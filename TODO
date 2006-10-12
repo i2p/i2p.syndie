@@ -7,11 +7,11 @@ Key:
  X doc/web/ onto syndie.i2p.net (~/syndie-inst/doc/web/)
  X archive onto http://syndie.i2p.net/archive/ (~/.syndie/archive/)
  X dist files ont http://syndie.i2p.net/dist/
-- darcs migration
+- monotone migration
  - public archive online
  - syndie-darcs@i2p.net mailing list
  X syndie-announce@i2p.net mailing list
- X use darcs internally
+ X use monotone internally
 
 ===maybe:
 - internationalize the text UI

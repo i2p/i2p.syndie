@@ -67,16 +67,16 @@ Source:<ul>
 <p>The GPG public key used to sign the distributed files is <code>393F2DF9</code> (fingerprint <code>AE89 D080 0E85 72F0 B777  B2ED C2FA 68C0 393F 2DF9</code>)</p>
 
 Unreleased development source:<ul>
-<li><code>mkdir syndie-dev ; cd syndie-dev ; darcs initialize ; darcs pull http://syndie.i2p.net/darcs/</code> (primary sources)</li>
-<li>Post new patches to syndie-darcs at i2p dot net: <pre>
-    darcs record -m "change stuff" -A my@email.addr
-    darcs send -o myfile.darcs --sign
-    mail syndie-darcs at i2p dot net &lt; myfile.darcs</pre>
-    If approved, they will be applied to the <code>http://syndie.i2p.net/darcs/</code>
-    archive.</li>
-<li>Apply patches by pulling from a URL above or from other darcs patches:<pre>
-    darcs apply --verify=syndie.pubring myfile.darcs</pre>
-    That applies the patch if it was signed by one of the syndie developers</li>
+<li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
+    syndie code is available on the netsync server <code>mtn.i2p.net</code>
+    in the <code>syndie</code> branch.</li>
+<li>Developers are granted write permission to that repository, and everyone
+    is granted read permission.</li>
+<li>The list of authorized committers can be found in the mtn-committers
+    file, which includes their monotone public keys, ready to be imported
+    with <code>cat mtn-committers | monotone read</code>.  That file can be
+    verified against the above GPG public key with
+    <code>gpg --verify mtn-committers</code>.</li>
 <li>Read the included INSTALL and related documentation</li>
 <li>Prerequisites:
     <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
