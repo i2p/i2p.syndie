@@ -1,6 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-    - bundled a gpg keyring for simplified patch verification
+* 2006-10-12  0.912b released
+    - migrated to monotone
+    - default to compact mode for thread display
+    - used cervantes' syndie_nets.png image (thanks!)
 
 * 2006-10-08  0.910a released
     - implemented the new "threads" command, allowing intra as well as
