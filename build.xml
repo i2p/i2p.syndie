@@ -148,7 +148,7 @@ public class Version {
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
         <tar compression="bzip2" destfile="doc/web/dist/syndie-${syndie.version}.src.tar.bz2">
-               <tarfileset dir="." includes="**" excludes=".svn, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
+               <tarfileset dir="." includes="**" excludes=".svn, _MTN, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
         </tar>
     </target>
     <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer" description="Package up syndie-$version.bin.exe">
