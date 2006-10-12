@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shortcuts>
+ <skipIfNotSupported />
+ <programGroup defaultName="Syndie" location="applications" />
+ <shortcut name="Syndie"
+           target="$INSTALL_PATH/bin/syndie" 
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           initialState="normal"
+           programGroup="yes"
+           startMenu="no"
+           desktop="yes"
+           startup="no"
+           encoding="UTF-8"
+           terminal="true"
+           type="Application" />
+ <!--
+ <shortcut name="Syndie documentation"
+           programGroup="yes"
+           desktop="yes"
+           applications="yes"
+           startMenu="yes"
+           startup="no"
+           target="$INSTALL_PATH/doc/web/index.html"
+           url="$INSTALL_PATH/doc/web/index.html"
+           type="Link"
+           encoding="UTF-8"
+           description="Syndie documentation index" />
+ -->
+ <shortcut name="Uninstall Syndie"
+           target="java"
+           commandLine="-jar &quot;$INSTALL_PATH/Uninstaller/uninstaller.jar&quot;"
+           workingDirectory=""
+           initialState="normal"
+           startMenu="no"
+           programGroup="yes"
+           startup="no"
+           encoding="UTF-8"
+           type="Application" />
+</shortcuts>

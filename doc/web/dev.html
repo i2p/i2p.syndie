@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>Syndie development</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<b>[dev]</b>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<div class="leftnav">
+<b>[code]</b><br />
+<a href="spec.html">[spec]</a><br />
+<a href="archive.html">[archive]</a><br />
+<a href="db.html">[database]</a><br />
+</div>
+<div class="bodycontent">
+Releases are versioned as <code>$major</code>.<code>$minor</code><code>$quality</code>,
+where <code>$major</code> indicates a substantial functional change,
+<code>$minor</code> indicates bugfixes and small improvements, and
+<code>$quality</code> values of <code>a,b,rc</code> indicate whether
+a release is <b>a</b>lpha quality (substantial changes still in progress, 
+liable to break, for geeks only), <b>b</b>eta quality (unstable, but
+changes are primarily bugfixes, for geeky testers),
+<b>r</b>elease <b>c</b>andidate quality (final testing before release),
+respectively.  Releases without <code>a,b,rc</code> are stable, production quality
+releases.</p>
+
+<p>Development discussions for Syndie go on within the
+<a href="http://www.i2p.net/">I2P</a> development team, on their
+<a href="http://dev.i2p.net/pipermail/i2p/">development list</a>,
+<a href="http://forum.i2p.net/forum.php?f=123">forum</a>,
+<a href="http://www.i2p.net/meetings">weekly meetings</a>, and
+<a href="irc://irc.freenode.net/#i2p">IRC channel</a>.</p>
+
+<p>Installation packages for <a href="download.html">download</a> are
+built with various ant targets:<ul>
+<li><code>syndie-$version.bin.exe</code><br />
+    <i>(java installer, includes bin/syndie.exe java launcher)</i><br />
+    built with the "installer-exe" target, but requires
+    "-Dlaunch4jdir=/path/to/launch4j" and
+    "-Dizpackdir=/path/to/izpack_install" (e.g.
+    <code>ant -Dizpackdir=/home/jrandom/IzPack_install/ -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
+<li><code>syndie-$version.bin.zip</code><br />
+    <i>(no java installer, includes bin/syndie.exe java launcher)</i><br />
+    built with the "java-package-exe" target, but requires
+    "-Dlaunch4jdir=/path/to/launch4j" (e.g.
+    <code>ant -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
+<li><code>syndie-$version.bin-noexe.zip</code><br />
+    <i>(no java installer, without bin/syndie.exe java launcher)</i><br />
+    built with the "java-package" target</li>
+<li><code>syndie-$version.src.tar.bz2</code><br />
+    <i>(source package)</i><br />
+    built with the "source-package" target</li>
+</ul></p>
+
+<p>All of the packages can be built into <code>doc/web/dist/</code> with
+"<code>ant dist</code>", though you need to include the settings required for
+<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code></p>
+
+<p>With a modern GCC/GCJ (releases prior to 4.0 will fail when they try to
+write to the database), you can build native Syndie executables.  On *nix/osx, 
+"<code>make -f Makefile.nix syndie</code>" creates ./syndie, and
+"<code>make -f Makefile.nix package</code>" creates a syndie-native.tar.bz2,
+which is just like syndie-$version.bin.zip, except bin/syndie is the native
+executable instead of a shell script launching java.  Work is ongoing for
+GCJ/MinGW support, but the Makefile.mingw should work with a viable MinGW
+install of GCJ 4.x</p>.
+</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+This is Syndie, an anonymity-aware distributed forum.
+
+Up to date information about Syndie can be found over at
+http://syndie.i2p.net/
+
+This package contains:
+- INSTALL: how to build and install Syndie from source
+- CHANGES: change log for Syndie
+- CREDITS: who has contributed to the Syndie development effort
+- LICENSE: license information for the Syndie codebase
+- doc/syndie.1: unix style manual page for the syndie command
+- doc/web/: HTML documentation for Syndie
+- bin/: contains the main Syndie command, sample Syndie scripts,
+        and an example perl CGI for operating an HTTP archive
+- lib/: compiled java libraries
+- resources/: localized data, etc
+- src/: source code
+- Makefile.nix: makefile for building syndie with GCJ for the current platform
+- Makefile.mingw: build a native windows executable with mingw/GCJ from *nix
+- build.xml: build the java code
+- nbproject/: developer setup for NetBeans users
+

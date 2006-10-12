@@ -1,0 +1,19 @@
+Unless marked otherwise, all code and content making up this package
+is released into the public domain.  Code included in this package
+must be under BSD or MIT compatible licenses.
+
+HSQLDB (hsqldb.jar and servlet.jar) are licensed according to 
+lib/hsqldb_lic.txt (BSD-like)
+
+The GNU-Crypto Fortuna PRNG and SHA-256 code is included with
+modifications as documented (removing other GNU-Crypto dependencies
+and renaming to avoid conflicts with standard GNU-Crypto code).  These
+files are located under src/gnu/crypto/ and are licensed according to
+the GPL with the "linking exception".  Since Syndie is not derived
+from the referenced PRNG or hash functions, Syndie is not tainted.
+
+The BouncyCastle HMAC and MD5 code is included with modifications
+as documented (removing other BouncyCastle dependencies).  These
+files are located under src/org/bouncycastle/ and are licensed
+according to the BouncyCastle license (an MIT-style license).
+

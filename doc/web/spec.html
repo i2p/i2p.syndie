@@ -1,0 +1,538 @@
+<html>
+<head>
+<title>Syndie: spec</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<b>[dev]</b>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<div class="leftnav">
+<a href="dev.html">[code]</a><br />
+<b>[spec]</b><br />
+<a href="archive.html">[archive]</a><br />
+<a href="db.html">[database]</a><br />
+</div>
+<div class="bodycontent">
+[<a id="specmenu" href="#message">Syndie messages</a>]
+[<a href="#key">Syndie key files</a>]
+[<a href="#uri">Syndie URIs</a>]
+[<a href="#headers">Syndie message headers</a>]
+
+<h2 id="message">Syndie messages (<a href="#specmenu">up</a>)</h2>
+A <code>.syndie</code> file contains signed and potentially encrypted data for
+passing Syndie channel metadata and posts around.  It is made up of two parts- a
+UTF-8 encoded header and a body.  The header begins with a type line, followed by
+name=value pairs, delimited by the newline character ('\n' or 0x0A).  After
+the pairs are complete, a blank newline is included, followed by the line
+"Size=$numBytes\n", where $numBytes is the size of the body (base10).  After that comes
+that many bytes making up the body of the enclosed message, followed by two
+newline delimited signature lines - AuthorizationSig=$signature and
+AuthenticationSig=$signature.  There can be any arbitrary amount of data after
+the signature lines, but it is not currently interpreted.</p>
+
+<p>The $numBytes body is an encrypted zip archive, though the encryption method
+depends upon the type line.  For posts and metadata messages, the data is
+AES/256/CBC encrypted (with a 16 byte IV at the beginning).  For private
+messages, the first 512 bytes are ElGamal/2048 encrypted to the channel's
+encryption key, which has the AES/256 session key and IV within it, and the
+remaining bytes are AES/256/CBC encrypted.</p>
+
+<p>The AES/256 encrypted area begins with a random number of nonzero padding
+bytes, followed by 0x0, then the internal payload size (as a 4 byte unsigned
+integer), followed by the total payload size (the same as the Size header),
+followed by the actual Zip encoded data, a random number of pad bytes, up to
+a 16 byte boundary, aka:</p>
+<pre>    rand(nonzero) padding + 0 + internalSize + totalSize + data + rand</pre>
+
+<p>After the AES/256 encrypted area there is an HMAC-SHA256 of the body section,
+using the SHA256 of the body decryption key concatenated with the IV as the
+HMAC key.</p>
+
+<p>The authorization signature is verified against the set of public keys
+associated with the channel.  Not all messages must have valid authorization
+signatures, but unauthorized messages may not be passed along.</p>
+
+<p>The authentication signature may be verified against the Author header (either
+in the public or encrypted header sets), but not all messages are authenticated.</p>
+
+<p>The unencrypted zip archive may contain the following entries:</p><ul>
+<li><code>headers.dat</code> <i>[used in: posts, private messages, metadata posts]</i><p>
+  Optionally contains headers that are not visible to those who cannot decrypt
+  the message</p></li>
+<li><code>page$n.dat</code> <i>[used in: posts, private messages]</i><p>
+  Page $n's contents</p></li>
+<li><code>page$n.cfg</code> <i>[used in: posts, private messages]</i><p>
+  Headers for page $n: Content-type, title, references, etc</p></li>
+<li><code>attach$n.dat</code> <i>[used in: posts, private messages]</i><p>
+  Attachment $n's contents</p></li>
+<li><code>attach$n.cfg</code> <i>[used in: posts, private messages]</i><p>
+  Headers for attachment $n: Content-type, language, etc</p></li>
+<li><code>avatar32.png</code> <i>[used in: posts, private messages, metadata posts]</i><p>
+  Contains a 32x32 pixel avatar for the message or channel</p></li>
+<li><code>references.cfg</code> <i>[used in: posts, private messages, metadata posts]</i><p>
+  Contains a tree of syndie references, formatted as
+  "[\t]*$name\t$uri\t$refType\t$description\n", where the tab indentation
+  at the beginning of the line determines the tree structure.  The refType
+  field can, for instance, be used to differentiate mentions of a positive
+  reference and those recommending blacklisting, etc.</p></li>
+</ul>
+
+<h2 id="key">Syndie key files (<a href="#specmenu">up</a>)</h2>
+<p>When passing around keys for Syndie channels, they can either be transferred
+in <a href="#uri">Syndie URIs</a> or in key files.  The key files themselves
+are UTF encoded as follows:</p>
+<pre>
+keytype: [manage|manage-pub|reply|reply-pub|post|post-pub|read]\n
+scope: $base64(channelHash)\n
+raw: $base64(bytes)\n
+</pre>
+
+<h2 id="uri">Syndie URIs (<a href="#specmenu">up</a>)</h2>
+<p>This defines the URIs safely passable within syndie, capable of referencing
+specific resources.  They contain one of four reference types, plus a bencoded
+set of attributes:</p>
+<pre>
+Type: url
+Attributes:
+* net:  what network the URL is on, such as "i2p", "tor", "ip", or "freenet" (string)
+* url:  network-specific URL (string)
+* name: [optional] short name of the resource referenced (string)
+* desc: [optional] longer description of the resource (string)
+* tag:  [optional] list of tags attached to the reference (string[])
+
+Type: channel
+Attributes:
+* channel:     [1] base64 of the SHA256 of the channel's identity public key (string)
+* author:      [1] base64 of the SHA256 of the author's identity public key, if different from the channel (string)
+* msgId:       [1] unique identifier within the channel's scope (or author's scope, if specified) (integer)
+* page:        [optional] page within the message's scope (integer)
+* attachment:  [optional] attachment within the message's scope (integer)
+* readKeyType: [optional] describes the readKey, e.g. "AES256" (string)
+* readKeyData: [optional] base64 of the key required to read posts in the channel [string)
+* postKeyType: [optional] describes the postKey, e.g. "DSA1024" (string)
+* postKeyData: [optional] base64 of the private key required to post to the channel (string)
+* name:        [optional] short name of the resource referenced (string)
+* desc:        [optional] longer description of the resource (string)
+* tag:         [optional] list of tags attached to the reference (string[])
+
+[1] If the field is not specified, it must be implicitly derived from the context.
+    For instance, a syndie post may omit the channel and msgId when referring to another
+    page or attachment on the current message.
+
+Type: search
+Attributes:
+* channel:      [optional] base64 of the SHA256 of the channel's identity public key (string)
+* author:       [optional] base64 of the SHA256 of the author's identity public key (string)
+* tag:          [optional] list of tags to match (string[])
+* keyword:      [optional] list of keywords to match (string[])
+* age:          [optional] number of days in the past to look back (integer)
+* status:       [optional] channels to look in- "new", "watched", "all" (string)
+
+Type: archive
+Attributes:
+* net:          what network the URL is on, such as "i2p", "tor", "ip", or "freenet" (string)
+* url:          network-specific URL (string)
+* readKeyType:  [optional] describes the readKey, e.g. "AES256" (string)
+* readKeyData:  [optional] base64 of the key required to pull data from the archive (string)
+* postKeyType:  [optional] describes the postKey, e.g. "AES256" (string)
+* postKeyData:  [optional] base64 of the key required to pull data from the archive (string)
+* identKeyType: [optional] describes the identKey, e.g. "DSA1024" (string)
+* identKeyData: [optional] base64 of the key the archive will identify themselves as (string)
+* name:         [optional] short name of the resource referenced (string)
+* desc:         [optional] longer description of the resource (string)
+* tag:          [optional] list of tags attached to the reference (string[])
+
+Type: text
+Attributes:
+* name: [optional] short name of the freeform text reference (string)
+* body: [optional] freeform text reference (string)
+* tag:  [optional] list of tags attached to the reference (string[])
+
+The canonical encoding is: "urn:syndie:$refType:$bencodedAttributes",
+with $refType being one of the five types above, and $bencodedAttributes
+being the bencoded attributes.  Strings are UTF-8, and the bencoded attributes
+are ordered according to the UK locale (in the canonical form).
+
+Examples:
+ urn:syndie:url:d3:url19:http://www.i2p.net/e
+ urn:syndie:channel:d7:channel40:12345678901234567890123456789012345678909:messageIdi42e4pagei0ee
+ urn:syndie:channel:d10:attachmenti3ee
+ urn:syndie:channel:d4:pagei2ee
+ urn:syndie:search:d3:tag3i2pe
+ urn:syndie:search:d6:status7:watchede
+
+Within syndie-enabled apps, the urn:syndie: prefix can be dropped:
+ url:d3:url19:http://www.i2p.net/e
+ channel:d7:channel40:12345678901234567890123456789012345678909:messageIdi42e4pagei0ee
+ channel:d10:attachmenti3ee
+ channel:d4:pagei2ee
+ search:d3:tag3i2pe
+ search:d6:status7:watchede
+</pre>
+
+<h2 id="headers">Syndie message headers (<a href="#specmenu">up</a>)</h2>
+<p>Syndie messages have a defined set of headers, and unknown headers are
+uninterpreted.</p>
+
+<p>
+ <a href="#header_author">Author</a>
+ <a href="#header_authenticationmask">AuthenticationMask</a>
+ <a href="#header_targetchannel">TargetChannel</a>
+ <a href="#header_posturi">PostURI</a>
+ <a href="#header_references">References</a>
+ <a href="#header_tags">Tags</a>
+ <a href="#header_overwriteuri">OverwriteURI</a>
+ <a href="#header_forcenewthread">ForceNewThread</a>
+ <a href="#header_refusereplies">RefuseReplies</a>
+ <a href="#header_cancel">Cancel</a>
+ <a href="#header_subject">Subject</a>
+ <a href="#header_bodykey">BodyKey</a>
+ <a href="#header_bodykeypromptsalt">BodyKeyPromptSalt</a>
+ <a href="#header_bodykeyprompt">BodyKeyPrompt</a>
+ <a href="#header_identity">Identity</a>
+ <a href="#header_encryptkey">EncryptKey</a>
+ <a href="#header_name">Name</a>
+ <a href="#header_description">Description</a>
+ <a href="#header_edition">Edition</a>
+ <a href="#header_publicposting">PublicPosting</a>
+ <a href="#header_publicreplies">PublicReplies</a>
+ <a href="#header_authorizedkeys">AuthorizedKeys</a>
+ <a href="#header_managerkeys">ManagerKeys</a>
+ <a href="#header_archives">Archives</a>
+ <a href="#header_channelreadkeys">ChannelReadKeys</a>
+ <a href="#header_expiration">Expiration</a> </p>
+
+<p>In the following list, <i>Required</i> means the header must be included
+   for messages of the allowed types.  <i>Allow as hidden</i> means the header
+   may be included in the encrypted <code>headers.dat</code> zip headers,
+   rather than in the unencrypted publicly visible headers.  <i>Allow on posts</i>
+   means the header can be used on normal posts.  <i>Allow on private messages</i>
+   means the header can be used on posts encrypted to a channel's private key.
+   <i>Allow on metadata messages</i> means the header can be used on metadata
+   messages configuring a channel.</p>
+
+<ul>
+ <li id="header_author"><b>Author</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> base64(channel identity key)</li>
+  <li><b>Description:</b> 
+  Nym that posted the message (must be authenticated with an authenticationSig)
+  </li>
+ </ul></li>
+ <li id="header_authenticationmask"><b>AuthenticationMask</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> base64(random 40 byte value)</li>
+  <li><b>Description:</b> 
+  If included, the authenticationSignature is XORed against this mask before 
+  checking for validity (preventing unauthorized people from seeing if the 
+  post was authenticated by $nym by simply checking the signature against
+  $nym's pubkey)
+  </li>
+ </ul></li>
+ <li id="header_targetchannel"><b>TargetChannel</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> base64(channel ident hash)</li>
+  <li><b>Description:</b> 
+  The channel in the PostURI may refer to the author (eg when unauthorized), 
+  so this supplements that with the channel that the post is destined for
+  </li>
+ </ul></li>
+ <li id="header_posturi"><b>PostURI</b><ul>
+  <li><b>Required?</b> yes</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> <a href="#uri">Syndie URI</a></li>
+  <li><b>Description:</b> 
+  Unique message identifier, including the channel the post is authorized 
+  for and the messageId.  If the post is not authorized for the
+  <a href="#header_targetchannel">target channel</a>, the scope referenced is
+  the <a href="#header_author">author's</a>
+  </li>
+ </ul></li>
+ <li id="header_references"><b>References</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> comma delimited list of <a href="#uri">Syndie URI</a>s</li>
+  <li><b>Description:</b> 
+  Earliest in the list is most recent ancestor
+  </li>
+ </ul></li>
+ <li id="header_tags"><b>Tags</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> tab delimited list of tags</li>
+  <li><b>Description:</b> 
+  Key phrases describing the message or channel
+  </li>
+ </ul></li>
+ <li id="header_overwriteuri"><b>OverwriteURI</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> <a href="#uri">Syndie URI</a></li>
+  <li><b>Description:</b> 
+  Entry that the current post is replacing (if authorized)
+  </li>
+ </ul></li>
+ <li id="header_forcenewthread"><b>ForceNewThread</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> "true" or "false"</li>
+  <li><b>Description:</b> 
+  If true, this message starts a new thread, even if there are parents
+  </li>
+ </ul></li>
+ <li id="header_refusereplies"><b>RefuseReplies</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> "true" or "false"</li>
+  <li><b>Description:</b> 
+  If true, only the author may post a threaded reply to this post
+  </li>
+ </ul></li>
+ <li id="header_cancel"><b>Cancel</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> tab delimited list of <a href="#uri">Syndie URIs</a></li>
+  <li><b>Description:</b> 
+  If the author is allowed, cancel the given message(s)
+  </li>
+ </ul></li>
+ <li id="header_subject"><b>Subject</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> no</li>
+  <li><b>Content type:</b> text</li>
+  <li><b>Description:</b> 
+  Short description of what the post is about
+  </li>
+ </ul></li>
+ <li id="header_bodykey"><b>BodyKey</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> base64(AES256 session key)</li>
+  <li><b>Description:</b> 
+  If specified, the zip entries are encrypted with the given key (and 
+  hence, readable by anyone) rather than the channel's normal
+  (unpublicized) session key.
+  </li>
+ </ul></li>
+ <li id="header_bodykeypromptsalt"><b>BodyKeyPromptSalt</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> base64(channel identity key)</li>
+  <li><b>Description:</b> 
+  Fed into the PBE algorithm with the answer to the <a href="#header_bodykeyprompt">BodyKeyPrompt</a>
+  </li>
+ </ul></li>
+ <li id="header_bodykeyprompt"><b>BodyKeyPrompt</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> text</li>
+  <li><b>Description:</b> 
+  If specified, the body is encrypted with a PBE key generated by answering
+  this query correctly.  e.g. "BodyKeyPrompt=1+1=?" would PBE generate the 
+  body key from the correct answer ("2")
+  </li>
+ </ul></li>
+ <li id="header_identity"><b>Identity</b><ul>
+  <li><b>Required?</b> yes</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> base64(DSA1024 public key)</li>
+  <li><b>Description:</b> 
+  Master signing public key
+  </li>
+ </ul></li>
+ <li id="header_encryptkey"><b>EncryptKey</b><ul>
+  <li><b>Required?</b> yes</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> base64(Elgamal2048 public key)</li>
+  <li><b>Description:</b> 
+  For private replies
+  </li>
+ </ul></li>
+ <li id="header_name"><b>Name</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> text</li>
+  <li><b>Description:</b> 
+  Suggested nickname
+  </li>
+ </ul></li>
+ <li id="header_description"><b>Description</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> text</li>
+  <li><b>Description:</b> 
+  Suggested description
+  </li>
+ </ul></li>
+ <li id="header_edition"><b>Edition</b><ul>
+  <li><b>Required?</b> yes</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> base10 nonnegative integer</li>
+  <li><b>Description:</b> 
+  Higher numbers replace lower numbers
+  </li>
+ </ul></li>
+ <li id="header_publicposting"><b>PublicPosting</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> "true" or "false"</li>
+  <li><b>Description:</b> 
+  If true, authenticated posts do not need to be authorized (though 
+  authorized posts can be unauthenticated)
+  </li>
+ </ul></li>
+ <li id="header_publicreplies"><b>PublicReplies</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> "true" or "false"</li>
+  <li><b>Description:</b> 
+  Like AllowPublicPosting, except replies only (unauthorized users 
+  can't create new threads)
+  </li>
+ </ul></li>
+ <li id="header_authorizedkeys"><b>AuthorizedKeys</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> tab delimited base64(DSA1024 public key)</li>
+  <li><b>Description:</b> 
+  Posts with authorizationSignatures verified by one of these keys are 
+  allowed (the pubkeys may be a nym's identity key or may be a separate 
+  signing key shared by multiple authors)
+  </li>
+ </ul></li>
+ <li id="header_managerkeys"><b>ManagerKeys</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> no</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> tab delimited base64(DSA1024 public key)</li>
+  <li><b>Description:</b> 
+  New metadata messages for this channel may be signed by one of 
+  these keys (the channel's identity key is implicitly in this set)
+  </li>
+ </ul></li>
+ <li id="header_archives"><b>Archives</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> tab delimited <a href="#uri">Syndie URIs</a></li>
+  <li><b>Description:</b> 
+  Lists some archives that may be consulted for new posts in the 
+  current channel (and/or which may accept replies for the channel)
+  </li>
+ </ul></li>
+ <li id="header_channelreadkeys"><b>ChannelReadKeys</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> no</li>
+  <li><b>Allow on private messages?</b> no</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> tab delimited base64(AES256 key)</li>
+  <li><b>Description:</b> 
+  Adds some channel read keys that may be used to encrypt/decrypt 
+  posts in the channel (publicizing these makes the channel publicly readable)
+  </li>
+ </ul></li>
+ <li id="header_expiration"><b>Expiration</b><ul>
+  <li><b>Required?</b> no</li>
+  <li><b>Allow as hidden?</b> yes</li>
+  <li><b>Allow on posts?</b> yes</li>
+  <li><b>Allow on private messages?</b> yes</li>
+  <li><b>Allow on metadata messages?</b> yes</li>
+  <li><b>Content type:</b> YYYYMMDD</li>
+  <li><b>Description:</b> 
+  Suggest a date after which the channel / message can be discarded safely
+  </li>
+ </ul></li>
+</ul>
+
+<p>When referring to <code>base64</code>, the content is base64 encoded
+with an alternate alphabet.  The alphabet is the standard one except with
+"~" replacing "/", and "+" with "-" (for safer URL and file name encoding).
+</p>
+</div>
+</body>
+</html>

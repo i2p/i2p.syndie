@@ -1,0 +1,103 @@
+[Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
+
+    - bundled a gpg keyring for simplified patch verification
+
+* 2006-10-08  0.910a released
+    - implemented the new "threads" command, allowing intra as well as
+      interchannel searching based on tags, with results ordered by most
+      recently updated threads.
+    - implemented the new "alias" command (and associated database table),
+      allowing single and multicommand aliases using ";" as a command
+      delimiter.  e.g.
+      "alias sync menu syndicate; getindex; fetch; schedule --put archive; post"
+
+* 2006-10-07  0.909a released
+    - added a new "history" and associated csh-style history editing
+      commands (!!, !-$num, !$num, ^a, ^a^b).
+    - simplify channel authorization management with new "listnyms",
+      "addnym", and "removenym" commands.
+
+* 2006-10-06  0.908a released
+    - rework the database update process so we now run
+      src/syndie/db/ddl_update$n.txt whenever we are upgrading from database
+      schema version $n.  This is backwards compatible
+    - revamp the message/metadata import process and db schema to allow 
+      importing messages that are authorized/authenticated but cannot be read,
+      due to a missing key or passphrase.  in turn, revamp the read/view menu
+      to display the undecrypted messages appropriately, prompting for the
+      valid decryption material, providable with the new "decrypt" command.
+    - encrypt private channel replies with the right key and scope
+
+* 2006-10-05  0.907a released
+    - further thread rendering fixes, and support for a new "threadprev"
+      command.
+    - added some status and debug messages describing the progress of http
+      fetches, and added a timeout for reading http response headers (which
+      should come back quickly, even if there's lots of data to transfer)
+    - deal with passphrase encrypted messages in the bulkimport command by
+      renaming them to "pbe_msg_$num.syndie", since they require interaction
+      to import ("import --in $filename" displays the prompt for decryption,
+      and "import --in $filename --pass $passphrase" decrypts it).
+
+* 2006-10-04  0.906a released
+    - added a new "prefs" command and related nymPref table, allowing you
+      to set persistent preferences for each nym to be loaded on login,
+      including debug and paginate state, the default http proxy, and a
+      default archive (allowing you to simply "getindex" without any
+      arguments).  The database update is handled automatically when
+      necessary without any intervention.
+    - bugfix to the message thread rendering.  it should now thread correctly
+    - rework the read menu to keep track of both the channels and the messages
+      being rendered so you can switch back and forth without regenerating a
+      channel list again -
+      (channels; messages --channel 2; view --message 0; messages --channel 3)
+
+* 2006-10-03  0.905a released
+    - support "getindex --archive file:///some/path" as well as
+      "getindex --archive /some/path" and "getindex --archive http://some/url"
+    - removed some debug messages unintentionally left in
+    - added a new FAQ (thanks bar and void!)
+
+* 2006-10-02  0.904a released
+    - further unauthorized post/reply improvements, but the changed
+      archive index-all.dat and index-new.dat have changed format, so
+      upgrading is mandatory (if you want to use http syndication ;)
+    - revamp the released packages:
+      syndie-$rev.bin.exe (java installer w/ launch4j'ed bin/syndie.exe)
+      syndie-$rev.bin.zip (no installer but w/ launch4j'ed bin/syndie.exe)
+      syndie-$rev.src.tar.bz2 (source only)
+
+* 2006-09-30  0.903a released
+    - don't regenerate new channel read keys each time we update the
+      metadata (since they replace old ones, so we can't decrypt messages
+      that were wrapped with the old keys)
+    - improvements to the unauthorized post/reply processing, flagging
+      messages that weren't explicitly authorized by their keys but were
+      by their context as authorized (replies in channels that allow public
+      replies, posts in channels that allow public posts)
+    - small fixes to the syndie.bat and import.cgi
+    - fixes for goofy non-defensive-programming mistakes
+    - lots of bugfixes (thanks void and Complication)
+
+* 2006-09-29  0.902a released
+    - deal with EOF on stdin (thanks bar!)
+    - both "?" and "help" now refer to the help command (thanks bar!)
+    - properly display blank lines in posts when appropriate
+    - fixed the archive index to include the right set of messages (oops)
+    - added the "builduri" helper commands for building Syndie URIs
+      of URLs, channels/messages/pages, and archives
+
+* 2006-09-28  0.901a released
+    - added new "backup" and "restore" commands for simple database
+      archival and disaster recovery
+    - added new IzPack installer and launch4j wrapper
+    - support reading new posts from standard input ("addpage --in STDIN")
+    - use ".syndie" as the file extension instead of ".snd"
+    - display the pagination and debug toggle state after changes
+      (thanks Complication!)
+    - hide the automatic db init and registration output on first run,
+      as the information is saved in the database anyway
+      (thanks Complication!)
+
+* 2006-09-26  0.900a released
+    - First baseline release

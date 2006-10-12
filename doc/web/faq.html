@@ -1,0 +1,109 @@
+<html>
+<head>
+<title>Syndie: FAQ</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<b>[faq]</b>
+<a href="roadmap.html">[roadmap]</a>
+<a href="dev.html">[dev]</a>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<!--
+<div class="leftnav">
+left nav
+</div>
+-->
+<div class="bodycontent">
+<ul id="menu">
+<li><a href="#why">Why does Syndie matter?</a></li>
+<li><a href="#whohostsarchives">Who will host Syndie archives?</a></li>
+<li><a href="#license">What license is Syndie released under</a></li>
+<li><a href="#relationship">What is the relationship between Syndie and $x?</a></li>
+</ul>
+<b id="why">Why does Syndie matter?</b> (<a href="#menu">up</a>)
+
+<p>What do forum/blogging tools have to do with providing strong anonymity?</p>
+
+<p>The answer: <b>*everything*</b>.</p>
+
+<p>To briefly summarize:<ul>
+ <li>Syndie's design as an anonymity-sensitive client application carefully
+   avoids the intricate data sensitivity problems that nearly every
+   application not built with anonymity in mind does not.</li>
+ <li>By operating on the content layer, Syndie does not depend upon the
+   performance or reliability of distributed networks like I2P, Tor, or
+   Freenet, though it can exploit them where appropriate.</li>
+ <li>By doing so, it can operate fully with small, ad-hoc mechanisms for
+   content distribution - mechanisms which may not be worth the effort
+   for powerful adversaries to counteract (since the 'payoff' of busting
+   just a few dozen people will likely exceed the cost of mounting the
+   attacks)</li>
+ <li>This implies that Syndie will be useful even without a few million
+   people using it - small unrelated groups of people should set up their
+   own private Syndie distribution scheme without requiring any
+   interaction with or even awareness by any other groups.</li>
+ <li>Since Syndie does not rely upon real-time interaction, it can even
+   make use of high latency anonymity systems and techniques to avoid the
+   attacks that all low latency systems are vulnerable to (such as
+   passive intersection attacks, passive and active timing attacks, and
+   active blending attacks).</li>
+</ul>
+
+<p>Alternately, you can review some of Syndie's
+<a href="usecases.html">use cases</a>.</p>
+
+<b id="whohostsarchives">Who will host Syndie archives?</b> (<a href="#menu">up</a>)
+
+<p><i>(irc log edited for clarity)</i></p>
+<ul>
+<li>&lt;bar&gt; a question i've been pondering is, who is later going to have balls
+    big enough to host syndie production servers/archives?</li>
+<li>&lt;bar&gt; aren't those going to be as easy to track down as the eepsites are
+    today?</li>
+<li>&lt;jrandom&gt; public syndie archives do not have the ability to *read*
+    the content posted to forums, unless the forums publish the keys to do so</li>
+<li>&lt;jrandom&gt; and see the second paragraph of
+    <a href="usecases.html#decentralizedforum">usecases.html</a></li>
+<li>&lt;jrandom&gt; of course, those hosting archives given lawful orders to 
+    drop a forum will probably do so</li>
+<li>&lt;jrandom&gt; (but then people can move to another archive, without disrupting
+    the forum's operation)</li>
+<li>&lt;void&gt; yeah, you should mention the fact that migration to a
+    different medium is going to be seamless</li>
+<li>&lt;bar&gt; if my archive shuts down, i can upload my whole forum to a new one,
+    right?</li>
+<li>&lt;jrandom&gt; 'zactly bar</li>
+<li>&lt;void&gt; they can use two methods at the same time while migrating</li>
+<li>&lt;void&gt; and anyone is able to synchronize the mediums</li>
+<li>&lt;jrandom&gt; right void</li>
+</ul>
+
+<b id="license">What license is Syndie released under?</b> (<a href="#menu">up</a>)
+
+<p>Short answer: its probably simplest to consider Syndie to be released under a
+BSD-like license.</p>
+
+<p>Medium answer: nearly all of the code is released into the public domain, with
+some files under MIT or BSD licenses.  Syndie is also linked against a library
+released under the GPL with the linking exception (which means Syndie does <b>not</b>
+have to be GPLed)</p>
+
+<p>Long answer: read the LICENSE file in the package.</p>
+
+<b id="relationship">What is the relationship between Syndie and $x?</b> (<a href="#menu">up</a>)
+
+<p>The <a href="related.html">relationship</a> between Syndie and other
+efforts have been moved to their own page.</p>
+
+</div>
+</body>
+</html>

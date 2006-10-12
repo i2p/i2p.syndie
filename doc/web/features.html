@@ -1,0 +1,132 @@
+<html>
+<head>
+<title>Syndie: features</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<b>[features]</b>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<a href="dev.html">[dev]</a>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<!--
+<div class="leftnav" id="menu">
+</div>
+-->
+<div class="bodycontent">
+<p>While its structure leads to a large number of
+different configurations, most needs will be met by selecting one of
+the options from each of the following three criteria:</p><ul>
+ <li>Forum types:<ul>
+   <li>Single author (typical blog)</li>
+   <li>Multiple authors (multiauthor blog)<a href="#starstar">**</a></li>
+   <li>Open (newsgroups, though restrictions may be included so that only
+     authorized<a href="#starstar">**</a> users can post new threads, while anyone can comment on
+     those new threads)</li>
+   </ul></li>
+ <li>Visibility:<ul>
+   <li>Anyone can read anything</li>
+   <li>Only authorized<a href="#star">*</a> people can read posts, but some metadata is exposed</li>
+   <li>Only authorized<a href="#star">*</a> people can read posts, or even know who is posting</li>
+   <li>Only authorized<a href="#star">*</a> people can read posts, and no one knows who is posting</li>
+   </ul></li>
+ <li>Comments/replies:<ul>
+   <li>Anyone can comment or send private replies to the author/forum owner</li>
+   <li>Only authorized<a href="#starstar">**</a> people can comment, and anyone can send private replies</li>
+   <li>No one can comment, but anyone can send private replies</li>
+   <li>No one can comment, and no one can send private replies</li>
+   </ul></li>
+</ul>
+
+<p style="text: small"><b id="star">*</b>
+   reading is authorized by giving people the symmetric key or passphrase
+   to decrypt the post.  Alternately, the post may include a publicly
+   visible prompt, where the correct answer serves to generate the
+   correct decryption key.</p>
+<p style="text: small"><b id="starstar">**</b>
+   posting, updating, and/or commenting is authorized by providing those 
+   users with asymmetric private keys to sign the posts with, where the
+   corresponding public key is included in the forum's metadata as
+   authorized to post, manage, or comment on the forum.  Alternately, the
+   signing public keys of individual authorized users may be listed in
+   the medtata.</p>
+
+<p>Individual posts may contain many different elements:</p><ul>
+ <li>Any number of pages, with out of band data for each page specifying
+   the content type, language, etc.  Any formatting may be used, as its
+   up to the client application to render the content safely - plain text
+   must be supported, and clients that can should support HTML.</li>
+ <li>Any number of attachments (again, with out of band data describing the
+   attachment)</li>
+ <li>A small avatar for the post (but if not specified, the author's 
+   default avatar is used)</li>
+ <li>A set of references to other posts, forums, archives, URLs, etc (which
+   may include the keys necessary to post, manage, or read the referenced
+   forums)</li>
+</ul>
+
+<p>On the whole, Syndie works at the *content layer* - individual posts are
+contained in encrypted zip files, and participating in the forum means
+simply sharing these files.  There are no dependencies upon how the files
+are transferred (over <a href="http://www.i2p.net/">I2P</a>, 
+<a href="http://tor.eff.org/">Tor</a>,
+<a href="http://www.freenetproject.org/">Freenet</a>,
+<a href="http://www.gnutella.org/">gnutella</a>,
+<a href="http://www.bittorrent.com/">bittorrent</a>,
+<a href="http://en.wikipedia.com/wiki/RSS">RSS</a>,
+<a href="http://en.wikipedia.com/wiki/Usenet">usenet</a>,
+<a href="http://en.wikipedia.com/wiki/Email">email</a>),
+but simple aggregation and distribution tools will be
+bundled with the standard Syndie release.</p>
+
+<p>Interaction with the Syndie content will occur in several ways.  First,
+there is a scriptable text based interface, allowing basic command line
+and interactive reading from, writing to, managing, and synchronizing
+the forums.  For instance, the following is a simple script to generate
+a new "message of the day" post -</p>
+<pre>
+    login
+    menu post
+    create --channel 0000000000000000000000000000000000000000
+    addpage --in /etc/motd --content-type text/plain
+    addattachment --in ~/webcam.png --content-type image/png
+    listauthkeys --authorizedOnly true
+    authenticate 0
+    authorize 0
+    set --subject "Today's MOTD"
+    set --publicTags motd
+    execute
+    exit
+</pre>
+<p>Simply pipe that through the syndie executable and the deed is done:</p>
+<pre>    cat motd-script | ./syndie > syndie.log</pre>
+
+<p>Additionally, there is work going on for a graphical Syndie interface,
+which includes the safe rendering of plain text and HTML pages (of
+course, with support for transparent integration with Syndie's
+features).</p>
+
+<p>Applications based on the old Syndie's "sucker" code will enable the
+scraping and rewriting of normal web pages and web sites so that they
+can be used as single or multipage Syndie posts, including images and
+other resources as attachments.</p>
+
+<p>Down the line, firefox/mozilla plugins are planned to both detect and
+import Syndie formatted files and Syndie references, as well as notify
+the local Syndie GUI that a particular forum, topic, tag, author, or
+search result should be brought into focus.</p>
+
+<p>Of course, since Syndie is, at its core, a content layer with a defined
+file format and cryptographic algorithms, other applications or
+alternate implementations will probably be brought forward over time.</p>
+</div>
+</body>
+</html>

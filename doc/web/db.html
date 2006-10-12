@@ -1,0 +1,54 @@
+<html>
+<head>
+<title>Syndie: database</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<b>[dev]</b>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<div class="leftnav">
+<a href="dev.html">[code]</a><br />
+<a href="spec.html">[spec]</a><br />
+<a href="archive.html">[archive]</a><br />
+<b>[database]</b><br />
+</div>
+<div class="bodycontent">
+The database that the <a href="manual.html">text interface</a> uses to store each
+nym's keys, organize their preferences, and store decrypted messages is a
+<a href="http://java.sun.com/jdbc/">JDBC</a> 
+accessible <a href="http://www.hsqldb.org/">HSQLDB</a> database.  By default, it
+loads the database up through HSQLDB's <code>file://</code> schema support, which
+allows only one instance at a time to access the database and loads it into memory.
+The database can be configured for remote access through HSQLDB's
+<code>hsql://hostname:portNum/dbName</code> or
+<code>hsqls://hostname:portNum/dbName</code> schema support, offering remote access
+(either directly or over SSL/TLS).  To use these alternate schemas, simply use the
+<a href="manual.html#login">login</a> command with
+<code>--db jdbc:hsqldb:hsqls://127.0.0.1:9999/syndie</code> (etc) after starting
+up a standalone HSQLDB database configured for remote access.
+
+<p>The database schema itself is kept as part of the Syndie source code as
+<code>src/syndie/db/ddl.txt</code>, and is documented therein.  Basically, it has
+tables to contain individual channels, messages within those channels, the content
+stored in those messages (including attachments and references), individual local
+nyms, their keys, and their preferences.  In addition, it has general configuration
+data for managing the database and the associated archive of
+<a href="spec.html#message">.syndie</a> messages.</p>
+
+<p>Also of interest are the database schema updates -
+<code>src/syndie/db/ddl_update*.txt</code>.  They are run sequentially to turn
+earlier database schema versions into newer versions of the schema.</p>
+</div>
+</body>
+</html>

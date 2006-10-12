@@ -1,0 +1,6 @@
+#!syndie
+login
+menu syndicate
+bulkimport --dir /tmp/cgiImport --delete true
+buildindex
+exit

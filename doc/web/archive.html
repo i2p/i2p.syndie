@@ -1,0 +1,163 @@
+<html>
+<head>
+<title>Syndie: archives</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<b>[dev]</b>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<div class="leftnav">
+<a href="dev.html">[code]</a><br />
+<a href="spec.html">[spec]</a><br />
+<b>[archive]</b><br />
+<a href="db.html">[database]</a><br />
+</div>
+<div class="bodycontent">
+Each Syndie instance operates with its own archive of messages, storing
+the data extracted from the <a href="spec.html#message">signed messages</a>
+within its local <a href="db.html">database</a> (by default stored under
+<code>$dataRoot/db/</code>), an archive of those signed messages in the
+<code>$dataRoot/archive/</code> file hierarchy, and an archive of locally
+created but not yet distributed messages in the
+<code>$dataRoot/outbound/</code> file hierarchy.  The contents of
+<code>$dataRoot/archive/</code> can be wiped out without any loss of
+functionality, though doing so prevents the Syndie instance from sharing
+the authenticated messages with other people.
+
+<p>Within the <code>$dataRoot/archive/</code> directory, each channel
+has its own subdirectory containing the channel's metadata (in <code>meta.syndie</code>)
+and posts (in <code>$messageId.syndie</code>).  In addition, there are three
+index files for each channel (<code>index-all.dat, index-new.dat,
+index-unauthorized.dat</code>) as well as four index files for the
+entire archive itself (<code>index-all.dat, index-meta.dat, index-new.dat,
+index-unauthorized.dat</code>).  These indexes are rebuilt with the
+<a href="manual.html#syndicate_buildindex">buildindex</a> command, summarizing all posts
+in the channel/archive (<code>index-all.dat</code>
+and <code>$channelHash/index-all.dat</code>), all posts received or published
+in the last few days (<code>index-new.dat</code> and
+<code>$channelHash/index-new.dat</code>),
+the metadata editions of all known channels (<code>index-meta.dat</code>),
+and all posts for individual
+channels that are not authorized (<code>index-unauthorized.dat</code> and
+<code>$channelHash/index-unauthorized.dat</code>).</p>
+
+<p>The index files all use the following format:</p><pre>
+    $channelHash        // 32 byte SHA256 value
+    $channelEdition     // 4 byte unsigned integer
+    $reciveDate         // 4 byte unsigned integer - days since 1970/1/1
+    $metaFileSize       // 4 byte unsigned integer - size of the meta.syndie file
+    $numMessages        // 4 byte unsigned integer - how many messages are known
+    $indexedMessages    // 4 byte unsigned integer - # messages following
+    for (i = 0; i < $indexedMessages; i++)
+       $messageId       // 8 byte unsigned integer
+       $receiveDate     // 4 byte unsigned integer - days since 1970/1/1
+       $entryFileSize   // 4 byte unsigned integer - size of $messageId.syndie
+       $flags           // 1 byte.
+                        // 1<<7: authorized
+                        // 1<<6: private reply
+                        // 1<<5: password based encrypted
+                        // 1<<4: archive considers the post "new"
+    // external chan refs in index-all and index-new refer to posts that
+    // are in another scope but both target this $channelHash scope and
+    // are authorized.  unsigned chan refs in index-unauthorized are the
+    // same, but not authorized
+    $externalChanRefs   // 4 byte unsigned integer - # channels following
+    for (i = 0; i < $externalChanRefs; i++)
+       $scopeHash       // 32 byte SHA256 value that the post is in
+       $posts           // 4 byte unsigned integer - messages following
+       for (j = 0; j < $posts;  j++
+           $messageId       // 8 byte unsigned integer
+           $receiveDate     // 4 byte unsigned integer - days since 1970/1/1
+           $entrySize       // 4 byte unsigned integer - sizeof .syndie file
+           $flags           // 1 byte.
+                            // 1<<7: authorized
+                            // 1<<6: private reply
+                            // 1<<5: password based encrypted
+                            // 1<<4: archive considers the post "new"
+</pre>
+
+<p>Individual posts are found under
+<code>$dataRoot/archive/$scope/$messageId.syndie</code>, and metadata under
+<code>$dataRoot/archive/$scope/meta.syndie</code>.  The externally referenced
+posts are found under their original scope path, not the targetted channel
+path - <code>$dataRoot/archive/$scopeHash/$messageId.syndie</code> and not
+<code>$dataRoot/archive/$channelHash/$messageId.syndie</code></p>
+
+<p>The <code>$dataRoot/archive/index-*dat</code> files simply concatenate the
+<code>$dataRoot/archive/$channelHash/index-*.dat</code> files together.
+These file formats are implemented in the <code>syndie.db.ArchiveIndex</code>
+class, and are subject to change.</p>
+
+<p>Given the simple file-based archive hierarchy and index, running a public
+Syndie archive is trivial - simply publish your <code>$dataRoot/archive/</code>
+in a webserver and tell people the URL.  They will then be able to load up
+their Syndie instance and use the <a href="manual.html#getindex">getindex and fetch</a>
+commands to pull posts from the archive into their local Syndie instance.</p>
+
+<p>To enable people to upload posts to an HTTP archive, Syndie bundles an
+<code>import.cgi</code> CGI script - simply place the <code>import.cgi</code>
+in the <code>$dataRoot/archive/</code> directory, mark it as executable and
+tell your webserver to run <code>.cgi</code> files as CGI scripts.  For example,
+the following Apache httpd.conf directives would suffice (assuming your login
+was <code>jrandom</code>):</p><pre>
+        &lt;Directory /home/jrandom/.syndie/archive/&gt;
+               Options ExecCGI Indexes
+        &lt;/Directory&gt;
+        Alias /archive/ "/home/jrandom/.syndie/archive/"
+        AddHandler cgi-script .cgi
+        AddType application/x-syndie .syndie
+</pre>
+
+<p>The CGI accepts posts (uploaded through <a href="manual.html">schedule and put</a>),
+writing them to <code>/tmp/cgiImport/</code> (another directory can be chosen
+by modifying the <code>import.cgi</code>).  In addition, while the CGI allows
+anyone to upload posts by default, you can require a password instead - simply
+set the <code>$requiredPassphrase</code> in the CGI and share that value with
+those authorized to upload posts.  Authorized users will then be able to post
+by providing that value in the <code>--pass $passphrase</code> parameter for
+<code>put</code>).</p>
+
+<p>To fully enable users to upload posts, you will need to set up a
+recurring task on your OS running the following Syndie script on occation
+(once every hour is perhaps reasonable):</p>
+<pre>
+  login
+  menu syndicate
+  bulkimport --dir /tmp/cgiImport --delete true
+  buildindex
+  exit
+</pre>
+
+<p>This tells Syndie to pull in all of the <code>.syndie</code> files
+stored in <code>/tmp/cgiImport</code>, deleting the original files on
+completion.  The <code>buildindex</code> then regenerates the <code>index-*</code>
+files.  An example <code>cron</code> line would be: </p><pre>
+30 * * * * /home/jrandom/syndie/bin/syndie @/home/jrandom/syndie/bin/bulkimport.syndie > /home/jrandom/syndie/import.log
+</pre>
+
+<p>An example upload form:</p>
+<pre>
+&lt;form action="import.cgi" method="POST" enctype="multipart/form-data"&gt;
+Metadata file: &lt;input type="file" name="meta0" /&gt;&lt;br /&gt;
+Metadata file: &lt;input type="file" name="meta1" /&gt;&lt;br /&gt;
+Metadata file: &lt;input type="file" name="meta2" /&gt;&lt;br /&gt;
+Post file: &lt;input type="file" name="post0" /&gt;&lt;br /&gt;
+Post file: &lt;input type="file" name="post1" /&gt;&lt;br /&gt;
+Post file: &lt;input type="file" name="post2" /&gt;&lt;br /&gt;
+&lt;input type="submit" /&gt;
+&lt;/form&gt;
+</pre>
+</div>
+</body>
+</html>

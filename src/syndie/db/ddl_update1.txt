@@ -1,0 +1,13 @@
+-- update the database schema from version 1
+-- this update is so that the 'prefs' command can keep persistent
+-- preferences, loading them on login, etc.
+--
+
+UPDATE appVersion SET versionNum = 2, visibleVersion = 'DB With NymPrefs';
+
+CREATE CACHED TABLE nymPref (
+	nymId			INTEGER
+	, prefName		VARCHAR(128)
+	, prefValue		VARCHAR(256)
+	, PRIMARY KEY (nymId, prefName)
+);

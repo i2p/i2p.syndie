@@ -1,0 +1,4 @@
+Congratulations for getting Syndie installed!
+
+Documentation can be found in doc/web/syndie.html,
+or online at http://syndie.i2p.net/

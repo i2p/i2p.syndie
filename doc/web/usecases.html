@@ -1,0 +1,88 @@
+<html>
+<head>
+<title>Syndie: Use cases</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<a href="dev.html">[dev]</a>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<!--
+<div class="leftnav">
+left nav
+</div>
+-->
+<div class="bodycontent">
+<h3>Syndie use cases (aka "why you would use Syndie")</h3>
+<ul id="menu">
+<li><a href="#decentralizedforum">Decentralized forum</a></li>
+<li><a href="#privateforum">Private forum</a></li>
+<li><a href="#offlineforum">Offline forum participation</a></li>
+<li><a href="#offlinebrowsing">Offline browsing</a></li>
+<li><a href="#securereader">Secure reader</a></li>
+</ul>
+
+<b id="decentralizedforum">Decentralized forum</b> (<a href="#menu">up</a>)
+
+<p>While many different groups often want to organize discussions into an
+online forum, the centralized nature of traditional forums (websites, BBSes,
+etc) can be a problem.  For instance, the site hosting the forum can be
+taken offline through <b>denial of service attacks</b> or administrative action.
+In addition, the single host offers a simple point to <b>monitor the group's
+activity</b>, so that even if a forum is pseudonymous, those pseudonyms can be
+tied to the IP that posted or read individual messages.</p>
+
+<p>In addition, not only are the forums decentralized, they are organized
+in an ad-hoc manner yet fully compatible with other organization techniques.
+This means that some small group of people can run their forum using one
+technique (distributing the messages by pasting them on a wiki site),
+another can run their forum using another technique (posting their messages
+in a distributed hashtable like <a href="http://www.opendht.org/">OpenDHT</a>,
+yet if one person is aware of both techniques, they can synchronize the two
+forums together.  This lets the people who were only aware of the wiki site
+talk to people who were only aware of the OpenDHT service without knowing
+anything about each other.  Extended further, <b>Syndie allows individual
+cells to control their own exposure while communicating across the whole
+organization</b>.</p>
+
+<b id="privateforum">Private forum</b> (<a href="#menu">up</a>)
+
+<p>Forums can be configured so that only authorized people can read the
+content, or even know what pseudonyms are posting the messages, even if an
+adversary confiscates the servers distributing the posts.  In addition,
+authorized users can prevent any unauthorized posts from being made entirely,
+or only allow them under limited circumstances.</p>
+
+<b id="offlineforum">Offline forum participation</b> (<a href="#menu">up</a>)
+
+<p>Unlike traditional forums, with Syndie you can particpate even when you
+are not online, "syncing up" any accumulated changes with the forum later
+on when it is convenient, perhaps days, weeks, or even months later.</p>
+
+<b id="offlinebrowsing">Offline browsing</b> (<a href="#menu">up</a>)
+
+<p>Syndie is not limited to simple text messages - individual web pages or
+full web sites can be packaged up into a single Syndie post, and using the
+<a href="#offlineforum">offline forum</a> functionality, you can browse that
+web site through Syndie without an active internet connection.</p>
+
+<b id="securereader">Secure reader</b> (<a href="#menu">up</a>)
+
+<p>All applications strive for security, but most do not consider
+identity or traffic pattern related information sensitive, so they do not
+bother trying to control their exposure.  Syndie however is designed with
+the needs of people demanding strong anonymity and security in mind.</p>
+
+</div>
+</body>
+</html>

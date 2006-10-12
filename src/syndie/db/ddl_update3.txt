@@ -1,0 +1,13 @@
+-- update the database from schema version 3
+-- this version 4 creates a set of per-nym command aliases
+--
+
+UPDATE appVersion SET versionNum = 4, visibleVersion = 'DB With aliases';
+
+CREATE CACHED TABLE nymCommandAlias (
+	nymId		INTEGER
+	, aliasName	VARCHAR(64)
+	, aliasValue	VARCHAR(1024)
+	, PRIMARY KEY(nymId, aliasName)
+);
+

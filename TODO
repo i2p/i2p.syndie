@@ -1,0 +1,41 @@
+Key:
+ - pending
+ X recently completed
+   (longer term tasks are included in doc/web/roadmap.html)
+===
+- push:
+ X doc/web/ onto syndie.i2p.net (~/syndie-inst/doc/web/)
+ X archive onto http://syndie.i2p.net/archive/ (~/.syndie/archive/)
+ X dist files ont http://syndie.i2p.net/dist/
+- darcs migration
+ - public archive online
+ - syndie-darcs@i2p.net mailing list
+ X syndie-announce@i2p.net mailing list
+ X use darcs internally
+
+===maybe:
+- internationalize the text UI
+- simple gui reader app?
+- logo, screenshots
+- submit hsqldb patch for gcj/etc that has java.nio.* but they're
+  unimplemented (so it can check an env flag to see if it should Class.forName
+  it)
+- archive cleanup script (delete expired posts / channels / etc, trim by size / age)
+- add a "forward [--private $boolean] --to $chan" command
+- detect application/x-syndie attachments (and prompt to import)
+- GCJ/MinGW'ed install for syndie-$rev.win.exe (~= syndie-$rev.bin.exe with a native syndie.exe)
+- doc up some interesting scenarios for channels
+ - multiauthor private w/ visible TargetChannel (easy to fetch, but exposes message
+   count for a channel)
+ - multiauthor private w/ no visible TargetChannel (need to be in the channel to know
+   what channels to pull from to get the messages to decrypt)
+ - singleauthor private
+ - channelReadKey rotation
+ - readKey delivery only in pbe'd msgs
+- let channels specify message sizes (<$xKB, ==$xKB, =={$x,$y,$y}KB) so every
+  message in the channel looks the same (.syndie format supports arbitrary padding)
+- hashcash(msgURI) in the public headers
+ - allows someone to precalc the hashcash for a particular uri then give that calc'ed
+   value to someone authorized to post under the msgURI's scope, so low-cpu users can
+   still post to a forum if they're given a list of available messageId/hashcash values
+   (assuming they're authorized to post in the uri's scope, of course)

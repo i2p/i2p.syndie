@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See commented blocks below for -->
+<!-- some examples of how to customize the build. -->
+<!-- (If you delete it and reopen the project it will be recreated.) -->
+<project name="syndie" default="default" basedir=".">
+    <description>Builds, tests, and runs the project syndie.</description>
+    <import file="nbproject/build-impl.xml"/>
+
+    <import file="nbproject/profiler-build-impl.xml"/>    <!--
+
+    There exist several targets which are by default empty and which can be 
+    used for execution of your tasks. These targets are usually executed 
+    before and after some main targets. They are: 
+
+      -pre-init:                 called before initialization of project properties
+      -post-init:                called after initialization of project properties
+      -pre-compile:              called before javac compilation
+      -post-compile:             called after javac compilation
+      -pre-compile-single:       called before javac compilation of single file
+      -post-compile-single:      called after javac compilation of single file
+      -pre-compile-test:         called before javac compilation of JUnit tests
+      -post-compile-test:        called after javac compilation of JUnit tests
+      -pre-compile-test-single:  called before javac compilation of single JUnit test
+      -post-compile-test-single: called after javac compilation of single JUunit test
+      -pre-jar:                  called before JAR building
+      -post-jar:                 called after JAR building
+      -post-clean:               called after cleaning build products
+
+    (Targets beginning with '-' are not intended to be called on their own.)
+
+    Example of inserting an obfuscator after compilation could look like this:
+
+        <target name="-post-compile">
+            <obfuscate>
+                <fileset dir="${build.classes.dir}"/>
+            </obfuscate>
+        </target>
+
+    For list of available properties check the imported 
+    nbproject/build-impl.xml file. 
+
+
+    Another way to customize the build is by overriding existing main targets.
+    The targets of interest are: 
+
+      -init-macrodef-javac:     defines macro for javac compilation
+      -init-macrodef-junit:     defines macro for junit execution
+      -init-macrodef-debug:     defines macro for class debugging
+      -init-macrodef-java:      defines macro for class execution
+      -do-jar-with-manifest:    JAR building (if you are using a manifest)
+      -do-jar-without-manifest: JAR building (if you are not using a manifest)
+      run:                      execution of project 
+      -javadoc-build:           Javadoc generation
+      test-report:              JUnit report generation
+
+    An example of overriding the target for project execution could look like this:
+
+        <target name="run" depends="syndie-impl.jar">
+            <exec dir="bin" executable="launcher.exe">
+                <arg file="${dist.jar}"/>
+            </exec>
+        </target>
+
+    Notice that the overridden target depends on the jar target and not only on 
+    the compile target as the regular run target does. Again, for a list of available 
+    properties which you can use, check the target you are overriding in the
+    nbproject/build-impl.xml file. 
+
+    -->
+
+    <!-- override the default so we don't build the javadoc unless requested -->
+    <target name="default" depends="jar" description="Build the whole project."/>
+    <target name="-pre-compile">
+        <loadproperties srcfile="VERSION" />
+        <echo file="src/syndie/Version.java">package syndie;
+public class Version {
+    public static final String VERSION = "${syndie.version}";
+}
+</echo>
+    </target>
+    <target name="import-i2p-source" description="Import the segments of i2p's SDK that we require.">
+      <copy todir="src">
+       <fileset dir="../i2p/core/java/src/" excludes="org/xlattice/**,net/i2p/client/*.java,net/i2p/client/datagram/**,net/i2p/data/Lease*,net/i2p/data/Payload*,net/i2p/data/Router*,net/i2p/data/TunnelId*,net/i2p/data/i2cp/**,net/i2p/util/ShellCommand*,net/i2p/util/FileUtil*,net/i2p/util/Exec.java,net/i2p/util/Delete.java,net/i2p/util/Copy.java,net/i2p/util/DecayingBloomFilter*,net/i2p/util/HTTPSendData*" includes="**/*java" />
+      </copy>
+    </target>
+
+    <target name="distclean" depends="clean">
+        <delete dir="doc/web/dist/" />
+    </target>
+    <target name="-post-clean">
+        <loadproperties srcfile="VERSION" />
+        <delete file="lib/syndie.jar" />
+        <delete dir="syndie-${syndie.version}" />
+        <delete file="syndie-${syndie.version}.bin.zip" />
+        <delete file="syndie-${syndie.version}.bin-noexe.zip" />
+        <delete file="syndie-${syndie.version}.src.tar.bz2" />
+        <delete file="src/syndie/Version.java" />
+        <delete file="debug.log" />
+        <delete file="syndie-${syndie.version}.bin.jar" />
+        <delete file="syndie-${syndie.version}.bin.exe" />
+        <delete file="syndie-${syndie.version}.exe" />
+        <delete file="syndie-${syndie.version}.jar" />
+        <delete dir="logs" />
+        <delete dir="build" />
+    </target>
+
+    <target name="java-package" depends="clean, prep-java" description="Package up syndie-$version.bin.zip, without including bin/syndie.exe">
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <zip destfile="doc/web/dist/syndie-${syndie.version}.bin-noexe.zip">
+               <zipfileset dir="." includes="syndie-${syndie.version}/**" />
+        </zip>
+        <delete dir="syndie-${syndie.version}" />
+        <ant target="clean" />
+    </target>
+    <target name="java-package-exe" depends="clean, prep-java, syndie-exe" description="Package up syndie-$version.bin.zip, including bin/syndie.exe">
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <zip destfile="doc/web/dist/syndie-${syndie.version}.bin.zip">
+               <zipfileset dir="." includes="syndie-${syndie.version}/**" />
+        </zip>
+        <delete dir="syndie-${syndie.version}" />
+    </target>
+    <target name="prep-java" depends="jar">
+        <loadproperties srcfile="VERSION" />
+        <delete dir="syndie-${syndie.version}" />
+        <mkdir dir="syndie-${syndie.version}" />
+        <mkdir dir="syndie-${syndie.version}/bin" />
+        <mkdir dir="syndie-${syndie.version}/doc" />
+        <mkdir dir="syndie-${syndie.version}/doc/web" />
+        <mkdir dir="syndie-${syndie.version}/lib" />
+        <copy todir="syndie-${syndie.version}/doc/">
+               <fileset dir="." includes="CHANGES, CREDITS, INSTALL, LICENSE, README, TODO" />
+        </copy>
+        <copy todir="syndie-${syndie.version}/" file="resources/welcome.txt" />
+        <copy todir="syndie-${syndie.version}/doc/" file="doc/syndie.1" />
+        <copy todir="syndie-${syndie.version}/doc/web/">
+               <fileset dir="doc/web/" includes="*" />
+        </copy>
+        <copy todir="syndie-${syndie.version}/bin/">
+               <fileset dir="bin/" includes="*" />
+        </copy>
+        <copy todir="syndie-${syndie.version}/lib/">
+               <fileset dir="lib/" includes="*" />
+        </copy>
+    </target>
+    <target name="source-package" depends="clean" description="Package up syndie-$version.src.tar.bz2">
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <tar compression="bzip2" destfile="doc/web/dist/syndie-${syndie.version}.src.tar.bz2">
+               <tarfileset dir="." includes="**" excludes=".svn, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
+        </tar>
+    </target>
+    <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer" description="Package up syndie-$version.bin.exe">
+        <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
+(If located elsewhere, run "ant -Dlaunch4jdir=/some/path installer-exe")</echo>
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
+                 classname="net.sf.launch4j.ant.Launch4jTask" />
+        <echo file="launchinstall.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>gui</headerType>
+ <jar>syndie-${syndie.version}.bin.jar</jar>
+ <outfile>doc/web/dist/syndie-${syndie.version}.bin.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>.</chdir>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} installer</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.bin.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchinstall.xml" />
+        <delete file="launchinstall.xml" />
+        <delete file="syndie-${syndie.version}.bin.jar" />
+    </target>
+    <target name="installer" depends="prep-java, -do-installer" description="Package up syndie-$version.bin.jar" />
+    <target name="-do-installer" description="Package up syndie-$version.bin.jar">
+        <echo>Using IzPack installer in ${izpackdir}/lib/compiler.jar
+(If located elsewhere, run "ant -Dizpackdir=/some/path installer")</echo>
+        <loadproperties srcfile="VERSION" />
+        <taskdef name="izpack" classpath="${izpackdir}/lib/standalone-compiler.jar"
+                 classname="com.izforge.izpack.ant.IzPackTask" />
+        <izpack output="syndie-${syndie.version}.bin.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpackdir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <appname>Syndie</appname>
+        <appversion>@{syndie.version}</appversion>
+        <appsubpath>syndie-@{syndie.version}</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="syndie-inst@i2p.net"/>
+        </authors>
+        <url>http://syndie.i2p.net</url>
+        <javaversion>1.4</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="700" height="500" resizable="yes" />
+    <locale>
+        <langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <resources>
+	<res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+	<res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
+            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
+            <!-- postinstall stuff for *nix -->
+            <!-- stage=never means chmod a+x -->
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+        <delete dir="syndie-${syndie.version}" />
+    </target>
+    <target name="syndie-exe" depends="jar" description="build a syndie.exe">
+        <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
+(If located elsewhere, run "ant -Dlaunch4jdir=/some/path syndie-exe")</echo>
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
+                 classname="net.sf.launch4j.ant.Launch4jTask" />
+        <jar jarfile="syndie-${syndie.version}.jar">
+	 <manifest>
+	  <attribute name="Main-Class" value="syndie.db.TextUI" />
+	  <!-- relative to the exe/jar file -->
+	  <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar" />
+         </manifest>
+        </jar>
+        <echo file="launchsyndie.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>console</headerType>
+ <jar>syndie-${syndie.version}.jar</jar>
+ <outfile>syndie-${syndie.version}.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>..</chdir>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} text interface</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchsyndie.xml" />
+        <delete file="launchsyndie.xml" />
+        <delete file="syndie-${syndie.version}.jar" />
+        <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie-${syndie.version}.exe" />
+    </target>
+    <target name="dist">
+      <ant target="distclean" />
+      <ant target="source-package" />
+      <ant target="installer-exe" />
+      <ant target="java-package-exe" />
+      <ant target="java-package" />
+    </target>
+</project>

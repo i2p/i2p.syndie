@@ -1,0 +1,11 @@
+Syndie can be built from source with a modern (1.4+) java development
+kit, or with a new GCJ (4.0+).  You must have ant (1.6.5+), and the
+source release includes HSQLDB (1.8.0.5), though newer revisions
+should work.
+
+To build a normal java instance, run "ant".
+
+To run it without any installation, run "sh bin/syndie".
+
+To build various packages, see the targets and instructions in
+doc/web/dev.html

@@ -1,0 +1,337 @@
+CREATE CACHED TABLE appVersion (
+	app			VARCHAR(64) PRIMARY KEY
+	, versionNum		INTEGER	NOT NULL
+	, visibleVersion	VARCHAR(64)
+);
+INSERT INTO appVersion (app, versionNum, visibleVersion) VALUES ('syndie.db', 1, 'Initial version');
+
+-- unique IDs for the channel table, but for transactional and threading
+-- issues, we need to pull the ID first, then insert
+CREATE SEQUENCE channelIdSequence;
+
+CREATE CACHED TABLE channel (
+	-- locally unique id
+	channelId	BIGINT IDENTITY PRIMARY KEY
+	, channelHash	VARBINARY(32)
+	, identKey	VARBINARY(256)
+	, encryptKey	VARBINARY(256)
+	, edition	BIGINT
+	, name		VARCHAR(256)
+	, description	VARCHAR(1024)
+	-- can unauthorized people post new topics?
+	, allowPubPost	BOOLEAN
+	-- can unauthorized people reply to existing topics?
+	, allowPubReply	BOOLEAN
+        , expiration    DATE DEFAULT NULL
+        , importDate    DATE DEFAULT NULL
+	, UNIQUE (channelHash)
+);
+
+CREATE CACHED TABLE channelTag (
+	channelId	BIGINT
+	, tag		VARCHAR(64)
+        , wasEncrypted  BOOLEAN
+	, PRIMARY KEY (channelId, tag)
+);
+
+-- who can post to the channel
+CREATE CACHED TABLE channelPostKey (
+	channelId	BIGINT
+	, authPubKey	VARBINARY(256)
+	, PRIMARY KEY (channelId, authPubKey)
+);
+
+-- who can manage the channel (post metadata messages)
+CREATE CACHED TABLE channelManageKey (
+	channelId	BIGINT
+	, authPubKey	VARBINARY(256)
+	, PRIMARY KEY (channelId, authPubKey)
+);
+
+CREATE CACHED TABLE channelArchive (
+	channelId	BIGINT
+	, archiveId	BIGINT
+        , wasEncrypted  BOOLEAN
+	, PRIMARY KEY (channelId, archiveId)
+);
+
+-- read keys published in the encrypted part of a channel's metadata
+CREATE CACHED TABLE channelReadKey (
+	channelId	BIGINT
+	, keyStart	DATE DEFAULT NULL
+	, keyEnd	DATE DEFAULT NULL
+	, keyData	VARBINARY(32)
+        -- if true, the encrypted metadata containing this read key was visible due to an unencrypted
+        -- bodyKey in the public headers
+        , wasPublic     BOOLEAN DEFAULT FALSE
+);
+
+CREATE CACHED TABLE channelMetaHeader (
+	channelId	BIGINT
+	, headerName	VARCHAR(256)
+	, headerValue	VARCHAR(4096)
+        , wasEncrypted  BOOLEAN
+);
+
+CREATE CACHED TABLE channelReferenceGroup (
+	channelId	BIGINT
+	, groupId	INTEGER NOT NULL
+	, parentGroupId	INTEGER
+	, siblingOrder	INTEGER NOT NULL
+	, name		VARCHAR(256)
+	, description	VARCHAR(1024)
+	, uriId		BIGINT
+	-- allows for references of 'ban', 'recommend', 'trust', etc
+	, referenceType	INTEGER DEFAULT NULL
+        , wasEncrypted  BOOLEAN
+	, PRIMARY KEY (channelId, groupId)
+);
+
+CREATE CACHED TABLE channelAvatar (
+        channelId       BIGINT PRIMARY KEY
+        , avatarData    LONGVARBINARY
+);
+
+-- unique IDs for the uriAttribute table, but for transactional and threading
+-- issues, we need to pull the ID first, then insert
+CREATE SEQUENCE uriIdSequence;
+
+-- simple URIs are just attribKey="url" attribValString="http://www.i2p.net/",
+-- but other internal URI references are a bit more complicated, with pairs
+-- like "network"="syndie", "type"="channel", "messageId=10199911184", etc.
+-- some of the key=val pairs are descriptive of the URI, and not a unique
+-- part of the URI itself, such as "title"="this is my blog".  the canonical
+-- uri takes these and orders them alphabetically (UTF8, UK Locale), ignoring
+-- any descriptive fields
+CREATE CACHED TABLE uriAttribute (
+	uriId			BIGINT
+	-- "url", "network", "channel", "messageId", "description", "title"
+	, attribKey		VARCHAR(64)
+	-- exactly one of attribVal* must be non-null
+	, attribValString	VARCHAR(2048) DEFAULT NULL
+	, attribValLong		BIGINT DEFAULT NULL
+	, attribValBool		BOOLEAN DEFAULT NULL
+	-- newline (0x0A) delimited strings
+	, attribValStrings	VARCHAR(2048) DEFAULT NULL
+	-- if true, this key=val is not part of the URI's unique string,
+	-- but instead just serves to describe the uri
+	, isDescriptive		BOOLEAN
+	, PRIMARY KEY (uriId, attribKey)
+);
+
+
+-- unique IDs for the archive table, but for transactional, threading, and portability
+-- issues, we need to pull the ID first, then insert
+CREATE SEQUENCE archiveIdSequence;
+
+CREATE CACHED TABLE archive (
+	archiveId		BIGINT PRIMARY KEY
+	-- are we allowed to post (with the auth we have)?
+	, postAllowed		BOOLEAN
+	-- are we allowed to pull messages (with the auth we have)?
+	, readAllowed		BOOLEAN
+	-- index into uris.uriId to access the archive
+	, uriId			BIGINT
+);
+
+
+-- unique IDs for the nym table, but for transactional, threading, and portability
+-- issues, we need to pull the ID first, then insert
+CREATE SEQUENCE nymIdSequence;
+
+CREATE CACHED TABLE nym (
+	nymId			INTEGER PRIMARY KEY 
+	, login                 VARCHAR(128) NOT NULL
+	, publicName		VARCHAR(128) DEFAULT NULL
+        -- if the passSalt is set, the passHash is the SHA256(password + salt)
+        , passSalt              VARBINARY(16) DEFAULT NULL
+        , passHash              VARBINARY(32) DEFAULT NULL
+        , isDefaultUser         BOOLEAN
+        , UNIQUE (login)
+);
+
+-- nyms may have various keys to perform certain tasks within different
+-- channels
+CREATE CACHED TABLE nymKey (
+	nymId			INTEGER
+	, keyChannel		VARBINARY(32)
+        -- manage, reply, post, read
+	, keyFunction		VARCHAR(32)
+        -- aes256, dsa, elg2048, etc
+	, keyType		VARCHAR(32)
+	, keyData		VARBINARY(512)
+        -- if the keySalt is set, the keyData is actually AES256/CBC
+        -- encrypted, using SHA256(password + salt[0:15])) as the the AES256
+        -- key, and salt[16:31] as the IV
+        , keySalt               VARBINARY(32)
+        -- the keys known by a nym may be received from untrusted or unauthenticated
+        -- sources - at first, they should not override other known keys, but if they
+        -- are later authenticated (able to decrypt/verify some authenticated posts,
+        -- etc), they should be marked as such here.
+        , authenticated         BOOLEAN DEFAULT FALSE
+        , keyPeriodBegin        DATE DEFAULT NULL
+        , keyPeriodEnd          DATE DEFAULT NULL
+);
+
+
+-- unique IDs for the resourceGroup.groupId column, but for transactional and threading
+-- issues, we need to pull the ID first, then insert
+CREATE SEQUENCE resourceGroupIdSequence;
+
+-- organize the nym's resource tree (bookmarks, etc)
+CREATE CACHED TABLE resourceGroup (
+	nymId			INTEGER NOT NULL
+	, groupId		INTEGER NOT NULL
+	, parentGroupId		INTEGER NOT NULL
+	, siblingOrder		INTEGER NOT NULL
+	, name			VARCHAR(128)
+	, description		VARCHAR(512)
+	, uriId			BIGINT
+	, isIgnored		BOOLEAN
+	, isBanned		BOOLEAN
+	, loadOnStartup		BOOLEAN
+	, PRIMARY KEY (nymId, groupId)
+	, UNIQUE (nymId, parentGroupId, siblingOrder)
+);
+
+-- unique message id
+CREATE SEQUENCE msgIdSequence;
+
+-- actual messages
+CREATE CACHED TABLE channelMessage (
+        -- unique Id internal to the database
+        msgId                   BIGINT PRIMARY KEY
+        -- what channel's keys are used to authorize and read the 
+        -- message, and what namespace the messageId is unique within
+        , scopeChannelId        BIGINT
+	, messageId		BIGINT
+        -- what channel the post should be grouped into
+	, targetChannelId	BIGINT
+        -- who made the post.  may be null if unknown, but is almost always
+	-- the same as the scopeChannelId
+        , authorChannelId       BIGINT
+	, subject		VARCHAR(256)
+	, overwriteScopeHash	VARBINARY(32)
+	, overwriteMessageId	BIGINT
+	, forceNewThread	BOOLEAN
+	, refuseReplies		BOOLEAN
+	, wasEncrypted		BOOLEAN
+        -- was the post encrypted with passphrase based encryption
+        , wasPBE                BOOLEAN
+	, wasPrivate		BOOLEAN
+        -- authorized is set to true if the post was signed by a
+	-- key listed as a poster or manager to the channel, if
+	-- the channel allowed unauthorized posts, or if the channel
+	-- allowed unauthorized replies and the post is in reply to an
+	-- authorized post (either directly or indirectly)
+        , wasAuthorized         BOOLEAN
+        , wasAuthenticated      BOOLEAN
+	, isCancelled		BOOLEAN
+        , expiration            DATE
+        , importDate            DATE DEFAULT NULL
+	, UNIQUE (scopeChannelId, messageId)
+        -- authorChannelHash, targetChannelId, messageId)
+);
+
+CREATE CACHED TABLE messageHierarchy (
+        msgId                   BIGINT
+        -- refers to a targetChannelId
+        , referencedChannelHash VARBINARY(32)
+        , referencedMessageId   BIGINT
+        -- how far up the tree is the referenced message?  parent has a closeness of 1,
+        -- grandparent has a closeness of 2, etc.  does not necessarily have to be exact,
+        -- merely relative
+        , referencedCloseness   INTEGER DEFAULT 1
+        , PRIMARY KEY (msgId, referencedCloseness)
+);
+
+CREATE CACHED TABLE messageTag (
+        msgId                   BIGINT
+	, tag			VARCHAR(64)
+        , isPublic              BOOLEAN DEFAULT false
+	, PRIMARY KEY (msgId, tag)
+);
+
+-- organize the message's references (not including html/sml/etc links, just those in the
+-- references.cfg zip entry)
+CREATE CACHED TABLE messageReference (
+	msgId                   BIGINT NOT NULL
+        -- referenceId is unique within the msgId scope
+	, referenceId		INTEGER NOT NULL
+	, parentReferenceId     INTEGER NOT NULL
+	, siblingOrder		INTEGER NOT NULL
+	, name			VARCHAR(128)
+	, description		VARCHAR(512)
+	, uriId			BIGINT
+        , refType               VARCHAR(64)
+	, PRIMARY KEY (msgId, referenceId)
+	, UNIQUE (msgId, parentReferenceId, siblingOrder)
+);
+
+CREATE CACHED TABLE messageAttachment (
+	msgId                   BIGINT
+        -- filename is derived from this
+	, attachmentNum		INTEGER
+        -- == sizeof(messageAttachmentData.dataBinary)
+	, attachmentSize	BIGINT
+        -- suggested mime type
+	, contentType		VARCHAR(64)
+        -- suggested name
+	, name			VARCHAR(64)
+        -- suggested description
+	, description		VARCHAR(256)
+	, PRIMARY KEY (msgId, attachmentNum)
+);
+
+-- holds the actual data of a particular attachment
+CREATE CACHED TABLE messageAttachmentData (
+        msgId                   BIGINT
+        , attachmentNum         INTEGER
+        , dataBinary            LONGVARBINARY
+        , PRIMARY KEY (msgId, attachmentNum)
+);
+
+-- holds the config for a particular attachment (unencrypted)
+CREATE CACHED TABLE messageAttachmentConfig (
+        msgId                   BIGINT
+        , attachmentNum         INTEGER
+        , dataString            LONGVARCHAR
+        , PRIMARY KEY (msgId, attachmentNum)
+);
+
+CREATE CACHED TABLE messagePage (
+	msgId                   BIGINT
+        -- 0 indexed
+	, pageNum		INTEGER
+        -- mime type
+	, contentType		VARCHAR(64)
+	, PRIMARY KEY (msgId, pageNum)
+);
+
+-- holds the raw data for the page (in UTF-8)
+CREATE CACHED TABLE messagePageData (
+        msgId                   BIGINT
+        , pageNum               INTEGER
+        , dataString            LONGVARCHAR
+        , PRIMARY KEY (msgId, pageNum)
+);
+
+-- holds the config for a particular page
+CREATE CACHED TABLE messagePageConfig (
+        msgId                   BIGINT
+        , pageNum               INTEGER
+        , dataString            LONGVARCHAR
+        , PRIMARY KEY (msgId, pageNum)
+);
+
+CREATE CACHED TABLE messageAvatar (
+        msgId           BIGINT PRIMARY KEY
+        , avatarData    LONGVARBINARY
+);
+
+-- never import posts from this author or in this channel
+CREATE CACHED TABLE banned (
+        channelHash     VARBINARY(32) PRIMARY KEY
+	, bannedOn      DATE DEFAULT NULL
+	, cause         VARCHAR(256)
+);

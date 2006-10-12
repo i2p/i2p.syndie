@@ -1,0 +1,122 @@
+<html>
+<head>
+<title>Syndie: download</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<b>[download]</b>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<a href="roadmap.html">[roadmap]</a>
+<a href="dev.html">[dev]</a>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<!--
+<div class="leftnav">
+left nav
+</div>
+-->
+<div class="bodycontent">
+<!--
+Windows binaries:<ul>
+<li><a href="http://syndie.i2p.net/dist/syndie-1.000a.win.exe">syndie-1.000a.win.exe</a>
+   (<a href="http://syndie.i2p.net/dist/syndie-1.000a.win.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li>Download and run the executable installer.</li>
+<li>Prerequisites: None</li>
+</ul>
+-->
+
+Binaries:<ul>
+<li><a href="dist/syndie-1.000a.bin.exe">syndie-1.000a.bin.exe</a>
+   (<a href="dist/syndie-1.000a.bin.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li>Download and run the executable installer.<br />
+    <i>(*nix and OS X users, run the executable by typing
+    "<code>java -jar syndie-1.000a.bin.exe</code>".  
+    yes, really, you want the .exe)</i></li>
+<li>Alternately, <a href="dist/syndie-1.000a.bin.zip">syndie-1.000a.bin.zip</a>
+   (<a href="dist/syndie-1.000a.bin.zip.sig">GPG signature</a>)
+   can be used instead - it unzips to ./syndie-1.000a/.  This method is
+   necessary when installing without a graphical interface, but does not
+   create desktop or start menu shortcuts, and does not include an uninstaller.
+   </li>
+<li>Prerequisites:
+    <a href="http://java.sun.com/javase/downloads/index.jsp">jre1.4+</a>,
+    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
+    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
+    (other JVMs may suffice)</li>
+</ul>
+
+Source:<ul>
+<li><a href="dist/syndie-1.000a.src.tar.bz2">syndie-1.000a.src.tar.bz2</a>
+  (<a href="dist/syndie-1.000a.src.tar.bz2.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li>Download and extract the archive, then read the INSTALL file</li>
+<li>Prerequisites:
+    <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
+    <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>,
+    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
+    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
+    (other JDKs may suffice)</li>
+</ul>
+
+<p>The GPG public key used to sign the distributed files is <code>393F2DF9</code> (fingerprint <code>AE89 D080 0E85 72F0 B777  B2ED C2FA 68C0 393F 2DF9</code>)</p>
+
+Unreleased development source:<ul>
+<li><code>mkdir syndie-dev ; cd syndie-dev ; darcs initialize ; darcs pull http://syndie.i2p.net/darcs/</code> (primary sources)</li>
+<li>Post new patches to syndie-darcs at i2p dot net: <pre>
+    darcs record -m "change stuff" -A my@email.addr
+    darcs send -o myfile.darcs --sign
+    mail syndie-darcs at i2p dot net &lt; myfile.darcs</pre>
+    If approved, they will be applied to the <code>http://syndie.i2p.net/darcs/</code>
+    archive.</li>
+<li>Apply patches by pulling from a URL above or from other darcs patches:<pre>
+    darcs apply --verify=syndie.pubring myfile.darcs</pre>
+    That applies the patch if it was signed by one of the syndie developers</li>
+<li>Read the included INSTALL and related documentation</li>
+<li>Prerequisites:
+    <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
+    <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>,
+    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
+    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
+    (other JDKs may suffice)</li>
+</ul>
+
+<p>Older releases are <a href="dist/">archived</a></p>
+
+<!--
+Gentoo:<ul>
+<li><code>emerge syndie</code></li>
+
+Debian:<ul>
+<li><code>apt-get syndie</code></li>
+-->
+
+<p>To uninstall, if you used the <code>.exe</code> installer, simply
+launch the included uninstaller.  Otherwise, just remove the directory you
+installed Syndie into (<code>$HOME/syndie</code> or <code>C:\syndie</code>).
+The Syndie content is stored in <code>$HOME/.syndie</code> by default, so
+you should delete that directory as well if you want to remove the
+content (and keys).</p>
+
+<p>To upgrade or reinstall, simply install Syndie again on top of itself.
+Upgrading or reinstalling does not affect your content or keys, just the
+software.  To completely wipe any old data, identities, or keys, delete the
+<code>$HOME/.syndie</code> directory.</p>
+
+<p>To run multiple separate Syndie instances, you can specify an alternate
+data root directory on the Syndie command line 
+(<code>$HOME/syndie/bin/syndie /another/path</code>).  In addition, you can have
+many different Syndie nyms within a single Syndie instance (see the "<code>login</code>"
+and "<code>register</code>" <a href="manual.html">commands</a>).</p>
+
+<p>These packages include the java 1.4 compiled HSQLDB 1.8.0.5 - you can
+replace the included lib/hsqldb.jar with newer versions, or remove it and
+adjust the <code>bin/syndie</code> script to reference the local hsqldb.jar.</p>
+</div>
+</body>
+</html>

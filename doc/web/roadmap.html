@@ -1,0 +1,66 @@
+<html>
+<head>
+<title>Syndie: roadmap</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div class="topnav">
+<a href="index.html">[home]</a>
+<a href="download.html">[download]</a>
+<a href="features.html">[features]</a>
+<a href="manual.html">[manual]</a>
+<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
+<a href="faq.html">[faq]</a>
+<b>[roadmap]</b>
+<a href="dev.html">[dev]</a>
+<a href="donate.html">[donate]</a>
+<a href="about.html">[about]</a>
+</div>
+<!--
+<div class="leftnav">
+left nav
+</div>
+-->
+<div class="bodycontent">
+The first public <a href="index.html">Syndie</a> release includes the following
+baseline functionality:
+<ul>
+ <li>The Syndie (scriptable) <a href="manual.html">text interface</a>, packaged
+     up as a typical java application, or buildable with modern GCJs.</li>
+ <li>Support for all types of Syndie forums</li>
+ <li>Manual Syndie distribution (as <code>.syndie</code> files), and HTTP
+     syndication to public <a href="archive.html">Syndie archives</a> through
+     the (scriptable) text interface.</li>
+ <li>Specs for the <a href="spec.html#message"><code>.syndie</code> file format</a>
+     and encryption algorithms, <a href="spec.html#uri">Syndie URIs</a>, and the
+     <a href="db.html">database schema</a>, allowing extensions and alternate
+     implementations by third parties</li>
+</ul>
+
+Subsequent releases will improve Syndie's capabilities across several dimensions:
+<ul>
+ <li>User interface:<ul>
+  <li>SWT-based GUI</li>
+  <li>Web browser plugin</li>
+  <li>Web scrape text UI (to pull in a full page for offline reading)</li>
+  <li>IMAP/POP3/NNTP reading interface</li>
+ </ul></li>
+ <li>Content support:<ul>
+  <li>Plain text (rendered in the text UI and the GUI)</li>
+  <li>HTML (safe rendering within the GUI)</li>
+ </ul></li>
+ <li>Syndication:<ul>
+  <li>Feedspace, feedtree, or low latency purpose built syndication</li>
+  <li>Freenet (FCP put/get of individual .syndie files at CHK@ keys, with archives
+      stored and pulled from SSK/USK@ keys)</li>
+  <li>Email (post through SMTP/mixmaster/mixminion, read from procmail)</li>
+ </ul></li>
+ <li>Full text search with <a href="http://lucene.org/>">Lucene</a> integration</li>
+ <li><a href="http://www.hsqldb.org/">HSQLDB</a> full database encryption
+     (logs, data, backup, scripts, etc)</li>
+ <li>Archive management heuristics</li>
+</ul>
+</div>
+</body>
+</html>

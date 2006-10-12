@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shortcuts>
+ <programGroup defaultName="Syndie" location="applications" />
+ <shortcut name="Syndie (text interface)"
+           programGroup="yes"
+           desktop="yes"
+	   applications="no"
+           target="$INSTALL_PATH\bin\syndie.exe" 
+           description="Main text interface to Syndie">
+     <createForPack name="Base" />
+ </shortcut>
+ <shortcut name="Syndie documentation"
+           programGroup="yes"
+           desktop="yes"
+	   applications="no"
+           target="$INSTALL_PATH\doc\web\index.html"
+           description="Local Syndie documentation">
+     <createForPack name="Base" />
+ </shortcut>
+ <shortcut name="Uninstall Syndie"
+           programGroup="yes"
+           desktop="yes"
+	   applications="no"
+           target="$INSTALL_PATH\uninstaller\uninstaller.jar"
+           description="No more Syndie">
+     <createForPack name="Base" />
+ </shortcut>
+</shortcuts>

@@ -1,0 +1,25 @@
+-- update the database from schema version 2
+-- this version 3 allows us to reference undecrypted data in the
+-- database, which means the undecrypted messages can be included
+-- in archives, etc.
+--
+
+UPDATE appVersion SET versionNum = 3, visibleVersion = 'DB With still-encrypted data';
+
+-- true if the message is a normal post but we don't have the decryption key
+-- to read it
+ALTER TABLE channel ADD COLUMN readKeyMissing BOOLEAN DEFAULT FALSE;
+-- contains the prompt to decrypt the metadata if and only if the metadata
+-- could otherwise not be decrypted
+ALTER TABLE channel ADD COLUMN pbePrompt VARCHAR(256) DEFAULT NULL;
+
+-- true if the message is a normal post but we don't have the decryption key
+-- to read it
+ALTER TABLE channelMessage ADD COLUMN readKeyMissing BOOLEAN DEFAULT FALSE;
+-- true if the message is a private reply message and we don't have the
+-- decryption key to read it
+ALTER TABLE channelMessage ADD COLUMN replyKeyMissing BOOLEAN DEFAULT FALSE;
+-- contains the prompt to decrypt the body if and only if the body could
+-- otherwise not be decrypted
+ALTER TABLE channelMessage ADD COLUMN pbePrompt VARCHAR(256) DEFAULT NULL;
+
