@@ -4,6 +4,8 @@ GCJ=gcj
 #GCJ=/u1/gcc-4.2-20060520-x86_64/bin/gcj
 EXECUTABLE=syndie
 GCJFLAGS=-g -O2 -fPIC -fjni -Wall
+CURVERSION=`cat VERSION | cut -d= -f2`
+PKGEND="nix.tar.bz2"
 
 all: syndie
 
@@ -31,8 +33,9 @@ clean:
 distclean: clean
 	@rm -f hsqldb_gcj.o
 	@rm -rf hsql hsqldb_gcj.jar
-	@rm -rf syndie-dev
-	@rm -f syndie-dev.tar.bz2
+	@rm -rf syndie-${CURVERSION}
+	@rm -f syndie-${CURVERSION}.${PKGEND}
+	@rm -f doc/web/dist/syndie-${CURVERSION}.${PKGEND}
 	@ant distclean
 	@rm -rf logs
 
@@ -48,12 +51,12 @@ ${EXECUTABLE}: hsqldb_gcj.o syndie.o
 
 package: ${EXECUTABLE}
 	@ant -q prep-java
-	@rm -f syndie-?.????/bin/syndie
-	@rm -f syndie-?.????/bin/syndie.bat
-	@rm -f syndie-?.????/lib/*jar
+	@rm -f syndie-${CURVERSION}/bin/syndie
+	@rm -f syndie-${CURVERSION}/bin/syndie.bat
+	@rm -f syndie-${CURVERSION}/lib/*jar
 	@strip ${EXECUTABLE}
-	@cp ${EXECUTABLE} syndie-?.????/bin/
+	@cp ${EXECUTABLE} syndie-${CURVERSION}/bin/
 	@mkdir -p doc/web/dist
-	@tar cjf doc/web/dist/syndie-native.tar.bz2 syndie-?.????
-	@rm -rf syndie-?.????
-	@echo "Native package built into doc/web/dist/syndie-native.tar.bz2"
+	@tar cjf doc/web/dist/syndie-${CURVERSION}.${PKGEND} syndie-${CURVERSION}
+	@rm -rf syndie-${CURVERSION}
+	@echo "Native package built into doc/web/dist/syndie-${CURVERSION}.${PKGEND}"

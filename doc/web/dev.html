@@ -78,11 +78,11 @@ built with various ant targets:<ul>
 <p>With a modern GCC/GCJ (releases prior to 4.0 will fail when they try to
 write to the database), you can build native Syndie executables.  On *nix/osx, 
 "<code>make -f Makefile.nix syndie</code>" creates ./syndie, and
-"<code>make -f Makefile.nix package</code>" creates a syndie-native.tar.bz2,
-which is just like syndie-$version.bin.zip, except bin/syndie is the native
-executable instead of a shell script launching java.  Work is ongoing for
-GCJ/MinGW support, but the Makefile.mingw should work with a viable MinGW
-install of GCJ 4.x</p>
+"<code>make -f Makefile.nix package</code>" creates a
+<code>syndie-$version.nix.tar.bz2</code>, which is just like
+syndie-$version.bin.zip, except bin/syndie is the native executable instead
+of a shell script launching java.  Work is ongoing for GCJ/MinGW support, but
+the Makefile.mingw should work with a viable MinGW install of GCJ 4.x</p>
 </div>
 </body>
 </html>
