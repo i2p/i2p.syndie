@@ -28,49 +28,66 @@ left nav
 <li><a href="#i2p">I2P</a></li>
 <li><a href="#tor">Tor</a></li>
 <li><a href="#freenet">Freenet</a></li>
-<li><a href="#usenet">Usenet</a></li>
+<li><a href="#frost">Frost</a></li>
 <li><a href="#opendht">OpenDHT</a></li>
-<li><a href="#feedspace">Feedspace</a></li>
-<li><a href="#feedtree">Feedtree</a></li>
 <li><a href="#eternity">Eternity Service</a></li>
-<li><a href="#pgp">PGP/GPG</a></li>
 </ul>
 
-<b id="i2p">I2P</b> (<a href="#menu">up</a>)
+<b id="i2p"><a href="http://www.i2p.net/">I2P</a></b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
+<p>Syndie is being developed in part by the I2P development team, keeping in
+mind both I2P's anonymity and security model so as to support trivial
+operation over the I2P network.  I2P by itself simply transfers small (1-4KB)
+messages between anonymous "destinations", while Syndie works at a higher
+layer, coordinating what content gets transferred in the first place, as well
+as allowing end user interaction.</p>
 
-<b id="Tor">Tor</b> (<a href="#menu">up</a>)
+<b id="Tor"><a href="http://tor.eff.org/">Tor</a></b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
+<p>As with I2P, Tor is a low latency anonymizing network, and Tor's
+requirements and capabilities have been kept in mind so as to allow Syndie to
+operate on top of Tor as well.</p>
 
-<b id="freenet">Freenet</b> (<a href="#menu">up</a>)
+<b id="freenet"><a href="http://www.freenetproject.org/">Freenet</a></b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
+<p>Freenet is an anonymizing distributed data cache whose features complement
+Syndie as well.  Inserting a Syndie archive into Freenet is not a problem, and
+syndicating off Freenet SSK or USK keys is trivial, given Freenet's HTTP
+interface.</p>
 
-<b id="usenet">Usenet</b> (<a href="#menu">up</a>)
+<b id="frost"><a href="http://jtcfrost.sf.net/">Frost</a></b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
+<p>Frost, one of the most popular Freenet applications, bears many
+similarities to Syndie.  The most substantial difference is Frost's tight
+dependence upon Freenet, limiting the flexibility of the message boards,
+constraining the potential user base to a subset of Freenet's users, and
+tying its viability to that of Freenet as a whole.  There are of course other
+important differences, such as Frost's functionality as a file sharing
+interface to Freenet and Syndie's ability to hide both the pseudonyms and
+even the quantity of messages being posted in a forum.</p>
 
-<b id="opendht">OpenDHT</b> (<a href="#menu">up</a>)
+<b id="opendht"><a href="http://www.opendht.org/">OpenDHT</a></b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
-
-<b id="feedspace">Feedspace</b> (<a href="#menu">up</a>)
-
-<p><!-- info here --></p>
-
-<b id="feedtree">Feedtree</b> (<a href="#menu">up</a>)
-
-<p><!-- info here --></p>
+<p>Another public storage medium that Syndie can be made to operate archives
+out of.  OpenDHT runs across hundreds of geographically and politically
+dispersed servers, hosted by PlanetLab.</p>
 
 <b id="eternity">Eternity Service</b> (<a href="#menu">up</a>)
 
-<p><!-- info here --></p>
-
-<b id="pgp">PGP/GPG</b> (<a href="#menu">up</a>)
-
-<p><!-- info here --></p>
+<p>Syndie has similarities with Ross Anderson's
+<a href="http://www.cl.cam.ac.uk/users/rja14">Eternity Service</a> and
+Adam Back's subsequent 
+<a href="http://www.cypherspace.org/~adam/eternity/">Eternity USENET</a>,
+but with substantial differences.  For instance, rather than integrate the
+content layer with the mixnet and a payment system (as the original
+Eternity Service did), Syndie operates on top of the various mixnets
+available today, and leaves payment out of the scope.  Syndie also differs
+from the various Eternity Service implementations in that Syndie is not meant
+to make a piece of content available to anyone forever, though a subset of
+Syndie's users may choose to run it in that way.  Syndie perhaps could be
+seen as a way to build many separate (crypto-enhanced) Usenet networks, each
+with their own content management policy, distribution mechanism, and
+namespace.</p>
 
 </div>
 </body>

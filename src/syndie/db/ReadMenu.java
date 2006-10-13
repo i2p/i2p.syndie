@@ -960,7 +960,10 @@ class ReadMenu implements TextEngine.Menu {
                     walked.append(CommandImpl.strip(node.getDescription()));
                 }
                 walked.append(" [type: ").append(node.getReferenceType()).append("]\n");
-                walked.append("\tURI: ").append(uri.toString());
+                if (uri.isURL())
+                    walked.append("\tURL: ").append(CommandImpl.strip(uri.getString("url")));
+                else
+                    walked.append("\tURI: ").append(uri.toString());
             }
             
             _ui.statusMessage(walked.toString());

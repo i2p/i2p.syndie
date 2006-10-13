@@ -132,6 +132,7 @@ public class Version {
         <copy todir="syndie-${syndie.version}/doc/">
                <fileset dir="." includes="CHANGES, CREDITS, INSTALL, LICENSE, README, TODO" />
         </copy>
+        <copy todir="syndie-${syndie.version}/doc/" file="mtn-committers" />
         <copy todir="syndie-${syndie.version}/" file="resources/welcome.txt" />
         <copy todir="syndie-${syndie.version}/doc/" file="doc/syndie.1" />
         <copy todir="syndie-${syndie.version}/doc/web/">

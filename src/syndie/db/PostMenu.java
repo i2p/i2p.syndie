@@ -1283,7 +1283,10 @@ class PostMenu implements TextEngine.Menu {
         }
         SyndieURI uri = null;
         try {
-            uri = new SyndieURI(uriStr);
+            if (uriStr.startsWith("http"))
+                uri = SyndieURI.createURL(uriStr);
+            else
+                uri = new SyndieURI(uriStr);
         } catch (URISyntaxException use) {
             ui.errorMessage("URI is not valid (" + uriStr + ")", use);
             ui.commandComplete(-1, null);

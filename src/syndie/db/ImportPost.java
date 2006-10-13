@@ -829,6 +829,7 @@ public class ImportPost {
             String name = node.getName();
             String desc = node.getDescription();
             String type = node.getReferenceType();
+            if (type == null) type = "URL";
             long uriId = _client.addURI(node.getURI());
             _node++;
             
@@ -844,7 +845,10 @@ public class ImportPost {
                 stmt.setString(5, CommandImpl.strip(name));
                 stmt.setString(6, CommandImpl.strip(desc));
                 stmt.setLong(7, uriId);
-                stmt.setString(8, type);
+                if (type != null)
+                    stmt.setString(8, type);
+                else
+                    stmt.setNull(8, Types.VARCHAR);
                 stmt.executeUpdate();
             } catch (SQLException se) {
                 _exception = se;

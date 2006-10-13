@@ -1,5 +1,12 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-13  0.913b released
+    - bundle a sample bash script for pulling websites into syndie
+      (depends on wget for fetching and links for html to text conversion)
+    - translate addref URIs that refer to http URLs into SyndieURIs
+      transparently
+    - filled in the related.html page a bit
+
 * 2006-10-12  0.912b released
     - migrated to monotone
     - default to compact mode for thread display
