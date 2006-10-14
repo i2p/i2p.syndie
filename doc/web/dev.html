@@ -1,30 +1,37 @@
-<html>
-<head>
-<title>Syndie development</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Syndie - code</title>
 <link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
 </head>
 <body>
-<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
-<div class="topnav">
-<a href="index.html">[home]</a>
-<a href="download.html">[download]</a>
-<a href="features.html">[features]</a>
-<a href="manual.html">[manual]</a>
-<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
-<a href="faq.html">[faq]</a>
-<a href="roadmap.html">[roadmap]</a>
-<b>[dev]</b>
-<a href="donate.html">[donate]</a>
-<a href="about.html">[about]</a>
+<div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div id="Header">
+ <a href="index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
 </div>
-<div class="leftnav">
-<b>[code]</b><br />
-<a href="spec.html">[spec]</a><br />
-<a href="archive.html">[archive]</a><br />
-<a href="db.html">[database]</a><br />
+<div id="Menu">
+	<a href="index.html" title="Home">Home</a><br />
+	<a href="download.html" title="Download Syndie">Download</a><br />
+	<a href="features.html" title="Syndie Features">Features</a><br />
+	<a href="usecases.html" title="Use cases">Use cases</a><br />
+	<a href="faq.html" title="Frequently Asked Questions">Faq</a><br />
+	<a href="roadmap.html" title="Roadmap">Roadmap</a><br />
+	<a href="dev.html" title="Developers">Developers</a><br />
+	<a href="manual.html" title="">Manual</a><br />
+	<a href="donate.html" title="Help Syndie">Donate</a><br />
+	<a href="related.html" title="Related projects">Related projects</a><br />
+	<a href="about.html" title="About Syndie">About</a><br />
+	<hr />
+	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a><br />
+	<hr />
+	<a href="dev.html" title="Code">Code</a><br />
+	<a href="spec.html" title="Specs">Specs</a><br />
+	<a href="archive.html" title="Archives">Archives</a><br />
+	<a href="db.html" title="Database">Database</a><br />
 </div>
-<div class="bodycontent">
-Releases are versioned as <code>$major</code>.<code>$minor</code><code>$quality</code>,
+<div id="Content">
+<h1>Syndie development</h1>
+<p>Releases are versioned as <code>$major</code>.<code>$minor</code><code>$quality</code>,
 where <code>$major</code> indicates a substantial functional change,
 <code>$minor</code> indicates bugfixes and small improvements, and
 <code>$quality</code> values of <code>a,b,rc</code> indicate whether
@@ -52,21 +59,21 @@ at <code>mtn.i2p.net</code>, as described on the
 
 <p>Installation packages for <a href="download.html">download</a> are
 built with various ant targets:<ul>
-<li><code>syndie-$version.bin.exe</code><br />
+<li><b><code>syndie-$version.bin.exe</code></b><br />
     <i>(java installer, includes bin/syndie.exe java launcher)</i><br />
     built with the "installer-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" and
     "-Dizpackdir=/path/to/izpack_install" (e.g.
     <code>ant -Dizpackdir=/home/jrandom/IzPack_install/ -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
-<li><code>syndie-$version.bin.zip</code><br />
+<li><b><code>syndie-$version.bin.zip</code></b><br />
     <i>(no java installer, includes bin/syndie.exe java launcher)</i><br />
     built with the "java-package-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" (e.g.
     <code>ant -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
-<li><code>syndie-$version.bin-noexe.zip</code><br />
+<li><b><code>syndie-$version.bin-noexe.zip</code></b><br />
     <i>(no java installer, without bin/syndie.exe java launcher)</i><br />
     built with the "java-package" target</li>
-<li><code>syndie-$version.src.tar.bz2</code><br />
+<li><b><code>syndie-$version.src.tar.bz2</code></b><br />
     <i>(source package)</i><br />
     built with the "source-package" target</li>
 </ul></p>

@@ -1,5 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-14  0.914b released
+    - revamped HTML design (thanks HotTuna!)
+    - put together a simple monotone_howto.html as a quickstart
+
 * 2006-10-13  0.913b released
     - bundle a sample bash script for pulling websites into syndie
       (depends on wget for fetching and links for html to text conversion)

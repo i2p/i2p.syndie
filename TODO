@@ -7,12 +7,18 @@ Key:
  X doc/web/ onto syndie.i2p.net (~/syndie-inst/doc/web/)
  X archive onto http://syndie.i2p.net/archive/ (~/.syndie/archive/)
  X dist files ont http://syndie.i2p.net/dist/
+X import syndienet html
+X write up monotone howto
+ X tracking dev howto (mtn pull "syndie")
+ X contributing howto (mtn keygen my@name, mtn sync), or diff -uw |mail
+- installer/script/exe/favicon.ico icons, and web doc logo
 - monotone migration
- - public archive online
+ X public archive online at mtn.i2p.net branch "syndie"
  X syndie-commit@i2p.net mailing list
  - on mtn rev push @ mtn.i2p.net, post to syndie-commit
  X syndie-announce@i2p.net mailing list
  X use monotone internally
+ - create mtn.i2p server tunnel pointing at mtn.i2p.net:4691
 
 ===maybe:
 - internationalize the text UI

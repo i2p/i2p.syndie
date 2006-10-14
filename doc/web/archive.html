@@ -1,30 +1,37 @@
-<html>
-<head>
-<title>Syndie: archives</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Syndie - archives</title>
 <link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
 </head>
 <body>
-<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
-<div class="topnav">
-<a href="index.html">[home]</a>
-<a href="download.html">[download]</a>
-<a href="features.html">[features]</a>
-<a href="manual.html">[manual]</a>
-<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
-<a href="faq.html">[faq]</a>
-<a href="roadmap.html">[roadmap]</a>
-<b>[dev]</b>
-<a href="donate.html">[donate]</a>
-<a href="about.html">[about]</a>
+<div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div id="Header">
+ <a href="index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
 </div>
-<div class="leftnav">
-<a href="dev.html">[code]</a><br />
-<a href="spec.html">[spec]</a><br />
-<b>[archive]</b><br />
-<a href="db.html">[database]</a><br />
+<div id="Menu">
+	<a href="index.html" title="Home">Home</a><br />
+	<a href="download.html" title="Download Syndie">Download</a><br />
+	<a href="features.html" title="Syndie Features">Features</a><br />
+	<a href="usecases.html" title="Use cases">Use cases</a><br />
+	<a href="faq.html" title="Frequently Asked Questions">Faq</a><br />
+	<a href="roadmap.html" title="Roadmap">Roadmap</a><br />
+	<a href="dev.html" title="Developers">Developers</a><br />
+	<a href="manual.html" title="">Manual</a><br />
+	<a href="donate.html" title="Help Syndie">Donate</a><br />
+	<a href="related.html" title="Related projects">Related projects</a><br />
+	<a href="about.html" title="About Syndie">About</a><br />
+	<hr />
+	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a><br />
+	<hr />
+	<a href="dev.html">Code</a><br />
+	<a href="spec.html">Specs</a><br />
+	<a href="archive.html">Archives</a><br />
+	<a href="db.html">Database</a><br />
 </div>
-<div class="bodycontent">
-Each Syndie instance operates with its own archive of messages, storing
+<div id="Content">
+<h1>Syndie archives</h1>
+<p>Each Syndie instance operates with its own archive of messages, storing
 the data extracted from the <a href="spec.html#message">signed messages</a>
 within its local <a href="db.html">database</a> (by default stored under
 <code>$dataRoot/db/</code>), an archive of those signed messages in the
@@ -33,7 +40,7 @@ created but not yet distributed messages in the
 <code>$dataRoot/outbound/</code> file hierarchy.  The contents of
 <code>$dataRoot/archive/</code> can be wiped out without any loss of
 functionality, though doing so prevents the Syndie instance from sharing
-the authenticated messages with other people.
+the authenticated messages with other people.</p>
 
 <p>Within the <code>$dataRoot/archive/</code> directory, each channel
 has its own subdirectory containing the channel's metadata (in <code>meta.syndie</code>)

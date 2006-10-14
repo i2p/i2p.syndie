@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Syndie - monotone howto</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div id="Header">
+ <a href="index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
+</div>
+<div id="Menu">
+	<a href="index.html" title="Home">Home</a><br />
+	<a href="download.html" title="Download Syndie">Download</a><br />
+	<a href="features.html" title="Syndie Features">Features</a><br />
+	<a href="faq.html" title="Frequently Asked Questions">Faq</a><br />
+	<a href="roadmap.html" title="Roadmap">Roadmap</a><br />
+	<a href="dev.html" title="Developers">Developers</a><br />
+	<a href="manual.html" title="">Manual</a><br />
+	<a href="donate.html" title="Help Syndie">Donate</a><br />
+	<a href="about.html" title="About Syndie">About</a><br />
+	<hr />
+	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a>
+</div>
+<div id="Content">
+<h1>Monotone howto</h1>
+<p><a href="http://venge.net/monotone/">Monotone</a> is a distributed version control
+system with tightly integrated cryptographic integrity and authenticity checks.  This
+howto is not meant to be an exhaustive set of documentation on monotone (see their
+huge set of manuals and wiki for that), but merely a means to bootstrap Syndie
+developers.</p>
+
+<h2>Tracking Syndie development</h2>
+
+<p>If your primary goal is to pull the latest development code, there is little to
+no setup required:</p>
+<ol>
+ <li>Install monotone</li>
+ <li>Create a monotone database:<br />
+     <code>mtn db init --db=./syndie.mtn</code></li>
+ <li>Create a monotone nym:<br />
+     <code>mtn genkey arbitrary@name</code></li>
+ <li>Pull the latest code into your monotone database:<br />
+     <code>mtn --db=./syndie.mtn pull mtn.i2p.net "syndie"</code></li>
+ <li>Check out the latest code from your monotone database into a new "workspace"<br />
+     <code>mtn --db=./syndie.mtn checkout --branch=syndie</code></li>
+ <li>You're good to go!  The code is now in <code>./syndie/</code></li>
+</ol>
+
+<p>Whenever you want to pull any more changes, run step 4 again, and then go into
+your monotone workspace (<code>./syndie/</code>) and run <code>mtn update</code></p>
+
+<p>If you have any changes you want to make to the main Syndie branch, you can bundle
+them up with <code>mtn diff</code> - mail that to a Syndie developer or the 
+<code>syndie-commit</code> mailing list at i2p.net.  The changes will be reviewed and
+applied and then pushed onto the <code>mtn.i2p.net</code> repository for everyone to
+access.  Over time, if you want commit priviledges on the <code>mtn.i2p.net</code>
+repository, that can be arranged - see below for more details.</p>
+
+<h2>Contributing to Syndie development</h2>
+
+<p>If you will be contributing to the codebase repeatedly, it may become simpler
+to just get commit priviledges on the <code>mtn.i2p.net</code> repository directly.
+If you feel you need this:</p>
+
+<ol>
+ <li>Create a long lasting monotone nym for development, using a valid email address:<br />
+     <code>mtn genkey jrandom@i2p.net</code></li>
+ <li>Create a transient monotone nym for synchronizing with the repository:<br />
+     <code>mtn genkey jrandom-transport@i2p.net</code></li>
+ <li>Make sure your commits will be signed by the long lasting nym:<br />
+     <pre>cat &gt;&gt; ~/.monotone/monotonerc
+function get_branch_key (branchname)
+  return "jrandom@i2p.net"
+end
+^D</pre></li>
+ <li>You can have monotone remember the passphrases to those passwords as well:<br />
+     <pre>cat &gt;&gt; ~/.monotone/monotonerc
+function get_passphrase (keypair_id)
+  if ("jrandom@i2p.net" == keypair_id) then
+    return "the_author_passphrase"
+  elseif ("jrandom-transport@i2p.net" == keypair_id) then
+    return "the_transport_passphrase"
+  else
+    return false
+  end
+end
+^D</pre></li>
+ <li>Send both public keys to <i>jrandom@i2p.net</i> so that they can be authorized<br />
+     <code>mtn pubkey jrandom@i2p.net > keys.txt ; mtn pubkey jrandom-transport@i2p.net >> keys.txt</code></li>
+</ol>
+
+<p>Once the keys are authorized, the long lasting nym will be added to the 
+<code>mtn-committers</code> file, and the transient nym will be granted write
+permission to the <code>mtn.i2p.net</code> repository.</p>
+
+<p>Monotone development cheatsheet:</p>
+<ul>
+ <li><code>mtn sync mtn.i2p.net --branch=syndie</code><br />
+     this pulls the latest changes from the repository into your database, and
+     pushes your latest already-committed changes from your database into the
+     repository.</li>
+ <li><code>mtn commit</code><br />
+     this commits the local changes in your monotone workspace into your
+     local database, signing the new revision with your nym key.  Please be
+     sure to update the <code>CHANGES</code> file with a bullet point for each
+     substantial change <i>above</i> the most recent release.  On the other hand,
+     if you are making a new release, include a date and version line in
+     <code>CHANGES</code>, update <code>VERSION</code>, as well as the version
+     numbers in <code>doc/web/download.html</code>.</li>
+ <li><code>mtn status</code><br />
+     this summarizes what files have changed in the monotone workspace</li>
+ <li><code>mtn diff</code><br />
+     this details what has changed in the monotone workspace</li>
+ <li><code>mtn add $filename</code><br />
+     this schedules a file for inclusion in the database on next commit</li>
+ <li><code>mtn drop $filename</code><br />
+     this schedules a file for removal from the database on next commit</li>
+ <li><code>mtn revert $path</code><br />
+     this undoes any local changes for the given path (which can be a file or
+     directory)</li>
+ <li><code>mtn update</code><br />
+     this pulls the latest changes from the local database into your workspace</li>
+ <li><code>mtn log $filename</code><br />
+     this views the change history of the given file</li>
+ <li><code>mtn heads</code><br />
+     this lists the revision ids of the unmerged paths on the current branch
+     ("syndie")</li>
+ <li><code>mtn tag $revision $tagname</code><br />
+     this cryptographically tags the given revision id with the specified tag
+     (e.g. "<code>mtn tag a8af872 syndie-0.912b</code>"). note that the revision
+     can be a short substring of the full revision id -
+     "a8af872" instead of "a8af872ccdc00b5995dd1c05f15d8912804bba99"</li>
+ <li><code>mtn db kill_tag_locally $tagname</code><br />
+     if the tag has <b>not</b> been pushed out onto any other databases, this will
+     remove the cryptographic certificate that associates the given tag with a 
+     revision.  This effectively allows you to move a tag
+     (circa <code>cvs tag -F</code>)</li>
+</ul>
+</div>
+</body>
+</html>

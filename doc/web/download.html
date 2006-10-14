@@ -1,47 +1,50 @@
-<html>
-<head>
-<title>Syndie: download</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Syndie - download</title>
 <link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
 </head>
 <body>
-<div style="display: none"><a href="#bodycontent" title="Skip navigation" accesskey="2">Skip navigation</a></div>
-<div class="topnav">
-<a href="index.html">[home]</a>
-<b>[download]</b>
-<a href="features.html">[features]</a>
-<a href="manual.html">[manual]</a>
-<a href="http://forum.i2p.net/viewforum.php?f=29">[forum]</a>
-<a href="faq.html">[faq]</a>
-<a href="roadmap.html">[roadmap]</a>
-<a href="dev.html">[dev]</a>
-<a href="donate.html">[donate]</a>
-<a href="about.html">[about]</a>
+<div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div id="Header">
+ <a href="index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
 </div>
-<!--
-<div class="leftnav">
-left nav
+<div id="Menu">
+	<a href="index.html" title="Home">Home</a><br />
+	<a href="download.html" title="Download Syndie">Download</a><br />
+	<a href="features.html" title="Syndie Features">Features</a><br />
+	<a href="usecases.html" title="Use cases">Use cases</a><br />
+	<a href="faq.html" title="Frequently Asked Questions">Faq</a><br />
+	<a href="roadmap.html" title="Roadmap">Roadmap</a><br />
+	<a href="dev.html" title="Developers">Developers</a><br />
+	<a href="manual.html" title="">Manual</a><br />
+	<a href="donate.html" title="Help Syndie">Donate</a><br />
+	<a href="related.html" title="Related projects">Related projects</a><br />
+	<a href="about.html" title="About Syndie">About</a><br />
+	<hr />
+	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a>
 </div>
--->
-<div class="bodycontent">
+<div id="Content">
+<h1>Download</h1>
 <!--
 Windows binaries:<ul>
-<li><a href="http://syndie.i2p.net/dist/syndie-1.000a.win.exe">syndie-1.000a.win.exe</a>
-   (<a href="http://syndie.i2p.net/dist/syndie-1.000a.win.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li><a href="http://syndie.i2p.net/dist/syndie-0.914b.win.exe">syndie-0.914b.win.exe</a>
+   (<a href="http://syndie.i2p.net/dist/syndie-0.914b.win.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
 <li>Download and run the executable installer.</li>
 <li>Prerequisites: None</li>
 </ul>
 -->
 
 Binaries:<ul>
-<li><a href="dist/syndie-1.000a.bin.exe">syndie-1.000a.bin.exe</a>
-   (<a href="dist/syndie-1.000a.bin.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li><a href="dist/syndie-0.914b.bin.exe">syndie-0.914b.bin.exe</a>
+   (<a href="dist/syndie-0.914b.bin.exe.sig">GPG signature</a>)</li>
 <li>Download and run the executable installer.<br />
     <i>(*nix and OS X users, run the executable by typing
-    "<code>java -jar syndie-1.000a.bin.exe</code>".  
+    "<code>java -jar syndie-0.914b.bin.exe</code>".  
     yes, really, you want the .exe)</i></li>
-<li>Alternately, <a href="dist/syndie-1.000a.bin.zip">syndie-1.000a.bin.zip</a>
-   (<a href="dist/syndie-1.000a.bin.zip.sig">GPG signature</a>)
-   can be used instead - it unzips to ./syndie-1.000a/.  This method is
+<li>Alternately, <a href="dist/syndie-0.914b.bin.zip">syndie-0.914b.bin.zip</a>
+   (<a href="dist/syndie-0.914b.bin.zip.sig">GPG signature</a>)
+   can be used instead - it unzips to ./syndie-0.914b/.  This method is
    necessary when installing without a graphical interface, but does not
    create desktop or start menu shortcuts, and does not include an uninstaller.
    </li>
@@ -53,8 +56,8 @@ Binaries:<ul>
 </ul>
 
 Source:<ul>
-<li><a href="dist/syndie-1.000a.src.tar.bz2">syndie-1.000a.src.tar.bz2</a>
-  (<a href="dist/syndie-1.000a.src.tar.bz2.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<li><a href="dist/syndie-0.914b.src.tar.bz2">syndie-0.914b.src.tar.bz2</a>
+  (<a href="dist/syndie-0.914b.src.tar.bz2.sig">GPG signature</a>)</li>
 <li>Download and extract the archive, then read the INSTALL file</li>
 <li>Prerequisites:
     <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
@@ -69,7 +72,8 @@ Source:<ul>
 Unreleased development source:<ul>
 <li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
     syndie code is available on the netsync server <code>mtn.i2p.net</code>
-    in the <code>syndie</code> branch.</li>
+    in the <code>syndie</code> branch.<br />
+    <i>Not familiar with monotone?  See this <a href="monotone_howto.html">howto</a></i></li>
 <li>Developers are granted write permission to that repository, and everyone
     is granted read permission.</li>
 <li>The list of authorized committers can be found in the mtn-committers
