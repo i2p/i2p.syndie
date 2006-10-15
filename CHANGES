@@ -1,5 +1,12 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-15  0.915b released
+    - added support for posting archives to freenet 0.7 via the 
+      freenetpost command in the syndicate menu.  pulling from freenet was
+      already possible through fproxy, though it now treats archive URLs
+      containing USK@, SSK@, and CHK@ specially (redirecting them to the
+      correct fproxy location)
+
 * 2006-10-14  0.914b released
     - revamped HTML design (thanks HotTuna!)
     - put together a simple monotone_howto.html as a quickstart

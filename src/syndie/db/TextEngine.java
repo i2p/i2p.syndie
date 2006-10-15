@@ -693,6 +693,22 @@ public class TextEngine {
         }
         _client.setDefaultHTTPArchive(prefs.getProperty("archive"));
         
+        _client.setDefaultFreenetPrivateKey(prefs.getProperty("freenetPrivateKey"));
+        _client.setDefaultFreenetPublicKey(prefs.getProperty("freenetPublicKey"));
+        _client.setDefaultFreenetHost(prefs.getProperty("fcpHost"));
+        port = prefs.getProperty("fcpPort");
+        if (port != null) {
+            try {
+                int num = Integer.parseInt(port);
+                _client.setDefaultFreenetPort(num);
+            } catch (NumberFormatException nfe) {
+                _ui.errorMessage("Freenet port preference is invalid", nfe);
+                _client.setDefaultFreenetPort(-1);
+            }
+        } else {
+            _client.setDefaultFreenetPort(-1);
+        }
+        
         if ( (_client.getDefaultHTTPProxyHost() != null) && (_client.getDefaultHTTPProxyPort() > 0) )
             _ui.statusMessage("Preference: default HTTP proxy: " + _client.getDefaultHTTPProxyHost() + ":" + _client.getDefaultHTTPProxyPort());
         else
@@ -701,6 +717,14 @@ public class TextEngine {
             _ui.statusMessage("Preference: default archive: " + _client.getDefaultHTTPArchive());
         else
             _ui.statusMessage("Preference: default archive: none");
+        
+        if ( (_client.getDefaultFreenetHost() != null) && (_client.getDefaultFreenetPort() > 0) )
+            _ui.statusMessage("Preference: Freenet FCP instance at " + 
+                              _client.getDefaultFreenetHost() + ":" + _client.getDefaultFreenetPort());
+        if (_client.getDefaultFreenetPrivateKey() != null)
+            _ui.statusMessage("Preference: Private Freenet key known");
+        if (_client.getDefaultFreenetPublicKey() != null)
+            _ui.statusMessage("Preference: Public Freenet key known: " + _client.getDefaultFreenetPublicKey());
     }
     
     private class MenuUI extends NestedUI {

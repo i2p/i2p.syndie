@@ -48,6 +48,10 @@ public class DBClient {
     private String _defaultArchive;
     private String _httpProxyHost;
     private int _httpProxyPort;
+    private String _fcpHost;
+    private int _fcpPort;
+    private String _freenetPrivateKey;
+    private String _freenetPublicKey;
         
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
@@ -100,6 +104,15 @@ public class DBClient {
     String getDefaultHTTPArchive() { return _defaultArchive; }
     void setDefaultHTTPArchive(String archive) { _defaultArchive = archive; }
     
+    String getDefaultFreenetHost() { return _fcpHost; }
+    void setDefaultFreenetHost(String host) { _fcpHost = host; }
+    int getDefaultFreenetPort() { return _fcpPort; }
+    void setDefaultFreenetPort(int port) { _fcpPort = port; }
+    String getDefaultFreenetPrivateKey() { return _freenetPrivateKey; }
+    void setDefaultFreenetPrivateKey(String privateSSK) { _freenetPrivateKey = privateSSK; }
+    String getDefaultFreenetPublicKey() { return _freenetPublicKey; }
+    void setDefaultFreenetPublicKey(String publicSSK) { _freenetPublicKey = publicSSK; }
+    
     public void close() {
         _login = null;
         _pass = null;
@@ -107,6 +120,10 @@ public class DBClient {
         _defaultArchive = null;
         _httpProxyHost = null;
         _httpProxyPort = -1;
+        _fcpHost = null;
+        _fcpPort = -1;
+        _freenetPrivateKey = null;
+        _freenetPublicKey = null;
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;

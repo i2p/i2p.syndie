@@ -76,7 +76,7 @@ database, archive, and related data files.  If not specified, it uses
   <dd>Start/stop paginating the output every 10 lines</dd>
   <dt id="general_toggleDebug"><code>toggleDebug</code></dt>
   <dd>Start/stop displaying verbose messages to the user</dd>
-  <dt id="general_prefs"><code>prefs [--debug $boolean] [--paginate $boolean] [--httpproxyhost $hostname --httpproxyport $portNum] [--archive $archiveURL]</code></dt>
+  <dt id="general_prefs"><code>prefs [--debug $boolean] [--paginate $boolean] [--httpproxyhost $hostname --httpproxyport $portNum] [--archive $archiveURL] [--freenetPrivateKey $privateKey] [--freenetPublicKey $publicKey] [--fcpHost $hostname] [--fcpPort $portNum]</code></dt>
   <dd>Update the current nym's preferences, specifying the debug and 
       paginate toggle state, the default HTTP proxy used for HTTP syndication,
       and the default archive location.  These preferences are loaded whenever
@@ -383,7 +383,13 @@ database, archive, and related data files.  If not specified, it uses
   <dt id="syndicate_getindex"><code>getindex --archive $url [--proxyHost $host --proxyPort $port] [--pass $pass]
             [--scope (all|new|meta|unauth)] [--channel $chan]</code></dt>
   <dd>fetch the index of the referenced archive, pulling in their list of
-      all posts, new posts, only metadata, or new unauthenticated posts.</dd>
+      all posts, new posts, only metadata, or new unauthenticated posts.  If the
+      $url begins with "/" or "file://", it is treated as a local archive on the
+      filesystem, and the proxies are ignored.  If the $url contains "SSK@", "USK@",
+      or "CHK@", it is treated as a Freenet 0.7 archive, and the proxies are
+      treated as the location of the fproxy instance (defaulting to localhost port
+      8888).  Otherwise, the $url refers to a standard URL, and the HTTP proxies are
+      used if specified.</dd>
   <dt id="syndicate_diff"><code>diff</code></dt>
   <dd>summarize the differences between the fetched index and the local db</dd>
   <dt id="syndicate_fetch"><code>fetch [--style (diff|known|metaonly|pir|unauth)] [--includeReplies $boolean]</code></dt>
@@ -407,6 +413,10 @@ database, archive, and related data files.  If not specified, it uses
       in absence of TLS/etc?</dd>
   <dt id="syndicate_bulkimport"><code>bulkimport --dir $directory --delete $boolean</code></dt>
   <dd>import all of the .syndie files in the given directory, deleting them on completion</dd>
+  <dt id="syndicate_freenetpost"><code>freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481]</code></dt>
+  <dd>post the entire local archive into Freenet, storing the data either in the
+      given SSK or in a brand new SSK, as requested.  This only works with Freenet
+      0.7.</dd>
   <dt id="syndicate_listban"><code>listban</code></dt>
   <dd>list the channels currently banned in the local archive</dd>
   <dt id="syndicate_unban"><code>unban [--scope $index|$chanHash]</code></dt>
