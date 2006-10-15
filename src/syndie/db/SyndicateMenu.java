@@ -497,7 +497,10 @@ class SyndicateMenu implements TextEngine.Menu {
             ssk = client.getDefaultFreenetPrivateKey();
         if (ssk == null)
             ssk = "new";
-        
+
+        processBuildIndex(client, new NestedUI(ui), new Opts());
+        // ignore the results
+
         FreenetArchivePusher pusher = new FreenetArchivePusher(ui, fcpHost, fcpPort);
         if ("new".equalsIgnoreCase(ssk)) {
             pusher.generateSSK();

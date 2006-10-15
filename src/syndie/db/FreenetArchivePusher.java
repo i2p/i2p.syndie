@@ -92,6 +92,7 @@ public class FreenetArchivePusher {
                        "Identifier=" + (msgId+1) + "\r\n" +
                        "URI=" + target + "\r\n" +
                        "Verbosity=0\r\n" + // we don't care about anyting
+                       "Global=true\r\n" + // let it be seen on fproxy's /queue/
                        "MaxRetries=10\r\n" +
                        "PriorityClass=3\r\n" + // 3 is lower than interactive
                        "Persistence=reboot\r\n" // runs until success or the freenet instance restarts

@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+    - let the freenetpost inserts be visible on freenet's /queue/
+    - automatically rebuild the index before inserting into freenet
+
 * 2006-10-15  0.915b released
     - added support for posting archives to freenet 0.7 via the 
       freenetpost command in the syndicate menu.  pulling from freenet was
