@@ -80,8 +80,8 @@ public class PageRenderer {
         });
     }
     
-    public void updateText() {
-        String str = "Ponies are ggggreat!  X likes ponies too!\nWow!";
+    public void updateText() { updateText("Ponies are ggggreat!  X likes ponies too!\nWow!", "text/plain"); }
+    public void updateText(String str, String mimeType) {
         _text.setText(str);
         int imgIndex = str.indexOf("X");
         //_images = new Image[] { _tab.getBrowser().getIconManager().getFlagPrivateMessageIcon() };

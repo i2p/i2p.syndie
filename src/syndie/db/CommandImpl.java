@@ -233,8 +233,8 @@ public abstract class CommandImpl implements CLI.Command {
         return rv;
     }
     
-    static final String strip(String orig) { return strip(orig, "\t\n\r\f", ' '); }
-    static final String strip(String orig, String charsToRemove, char replacement) {
+    public static final String strip(String orig) { return strip(orig, "\t\n\r\f", ' '); }
+    public static final String strip(String orig, String charsToRemove, char replacement) {
         boolean changed = false;
         if (orig == null) return "";
         char buf[] = orig.toCharArray();
@@ -252,5 +252,45 @@ public abstract class CommandImpl implements CLI.Command {
     
     boolean verifySig(DBClient client, Signature sig, Hash hash, SigningPublicKey pubKey) {
         return client.ctx().dsa().verifySignature(sig, hash, pubKey);
+    }
+
+    public static void parseProps(String data, Properties rv) { parseProps(DataHelper.getUTF8(data), rv); }
+    public static void parseProps(byte data[], Properties rv) {
+        //System.out.println("parsing props: " + new String(data));
+        int off = 0;
+        int dataStart = off;
+        int valStart = -1;
+        while (off < data.length) {
+            if (data[off] == '\n') {
+                try {
+                    String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
+                    String val = new String(data, valStart, off-valStart, "UTF-8");
+                    //System.out.println("Prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
+                    rv.setProperty(key, val);
+                } catch (UnsupportedEncodingException uee) {
+                    //
+                } catch (RuntimeException re) {
+                    //re.printStackTrace();
+                }
+                dataStart = off+1;
+                valStart = -1;
+            } else if ( (data[off] == '=') && (valStart == -1) ) {
+                valStart = off+1;
+            } else if (off + 1 >= data.length) {
+                if ( ( (valStart-1-dataStart) > 0) && ( (off+1-valStart) > 0) ) {
+                    try {
+                        String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
+                        String val = new String(data, valStart, off+1-valStart, "UTF-8");
+                        //System.out.println("End prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
+                        rv.setProperty(key, val);
+                    } catch (UnsupportedEncodingException uee) {
+                        //
+                    } catch (RuntimeException re) {
+                        //re.printStackTrace();
+                    }
+                }
+            }
+            off++;
+        }
     }
 }

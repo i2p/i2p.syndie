@@ -1,6 +1,12 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -18,9 +24,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
+import syndie.Constants;
+import syndie.data.ChannelInfo;
+import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
 import org.eclipse.swt.dnd.*;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.TextUI;
 import syndie.db.TextEngine;
@@ -63,6 +73,11 @@ public class MessageTab extends Component {
         _parent = parent;
         _uri = uri;
         initComponents();
+    }
+   
+    public void viewMessage(SyndieURI uri) {
+        _uri = uri;
+        updateFields();
     }
     
     public SyndieURI getURI() { return _uri; }
@@ -111,53 +126,145 @@ public class MessageTab extends Component {
         //_browser.getUser().view("urn:syndie:channel:d7:channel40:1234567890123456789012345678901234567890e");
     }
     protected void updateFields() {
-        _aboutSubject.setText("This message talks about my love of ponies");
-        _aboutAvatar.setImage(_avatar);
-        _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _aboutChannel.setText("$postedInChannel");
-        _aboutChannel.setImage(_icon);
-        _aboutDate.setText("2006/04/25");
-        _aboutTags.setText("(<a>ponies</a>, <a>rainbows</a>, <a>kittens</a>)");
-        _aboutNym.setImage(_icon);
-        _aboutNym.setText("jrandom");
-        _tab.setText(_uri.toString());
-        _tab.setToolTipText(_aboutSubject.getText());
-        
-        updateFlags();
-        
-        _page.setItems(new String[] { "Page 1", "Page 2", "Page 3", "Page 4" });
-        _page.select(0);
-        _body.updateText();
+        MessageInfo msg = null;
+        ChannelInfo targetChannel = null;
+        if ( (_uri == null) || (_client == null) || (!_client.isLoggedIn()) ) {
+            _aboutSubject.setText("This message talks about my love of ponies");
+            _aboutAvatar.setImage(_avatar);
+            _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
+            _aboutChannel.setText("$postedInChannel");
+            _aboutChannel.setImage(_icon);
+            _aboutDate.setText("2006/04/25");
+            _aboutTags.setText("(<a>ponies</a>, <a>rainbows</a>, <a>kittens</a>)");
+            _aboutNym.setImage(_icon);
+            _aboutNym.setText("jrandom");
+            _tab.setText(_uri.toString());
+            _tab.setToolTipText(_aboutSubject.getText());
+
+            _page.setItems(new String[] { "Page 1", "Page 2", "Page 3", "Page 4" });
+            _page.select(0);
+            _body.updateText();
+        } else {
+            long channelId = _client.getChannelId(_uri.getScope());
+            ChannelInfo chan = _client.getChannel(channelId);
+            msg = _client.getMessage(channelId, _uri.getMessageId());
+            targetChannel = _client.getChannel(msg.getTargetChannelId());
+            
+            _aboutSubject.setText(msg.getSubject());
+            _aboutAvatar.setImage(_avatar);
+            _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
+            _aboutChannel.setText(chan.getName() + (chan.getDescription() != null ? "-" + chan.getDescription() : ""));
+            _aboutChannel.setImage(_icon);
+            _aboutDate.setText(formatDate(msg.getMessageId()));
+            Set tags = new TreeSet();
+            tags.addAll(msg.getPublicTags());
+            tags.addAll(msg.getPrivateTags());
+            if (tags.size() > 0) {
+                StringBuffer buf = new StringBuffer();
+                buf.append("(");
+                for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
+                    String tag = (String)iter.next();
+                    buf.append("<a>").append(CommandImpl.strip(tag)).append("</a>");
+                    if (iter.hasNext())
+                        buf.append(", ");
+                }
+                buf.append(")");
+                _aboutTags.setText(buf.toString());
+            } else {
+                _aboutTags.setText("");
+            }
+            _aboutNym.setImage(_icon);
+            ChannelInfo author = _client.getChannel(msg.getAuthorChannelId());
+            if (author == null)
+                author = chan;
+            _aboutNym.setText(author.getName());
+            _tab.setText(_uri.toString());
+            _tab.setToolTipText(_aboutSubject.getText());
+
+            int pages = msg.getPageCount();
+            String pageNames[] = new String[pages];
+            for (int i = 0; i < pages; i++)
+                pageNames[i] = "Page " + (i+1);
+            _page.setItems(pageNames);
+            if (_uri.getLong("page") != null) {
+                int index = ((Long)_uri.getLong("page")).intValue();
+                if ( (index <= pages) && (index > 0) )
+                    _page.select(index-1);
+                else
+                    _page.select(0);
+            } else {
+                _page.select(0);
+            }
+            
+            int toView = _page.getSelectionIndex();
+            String cfg = _client.getMessagePageConfig(msg.getInternalId(), toView);
+            String body = _client.getMessagePageData(msg.getInternalId(), toView);
+            Properties props = new Properties();
+            CommandImpl.parseProps(cfg, props);
+            String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
+            _body.updateText(body, mimeType);
+        }
+        updateFlags(msg, targetChannel);
+    }
+
+    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
+    private static String formatDate(long when) {
+        synchronized (_dayFmt) { return _dayFmt.format(new Date(when)); }
     }
     
-    private void updateFlags() {
-        updateAttachments();
-        updateKeys();
-        updateReferences();
-        updateChannelFlags();
+    private void updateFlags(MessageInfo msg, ChannelInfo targetChannel) {
+        updateAttachments(msg);
+        updateKeys(msg);
+        updateReferences(msg);
+        updateChannelFlags(msg, targetChannel);
     }
-    private void updateAttachments() {
+    private void updateAttachments(MessageInfo msg) {
         Button flag = new Button(_aboutFlags, SWT.PUSH);
         flag.setImage(_icon);
         flag.setToolTipText("Attachments included");
         Menu menu = new Menu(flag);
         flag.setMenu(menu);
         flag.addSelectionListener(new ShowMenuOnSelect(menu));
-        for (int i = 0; i < 10; i++) {
-            MenuItem item = new MenuItem(menu, SWT.CASCADE);
-            item.setText("attachment " + i);
-            Menu action = new Menu(item);
-            item.setMenu(action);
-            new MenuItem(action, SWT.PUSH).setText("View");
-            new MenuItem(action, SWT.PUSH).setText("Save");
-            new MenuItem(action, SWT.SEPARATOR);
-            new MenuItem(action, SWT.PUSH).setText("Type: image/png");
-            new MenuItem(action, SWT.PUSH).setText("Size: 32KB");
-            new MenuItem(action, SWT.PUSH).setText("Name: my_image_file.png");
-            new MenuItem(action, SWT.PUSH).setText("Description: this is an image.  i think you'll like it");
+        if (msg == null) {
+            for (int i = 0; i < 10; i++) {
+                MenuItem item = new MenuItem(menu, SWT.CASCADE);
+                item.setText("attachment " + i);
+                Menu action = new Menu(item);
+                item.setMenu(action);
+                new MenuItem(action, SWT.PUSH).setText("View");
+                new MenuItem(action, SWT.PUSH).setText("Save");
+                new MenuItem(action, SWT.SEPARATOR);
+                new MenuItem(action, SWT.PUSH).setText("Type: image/png");
+                new MenuItem(action, SWT.PUSH).setText("Size: 32KB");
+                new MenuItem(action, SWT.PUSH).setText("Name: my_image_file.png");
+                new MenuItem(action, SWT.PUSH).setText("Description: this is an image.  i think you'll like it");
+            }
+        } else {
+            for (int i = 0; i < msg.getAttachmentCount(); i++) {
+                MenuItem item = new MenuItem(menu, SWT.CASCADE);
+                item.setText("attachment " + i);
+                Menu action = new Menu(item);
+                item.setMenu(action);
+                new MenuItem(action, SWT.PUSH).setText("View");
+                new MenuItem(action, SWT.PUSH).setText("Save");
+                new MenuItem(action, SWT.SEPARATOR);
+                
+                String cfg = _client.getMessageAttachmentConfig(msg.getInternalId(), i);
+                Properties props = new Properties();
+                CommandImpl.parseProps(cfg, props);
+                String mimeType = props.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE, "text/plain");
+                String name = props.getProperty(Constants.MSG_ATTACH_NAME, "attachment" + i + ".dat");
+                String desc = props.getProperty(Constants.MSG_ATTACH_DESCRIPTION, "attachment data");
+                int size = _client.getMessageAttachmentSize(msg.getInternalId(), i);
+                
+                new MenuItem(action, SWT.PUSH).setText("Type: " + CommandImpl.strip(mimeType));
+                new MenuItem(action, SWT.PUSH).setText("Size: " + ((size+1023)/1024) + "KB");
+                new MenuItem(action, SWT.PUSH).setText("Name: " + CommandImpl.strip(name));
+                new MenuItem(action, SWT.PUSH).setText("Description: " + CommandImpl.strip(desc));
+            }
         }
     }
-    private void updateKeys() {
+    private void updateKeys(MessageInfo msg) {
         Button flag = new Button(_aboutFlags, SWT.PUSH);
         flag.setImage(_icon);
         flag.setToolTipText("Keys included");
@@ -193,7 +300,7 @@ public class MessageTab extends Component {
         new MenuItem(action, SWT.PUSH).setText("Import key");
         new MenuItem(action, SWT.PUSH).setText("View channel $channelName");
     }
-    private void updateReferences() {
+    private void updateReferences(MessageInfo msg) {
         Button flag = new Button(_aboutFlags, SWT.PUSH);
         flag.setImage(_icon);
         flag.setToolTipText("References included");
@@ -205,7 +312,7 @@ public class MessageTab extends Component {
             item.setText("Reference to $uri");
         }
     }
-    private void updateChannelFlags() {
+    private void updateChannelFlags(MessageInfo msg, ChannelInfo targetChannel) {
         Button flag = new Button(_aboutFlags, SWT.PUSH);
         flag.setImage(_icon);
         flag.setToolTipText("You can manage this channel");
@@ -287,59 +394,5 @@ public class MessageTab extends Component {
         public ShowMenuOnSelect(Menu menu) { _menu = menu; }
         public void widgetDefaultSelected(SelectionEvent selectionEvent) { _menu.setVisible(true); }
         public void widgetSelected(SelectionEvent selectionEvent) { _menu.setVisible(true); }
-    }
-    
-    public static void main(String args[]) {
-        System.out.println("running");
-        System.setProperty("jbigi.dontLog", "true");
-        System.setProperty("jcpuid.dontLog", "true");
-        
-        String rootDir = TextEngine.getRootPath();
-        String script = null;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("@"))
-                script = args[i].substring(1);
-            else
-                rootDir = args[i];
-        }
-        TextUI ui = new TextUI(false);
-        if (script != null) {
-            try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
-                String line = null;
-                while ( (line = in.readLine()) != null)
-                    ui.insertCommand(line);
-            } catch (UnsupportedEncodingException uee) {
-                ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
-            } catch (IOException ioe) {
-                ui.errorMessage("Error running the script " + script, ioe);
-            }
-        }
-        final TextEngine engine = new TextEngine(rootDir, ui);
-        new Thread(new Runnable() { public void run() { engine.run(); } }).start();
-        
-        Display display = Display.getDefault();
-        Shell shell = new Shell(display, SWT.SHELL_TRIM);
-        Composite composite = new Composite(shell, SWT.NONE);
-        composite.setLayout(new GridLayout(1, true));
-        shell.setLayout(new FillLayout());
-        CTabFolder parent = new CTabFolder(composite, SWT.BORDER | SWT.CLOSE | SWT.V_SCROLL | SWT.H_SCROLL);
-
-        MessageTab tab = new MessageTab(engine.getClient(), parent, "");
-
-        parent.setSelection(tab.getTab());
-        tab.setFocus();
-        parent.setLayoutData(new GridData(700, 500));
-        shell.pack();
-        shell.open();
-        while (!shell.isDisposed()) {
-            try {
-                if (!display.readAndDispatch()) display.sleep();
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("Done");
-        System.exit(0);
     }
 }

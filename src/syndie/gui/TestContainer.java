@@ -18,6 +18,10 @@ public class TestContainer {
 
         MessageTab tab = new MessageTab(client, parent, "");
 
+        CLI.setCommand("viewmsg", ViewMessageCommand.class);
+        ViewMessageCommand.messageTab = tab;
+        ViewMessageCommand.display = display;
+                
         parent.setSelection(tab.getTab());
         tab.setFocus();
         parent.setLayoutData(new GridData(700, 500));
@@ -37,7 +41,9 @@ public class TestContainer {
     /** ~= TextUI.main, except run in its own thread */
     private static DBClient startTextEngine(String args[]) {
         final TextUI ui = new TextUI(args);
-        new Thread(new Runnable() { public void run() { ui.run(); } }).start();
+        Thread t = new Thread(new Runnable() { public void run() { ui.run(); } }, "TextUI");
+        t.setDaemon(true);
+        t.start();
 	return ui.getEngine().getClient();
     }
 }
