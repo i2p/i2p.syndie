@@ -13,7 +13,7 @@ public class CLI {
     public static interface Command {
         public DBClient runCommand(Opts opts, UI ui, DBClient client);
     }
-    private static final Object _commands[][] = new Object[][] {
+    private static Object _commands[][] = new Object[][] {
         new Object[] { "import", Importer.class },
         new Object[] { "register", LoginManager.class },
 //        new Object[] { "login", LoginManager.class },
@@ -72,6 +72,31 @@ public class CLI {
             return null;
         }
     }
+
+    /**
+     * allow new commands to be added to the set of known commands,
+     * or old commands to be replaced with new ones.
+     */
+    public static void setCommand(String name, Class cmdClass) {
+        if (getCommand(name) == null) {
+            Object old[][] = _commands;
+            Object newcmd[][] = new Object[old.length+1][2];
+            for (int i = 0; i < old.length; i++) {
+                newcmd[i][0] = old[i][0];
+                newcmd[i][1] = old[i][1];
+            }
+            newcmd[old.length][0] = name;
+            newcmd[old.length][1] = cmdClass;
+            _commands = newcmd;
+        } else {
+            for (int i = 0; i < _commands.length; i++) {
+                if (name.equalsIgnoreCase(_commands[i][0].toString())) {
+                    _commands[i][1] = cmdClass;
+                }
+            }
+        }
+    }
+
     private static final void usage() {
         System.err.println("Usage: $command [$args]*");
         System.err.print("Known commands: ");

@@ -15,6 +15,7 @@ public class TextUI implements UI {
     private int _linesSinceInput;
     private PrintStream _debugOut;
     private BufferedReader _in;
+    private TextEngine _engine;
     
     /** @param wantsDebug if true, we want to display debug messages */
     public TextUI(boolean wantsDebug) {
@@ -190,6 +191,11 @@ public class TextUI implements UI {
     }
     
     public static void main(String args[]) {
+        TextUI ui = new TextUI(args);
+        ui.run();
+    }
+    public TextUI(String args[]) {
+        this(false);
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
         
@@ -201,20 +207,28 @@ public class TextUI implements UI {
             else
                 rootDir = args[i];
         }
-        TextUI ui = new TextUI(false);
         if (script != null) {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null)
-                    ui.insertCommand(line);
+                    insertCommand(line);
             } catch (UnsupportedEncodingException uee) {
-                ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
+                errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
-                ui.errorMessage("Error running the script " + script, ioe);
+                errorMessage("Error running the script " + script, ioe);
             }
         }
-        TextEngine engine = new TextEngine(rootDir, ui);
-        engine.run();
+        _engine = new TextEngine(rootDir, this);
+    }
+    
+    public TextEngine getEngine() { return _engine; }
+
+    /**
+     * run the UI against a new text engine - this call doesn't return
+     * until the engine tells it to
+     */
+    public void run() {
+        _engine.run();
     }
 }

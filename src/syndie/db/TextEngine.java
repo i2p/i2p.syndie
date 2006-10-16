@@ -110,7 +110,7 @@ public class TextEngine {
         _archiveDir = new File(_rootDir, "archive");
         _outboundDir = new File(_rootDir, "outbound");
         _logDir = new File(_rootDir, "logs");
-        
+
         boolean dbDirCreated = false;
         if (!_rootDir.exists()) _rootDir.mkdirs();
         if (!_dbDir.exists()) { _dbDir.mkdir(); dbDirCreated = true; }
@@ -118,6 +118,8 @@ public class TextEngine {
         if (!_archiveDir.exists()) _archiveDir.mkdir();
         if (!_outboundDir.exists()) _outboundDir.mkdir();
         if (!_logDir.exists()) _logDir.mkdir();
+        
+        _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
         
         if (dbDirCreated) {
             // so it doesn't gather 'command completed'/etc messages on the screen
@@ -275,7 +277,7 @@ public class TextEngine {
             return true;
         } else if ("up".equalsIgnoreCase(cmd)) {
             if (_currentMenu != StartMenu.NAME)
-	        _currentMenu = LoggedInMenu.NAME;
+                _currentMenu = LoggedInMenu.NAME;
             _ui.commandComplete(0, null);
             return true;
         } else if ("prefs".equalsIgnoreCase(cmd)) {

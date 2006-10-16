@@ -2,6 +2,9 @@
 
     - let the freenetpost inserts be visible on freenet's /queue/
     - automatically rebuild the index before inserting into freenet
+    - make it easier for other apps to embed the text interface (by
+      creating a TextUI(String[]) and .run()ing it), and to extend the
+      commands known (by registering them with syndie.db.CLI)
 
 * 2006-10-15  0.915b released
     - added support for posting archives to freenet 0.7 via the 
