@@ -5,6 +5,9 @@
     - make it easier for other apps to embed the text interface (by
       creating a TextUI(String[]) and .run()ing it), and to extend the
       commands known (by registering them with syndie.db.CLI)
+    - (syndie.gui branch) initial stub message viewer, depends upon swt
+      libs being located as specified in bin/syndie-gui (at runtime) or
+      nbproject/project.properties (at build time)
 
 * 2006-10-15  0.915b released
     - added support for posting archives to freenet 0.7 via the 
