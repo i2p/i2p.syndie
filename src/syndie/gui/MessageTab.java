@@ -113,7 +113,7 @@ public class MessageTab extends Component {
         _aboutNym = new Button(_top, SWT.FLAT);
         _aboutFlags = new Composite(_top, SWT.BORDER);
         _page = new Combo(_top, SWT.NONE);
-        _body = new PageRenderer(this, _top);
+        _body = new PageRenderer(_top);
     }
     protected void addActions() { 
         _aboutChannel.addMouseListener(new MouseListener() {
@@ -143,7 +143,6 @@ public class MessageTab extends Component {
 
             _page.setItems(new String[] { "Page 1", "Page 2", "Page 3", "Page 4" });
             _page.select(0);
-            _body.updateText();
         } else {
             long channelId = _client.getChannelId(_uri.getScope());
             ChannelInfo chan = _client.getChannel(channelId);
@@ -197,12 +196,7 @@ public class MessageTab extends Component {
             }
             
             int toView = _page.getSelectionIndex();
-            String cfg = _client.getMessagePageConfig(msg.getInternalId(), toView);
-            String body = _client.getMessagePageData(msg.getInternalId(), toView);
-            Properties props = new Properties();
-            CommandImpl.parseProps(cfg, props);
-            String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
-            _body.updateText(body, mimeType);
+            _body.renderPage(_client, msg, toView);
         }
         updateFlags(msg, targetChannel);
     }

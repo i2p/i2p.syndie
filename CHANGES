@@ -10,6 +10,7 @@
       nbproject/project.properties (at build time)
     - (syndie.gui branch) further refinement to the gui stub, loads
       message bodies with viewmsg --uri $uri
+    - (syndie.gui branch) beginning of the html parse/rendering
 
 * 2006-10-15  0.915b released
     - added support for posting archives to freenet 0.7 via the 
