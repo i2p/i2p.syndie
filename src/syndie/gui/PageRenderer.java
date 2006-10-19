@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.Collection;
 import java.util.Properties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
@@ -97,10 +98,16 @@ public class PageRenderer {
     private void renderHTML(String html) {
         HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg);
         builder.buildState();
-        _text.setText(builder.getAsText());
-        _text.setStyleRanges(builder.getStyleRanges());
+        String text = builder.getAsText();
+        _text.setText(text);
+        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg);
+        sbuilder.buildStyles();
+        _text.setStyleRanges(sbuilder.getStyleRanges());
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
         // so that the listeners registered in the constructor can do their thing
+        Collection imageIndexes = sbuilder.getImageIndexes();
+        Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
+        Collection listItemIndexes = sbuilder.getListItemIndexes();
     }
     
     public MessageInfo getCurrentMessage() { return _msg; }

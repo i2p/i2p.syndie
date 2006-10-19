@@ -11,22 +11,23 @@ class HTMLStateBuilder {
     private String _html;
     private MessageInfo _msg;
     private String _plainText;
-    private List _styleRanges;
     /** used during state building */
     private boolean _isInComment;
     /** used during state building */
     private boolean _prevWasWhitespace;
     /** list of Tag instances, used during state building */
     private List _activeTags;
+    /** parsed Tag instances with start/stop ranges */
+    private List _closedTags;
     
     private static final Map _charMap = new HashMap();
     static {
         _charMap.put("amp", "&");
         _charMap.put("nbsp", " ");
         _charMap.put("lt", "<");
-        _charMap.put("le", "\u1230");
+        _charMap.put("le", "\u1230"); // todo: get actual utf-8 char code
         _charMap.put("eq", "=");
-        _charMap.put("ge", "\u2345");
+        _charMap.put("ge", "\u2345"); // todo: get actual utf-8 char code
         _charMap.put("gt", ">");
     }
     
@@ -37,7 +38,7 @@ class HTMLStateBuilder {
 
     public void buildState() {
         _activeTags = new ArrayList();
-        _styleRanges = new ArrayList();
+        _closedTags = new ArrayList();
         int off = 0;
         int len = _html.length();
         
@@ -48,6 +49,10 @@ class HTMLStateBuilder {
         
         System.out.println("unparsed html:\n" + _html);
         
+        _plainText = parse(off, len, assumeBody);
+    }
+    
+    private String parse(int off, int len, boolean assumeBody) {
         boolean tagStarted = false;
         _prevWasWhitespace = false;
         _isInComment = false;
@@ -155,16 +160,16 @@ class HTMLStateBuilder {
         
         // close any unclosed tags
         for (int i = _activeTags.size()-1; i >= 0; i--) {
-            Tag tag = (Tag)_activeTags.get(i);
-            receiveTagEnd(tag.getName(), len, body);
+            HTMLTag tag = (HTMLTag)_activeTags.get(i);
+            receiveTagEnd(tag.getName(), body.length(), body);
         }
         
-        _plainText = body.toString();
+        return body.toString();
     }
     
     private boolean tagIsActive(String tagName) {
         for (int i = 0; i < _activeTags.size(); i++) {
-            Tag tag = (Tag)_activeTags.get(i);
+            HTMLTag tag = (HTMLTag)_activeTags.get(i);
             if (tag.getName().equals(tagName))
                 return true;
         }
@@ -184,23 +189,55 @@ class HTMLStateBuilder {
             }
             return;
         }
-        Tag tag = new Tag(tagContent, bodyIndex);
+        HTMLTag parent = null;
+        if (_activeTags.size() > 0)
+            parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
+        HTMLTag tag = new HTMLTag(tagContent, bodyIndex, parent);
         _activeTags.add(tag);
         System.out.println("tag parsed: " + tag.toString());
         String tagName = tag.getName();
+        // some tags insert data into the document as soon as they begin (br, img, p, pre, li, etc),
+        // while others only insert data when they end or not at all
         if ("br".equals(tagName)) {
             body.append("\n");
             _prevWasWhitespace = true;
+        } else if ("img".equals(tagName)) {
+            body.append(PLACEHOLDER_IMAGE);
+            _prevWasWhitespace = false;
+        } else if ("p".equals(tagName)) {
+            // make sure the <p>foo</p> starts off with a blank line before it
+            if ( (bodyIndex > 1) && (body.charAt(bodyIndex-1) != '\n') && (body.charAt(bodyIndex-2) != '\n') )
+                body.append('\n');
+        } else if ("pre".equals(tagName)) {
+            // make sure the <pre>foo</pre> starts off on a new line
+            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') )
+                body.append('\n');
+        } else if ("li".equals(tagName)) {
+            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') )
+                body.append('\n');
+            body.append(PLACEHOLDER_LISTITEM);
+            _prevWasWhitespace = false;
         }
     }
+    
+    /** the following character is inserted into the document whenever there should be an image */
+    static final char PLACEHOLDER_IMAGE = '\u0001';
+    /** the following character is inserted into the document after all links */
+    static final char PLACEHOLDER_LINK_END = '\u0002';
+    /** the following character is inserted into the document before any list items */
+    static final char PLACEHOLDER_LISTITEM = '\u0003';
+    
     private void receiveTagEnd(StringBuffer content, int bodyIndex, StringBuffer body) {
         receiveTagEnd(content.toString(), bodyIndex, body);
     }
     private void receiveTagEnd(String content, int bodyIndex, StringBuffer body) {
         //System.out.println("Receive tag end: " + content + " [applies to " + bodyIndex + "]");
-        Tag tag = new Tag(content, bodyIndex);
+        HTMLTag parent = null;
+        if (_activeTags.size() > 0)
+            parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
+        HTMLTag tag = new HTMLTag(content, bodyIndex, parent);
         for (int i = _activeTags.size()-1; i >= 0; i--) {
-            Tag open = (Tag)_activeTags.get(i);
+            HTMLTag open = (HTMLTag)_activeTags.get(i);
             if (tag.getName().equals(open.getName())) {
                 open.setEndIndex(bodyIndex);
                 System.out.println("Closing tag " + open.toString());
@@ -218,7 +255,13 @@ class HTMLStateBuilder {
                            "h5".equals(tag.getName())) {
                     body.append("\n\n");
                     _prevWasWhitespace = true;
+                } else if ("li".equals(tag.getName())) {
+                    body.append("\n");
+                    _prevWasWhitespace = true;
+                } else if ("a".equals(tag.getName())) {
+                    body.append(PLACEHOLDER_LINK_END);
                 }
+                _closedTags.add(open);
                 // should we remove all of the child tags too? 
                 // no.  think about: <b><i>bold italic</b>italic not bold</i>
                 return;
@@ -227,116 +270,12 @@ class HTMLStateBuilder {
         System.out.println("tag closed that was never opened: " + tag);
         System.out.println("tags: " + _activeTags);
     }
-    
-    private class Tag {
-        /** tag name, lower case */
-        private String _name;
-        /** attributes on the tag */
-        private Properties _attributes;
-        /** start index for the body text that the tag is applicable to */
-        private int _startIndex;
-        private int _endIndex;
-        
-        public Tag(String tagBody, int startIndex) {
-            _startIndex = startIndex;
-            _endIndex = -1;
-            _attributes = new Properties();
-            int attribNameStart = -1;
-            int attribNameEnd = -1;
-            int attribValueStart = -1;
-            int quoteChar = -1;
 
-            if (tagBody.charAt(0) == '/') // endTag
-                tagBody = tagBody.substring(1);
-            
-            int len = tagBody.length();
-            for (int i = 0; i < len; i++) {
-                char c = tagBody.charAt(i);
-                if (Character.isWhitespace(c)) {
-                    if (_name == null) {
-                        if (i == 0)
-                            _name = "";
-                        _name = tagBody.substring(0, i).toLowerCase();
-                    } else {
-                        if (quoteChar != -1) {
-                            // keep going, we are inside a quote
-                        } else {
-                            if (attribNameStart == -1) {
-                                // whitespace outside an attribute.. ignore
-                            } else if (attribNameEnd == -1) {
-                                // whitespace does terminate an attribute ("href = 'foo'")
-                                attribNameEnd = i;
-                            } else if (attribValueStart == -1) {
-                                // whitespace doesn't start an attribute 
-                            } else {
-                                // whitespace does terminate an unquoted attribute value though
-                                quoteChar = -1;
-                                String name = tagBody.substring(attribNameStart, attribNameEnd);
-                                String val = tagBody.substring(attribValueStart, i);
-                                _attributes.setProperty(name, val);
-                                attribNameStart = -1;
-                                attribNameEnd = -1;
-                                attribValueStart = -1;
-                            }
-                        }
-                    }
-                } else if ( (quoteChar != -1) && (quoteChar == c) && (attribValueStart != -1) ) {
-                    quoteChar = -1;
-                    String name = tagBody.substring(attribNameStart, attribNameEnd);
-                    String val = tagBody.substring(attribValueStart, i);
-                    _attributes.setProperty(name, val);
-                    attribNameStart = -1;
-                    attribNameEnd = -1;
-                    attribValueStart = -1;
-                } else if (_name != null) {
-                    // already have our name, so we are parsing attributes
-                    if (attribNameStart == -1) {
-                        attribNameStart = i;
-                    } else if (attribNameEnd == -1) {
-                        if (c == '=') {
-                            attribNameEnd = i;
-                        }
-                    } else if (attribValueStart == -1) {
-                        if (c == '\'') {
-                            quoteChar = c;
-                            attribValueStart = i+1;
-                        } else if (c == '\"') {
-                            quoteChar = c;
-                            attribValueStart = i+1;
-                        }
-                    }
-                } else {
-                    // name not known, and we haven't reached whitespace yet.  keep going
-                }
-            } // end looping over the tag body
-            if (_name == null)
-                _name = tagBody.toLowerCase();
-        }
-        
-        /** lower case tag name */
-        public String getName() { return _name; }
-        public String getAttribValue(String name) { return _attributes.getProperty(name); }
-        public int getStartIndex() { return _startIndex; }
-        /** the tag was closed at the given body index */
-        public void setEndIndex(int index) { _endIndex = index; }
-        public int getEndIndex() { return _endIndex; }
-        
-        public String toString() {
-            StringBuffer rv = new StringBuffer();
-            rv.append('<');
-            rv.append(_name);
-            rv.append(' ');
-            for (Iterator iter = _attributes.keySet().iterator(); iter.hasNext(); ) {
-                String name = (String)iter.next();
-                String val = _attributes.getProperty(name);
-                rv.append(name).append('=').append('\'').append(val).append('\'').append(' ');
-            }
-            rv.append('>');
-            rv.append(" applies to [" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
-            return rv.toString();
-        }
-    }
-
+    /**
+     * interpret html character entities (&amp;, &nbsp;, &#0001;, etc)
+     * @return string containing the referenced character, or if the reference could not be
+     *         decoded, the escape body itself (so the typo &am; would return "&am;")
+     */
     private String getCharacter(String escapeBody) {
         String rv = (String)_charMap.get(escapeBody.toLowerCase());
         if (rv != null)
@@ -359,10 +298,8 @@ class HTMLStateBuilder {
     }
     
     public String getAsText() { return _plainText; }
-    public StyleRange[] getStyleRanges() {
-        StyleRange rv[] = new StyleRange[_styleRanges.size()];
-        return (StyleRange[])_styleRanges.toArray(rv);
-    }
+    /** list of parsed HTMLTag instances, specifying their start and end index in the body */
+    public List getTags() { return _closedTags; }
     
     public static void main(String args[]) {
         test("<html><body>hi<br />how are you?</body></html>");
@@ -380,7 +317,7 @@ class HTMLStateBuilder {
         System.out.println("Text: " + text);
     }
     /** try to flex the supported html... */
-    private static final String COMPREHENSIVE_TEST = 
+    static final String COMPREHENSIVE_TEST = 
 "<html><body>\n" +
 "<p>html test page (links to syndieURIs are invalid, as are pages/images)</p>\n" +
 "<b>i am bold</b><br />\n" +
