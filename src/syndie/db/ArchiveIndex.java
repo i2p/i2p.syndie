@@ -93,7 +93,7 @@ public class ArchiveIndex {
         // grab authorized messages
         List authorizedIds = client.getMessageIdsAuthorized(info.getChannelHash());
         for (int i = 0; i < authorizedIds.size(); i++) {
-            ui.debugMessage("Authorized messageIds for " + info.getChannelHash().toBase64() + ": " + authorizedIds);
+            //ui.debugMessage("Authorized messageIds for " + info.getChannelHash().toBase64() + ": " + authorizedIds);
             Long msgId = (Long)authorizedIds.get(i);
             MessageInfo msgInfo = client.getMessage(msgId.longValue());
             if (msgInfo != null) {
@@ -242,22 +242,22 @@ public class ArchiveIndex {
                 boolean ok = entry.read(fin, unauth);
                 if (ok) {
                     if (unauth) {
-                        ui.debugMessage("Index contains the unauthorized channel data for " + Base64.encode(entry.getScope()));
-                        for (int i = 0 ; i < entry.getUnauthorizedMessageCount(); i++) {
-                            ArchiveMessage msg = entry.getUnauthorizedMessage(i);
-                            ui.debugMessage(i + ": " + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
-                        }
+                        //ui.debugMessage("Index contains the unauthorized channel data for " + Base64.encode(entry.getScope()));
+                        //for (int i = 0 ; i < entry.getUnauthorizedMessageCount(); i++) {
+                            //ArchiveMessage msg = entry.getUnauthorizedMessage(i);
+                            //ui.debugMessage(i + ": " + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
+                        //}
                     } else {
-                        ui.debugMessage("Index contains the channel data for " + Base64.encode(entry.getScope()));
-                        for (int i = 0 ; i < entry.getMessageCount(); i++) {
-                            ArchiveMessage msg = entry.getMessage(i);
-                            ui.debugMessage(i + ": " + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
-                        }
-                        ui.debugMessage("Pseudoauthorized messages: " + entry.getPseudoAuthorizedMessageCount());
-                        for (int i = 0 ; i < entry.getPseudoAuthorizedMessageCount(); i++) {
-                            ArchiveMessage msg = entry.getPseudoAuthorizedMessage(i);
-                            ui.debugMessage(i + ": " + msg.getPrimaryScope().toBase64() +":" + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
-                        }
+                        //ui.debugMessage("Index contains the channel data for " + Base64.encode(entry.getScope()));
+                        //for (int i = 0 ; i < entry.getMessageCount(); i++) {
+                        //    ArchiveMessage msg = entry.getMessage(i);
+                        //    ui.debugMessage(i + ": " + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
+                        //}
+                        //ui.debugMessage("Pseudoauthorized messages: " + entry.getPseudoAuthorizedMessageCount());
+                        //for (int i = 0 ; i < entry.getPseudoAuthorizedMessageCount(); i++) {
+                        //    ArchiveMessage msg = entry.getPseudoAuthorizedMessage(i);
+                        //    ui.debugMessage(i + ": " + msg.getPrimaryScope().toBase64() +":" + msg.getMessageId() + "/" + msg.getIsAuthorized() + "/"+msg.getIsNew() + "/" + msg.getIsPasswordProtected() + "/" + msg.getIsReply() + "/" + ((msg.getEntrySize()+1023)/1024) + "KB");
+                        //}
                     }
                     index.addChannel(entry);
                 } else {

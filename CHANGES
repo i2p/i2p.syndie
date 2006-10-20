@@ -1,10 +1,13 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-20  0.916b released
     - let the freenetpost inserts be visible on freenet's /queue/
     - automatically rebuild the index before inserting into freenet
     - make it easier for other apps to embed the text interface (by
       creating a TextUI(String[]) and .run()ing it), and to extend the
       commands known (by registering them with syndie.db.CLI)
+    - deal with missing messages in threads more gracefully
+    - properly pull freenet archive entries with ?forcedownload URLs
 
 * 2006-10-15  0.915b released
     - added support for posting archives to freenet 0.7 via the 

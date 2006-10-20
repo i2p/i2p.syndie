@@ -768,14 +768,10 @@ class ReadMenu implements TextEngine.Menu {
                         if (_currentMessage != null) {
                             // ok, switched over
                         } else {
-                            ui.statusMessage("Switched over to the specified channel, but the requested message was not known (" + uri.getMessageId() + ")");
-                            ui.commandComplete(0, null);
-                            return;
+                            ui.statusMessage("The requested message is not known locally: " + uri);
                         }
                     } else {
-                        ui.statusMessage("The message requested is not in a locally known channel (" + uri.getScope() + ")");
-                        ui.commandComplete(0, null);
-                        return;
+                        ui.statusMessage("The requested message is not known locally: " + uri);
                     }
                 } catch (URISyntaxException use) {
                     ui.errorMessage("The requested message is neither an index to the message list or a full syndie URI");
@@ -786,8 +782,13 @@ class ReadMenu implements TextEngine.Menu {
         }
         
         if (_currentMessage == null) {
-            ui.errorMessage("Current message is null");
-            ui.commandComplete(-1, null);
+            if (!rebuildThread) {
+                displayThread(client, ui, rebuildThread);
+                ui.commandComplete(0, null);
+            } else {
+                ui.errorMessage("Current message is null");
+                ui.commandComplete(-1, null);
+            }
         } else {
             displayMessage(client, ui, _currentMessage, (int)opts.getOptLong("page", 1));
             displayThread(client, ui, rebuildThread);
@@ -1163,7 +1164,7 @@ class ReadMenu implements TextEngine.Menu {
             Hash channel = uri.getScope();
             Long msgId = uri.getMessageId();
             if ( (channel == null) || (msgId == null) ) return;
-            //_ui.debugMessage("Walking node " + _nodes + " - " + channel.toBase64() + ":" + msgId.longValue() + " [" + node.getTreeIndex() + "]");
+            //_ui.debugMessage("Walking node " + _nodes + " - " + channel.toBase64() + ":" + msgId.longValue() + " [" + node.getTreeIndex() + "/" + node.getName() + "]");
             //if (node.getParent() == null)
             //    _ui.debugMessage("parent: none");
             //else
@@ -1172,14 +1173,20 @@ class ReadMenu implements TextEngine.Menu {
             
             StringBuffer walked = new StringBuffer();
             
-            if ( (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) )
+            if ( (_currentMessage != null) && (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) )
                 walked.append("* ");
             
             walked.append(node.getTreeIndex()).append(": ");
-            if (node.getName() == null) {
+            if (node.getDescription() == null) {
                 // dummy element in the tree, representing a message we don't have locally
+                walked.append(CommandImpl.strip(node.getName()));
+                walked.append(" (").append(channel.toBase64().substring(0,6)).append(") ");
+                String when = null;
+                synchronized (_dayFmt) {
+                    when = _dayFmt.format(new Date(msgId.longValue()));
+                }
+                walked.append(when).append(" ");
                 walked.append("[message not locally known]");
-                walked.append(" (").append(channel.toBase64().substring(0,6)).append(":").append(msgId).append(")");
             } else {
                 walked.append(CommandImpl.strip(node.getName()));
                 walked.append(" (").append(channel.toBase64().substring(0,6)).append(") ");
@@ -1243,6 +1250,8 @@ class ReadMenu implements TextEngine.Menu {
             
             _ui.debugMessage("Visiting " + node.getTreeIndex() + ": " + channel.toBase64().substring(0,6) + ":" + msgId);
             if (_nextURI != null) return; // done
+            if (node.getDescription() == null) // not known locally
+                return;
             if (_prevWasCurrent) {
                 _prevWasCurrent = false;
                 if (_wanted == null) { // pick next available
@@ -1252,7 +1261,7 @@ class ReadMenu implements TextEngine.Menu {
                 }
             }
             
-            if ( (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) ) {
+            if ( (_currentMessage != null) && (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) ) {
                 _prevWasCurrent = true;
                 _ui.debugMessage("current message is being viewed (" + node.getTreeIndex() + ")");
             } else {
@@ -1328,7 +1337,7 @@ class ReadMenu implements TextEngine.Menu {
                         if (_currentMessage != null) {
                             // ok, switched over
                         } else {
-                            ui.statusMessage("Switched over to the specified channel, but the requested message was not known (" + uri.getMessageId() + ")");
+                            ui.statusMessage("Switched over to the specified channel, but the requested message was not known (" + uri + ")");
                             ui.commandComplete(0, null);
                             return;
                         }
@@ -1400,7 +1409,7 @@ class ReadMenu implements TextEngine.Menu {
                         if (_currentMessage != null) {
                             // ok, switched over
                         } else {
-                            ui.statusMessage("Switched over to the specified channel, but the requested message was not known (" + uri.getMessageId() + ")");
+                            ui.statusMessage("Switched over to the specified channel, but the requested message was not known (" + uri + ")");
                             ui.commandComplete(0, null);
                             return;
                         }

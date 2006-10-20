@@ -117,6 +117,8 @@ public class HTTPSyndicator {
             else
                 url = _archiveURL + uri.getScope().toBase64() + "/" + uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX;
             
+            if ( (url.indexOf("SSK@") >= 0) || (url.indexOf("CHK@") >= 0) || (url.indexOf("USK@") >= 0) )
+                url = url + "?forcedownload";
             File tmpFile = new File(msgDir, i + Constants.FILENAME_SUFFIX);
             httpURLToSyndieURI.put(url, uri);
             urls.add(url);
@@ -275,6 +277,11 @@ public class HTTPSyndicator {
     public void importPBE(int index, String passphrase) {
         Importer imp = new Importer(_client, _client.getPass());
         File f = (File)_pendingPBEFiles.get(index);
+        if ( (_pendingPBEURIs.size() <= index) || (index < 0) ) {
+            _ui.errorMessage("Index out of bounds");
+            _ui.commandComplete(-1, null);
+            return;
+        }
         SyndieURI uri = (SyndieURI)_pendingPBEURIs.get(index);
         boolean ok;
         try {

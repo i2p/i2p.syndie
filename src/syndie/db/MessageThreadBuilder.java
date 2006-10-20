@@ -70,6 +70,7 @@ class MessageThreadBuilder {
             MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
             if (msg != null) {
                 subject = msg.getSubject();
+                if (subject == null) subject = "";
                 if (!msg.getForceNewThread()) {
                     parentURIs = getParentURIs(msg.getInternalId());
                     enqueue(parentURIs);
@@ -78,9 +79,12 @@ class MessageThreadBuilder {
                     childURIs = getChildURIs(chan, msg.getMessageId());
                     enqueue(childURIs);
                 }
+            } else {
+                _ui.debugMessage("message " + uri + " (chanId=" + chanId + ") was not found");
             }
         } else {
             authorName = uri.getScope().toBase64().substring(0,6);
+            _ui.debugMessage("channel for message " + uri + " was not found");
         }
         
         ThreadedReferenceNode node = new ThreadedReferenceNode(authorName, uri, subject);

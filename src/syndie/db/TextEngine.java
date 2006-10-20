@@ -60,7 +60,17 @@ public class TextEngine {
         }
         _ui.statusMessage("Syndie engine exiting");
     }
+
     public boolean runStep() {
+        try {
+	    return doRunStep();
+	} catch (RuntimeException re) {
+	    _ui.errorMessage("Internal error", re);
+	    return true;
+	}
+    }
+
+    private boolean doRunStep() {
         Opts opts = _ui.readCommand();
         if (opts == null) return false;
         String cmdStr = opts.getCommand();
