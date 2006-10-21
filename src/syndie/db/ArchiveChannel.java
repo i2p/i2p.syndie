@@ -60,7 +60,7 @@ public class ArchiveChannel {
 
     public void write(OutputStream out, boolean newOnly, boolean chanOnly, boolean includeUnauthorized) throws IOException {            
         try {
-            _ui.debugMessage("Writing channel " + Base64.encode(getScope()) + " (new? " + newOnly + " meta? " + chanOnly + " unauthorized? " + includeUnauthorized + ")");
+            //_ui.debugMessage("Writing channel " + Base64.encode(getScope()) + " (new? " + newOnly + " meta? " + chanOnly + " unauthorized? " + includeUnauthorized + ")");
             //$scopeHash
             out.write(getScope());
             //$metaVersion
@@ -92,7 +92,7 @@ public class ArchiveChannel {
                         }
                     }
                     DataHelper.writeLong(out, 4, numToWrite);
-                    _ui.debugMessage("Including fully authorized messages: " + numToWrite);
+                    //_ui.debugMessage("Including fully authorized messages: " + numToWrite);
                     for (int j = 0; !includeUnauthorized && j < getMessageCount(); j++) {
                         ArchiveMessage msg = getMessage(j);
                         //    $messageId
@@ -104,7 +104,7 @@ public class ArchiveChannel {
                             DataHelper.writeLong(out, 4, msg.getReceiveDate()/24*60*60*1000l);
                             DataHelper.writeLong(out, 4, msg.getEntrySize());
                             DataHelper.writeLong(out, 1, msg.getFlags());
-                            _ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
+                            //_ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
                         }
                     }
                 }
@@ -113,7 +113,7 @@ public class ArchiveChannel {
                 // posts
                 Map thirdParty = new HashMap();
                 if (includeUnauthorized) {
-                    _ui.debugMessage("Including unauthorized messages: " + getUnauthorizedMessageCount());
+                    //_ui.debugMessage("Including unauthorized messages: " + getUnauthorizedMessageCount());
                     for (int i = 0; i < getUnauthorizedMessageCount(); i++) {
                         ArchiveMessage msg = getUnauthorizedMessage(i);
                         if (!msg.getIsNew() && newOnly)
@@ -126,7 +126,7 @@ public class ArchiveChannel {
                         msgs.add(msg);
                     }
                 } else {
-                    _ui.debugMessage("Including pseudoauthorized messages: " + getPseudoAuthorizedMessageCount());
+                    //_ui.debugMessage("Including pseudoauthorized messages: " + getPseudoAuthorizedMessageCount());
                     for (int i = 0; i < getPseudoAuthorizedMessageCount(); i++) {
                         ArchiveMessage msg = getPseudoAuthorizedMessage(i);
                         if (!msg.getIsNew() && newOnly)
@@ -151,7 +151,7 @@ public class ArchiveChannel {
                         DataHelper.writeLong(out, 4, msg.getReceiveDate()/24*60*60*1000L);
                         DataHelper.writeLong(out, 4, msg.getEntrySize());
                         DataHelper.writeLong(out, 1, msg.getFlags());
-                        _ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
+                        //_ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
                     }
                 }
             }
@@ -175,6 +175,7 @@ public class ArchiveChannel {
 
             long numMsgs = DataHelper.readLong(in, 4);
             int subsequent = (int)DataHelper.readLong(in, 4);
+            //_ui.debugMessage("scope: " + scopeHash.toBase64() + " #msgs: " + numMsgs + " included? " + subsequent);
             for (int i = 0; i < subsequent; i++) {
                 ArchiveMessage msg = new ArchiveMessage();
                 long msgId = DataHelper.readLong(in, 8);

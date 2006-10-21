@@ -168,6 +168,10 @@ public class ThreadAccumulator {
                 _latest = node;
             long chanId = _client.getChannelId(node.getURI().getScope());
             MessageInfo msg = _client.getMessage(chanId, node.getURI().getMessageId());
+            if (msg == null) {
+                _ui.debugMessage("Visiting node " + node.getURI() + " is in channelId " + chanId + " but the message isn't in the database?");
+                return;
+            }
             _tags.addAll(msg.getPublicTags());
             _tags.addAll(msg.getPrivateTags());
         }        

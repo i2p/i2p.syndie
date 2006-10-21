@@ -91,12 +91,17 @@ public class FreenetArchivePusher {
             out.write(("ClientPutComplexDir\r\n" +
                        "Identifier=" + (msgId+1) + "\r\n" +
                        "URI=" + target + "\r\n" +
-                       "Verbosity=0\r\n" + // we don't care about anyting
+                       "Verbosity=1023\r\n" + // we don't care about anyting
                        "Global=true\r\n" + // let it be seen on fproxy's /queue/
                        "MaxRetries=10\r\n" +
                        "PriorityClass=3\r\n" + // 3 is lower than interactive
                        "Persistence=reboot\r\n" // runs until success or the freenet instance restarts
+                       //"DefaultName=index-all.dat\r\n" // serve it up as the index
                        ).getBytes());
+            
+            // perhaps we should insert a fake html index to let people browse the
+            // archive with fproxy?  maybe with some 'hey, you need syndie to read this'
+            // stuff in it?
             
             // dont use UploadFrom=disk, because that breaks if the fcpHost != localhost,
             // or if the freenet instance doesn't have read permissions on the archive

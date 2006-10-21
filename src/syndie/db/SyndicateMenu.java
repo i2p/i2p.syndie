@@ -135,6 +135,7 @@ class SyndicateMenu implements TextEngine.Menu {
                 keyStart = _baseUrl.indexOf("CHK@");
             }
         }
+	boolean includeForceDownload = false;
         if (keyStart >= 0) {
             String fproxyHost = _proxyHost;
             int fproxyPort = _proxyPort;
@@ -145,6 +146,7 @@ class SyndicateMenu implements TextEngine.Menu {
             _proxyHost = null;
             _proxyPort = -1;
             _baseUrl = "http://" + fproxyHost + ":" + fproxyPort + "/" + _baseUrl.substring(keyStart);
+	    includeForceDownload = true;
         }
         
         
@@ -170,6 +172,8 @@ class SyndicateMenu implements TextEngine.Menu {
         } else { //if ("all".equalsIgnoreCase(scope))
             url = _baseUrl + "index-all.dat";
         }
+	if (includeForceDownload) url = url + "?forcedownload";
+
         _shouldProxy = (_proxyHost != null) && (_proxyPort > 0);
         _archiveWasRemote = true;
         File out = null;
@@ -417,7 +421,7 @@ class SyndicateMenu implements TextEngine.Menu {
         
         File f = new File(dir);
         File files[] = f.listFiles(_metafilter);
-        for (int i = 0; i < files.length; i++) {
+        for (int i = 0; files != null && i < files.length; i++) {
             importMsg(client, ui, files[i]);
             if (del) {
                 boolean deleted = files[i].delete();
@@ -430,7 +434,7 @@ class SyndicateMenu implements TextEngine.Menu {
         }
         
         files = f.listFiles(_postfilter);
-        for (int i = 0; i < files.length; i++) {
+        for (int i = 0; files != null && i < files.length; i++) {
             importMsg(client, ui, files[i]);
             if (del) {
                 boolean deleted = files[i].delete();
