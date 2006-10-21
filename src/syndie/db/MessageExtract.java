@@ -136,10 +136,10 @@ public class MessageExtract extends CommandImpl {
                     }
                 } else {
                     Hash identHash = ident.calculateHash();
-                    List keys = client.getReadKeys(identHash, nymId, client.getPass());
+                    List keys = client.getReadKeys(identHash, nymId, client.getPass(), false);
                     byte target[] = enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
-                        List targetKeys = client.getReadKeys(new Hash(target), client.getLoggedInNymId(), client.getPass());
+                        List targetKeys = client.getReadKeys(new Hash(target), client.getLoggedInNymId(), client.getPass(), false);
                         keys.addAll(targetKeys);
                     }
                     

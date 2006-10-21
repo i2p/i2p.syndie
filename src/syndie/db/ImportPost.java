@@ -180,14 +180,14 @@ public class ImportPost {
                         }
                     }
                 } else {
-                    List keys = _client.getReadKeys(_channel, _nymId, _pass);
+                    List keys = _client.getReadKeys(_channel, _nymId, _pass, false);
                     if ( (keys == null) || (keys.size() <= 0) ) {
                         _ui.errorMessage("No read keys known for " + _channel.toBase64());
                         _body = new UnreadableEnclosureBody(_client.ctx());
                     }
                     byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
-                        List targetKeys = _client.getReadKeys(new Hash(target), _nymId, _pass);
+                        List targetKeys = _client.getReadKeys(new Hash(target), _nymId, _pass, false);
                         keys.addAll(targetKeys);
                     }
                     for (int i = 0; i < keys.size(); i++) {

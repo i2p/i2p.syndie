@@ -78,7 +78,7 @@ class ImportMeta {
                     }
                 }
             } else {
-                List keys = client.getReadKeys(identHash, nymId, nymPassphrase);
+                List keys = client.getReadKeys(identHash, nymId, nymPassphrase, false);
                 for (int i = 0; keys != null && i < keys.size(); i++) {
                     // try decrypting with that key
                     try {
@@ -598,9 +598,9 @@ class ImportMeta {
         }
     }
     
-    static final String SQL_DELETE_READ_KEYS = "DELETE FROM channelReadKey WHERE channelId = ?";
+    static final String SQL_DEPRECATE_READ_KEYS = "UPDATE channelReadKey SET keyEnd = CURDATE() WHERE channelId = ? AND keyEnd IS NULL";
     private static void setChannelReadKeys(DBClient client, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
-        client.exec(SQL_DELETE_READ_KEYS, channelId);
+        client.exec(SQL_DEPRECATE_READ_KEYS, channelId);
         addChannelReadKeys(client, channelId, body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS));
         addChannelReadKeys(client, channelId, enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS));
     }

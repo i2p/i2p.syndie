@@ -471,12 +471,15 @@ public class DBClient {
     private static final String SQL_GET_READKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND keyFunction = '" + Constants.KEY_FUNCTION_READ + "'";
-    private static final String SQL_GET_CHANREADKEYS = "SELECT keyData, keyStart FROM channelReadKey WHERE channelId = ? ORDER BY keyStart ASC";
+    private static final String SQL_GET_CHANREADKEYS_RW = "SELECT keyData, keyStart FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL ORDER BY keyStart ASC";
+    private static final String SQL_GET_CHANREADKEYS_RO = "SELECT keyData, keyStart FROM channelReadKey WHERE channelId = ? ORDER BY keyStart ASC";
     /** 
      * list of SessionKey instances that the nym specified can use to try and read/write 
      * posts to the given identHash channel
+     * @param onlyIncludeForWriting if true, only list the read keys we can use for writing a post (meaning
+     *        those that have not been deprecated)
      */
-    public List getReadKeys(Hash identHash, long nymId, String nymPassphrase) {
+    public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
         List rv = new ArrayList(1);
         byte pass[] = DataHelper.getUTF8(nymPassphrase);
         PreparedStatement stmt = null;
@@ -522,7 +525,10 @@ public class DBClient {
         // signed channel metadata
         long channelId = getChannelId(identHash);
         try {
-            stmt = _con.prepareStatement(SQL_GET_CHANREADKEYS);
+            if (onlyIncludeForWriting)
+                stmt = _con.prepareStatement(SQL_GET_CHANREADKEYS_RW);
+            else
+                stmt = _con.prepareStatement(SQL_GET_CHANREADKEYS_RO);
             //stmt.setBytes(1, identHash.getData());
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
@@ -897,7 +903,7 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_ARCHIVES = "SELECT archiveId, wasEncrypted FROM channelArchive WHERE channelId = ?";
-    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT keyData FROM channelReadKey WHERE channelId = ?";
+    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT keyData FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
     private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ? ORDER BY headerName";
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
@@ -1852,6 +1858,7 @@ public class DBClient {
     }
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
+    private static final String SQL_DELETE_READ_KEYS = "DELETE FROM channelReadKey WHERE channelId = ?";
     void deleteFromDB(SyndieURI uri, UI ui) {
         if (uri.getMessageId() == null) {
             // delete the whole channel, though all of the posts
@@ -1864,7 +1871,7 @@ public class DBClient {
                 exec(ImportMeta.SQL_DELETE_ARCHIVE_URIS, scopeId);
                 exec(ImportMeta.SQL_DELETE_ARCHIVES, scopeId);
                 exec(ImportMeta.SQL_DELETE_CHAN_ARCHIVES, scopeId);
-                exec(ImportMeta.SQL_DELETE_READ_KEYS, scopeId);
+                exec(SQL_DELETE_READ_KEYS, scopeId);
                 exec(ImportMeta.SQL_DELETE_CHANNEL_META_HEADER, scopeId);
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REF_URIS, scopeId);
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REFERENCES, scopeId);

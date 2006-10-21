@@ -10,6 +10,9 @@
       new users to http://syndie.i2p.net/archive/, and includes a "sync"
       alias to both pull and push any changes to it.  this does not affect
       existing syndie logins, and does not overwrite existing scripts
+    - keep track of old channel read keys so that we can decrypt messages that
+      used them later on, but don't use them to encrypt any new messages.
+      later, we can do some pruning to remove keys long ago deprecated
 
 * 2006-10-20  0.916b released
     - let the freenetpost inserts be visible on freenet's /queue/

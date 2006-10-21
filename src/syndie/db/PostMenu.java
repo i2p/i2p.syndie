@@ -1119,7 +1119,7 @@ class PostMenu implements TextEngine.Menu {
             type = "channel read key";
             byte channel[] = opts.getOptBytes("scope");
             byte keyHash[] = opts.getOptBytes("readkey");
-            List keys = client.getReadKeys(new Hash(channel), client.getLoggedInNymId(), client.getPass());
+            List keys = client.getReadKeys(new Hash(channel), client.getLoggedInNymId(), client.getPass(), true);
             ui.debugMessage("read keys for scope " + Base64.encode(channel) + ": " + keys.size()
                             + " (looking for " + Base64.encode(keyHash) + ")");
             for (int i = 0; i < keys.size(); i++) {

@@ -148,7 +148,7 @@ public class MessageGen extends CommandImpl {
     }
     
     private boolean genMessage(DBClient client, UI ui, long nymId, long scopeChannelId, long targetChannelId, Hash scopeChannel, Hash targetChannel, Opts args, PublicKey to) throws SQLException {
-        List readKeys = client.getReadKeys(targetChannel, nymId, client.getPass());
+        List readKeys = client.getReadKeys(targetChannel, nymId, client.getPass(), true);
         SessionKey bodyKey = null;
         boolean postAsUnauthorized = args.getOptBoolean("postAsUnauthorized", false);
         
@@ -639,7 +639,7 @@ public class MessageGen extends CommandImpl {
         //    authorizationKey = authenticationKey; // self-authorized, may not be sufficient
         
         if ( (readKey == null) && (channel != null) ) {
-            List read = client.getReadKeys(channel, nymId, client.getPass());
+            List read = client.getReadKeys(channel, nymId, client.getPass(), true);
             if ( (read != null) && (read.size() > 0) ) {
                 int index = client.ctx().random().nextInt(read.size());
                 readKey = (SessionKey)read.get(index);
