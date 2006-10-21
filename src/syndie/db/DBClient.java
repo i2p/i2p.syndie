@@ -2260,4 +2260,51 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+    
+    public Properties getDefaultPrefs() { return readScriptProps("defaultprefs"); }
+    public Properties getDefaultAliases() { return readScriptProps("defaultaliases"); }
+    private Properties readScriptProps(String propName) {
+        Properties rv = new Properties();
+        File scriptDir = new File(_rootDir, "scripts");
+        File scriptFile = new File(scriptDir, propName);
+        if (scriptFile.exists()) {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8"));
+                String line = null;
+                while ( (line = in.readLine()) != null) {
+                    int split = line.indexOf('=');
+                    if ( (split <= 0) || (split >= line.length()) )
+                        continue;
+                    String name = line.substring(0, split).trim();
+                    String val = line.substring(split+1).trim();
+                    if (name.length() <= 0) continue;
+                    if (name.startsWith("//") || (name.startsWith("--")) || (name.startsWith("#"))) continue;
+                    rv.setProperty(name, val);
+                }
+            } catch (UnsupportedEncodingException uee) {
+                //ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
+            } catch (IOException ioe) {
+                //ignore
+            }
+        }
+        return rv;
+    }
+    
+    /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */
+    public void runScript(UI ui, String scriptName) {
+        File scriptDir = new File(_rootDir, "scripts");
+        File script = new File(scriptDir, scriptName);
+        if (script.exists()) {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
+                String line = null;
+                while ( (line = in.readLine()) != null)
+                    ui.insertCommand(line);
+            } catch (UnsupportedEncodingException uee) {
+                ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
+            } catch (IOException ioe) {
+                ui.errorMessage("Error running the script " + script, ioe);
+            }
+        }
+    }
 }

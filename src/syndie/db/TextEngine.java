@@ -1,6 +1,13 @@
 package syndie.db;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -23,6 +30,7 @@ public class TextEngine {
     private File _archiveDir;
     private File _outboundDir;
     private File _logDir;
+    private File _scriptDir;
     private NestedGobbleUI _gobbleUI;
     private UI _realUI;
     private List _commandHistory;
@@ -36,6 +44,7 @@ public class TextEngine {
         _commandHistory = new ArrayList();
         rebuildMenus();
         buildInstallDir();
+        _client.runScript(_ui, "startup");
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -120,6 +129,7 @@ public class TextEngine {
         _archiveDir = new File(_rootDir, "archive");
         _outboundDir = new File(_rootDir, "outbound");
         _logDir = new File(_rootDir, "logs");
+        _scriptDir = new File(_rootDir, "scripts");
 
         boolean dbDirCreated = false;
         if (!_rootDir.exists()) _rootDir.mkdirs();
@@ -128,6 +138,14 @@ public class TextEngine {
         if (!_archiveDir.exists()) _archiveDir.mkdir();
         if (!_outboundDir.exists()) _outboundDir.mkdir();
         if (!_logDir.exists()) _logDir.mkdir();
+        if (!_scriptDir.exists()) {
+            _scriptDir.mkdir();
+            // bundle any scripts we ship with in the .jar
+            installScript("/defaultprefs", new File(_scriptDir, "defaultprefs"));
+            installScript("/defaultaliases", new File(_scriptDir, "defaultaliases"));
+            installScript("/onstartup", new File(_scriptDir, "startup"));
+            installScript("/onlogin", new File(_scriptDir, "login"));
+        }
         
         _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
         
@@ -153,6 +171,31 @@ public class TextEngine {
         bin/{runtext.sh,runcli.sh}
          */
     }
+    
+    private void installScript(String name, File toFile) {
+        InputStream in = null;
+        FileOutputStream fos = null;
+        try {
+            in = getClass().getResourceAsStream(name);
+            fos = new FileOutputStream(toFile);
+            if (in != null) {
+                byte buf[] = new byte[1024];
+                int read = -1;
+                while ( (read = in.read(buf)) != -1)
+                    fos.write(buf, 0, read);
+                in.close();
+                in = null;
+            }
+            fos.close();
+            fos = null;
+        } catch (IOException ioe) {
+            // ignore... script wasn't a resource, or we couldn't write to the dir, etc
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
+            if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+        }
+    }
+    
     public String getDBFile() { return _dbDir.getPath() + File.separator + "syndie"; }
     public static String getRootPath() { return System.getProperty("user.home") + File.separator + ".syndie"; }
     public DBClient getClient() { return _client; }
@@ -190,6 +233,7 @@ public class TextEngine {
                 
                 Properties prefs = _client.getNymPrefs(nymId);
                 doSetPrefs(prefs);
+                _client.runScript(_ui, "login");
             } else {
                 _ui.statusMessage("Login failed");
                 rebuildMenus();

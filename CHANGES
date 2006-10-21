@@ -1,5 +1,16 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+    - add hooks for scripts to be run on syndie startup and login, as well as
+      a set of default preferences and aliases to be injected when a new local
+      syndie nym is created.  the scripts are in the "startup" and "login"
+      files in "$rootDir/scripts/".  the preferences and aliases are name=value
+      pairs in that same directory in the "defaultprefs" and "defaultaliases"
+      files.
+    - ship with default preferences and aliases to set the default archive for
+      new users to http://syndie.i2p.net/archive/, and includes a "sync"
+      alias to both pull and push any changes to it.  this does not affect
+      existing syndie logins, and does not overwrite existing scripts
+
 * 2006-10-20  0.916b released
     - let the freenetpost inserts be visible on freenet's /queue/
     - automatically rebuild the index before inserting into freenet

@@ -2,7 +2,9 @@ package syndie.db;
 
 import java.io.*;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
 import syndie.Constants;
@@ -90,8 +92,17 @@ public class LoginManager extends CommandImpl {
             String login = client.getLogin();
             String pass = client.getPass();
             // log in to the new nym
-            client.getNymId(args.getOptValue("login"), args.getOptValue("pass"));
+            long newId = client.getNymId(args.getOptValue("login"), args.getOptValue("pass"));
             boolean ok = processSimple(args, client, ui);
+            if (ok) {
+                client.setNymPrefs(newId, client.getDefaultPrefs());
+                Properties aliases = client.getDefaultAliases();
+                for (Iterator iter = aliases.keySet().iterator(); iter.hasNext(); ) {
+                    String name = (String)iter.next();
+                    String val = aliases.getProperty(name);
+                    client.addAlias(newId, name, val);
+                }
+            }
             client.getNymId(login, pass); // relogin to the orig login/pass (not the newly registered one)
             if (!ok)
                 return client;

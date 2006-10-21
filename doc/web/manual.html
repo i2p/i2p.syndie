@@ -38,6 +38,15 @@ The optional <code>data_root</code> parameter tells Syndie where to locate the
 database, archive, and related data files.  If not specified, it uses
 <code>$HOME/.syndie/</code> (or <code>%HOME%\.syndie</code> on windows).</p>
 
+<p>When the interface starts up, the <code>data_root/scripts/startup</code>
+script is run, and when any nym logs in, the <code>data_root/scripts/login</code>
+script is run, if they exist.  When a new nym is created (with
+<a href="#start_register">register</a>), the nym is given the preferences from the
+<code>data_root/scripts/defaultprefs</code> file (which contains newline delimited
+<code>name=value</code> pairs).  The new nym is also given the aliases from the
+<code>data_root/scripts/defaultaliases</code> file (which also contains newline
+delimited <code>name=value</code> pairs)</p>
+
 <p>The menus are outlined below, with unimplemented commands prefixed by
 <code>//</code>.</p>
 <ul id="menu">
