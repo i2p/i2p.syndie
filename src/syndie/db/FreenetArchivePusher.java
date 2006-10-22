@@ -96,12 +96,7 @@ public class FreenetArchivePusher {
                        "MaxRetries=10\r\n" +
                        "PriorityClass=3\r\n" + // 3 is lower than interactive
                        "Persistence=reboot\r\n" // runs until success or the freenet instance restarts
-                       //"DefaultName=index-all.dat\r\n" // serve it up as the index
                        ).getBytes());
-            
-            // perhaps we should insert a fake html index to let people browse the
-            // archive with fproxy?  maybe with some 'hey, you need syndie to read this'
-            // stuff in it?
             
             // dont use UploadFrom=disk, because that breaks if the fcpHost != localhost,
             // or if the freenet instance doesn't have read permissions on the archive
@@ -184,6 +179,8 @@ public class FreenetArchivePusher {
                 rv.add(files[i]);
             } else if (files[i].getName().endsWith(".dat")) {
                 rv.add(files[i]);
+            } else if (files[i].getName().endsWith(".html")) {
+                rv.add(files[i]);
             }
         }
     }
@@ -205,6 +202,8 @@ public class FreenetArchivePusher {
                 break; // root of the filesystem... file is not in the archive, or the archive is the root
             f = f.getParentFile();
         }
+        while ( (buf.length() > 0) && (buf.charAt(0) == '/') )
+            buf.deleteCharAt(0);
         return buf.toString();
     }
     
@@ -213,6 +212,8 @@ public class FreenetArchivePusher {
             return "application/x-syndie";
         else if (f.getName().endsWith(".dat"))
             return "application/x-syndie-index";
+        else if (f.getName().endsWith(".html"))
+            return "text/html";
         else
             return "application/octet-stream";
     }

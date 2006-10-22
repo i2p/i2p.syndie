@@ -34,7 +34,10 @@ public class EepGet {
     private int _proxyPort;
     private int _numRetries;
     private String _outputFile;
+    /** url we were asked to fetch */
     private String _url;
+    /** the URL we actually fetch from (may differ from the _url in case of redirect) */
+    private String _actualURL;
     private String _postData;
     private boolean _allowCaching;
     private List _listeners;
@@ -56,6 +59,8 @@ public class EepGet {
     private boolean _headersRead;
     private boolean _aborted;
     private long _fetchHeaderTimeout;
+    private int _redirects;
+    private String _redirectLocation;
     
     public EepGet(I2PAppContext ctx, String proxyHost, int proxyPort, int numRetries, String outputFile, String url) {
         this(ctx, true, proxyHost, proxyPort, numRetries, outputFile, url);
@@ -87,6 +92,7 @@ public class EepGet {
         _numRetries = numRetries;
         _outputFile = outputFile;
         _url = url;
+        _actualURL = url;
         _postData = postData;
         _alreadyTransferred = 0;
         _bytesTransferred = 0;
@@ -334,7 +340,7 @@ public class EepGet {
         _keepFetching = true;
 
         if (_log.shouldLog(Log.DEBUG))
-            _log.debug("Fetching (proxied? " + _shouldProxy + ") url=" + _url);
+            _log.debug("Fetching (proxied? " + _shouldProxy + ") url=" + _actualURL);
         while (_keepFetching) {
             try {
                 for (int i = 0; i < _listeners.size(); i++) 
@@ -403,6 +409,39 @@ public class EepGet {
         }
         if (_aborted)
             throw new IOException("Timed out reading the HTTP headers");
+        
+        if (_redirectLocation != null) {
+            try {
+                URL oldURL = new URL(_actualURL);
+                String query = oldURL.getQuery();
+                if (query == null) query = "";
+                if (_redirectLocation.startsWith("http://")) {
+                    if ( (_redirectLocation.indexOf('?') < 0) && (query.length() > 0) )
+                        _actualURL = _redirectLocation + "?" + query;
+                    else
+                        _actualURL = _redirectLocation;
+                } else { 
+                    URL url = new URL(_actualURL);
+		    if (_redirectLocation.startsWith("/"))
+                        _actualURL = "http://" + url.getHost() + ":" + url.getPort() + _redirectLocation;
+                    else
+                        _actualURL = "http://" + url.getHost() + ":" + url.getPort() + "/" + _redirectLocation;
+                    if ( (_actualURL.indexOf('?') < 0) && (query.length() > 0) )
+                        _actualURL = _actualURL + "?" + query;
+                    else
+                        _actualURL = _actualURL;
+                }
+            } catch (MalformedURLException mue) {
+                throw new IOException("Redirected from an invalid URL");
+            }
+            _redirects++;
+            if (_redirects > 5)
+                throw new IOException("Too many redirects: to " + _redirectLocation);
+            if (_log.shouldLog(Log.INFO)) _log.info("Redirecting to " + _redirectLocation);
+            sendRequest();
+            doFetch();
+            return;
+        }
         
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Headers read completely, reading " + _bytesRemaining);
@@ -483,6 +522,7 @@ public class EepGet {
         boolean read = DataHelper.readLine(_proxyIn, buf);
         if (!read) throw new IOException("Unable to read the first line");
         int responseCode = handleStatus(buf.toString());
+        boolean redirect = false;
 
         boolean rcOk = false;
         switch (responseCode) {
@@ -494,6 +534,11 @@ public class EepGet {
             case 206: // partial
                 _out = new FileOutputStream(_outputFile, true);
                 rcOk = true;
+                break;
+            case 301: // redirect
+                _alreadyTransferred = 0;
+                rcOk = true;
+                redirect = true;
                 break;
             case 304: // not modified
                 _bytesRemaining = 0;
@@ -544,6 +589,7 @@ public class EepGet {
                         if (_encodingChunked) {
                             _bytesRemaining = readChunkLength();
                         }
+                        if (!redirect) _redirectLocation = null;
                         return;
                     }
                     break;
@@ -638,6 +684,8 @@ public class EepGet {
                 _encodingChunked = true;
         } else if (key.equalsIgnoreCase("Content-Type")) {
             _contentType=val;
+        } else if (key.equalsIgnoreCase("Location")) {
+            _redirectLocation=val.trim();
         } else {
             // ignore the rest
         }
@@ -667,11 +715,15 @@ public class EepGet {
 
         String req = getRequest();
 
+        if (_proxyIn != null) try { _proxyIn.close(); } catch (IOException ioe) {}
+        if (_proxyOut != null) try { _proxyOut.close(); } catch (IOException ioe) {}
+        if (_proxy != null) try { _proxy.close(); } catch (IOException ioe) {}
+
         if (_shouldProxy) {
             _proxy = new Socket(_proxyHost, _proxyPort);
         } else {
             try {
-                URL url = new URL(_url);
+                URL url = new URL(_actualURL);
                 String host = url.getHost();
                 int port = url.getPort();
                 if (port == -1)
@@ -696,12 +748,17 @@ public class EepGet {
         boolean post = false;
         if ( (_postData != null) && (_postData.length() > 0) )
             post = true;
+        URL url = new URL(_actualURL);
+        String path = url.getPath();
+        String query = url.getQuery();
+        if (query != null)
+            path = path + "?" + query;
+        if (_log.shouldLog(Log.DEBUG)) _log.debug("Requesting " + path);
         if (post) {
-            buf.append("POST ").append(_url).append(" HTTP/1.1\r\n");
+            buf.append("POST ").append(path).append(" HTTP/1.1\r\n");
         } else {
-            buf.append("GET ").append(_url).append(" HTTP/1.1\r\n");
+            buf.append("GET ").append(path).append(" HTTP/1.1\r\n");
         }
-        URL url = new URL(_url);
         buf.append("Host: ").append(url.getHost()).append("\r\n");
         if (_alreadyTransferred > 0) {
             buf.append("Range: bytes=");

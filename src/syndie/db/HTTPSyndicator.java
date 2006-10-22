@@ -246,7 +246,7 @@ public class HTTPSyndicator {
             try {
                 NestedUI nested = new NestedUI(_ui);
                 ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), null);
-                if (ok && (nested.getExitCode() >= 0)) {
+                if (ok && (nested.getExitCode() >= 0) && (!imp.wasPBE()) ) {
                     _ui.debugMessage("Import successful for " + uri);
                     f.delete();
                     imported++;
@@ -276,12 +276,12 @@ public class HTTPSyndicator {
     public SyndieURI getMissingURI(int index) { return (SyndieURI)_pendingPBEURIs.get(index); }
     public void importPBE(int index, String passphrase) {
         Importer imp = new Importer(_client, _client.getPass());
-        File f = (File)_pendingPBEFiles.get(index);
         if ( (_pendingPBEURIs.size() <= index) || (index < 0) ) {
             _ui.errorMessage("Index out of bounds");
             _ui.commandComplete(-1, null);
             return;
         }
+        File f = (File)_pendingPBEFiles.get(index);
         SyndieURI uri = (SyndieURI)_pendingPBEURIs.get(index);
         boolean ok;
         try {

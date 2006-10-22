@@ -14,6 +14,17 @@
       used them later on, but don't use them to encrypt any new messages.
       later, we can do some pruning to remove keys long ago deprecated
     - upgrade to HSQLDB 1.8.0.7
+    - include an index.html in the archive directory that, by default,
+      simply explains briefly what the archive is and disclaims responsability
+      for the content in it.  archive operators can customize the file as they
+      see fit by editing "$rootDir/archive/index.html".  That index will of
+      course be visible to anyone viewing the archive on the web, and it is
+      also published inside freenet archives (as are any other html files)
+    - more aggressively clean up temporary files on syndie shutdown
+    - fixed a regression where fetched passphrase encrypted posts did not
+      properly prompt the user for the passphrase
+    - add support for HTTP 301 redirects to EepGet (so freenet USKs work as
+      intended)
 
 * 2006-10-20  0.916b released
     - let the freenetpost inserts be visible on freenet's /queue/

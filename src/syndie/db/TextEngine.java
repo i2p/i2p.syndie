@@ -134,18 +134,24 @@ public class TextEngine {
         boolean dbDirCreated = false;
         if (!_rootDir.exists()) _rootDir.mkdirs();
         if (!_dbDir.exists()) { _dbDir.mkdir(); dbDirCreated = true; }
-        if (!_tmpDir.exists()) _tmpDir.mkdir();
+        if (_tmpDir.exists())
+            rmdir(_tmpDir, _rootDir);
+        _tmpDir.mkdir();
         if (!_archiveDir.exists()) _archiveDir.mkdir();
         if (!_outboundDir.exists()) _outboundDir.mkdir();
         if (!_logDir.exists()) _logDir.mkdir();
         if (!_scriptDir.exists()) {
             _scriptDir.mkdir();
             // bundle any scripts we ship with in the .jar
-            installScript("/defaultprefs", new File(_scriptDir, "defaultprefs"));
-            installScript("/defaultaliases", new File(_scriptDir, "defaultaliases"));
-            installScript("/onstartup", new File(_scriptDir, "startup"));
-            installScript("/onlogin", new File(_scriptDir, "login"));
+            installResource("/defaultprefs", new File(_scriptDir, "defaultprefs"));
+            installResource("/defaultaliases", new File(_scriptDir, "defaultaliases"));
+            installResource("/onstartup", new File(_scriptDir, "startup"));
+            installResource("/onlogin", new File(_scriptDir, "login"));
         }
+        
+        File archiveIntro = new File(_archiveDir, "index.html");
+        if (!archiveIntro.exists())
+            installResource("/defaultarchiveindex", archiveIntro);
         
         _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
         
@@ -172,7 +178,7 @@ public class TextEngine {
          */
     }
     
-    private void installScript(String name, File toFile) {
+    private void installResource(String name, File toFile) {
         InputStream in = null;
         FileOutputStream fos = null;
         try {
@@ -194,6 +200,30 @@ public class TextEngine {
             if (in != null) try { in.close(); } catch (IOException ioe) {}
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
         }
+    }
+    
+    private void rmdir(File dir, File root) {
+        if (!isAncestor(dir, root)) return;
+        if (dir.isDirectory()) {
+            File children[] = dir.listFiles();
+            for (int i = 0; i < children.length; i++) {
+                if (isAncestor(children[i], root)) // safety for symlinks/etc
+                    rmdir(children[i], root);
+            }
+        }
+        dir.delete();
+    }
+    /** true if the child is underneath the root, directly or indirectly */
+    private boolean isAncestor(File child, File root) {
+        while (child != null) {
+            if (child.equals(root))
+                return true;
+            File parent = child.getParentFile();
+            if (parent.equals(child))
+                break;
+            child = parent;
+        }
+        return false;
     }
     
     public String getDBFile() { return _dbDir.getPath() + File.separator + "syndie"; }
