@@ -535,7 +535,10 @@ public class EepGet {
                 _out = new FileOutputStream(_outputFile, true);
                 rcOk = true;
                 break;
-            case 301: // redirect
+            case 301: // various redirections
+            case 302:
+            case 303:
+            case 307:
                 _alreadyTransferred = 0;
                 rcOk = true;
                 redirect = true;
