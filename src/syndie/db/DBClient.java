@@ -89,7 +89,7 @@ public class DBClient {
     String getLogin() { return _login; }
     /** if logged in, the password authenticating it is returned here */
     String getPass() { return _pass; }
-    boolean isLoggedIn() { return _login != null; }
+    public boolean isLoggedIn() { return _login != null; }
     /** if logged in, the internal nymId associated with that login */
     long getLoggedInNymId() { return _nymId; }
     
@@ -1693,7 +1693,30 @@ public class DBClient {
         }
         return null;
     }
-
+    
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_SIZE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (rs.next())
+                return rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return 0;
+    }
+    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
     public String getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();

@@ -1,5 +1,11 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+    - (syndie.gui branch) initial stub message viewer, depends upon swt
+      libs being located as specified in bin/syndie-gui (at runtime) or
+      nbproject/project.properties (at build time)
+    - (syndie.gui branch) further refinement to the gui stub, loads
+      message bodies with viewmsg --uri $uri
+    - (syndie.gui branch) beginning of the html parse/rendering
     - add hooks for scripts to be run on syndie startup and login, as well as
       a set of default preferences and aliases to be injected when a new local
       syndie nym is created.  the scripts are in the "startup" and "login"
