@@ -13,6 +13,7 @@
     - keep track of old channel read keys so that we can decrypt messages that
       used them later on, but don't use them to encrypt any new messages.
       later, we can do some pruning to remove keys long ago deprecated
+    - upgrade to HSQLDB 1.8.0.7
 
 * 2006-10-20  0.916b released
     - let the freenetpost inserts be visible on freenet's /queue/
