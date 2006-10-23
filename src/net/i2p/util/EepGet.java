@@ -752,10 +752,17 @@ public class EepGet {
         if ( (_postData != null) && (_postData.length() > 0) )
             post = true;
         URL url = new URL(_actualURL);
+        String proto = url.getProtocol();
+        String host = url.getHost();
+        int port = url.getPort();
         String path = url.getPath();
         String query = url.getQuery();
         if (query != null)
             path = path + "?" + query;
+        if (!path.startsWith("/"))
+	    path = "/" + path;
+        if ( (port == 80) || (port == 443) ) path = proto + "://" + host + path;
+        else path = proto + "://" + host + ":" + port + path;
         if (_log.shouldLog(Log.DEBUG)) _log.debug("Requesting " + path);
         if (post) {
             buf.append("POST ").append(path).append(" HTTP/1.1\r\n");

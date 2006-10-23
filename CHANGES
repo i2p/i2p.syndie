@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-23  0.918b released
+    - fix a regression in EepGet (thanks gloin and burl!)
+
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as
       a set of default preferences and aliases to be injected when a new local
