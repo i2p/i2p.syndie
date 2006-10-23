@@ -6,6 +6,8 @@
     - (syndie.gui branch) further refinement to the gui stub, loads
       message bodies with viewmsg --uri $uri
     - (syndie.gui branch) beginning of the html parse/rendering
+
+* 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as
       a set of default preferences and aliases to be injected when a new local
       syndie nym is created.  the scripts are in the "startup" and "login"

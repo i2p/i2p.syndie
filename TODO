@@ -4,7 +4,6 @@ Key:
    (longer term tasks are included in doc/web/roadmap.html)
 ===
 - installer/script/exe/favicon.ico icons, and web doc logo
-- distribute default http archive and aliases on new nym creation(?)
 - monotone migration
  X public archive online at mtn.i2p.net branch "syndie"
  X syndie-commit@i2p.net mailing list
