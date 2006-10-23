@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import org.eclipse.swt.SWT;
@@ -11,6 +12,7 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
 import org.eclipse.swt.graphics.Image;
@@ -37,11 +39,16 @@ public class PageRenderer {
     private int _page;
     private Menu _menu;
     private PageActionListener _listener;
+    private ArrayList _fonts;
+    private ArrayList _imageIndexes;
+    private ArrayList _images;
+    private ArrayList _liIndexes;
     
     public PageRenderer(Composite parent) {
         _parent = parent;
         _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.READ_ONLY);
         _menu = new Menu(_text);
+        _fonts = null;
 
         _text.setDoubleClickEnabled(true);
         _text.addSelectionListener(new SelectionListener() {
@@ -73,6 +80,37 @@ public class PageRenderer {
                 //System.out.println("hoover [" + mouseEvent.x + " to " + mouseEvent.y + "] / " + off);
             }
         });
+        // draw the current image or bullet on the pane
+        _text.addPaintObjectListener(new PaintObjectListener() {
+            public void paintObject(PaintObjectEvent evt) {
+                GC gc = evt.gc;
+                StyleRange range = evt.style;
+                int start = range.start;
+                if (_imageIndexes != null) {
+                    for (int i = 0; i < _imageIndexes.size(); i++) {
+                        int offset = ((Integer)_imageIndexes.get(i)).intValue();
+                        if (start == offset) {
+                            Image img = (Image)_images.get(i);
+                            int x = evt.x;
+                            int y = evt.y + evt.ascent - range.metrics.ascent;
+                            gc.drawImage(img, x, y);
+                            return;
+                        }
+                    }
+                }
+                // not an image.. check the li indexes
+                if (_liIndexes != null) {
+                    for (int i = 0; i < _liIndexes.size(); i++) {
+                        int offset = ((Integer)_liIndexes.get(i)).intValue();
+                        if (start == offset) {
+                            // render the line's bullet
+                            // ...
+                            return;
+                        }
+                    }
+                }
+            }
+        });
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
@@ -93,21 +131,37 @@ public class PageRenderer {
         }
     }
     private void renderText(String body) {
+        disposeFonts();
         _text.setText(body);
+        _text.setStyleRanges(null);
     }
     private void renderHTML(String html) {
+        disposeFonts();
         HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg);
         builder.buildState();
         String text = builder.getAsText();
         _text.setText(text);
         HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg);
         sbuilder.buildStyles();
+        _fonts = sbuilder.getFonts();
         _text.setStyleRanges(sbuilder.getStyleRanges());
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
         // so that the listeners registered in the constructor can do their thing
-        Collection imageIndexes = sbuilder.getImageIndexes();
+        _imageIndexes = sbuilder.getImageIndexes();
+        _liIndexes = sbuilder.getListItemIndexes();
+        _images = sbuilder.getImages();
         Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
-        Collection listItemIndexes = sbuilder.getListItemIndexes();
+    }
+    
+    private void disposeFonts() {
+        if (_fonts != null) {
+            for (int i = 0; i < _fonts.size(); i++) {
+                Font f = (Font)_fonts.get(i);
+                if (!f.isDisposed())
+                    f.dispose();
+            }
+            _fonts = null;
+        }
     }
     
     public MessageInfo getCurrentMessage() { return _msg; }

@@ -2237,6 +2237,7 @@ public class DBClient {
     /** map of command name (String) to command line (String) */
     public Map getAliases(long nymId) {
         TreeMap rv = new TreeMap();
+        if (!isLoggedIn()) return rv;
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

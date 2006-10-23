@@ -21,14 +21,21 @@ class HTMLStateBuilder {
     private List _closedTags;
     
     private static final Map _charMap = new HashMap();
+    private static final Set _noBodyTags = new HashSet();
     static {
         _charMap.put("amp", "&");
         _charMap.put("nbsp", " ");
         _charMap.put("lt", "<");
-        _charMap.put("le", "\u1230"); // todo: get actual utf-8 char code
+        _charMap.put("le", "\u8804");
+        _charMap.put("ge", "\u8805");
         _charMap.put("eq", "=");
-        _charMap.put("ge", "\u2345"); // todo: get actual utf-8 char code
         _charMap.put("gt", ">");
+        // a whole lot more... check http://www.w3.org/TR/html401/sgml/entities.html
+        
+        // tags that don't allow bodies (and should be implicitly closed if not done so explicitly)
+        _noBodyTags.add("img");
+        _noBodyTags.add("br");
+        _noBodyTags.add("hr");
     }
     
     public HTMLStateBuilder(String html, MessageInfo msg) {
@@ -218,6 +225,9 @@ class HTMLStateBuilder {
             body.append(PLACEHOLDER_LISTITEM);
             _prevWasWhitespace = false;
         }
+        
+        if (_noBodyTags.contains(tagName))
+            receiveTagEnd(content, body.length(), body);
     }
     
     /** the following character is inserted into the document whenever there should be an image */
