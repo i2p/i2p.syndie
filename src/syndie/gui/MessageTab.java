@@ -129,24 +129,16 @@ public class MessageTab extends Component {
         MessageInfo msg = null;
         ChannelInfo targetChannel = null;
         if ( (_uri == null) || (_client == null) || (!_client.isLoggedIn()) ) {
-            _aboutSubject.setText("This message talks about my love of ponies");
-            _aboutAvatar.setImage(_avatar);
-            _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
-            _aboutChannel.setText("$postedInChannel");
-            _aboutChannel.setImage(_icon);
-            _aboutDate.setText("2006/04/25");
-            _aboutTags.setText("(<a>ponies</a>, <a>rainbows</a>, <a>kittens</a>)");
-            _aboutNym.setImage(_icon);
-            _aboutNym.setText("jrandom");
-            _tab.setText(_uri.toString());
-            _tab.setToolTipText(_aboutSubject.getText());
-
-            _page.setItems(new String[] { "Page 1", "Page 2", "Page 3", "Page 4" });
-            _page.select(0);
+            displayDummy();
         } else {
             long channelId = _client.getChannelId(_uri.getScope());
             ChannelInfo chan = _client.getChannel(channelId);
             msg = _client.getMessage(channelId, _uri.getMessageId());
+            if (msg == null) {
+                displayDummy();
+                updateFlags(null, null);
+                return;
+            }
             targetChannel = _client.getChannel(msg.getTargetChannelId());
             
             _aboutSubject.setText(msg.getSubject());
@@ -199,6 +191,23 @@ public class MessageTab extends Component {
             _body.renderPage(_client, msg, toView);
         }
         updateFlags(msg, targetChannel);
+    }
+    
+    private void displayDummy() {
+        _aboutSubject.setText("This message talks about my love of ponies");
+        _aboutAvatar.setImage(_avatar);
+        _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
+        _aboutChannel.setText("$postedInChannel");
+        _aboutChannel.setImage(_icon);
+        _aboutDate.setText("2006/04/25");
+        _aboutTags.setText("(<a>ponies</a>, <a>rainbows</a>, <a>kittens</a>)");
+        _aboutNym.setImage(_icon);
+        _aboutNym.setText("jrandom");
+        _tab.setText(_uri.toString());
+        _tab.setToolTipText(_aboutSubject.getText());
+
+        _page.setItems(new String[] { "Page 1", "Page 2", "Page 3", "Page 4" });
+        _page.select(0);
     }
 
     private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");

@@ -7,6 +7,7 @@
       message bodies with viewmsg --uri $uri
     - (syndie.gui branch) beginning of the html parse/rendering
     - (syndie.gui branch) render images and fonts
+    - (syndie.gui branch) lists, justification, and indentation work
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as

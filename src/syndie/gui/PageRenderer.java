@@ -2,6 +2,9 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
@@ -13,6 +16,7 @@ import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
 import org.eclipse.swt.graphics.Image;
@@ -119,6 +123,10 @@ public class PageRenderer {
         _client = client;
         _msg = msg;
         _page = pageNum;
+        if (msg == null) {
+            renderText("");
+            return;
+        }
         String cfg = client.getMessagePageConfig(msg.getInternalId(), pageNum);
         String body = client.getMessagePageData(msg.getInternalId(), pageNum);
         Properties props = new Properties();
@@ -137,7 +145,21 @@ public class PageRenderer {
     }
     private void renderHTML(String html) {
         disposeFonts();
-        HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg);
+
+        int charsPerLine = -1;
+        if (true) {
+            // have the HTMLStateBuilder inject fake line wrapping, even though
+            // the wrapping won't be right all of the time.  this lets wrapped
+            // lines have the right indentation.  however, it can cause problems
+            // for bullet points, as each line is given a bullet
+            GC gc = new GC(_text);
+            FontMetrics metrics = gc.getFontMetrics();
+            int charWidth = metrics.getAverageCharWidth();
+            int paneWidth = _text.getBounds().width;
+            charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
+        }
+        
+        HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, charsPerLine);
         builder.buildState();
         String text = builder.getAsText();
         _text.setText(text);
@@ -150,7 +172,149 @@ public class PageRenderer {
         _imageIndexes = sbuilder.getImageIndexes();
         _liIndexes = sbuilder.getListItemIndexes();
         _images = sbuilder.getImages();
+        if (_images.size() != _imageIndexes.size()) {
+            throw new RuntimeException("images: " + _images.size() + " imageIndexes: " + _imageIndexes.size());
+        }
+        // the _imageIndexes/_images contain the image for the linkEnd values, but
+        // we may want to keep track of them separately for menu handling
         Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
+        
+        setLineProperties(builder, sbuilder);
+    }
+    
+    /**
+     * markup on a char by char level is done, but now handle the markup on a line-by-line
+     * level, with indents, coloring, bullets, etc
+     */
+    private void setLineProperties(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder) {
+        int lines = _text.getLineCount();
+        int bodySize = _text.getCharCount();
+        Map bulletLists = new HashMap();
+        for (int line = 0; line < lines; line++) {
+            int lineStart = _text.getOffsetAtLine(line);
+            int lineEnd = -1;
+            if (line + 1 == lines)
+                lineEnd = bodySize;
+            else
+                lineEnd = _text.getOffsetAtLine(line+1)-1;
+            
+            int alignment = SWT.LEFT;
+            
+            // now get the tags applicable to [lineStart,lineEnd]
+            ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
+            if (HTMLStyleBuilder.containsTag(tags, "pre")) {
+                // if they have pre, do no formatting
+            } else {
+                // look for alignment attributes
+                for (int i = 0; i < tags.size(); i++) {
+                    HTMLTag tag = (HTMLTag)tags.get(i);
+                    String align = tag.getAttribValue("align");
+                    if (align != null) {
+                        if ("left".equalsIgnoreCase(align))
+                            alignment = SWT.LEFT;
+                        else if ("center".equalsIgnoreCase(align))
+                            alignment = SWT.CENTER;
+                        else if ("right".equalsIgnoreCase(align))
+                            alignment = SWT.RIGHT;
+                        else
+                            continue;
+                        break; // left|center|right
+                    }
+                }
+                // look for center tags
+                if (HTMLStyleBuilder.containsTag(tags, "center"))
+                    alignment = SWT.CENTER;
+            }
+            
+            boolean bulletOrdered = false;
+            int olLevel = 0;
+            int ulLevel = 0;
+            
+            Bullet bullet = null;
+            boolean liFound = false;
+            int indentLevel = 0;
+            // look for li tags, and indent $x times the nesting layer
+            for (int i = 0; i < tags.size(); i++) {
+                HTMLTag tag = (HTMLTag)tags.get(i);
+                if ("li".equals(tag.getName())) {
+                    indentLevel++;
+                    // we only want to put a bullet point on the first line of
+                    // a potentially multiline list item
+                    if (!tag.wasConsumed()) {
+                        liFound = true;
+                        tag.consume();
+                    }
+                } else if ("ol".equals(tag.getName()) && liFound) {
+                    if ( (olLevel == 0) && (ulLevel == 0) ) {
+                        bulletOrdered = true;
+                        bullet = (Bullet)bulletLists.get(tag);
+                        if (bullet == null) {
+                            StyleRange bulletRange = new StyleRange();
+                            bulletRange.metrics = new GlyphMetrics(0, 0, 0);
+                            bullet = new Bullet(ST.BULLET_NUMBER | ST.BULLET_TEXT, bulletRange);
+                            bullet.text = ")";
+                            bulletLists.put(tag, bullet);
+                        }
+                    }
+                    olLevel++;
+                } else if ("ul".equals(tag.getName()) && liFound) {
+                    if ( (olLevel == 0) && (ulLevel == 0) ) {
+                        bulletOrdered = false;
+                        bullet = (Bullet)bulletLists.get(tag);
+                        if (bullet == null) {
+                            StyleRange bulletRange = new StyleRange();
+                            bulletRange.metrics = new GlyphMetrics(0, 0, 0);
+                            bullet = new Bullet(ST.BULLET_DOT, bulletRange);
+                            bulletLists.put(tag, bullet);
+                        }
+                    }
+                    ulLevel++;
+                }
+            }
+            
+            //if (indentLevel > 0)
+            //    System.out.println("indent level: " + indentLevel + " bullet: " + bullet + " ulLevel: " + ulLevel + " olLevel: " + olLevel);
+            
+            // look for <quote> tags, and indent $x times the nesting layer
+            for (int i = 0; i < tags.size(); i++) {
+                HTMLTag tag = (HTMLTag)tags.get(i);
+                if ("quote".equals(tag.getName()))
+                    indentLevel++;
+            }
+            
+            //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: tags: " + tags 
+            //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
+            //                   + " indent: " + indentLevel + ")");
+            
+            int charWidth = -1;
+            if (indentLevel > 0) {
+                GC gc = new GC(_text);
+                FontMetrics metrics = gc.getFontMetrics();
+                charWidth = metrics.getAverageCharWidth();
+            }
+            
+            _text.setLineAlignment(line, 1, alignment);
+            
+            if (bullet != null) {
+                bullet.style.metrics.width = indentLevel * 4 * charWidth;
+                _text.setLineBullet(line, 1, bullet);
+            } else {
+                _text.setLineIndent(line, 1, indentLevel * 4 * charWidth);
+            }
+        }
+    }
+    
+    private ArrayList getTags(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder, int start, int end) {
+        ArrayList rv = new ArrayList();
+        for (Iterator iter = stateBuilder.getTags().iterator(); iter.hasNext(); ) {
+            HTMLTag tag = (HTMLTag)iter.next();
+            int tStart = tag.getStartIndex();
+            int tEnd = tag.getEndIndex();
+            if ( ( (tStart <= start) && (tEnd > start) ) ||
+                 ( (tStart >= start) && (tStart < end) ) )
+                rv.add(tag);
+        }
+        return rv;
     }
     
     private void disposeFonts() {

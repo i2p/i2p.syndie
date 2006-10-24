@@ -13,11 +13,13 @@ class HTMLTag {
     private int _startIndex;
     private int _endIndex;
     private HTMLTag _parent;
+    private boolean _consumed;
     
     public HTMLTag(String tagBody, int startIndex, HTMLTag parent) {
         _startIndex = startIndex;
         _endIndex = -1;
         _parent = parent;
+        _consumed = false;
         _attributes = new Properties();
         int attribNameStart = -1;
         int attribNameEnd = -1;
@@ -103,6 +105,8 @@ class HTMLTag {
      * the parent for 'b'
      */
     public HTMLTag getParent() { return _parent; }
+    public boolean wasConsumed() { return _consumed; }
+    public void consume() { _consumed = true; }
     
     public String toString() {
         StringBuffer rv = new StringBuffer();
@@ -115,7 +119,7 @@ class HTMLTag {
             rv.append(name).append('=').append('\'').append(val).append('\'').append(' ');
         }
         rv.append('>');
-        rv.append(" applies to [" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
+        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
         return rv.toString();
     }
 }

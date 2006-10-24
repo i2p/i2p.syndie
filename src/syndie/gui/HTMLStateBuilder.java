@@ -19,6 +19,8 @@ class HTMLStateBuilder {
     private List _activeTags;
     /** parsed Tag instances with start/stop ranges */
     private List _closedTags;
+    /** rough attempt to figure out our own line wrapping so we can indent appropriately */
+    private int _charsPerLine;
     
     private static final Map _charMap = new HashMap();
     private static final Set _noBodyTags = new HashSet();
@@ -38,9 +40,11 @@ class HTMLStateBuilder {
         _noBodyTags.add("hr");
     }
     
-    public HTMLStateBuilder(String html, MessageInfo msg) {
+    public HTMLStateBuilder(String html, MessageInfo msg) { this(html, msg, -1); }
+    public HTMLStateBuilder(String html, MessageInfo msg, int charsPerLine) {
         _html = html;
         _msg = msg;
+        _charsPerLine = charsPerLine;
     }
 
     public void buildState() {
@@ -92,12 +96,12 @@ class HTMLStateBuilder {
                         for (int j = i+1; j < len; j++) {
                             char ce = _html.charAt(j);
                             if (ce == ';') {
-                                body.append(getCharacter(escapeCode.toString()));
+                                appendBody(body, getCharacter(escapeCode.toString()));
                                 i = j+1;
                                 escapeFound = true;
                                 break;
                             } else if (Character.isWhitespace(ce)) { // invalid html, so lets treat it as an &
-                                body.append(getCharacter("amp"));
+                                appendBody(body, getCharacter("amp"));
                                 _prevWasWhitespace = false;
                                 escapeFound = true;
                                 break;
@@ -108,7 +112,7 @@ class HTMLStateBuilder {
                         }
                         if (!escapeFound) {
                             // if the entire page had no more ';' characters, so definitely invalid
-                            body.append(getCharacter("amp"));
+                            appendBody(body, getCharacter("amp"));
                             _prevWasWhitespace = false;
                         }
                         break;
@@ -151,13 +155,13 @@ class HTMLStateBuilder {
                                     // ignore dup whitespace
                                 } else {
                                     if (pre)
-                                        body.append(c);
+                                        appendBody(body, c, true);
                                     else
-                                        body.append(' ');
+                                        appendBody(body, ' ', true);
                                     _prevWasWhitespace = true;
                                 }
                             } else {
-                                body.append(c);
+                                appendBody(body, c);
                                 _prevWasWhitespace = false;
                             }
                         }
@@ -172,6 +176,30 @@ class HTMLStateBuilder {
         }
         
         return body.toString();
+    }
+
+    /**
+     * add the char to the body buffer, inserting an extra newline if the resulting
+     * line would be too long
+     */
+    private void appendBody(StringBuffer body, char c) { appendBody(body, Character.toString(c)); }
+    private void appendBody(StringBuffer body, char c, boolean isWhitespace) { appendBody(body, Character.toString(c), isWhitespace); }
+    private void appendBody(StringBuffer body, String str) { appendBody(body, str, false); }
+    private void appendBody(StringBuffer body, String str, boolean isWhitespace) {
+        if ( (_charsPerLine > 0) && (str.indexOf('\n') == -1) && (isWhitespace) ) {
+            int lineLen = 0;
+            for (int i = body.length()-1; i >= 0; i--) {
+                if (body.charAt(i) == '\n')
+                    break;
+                lineLen++;
+            }
+            if (lineLen > _charsPerLine) {
+                body.append('\n');
+                _prevWasWhitespace = true;
+                return;
+            }
+        }
+        body.append(str);
     }
     
     private boolean tagIsActive(String tagName) {
@@ -201,29 +229,33 @@ class HTMLStateBuilder {
             parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
         HTMLTag tag = new HTMLTag(tagContent, bodyIndex, parent);
         _activeTags.add(tag);
-        System.out.println("tag parsed: " + tag.toString());
+        //System.out.println("tag parsed: " + tag.toString());
         String tagName = tag.getName();
         // some tags insert data into the document as soon as they begin (br, img, p, pre, li, etc),
         // while others only insert data when they end or not at all
         if ("br".equals(tagName)) {
-            body.append("\n");
+            appendBody(body, '\n');
             _prevWasWhitespace = true;
         } else if ("img".equals(tagName)) {
-            body.append(PLACEHOLDER_IMAGE);
+            appendBody(body, PLACEHOLDER_IMAGE);
             _prevWasWhitespace = false;
         } else if ("p".equals(tagName)) {
             // make sure the <p>foo</p> starts off with a blank line before it
-            if ( (bodyIndex > 1) && (body.charAt(bodyIndex-1) != '\n') && (body.charAt(bodyIndex-2) != '\n') )
-                body.append('\n');
+            if ( (bodyIndex > 1) && (body.charAt(bodyIndex-1) != '\n') && (body.charAt(bodyIndex-2) != '\n') ) {
+                appendBody(body, '\n');
+                _prevWasWhitespace = true;
+            }
         } else if ("pre".equals(tagName)) {
             // make sure the <pre>foo</pre> starts off on a new line
-            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') )
-                body.append('\n');
+            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') ) {
+                appendBody(body, '\n');
+                _prevWasWhitespace = true;
+            }
         } else if ("li".equals(tagName)) {
             if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') )
-                body.append('\n');
-            body.append(PLACEHOLDER_LISTITEM);
-            _prevWasWhitespace = false;
+                appendBody(body, '\n');
+            appendBody(body, PLACEHOLDER_LISTITEM);
+            _prevWasWhitespace = true;
         }
         
         if (_noBodyTags.contains(tagName))
@@ -250,26 +282,34 @@ class HTMLStateBuilder {
             HTMLTag open = (HTMLTag)_activeTags.get(i);
             if (tag.getName().equals(open.getName())) {
                 open.setEndIndex(bodyIndex);
-                System.out.println("Closing tag " + open.toString());
+                //System.out.println("Closing tag " + open.toString());
                 _activeTags.remove(i);
                 if ("p".equals(tag.getName())) {
-                    body.append("\n\n");
+                    appendBody(body, '\n');
+                    appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("pre".equals(tag.getName())) {
-                    body.append("\n");
+                    appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("h1".equals(tag.getName()) || 
                            "h2".equals(tag.getName()) || 
                            "h3".equals(tag.getName()) || 
                            "h4".equals(tag.getName()) || 
                            "h5".equals(tag.getName())) {
-                    body.append("\n\n");
+                    appendBody(body, '\n');
+                    appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("li".equals(tag.getName())) {
-                    body.append("\n");
+                    //body.append("\n");
+                    //_prevWasWhitespace = true;
+                } else if ("ul".equals(tag.getName())) {
+                    appendBody(body, '\n');
+                    _prevWasWhitespace = true;
+                } else if ("ol".equals(tag.getName())) {
+                    appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("a".equals(tag.getName())) {
-                    body.append(PLACEHOLDER_LINK_END);
+                    appendBody(body, PLACEHOLDER_LINK_END);
                 }
                 _closedTags.add(open);
                 // should we remove all of the child tags too? 

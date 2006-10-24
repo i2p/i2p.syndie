@@ -52,6 +52,7 @@ class HTMLStyleBuilder {
     private List _customFonts;
 
     private static Image _linkEndIcon;
+    private static Image _imageUnknownIcon;
     static { buildDefaultIcons(); }
     
     public HTMLStyleBuilder(DBClient client, List htmlTags, String msgText, MessageInfo msg) {
@@ -213,7 +214,7 @@ class HTMLStyleBuilder {
     
     public StyleRange[] getStyleRanges() { return _styleRanges; }
     
-    private boolean containsTag(List tags, String tagName) {
+    static boolean containsTag(List tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
             if (((HTMLTag)tags.get(i)).getName().equalsIgnoreCase(tagName))
                 return true;
@@ -310,12 +311,21 @@ class HTMLStyleBuilder {
                 break;
             }
         }
-        if (imgTag == null) return;
+        if (imgTag == null) {
+            _images.add(_imageUnknownIcon);
+            return;
+        }
         SyndieURI imgURI = getURI(imgTag.getAttribValue("src"));
-        if (imgURI == null) return;
+        if (imgURI == null) {
+            _images.add(_imageUnknownIcon);
+            return;
+        }
         
         Long attachmentId = imgURI.getLong("attachment");
-        if (attachmentId == null) return;
+        if (attachmentId == null) {
+            _images.add(_imageUnknownIcon);
+            return;
+        }
         
         // the attachment may not be from this message...
         Hash scope = imgURI.getScope();
@@ -332,7 +342,11 @@ class HTMLStyleBuilder {
         
         long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
         byte imgData[] = _client.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
-        Image img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
+        Image img = null;
+        if (imgData == null)
+            img = _imageUnknownIcon;
+        else
+            img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
         int width = img.getBounds().width;
         int ascent = img.getBounds().height;
         _images.add(img);
@@ -515,13 +529,15 @@ class HTMLStyleBuilder {
             rv = 4;
         if (rv >= 64)
             rv = 64;
-        System.out.println("new size: " + rv + " baseSize: " + baseSize + " mod: " + sizeModifier);
+        //System.out.println("new size: " + rv + " baseSize: " + baseSize + " mod: " + sizeModifier);
         return rv;
     }
 
     private static void buildDefaultIcons() {
         _linkEndIcon = new Image(Display.getDefault(), 10, 10);
         _linkEndIcon.setBackground(new Color(Display.getDefault(), 255, 0, 0));
+        _imageUnknownIcon = new Image(Display.getDefault(), 10, 10);
+        _imageUnknownIcon.setBackground(new Color(Display.getDefault(), 0, 255, 0));
     }
     
     public static void main(String args[]) {
@@ -534,7 +550,7 @@ class HTMLStyleBuilder {
     }
     
     private static void test(String body) {
-        HTMLStateBuilder b = new HTMLStateBuilder(body, null);
+        HTMLStateBuilder b = new HTMLStateBuilder(body, null, -1);
         b.buildState();
         String text = b.getAsText();
         System.out.println("parsed: [" + body + "]");
