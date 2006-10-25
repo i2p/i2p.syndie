@@ -80,6 +80,9 @@ class HTMLStyleBuilder {
         buildFonts(getFontConfig(client));
     }
     
+    public ArrayList getImageTags() { return _imageTags; }
+    public ArrayList getLinkTags() { return _linkTags; }
+    
     public void buildStyles() {
         // get a list of points where any tag starts or ends
         TreeMap breakPointTags = new TreeMap();

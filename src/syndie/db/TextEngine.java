@@ -438,6 +438,9 @@ public class TextEngine {
         } else if ("alias".equalsIgnoreCase(cmd)) {
             processAlias(opts);
             return true;
+        } else if ("definecmd".equalsIgnoreCase(cmd)) {
+            processDefineCommand(opts);
+            return true;
         } else if ("?".equalsIgnoreCase(cmd) || "help".equalsIgnoreCase(cmd)) {
             help();
             _ui.commandComplete(0, null);
@@ -532,6 +535,30 @@ public class TextEngine {
             }
         }
         return rv.toString();
+    }
+    
+    private void processDefineCommand(Opts opts) {
+        String cmdName = opts.getOptValue("name");
+        String className = opts.getOptValue("class");
+        if ( (cmdName != null) && (className != null) ) {
+            try {
+                Class cls = Class.forName(className);
+                if (CLI.Command.class.isAssignableFrom(cls)) {
+                    CLI.setCommand(cmdName, cls);
+                    _ui.statusMessage("Defined [" + cmdName + "] to run the command [" + cls.getName() + "]");
+                    _ui.commandComplete(0, null);
+                } else {
+                    _ui.errorMessage("Specified command [" + cls.getName() + "] is not a valid CLI.Command");
+                    _ui.commandComplete(-1, null);
+                }
+            } catch (ClassNotFoundException cnfe) {
+                _ui.errorMessage("Specified command [" + className + "] was not found");
+                _ui.commandComplete(-1, null);
+            }
+        } else {
+            _ui.errorMessage("Usage: definecmd --name $commandName --class javaClassName");
+            _ui.commandComplete(-1, null);
+        }
     }
     
     private void processAlias(Opts opts) {

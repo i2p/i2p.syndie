@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.FocusEvent;
@@ -50,13 +51,18 @@ public class PageRenderer {
     private ArrayList _images;
     private ArrayList _liIndexes;
     
+    private ArrayList _imageTags;
+    private ArrayList _linkTags;
+    
     public PageRenderer(Composite parent) {
         _parent = parent;
-        _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.READ_ONLY);
+        _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         _menu = new Menu(_text);
         _fonts = null;
         _colors = null;
-
+        _imageTags = new ArrayList();
+        _linkTags = new ArrayList();
+    
         _text.setDoubleClickEnabled(true);
         _text.addSelectionListener(new SelectionListener() {
             public void widgetSelected(SelectionEvent selectionEvent) {
@@ -75,12 +81,21 @@ public class PageRenderer {
         });
         _text.addMouseTrackListener(new MouseTrackListener() {
             public void mouseEnter(MouseEvent mouseEvent) {}
-            public void mouseExit(MouseEvent mouseEvent) {}
+            public void mouseExit(MouseEvent mouseEvent) {
+            }
             public void mouseHover(MouseEvent mouseEvent) {
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
                 try {
                     off = _text.getOffsetAtLocation(p);
+                    for (int i = 0; i < _linkTags.size(); i++) {
+                        HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                        if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                            StyleRange range = _text.getStyleRangeAtOffset(off);
+                            System.out.println("Hover over " + tag + " (" + off + ": " + range + ")");
+                            break;
+                        }
+                    }
                 } catch (IllegalArgumentException iae) {
                     // no char at that point (why doesn't swt just return -1?)
                 }
@@ -100,7 +115,7 @@ public class PageRenderer {
                             Image img = (Image)_images.get(i);
                             int x = evt.x;
                             int y = evt.y + evt.ascent - range.metrics.ascent;
-                            System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
+                            //System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
                             gc.drawImage(img, x, y);
                             return;
                         }
@@ -122,7 +137,25 @@ public class PageRenderer {
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
+    public Composite getComposite() { return _text; }
     
+    public void renderPage(DBClient client, SyndieURI uri) {
+        Hash chan = uri.getScope();
+        if (chan == null) return;
+        long chanId = client.getChannelId(chan);
+        if (chanId < 0) return;
+        MessageInfo msg = client.getMessage(chanId, uri.getMessageId());
+        if (msg == null) return;
+        Long page = null;
+        page = uri.getLong("page");
+        if (page != null) {
+            if ( (page.longValue() > msg.getPageCount()) || (page.longValue() < 0) )
+                page = new Long(0);
+        } else {
+            page = new Long(0);
+        }
+        renderPage(client, msg, page.intValue());
+    }
     public void renderPage(DBClient client, MessageInfo msg, int pageNum) {
         _client = client;
         _msg = msg;
@@ -162,7 +195,10 @@ public class PageRenderer {
             FontMetrics metrics = gc.getFontMetrics();
             int charWidth = metrics.getAverageCharWidth();
             int paneWidth = _text.getBounds().width;
+            //if (paneWidth > 800) paneWidth = 800;
+            //else if (paneWidth < 100) paneWidth = 100;
             charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
+            System.out.println("max chars per line: " + charsPerLine + " pane width: " + paneWidth + " charWidth: " + charWidth);
         }
         
         HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, charsPerLine);
@@ -187,6 +223,8 @@ public class PageRenderer {
         Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
         
         setLineProperties(builder, sbuilder);
+        _linkTags = sbuilder.getLinkTags();
+        _imageTags = sbuilder.getImageTags();
     }
     
     /**
