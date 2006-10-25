@@ -32,7 +32,7 @@ class HTMLTag {
         int len = tagBody.length();
         for (int i = 0; i < len; i++) {
             char c = tagBody.charAt(i);
-            if (Character.isWhitespace(c)) {
+            if (Character.isWhitespace(c) || (c == '/')) {
                 if (_name == null) {
                     if (i == 0)
                         _name = "";
@@ -43,51 +43,51 @@ class HTMLTag {
                     } else {
                         if (attribNameStart == -1) {
                             // whitespace outside an attribute.. ignore
-                        } else                            if (attribNameEnd == -1) {
-                                // whitespace does terminate an attribute ("href = 'foo'")
-                                attribNameEnd = i;
-                            } else                                if (attribValueStart == -1) {
-                                    // whitespace doesn't start an attribute 
-                                } else {
-                                    // whitespace does terminate an unquoted attribute value though
-                                    quoteChar = -1;
-                                    String name = tagBody.substring(attribNameStart, attribNameEnd);
-                                    String val = tagBody.substring(attribValueStart, i);
-                                    _attributes.setProperty(name, val);
-                                    attribNameStart = -1;
-                                    attribNameEnd = -1;
-                                    attribValueStart = -1;
-                                }
+                        } else if (attribNameEnd == -1) {
+                            // whitespace does terminate an attribute ("href = 'foo'")
+                            attribNameEnd = i;
+                        } else if (attribValueStart == -1) {
+                                // whitespace doesn't start an attribute 
+                        } else {
+                            // whitespace does terminate an unquoted attribute value though
+                            quoteChar = -1;
+                            String name = tagBody.substring(attribNameStart, attribNameEnd);
+                            String val = tagBody.substring(attribValueStart, i);
+                            _attributes.setProperty(name, val);
+                            attribNameStart = -1;
+                            attribNameEnd = -1;
+                            attribValueStart = -1;
+                        }
                     }
                 }
             }  else if ((quoteChar != -1) && (quoteChar == c) && (attribValueStart != -1)) {
-                    quoteChar = -1;
-                    String name = tagBody.substring(attribNameStart, attribNameEnd);
-                    String val = tagBody.substring(attribValueStart, i);
-                    _attributes.setProperty(name, val);
-                    attribNameStart = -1;
-                    attribNameEnd = -1;
-                    attribValueStart = -1;
-            }  else if (_name != null) {
-                    // already have our name, so we are parsing attributes
-                    if (attribNameStart == -1) {
-                        attribNameStart = i;
-                    } else if (attribNameEnd == -1) {
-                        if (c == '=') {
-                            attribNameEnd = i;
-                        }
-                    } else if (attribValueStart == -1) {
-                        if (c == '\'') {
-                            quoteChar = c;
-                            attribValueStart = i+1;
-                        } else if (c == '\"') {
-                            quoteChar = c;
-                            attribValueStart = i+1;
-                        }
+                quoteChar = -1;
+                String name = tagBody.substring(attribNameStart, attribNameEnd);
+                String val = tagBody.substring(attribValueStart, i);
+                _attributes.setProperty(name, val);
+                attribNameStart = -1;
+                attribNameEnd = -1;
+                attribValueStart = -1;
+            } else if (_name != null) {
+                // already have our name, so we are parsing attributes
+                if (attribNameStart == -1) {
+                    attribNameStart = i;
+                } else if (attribNameEnd == -1) {
+                    if (c == '=') {
+                        attribNameEnd = i;
                     }
-                } else {
-                    // name not known, and we haven't reached whitespace yet.  keep going
+                } else if (attribValueStart == -1) {
+                    if (c == '\'') {
+                        quoteChar = c;
+                        attribValueStart = i+1;
+                    } else if (c == '\"') {
+                        quoteChar = c;
+                        attribValueStart = i+1;
+                    }
                 }
+            } else {
+                // name not known, and we haven't reached whitespace yet.  keep going
+            }
         } // end looping over the tag body
         if (_name == null)
             _name = tagBody.toLowerCase();

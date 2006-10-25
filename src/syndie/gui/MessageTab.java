@@ -141,7 +141,9 @@ public class MessageTab extends Component {
             }
             targetChannel = _client.getChannel(msg.getTargetChannelId());
             
-            _aboutSubject.setText(msg.getSubject());
+            String subject = msg.getSubject();
+            if (subject == null) subject = "";
+            _aboutSubject.setText(subject);
             _aboutAvatar.setImage(_avatar);
             _aboutChannelRow.setLayout(new RowLayout(SWT.HORIZONTAL));
             _aboutChannel.setText(chan.getName() + (chan.getDescription() != null ? "-" + chan.getDescription() : ""));

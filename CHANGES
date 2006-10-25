@@ -8,6 +8,8 @@
     - (syndie.gui branch) beginning of the html parse/rendering
     - (syndie.gui branch) render images and fonts
     - (syndie.gui branch) lists, justification, and indentation work
+    - (syndie.gui branch) all HTML4.0 entities, bgcolors, fgcolors, user
+      specified fonts, better handling of the quote tag, unknown image icon
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as

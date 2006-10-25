@@ -15,6 +15,7 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
@@ -44,6 +45,7 @@ public class PageRenderer {
     private Menu _menu;
     private PageActionListener _listener;
     private ArrayList _fonts;
+    private ArrayList _colors;
     private ArrayList _imageIndexes;
     private ArrayList _images;
     private ArrayList _liIndexes;
@@ -53,6 +55,7 @@ public class PageRenderer {
         _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.READ_ONLY);
         _menu = new Menu(_text);
         _fonts = null;
+        _colors = null;
 
         _text.setDoubleClickEnabled(true);
         _text.addSelectionListener(new SelectionListener() {
@@ -97,6 +100,7 @@ public class PageRenderer {
                             Image img = (Image)_images.get(i);
                             int x = evt.x;
                             int y = evt.y + evt.ascent - range.metrics.ascent;
+                            System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
                             gc.drawImage(img, x, y);
                             return;
                         }
@@ -140,11 +144,13 @@ public class PageRenderer {
     }
     private void renderText(String body) {
         disposeFonts();
+        disposeColors();
         _text.setText(body);
         _text.setStyleRanges(null);
     }
     private void renderHTML(String html) {
         disposeFonts();
+        disposeColors();
 
         int charsPerLine = -1;
         if (true) {
@@ -166,6 +172,7 @@ public class PageRenderer {
         HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg);
         sbuilder.buildStyles();
         _fonts = sbuilder.getFonts();
+        _colors = sbuilder.getCustomColors();
         _text.setStyleRanges(sbuilder.getStyleRanges());
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
         // so that the listeners registered in the constructor can do their thing
@@ -173,7 +180,7 @@ public class PageRenderer {
         _liIndexes = sbuilder.getListItemIndexes();
         _images = sbuilder.getImages();
         if (_images.size() != _imageIndexes.size()) {
-            throw new RuntimeException("images: " + _images.size() + " imageIndexes: " + _imageIndexes.size());
+            throw new RuntimeException("images: " + _images + " imageIndexes: " + _imageIndexes);
         }
         // the _imageIndexes/_images contain the image for the linkEnd values, but
         // we may want to keep track of them separately for menu handling
@@ -275,14 +282,17 @@ public class PageRenderer {
             //if (indentLevel > 0)
             //    System.out.println("indent level: " + indentLevel + " bullet: " + bullet + " ulLevel: " + ulLevel + " olLevel: " + olLevel);
             
+            boolean quoteFound = false;
             // look for <quote> tags, and indent $x times the nesting layer
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
-                if ("quote".equals(tag.getName()))
+                if ("quote".equals(tag.getName())) {
                     indentLevel++;
+                    quoteFound = true;
+                }
             }
             
-            //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: tags: " + tags 
+            //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: quote? " + quoteFound + " tags: " + tags 
             //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
             //                   + " indent: " + indentLevel + ")");
             
@@ -325,6 +335,16 @@ public class PageRenderer {
                     f.dispose();
             }
             _fonts = null;
+        }
+    }
+    private void disposeColors() {
+        if (_colors != null) {
+            for (int i = 0; i < _colors.size(); i++) {
+                Color c = (Color)_colors.get(i);
+                if (!c.isDisposed())
+                    c.dispose();
+            }
+            _colors = null;
         }
     }
     

@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.*;
 import net.i2p.data.Hash;
@@ -34,6 +35,8 @@ class HTMLStyleBuilder {
     private ArrayList _images;
     private ArrayList _linkIndexes;
     private ArrayList _listItemIndexes;
+    private ArrayList _linkTags;
+    private ArrayList _imageTags;
     
     // default fonts that can be shared across many ranges.  this does not cover
     // every scenario though, so some fonts may need to be built dynamically
@@ -51,9 +54,15 @@ class HTMLStyleBuilder {
     /** fonts built for ranges that did not match up with the defaults */
     private List _customFonts;
 
+    /** light grey background for quotes */
+    private static Color _bgColorQuote = new Color(Display.getDefault(), 223, 223, 223);
+    private static final Map _colorNameToRGB = new HashMap();
+    
+    private Map _customColors;
+
     private static Image _linkEndIcon;
     private static Image _imageUnknownIcon;
-    static { buildDefaultIcons(); }
+    static { buildDefaultIcons(); buildColorNameToRGB(); }
     
     public HTMLStyleBuilder(DBClient client, List htmlTags, String msgText, MessageInfo msg) {
         _client = client;
@@ -63,8 +72,11 @@ class HTMLStyleBuilder {
         _imageIndexes = new ArrayList();
         _linkIndexes = new ArrayList();
         _listItemIndexes = new ArrayList();
+        _linkTags = new ArrayList();
+        _imageTags = new ArrayList();
         _images = new ArrayList();
         _customFonts = new ArrayList();
+        _customColors = new HashMap();
         buildFonts(getFontConfig(client));
     }
     
@@ -73,6 +85,11 @@ class HTMLStyleBuilder {
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
+            if ("a".equals(tag.getName())) {
+                _linkTags.add(tag);
+            } else if ("img".equals(tag.getName())) {
+                _imageTags.add(tag);
+            }
             List tags = (List)breakPointTags.get(new Integer(tag.getStartIndex()));
             if (tags == null) {
                 tags = new ArrayList();
@@ -87,6 +104,7 @@ class HTMLStyleBuilder {
                 breakPointTags.put(new Integer(tag.getEndIndex()), tags);
             }
             tags.add(tag);
+            //System.out.println("breakpoints for tag " + tag + ": " + tag.getStartIndex() + ", " + tag.getEndIndex());
         }
         
         // include special characters
@@ -161,6 +179,29 @@ class HTMLStyleBuilder {
             _styleRanges[rangeIndex] = buildStyle((List)breakPointTags.get(curBreakPoint), start, length);
             rangeIndex++;
         }
+        
+        // put images in for all the <img> tags
+        for (int i = 0; i < _imageTags.size(); i++) {
+            HTMLTag imgTag = (HTMLTag)_imageTags.get(i);
+            for (int j = 0; j < _styleRanges.length; j++) {
+                if (_styleRanges[j].start == imgTag.getStartIndex()) {
+                    //System.out.println("img in range @ " + _styleRanges[j].start + ": " + imgTag);
+                    includeImage(_styleRanges[j], imgTag);
+                    break;
+                }
+            }
+        }
+        // now put images in the range after <a> tags
+        for (int i = 0; i < _linkTags.size(); i++) {
+            HTMLTag linkTag = (HTMLTag)_linkTags.get(i);
+            for (int j = 0; j < _styleRanges.length; j++) {
+                if (_styleRanges[j].start == linkTag.getEndIndex()) {
+                    //System.out.println("link in range @ " + _styleRanges[j].start + ": " + linkTag);
+                    includeLinkEnd(_styleRanges[j], linkTag);
+                    break;
+                }
+            }
+        }
     }
     
     public ArrayList getImageIndexes() { return _imageIndexes; }
@@ -182,6 +223,7 @@ class HTMLStyleBuilder {
         rv.add(_fontPRE);
         return rv;
     }
+    public ArrayList getCustomColors() { return new ArrayList(_customColors.values()); }
     
     private void insertCharBreakpoints(char placeholder, Map breakpoints, List indexes) {
         int start = 0;
@@ -193,8 +235,12 @@ class HTMLStyleBuilder {
                 Integer idx = new Integer(index);
                 indexes.add(idx);
                 List indexTags = (List)breakpoints.get(idx);
-                if (indexTags == null) 
+                if (indexTags == null) {
                     breakpoints.put(idx, new ArrayList());
+                    //System.out.println("char breakpoint " + (int)placeholder + ": " + index + ", no tags @ breakpoint");
+                } else {
+                    //System.out.println("char breakpoint " + (int)placeholder + ": " + index + ", tags @ breakpoint: " + indexTags);
+                }
                 start = index+1;
             }
         }
@@ -205,7 +251,7 @@ class HTMLStyleBuilder {
         for (int i = 0; i < tags.size(); i++)
             System.out.print(((HTMLTag)tags.get(i)).getName() + " ");
         if (length > 0)
-            System.out.println("\n\t" + _msgText.substring(start, start+length));
+            System.out.println("\t[" + _msgText.substring(start, start+length).trim() + "]");
         else
             System.out.println();
     
@@ -285,68 +331,149 @@ class HTMLStyleBuilder {
             }
         }
         
-        if ( (customStyle != 0) || (sizeModifier != 0) ) {
-            // ok, we can't use a default font, so lets construct a new one (or use a cached one)
-            style.font = buildFont(style.font, customStyle, sizeModifier);
-        }
-        
-        if (containsTag(tags, "img")) {
-            System.out.println("Image w/ tags at index " + start + " : " +  tags);
-            includeImage(style, tags);
-        } else if (_linkIndexes.contains(new Integer(start))) {
-            includeLinkEnd(style, tags);
-        } else if (_imageIndexes.contains(new Integer(start))) {
-            System.out.println("Image at index " + start + " : " +  tags);
-            includeImage(style, tags);
-        }
-        return style;
-    }
-    
-    private void includeImage(StyleRange style, List tags) {
-        HTMLTag imgTag = null;
+        String fontName = null;
+        // innermost font name is used
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            if (tag.getName().equalsIgnoreCase("img")) {
-                imgTag = tag;
+            String name = null;
+            if (tag.getName().equalsIgnoreCase("font"))
+                name = tag.getAttribValue("name");
+            else
+                name = tag.getAttribValue("font");
+            if (name != null) {
+                fontName = name.trim();
                 break;
             }
         }
+        
+        Color bgColor = null;
+        if (containsTag(tags, "quote"))
+            bgColor = _bgColorQuote;
+        // innermost bgcolor is used
+        //System.out.println("Looking for a bgcolor in " + tags);
+        for (int i = 0; i < tags.size(); i++) {
+            HTMLTag tag = (HTMLTag)tags.get(i);
+            String color = tag.getAttribValue("bgcolor");
+            if (color != null) {
+                color = color.trim();
+                String rgb = (String)_colorNameToRGB.get(color);
+                if (rgb != null)
+                    color = rgb;
+                //System.out.println("color: " + color);
+                if (color.startsWith("#") && (color.length() == 7)) {
+                    Color cached = (Color)_customColors.get(color);
+                    if (cached == null) {
+                        try {
+                            int r = Integer.parseInt(color.substring(1, 3), 16);
+                            int g = Integer.parseInt(color.substring(3, 5), 16);
+                            int b = Integer.parseInt(color.substring(5, 7), 16);
+                            cached = new Color(Display.getDefault(), r, g, b);
+                            _customColors.put(color, cached);
+                            //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
+                        } catch (NumberFormatException nfe) {
+                            // invalid rgb
+                            System.out.println("invalid rgb");
+                            nfe.printStackTrace();
+                        }
+                    }
+                    if (cached != null) {
+                        bgColor = cached;
+                        break;
+                    }
+                } else {
+                    // invalid rgb
+                    //System.out.println("rgb is not valid [" + color + "]");
+                }
+            }
+        }
+        
+        if (bgColor != null)
+            style.background = bgColor;
+        
+        Color fgColor = null;
+        // innermost fgcolor/color is used
+        //System.out.println("Looking for a fgcolor in " + tags);
+        for (int i = 0; i < tags.size(); i++) {
+            HTMLTag tag = (HTMLTag)tags.get(i);
+            String color = tag.getAttribValue("fgcolor");
+            if (color == null)
+                color = tag.getAttribValue("color");
+            if (color != null) {
+                color = color.trim();
+                String rgb = (String)_colorNameToRGB.get(color);
+                if (rgb != null)
+                    color = rgb;
+                //System.out.println("color: " + color);
+                if (color.startsWith("#") && (color.length() == 7)) {
+                    Color cached = (Color)_customColors.get(color);
+                    if (cached == null) {
+                        try {
+                            int r = Integer.parseInt(color.substring(1, 3), 16);
+                            int g = Integer.parseInt(color.substring(3, 5), 16);
+                            int b = Integer.parseInt(color.substring(5, 7), 16);
+                            cached = new Color(Display.getDefault(), r, g, b);
+                            _customColors.put(color, cached);
+                            //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
+                        } catch (NumberFormatException nfe) {
+                            // invalid rgb
+                            System.out.println("invalid rgb");
+                            nfe.printStackTrace();
+                        }
+                    }
+                    if (cached != null) {
+                        fgColor = cached;
+                        break;
+                    }
+                } else {
+                    // invalid rgb
+                    //System.out.println("rgb is not valid [" + color + "]");
+                }
+            }
+        }
+        
+        if (fgColor != null)
+            style.foreground = fgColor;
+        
+        if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) ) {
+            // ok, we can't use a default font, so lets construct a new one (or use a cached one)
+            style.font = buildFont(style.font, customStyle, sizeModifier, fontName);
+        }
+        
+        // images are built later
+        return style;
+    }
+    
+    private void includeImage(StyleRange style, HTMLTag imgTag) {
         if (imgTag == null) {
             _images.add(_imageUnknownIcon);
             return;
         }
         SyndieURI imgURI = getURI(imgTag.getAttribValue("src"));
-        if (imgURI == null) {
-            _images.add(_imageUnknownIcon);
-            return;
-        }
-        
-        Long attachmentId = imgURI.getLong("attachment");
-        if (attachmentId == null) {
-            _images.add(_imageUnknownIcon);
-            return;
-        }
-        
-        // the attachment may not be from this message...
-        Hash scope = imgURI.getScope();
-        long scopeId = -1;
-        Long msgId = imgURI.getMessageId();
-        if ( (scope == null) || (msgId == null) ) {
-            // ok, yes, its implicitly from this message
-            scope = _msg.getScopeChannel();
-            scopeId = _msg.getScopeChannelId();
-            msgId = new Long(_msg.getMessageId());
-        } else {
-            scopeId = _client.getChannelId(scope);
-        }
-        
-        long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
-        byte imgData[] = _client.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
         Image img = null;
-        if (imgData == null)
+        if (imgURI != null) {
+            Long attachmentId = imgURI.getLong("attachment");
+            if (attachmentId != null) {
+                // the attachment may not be from this message...
+                Hash scope = imgURI.getScope();
+                long scopeId = -1;
+                Long msgId = imgURI.getMessageId();
+                if ( (scope == null) || (msgId == null) ) {
+                    // ok, yes, its implicitly from this message
+                    scope = _msg.getScopeChannel();
+                    scopeId = _msg.getScopeChannelId();
+                    msgId = new Long(_msg.getMessageId());
+                } else {
+                    scopeId = _client.getChannelId(scope);
+                }
+        
+                long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
+                byte imgData[] = _client.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
+                if (imgData != null)
+                    img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
+            }
+        }
+        if (img == null)
             img = _imageUnknownIcon;
-        else
-            img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
         int width = img.getBounds().width;
         int ascent = img.getBounds().height;
         _images.add(img);
@@ -356,18 +483,12 @@ class HTMLStyleBuilder {
         //style.background = _imgBGColor;
     }
     
-    private void includeLinkEnd(StyleRange style, List tags) {
-        HTMLTag aTag = null;
-        for (int i = 0; i < tags.size(); i++) {
-            HTMLTag tag = (HTMLTag)tags.get(i);
-            if (tag.getName().equalsIgnoreCase("a")) {
-                aTag = tag;
-                break;
-            }
-        }
-        if (aTag == null) return;
+    private void includeLinkEnd(StyleRange style, HTMLTag aTag) {
         SyndieURI targetURI = getURI(aTag.getAttribValue("href"));
-        if (targetURI == null) return;
+        //if (targetURI == null) {
+        //    System.out.println("no target uri in " + aTag);
+        //    return;
+        //}
         
         // perhaps use different icons depending upon who or what is being targetted?
         // e.g. the channel icon for channels or messages, a special archive icon for
@@ -377,11 +498,14 @@ class HTMLStyleBuilder {
         Image img = _linkEndIcon;
         int width = img.getBounds().width;
         int ascent = img.getBounds().height;
+        Integer idx = new Integer(style.start);
+        if (_imageIndexes.contains(idx))
+            throw new RuntimeException("wtf, already have an image at " + idx + ": " + _imageIndexes);
+        _imageIndexes.add(idx);
         _images.add(img);
         
         int descent = 0;
         style.metrics = new GlyphMetrics(ascent, 0, width);
-        //style.background = _imgBGColor;
     }
     
     private SyndieURI getURI(String src) {
@@ -488,7 +612,7 @@ class HTMLStyleBuilder {
      * This does not adjust the old font in any way, and may return a cached value
      * from _customFonts
      */
-    private Font buildFont(Font oldFont, int swtAttribs, int sizeModifier) {
+    private Font buildFont(Font oldFont, int swtAttribs, int sizeModifier, String fontName) {
         FontData oldData[] = null;
         if (!oldFont.isDisposed()) {
             oldData = oldFont.getFontData();
@@ -497,7 +621,7 @@ class HTMLStyleBuilder {
         }
         FontData newData[] = new FontData[oldData.length];
         for (int i = 0; i < oldData.length; i++)
-            newData[i] = new FontData(oldData[i].getName(), getSize(oldData[i].getHeight(), sizeModifier), oldData[i].getStyle() | swtAttribs);
+            newData[i] = new FontData((fontName != null ? fontName : oldData[i].getName()), getSize(oldData[i].getHeight(), sizeModifier), oldData[i].getStyle() | swtAttribs);
         Font rv = null;
         // search through _customFonts to see if we are already using this combination
         for (int i = 0; i < _customFonts.size(); i++) {
@@ -534,10 +658,23 @@ class HTMLStyleBuilder {
     }
 
     private static void buildDefaultIcons() {
-        _linkEndIcon = new Image(Display.getDefault(), 10, 10);
-        _linkEndIcon.setBackground(new Color(Display.getDefault(), 255, 0, 0));
-        _imageUnknownIcon = new Image(Display.getDefault(), 10, 10);
-        _imageUnknownIcon.setBackground(new Color(Display.getDefault(), 0, 255, 0));
+        InputStream in = HTMLStyleBuilder.class.getResourceAsStream("iconUnknown.png");
+        _imageUnknownIcon = new Image(Display.getDefault(), in);
+        in = HTMLStyleBuilder.class.getResourceAsStream("iconLink.png");
+        if (in != null) {
+            _linkEndIcon = new Image(Display.getDefault(), in);
+        } else {
+            _linkEndIcon = _imageUnknownIcon;
+            throw new RuntimeException("could not load the link end icon");
+        }
+        
+    }
+    private static void buildColorNameToRGB() {
+        _colorNameToRGB.put("red", "#FF0000");
+        _colorNameToRGB.put("green", "#00FF00");
+        _colorNameToRGB.put("blue", "#0000FF");
+        _colorNameToRGB.put("white", "#FFFFFF");
+        _colorNameToRGB.put("black", "#000000");
     }
     
     public static void main(String args[]) {
