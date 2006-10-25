@@ -121,7 +121,7 @@ public class ViewMessage extends CommandImpl {
                     fos.close();
                 }
                 
-                String cfg = client.getMessageAttachmentConfig(info.getInternalId(), i);
+                String cfg = client.getMessageAttachmentConfigRaw(info.getInternalId(), i);
                 if (cfg != null) {
                     fos = new FileOutputStream(new File(dir, "attachment" + i + ".cfg"));
                     fos.write(DataHelper.getUTF8(cfg));

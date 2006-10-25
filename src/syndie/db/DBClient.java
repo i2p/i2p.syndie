@@ -605,6 +605,33 @@ public class DBClient {
         return rv;
     }
     
+    private static final String SQL_GET_CHANNEL_HASH = "SELECT channelHash FROM channel WHERE channelId = ?";
+    public Hash getChannelHash(long channelId) {
+        if (channelId < 0) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_HASH);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte chanHash[] = rs.getBytes(1);
+                if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
+                    return new Hash(chanHash);
+                return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel hash", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_ID = "SELECT channelId FROM channel WHERE channelHash = ?";
     public long getChannelId(Hash channel) {
         if (channel == null) return -1;
@@ -1717,8 +1744,16 @@ public class DBClient {
         return 0;
     }
     
+    public Properties getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
+        String cfg = getMessageAttachmentConfigRaw(internalMessageId, attachmentNum);
+        Properties rv = new Properties();
+        if (cfg != null)
+            CommandImpl.parseProps(cfg, rv);
+        return rv;
+    }
+    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
-    public String getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
+    public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;

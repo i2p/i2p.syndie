@@ -1,5 +1,6 @@
 package syndie;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -100,6 +101,8 @@ public class Constants {
 
     public static final String FILENAME_SUFFIX = ".syndie";
 
+    public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";
+
 
     public static final String[] split(char elem, String orig) {
         List vals = new ArrayList();
@@ -125,6 +128,28 @@ public class Constants {
         for (int i = 0; i < rv.length; i++)
             rv[i] = (String)vals.get(i);
         return rv;
+    }
+    
+    private static final String ALLOWED_FILENAME = "abcdefghijklmnopqrstuvwxyz" +
+                                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                                   "0123456789" +
+                                                   "._-+";
+    
+    /** incredibly conservative filter, only allowing ascii alphanum and a few symbols */
+    public static String stripFilename(String name, boolean allowPaths) {
+        char rv[] = name.toCharArray();
+        boolean mod = false;
+        for (int i = 0; i < rv.length; i++) {
+            if (allowPaths && ( (rv[i] == '/' || rv[i] == '\\') )) {
+                rv[i] = File.separatorChar;
+                mod = true;
+            } else if (ALLOWED_FILENAME.indexOf(rv[i]) == -1) {
+                rv[i] = '_';
+                mod = true;
+            }
+        }
+        if (!mod) return name;
+        return new String(rv);
     }
 
     public static void main(String args[]) {

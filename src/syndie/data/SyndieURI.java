@@ -242,6 +242,13 @@ public class SyndieURI {
         else
             return null;
     }
+    public SessionKey getArchiveKey() {
+        byte val[] = getBytes(Constants.URI_ARCHIVE_PASSPHRASE);
+        if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
+            return new SessionKey(val);
+        else
+            return null;
+    }
     public SigningPrivateKey getPostKey() {
         byte val[] = getBytes("postKey");
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )

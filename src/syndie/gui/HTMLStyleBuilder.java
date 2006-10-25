@@ -28,6 +28,7 @@ class HTMLStyleBuilder {
     private List _htmlTags;
     private String _msgText;
     private MessageInfo _msg;
+    private boolean _enableImages;
     private List _tagRanges;
     private StyleRange[] _styleRanges;
     private ArrayList _imageIndexes;
@@ -64,11 +65,12 @@ class HTMLStyleBuilder {
     private static Image _imageUnknownIcon;
     static { buildDefaultIcons(); buildColorNameToRGB(); }
     
-    public HTMLStyleBuilder(DBClient client, List htmlTags, String msgText, MessageInfo msg) {
+    public HTMLStyleBuilder(DBClient client, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
         _client = client;
         _htmlTags = htmlTags;
         _msgText = msgText;
         _msg = msg;
+        _enableImages = enableImages;
         _imageIndexes = new ArrayList();
         _linkIndexes = new ArrayList();
         _listItemIndexes = new ArrayList();
@@ -111,7 +113,8 @@ class HTMLStyleBuilder {
         }
         
         // include special characters
-        insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_IMAGE, breakPointTags, _imageIndexes);
+        if (_enableImages)
+            insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_IMAGE, breakPointTags, _imageIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LINK_END, breakPointTags, _linkIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LISTITEM, breakPointTags, _listItemIndexes);
         
@@ -183,17 +186,20 @@ class HTMLStyleBuilder {
             rangeIndex++;
         }
         
-        // put images in for all the <img> tags
-        for (int i = 0; i < _imageTags.size(); i++) {
-            HTMLTag imgTag = (HTMLTag)_imageTags.get(i);
-            for (int j = 0; j < _styleRanges.length; j++) {
-                if (_styleRanges[j].start == imgTag.getStartIndex()) {
-                    //System.out.println("img in range @ " + _styleRanges[j].start + ": " + imgTag);
-                    includeImage(_styleRanges[j], imgTag);
-                    break;
+        if (_enableImages) {
+            // put images in for all the <img> tags
+            for (int i = 0; i < _imageTags.size(); i++) {
+                HTMLTag imgTag = (HTMLTag)_imageTags.get(i);
+                for (int j = 0; j < _styleRanges.length; j++) {
+                    if (_styleRanges[j].start == imgTag.getStartIndex()) {
+                        //System.out.println("img in range @ " + _styleRanges[j].start + ": " + imgTag);
+                        includeImage(_styleRanges[j], imgTag);
+                        break;
+                    }
                 }
             }
         }
+        
         // now put images in the range after <a> tags
         for (int i = 0; i < _linkTags.size(); i++) {
             HTMLTag linkTag = (HTMLTag)_linkTags.get(i);
@@ -511,7 +517,9 @@ class HTMLStyleBuilder {
         style.metrics = new GlyphMetrics(ascent, 0, width);
     }
     
-    private SyndieURI getURI(String src) {
+    
+    private SyndieURI getURI(String src) { return getURI(src, _msg); }
+    static SyndieURI getURI(String src, MessageInfo scope) {
         if (src == null) return null;
         
         SyndieURI uri = null;
@@ -524,7 +532,7 @@ class HTMLStyleBuilder {
             String attachmentNum = src.substring("attachment".length()).trim();
             try {
                 int num = Integer.parseInt(attachmentNum);
-                SyndieURI msgURI = _msg.getURI();
+                SyndieURI msgURI = scope.getURI();
                 return SyndieURI.createAttachment(msgURI.getScope(), msgURI.getMessageId().longValue(), num);
             } catch (NumberFormatException nfe) {
                 return null;
@@ -534,7 +542,7 @@ class HTMLStyleBuilder {
             String pageNum = src.substring("page".length()).trim();
             try {
                 int num = Integer.parseInt(pageNum);
-                SyndieURI msgURI = _msg.getURI();
+                SyndieURI msgURI = scope.getURI();
                 return SyndieURI.createMessage(msgURI.getScope(), msgURI.getMessageId().longValue(), num);
             } catch (NumberFormatException nfe) {
                 return null;
@@ -695,7 +703,7 @@ class HTMLStyleBuilder {
         String text = b.getAsText();
         System.out.println("parsed: [" + body + "]");
         System.out.println("text: [" + text + "]");
-        HTMLStyleBuilder sb = new HTMLStyleBuilder(null, b.getTags(), text, null);
+        HTMLStyleBuilder sb = new HTMLStyleBuilder(null, b.getTags(), text, null, true);
         try {
             sb.buildStyles();
         } catch (Exception e) {

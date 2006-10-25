@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.Hash;
+import net.i2p.data.PrivateKey;
+import net.i2p.data.SessionKey;
+import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.FocusEvent;
@@ -54,6 +57,61 @@ public class PageRenderer {
     private ArrayList _imageTags;
     private ArrayList _linkTags;
     
+    private Menu _bodyMenu;
+    private Menu _imageMenu;
+    private Menu _linkMenu;
+    private Menu _imageLinkMenu;
+    
+    private MenuItem _bodyViewForum;
+    private MenuItem _bodyViewForumMetadata;
+    private MenuItem _bodyBookmarkForum;
+    private MenuItem _bodyViewAuthorForum;
+    private MenuItem _bodyViewAuthorMetadata;
+    private MenuItem _bodyBookmarkAuthor;
+    private MenuItem _bodyBanForum;
+    private MenuItem _bodyBanAuthor;
+    private MenuItem _bodyEnable;
+    private MenuItem _bodyDisable;
+    private MenuItem _bodySaveAll;
+    
+    private MenuItem _imgView;
+    private MenuItem _imgSave;
+    private MenuItem _imgSaveAll;
+    private MenuItem _imgDisable;
+    private MenuItem _imgEnable;
+    private MenuItem _imgIgnoreAuthor;
+    private MenuItem _imgIgnoreForum;
+    
+    private MenuItem _linkView;
+    private MenuItem _linkBookmark;
+    private MenuItem _linkImportReadKey;
+    private MenuItem _linkImportPostKey;
+    private MenuItem _linkImportManageKey;
+    private MenuItem _linkImportReplyKey;
+    private MenuItem _linkImportArchiveKey;
+    
+    private MenuItem _imgLinkViewLink;
+    private MenuItem _imgLinkViewImg;
+    private MenuItem _imgLinkSave;
+    private MenuItem _imgLinkSaveAll;
+    private MenuItem _imgLinkDisable;
+    private MenuItem _imgLinkEnable;
+    private MenuItem _imgLinkIgnoreAuthor;
+    private MenuItem _imgLinkIgnoreForum;
+    private MenuItem _imgLinkBookmarkLink;
+    private MenuItem _imgLinkImportReadKey;
+    private MenuItem _imgLinkImportPostKey;
+    private MenuItem _imgLinkImportManageKey;
+    private MenuItem _imgLinkImportReplyKey;
+    private MenuItem _imgLinkImportArchiveKey;
+
+    private boolean _enableImages;
+    
+    private SyndieURI _currentEventURI;
+    private HTMLTag _currentEventLinkTag;
+    private Image _currentEventImage;
+    private HTMLTag _currentEventImageTag;
+    
     public PageRenderer(Composite parent) {
         _parent = parent;
         _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
@@ -62,39 +120,60 @@ public class PageRenderer {
         _colors = null;
         _imageTags = new ArrayList();
         _linkTags = new ArrayList();
+        
+        _enableImages = true;
     
+        buildMenus();
+        pickBodyMenu();
+        
         _text.setDoubleClickEnabled(true);
         _text.addSelectionListener(new SelectionListener() {
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                //System.out.println("Selected [" + selectionEvent.text + "] ["+selectionEvent.x + " to " + selectionEvent.y + "]");
-            }
+            public void widgetSelected(SelectionEvent selectionEvent) { _text.copy(); }
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {}
         });
         _text.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
-            public void mouseDown(MouseEvent mouseEvent) {
-                //System.out.println("down [" + mouseEvent.x + " to " + mouseEvent.y + "]");
-            }
-            public void mouseUp(MouseEvent mouseEvent) {
-                //System.out.println("up [" + mouseEvent.x + " to " + mouseEvent.y + "]");
-            }
+            public void mouseDown(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
+            public void mouseUp(MouseEvent mouseEvent) {}
         });
         _text.addMouseTrackListener(new MouseTrackListener() {
-            public void mouseEnter(MouseEvent mouseEvent) {}
-            public void mouseExit(MouseEvent mouseEvent) {
-            }
+            public void mouseEnter(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
+            public void mouseExit(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
             public void mouseHover(MouseEvent mouseEvent) {
+                pickMenu(mouseEvent.x, mouseEvent.y);
+                _text.setToolTipText("");
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
                 try {
                     off = _text.getOffsetAtLocation(p);
+                    HTMLTag linkTag = null;
+                    StyleRange linkRange = null;
+                    HTMLTag imgTag = null;
+                    StyleRange imgRange = null;
                     for (int i = 0; i < _linkTags.size(); i++) {
                         HTMLTag tag = (HTMLTag)_linkTags.get(i);
                         if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
-                            System.out.println("Hover over " + tag + " (" + off + ": " + range + ")");
+                            linkTag = tag;
+                            linkRange = range;
                             break;
                         }
+                    }
+                    for (int i = 0; i < _imageTags.size(); i++) {
+                        HTMLTag tag = (HTMLTag)_imageTags.get(i);
+                        if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                            StyleRange range = _text.getStyleRangeAtOffset(off);
+                            imgRange = range;
+                            imgTag = tag;
+                            break;
+                        }
+                    }
+                    if ( (imgTag != null) && (linkTag != null) ) {
+                        hoverImageLink(imgRange, imgTag, linkRange, linkTag, off);
+                    } else if (imgTag != null) {
+                        hoverImage(imgRange, off, imgTag);
+                    } else if (linkTag != null) {
+                        hoverLink(linkRange, off, linkTag);
                     }
                 } catch (IllegalArgumentException iae) {
                     // no char at that point (why doesn't swt just return -1?)
@@ -117,17 +196,6 @@ public class PageRenderer {
                             int y = evt.y + evt.ascent - range.metrics.ascent;
                             //System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
                             gc.drawImage(img, x, y);
-                            return;
-                        }
-                    }
-                }
-                // not an image.. check the li indexes
-                if (_liIndexes != null) {
-                    for (int i = 0; i < _liIndexes.size(); i++) {
-                        int offset = ((Integer)_liIndexes.get(i)).intValue();
-                        if (start == offset) {
-                            // render the line's bullet
-                            // ...
                             return;
                         }
                     }
@@ -156,7 +224,7 @@ public class PageRenderer {
         }
         renderPage(client, msg, page.intValue());
     }
-    public void renderPage(DBClient client, MessageInfo msg, int pageNum) {
+    private void renderPage(DBClient client, MessageInfo msg, int pageNum) {
         _client = client;
         _msg = msg;
         _page = pageNum;
@@ -205,7 +273,7 @@ public class PageRenderer {
         builder.buildState();
         String text = builder.getAsText();
         _text.setText(text);
-        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg);
+        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg, _enableImages);
         sbuilder.buildStyles();
         _fonts = sbuilder.getFonts();
         _colors = sbuilder.getCustomColors();
@@ -389,30 +457,849 @@ public class PageRenderer {
     public MessageInfo getCurrentMessage() { return _msg; }
     public int getCurrentPage() { return _page; }
     public DBClient getCurrentClient() { return _client; }
-    public Menu getMenu() { return _menu; }
+
+    private void pickMenu(int x, int y) {
+        Point p = new Point(x, y);
+        int off = -1;
+        try {
+            off = _text.getOffsetAtLocation(p);
+            HTMLTag linkTag = null;
+            HTMLTag imgTag = null;
+            for (int i = 0; i < _linkTags.size(); i++) {
+                HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                    linkTag = tag;
+                    break;
+                }
+            }
+            for (int i = 0; i < _imageTags.size(); i++) {
+                HTMLTag tag = (HTMLTag)_imageTags.get(i);
+                if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                    imgTag = tag;
+                    break;
+                }
+            }
+            if ( (imgTag != null) && (linkTag != null) ) {
+                pickImageLinkMenu(linkTag, imgTag);
+                return;
+            } else if (linkTag != null) {
+                pickLinkMenu(linkTag);
+                return;
+            } else if (imgTag != null) {
+                pickImageMenu(imgTag);
+                return;
+            }
+        } catch (IllegalArgumentException iae) {
+            // no char at that point (why doesn't swt just return -1?)
+        }
+        pickBodyMenu();
+    }
+    
+    private void pickImageLinkMenu(HTMLTag linkTag, HTMLTag imgTag) {
+        _text.setMenu(_imageLinkMenu);
+        SyndieURI uri = null;
+        if (linkTag != null)
+            uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
+        if ( (_msg == null) || (linkTag == null) || (uri == null) ) {
+            _imgLinkBookmarkLink.setEnabled(false);
+            _imgLinkDisable.setEnabled(false);
+            _imgLinkEnable.setEnabled(false);
+            _imgLinkIgnoreAuthor.setEnabled(false);
+            _imgLinkIgnoreForum.setEnabled(false);
+            _imgLinkImportArchiveKey.setEnabled(false);
+            _imgLinkImportManageKey.setEnabled(false);
+            _imgLinkImportPostKey.setEnabled(false);
+            _imgLinkImportReadKey.setEnabled(false);
+            _imgLinkImportReplyKey.setEnabled(false);
+            _imgLinkSave.setEnabled(false);
+            _imgLinkSaveAll.setEnabled(false);
+            _imgLinkViewImg.setEnabled(false);
+            _imgLinkViewLink.setEnabled(false);
+            _currentEventURI = null;
+            _currentEventLinkTag = null;
+            _currentEventImage = null;
+        } else {
+            if (uri.isChannel()) {
+                _imgLinkViewLink.setEnabled(true);
+                _imgLinkBookmarkLink.setEnabled(true);
+            } else if (uri.isArchive()) {
+                _imgLinkViewLink.setEnabled(true);
+                _imgLinkBookmarkLink.setEnabled(true);
+            } else {
+                _imgLinkViewLink.setEnabled(true);
+                _imgLinkBookmarkLink.setEnabled(false);
+            }
+            
+            _currentEventURI = uri;
+            _currentEventLinkTag = linkTag;
+            _currentEventImage = null;
+            if (imgTag != null) {
+                for (int i = 0; i < _imageIndexes.size(); i++) {
+                    Integer idx = (Integer)_imageIndexes.get(i);
+                    if (idx.intValue() == imgTag.getStartIndex()) {
+                        _currentEventImage = (Image)_images.get(i);
+                        _currentEventImageTag = imgTag;
+                        break;
+                    }
+                }
+            }
+            
+            _imgLinkDisable.setEnabled(_enableImages);
+            _imgLinkEnable.setEnabled(!_enableImages);
+            
+            long targetId = _msg.getTargetChannelId();
+            long authorId = _msg.getAuthorChannelId();
+            if ( (targetId == authorId) || (authorId < 0) ) {
+                _imgLinkIgnoreAuthor.setEnabled(false);
+            } else {
+                _imgLinkIgnoreAuthor.setEnabled(true);
+            }
+            
+            _imgLinkIgnoreForum.setEnabled(true);
+            _imgLinkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
+            _imgLinkImportManageKey.setEnabled(uri.getManageKey() != null);
+            _imgLinkImportPostKey.setEnabled(uri.getPostKey() != null);
+            _imgLinkImportReadKey.setEnabled(uri.getReadKey() != null);
+            _imgLinkImportReplyKey.setEnabled(uri.getReplyKey() != null);
+            _imgLinkSave.setEnabled(true);
+            _imgLinkSaveAll.setEnabled(true);
+            _imgLinkViewImg.setEnabled(true);
+        }
+    }
+    
+    private void pickLinkMenu(HTMLTag linkTag) {
+        _text.setMenu(_linkMenu);
+        SyndieURI uri = null;
+        if (linkTag != null)
+            uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
+        if ( (_msg == null) || (linkTag == null) || (uri == null) ) {
+            _linkView.setEnabled(false);
+            _linkBookmark.setEnabled(false);
+            _linkImportArchiveKey.setEnabled(false);
+            _linkImportManageKey.setEnabled(false);
+            _linkImportPostKey.setEnabled(false);
+            _linkImportReadKey.setEnabled(false);
+            _linkImportReplyKey.setEnabled(false);
+            _currentEventURI = null;
+            _currentEventLinkTag = null;
+            _currentEventImage = null;
+        } else {
+            if (uri.isChannel()) {
+                _linkView.setEnabled(true);
+                _linkBookmark.setEnabled(true);
+            } else if (uri.isArchive()) {
+                _linkView.setEnabled(true);
+                _linkBookmark.setEnabled(true);
+            } else {
+                _linkView.setEnabled(true);
+                _linkBookmark.setEnabled(false);
+            }
+            
+            _currentEventURI = uri;
+            _currentEventLinkTag = linkTag;
+            _currentEventImage = null;
+            
+            _linkImportManageKey.setEnabled(uri.getManageKey() != null);
+            _linkImportPostKey.setEnabled(uri.getPostKey() != null);
+            _linkImportReadKey.setEnabled(uri.getReadKey() != null);
+            _linkImportReplyKey.setEnabled(uri.getReplyKey() != null);
+            
+            _linkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
+        }
+    }
+    
+    private void pickBodyMenu() {
+        _text.setMenu(_bodyMenu);
+            
+        _currentEventURI = null;
+        _currentEventLinkTag = null;
+        _currentEventImage = null;
+            
+        if (_msg == null) {
+            _bodyBanAuthor.setEnabled(false);
+            _bodyBanForum.setEnabled(false);
+            _bodyBookmarkAuthor.setEnabled(false);
+            _bodyBookmarkForum.setEnabled(false);
+            _bodyViewAuthorForum.setEnabled(false);
+            _bodyViewAuthorMetadata.setEnabled(false);
+            _bodyViewForum.setEnabled(false);
+            _bodyViewForumMetadata.setEnabled(false);
+            _bodyEnable.setEnabled(false);
+            _bodyDisable.setEnabled(false);
+            _bodySaveAll.setEnabled(false);
+        } else {
+            _bodyDisable.setEnabled(_enableImages);
+            _bodyEnable.setEnabled(!_enableImages);
+            _bodySaveAll.setEnabled(true);
+            long targetId = _msg.getTargetChannelId();
+            long authorId = _msg.getAuthorChannelId();
+            if ( (targetId == authorId) || (authorId < 0) ) {
+                // author == target, so no need for a separate set of author commands
+                _bodyBanAuthor.setEnabled(false);
+                _bodyBookmarkAuthor.setEnabled(false);
+                _bodyViewAuthorForum.setEnabled(false);
+                _bodyViewAuthorMetadata.setEnabled(false);
+                _bodyBanForum.setEnabled(true);
+                _bodyBookmarkForum.setEnabled(true);
+                _bodyViewForum.setEnabled(true);
+                _bodyViewForumMetadata.setEnabled(true);
+            } else {
+                // author != target
+                _bodyBanAuthor.setEnabled(true);
+                _bodyBookmarkAuthor.setEnabled(true);
+                _bodyViewAuthorForum.setEnabled(true);
+                _bodyViewAuthorMetadata.setEnabled(true);
+                _bodyBanForum.setEnabled(true);
+                _bodyBookmarkForum.setEnabled(true);
+                _bodyViewForum.setEnabled(true);
+                _bodyViewForumMetadata.setEnabled(true);
+            }
+        }
+    }
+    
+    private void pickImageMenu(HTMLTag imgTag) {
+        _text.setMenu(_imageMenu);
+            
+        _currentEventURI = null;
+        _currentEventLinkTag = null;
+        
+        _currentEventImage = null;
+        if (imgTag != null) {
+            for (int i = 0; i < _imageIndexes.size(); i++) {
+                Integer idx = (Integer)_imageIndexes.get(i);
+                if (idx.intValue() == imgTag.getStartIndex()) {
+                    _currentEventImage = (Image)_images.get(i);
+                    _currentEventImageTag = imgTag;
+                    break;
+                }
+            }
+        }
+        
+        if (_msg == null) {
+            _imgDisable.setEnabled(false);
+            _imgEnable.setEnabled(false);
+            _imgIgnoreAuthor.setEnabled(false);
+            _imgIgnoreForum.setEnabled(false);
+            _imgSave.setEnabled(false);
+            _imgSaveAll.setEnabled(false);
+            _imgView.setEnabled(false);
+        } else {
+            _imgDisable.setEnabled(_enableImages);
+            _imgEnable.setEnabled(!_enableImages);
+            _imgSave.setEnabled(true);
+            _imgSaveAll.setEnabled(true);
+            _imgView.setEnabled(true);
+            _imgIgnoreForum.setEnabled(true);
+            
+            long targetId = _msg.getTargetChannelId();
+            long authorId = _msg.getAuthorChannelId();
+            if ( (targetId == authorId) || (authorId < 0) ) {
+                _imgIgnoreAuthor.setEnabled(false);
+            } else {
+                _imgIgnoreAuthor.setEnabled(true);
+            }
+        }
+    }
+    
+    private void hoverLink(StyleRange range, int offset, HTMLTag tag) {
+        System.out.println("Hover over link @ " + offset + ": " + tag);
+        String href = tag.getAttribValue("href");
+        String title = tag.getAttribValue("title");
+        StringBuffer buf = new StringBuffer();
+        if (title != null) {
+            buf.append(CommandImpl.strip(title));
+            if (href != null)
+                buf.append('\n');
+        }
+        if (href != null)
+            buf.append('(').append(CommandImpl.strip(href)).append(')');
+        if (buf.length() > 0)
+            _text.setToolTipText(buf.toString());
+    }
+    private void hoverImage(StyleRange range, int offset, HTMLTag tag) {
+        //System.out.println("Hover over image @ " + offset + ": " + tag);
+        String alt = tag.getAttribValue("alt");
+        String src = tag.getAttribValue("src");
+        StringBuffer buf = new StringBuffer();
+        if (alt != null) {
+            buf.append(CommandImpl.strip(alt));
+            if (src != null)
+                buf.append('\n');
+        }
+        if (src != null)
+            buf.append('(').append(CommandImpl.strip(src)).append(')');
+        if (buf.length() > 0)
+            _text.setToolTipText(buf.toString());
+    }
+    private void hoverImageLink(StyleRange imgRange, HTMLTag imgTag, StyleRange linkRange, HTMLTag linkTag, int off) {
+        StringBuffer buf = new StringBuffer();
+        String alt = imgTag.getAttribValue("alt");
+        String src = imgTag.getAttribValue("src");
+        String href = linkTag.getAttribValue("href");
+        String title = linkTag.getAttribValue("title");
+        
+        if (alt != null) {
+            buf.append(CommandImpl.strip(alt));
+            if (src != null)
+                buf.append('\n');
+        }
+        if (src != null)
+            buf.append('(').append(CommandImpl.strip(src)).append(')');
+        
+        if ( (alt != null) || (src != null))
+            buf.append('\n');
+        
+        if (title != null) {
+            buf.append(CommandImpl.strip(title));
+            if (href != null)
+                buf.append('\n');
+        }
+        if (href != null)
+            buf.append('(').append(CommandImpl.strip(href)).append(')');
+
+        if (buf.length() > 0)
+            _text.setToolTipText(buf.toString());        
+    }
+    
+    
+    private void buildMenus() {
+        buildBodyMenu();
+        buildLinkMenu();
+        buildImageMenu();
+        buildImageLinkMenu();
+    }
+
+    private void toggleImages() {
+        boolean old = _enableImages;
+        _enableImages = !old;
+        _imgLinkDisable.setEnabled(_enableImages);
+        _imgLinkEnable.setEnabled(!_enableImages);
+        _imgDisable.setEnabled(_enableImages);
+        _imgEnable.setEnabled(!_enableImages);
+        _bodyDisable.setEnabled(_enableImages);
+        _bodyEnable.setEnabled(!_enableImages);
+        rerender();
+    }
+    
+    private abstract class FireEventListener implements SelectionListener {
+        public void widgetSelected(SelectionEvent selectionEvent) { fireEvent(); }
+        public void widgetDefaultSelected(SelectionEvent selectionEvent) { fireEvent(); }
+        public abstract void fireEvent();
+    }
+    private abstract class FireLinkEventListener extends FireEventListener {
+        public void fireEvent() { fireEvent(_currentEventLinkTag, _currentEventURI); }
+        public abstract void fireEvent(HTMLTag tag, SyndieURI uri);
+    }
+    
+    /** menu shown when right clicking on anything that isn't a link or image */
+    private void buildBodyMenu() {
+        _bodyMenu = new Menu(_text);
+        _bodyMenu.setEnabled(true);
+
+        _bodyViewForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewForum.setText("View forum");
+        _bodyViewForum.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.viewScopeMessages(PageRenderer.this, _msg.getTargetChannel()); 
+            }
+        });
+        _bodyViewForumMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewForumMetadata.setText("View forum metadata");
+        _bodyViewForumMetadata.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.viewScopeMetadata(PageRenderer.this, _msg.getTargetChannel()); 
+            }
+        });
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        _bodyViewAuthorForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewAuthorForum.setText("View author");
+        _bodyViewAuthorForum.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.viewScopeMessages(PageRenderer.this, _msg.getScopeChannel()); 
+            }
+        });
+        _bodyViewAuthorMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewAuthorMetadata.setText("View author metadata");
+        _bodyViewAuthorMetadata.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.viewScopeMetadata(PageRenderer.this, _msg.getScopeChannel()); 
+            }
+        });
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        _bodyBookmarkForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyBookmarkForum.setText("Bookmark forum");
+        _bodyBookmarkForum.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getTargetChannel()));
+            }
+        });
+        _bodyBookmarkAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyBookmarkAuthor.setText("Bookmark author");
+        _bodyBookmarkAuthor.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getScopeChannel()));
+            }
+        });
+        
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        _bodySaveAll = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodySaveAll.setText("Save all images");
+        _bodySaveAll.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                saveAllImages();
+            }
+        });
+        _bodyDisable = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyDisable.setText("Disable images");
+        _bodyDisable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        _bodyEnable = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyEnable.setText("Enable images");
+        _bodyEnable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyBanForum.setText("Ban forum");
+        _bodyBanForum.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.banScope(PageRenderer.this, _msg.getTargetChannel());
+            }
+        });
+        _bodyBanAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyBanAuthor.setText("Ban author");
+        _bodyBanAuthor.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.banScope(PageRenderer.this, _msg.getScopeChannel());
+            }
+        });
+    }
+    
+    /** menu shown when right clicking on a link */
+    private void buildLinkMenu() {
+        _linkMenu = new Menu(_text);
+        _linkMenu.setEnabled(true);
+        
+        _linkView = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkView.setText("View link");
+        _linkView.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.view(PageRenderer.this, uri);
+                }
+            }
+        });
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
+        _linkBookmark = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkBookmark.setText("Bookmark link");
+        _linkBookmark.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.bookmark(PageRenderer.this, uri);
+                }
+            }
+        });
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
+        _linkImportReadKey = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkImportReadKey.setText("Import read key");
+        _linkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+                }
+            }
+        });
+        _linkImportPostKey = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkImportPostKey.setText("Import post key");
+        _linkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+                }
+            }
+        });
+        _linkImportManageKey = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkImportManageKey.setText("Import manage key");
+        _linkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+                }
+            }
+        });
+        _linkImportReplyKey = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkImportReplyKey.setText("Import reply key");
+        _linkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+                }
+            }
+        });
+        _linkImportArchiveKey = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkImportArchiveKey.setText("Import archive key");
+        _linkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+                }
+            }
+        });
+    }
+
+    private Hash getAuthorHash() {
+        long authorId = _msg.getAuthorChannelId();
+        if (authorId != _msg.getScopeChannelId()) {
+            return _client.getChannelHash(authorId);
+        } else {
+            return _msg.getScopeChannel();
+        }
+    }
+    
+    private void saveImage() {
+        // prompt the user for where the image should be saved
+        String name = getSuggestedName(_currentEventImageTag);
+        if (_listener != null)
+            _listener.saveImage(PageRenderer.this, name, _currentEventImage);
+    }
+    private void saveAllImages() {
+        // prompt the user for where the images should be saved
+        Map images = new HashMap();
+        for (int i = 0; i < _imageTags.size(); i++) {
+            HTMLTag tag = (HTMLTag)_imageTags.get(i);
+            String suggestedName = getSuggestedName(tag);
+            if (images.containsKey(suggestedName)) {
+                int j = 1;
+                while (images.containsKey(suggestedName + "." + j))
+                    j++;
+                suggestedName = suggestedName + "." + j;
+            }
+            for (int j = 0; j < _imageIndexes.size(); j++) {
+                Integer idx = (Integer)_imageIndexes.get(j);
+                if (idx.intValue() == tag.getStartIndex()) {
+                    images.put(suggestedName, _images.get(j));
+                    break;
+                }
+            }
+        }
+        if (_listener != null)
+            _listener.saveAllImages(PageRenderer.this, images);
+    }
+    
+    private String getSuggestedName(HTMLTag tag) {
+        SyndieURI imgURI = HTMLStyleBuilder.getURI(tag.getAttribValue("src"), _msg);
+        if (imgURI != null) {
+            Long attachmentId = imgURI.getLong("attachment");
+            if (attachmentId != null) {
+                // the attachment may not be from this message...
+                Hash scope = imgURI.getScope();
+                long scopeId = -1;
+                Long msgId = imgURI.getMessageId();
+                if ( (scope == null) || (msgId == null) ) {
+                    // ok, yes, its implicitly from this message
+                    scope = _msg.getScopeChannel();
+                    scopeId = _msg.getScopeChannelId();
+                    msgId = new Long(_msg.getMessageId());
+                } else {
+                    scopeId = _client.getChannelId(scope);
+                }
+        
+                long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
+                Properties props = _client.getMessageAttachmentConfig(internalMsgId, attachmentId.intValue());
+                String name = props.getProperty(Constants.MSG_ATTACH_NAME);
+                if (name != null)
+                    return Constants.stripFilename(name, false);
+                else
+                    return "attachment" + attachmentId.intValue() + ".png";
+            }
+        }
+        return tag.hashCode() + ".png";
+    }
+    
+    private void rerender() {
+        // reparse/render/layout the text area, since the image/ban/etc changed
+        System.out.println("rerender");
+        renderPage(_client, _msg, _page);
+    }
+    
+    /** menu shown when right clicking on an image*/
+    private void buildImageMenu() {
+        _imageMenu = new Menu(_text);
+        _imageMenu.setEnabled(true);
+        
+        _imgView = new MenuItem(_imageMenu, SWT.PUSH);
+        _imgView.setText("View image");
+        _imgView.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) && (_currentEventImage != null) )
+                    _listener.viewImage(PageRenderer.this, _currentEventImage);
+            }
+        });
+        _imgSave = new MenuItem(_imageMenu, SWT.PUSH);
+        _imgSave.setText("Save image");
+        _imgSave.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if (_currentEventImage != null)
+                    saveImage();
+            }
+        });
+        _imgSaveAll = new MenuItem(_imageMenu, SWT.PUSH);
+        _imgSaveAll.setText("Save all images");
+        _imgSaveAll.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                saveAllImages();
+            }
+        });
+        new MenuItem(_imageMenu, SWT.SEPARATOR);
+        _imgDisable = new MenuItem(_imageMenu, SWT.PUSH);
+        _imgDisable.setText("Disable images");
+        _imgDisable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        _imgEnable = new MenuItem(_imageMenu, SWT.PUSH);
+        _imgEnable.setText("Enable images");
+        _imgEnable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        new MenuItem(_imageMenu, SWT.SEPARATOR);
+        _imgIgnoreForum= new MenuItem(_imageMenu, SWT.PUSH);
+        _imgIgnoreForum.setText("Ignore images in this forum");
+        _imgIgnoreForum.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
+                rerender();
+            }
+        });
+        _imgIgnoreAuthor= new MenuItem(_imageMenu, SWT.PUSH);
+        _imgIgnoreAuthor.setText("Ignore images from this author");
+        _imgIgnoreAuthor.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
+                rerender();
+            }
+        });
+    }
+    
+    /** menu shown when right clicking on an image that is inside a hyperlink */
+    private void buildImageLinkMenu() {
+        _imageLinkMenu = new Menu(_text);
+        _imageLinkMenu.setEnabled(true);
+        
+        _imgLinkViewLink = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkViewLink.setText("View link");
+        _imgLinkViewLink.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.view(PageRenderer.this, uri);
+                }
+            }
+        });
+        _imgLinkViewImg = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkViewImg.setText("View image");
+        _imgLinkViewImg.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) && (_currentEventImage != null) )
+                    _listener.viewImage(PageRenderer.this, _currentEventImage);
+            }
+        });
+        _imgLinkBookmarkLink = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkBookmarkLink.setText("Bookmark link");
+        _imgLinkBookmarkLink.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.bookmark(PageRenderer.this, uri);
+                }
+            }
+        });
+        new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
+        
+        _imgLinkSave = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkSave.setText("Save image");
+        _imgLinkSave.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if (_currentEventImage != null)
+                    saveImage();
+            }
+        });
+        _imgLinkSaveAll = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkSaveAll.setText("Save all images");
+        _imgLinkSaveAll.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                saveAllImages();
+            }
+        });
+        _imgLinkDisable = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkDisable.setText("Disable images");
+        _imgLinkDisable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        _imgLinkEnable = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkEnable.setText("Enable images");
+        _imgLinkEnable.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                toggleImages();
+            }
+        });
+        new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
+        
+        _imgLinkIgnoreForum = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkIgnoreForum.setText("Ignore images in this forum");
+        _imgLinkIgnoreForum.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
+                rerender();
+            }
+        });
+        _imgLinkIgnoreAuthor = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkIgnoreAuthor.setText("Ignore images from this author");
+        _imgLinkIgnoreAuthor.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
+                rerender();
+            }
+        });
+        new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
+        
+        _imgLinkImportReadKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkImportReadKey.setText("Import read key");
+        _imgLinkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+                }
+            }
+        });
+        _imgLinkImportPostKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkImportPostKey.setText("Import post key");
+        _imgLinkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+                }
+            }
+        });
+        _imgLinkImportManageKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkImportManageKey.setText("Import manage key");
+        _imgLinkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+                }
+            }
+        });
+        _imgLinkImportReplyKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkImportReplyKey.setText("Import reply key");
+        _imgLinkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+                }
+            }
+        });
+        _imgLinkImportArchiveKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+        _imgLinkImportArchiveKey.setText("Import archive key");
+        _imgLinkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
+            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                    _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+                }
+            }
+        });
+    }
     
     public interface PageActionListener {
-        // hover events are item selection without clicking (mouseover / tab to)
-        public void imageHover(PageRenderer renderer, int attachmentNum);
-        public void internalPageLinkHover(PageRenderer renderer, int targetPage);
-        public void internalAttachmentLinkHover(PageRenderer renderer, int targetAttachment);
-        public void syndieLinkHover(PageRenderer renderer, SyndieURI uri);
-        public void externalLinkHover(PageRenderer renderer, String url);
+        /**
+         * The user wants to view the list of messages in the given scope (forum/blog)
+         */
+        public void viewScopeMessages(PageRenderer renderer, Hash scope);
+        /**
+         * The user wants to view the description for the given scope (forum/blog)
+         */
+        public void viewScopeMetadata(PageRenderer renderer, Hash scope);
+        /**
+         * The user wants to view the given uri (may refer to a syndie location, archive, external url, etc) 
+         */
+        public void view(PageRenderer renderer, SyndieURI uri);
+        /**
+         * The user wants to bookmark the given uri (perhaps prompt them where they want to bookmark it, and what they want to call it?)
+         */
+        public void bookmark(PageRenderer renderer, SyndieURI uri);
+        /**
+         * The user never wants to see the given scope again
+         */
+        public void banScope(PageRenderer renderer, Hash scope);
+        /**
+         * Display the image
+         */
+        public void viewImage(PageRenderer renderer, Image img);
+        /**
+         * The user never wants to see images from the given author (or in the given forum)
+         */
+        public void ignoreImageScope(PageRenderer renderer, Hash scope);
         
-        // menu events are triggered by e.g. right mouse click on an item
-        // the listener is responsible for populating the popup menu with actions
-        // appropriate for the target
-        public void imageMenu(PageRenderer renderer, Menu menu, int attachmentNum);
-        public void internalPageLinkMenu(PageRenderer renderer, Menu menu, int targetPage);
-        public void internalAttachmentLinkMenu(PageRenderer renderer, Menu menu, int targetAttachment);
-        public void syndieLinkMenu(PageRenderer renderer, Menu menu, SyndieURI uri);
-        public void externalLinkMenu(PageRenderer renderer, Menu menu, String url);
+        /**
+         * Import the read key for posts on the given scope
+         * @param referencedBy who gave us the key
+         * @param keyScope what forum/blog the key is valid for
+         */
+        public void importReadKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, SessionKey key);
+        /**
+         * Import the post key to post on the given scope
+         * @param referencedBy who gave us the key
+         * @param keyScope what forum/blog the key is valid for
+         */
+        public void importPostKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, SigningPrivateKey key);
+        /**
+         * Import the manage key to manage the given scope
+         * @param referencedBy who gave us the key
+         * @param keyScope what forum/blog the key is valid for
+         */
+        public void importManageKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, SigningPrivateKey key);
+        /**
+         * Import the reply key to decrypt posts in the given scope
+         * @param referencedBy who gave us the key
+         * @param keyScope what forum/blog the key is valid for
+         */
+        public void importReplyKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, PrivateKey key);
+        /**
+         * Import the archive key to contact the given archive
+         * @param referencedBy who gave us the key
+         * @param archiveURI what archive the key is valid for
+         */
+        public void importArchiveKey(PageRenderer renderer, Hash referencedBy, SyndieURI archiveURI, SessionKey key);
         
-        // follow events are triggered by e.g. left mouse click on an item
-        public void imageFollow(PageRenderer renderer, int attachmentNum);
-        public void internalPageLinkFollow(PageRenderer renderer, int targetPage);
-        public void internalAttachmentLinkFollow(PageRenderer renderer, int targetAttachment);
-        public void syndieLinkFollow(PageRenderer renderer, SyndieURI uri);
-        public void externalLinkFollow(PageRenderer renderer, String url);
+        /**
+         * The user wants to save the given images
+         * @param images map of suggested filename (without any path) to the actual swt Image
+         */
+        public void saveAllImages(PageRenderer renderer, Map images);
+        /**
+         * The user wants to save the given image
+         */
+        public void saveImage(PageRenderer renderer, String suggestedName, Image img);
     }
 }
