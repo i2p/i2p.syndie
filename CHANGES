@@ -15,6 +15,9 @@
     - (syndie.gui branch) split the viewcmd to launch the PageRenderer itself,
       rather than using the old MessageTab and associate baggage
     - (syndie.gui branch) enable the page context menus
+    - (syndie.gui branch) body bgcolor and bgimage (tiled), and refactor the
+      PageRender's DBClient dependency into a PageRendererSource for easy
+      rendering of pages not in the database
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as

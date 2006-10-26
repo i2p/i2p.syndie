@@ -24,7 +24,7 @@ import syndie.db.DBClient;
  *
  */
 class HTMLStyleBuilder {
-    private DBClient _client;
+    private PageRendererSource _source;
     private List _htmlTags;
     private String _msgText;
     private MessageInfo _msg;
@@ -60,13 +60,16 @@ class HTMLStyleBuilder {
     private static final Map _colorNameToRGB = new HashMap();
     
     private Map _customColors;
+    
+    private Color _bgColor;
+    private Image _bgImage;
 
-    private static Image _linkEndIcon;
-    private static Image _imageUnknownIcon;
+    static Image ICON_LINK_END;
+    static Image ICON_IMAGE_UNKNOWN;
     static { buildDefaultIcons(); buildColorNameToRGB(); }
     
-    public HTMLStyleBuilder(DBClient client, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
-        _client = client;
+    public HTMLStyleBuilder(PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
+        _source = src;
         _htmlTags = htmlTags;
         _msgText = msgText;
         _msg = msg;
@@ -79,11 +82,15 @@ class HTMLStyleBuilder {
         _images = new ArrayList();
         _customFonts = new ArrayList();
         _customColors = new HashMap();
-        buildFonts(getFontConfig(client));
+        _bgImage = null;
+        _bgColor = null;
+        buildFonts(getFontConfig(src));
     }
     
     public ArrayList getImageTags() { return _imageTags; }
     public ArrayList getLinkTags() { return _linkTags; }
+    public Image getBackgroundImage() { return _bgImage; }
+    public Color getBackgroundColor() { return _bgColor; }
     
     public void buildStyles() {
         // get a list of points where any tag starts or ends
@@ -94,6 +101,16 @@ class HTMLStyleBuilder {
                 _linkTags.add(tag);
             } else if ("img".equals(tag.getName())) {
                 _imageTags.add(tag);
+            } else if ("body".equals(tag.getName())) {
+                String bgimage = tag.getAttribValue("bgimage");
+                if (bgimage != null) {
+                    Image img = getImage(getURI(bgimage));
+                    if (img != null)
+                        _bgImage = img;
+                }
+                Color color = getColor(tag.getAttribValue("bgcolor"));
+                if (color != null)
+                    _bgColor = color;
             }
             List tags = (List)breakPointTags.get(new Integer(tag.getStartIndex()));
             if (tags == null) {
@@ -356,45 +373,14 @@ class HTMLStyleBuilder {
         }
         
         Color bgColor = null;
-        if (containsTag(tags, "quote"))
-            bgColor = _bgColorQuote;
         // innermost bgcolor is used
         //System.out.println("Looking for a bgcolor in " + tags);
-        for (int i = 0; i < tags.size(); i++) {
+        for (int i = 0; (bgColor == null) && (i < tags.size()); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            String color = tag.getAttribValue("bgcolor");
-            if (color != null) {
-                color = color.trim();
-                String rgb = (String)_colorNameToRGB.get(color);
-                if (rgb != null)
-                    color = rgb;
-                //System.out.println("color: " + color);
-                if (color.startsWith("#") && (color.length() == 7)) {
-                    Color cached = (Color)_customColors.get(color);
-                    if (cached == null) {
-                        try {
-                            int r = Integer.parseInt(color.substring(1, 3), 16);
-                            int g = Integer.parseInt(color.substring(3, 5), 16);
-                            int b = Integer.parseInt(color.substring(5, 7), 16);
-                            cached = new Color(Display.getDefault(), r, g, b);
-                            _customColors.put(color, cached);
-                            //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
-                        } catch (NumberFormatException nfe) {
-                            // invalid rgb
-                            System.out.println("invalid rgb");
-                            nfe.printStackTrace();
-                        }
-                    }
-                    if (cached != null) {
-                        bgColor = cached;
-                        break;
-                    }
-                } else {
-                    // invalid rgb
-                    //System.out.println("rgb is not valid [" + color + "]");
-                }
-            }
+            bgColor = getColor(tag.getAttribValue("bgcolor"));
         }
+        if ((bgColor == null) && (containsTag(tags, "quote")))
+            bgColor = _bgColorQuote;
         
         if (bgColor != null)
             style.background = bgColor;
@@ -407,37 +393,9 @@ class HTMLStyleBuilder {
             String color = tag.getAttribValue("fgcolor");
             if (color == null)
                 color = tag.getAttribValue("color");
-            if (color != null) {
-                color = color.trim();
-                String rgb = (String)_colorNameToRGB.get(color);
-                if (rgb != null)
-                    color = rgb;
-                //System.out.println("color: " + color);
-                if (color.startsWith("#") && (color.length() == 7)) {
-                    Color cached = (Color)_customColors.get(color);
-                    if (cached == null) {
-                        try {
-                            int r = Integer.parseInt(color.substring(1, 3), 16);
-                            int g = Integer.parseInt(color.substring(3, 5), 16);
-                            int b = Integer.parseInt(color.substring(5, 7), 16);
-                            cached = new Color(Display.getDefault(), r, g, b);
-                            _customColors.put(color, cached);
-                            //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
-                        } catch (NumberFormatException nfe) {
-                            // invalid rgb
-                            System.out.println("invalid rgb");
-                            nfe.printStackTrace();
-                        }
-                    }
-                    if (cached != null) {
-                        fgColor = cached;
-                        break;
-                    }
-                } else {
-                    // invalid rgb
-                    //System.out.println("rgb is not valid [" + color + "]");
-                }
-            }
+            
+            fgColor = getColor(color);
+            if (fgColor != null) break;
         }
         
         if (fgColor != null)
@@ -452,12 +410,58 @@ class HTMLStyleBuilder {
         return style;
     }
     
+    private Color getColor(String color) {
+        Color rv = null;
+        if (color != null) {
+            color = color.trim();
+            String rgb = (String)_colorNameToRGB.get(color);
+            if (rgb != null)
+                color = rgb;
+            //System.out.println("color: " + color);
+            if (color.startsWith("#") && (color.length() == 7)) {
+                Color cached = (Color)_customColors.get(color);
+                if (cached == null) {
+                    try {
+                        int r = Integer.parseInt(color.substring(1, 3), 16);
+                        int g = Integer.parseInt(color.substring(3, 5), 16);
+                        int b = Integer.parseInt(color.substring(5, 7), 16);
+                        cached = new Color(Display.getDefault(), r, g, b);
+                        _customColors.put(color, cached);
+                        //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
+                    } catch (NumberFormatException nfe) {
+                        // invalid rgb
+                        System.out.println("invalid rgb");
+                        nfe.printStackTrace();
+                    }
+                }
+                if (cached != null)
+                    rv = cached;
+            } else {
+                // invalid rgb
+                //System.out.println("rgb is not valid [" + color + "]");
+            }
+        }
+        return rv;
+    }
+    
     private void includeImage(StyleRange style, HTMLTag imgTag) {
         if (imgTag == null) {
-            _images.add(_imageUnknownIcon);
+            _images.add(ICON_IMAGE_UNKNOWN);
             return;
         }
-        SyndieURI imgURI = getURI(imgTag.getAttribValue("src"));
+        Image img = getImage(getURI(imgTag.getAttribValue("src")));
+        if (img == null)
+            img = ICON_IMAGE_UNKNOWN;
+        int width = img.getBounds().width;
+        int ascent = img.getBounds().height;
+        _images.add(img);
+        
+        int descent = 0;
+        style.metrics = new GlyphMetrics(ascent, 0, width);
+        //style.background = _imgBGColor;
+    }
+    
+    private Image getImage(SyndieURI imgURI) {
         Image img = null;
         if (imgURI != null) {
             Long attachmentId = imgURI.getLong("attachment");
@@ -472,24 +476,16 @@ class HTMLStyleBuilder {
                     scopeId = _msg.getScopeChannelId();
                     msgId = new Long(_msg.getMessageId());
                 } else {
-                    scopeId = _client.getChannelId(scope);
+                    scopeId = _source.getChannelId(scope);
                 }
         
-                long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
-                byte imgData[] = _client.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
+                long internalMsgId = _source.getMessageId(scopeId, msgId.longValue());
+                byte imgData[] = _source.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
                 if (imgData != null)
                     img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
             }
         }
-        if (img == null)
-            img = _imageUnknownIcon;
-        int width = img.getBounds().width;
-        int ascent = img.getBounds().height;
-        _images.add(img);
-        
-        int descent = 0;
-        style.metrics = new GlyphMetrics(ascent, 0, width);
-        //style.background = _imgBGColor;
+        return img;
     }
     
     private void includeLinkEnd(StyleRange style, HTMLTag aTag) {
@@ -504,7 +500,7 @@ class HTMLStyleBuilder {
         // archives, a special external link icon for generic URLs, a special icon
         // for links with keys on them, etc
         
-        Image img = _linkEndIcon;
+        Image img = ICON_LINK_END;
         int width = img.getBounds().width;
         int ascent = img.getBounds().height;
         Integer idx = new Integer(style.start);
@@ -557,7 +553,7 @@ class HTMLStyleBuilder {
      * get the client's font preferences. values should be in the form of
      * "fontname;sizeInPoints;(NORMAL|BOLD|ITALIC|BOLDITALIC)".
      */
-    private Properties getFontConfig(DBClient client) {
+    private Properties getFontConfig(PageRendererSource source) {
         Properties rv = new Properties();
         Properties defaultCfg = getDefaultConfig();
         rv.putAll(defaultCfg);
@@ -670,12 +666,12 @@ class HTMLStyleBuilder {
 
     private static void buildDefaultIcons() {
         InputStream in = HTMLStyleBuilder.class.getResourceAsStream("iconUnknown.png");
-        _imageUnknownIcon = new Image(Display.getDefault(), in);
+        ICON_IMAGE_UNKNOWN = new Image(Display.getDefault(), in);
         in = HTMLStyleBuilder.class.getResourceAsStream("iconLink.png");
         if (in != null) {
-            _linkEndIcon = new Image(Display.getDefault(), in);
+            ICON_LINK_END = new Image(Display.getDefault(), in);
         } else {
-            _linkEndIcon = _imageUnknownIcon;
+            ICON_LINK_END = ICON_IMAGE_UNKNOWN;
             throw new RuntimeException("could not load the link end icon");
         }
         

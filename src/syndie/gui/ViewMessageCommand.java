@@ -55,7 +55,7 @@ public class ViewMessageCommand implements CLI.Command {
 
                 // we need to set a default size before rendering so we can do fake word wrapping
                 renderer.getComposite().setSize(renderer.getComposite().computeSize(800, 800));
-                renderer.renderPage(client, msg);
+                renderer.renderPage(new PageRendererSource(client), msg);
                 Point setSize = renderer.getComposite().getSize();
                 Point preferredSize = renderer.getComposite().computeSize(SWT.DEFAULT, SWT.DEFAULT);
                 Point minSize = new Point(Math.min(setSize.x, preferredSize.x),

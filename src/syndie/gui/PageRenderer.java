@@ -43,7 +43,7 @@ import syndie.db.DBClient;
 public class PageRenderer {
     private Composite _parent;
     private StyledText _text;
-    private DBClient _client;
+    private PageRendererSource _source;
     private MessageInfo _msg;
     private int _page;
     private PageActionListener _listener;
@@ -52,6 +52,8 @@ public class PageRenderer {
     private ArrayList _imageIndexes;
     private ArrayList _images;
     private ArrayList _liIndexes;
+    private Color _bgColor;
+    private Image _bgImage;
     
     private ArrayList _imageTags;
     private ArrayList _linkTags;
@@ -207,12 +209,12 @@ public class PageRenderer {
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
     public Composite getComposite() { return _text; }
     
-    public void renderPage(DBClient client, SyndieURI uri) {
+    public void renderPage(PageRendererSource src, SyndieURI uri) {
         Hash chan = uri.getScope();
         if (chan == null) return;
-        long chanId = client.getChannelId(chan);
+        long chanId = src.getChannelId(chan);
         if (chanId < 0) return;
-        MessageInfo msg = client.getMessage(chanId, uri.getMessageId());
+        MessageInfo msg = src.getMessage(chanId, uri.getMessageId());
         if (msg == null) return;
         Long page = null;
         page = uri.getLong("page");
@@ -222,18 +224,18 @@ public class PageRenderer {
         } else {
             page = new Long(0);
         }
-        renderPage(client, msg, page.intValue());
+        renderPage(src, msg, page.intValue());
     }
-    private void renderPage(DBClient client, MessageInfo msg, int pageNum) {
-        _client = client;
+    private void renderPage(PageRendererSource src, MessageInfo msg, int pageNum) {
+        _source = src;
         _msg = msg;
         _page = pageNum;
         if (msg == null) {
             renderText("");
             return;
         }
-        String cfg = client.getMessagePageConfig(msg.getInternalId(), pageNum);
-        String body = client.getMessagePageData(msg.getInternalId(), pageNum);
+        String cfg = src.getMessagePageConfig(msg.getInternalId(), pageNum);
+        String body = src.getMessagePageData(msg.getInternalId(), pageNum);
         Properties props = new Properties();
         CommandImpl.parseProps(cfg, props);
         String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
@@ -246,12 +248,14 @@ public class PageRenderer {
     private void renderText(String body) {
         disposeFonts();
         disposeColors();
+        disposeImages();
         _text.setText(body);
         _text.setStyleRanges(null);
     }
     private void renderHTML(String html) {
         disposeFonts();
         disposeColors();
+        disposeImages();
 
         int charsPerLine = -1;
         if (true) {
@@ -273,7 +277,7 @@ public class PageRenderer {
         builder.buildState();
         String text = builder.getAsText();
         _text.setText(text);
-        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_client, builder.getTags(), text, _msg, _enableImages);
+        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
         sbuilder.buildStyles();
         _fonts = sbuilder.getFonts();
         _colors = sbuilder.getCustomColors();
@@ -293,6 +297,18 @@ public class PageRenderer {
         setLineProperties(builder, sbuilder);
         _linkTags = sbuilder.getLinkTags();
         _imageTags = sbuilder.getImageTags();
+        
+        _bgImage = sbuilder.getBackgroundImage();
+        if (_bgImage != null) {
+            _text.setBackgroundImage(_bgImage);
+        } else {
+            _text.setBackgroundImage(null);
+            _text.setBackgroundMode(SWT.INHERIT_DEFAULT); // use the container's background
+        }
+        
+        _bgColor = sbuilder.getBackgroundColor();
+        if (_bgColor != null)
+            _text.setBackground(_bgColor);
     }
     
     /**
@@ -452,11 +468,29 @@ public class PageRenderer {
             }
             _colors = null;
         }
+        if ( (_bgColor != null) && (!_bgColor.isDisposed()) )
+            _bgColor.dispose();
+        _bgColor = null;
+    }
+    private void disposeImages() {
+        if ( (_bgImage != null) && (!_bgImage.isDisposed()) )
+            _bgImage.dispose();
+        _bgImage = null;
+        if (_images != null) {
+            for (int i = 0; i < _images.size(); i++) {
+                Image img = (Image)_images.get(i);
+                if (img == HTMLStyleBuilder.ICON_IMAGE_UNKNOWN) continue;
+                if (img == HTMLStyleBuilder.ICON_LINK_END) continue;
+                if (!img.isDisposed())
+                    img.dispose();
+            }
+            _images = null;
+        }
     }
     
     public MessageInfo getCurrentMessage() { return _msg; }
     public int getCurrentPage() { return _page; }
-    public DBClient getCurrentClient() { return _client; }
+    //public DBClient getCurrentClient() { return _client; }
 
     private void pickMenu(int x, int y) {
         Point p = new Point(x, y);
@@ -990,7 +1024,7 @@ public class PageRenderer {
     private Hash getAuthorHash() {
         long authorId = _msg.getAuthorChannelId();
         if (authorId != _msg.getScopeChannelId()) {
-            return _client.getChannelHash(authorId);
+            return _source.getChannelHash(authorId);
         } else {
             return _msg.getScopeChannel();
         }
@@ -1041,11 +1075,11 @@ public class PageRenderer {
                     scopeId = _msg.getScopeChannelId();
                     msgId = new Long(_msg.getMessageId());
                 } else {
-                    scopeId = _client.getChannelId(scope);
+                    scopeId = _source.getChannelId(scope);
                 }
         
-                long internalMsgId = _client.getMessageId(scopeId, msgId.longValue());
-                Properties props = _client.getMessageAttachmentConfig(internalMsgId, attachmentId.intValue());
+                long internalMsgId = _source.getMessageId(scopeId, msgId.longValue());
+                Properties props = _source.getMessageAttachmentConfig(internalMsgId, attachmentId.intValue());
                 String name = props.getProperty(Constants.MSG_ATTACH_NAME);
                 if (name != null)
                     return Constants.stripFilename(name, false);
@@ -1059,7 +1093,7 @@ public class PageRenderer {
     private void rerender() {
         // reparse/render/layout the text area, since the image/ban/etc changed
         System.out.println("rerender");
-        renderPage(_client, _msg, _page);
+        renderPage(_source, _msg, _page);
     }
     
     /** menu shown when right clicking on an image*/
