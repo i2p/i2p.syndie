@@ -311,8 +311,8 @@ class HTMLStateBuilder {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("a".equals(tag.getName())) {
+                    appendBody(body, ' ');
                     appendBody(body, PLACEHOLDER_LINK_END);
-                    //open.setEndIndex(body.length()-1);
                 }
                 _closedTags.add(open);
                 System.out.println("Closing tag " + open.toString());

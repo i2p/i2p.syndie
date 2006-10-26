@@ -46,7 +46,6 @@ public class PageRenderer {
     private DBClient _client;
     private MessageInfo _msg;
     private int _page;
-    private Menu _menu;
     private PageActionListener _listener;
     private ArrayList _fonts;
     private ArrayList _colors;
@@ -68,6 +67,8 @@ public class PageRenderer {
     private MenuItem _bodyViewAuthorForum;
     private MenuItem _bodyViewAuthorMetadata;
     private MenuItem _bodyBookmarkAuthor;
+    private MenuItem _bodyReplyToForum;
+    private MenuItem _bodyReplyToAuthor;
     private MenuItem _bodyBanForum;
     private MenuItem _bodyBanAuthor;
     private MenuItem _bodyEnable;
@@ -115,7 +116,6 @@ public class PageRenderer {
     public PageRenderer(Composite parent) {
         _parent = parent;
         _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
-        _menu = new Menu(_text);
         _fonts = null;
         _colors = null;
         _imageTags = new ArrayList();
@@ -620,6 +620,8 @@ public class PageRenderer {
             _bodyBanForum.setEnabled(false);
             _bodyBookmarkAuthor.setEnabled(false);
             _bodyBookmarkForum.setEnabled(false);
+            _bodyReplyToForum.setEnabled(false);
+            _bodyReplyToAuthor.setEnabled(false);
             _bodyViewAuthorForum.setEnabled(false);
             _bodyViewAuthorMetadata.setEnabled(false);
             _bodyViewForum.setEnabled(false);
@@ -639,6 +641,8 @@ public class PageRenderer {
                 _bodyBookmarkAuthor.setEnabled(false);
                 _bodyViewAuthorForum.setEnabled(false);
                 _bodyViewAuthorMetadata.setEnabled(false);
+                _bodyReplyToForum.setEnabled(true);
+                _bodyReplyToAuthor.setEnabled(false);
                 _bodyBanForum.setEnabled(true);
                 _bodyBookmarkForum.setEnabled(true);
                 _bodyViewForum.setEnabled(true);
@@ -649,6 +653,8 @@ public class PageRenderer {
                 _bodyBookmarkAuthor.setEnabled(true);
                 _bodyViewAuthorForum.setEnabled(true);
                 _bodyViewAuthorMetadata.setEnabled(true);
+                _bodyReplyToForum.setEnabled(true);
+                _bodyReplyToAuthor.setEnabled(true);
                 _bodyBanForum.setEnabled(true);
                 _bodyBookmarkForum.setEnabled(true);
                 _bodyViewForum.setEnabled(true);
@@ -848,6 +854,26 @@ public class PageRenderer {
         });
         
         new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        
+        _bodyReplyToForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyReplyToForum.setText("Reply to forum");
+        _bodyReplyToForum.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.replyToForum(PageRenderer.this, _msg.getTargetChannel(), _msg.getURI());
+            }
+        });
+        _bodyReplyToAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyReplyToAuthor.setText("Private reply to author");
+        _bodyReplyToAuthor.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                if ( (_listener != null) && (_msg != null) )
+                    _listener.privateReply(PageRenderer.this, getAuthorHash(), _msg.getURI());
+            }
+        });
+        
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        
         _bodySaveAll = new MenuItem(_bodyMenu, SWT.PUSH);
         _bodySaveAll.setText("Save all images");
         _bodySaveAll.addSelectionListener(new FireEventListener() {
@@ -1301,5 +1327,15 @@ public class PageRenderer {
          * The user wants to save the given image
          */
         public void saveImage(PageRenderer renderer, String suggestedName, Image img);
+        
+        /**
+         * The user wants to create a reply that is readable only by the target author
+         */
+        public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg);
+
+        /**
+         * The user wants to post up a reply to the given forum
+         */
+        public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg);
     }
 }

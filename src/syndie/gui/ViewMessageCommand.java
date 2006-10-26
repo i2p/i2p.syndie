@@ -52,11 +52,17 @@ public class ViewMessageCommand implements CLI.Command {
                 scroll.setContent(renderer.getComposite());
                 shell.setLayout(new FillLayout());
                 scroll.setLayout(new FillLayout());
-                Point sz = shell.computeSize(600, 800);
-                shell.setSize(sz);
-                sz = renderer.getComposite().computeSize(sz.x-20, sz.y-20); //SWT.DEFAULT, SWT.DEFAULT); //400, 600);
+
+                // we need to set a default size before rendering so we can do fake word wrapping
+                renderer.getComposite().setSize(renderer.getComposite().computeSize(800, 800));
                 renderer.renderPage(client, msg);
-                scroll.setMinSize(sz);
+                Point setSize = renderer.getComposite().getSize();
+                Point preferredSize = renderer.getComposite().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+                Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
+                                          Math.min(setSize.y, preferredSize.y));
+                renderer.getComposite().setSize(minSize);
+                scroll.setMinSize(minSize);
+                shell.pack();
                 shell.open();
                 
             }
@@ -121,6 +127,14 @@ public class ViewMessageCommand implements CLI.Command {
 
         public void saveImage(PageRenderer renderer, String suggestedName, Image img) {
             _ui.statusMessage("save image: " + suggestedName);
+        }
+        
+        public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {
+            _ui.statusMessage("create a private reply to " + author.toBase64() + " regarding " + msg);
+        }
+        
+        public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
+            _ui.statusMessage("reply in " + forum.toBase64() + " regarding " + msg);
         }
     }
 }
