@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-10-27  0.919b released
+    - another EepGet fix (thanks burl!)
+
 * 2006-10-23  0.918b released
     - fix a regression in EepGet (thanks gloin and burl!)
 

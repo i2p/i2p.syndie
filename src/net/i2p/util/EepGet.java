@@ -761,7 +761,7 @@ public class EepGet {
             path = path + "?" + query;
         if (!path.startsWith("/"))
 	    path = "/" + path;
-        if ( (port == 80) || (port == 443) ) path = proto + "://" + host + path;
+        if ( (port == 80) || (port == 443) || (port <= 0) ) path = proto + "://" + host + path;
         else path = proto + "://" + host + ":" + port + path;
         if (_log.shouldLog(Log.DEBUG)) _log.debug("Requesting " + path);
         if (post) {
