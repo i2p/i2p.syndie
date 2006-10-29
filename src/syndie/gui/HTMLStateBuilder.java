@@ -30,6 +30,7 @@ class HTMLStateBuilder {
         _noBodyTags.add("img");
         _noBodyTags.add("br");
         _noBodyTags.add("hr");
+        _noBodyTags.add("meta");
     }
     
     public HTMLStateBuilder(String html, MessageInfo msg) { this(html, msg, -1); }
@@ -89,7 +90,7 @@ class HTMLStateBuilder {
                             char ce = _html.charAt(j);
                             if (ce == ';') {
                                 appendBody(body, getCharacter(escapeCode.toString()));
-                                i = j+1;
+                                i = j;
                                 escapeFound = true;
                                 break;
                             } else if (Character.isWhitespace(ce)) { // invalid html, so lets treat it as an &
@@ -257,7 +258,8 @@ class HTMLStateBuilder {
         }
         
         // if the html doesn't explicitly close <br>, <img>, <hr>, etc, then do so implicitly
-        if (_noBodyTags.contains(tagName) && (content.charAt(content.length()-1) != '/'))
+        if ( (_noBodyTags.contains(tagName) || (tagName.startsWith("!"))) && 
+             (content.charAt(content.length()-1) != '/') )
             receiveTagEnd(content, body.length(), body);
     }
     
@@ -331,22 +333,28 @@ class HTMLStateBuilder {
      *         decoded, the escape body itself (so the typo &am; would return "&am;")
      */
     private String getCharacter(String escapeBody) {
-        String rv = (String)_charMap.get(escapeBody.toLowerCase());
-        if (rv != null)
-            return rv;
+        Character rv = (Character)_charMap.get(escapeBody.toLowerCase());
+        if (rv != null) {
+            //System.out.println("Escaping [" + escapeBody + "] and replacing it with [" + rv + "]");
+            return rv.toString();
+        }
         if (escapeBody.charAt(0) == '#') {
             try {
                 int i = Integer.parseInt(escapeBody.substring(1));
-                if (i > 0)
+                if (i > 0) {
+                    //System.out.println("Escaping [" + escapeBody + "] and replacing it with [" + (char)i + "]");
                     return Character.toString((char)i);
+                }
                 // else, fallthrough
             } catch (NumberFormatException nfe) {
                 // &#asdf;
                 // fallthrough
+                //System.out.println("Escape [" + escapeBody + "] is a bad number");
             }
         } else {
             // not a unicode escape, and not one of the known chars in charMap
             // fallthrough
+            System.out.println("Escape [" + escapeBody + "] is not a number");
         }
         return "&" + escapeBody + ";";
     }
@@ -358,259 +366,268 @@ class HTMLStateBuilder {
     private static void buildEntities() {
 
         // from http://www.w3.org/TR/html401/sgml/entities.html
-        _charMap.put("AElig", "\u0198");
-        _charMap.put("Aacute", "\u0193");
-        _charMap.put("Acirc", "\u0194");
-        _charMap.put("Agrave", "\u0192");
-        _charMap.put("Alpha", "\u0913");
-        _charMap.put("Aring", "\u0197");
-        _charMap.put("Atilde", "\u0195");
-        _charMap.put("Auml", "\u0196");
-        _charMap.put("Beta", "\u0914");
-        _charMap.put("Ccedil", "\u0199");
-        _charMap.put("Chi", "\u0935");
-        _charMap.put("Dagger", "\u8225");
-        _charMap.put("Delta", "\u0916");
-        _charMap.put("ETH", "\u0208");
-        _charMap.put("Eacute", "\u0201");
-        _charMap.put("Ecirc", "\u0202");
-        _charMap.put("Egrave", "\u0200");
-        _charMap.put("Epsilon", "\u0917");
-        _charMap.put("Eta", "\u0919");
-        _charMap.put("Euml", "\u0203");
-        _charMap.put("Gamma", "\u0915");
-        _charMap.put("Iacute", "\u0205");
-        _charMap.put("Icirc", "\u0206");
-        _charMap.put("Igrave", "\u0204");
-        _charMap.put("Iota", "\u0921");
-        _charMap.put("Iuml", "\u0207");
-        _charMap.put("Kappa", "\u0922");
-        _charMap.put("Lambda", "\u0923");
-        _charMap.put("Ntilde", "\u0209");
-        _charMap.put("OElig", "\u0338");
-        _charMap.put("Oacute", "\u0211");
-        _charMap.put("Ocirc", "\u0212");
-        _charMap.put("Ograve", "\u0210");
-        _charMap.put("Omega", "\u0937");
-        _charMap.put("Omicron", "\u0927");
-        _charMap.put("Oslash", "\u0216");
-        _charMap.put("Otilde", "\u0213");
-        _charMap.put("Ouml", "\u0214");
-        _charMap.put("Phi", "\u0934");
-        _charMap.put("Prime", "\u8243");
-        _charMap.put("Psi", "\u0936");
-        _charMap.put("Rho", "\u0929");
-        _charMap.put("Scaron", "\u0352");
-        _charMap.put("Sigma", "\u0931");
-        _charMap.put("THORN", "\u0222");
-        _charMap.put("Tau", "\u0932");
-        _charMap.put("Theta", "\u0920");
-        _charMap.put("Uacute", "\u0218");
-        _charMap.put("Ucirc", "\u0219");
-        _charMap.put("Ugrave", "\u0217");
-        _charMap.put("Upsilon", "\u0933");
-        _charMap.put("Uuml", "\u0220");
-        _charMap.put("Yacute", "\u0221");
-        _charMap.put("Yuml", "\u0376");
-        _charMap.put("Zeta", "\u0918");
-        _charMap.put("aacute", "\u0225");
-        _charMap.put("acirc", "\u0226");
-        _charMap.put("acute", "\u0180");
-        _charMap.put("aelig", "\u0230");
-        _charMap.put("agrave", "\u0224");
-        _charMap.put("alefsym", "\u8501");
-        _charMap.put("alpha", "\u0945");
-        _charMap.put("amp", "\u0038");
-        _charMap.put("and", "\u8743");
-        _charMap.put("ang", "\u8736");
-        _charMap.put("aring", "\u0229");
-        _charMap.put("asymp", "\u8776");
-        _charMap.put("atilde", "\u0227");
-        _charMap.put("auml", "\u0228");
-        _charMap.put("bdquo", "\u8222");
-        _charMap.put("beta", "\u0946");
-        _charMap.put("brvbar", "\u0166");
-        _charMap.put("bull", "\u8226");
-        _charMap.put("cap", "\u8745");
-        _charMap.put("ccedil", "\u0231");
-        _charMap.put("cedil", "\u0184");
-        _charMap.put("cent", "\u0162");
-        _charMap.put("chi", "\u0967");
-        _charMap.put("circ", "\u0710");
-        _charMap.put("clubs", "\u9827");
-        _charMap.put("cong", "\u8773");
-        _charMap.put("copy", "\u0169");
-        _charMap.put("crarr", "\u8629");
-        _charMap.put("cup", "\u8746");
-        _charMap.put("curren", "\u0164");
-        _charMap.put("dArr", "\u8659");
-        _charMap.put("dagger", "\u8224");
-        _charMap.put("darr", "\u8595");
-        _charMap.put("deg", "\u0176");
-        _charMap.put("delta", "\u0948");
-        _charMap.put("diams", "\u9830");
-        _charMap.put("divide", "\u0247");
-        _charMap.put("eacute", "\u0233");
-        _charMap.put("ecirc", "\u0234");
-        _charMap.put("egrave", "\u0232");
-        _charMap.put("empty", "\u8709");
-        _charMap.put("emsp", "\u8195");
-        _charMap.put("ensp", "\u8194");
-        _charMap.put("epsilon", "\u0949");
-        _charMap.put("equiv", "\u8801");
-        _charMap.put("eta", "\u0951");
-        _charMap.put("eth", "\u0240");
-        _charMap.put("euml", "\u0235");
-        _charMap.put("euro", "\u8364");
-        _charMap.put("exist", "\u8707");
-        _charMap.put("fnof", "\u0402");
-        _charMap.put("forall", "\u8704");
-        _charMap.put("frac12", "\u0189");
-        _charMap.put("frac14", "\u0188");
-        _charMap.put("frac34", "\u0190");
-        _charMap.put("frasl", "\u8260");
-        _charMap.put("gamma", "\u0947");
-        _charMap.put("gt", "\u0062");
-        _charMap.put("hArr", "\u8660");
-        _charMap.put("harr", "\u8596");
-        _charMap.put("hearts", "\u9829");
-        _charMap.put("hellip", "\u8230");
-        _charMap.put("iacute", "\u0237");
-        _charMap.put("icirc", "\u0238");
-        _charMap.put("iexcl", "\u0161");
-        _charMap.put("igrave", "\u0236");
-        _charMap.put("image", "\u8465");
-        _charMap.put("infin", "\u8734");
-        _charMap.put("int", "\u8747");
-        _charMap.put("iota", "\u0953");
-        _charMap.put("iquest", "\u0191");
-        _charMap.put("isin", "\u8712");
-        _charMap.put("iuml", "\u0239");
-        _charMap.put("kappa", "\u0954");
-        _charMap.put("lArr", "\u8656");
-        _charMap.put("lambda", "\u0955");
-        _charMap.put("lang", "\u9001");
-        _charMap.put("laquo", "\u0171");
-        _charMap.put("larr", "\u8592");
-        _charMap.put("lceil", "\u8968");
-        _charMap.put("ldquo", "\u8220");
-        _charMap.put("lfloor", "\u8970");
-        _charMap.put("lowast", "\u8727");
-        _charMap.put("loz", "\u9674");
-        _charMap.put("lrm", "\u8206");
-        _charMap.put("lsaquo", "\u8249");
-        _charMap.put("lsquo", "\u8216");
-        _charMap.put("lt", "\u0060");
-        _charMap.put("macr", "\u0175");
-        _charMap.put("mdash", "\u8212");
-        _charMap.put("micro", "\u0181");
-        _charMap.put("middot", "\u0183");
-        _charMap.put("minus", "\u8722");
-        _charMap.put("nabla", "\u8711");
-        _charMap.put("nbsp", "\u0160");
-        _charMap.put("ndash", "\u8211");
-        _charMap.put("not", "\u0172");
-        _charMap.put("notin", "\u8713");
-        _charMap.put("nsub", "\u8836");
-        _charMap.put("ntilde", "\u0241");
-        _charMap.put("oacute", "\u0243");
-        _charMap.put("ocirc", "\u0244");
-        _charMap.put("oelig", "\u0339");
-        _charMap.put("ograve", "\u0242");
-        _charMap.put("oline", "\u8254");
-        _charMap.put("omega", "\u0969");
-        _charMap.put("omicron", "\u0959");
-        _charMap.put("oplus", "\u8853");
-        _charMap.put("ordf", "\u0170");
-        _charMap.put("ordm", "\u0186");
-        _charMap.put("oslash", "\u0248");
-        _charMap.put("otilde", "\u0245");
-        _charMap.put("otimes", "\u8855");
-        _charMap.put("ouml", "\u0246");
-        _charMap.put("para", "\u0182");
-        _charMap.put("part", "\u8706");
-        _charMap.put("permil", "\u8240");
-        _charMap.put("perp", "\u8869");
-        _charMap.put("phi", "\u0966");
-        _charMap.put("piv", "\u0982");
-        _charMap.put("plusmn", "\u0177");
-        _charMap.put("pound", "\u0163");
-        _charMap.put("prime", "\u8242");
-        _charMap.put("prod", "\u8719");
-        _charMap.put("prop", "\u8733");
-        _charMap.put("psi", "\u0968");
-        _charMap.put("quot", "\u0034");
-        _charMap.put("rArr", "\u8658");
-        _charMap.put("radic", "\u8730");
-        _charMap.put("rang", "\u9002");
-        _charMap.put("raquo", "\u0187");
-        _charMap.put("rarr", "\u8594");
-        _charMap.put("rceil", "\u8969");
-        _charMap.put("rdquo", "\u8221");
-        _charMap.put("real", "\u8476");
-        _charMap.put("reg", "\u0174");
-        _charMap.put("rfloor", "\u8971");
-        _charMap.put("rho", "\u0961");
-        _charMap.put("rlm", "\u8207");
-        _charMap.put("rsaquo", "\u8250");
-        _charMap.put("rsquo", "\u8217");
-        _charMap.put("sbquo", "\u8218");
-        _charMap.put("scaron", "\u0353");
-        _charMap.put("sdot", "\u8901");
-        _charMap.put("sect", "\u0167");
-        _charMap.put("shy", "\u0173");
-        _charMap.put("sigma", "\u0963");
-        _charMap.put("sigmaf", "\u0962");
-        _charMap.put("sim", "\u8764");
-        _charMap.put("spades", "\u9824");
-        _charMap.put("sub", "\u8834");
-        _charMap.put("sube", "\u8838");
-        _charMap.put("sum", "\u8721");
-        _charMap.put("sup", "\u8835");
-        _charMap.put("sup1", "\u0185");
-        _charMap.put("sup2", "\u0178");
-        _charMap.put("sup3", "\u0179");
-        _charMap.put("supe", "\u8839");
-        _charMap.put("szlig", "\u0223");
-        _charMap.put("tau", "\u0964");
-        _charMap.put("there4", "\u8756");
-        _charMap.put("theta", "\u0952");
-        _charMap.put("thetasym", "\u0977");
-        _charMap.put("thinsp", "\u8201");
-        _charMap.put("thorn", "\u0254");
-        _charMap.put("tilde", "\u0732");
-        _charMap.put("times", "\u0215");
-        _charMap.put("trade", "\u8482");
-        _charMap.put("uArr", "\u8657");
-        _charMap.put("uacute", "\u0250");
-        _charMap.put("uarr", "\u8593");
-        _charMap.put("ucirc", "\u0251");
-        _charMap.put("ugrave", "\u0249");
-        _charMap.put("uml", "\u0168");
-        _charMap.put("upsih", "\u0978");
-        _charMap.put("upsilon", "\u0965");
-        _charMap.put("uuml", "\u0252");
-        _charMap.put("weierp", "\u8472");
-        _charMap.put("yacute", "\u0253");
-        _charMap.put("yen", "\u0165");
-        _charMap.put("yuml", "\u0255");
-        _charMap.put("zeta", "\u0950");
-        _charMap.put("zwj", "\u8205");
-        _charMap.put("zwnj", "\u8204");
-        _charMap.put("Mu", "\u0924");
-        _charMap.put("Mu", "\u0924");
-        _charMap.put("Nu", "\u0925");
-        _charMap.put("Pi", "\u0928");
-        _charMap.put("Xi", "\u0926");
-        _charMap.put("ge", "\u8805");
-        _charMap.put("le", "\u8804");
-        _charMap.put("ne", "\u8800");
-        _charMap.put("nu", "\u0957");
-        _charMap.put("pi", "\u0960");
-        _charMap.put("xi", "\u0958");
-        _charMap.put("or", "\u8744");
-        _charMap.put("ni", "\u8715");
-        _charMap.put("mu", "\u0956");        
+        _charMap.put("AElig", getDecimalChar("0198"));
+        _charMap.put("Aacute", getDecimalChar("0193"));
+        _charMap.put("Acirc", getDecimalChar("0194"));
+        _charMap.put("Agrave", getDecimalChar("0192"));
+        _charMap.put("Alpha", getDecimalChar("0913"));
+        _charMap.put("Aring", getDecimalChar("0197"));
+        _charMap.put("Atilde", getDecimalChar("0195"));
+        _charMap.put("Auml", getDecimalChar("0196"));
+        _charMap.put("Beta", getDecimalChar("0914"));
+        _charMap.put("Ccedil", getDecimalChar("0199"));
+        _charMap.put("Chi", getDecimalChar("0935"));
+        _charMap.put("Dagger", getDecimalChar("8225"));
+        _charMap.put("Delta", getDecimalChar("0916"));
+        _charMap.put("ETH", getDecimalChar("0208"));
+        _charMap.put("Eacute", getDecimalChar("0201"));
+        _charMap.put("Ecirc", getDecimalChar("0202"));
+        _charMap.put("Egrave", getDecimalChar("0200"));
+        _charMap.put("Epsilon", getDecimalChar("0917"));
+        _charMap.put("Eta", getDecimalChar("0919"));
+        _charMap.put("Euml", getDecimalChar("0203"));
+        _charMap.put("Gamma", getDecimalChar("0915"));
+        _charMap.put("Iacute", getDecimalChar("0205"));
+        _charMap.put("Icirc", getDecimalChar("0206"));
+        _charMap.put("Igrave", getDecimalChar("0204"));
+        _charMap.put("Iota", getDecimalChar("0921"));
+        _charMap.put("Iuml", getDecimalChar("0207"));
+        _charMap.put("Kappa", getDecimalChar("0922"));
+        _charMap.put("Lambda", getDecimalChar("0923"));
+        _charMap.put("Ntilde", getDecimalChar("0209"));
+        _charMap.put("OElig", getDecimalChar("0338"));
+        _charMap.put("Oacute", getDecimalChar("0211"));
+        _charMap.put("Ocirc", getDecimalChar("0212"));
+        _charMap.put("Ograve", getDecimalChar("0210"));
+        _charMap.put("Omega", getDecimalChar("0937"));
+        _charMap.put("Omicron", getDecimalChar("0927"));
+        _charMap.put("Oslash", getDecimalChar("0216"));
+        _charMap.put("Otilde", getDecimalChar("0213"));
+        _charMap.put("Ouml", getDecimalChar("0214"));
+        _charMap.put("Phi", getDecimalChar("0934"));
+        _charMap.put("Prime", getDecimalChar("8243"));
+        _charMap.put("Psi", getDecimalChar("0936"));
+        _charMap.put("Rho", getDecimalChar("0929"));
+        _charMap.put("Scaron", getDecimalChar("0352"));
+        _charMap.put("Sigma", getDecimalChar("0931"));
+        _charMap.put("THORN", getDecimalChar("0222"));
+        _charMap.put("Tau", getDecimalChar("0932"));
+        _charMap.put("Theta", getDecimalChar("0920"));
+        _charMap.put("Uacute", getDecimalChar("0218"));
+        _charMap.put("Ucirc", getDecimalChar("0219"));
+        _charMap.put("Ugrave", getDecimalChar("0217"));
+        _charMap.put("Upsilon", getDecimalChar("0933"));
+        _charMap.put("Uuml", getDecimalChar("0220"));
+        _charMap.put("Yacute", getDecimalChar("0221"));
+        _charMap.put("Yuml", getDecimalChar("0376"));
+        _charMap.put("Zeta", getDecimalChar("0918"));
+        _charMap.put("aacute", getDecimalChar("0225"));
+        _charMap.put("acirc", getDecimalChar("0226"));
+        _charMap.put("acute", getDecimalChar("0180"));
+        _charMap.put("aelig", getDecimalChar("0230"));
+        _charMap.put("agrave", getDecimalChar("0224"));
+        _charMap.put("alefsym", getDecimalChar("8501"));
+        _charMap.put("alpha", getDecimalChar("0945"));
+        _charMap.put("amp", getDecimalChar("0038"));
+        _charMap.put("and", getDecimalChar("8743"));
+        _charMap.put("ang", getDecimalChar("8736"));
+        _charMap.put("aring", getDecimalChar("0229"));
+        _charMap.put("asymp", getDecimalChar("8776"));
+        _charMap.put("atilde", getDecimalChar("0227"));
+        _charMap.put("auml", getDecimalChar("0228"));
+        _charMap.put("bdquo", getDecimalChar("8222"));
+        _charMap.put("beta", getDecimalChar("0946"));
+        _charMap.put("brvbar", getDecimalChar("0166"));
+        _charMap.put("bull", getDecimalChar("8226"));
+        _charMap.put("cap", getDecimalChar("8745"));
+        _charMap.put("ccedil", getDecimalChar("0231"));
+        _charMap.put("cedil", getDecimalChar("0184"));
+        _charMap.put("cent", getDecimalChar("0162"));
+        _charMap.put("chi", getDecimalChar("0967"));
+        _charMap.put("circ", getDecimalChar("0710"));
+        _charMap.put("clubs", getDecimalChar("9827"));
+        _charMap.put("cong", getDecimalChar("8773"));
+        _charMap.put("copy", getDecimalChar("0169"));
+        _charMap.put("crarr", getDecimalChar("8629"));
+        _charMap.put("cup", getDecimalChar("8746"));
+        _charMap.put("curren", getDecimalChar("0164"));
+        _charMap.put("dArr", getDecimalChar("8659"));
+        _charMap.put("dagger", getDecimalChar("8224"));
+        _charMap.put("darr", getDecimalChar("8595"));
+        _charMap.put("deg", getDecimalChar("0176"));
+        _charMap.put("delta", getDecimalChar("0948"));
+        _charMap.put("diams", getDecimalChar("9830"));
+        _charMap.put("divide", getDecimalChar("0247"));
+        _charMap.put("eacute", getDecimalChar("0233"));
+        _charMap.put("ecirc", getDecimalChar("0234"));
+        _charMap.put("egrave", getDecimalChar("0232"));
+        _charMap.put("empty", getDecimalChar("8709"));
+        _charMap.put("emsp", getDecimalChar("8195"));
+        _charMap.put("ensp", getDecimalChar("8194"));
+        _charMap.put("epsilon", getDecimalChar("0949"));
+        _charMap.put("equiv", getDecimalChar("8801"));
+        _charMap.put("eta", getDecimalChar("0951"));
+        _charMap.put("eth", getDecimalChar("0240"));
+        _charMap.put("euml", getDecimalChar("0235"));
+        _charMap.put("euro", getDecimalChar("8364"));
+        _charMap.put("exist", getDecimalChar("8707"));
+        _charMap.put("fnof", getDecimalChar("0402"));
+        _charMap.put("forall", getDecimalChar("8704"));
+        _charMap.put("frac12", getDecimalChar("0189"));
+        _charMap.put("frac14", getDecimalChar("0188"));
+        _charMap.put("frac34", getDecimalChar("0190"));
+        _charMap.put("frasl", getDecimalChar("8260"));
+        _charMap.put("gamma", getDecimalChar("0947"));
+        _charMap.put("gt", getDecimalChar("0062"));
+        _charMap.put("hArr", getDecimalChar("8660"));
+        _charMap.put("harr", getDecimalChar("8596"));
+        _charMap.put("hearts", getDecimalChar("9829"));
+        _charMap.put("hellip", getDecimalChar("8230"));
+        _charMap.put("iacute", getDecimalChar("0237"));
+        _charMap.put("icirc", getDecimalChar("0238"));
+        _charMap.put("iexcl", getDecimalChar("0161"));
+        _charMap.put("igrave", getDecimalChar("0236"));
+        _charMap.put("image", getDecimalChar("8465"));
+        _charMap.put("infin", getDecimalChar("8734"));
+        _charMap.put("int", getDecimalChar("8747"));
+        _charMap.put("iota", getDecimalChar("0953"));
+        _charMap.put("iquest", getDecimalChar("0191"));
+        _charMap.put("isin", getDecimalChar("8712"));
+        _charMap.put("iuml", getDecimalChar("0239"));
+        _charMap.put("kappa", getDecimalChar("0954"));
+        _charMap.put("lArr", getDecimalChar("8656"));
+        _charMap.put("lambda", getDecimalChar("0955"));
+        _charMap.put("lang", getDecimalChar("9001"));
+        _charMap.put("laquo", getDecimalChar("0171"));
+        _charMap.put("larr", getDecimalChar("8592"));
+        _charMap.put("lceil", getDecimalChar("8968"));
+        _charMap.put("ldquo", getDecimalChar("8220"));
+        _charMap.put("lfloor", getDecimalChar("8970"));
+        _charMap.put("lowast", getDecimalChar("8727"));
+        _charMap.put("loz", getDecimalChar("9674"));
+        _charMap.put("lrm", getDecimalChar("8206"));
+        _charMap.put("lsaquo", getDecimalChar("8249"));
+        _charMap.put("lsquo", getDecimalChar("8216"));
+        _charMap.put("lt", getDecimalChar("0060"));
+        _charMap.put("macr", getDecimalChar("0175"));
+        _charMap.put("mdash", getDecimalChar("8212"));
+        _charMap.put("micro", getDecimalChar("0181"));
+        _charMap.put("middot", getDecimalChar("0183"));
+        _charMap.put("minus", getDecimalChar("8722"));
+        _charMap.put("nabla", getDecimalChar("8711"));
+        _charMap.put("nbsp", getDecimalChar("0160"));
+        _charMap.put("ndash", getDecimalChar("8211"));
+        _charMap.put("not", getDecimalChar("0172"));
+        _charMap.put("notin", getDecimalChar("8713"));
+        _charMap.put("nsub", getDecimalChar("8836"));
+        _charMap.put("ntilde", getDecimalChar("0241"));
+        _charMap.put("oacute", getDecimalChar("0243"));
+        _charMap.put("ocirc", getDecimalChar("0244"));
+        _charMap.put("oelig", getDecimalChar("0339"));
+        _charMap.put("ograve", getDecimalChar("0242"));
+        _charMap.put("oline", getDecimalChar("8254"));
+        _charMap.put("omega", getDecimalChar("0969"));
+        _charMap.put("omicron", getDecimalChar("0959"));
+        _charMap.put("oplus", getDecimalChar("8853"));
+        _charMap.put("ordf", getDecimalChar("0170"));
+        _charMap.put("ordm", getDecimalChar("0186"));
+        _charMap.put("oslash", getDecimalChar("0248"));
+        _charMap.put("otilde", getDecimalChar("0245"));
+        _charMap.put("otimes", getDecimalChar("8855"));
+        _charMap.put("ouml", getDecimalChar("0246"));
+        _charMap.put("para", getDecimalChar("0182"));
+        _charMap.put("part", getDecimalChar("8706"));
+        _charMap.put("permil", getDecimalChar("8240"));
+        _charMap.put("perp", getDecimalChar("8869"));
+        _charMap.put("phi", getDecimalChar("0966"));
+        _charMap.put("piv", getDecimalChar("0982"));
+        _charMap.put("plusmn", getDecimalChar("0177"));
+        _charMap.put("pound", getDecimalChar("0163"));
+        _charMap.put("prime", getDecimalChar("8242"));
+        _charMap.put("prod", getDecimalChar("8719"));
+        _charMap.put("prop", getDecimalChar("8733"));
+        _charMap.put("psi", getDecimalChar("0968"));
+        _charMap.put("quot", getDecimalChar("0034"));
+        _charMap.put("rArr", getDecimalChar("8658"));
+        _charMap.put("radic", getDecimalChar("8730"));
+        _charMap.put("rang", getDecimalChar("9002"));
+        _charMap.put("raquo", getDecimalChar("0187"));
+        _charMap.put("rarr", getDecimalChar("8594"));
+        _charMap.put("rceil", getDecimalChar("8969"));
+        _charMap.put("rdquo", getDecimalChar("8221"));
+        _charMap.put("real", getDecimalChar("8476"));
+        _charMap.put("reg", getDecimalChar("0174"));
+        _charMap.put("rfloor", getDecimalChar("8971"));
+        _charMap.put("rho", getDecimalChar("0961"));
+        _charMap.put("rlm", getDecimalChar("8207"));
+        _charMap.put("rsaquo", getDecimalChar("8250"));
+        _charMap.put("rsquo", getDecimalChar("8217"));
+        _charMap.put("sbquo", getDecimalChar("8218"));
+        _charMap.put("scaron", getDecimalChar("0353"));
+        _charMap.put("sdot", getDecimalChar("8901"));
+        _charMap.put("sect", getDecimalChar("0167"));
+        _charMap.put("shy", getDecimalChar("0173"));
+        _charMap.put("sigma", getDecimalChar("0963"));
+        _charMap.put("sigmaf", getDecimalChar("0962"));
+        _charMap.put("sim", getDecimalChar("8764"));
+        _charMap.put("spades", getDecimalChar("9824"));
+        _charMap.put("sub", getDecimalChar("8834"));
+        _charMap.put("sube", getDecimalChar("8838"));
+        _charMap.put("sum", getDecimalChar("8721"));
+        _charMap.put("sup", getDecimalChar("8835"));
+        _charMap.put("sup1", getDecimalChar("0185"));
+        _charMap.put("sup2", getDecimalChar("0178"));
+        _charMap.put("sup3", getDecimalChar("0179"));
+        _charMap.put("supe", getDecimalChar("8839"));
+        _charMap.put("szlig", getDecimalChar("0223"));
+        _charMap.put("tau", getDecimalChar("0964"));
+        _charMap.put("there4", getDecimalChar("8756"));
+        _charMap.put("theta", getDecimalChar("0952"));
+        _charMap.put("thetasym", getDecimalChar("0977"));
+        _charMap.put("thinsp", getDecimalChar("8201"));
+        _charMap.put("thorn", getDecimalChar("0254"));
+        _charMap.put("tilde", getDecimalChar("0732"));
+        _charMap.put("times", getDecimalChar("0215"));
+        _charMap.put("trade", getDecimalChar("8482"));
+        _charMap.put("uArr", getDecimalChar("8657"));
+        _charMap.put("uacute", getDecimalChar("0250"));
+        _charMap.put("uarr", getDecimalChar("8593"));
+        _charMap.put("ucirc", getDecimalChar("0251"));
+        _charMap.put("ugrave", getDecimalChar("0249"));
+        _charMap.put("uml", getDecimalChar("0168"));
+        _charMap.put("upsih", getDecimalChar("0978"));
+        _charMap.put("upsilon", getDecimalChar("0965"));
+        _charMap.put("uuml", getDecimalChar("0252"));
+        _charMap.put("weierp", getDecimalChar("8472"));
+        _charMap.put("yacute", getDecimalChar("0253"));
+        _charMap.put("yen", getDecimalChar("0165"));
+        _charMap.put("yuml", getDecimalChar("0255"));
+        _charMap.put("zeta", getDecimalChar("0950"));
+        _charMap.put("zwj", getDecimalChar("8205"));
+        _charMap.put("zwnj", getDecimalChar("8204"));
+        _charMap.put("Mu", getDecimalChar("0924"));
+        _charMap.put("Mu", getDecimalChar("0924"));
+        _charMap.put("Nu", getDecimalChar("0925"));
+        _charMap.put("Pi", getDecimalChar("0928"));
+        _charMap.put("Xi", getDecimalChar("0926"));
+        _charMap.put("ge", getDecimalChar("8805"));
+        _charMap.put("le", getDecimalChar("8804"));
+        _charMap.put("ne", getDecimalChar("8800"));
+        _charMap.put("nu", getDecimalChar("0957"));
+        _charMap.put("pi", getDecimalChar("0960"));
+        _charMap.put("xi", getDecimalChar("0958"));
+        _charMap.put("or", getDecimalChar("8744"));
+        _charMap.put("ni", getDecimalChar("8715"));
+        _charMap.put("mu", getDecimalChar("0956"));        
+    }
+    
+    private static final Character getDecimalChar(String decimal) {
+        try {
+            int i = Integer.parseInt(decimal, 10);
+            return new Character((char)i);
+        } catch (NumberFormatException nfe) {
+            throw new RuntimeException("wtf: " + decimal);
+        }
     }
     
     public static void main(String args[]) {
@@ -630,11 +647,12 @@ class HTMLStateBuilder {
     }
     /** try to flex the supported html... */
     static final String COMPREHENSIVE_TEST = 
-"<html><body>\n" +
+"<html><body bgimage=\"attachment0\">\n" +
 "<p>html test page (links to syndieURIs are invalid, as are pages/images)</p>\n" +
 "<b>i am bold</b><br />\n" +
 "<i>i am italicized</i><br />\n" +
 "<u>i am underlined</u><br />\n" +
+"<so>i am struck out</so><br />\n" +
 "<p>paragraph</p><p>another paragraph</p>\n" +
 "<ul>\n" +
 " <li>unordered list item</li>\n" +
@@ -680,5 +698,7 @@ class HTMLStateBuilder {
 "<font size=\"-3\">size-3</font><br />\n" +
 "<font size=\"-4\">size-4</font><br />\n" +
 "<font size=\"-5\">size-5</font><br />\n" +
+"<p bgcolor=\"red\" color=\"blue\" font=\"Times\">times in blue on a red background</p>\n" +
+"<quote>this is a quote</quote>\n" +
 "</body></html>";
 }
