@@ -57,7 +57,6 @@ class HTMLStyleBuilder {
 
     /** light grey background for quotes */
     private static Color _bgColorQuote = new Color(Display.getDefault(), 223, 223, 223);
-    private static final Map _colorNameToRGB = new HashMap();
     
     private Map _customColors;
     
@@ -66,7 +65,7 @@ class HTMLStyleBuilder {
 
     static Image ICON_LINK_END;
     static Image ICON_IMAGE_UNKNOWN;
-    static { buildDefaultIcons(); buildColorNameToRGB(); }
+    static { buildDefaultIcons(); }
     
     public HTMLStyleBuilder(PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
         _source = src;
@@ -411,37 +410,7 @@ class HTMLStyleBuilder {
     }
     
     private Color getColor(String color) {
-        Color rv = null;
-        if (color != null) {
-            color = color.trim();
-            String rgb = (String)_colorNameToRGB.get(color);
-            if (rgb != null)
-                color = rgb;
-            //System.out.println("color: " + color);
-            if (color.startsWith("#") && (color.length() == 7)) {
-                Color cached = (Color)_customColors.get(color);
-                if (cached == null) {
-                    try {
-                        int r = Integer.parseInt(color.substring(1, 3), 16);
-                        int g = Integer.parseInt(color.substring(3, 5), 16);
-                        int b = Integer.parseInt(color.substring(5, 7), 16);
-                        cached = new Color(Display.getDefault(), r, g, b);
-                        _customColors.put(color, cached);
-                        //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
-                    } catch (NumberFormatException nfe) {
-                        // invalid rgb
-                        System.out.println("invalid rgb");
-                        nfe.printStackTrace();
-                    }
-                }
-                if (cached != null)
-                    rv = cached;
-            } else {
-                // invalid rgb
-                //System.out.println("rgb is not valid [" + color + "]");
-            }
-        }
-        return rv;
+        return ColorUtil.getColor(color, _customColors);
     }
     
     private void includeImage(StyleRange style, HTMLTag imgTag) {
@@ -675,13 +644,6 @@ class HTMLStyleBuilder {
             throw new RuntimeException("could not load the link end icon");
         }
         
-    }
-    private static void buildColorNameToRGB() {
-        _colorNameToRGB.put("red", "#FF0000");
-        _colorNameToRGB.put("green", "#00FF00");
-        _colorNameToRGB.put("blue", "#0000FF");
-        _colorNameToRGB.put("white", "#FFFFFF");
-        _colorNameToRGB.put("black", "#000000");
     }
     
     public static void main(String args[]) {

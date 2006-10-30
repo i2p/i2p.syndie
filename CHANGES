@@ -18,6 +18,8 @@
     - (syndie.gui branch) body bgcolor and bgimage (tiled), and refactor the
       PageRender's DBClient dependency into a PageRendererSource for easy
       rendering of pages not in the database
+    - (syndie.gui branch) stubs for the wysiwyg editor, and refactor the system
+      colors out into a shared component
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as
