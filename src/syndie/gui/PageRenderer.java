@@ -12,6 +12,8 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -204,6 +206,12 @@ public class PageRenderer {
                 }
             }
         });
+        _text.addControlListener(new ControlListener() {
+            public void controlMoved(ControlEvent controlEvent) {}
+            public void controlResized(ControlEvent controlEvent) {
+                if (_msg != null) rerender();
+            }
+        });
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
@@ -250,7 +258,7 @@ public class PageRenderer {
         disposeColors();
         disposeImages();
         _text.setText(body);
-        _text.setStyleRanges(null);
+        _text.setStyleRanges(null, null);
     }
     private void renderHTML(String html) {
         disposeFonts();
@@ -267,10 +275,12 @@ public class PageRenderer {
             FontMetrics metrics = gc.getFontMetrics();
             int charWidth = metrics.getAverageCharWidth();
             int paneWidth = _text.getBounds().width;
+            int w = _text.getClientArea().width;
+            int ww = _parent.getClientArea().width;
             //if (paneWidth > 800) paneWidth = 800;
             //else if (paneWidth < 100) paneWidth = 100;
             charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
-            System.out.println("max chars per line: " + charsPerLine + " pane width: " + paneWidth + " charWidth: " + charWidth);
+            System.out.println("max chars per line: " + charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
         }
         
         HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, charsPerLine);
