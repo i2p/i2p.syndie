@@ -115,4 +115,14 @@ public class ColorUtil {
      * 16x16 pixel image of the given system color (do not dispose!)
      */
     public static Image getSystemColorSwatch(Color color) { return (Image)_systemColorSwatches.get(color); }
+
+    static String getSystemColorName(Color color) {
+        for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {
+            String name = (String)iter.next();
+            Color cur = (Color)_colorNameToSystem.get(name);
+            if ( (cur == color) || (cur.equals(color)) )
+                return name;
+        }
+        return null;
+    }
 }
