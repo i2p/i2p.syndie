@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import net.i2p.data.Hash;
+import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ExtendedModifyEvent;
 import org.eclipse.swt.custom.ExtendedModifyListener;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -55,15 +59,19 @@ public class PageEditor {
     private Composite _parent;
     private Composite _root;
     private Composite _toolbars;
+    private SashForm _sash;
     private StyledText _text;
     private PageRenderer _preview;
+    
+    private long _lastModified;
+    private long _lastPreviewed;
     
     // html toolbar
     private Button _htmlStyleChooser;
     private Button _htmlLink;
     private Button _htmlImg;
     private Button _htmlSymbol;
-    private Combo _htmlHeader;
+    private Button _htmlHeader;
     private Button _htmlQuote;
     private Button _htmlPre;
     // page toolbar
@@ -146,10 +154,15 @@ public class PageEditor {
         } else {
             createTextToolbar();
         }
-        _text = new StyledText(_root, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+        _sash = new SashForm(_root, SWT.VERTICAL);
+        _text = new StyledText(_sash, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+        _text.setEditable(true);
+        _text.setDoubleClickEnabled(true);
+        addEditListeners();
+        
+        _preview = new PageRenderer(_sash, true);
         
         createStyleChooser();
-        preparePreview();
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -170,9 +183,7 @@ public class PageEditor {
         gd.grabExcessVerticalSpace = true;
         gd.horizontalAlignment = GridData.FILL;
         gd.verticalAlignment = GridData.FILL;
-        _text.setLayoutData(gd);
-        _text.setEditable(true);
-        _text.setDoubleClickEnabled(true);
+        _sash.setLayoutData(gd);
     }
     
     private void createHTMLToolbar() { createToolbar(true); }
@@ -198,17 +209,8 @@ public class PageEditor {
         _htmlSymbol = new Button(grpHTML, SWT.PUSH);
         _htmlSymbol.setText("sym");
         _htmlSymbol.setToolTipText("Add a new symbol");
-        _htmlHeader = new Combo(grpHTML, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _htmlHeader.add("none");
-        _htmlHeader.add("H1");
-        _htmlHeader.add("H2");
-        _htmlHeader.add("H3");
-        _htmlHeader.add("H4");
-        _htmlHeader.add("H5");
-        _htmlHeader.select(0);
-        _htmlHeader.setToolTipText("Use a header");
-        _htmlHeader.setEnabled(enable); // needs to be done explicitly for some reason...
-        _htmlHeader.addSelectionListener(new HeaderListener());
+        _htmlHeader = new Button(grpHTML, SWT.PUSH);
+        prepareHeader();
         _htmlPre = new Button(grpHTML, SWT.PUSH);
         _htmlPre.setText("pre");
         _htmlPre.setToolTipText("Add preformatted text");
@@ -274,28 +276,8 @@ public class PageEditor {
             public void widgetSelected(SelectionEvent selectionEvent) { preview(); }
         });
         
-        Group grpDebug = new Group(_toolbars, SWT.HORIZONTAL);
-        grpDebug.setText("Debug");
-        Button dumpStyle = new Button(grpDebug, SWT.PUSH);
-        dumpStyle.setText("styles");
-        dumpStyle.setToolTipText("walk styles");
-        dumpStyle.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { dumpStyles(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { dumpStyles(); }
-        });
-        Button dumpStatus = new Button(grpDebug, SWT.PUSH);
-        dumpStatus.setText("status");
-        dumpStatus.setToolTipText("display all status info");
-        dumpStatus.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { dumpStatus(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { dumpStatus(); }
-        });
-        
-        grpDebug.setEnabled(true);
-        RowLayout rl = new RowLayout(SWT.HORIZONTAL);
-        grpDebug.setLayout(rl);
         grpMeta.setEnabled(enable);
-        rl = new RowLayout(SWT.HORIZONTAL);
+        RowLayout rl = new RowLayout(SWT.HORIZONTAL);
         grpMeta.setLayout(rl);
         grpList.setEnabled(enable);
         rl = new RowLayout(SWT.HORIZONTAL);
@@ -313,6 +295,29 @@ public class PageEditor {
         _toolbars.setLayout(rl);
     }
     
+    private void prepareHeader() {
+        _htmlHeader.setText("H*");
+        final Menu headerMenu = new Menu(_htmlHeader);
+        newHeader(headerMenu, "H1");
+        newHeader(headerMenu, "H2");
+        newHeader(headerMenu, "H3");
+        newHeader(headerMenu, "H4");
+        newHeader(headerMenu, "H5");
+        _htmlHeader.setMenu(headerMenu);
+        _htmlHeader.setToolTipText("Use a header");
+        _htmlHeader.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { headerMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { headerMenu.setVisible(true); }
+        });
+    }
+    
+    private void newHeader(final Menu menu, String header) {
+        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item.setText(header);
+        final String text = "<" + header + ">TEXT</" + header + ">";
+        item.addSelectionListener(new InsertListener(text, true));
+    }
+
     private void createStyleChooser() {
         _txtShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
         _txtShell.setText("Text style chooser");
@@ -505,24 +510,25 @@ public class PageEditor {
     }
     
     private void insertAtCaret(String text) {
-        // rather than replacing everything selected, just insert at the caret
-        _text.replaceTextRange(_text.getCaretOffset(), 0, text);
-        //_text.insert(buf.toString());
-        _text.setCaretOffset(_text.getCaretOffset()+text.length());
+        if (text != null) {
+            // rather than replacing everything selected, just insert at the caret
+            _text.replaceTextRange(_text.getCaretOffset(), 0, text);
+            //_text.insert(buf.toString());
+            _text.setCaretOffset(_text.getCaretOffset()+text.length());
+        }
         boolean focused = _text.forceFocus();
-        System.out.println("forced focus: " + focused);
     }
     
     private boolean isAtBeginningOfLine(int offset) {
         if (offset == 0) return true;
         int len = _text.getCharCount();
         String txt = null;
-        if (offset + 1 >= len)
-            txt = _text.getText(0, offset);
+        if (offset >= len)
+            txt = _text.getText(0, offset-2);
         else
-            txt = _text.getText(0, offset+1);
+            txt = _text.getText(0, offset-1);
         boolean isInTag = false;
-        for (int i = offset; i >= 0; i--) {
+        for (int i = txt.length()-1; i >= 0; i--) {
             char c = txt.charAt(i);
             if ('\n' == c) {
                 return true;
@@ -538,30 +544,7 @@ public class PageEditor {
         return true;
     }
     
-    private class HeaderListener implements SelectionListener {
-        public void widgetSelected(SelectionEvent selectionEvent) { insert(); }
-        public void widgetDefaultSelected(SelectionEvent selectionEvent) { insert(); }
-        private void insert() {
-            String header = _htmlHeader.getItem(_htmlHeader.getSelectionIndex());
-            String toInsert = null;
-            if ("h1".equals(header))
-                toInsert = "<h1>HEADER</h1>\n";
-            else if ("h2".equals(header))
-                toInsert = "<h2>HEADER</h2>\n";
-            if ("h3".equals(header))
-                toInsert = "<h3>HEADER</h3>\n";
-            if ("h4".equals(header))
-                toInsert = "<h4>HEADER</h4>\n";
-            if ("h5".equals(header))
-                toInsert = "<h5>HEADER</h5>\n";
-            
-            if (!isAtBeginningOfLine(_text.getCaretOffset()))
-                toInsert = "\n" + toInsert;
-            
-            insertAtCaret(toInsert);
-        }
-    }
-    
+    /** simple hook to inert a buffer at the caret */
     private class InsertListener implements SelectionListener {
         private boolean _onNewline;
         private String _toInsert;
@@ -618,28 +601,23 @@ public class PageEditor {
             _button = button;
             _color = color;
         }
-        public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-            _button.setBackground(ColorUtil.getColor(_color, null));
-        }
-        public void widgetSelected(SelectionEvent selectionEvent) {
-            _button.setBackground(ColorUtil.getColor(_color, null));
+        public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickColor(); }
+        public void widgetSelected(SelectionEvent selectionEvent) { pickColor(); }
+        private void pickColor() {
+            Color color = ColorUtil.getColor(_color, null);
+            _button.setBackground(color);
+            if (color == null) {
+                _button.setForeground(ColorUtil.getColor("black", null));
+            } else {
+                // not the best heuristic, but it seems to work ok
+                if ( (color.getRed() <= 128) && (color.getGreen() <= 128) && (color.getBlue() <= 128) )
+                    _button.setForeground(ColorUtil.getColor("white", null));
+                else
+                    _button.setForeground(ColorUtil.getColor("black", null));
+            }
         }
     }
 
-    private void preparePreview() {
-        ScrolledComposite scroll = new ScrolledComposite(_root, SWT.H_SCROLL | SWT.V_SCROLL);
-        scroll.setExpandHorizontal(true);
-        scroll.setExpandVertical(true);
-        _preview = new PageRenderer(scroll);
-        scroll.setContent(_preview.getComposite());
-        scroll.setLayout(new FillLayout());
-        GridData gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.grabExcessVerticalSpace = false;
-        gd.horizontalAlignment = GridData.FILL;
-        gd.verticalAlignment = GridData.FILL;
-        scroll.setLayoutData(gd);
-    }
     private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void preview() {
         MessageInfo msgInfo = new MessageInfo();
@@ -657,34 +635,30 @@ public class PageEditor {
         ArrayList attachmentOrder = new ArrayList();
         PageRendererSourceMem src = new PageRendererSourceMem(null, msgInfo, pageData, attachments, attachmentOrder);
         _preview.renderPage(src, _dummyURI);
+        _lastPreviewed = System.currentTimeMillis();
+        _lastModified = -1;
     }
     
-    private void dumpStyles() {
-        System.out.println("dumping styles: text=[" + _text.getText() + "]");
-        StyleRange ranges[] = _text.getStyleRanges();
-        if ( (ranges != null) && (ranges.length > 0) ) {
-            for (int i = 0; i < ranges.length; i++)
-                System.out.println("range " + i + ": " + ranges[i].toString());
-        } else {
-            System.out.println("no styles");
+    private void addEditListeners() {
+        _text.addExtendedModifyListener(new ExtendedModifyListener() {
+            public void modifyText(ExtendedModifyEvent evt) {
+                _lastModified = System.currentTimeMillis();
+                SimpleTimer.getInstance().addEvent(_timedPreview, 500);
+            }
+        });
+    }
+    private SimpleTimer.TimedEvent _timedPreview = new SimpleTimer.TimedEvent() {
+        public void timeReached() {
+            if (_lastModified > 0) {
+                long idle = System.currentTimeMillis() - _lastModified;
+                if (idle > 2000) {
+                    System.out.println("idle for " + idle + "ms, previewing");
+                    Display.getDefault().asyncExec(new Runnable() { public void run() { preview(); } });
+                } else {
+                    //System.out.println("idle for " + idle + "ms, NOT previewing");
+                    SimpleTimer.getInstance().addEvent(_timedPreview, 300);
+                }
+            }
         }
-    }
-    private void dumpSelection() {
-        Point range = _text.getSelectionRange();
-        if (range == null) {
-            System.out.println("No content selected");
-            int offset = _text.getCaretOffset();
-            System.out.println("Caret offset: " + offset);
-            return;
-        }
-        System.out.println("Selection range: " + range.x + " through " + (range.x+range.y));
-        System.out.println("[" + _text.getTextRange(range.x, range.y) + "]");
-        int offset = _text.getCaretOffset();
-        System.out.println("Caret offset: " + offset);
-    }
-    private void dumpStatus() {
-        dumpStyles();
-        dumpSelection();
-        System.out.println("Control: " + getControlState());
-    }
+    };
 }

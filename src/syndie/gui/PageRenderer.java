@@ -117,9 +117,13 @@ public class PageRenderer {
     private Image _currentEventImage;
     private HTMLTag _currentEventImageTag;
     
-    public PageRenderer(Composite parent) {
+    public PageRenderer(Composite parent) { this(parent, false); }
+    public PageRenderer(Composite parent, boolean scrollbars) {
         _parent = parent;
-        _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+        if (scrollbars)
+            _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+        else
+            _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         _fonts = null;
         _colors = null;
         _imageTags = new ArrayList();
