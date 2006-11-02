@@ -115,6 +115,7 @@ public class ColorUtil {
      * 16x16 pixel image of the given system color (do not dispose!)
      */
     public static Image getSystemColorSwatch(Color color) { return (Image)_systemColorSwatches.get(color); }
+    public static boolean isSystemColorSwatch(Image img) { return _systemColorSwatches.containsValue(img); }
 
     static String getSystemColorName(Color color) {
         for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {
@@ -125,4 +126,6 @@ public class ColorUtil {
         }
         return null;
     }
+
+    static boolean isSystemColor(Color color) { return _colorNameToSystem.containsValue(color); }
 }

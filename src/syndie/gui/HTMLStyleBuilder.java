@@ -108,8 +108,10 @@ class HTMLStyleBuilder {
                         _bgImage = img;
                 }
                 Color color = getColor(tag.getAttribValue("bgcolor"));
-                if (color != null)
+                if (color != null) {
                     _bgColor = color;
+                    System.out.println("setting the body bgcolor to " + color);
+                }
             }
             List tags = (List)breakPointTags.get(new Integer(tag.getStartIndex()));
             if (tags == null) {

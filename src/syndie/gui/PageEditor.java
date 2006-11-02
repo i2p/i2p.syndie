@@ -2,7 +2,9 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import net.i2p.data.Hash;
 import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
@@ -12,6 +14,9 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.VerifyKeyListener;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -100,6 +105,9 @@ public class PageEditor {
     private Combo _txtFontSize;
     private Button _txtFGColor;
     private Button _txtBGColor;
+    private Button _txtAlignLeft;
+    private Button _txtAlignCenter;
+    private Button _txtAlignRight;
     
     public PageEditor(Composite parent, MessageEditor msg, String type) {
         _parent = parent;
@@ -184,6 +192,7 @@ public class PageEditor {
         gd.horizontalAlignment = GridData.FILL;
         gd.verticalAlignment = GridData.FILL;
         _sash.setLayoutData(gd);
+        _root.setTabList(new Control[] { _sash }); //_text, _preview.getComposite() });
     }
     
     private void createHTMLToolbar() { createToolbar(true); }
@@ -223,7 +232,13 @@ public class PageEditor {
         _pageBGImage = new Button(grpPage, SWT.PUSH);
         _pageBGImage.setText("bgimg");
         _pageBGImage.setToolTipText("Set the background image");
-        _pageBGColor = buildColorCombo(grpPage, "pagebg", "Adjust the page bg color", "white", enable);
+        _pageBGImage.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { setBodyTags(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { setBodyTags(); }
+        });
+        _pageBGColor = buildColorCombo(grpPage, "pagebg", "Adjust the page bg color", "white", enable, new Runnable() {
+            public void run() { setBodyTags(); }
+        });
         
         Group grpList = new Group(_toolbars, SWT.SHADOW_ETCHED_IN);
         grpList.setText("List");
@@ -295,6 +310,32 @@ public class PageEditor {
         _toolbars.setLayout(rl);
     }
     
+    private void setBodyTags() {
+        String bodyColor = ColorUtil.getSystemColorName(_pageBGColor.getBackground());
+        if (bodyColor != null) {
+            String txt = _text.getText();
+            int body = txt.indexOf("<body");
+            if (body == -1) {
+                // ok, this assumes that if they don't have a <body> tag, they don't have an <html>
+                // tag either
+                _text.replaceTextRange(0, 0, "<html>\n<body bgcolor=\"" + bodyColor + "\">\n");
+                int sz = _text.getCharCount();
+                _text.replaceTextRange(sz, 0, "\n</body>\n</html>\n");
+            } else {
+                int bodyEnd = txt.indexOf('>', body);
+                String attributes = txt.substring(body+1, bodyEnd);
+                HTMLTag bodyTag = new HTMLTag(attributes, 0, null);
+                bodyTag.setAttribValue("bgcolor", bodyColor);
+                _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
+            }
+        }
+    }
+    
+    private Properties getAttributes(String attributes) {
+        Properties rv = new Properties();
+        return rv;
+    }
+    
     private void prepareHeader() {
         _htmlHeader.setText("H*");
         final Menu headerMenu = new Menu(_htmlHeader);
@@ -326,7 +367,9 @@ public class PageEditor {
         rl.wrap = false;
         _txtShell.setLayout(rl);
         
-        Group grpText = new Group(_txtShell, SWT.SHADOW_ETCHED_IN);
+        Composite controlBar = new Composite(_txtShell, SWT.NONE);
+        controlBar.setLayout(new RowLayout(SWT.HORIZONTAL));
+        Group grpText = new Group(controlBar, SWT.SHADOW_ETCHED_IN);
         grpText.setLayout(new RowLayout(SWT.HORIZONTAL));
         grpText.setText("Styling");
         _txtBold = new Button(grpText, SWT.TOGGLE);
@@ -359,6 +402,19 @@ public class PageEditor {
         _txtFontSize.setToolTipText("Adjust the font size");
         _txtFGColor = buildColorCombo(grpText, "color", "Adjust the fg color", "black", true);
         _txtBGColor = buildColorCombo(grpText, "bgcolor", "Adjust the bg color", "white", true);
+        
+        Group grpAlign = new Group(controlBar, SWT.SHADOW_ETCHED_IN);
+        grpAlign.setLayout(new RowLayout(SWT.HORIZONTAL));
+        grpAlign.setText("Alignment");
+        _txtAlignLeft = new Button(grpAlign, SWT.RADIO);
+        _txtAlignLeft.setText("left");
+        _txtAlignLeft.setToolTipText("Align the text to the left");
+        _txtAlignCenter = new Button(grpAlign, SWT.RADIO);
+        _txtAlignCenter.setText("center");
+        _txtAlignCenter.setToolTipText("Align the text to the center");
+        _txtAlignRight = new Button(grpAlign, SWT.RADIO);
+        _txtAlignRight.setText("right");
+        _txtAlignRight.setToolTipText("Align the text to the right");
         
         _sampleText = new StyledText(_txtShell, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.READ_ONLY);
         _sampleText.setText("This is the sample text");
@@ -395,6 +451,9 @@ public class PageEditor {
         _txtStrikeout.addSelectionListener(lsnr);
         _txtFont.addSelectionListener(lsnr);
         _txtFontSize.addSelectionListener(lsnr);
+        _txtAlignLeft.addSelectionListener(lsnr);
+        _txtAlignCenter.addSelectionListener(lsnr);
+        _txtAlignRight.addSelectionListener(lsnr);
         addListeners(lsnr, _txtFGColor);
         addListeners(lsnr, _txtBGColor);
     }
@@ -436,9 +495,13 @@ public class PageEditor {
             range.strikeout = strikeout;
             range.underline = underline;
             range.font = getSampleFont(bold, italic, font, sz);
+            int align = SWT.LEFT;
+            if (_txtAlignCenter.getSelection()) align = SWT.CENTER;
+            else if (_txtAlignRight.getSelection()) align = SWT.RIGHT;
             _sampleText.setStyleRange(range);
-            _txtShell.layout();
             _txtShell.pack(true);
+            // align has to be after pack, otherwise it gets lost for some reason
+            _sampleText.setLineAlignment(0, 1, align);
         }
         
         private Font getSampleFont(boolean bold, boolean italic, String style, String sz) {
@@ -459,6 +522,7 @@ public class PageEditor {
     
     private void resetTextStyle() {
         _sampleText.setStyleRanges(null, null);
+        _sampleText.setLineAlignment(0, 1, SWT.LEFT);
         _txtBold.setSelection(false);
         _txtItalic.setSelection(false);
         _txtUnderline.setSelection(false);
@@ -467,6 +531,9 @@ public class PageEditor {
         _txtFontSize.select(5); // +0
         _txtFGColor.setBackground(null);
         _txtBGColor.setBackground(null);
+        _txtAlignLeft.setSelection(true);
+        _txtAlignCenter.setSelection(false);
+        _txtAlignRight.setSelection(false);
     }
     
     private void insertTextStyle() {
@@ -479,22 +546,53 @@ public class PageEditor {
         String fg = ColorUtil.getSystemColorName(_txtFGColor.getBackground());
         String bg = ColorUtil.getSystemColorName(_txtBGColor.getBackground());
         
+        String align = null;
+        if (_txtAlignCenter.getSelection())
+            align = " align=\"center\"";
+        else if (_txtAlignRight.getSelection())
+            align = " align=\"right\"";
+        
         StringBuffer buf = new StringBuffer();
-        if (bold) buf.append("<b>");
-        if (italic) buf.append("<i>");
-        if (underline) buf.append("<u>");
-        if (strikeout) buf.append("<so>");
+        if (bold) {
+            buf.append("<b");
+            if (align != null)
+                buf.append(align);
+            align = null;
+            buf.append(">");
+        }
+        if (italic) {
+            buf.append("<i");
+            if (align != null)
+                buf.append(align);
+            align = null;
+            buf.append(">");
+        }
+        if (underline) {
+            buf.append("<u");
+            if (align != null)
+                buf.append(align);
+            align = null;
+            buf.append(">");
+        }
+        if (strikeout) {
+            buf.append("<so");
+            if (align != null)
+                buf.append(align);
+            align = null;
+            buf.append(">");
+        }
         
         boolean fontSet = false;
-        if ( (!"Times".equals(font)) || (!"+0".equals(sz)) || (fg != null) || (bg != null) )
+        if ( (!"Times".equals(font)) || (!"+0".equals(sz)) || (fg != null) || (bg != null) || (align != null) )
             fontSet = true;
         
         if (fontSet) {
             buf.append("<font ");
-            if (!"Times".equals(font)) buf.append("name=\"").append(font).append("\" ");
-            if (!"+0".equals(sz)) buf.append(" size=\"").append(sz).append("\" ");
-            if (fg != null) buf.append(" color=\"").append(fg).append("\" ");
-            if (bg != null) buf.append(" bgcolor=\"").append(bg).append("\" ");
+            if (!"Times".equals(font)) buf.append(" name=\"").append(font).append("\"");
+            if (!"+0".equals(sz)) buf.append(" size=\"").append(sz).append("\"");
+            if (fg != null) buf.append(" color=\"").append(fg).append("\"");
+            if (bg != null) buf.append(" bgcolor=\"").append(bg).append("\"");
+            if (align != null) buf.append(align);
             buf.append(">");
         }
         
@@ -564,7 +662,8 @@ public class PageEditor {
     
     private void showStyleChooser() { resetTextStyle(); _txtShell.setVisible(true); }
     
-    private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) {
+    private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) { return buildColorCombo(parent, name, tooltip, defaultColor, enable, null); }
+    private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {
         final Button rv = new Button(parent, SWT.PUSH);
         rv.setText(name);
         final Menu colorMenu = new Menu(rv);
@@ -572,7 +671,7 @@ public class PageEditor {
         none.setText("default");
         if ( (defaultColor == null) || ("default".equalsIgnoreCase(defaultColor)))
             none.setSelection(true);
-        none.addSelectionListener(new ColorMenuItemListener(rv, null));
+        none.addSelectionListener(new ColorMenuItemListener(rv, null, onSelect));
         ArrayList names = ColorUtil.getSystemColorNames();
         for (int i = 0; i < names.size(); i++) {
             String colorName = (String)names.get(i);
@@ -582,7 +681,7 @@ public class PageEditor {
             item.setImage(ColorUtil.getSystemColorSwatch(color));
             if (colorName.equalsIgnoreCase(defaultColor))
                 item.setSelection(true);
-            item.addSelectionListener(new ColorMenuItemListener(rv, colorName));
+            item.addSelectionListener(new ColorMenuItemListener(rv, colorName, onSelect));
         }
         rv.setMenu(colorMenu);
         rv.addSelectionListener(new SelectionListener() {
@@ -597,9 +696,11 @@ public class PageEditor {
     private class ColorMenuItemListener implements SelectionListener {
         private Button _button;
         private String _color;
-        public ColorMenuItemListener(Button button, String color) {
+        private Runnable _onSelect;
+        public ColorMenuItemListener(Button button, String color, Runnable onSelect) {
             _button = button;
             _color = color;
+            _onSelect = onSelect;
         }
         public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickColor(); }
         public void widgetSelected(SelectionEvent selectionEvent) { pickColor(); }
@@ -615,6 +716,7 @@ public class PageEditor {
                 else
                     _button.setForeground(ColorUtil.getColor("black", null));
             }
+            if (_onSelect != null) _onSelect.run();
         }
     }
 
@@ -646,17 +748,95 @@ public class PageEditor {
                 SimpleTimer.getInstance().addEvent(_timedPreview, 500);
             }
         });
+        _text.addKeyListener(new KeyListener() {
+            public void keyReleased(KeyEvent evt) { }
+            public void keyPressed(KeyEvent evt) {
+                switch (evt.character) {
+                    case 0x01: // ^A
+                        _text.selectAll();
+                        evt.doit = false;
+                        break;
+                    case 0x02: // ^B
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            insertAtCaret("<b></b>");
+                            int newOffset = _text.getCaretOffset();
+                            newOffset -= "</b>".length();
+                            _text.setCaretOffset(newOffset);
+                            evt.doit = false;
+                            break;
+                        }
+                    case 0x09: // ^I
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            int off = _text.getCaretOffset();
+                            _text.replaceTextRange(off-1, 1, ""); // remove the (^I-inserted) tab
+                            insertAtCaret("<i></i>");
+                            int newOffset = _text.getCaretOffset();
+                            newOffset -= "</i>".length();
+                            _text.setCaretOffset(newOffset);
+                            evt.doit = false;
+                            break;
+                        }
+                    case 0x15: // ^U
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            insertAtCaret("<u></u>");
+                            int newOffset = _text.getCaretOffset();
+                            newOffset -= "</u>".length();
+                            _text.setCaretOffset(newOffset);
+                            evt.doit = false;
+                            break;
+                        }
+                    case 0x03: // ^C
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _text.copy();
+                            evt.doit = false;
+                            break;
+                        }
+                    case 0x16: // ^V
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _text.paste();
+                            evt.doit = false;
+                            break;
+                        }
+                    case 0x18: // ^X
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _text.cut();
+                            evt.doit = false;
+                            break;
+                        }
+                }
+                /*
+                StringBuffer buf = new StringBuffer();
+                if ( (evt.stateMask & SWT.ALT) != 0)
+                    buf.append("ALT-");
+                if ( (evt.stateMask & SWT.CONTROL) != 0)
+                    buf.append("CNTR-");
+                if ( (evt.stateMask & SWT.COMMAND) != 0)
+                    buf.append("CMD-");
+                if ( (evt.stateMask & SWT.MOD1) != 0) // control
+                    buf.append("M1-");
+                if ( (evt.stateMask & SWT.MOD2) != 0) // shift
+                    buf.append("M2-");
+                if ( (evt.stateMask & SWT.MOD3) != 0) // alt
+                    buf.append("M3-");
+                if ( (evt.stateMask & SWT.MOD4) != 0)
+                    buf.append("M4-");
+                buf.append(evt.character).append(" (").append((int)evt.character).append(") ");
+                buf.append(" [").append(evt.character & ~SWT.ALT & ~SWT.CONTROL & ~SWT.COMMAND).append("]");
+                System.out.println("Key press: " + buf.toString());
+                 */
+            }
+        });
     }
     private SimpleTimer.TimedEvent _timedPreview = new SimpleTimer.TimedEvent() {
         public void timeReached() {
             if (_lastModified > 0) {
                 long idle = System.currentTimeMillis() - _lastModified;
-                if (idle > 2000) {
+                if (idle > 1000) {
                     System.out.println("idle for " + idle + "ms, previewing");
                     Display.getDefault().asyncExec(new Runnable() { public void run() { preview(); } });
                 } else {
                     //System.out.println("idle for " + idle + "ms, NOT previewing");
-                    SimpleTimer.getInstance().addEvent(_timedPreview, 300);
+                    SimpleTimer.getInstance().addEvent(_timedPreview, 100);
                 }
             }
         }

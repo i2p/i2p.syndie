@@ -477,12 +477,12 @@ public class PageRenderer {
         if (_colors != null) {
             for (int i = 0; i < _colors.size(); i++) {
                 Color c = (Color)_colors.get(i);
-                if (!c.isDisposed())
+                if ( (!c.isDisposed()) && (!ColorUtil.isSystemColor(c)) )
                     c.dispose();
             }
             _colors = null;
         }
-        if ( (_bgColor != null) && (!_bgColor.isDisposed()) )
+        if ( (_bgColor != null) && (!_bgColor.isDisposed()) && (!ColorUtil.isSystemColor(_bgColor)))
             _bgColor.dispose();
         _bgColor = null;
     }
@@ -495,6 +495,7 @@ public class PageRenderer {
                 Image img = (Image)_images.get(i);
                 if (img == HTMLStyleBuilder.ICON_IMAGE_UNKNOWN) continue;
                 if (img == HTMLStyleBuilder.ICON_LINK_END) continue;
+                if (ColorUtil.isSystemColorSwatch(img)) continue;
                 if (!img.isDisposed())
                     img.dispose();
             }

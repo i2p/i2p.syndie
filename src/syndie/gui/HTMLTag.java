@@ -96,6 +96,7 @@ class HTMLTag {
     /** lower case tag name */
     public String getName() { return _name; }
     public String getAttribValue(String name) { return _attributes.getProperty(name); }
+    public void setAttribValue(String name, String value) { _attributes.setProperty(name, value); }
     public int getStartIndex() { return _startIndex; }
     /** the tag was closed at the given body index */
     public void setEndIndex(int index) { _endIndex = index; }
@@ -110,6 +111,12 @@ class HTMLTag {
     
     public String toString() {
         StringBuffer rv = new StringBuffer();
+        rv.append(toHTML());
+        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
+        return rv.toString();
+    }
+    public String toHTML() {
+        StringBuffer rv = new StringBuffer();
         rv.append('<');
         rv.append(_name);
         rv.append(' ');
@@ -119,7 +126,6 @@ class HTMLTag {
             rv.append(name).append('=').append('\'').append(val).append('\'').append(' ');
         }
         rv.append('>');
-        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
         return rv.toString();
     }
 }
