@@ -1,5 +1,12 @@
 package syndie.gui;
 
+import com.swabunga.spell.engine.SpellDictionaryHashMap;
+import com.swabunga.spell.engine.Word;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,10 +57,13 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
+
+import com.swabunga.spell.engine.SpellDictionary;
 
 /**
  * wysiwyg editor for text or html pages in a message
@@ -108,6 +118,29 @@ public class PageEditor {
     private Button _txtAlignLeft;
     private Button _txtAlignCenter;
     private Button _txtAlignRight;
+    
+    // spell checker dialog
+    private Shell _spellShell;
+    private StyledText _spellContext;
+    /** line in the text buffer we are spellchecking */
+    private int _spellLine;
+    /** word in the line that we are spellchecking */
+    private int _spellWordIndex;
+    /** offset in the entire text to the current word being spellchecked */
+    private int _spellWordStart;
+    /** offset in the entire text to the current word being spellchecked (end is inclusive) */
+    private int _spellWordEnd;
+    private Text _spellWord;
+    private Combo _spellSuggestions;
+    private Button _spellReplace;
+    private Button _spellReplaceAll;
+    private Button _spellIgnore;
+    private Button _spellIgnoreAll;
+    private Button _spellAdd;
+    private Button _spellCancel;
+    /** list of words we are ignoring for the current spellcheck iteration */
+    private ArrayList _spellIgnoreAllList;
+    private SpellDictionary _spellDictionary;
     
     public PageEditor(Composite parent, MessageEditor msg, String type) {
         _parent = parent;
@@ -171,6 +204,7 @@ public class PageEditor {
         _preview = new PageRenderer(_sash, true);
         
         createStyleChooser();
+        createSpellchecker();
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -277,6 +311,10 @@ public class PageEditor {
         _metaSpell = new Button(grpMeta, SWT.PUSH);
         _metaSpell.setText("sp");
         _metaSpell.setToolTipText("spellcheck");
+        _metaSpell.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { spellcheck(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { spellcheck(); }
+        });
         _metaFind = new Button(grpMeta, SWT.PUSH);
         _metaFind.setText("^F");
         _metaFind.setToolTipText("find");
@@ -841,4 +879,295 @@ public class PageEditor {
             }
         }
     };
+
+    
+    private void createSpellchecker() {
+        _spellShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
+        _spellShell.setText("Spell checker");
+        GridLayout gl = new GridLayout(2, false);
+        _spellShell.setLayout(gl);
+        
+        _spellIgnoreAllList = new ArrayList();
+        try {
+            _spellDictionary = new SpellDictionaryHashMap(getDictionaryReader());
+        } catch (IOException ioe) {
+            try { _spellDictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}
+        }
+        
+        _spellContext = new StyledText(_spellShell, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.READ_ONLY);
+        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        _spellContext.setLayoutData(gd);
+        
+        Label l = new Label(_spellShell, SWT.NONE);
+        l.setText("Word: ");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = false;
+        l.setLayoutData(gd);
+        _spellWord = new Text(_spellShell, SWT.BORDER | SWT.READ_ONLY | SWT.SINGLE | SWT.LEFT);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        _spellWord.setLayoutData(gd);
+
+        l = new Label(_spellShell, SWT.NONE);
+        l.setText("Suggestions: ");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = false;
+        l.setLayoutData(gd);
+        _spellSuggestions = new Combo(_spellShell, SWT.SIMPLE);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        _spellSuggestions.setLayoutData(gd);
+        
+        Composite actionLine = new Composite(_spellShell, SWT.NONE);
+        actionLine.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _spellReplace = new Button(actionLine, SWT.PUSH);
+        _spellReplace.setText("replace");
+        _spellReplaceAll = new Button(actionLine, SWT.PUSH);
+        _spellReplaceAll.setText("replace all");
+        _spellIgnore = new Button(actionLine, SWT.PUSH);
+        _spellIgnore.setText("ignore");
+        _spellIgnoreAll = new Button(actionLine, SWT.PUSH);
+        _spellIgnoreAll.setText("ignore all");
+        _spellAdd = new Button(actionLine, SWT.PUSH);
+        _spellAdd.setText("add");
+        _spellCancel = new Button(actionLine, SWT.PUSH);
+        _spellCancel.setText("cancel");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        actionLine.setLayoutData(gd);
+        
+        _spellIgnore.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _spellWordIndex++; spellNext(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _spellWordIndex++; spellNext(); }
+        });
+        _spellIgnoreAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _spellWordIndex++; _spellIgnoreAllList.add(_spellWord.getText().trim().toLowerCase()); spellNext(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _spellWordIndex++; _spellIgnoreAllList.add(_spellWord.getText().trim().toLowerCase()); spellNext(); }
+        });
+        _spellReplace.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { spellReplaceWord(false); spellNext(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { spellReplaceWord(false); spellNext(); }
+        });
+        _spellReplaceAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { spellReplaceWord(true); spellNext(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { spellReplaceWord(true); spellNext(); }
+        });
+
+        _spellCancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { resetSpellcheck(); _spellShell.setVisible(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { resetSpellcheck(); _spellShell.setVisible(false); }
+        });
+        
+        _spellShell.pack();
+    }
+    private void spellReplaceWord(boolean replaceAll) {
+        String old = _spellWord.getText().trim();
+        String newText = _spellSuggestions.getText().trim();
+        int len = _spellWordEnd-_spellWordStart+1;
+        if (_spellWordStart + len >= _text.getCharCount())
+            len = _text.getCharCount() - _spellWordStart;
+        String oldFound = _text.getTextRange(_spellWordStart, len);
+        System.out.println("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
+        _text.replaceTextRange(_spellWordStart, len, newText);
+        _spellWordIndex++;
+        if (replaceAll) {
+            int line = _spellLine;
+            int word = _spellWordIndex;
+            spellNext(newText, old);
+            _spellLine = line;
+            _spellWordIndex = word;
+        }
+    }
+    private void spellNext() { spellNext(null, null); }
+    private void spellNext(String forceReplacement, String replaceFor) {
+        // iterate over the lines
+        //  iterate over the words (ignoring html)
+        //   if (!spelledCorrectly)
+        //    update spellcheck display
+        //    _spellShell.setVisible(true);
+        //    return;
+        // if end reached
+        //  display success dialog
+              
+        _spellWordStart = -1;
+        _spellWordEnd = -1;
+        boolean inTag = false;
+        while (_spellLine < _text.getLineCount()) {
+            int lineStart = _text.getOffsetAtLine(_spellLine);
+            int lineEnd = -1;
+            if (_spellLine + 1 >= _text.getLineCount())
+                lineEnd = _text.getCharCount()-1;
+            else
+                lineEnd = _text.getOffsetAtLine(_spellLine+1)-1;
+            
+            String lineText = "";
+            if (lineEnd > lineStart)
+                lineText = _text.getText(lineStart, lineEnd).trim();
+            //System.out.println("line " + _spellLine + ": [" + lineText + "]");
+            
+            int off = 0;
+            if (inTag) {
+                int endTag = lineText.indexOf('>');
+                if (endTag == -1) {
+                    // entire line is within a tag.  skip to the next line
+                    _spellLine++;
+                    continue;
+                } else {
+                    off = endTag+1;
+                }
+            }
+            
+            /** wordStart is part of the word */
+            int wordStart = -1;
+            /** wordEnd is part of the word */
+            int wordEnd = -1;
+            int curWord = 0;
+            int cur = off;
+            int len = lineText.length();
+            while (true) {
+                if ( (cur >= len) && (wordStart == -1) )
+                    break;
+                char c = 0;
+                if (cur < len)
+                    c = lineText.charAt(cur);
+                if ( (cur < len) && (Character.isLetterOrDigit(c)) ) {
+                    if (wordStart < 0) {
+                        wordStart = cur;
+                        //System.out.println("wordStart reached @ " + cur);
+                    }
+                } else if (wordStart != -1) {
+                    if (cur >= len) {
+                        wordEnd = cur;
+                        //System.out.println("wordEnd reached: [" + lineText.substring(wordStart) + "] [" + wordStart + "," + wordEnd + "]");
+                    } else {
+                        wordEnd = cur-1;
+                        //System.out.println("wordEnd reached: [" + lineText.substring(wordStart, wordEnd+1) + "] [" + wordStart + "," + wordEnd + "]");
+                    }
+                    if (curWord == _spellWordIndex) {
+                        String word = null;
+                        if (cur >= len)
+                            word = lineText.substring(wordStart);
+                        else
+                            word = lineText.substring(wordStart, wordEnd+1);
+                        String lower = word.toLowerCase();
+                        if (forceReplacement != null) {
+                            if (replaceFor.equals(lower)) {
+                                _spellWordStart = lineStart + wordStart;
+                                if (cur >= len)
+                                    _spellWordEnd = lineStart + wordEnd - 1;
+                                else
+                                    _spellWordEnd = lineStart + wordEnd;
+                                int wordLen = _spellWordEnd-_spellWordStart+1;
+                                if (_spellWordStart + wordLen >= _text.getCharCount())
+                                    wordLen = _text.getCharCount() - _spellWordStart;
+                                String oldFound = _text.getTextRange(_spellWordStart, wordLen);
+                                //System.out.println("force replacing [" + lower + "]/[" + oldFound + "] with [" + forceReplacement + "]");
+                                _text.replaceTextRange(_spellWordStart, wordLen, forceReplacement);
+                                // does not break.. keeps on iterating through the whole doc
+                            } else {
+                                // ok, this word may be misspelled, but we are doing a replaceAll
+                            }
+                        } else {
+                            if (!_spellIgnoreAllList.contains(lower)) {
+                                ArrayList suggestions = getSuggestions(lower);
+                                if (suggestions != null) {
+                                    _spellWordStart = lineStart + wordStart;
+                                    if (cur >= len)
+                                        _spellWordEnd = lineStart + wordEnd - 1;
+                                    else
+                                        _spellWordEnd = lineStart + wordEnd;
+                                    _spellWord.setText(word);
+                                    _spellSuggestions.removeAll();
+                                    for (int i = 0; i < suggestions.size(); i++)
+                                        _spellSuggestions.add((String)suggestions.get(i));
+                                    _spellSuggestions.select(0);
+                                    _spellContext.setText(lineText);
+                                    // underline the word
+                                    showSpell(true);
+                                    return;
+                                }
+                            }
+                        }
+                        _spellWordIndex++;
+                    }
+                    wordStart = -1;
+                    wordEnd = -1;
+                    curWord++;
+                }
+                cur++;
+            }
+            // end of line reached
+            if (lineText.lastIndexOf('<') > lineText.lastIndexOf('>'))
+                inTag = true;
+            _spellWordIndex = 0;
+            _spellLine++;
+        }
+        
+        // end reached.  show success (or bailout if we just want to nested replaceAll)
+        if (forceReplacement != null)
+            return;
+        showSpell(false);
+        return;
+    }
+    
+    private ArrayList getSuggestions(String word) {
+        if (!_spellDictionary.isCorrect(word)) {
+            java.util.List suggestions = _spellDictionary.getSuggestions(word, 5); // 5?!  why?
+            ArrayList rv = new ArrayList(suggestions.size());
+            for (int i = 0; i < suggestions.size(); i++) {
+                Word suggestedWord = (Word)suggestions.get(i);
+                rv.add(suggestedWord.getWord());
+            }
+            return rv;
+        }
+        return null;
+    }
+    
+    private void showSpell(boolean wordSet) {
+        if (wordSet) {
+            _spellContext.setLineBackground(0, 1, null);
+            _spellWord.setEnabled(true);
+            _spellSuggestions.setEnabled(true);
+            _spellAdd.setEnabled(true);
+            _spellCancel.setEnabled(true);
+            _spellCancel.setText("cancel");
+            _spellIgnore.setEnabled(true);
+            _spellIgnoreAll.setEnabled(true);
+            _spellReplace.setEnabled(true);
+            _spellReplaceAll.setEnabled(true);
+        } else {
+            _spellContext.setText("End of content reached");
+            _spellContext.setLineBackground(0, 1, ColorUtil.getColor("red", null));
+            _spellWord.setText("");
+            _spellWord.setEnabled(false);
+            _spellSuggestions.removeAll();
+            _spellSuggestions.setEnabled(false);
+            _spellAdd.setEnabled(false);
+            _spellCancel.setEnabled(true);
+            _spellCancel.setText("ok");
+            _spellIgnore.setEnabled(false);
+            _spellIgnoreAll.setEnabled(false);
+            _spellReplace.setEnabled(false);
+            _spellReplaceAll.setEnabled(false);
+        }
+        _spellShell.setVisible(true);
+    }
+    
+    private void spellcheck() { resetSpellcheck(); spellNext(); }
+    private void resetSpellcheck() {
+        _spellLine = 0;
+        _spellWordIndex = 0;
+        _spellIgnoreAllList.clear();
+    }
+
+    private Reader getDictionaryReader() {
+        // read from the db/etc
+        try {
+            return new InputStreamReader(new FileInputStream("/usr/share/dict/words"), "UTF-8");
+        } catch (IOException ioe) {}
+        return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
+    }
 }

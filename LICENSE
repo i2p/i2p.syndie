@@ -17,3 +17,5 @@ as documented (removing other BouncyCastle dependencies).  These
 files are located under src/org/bouncycastle/ and are licensed
 according to the BouncyCastle license (an MIT-style license).
 
+The jazzy 0.5.2 spellchecking engine (under src/com/swabunga) is
+LGPL licensed.
