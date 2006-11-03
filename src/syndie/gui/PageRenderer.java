@@ -16,6 +16,8 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseTrackListener;
@@ -117,6 +119,8 @@ public class PageRenderer {
     private Image _currentEventImage;
     private HTMLTag _currentEventImageTag;
     
+    private int _viewSizeModifier;
+    
     public PageRenderer(Composite parent) { this(parent, false); }
     public PageRenderer(Composite parent, boolean scrollbars) {
         _parent = parent;
@@ -130,6 +134,7 @@ public class PageRenderer {
         _linkTags = new ArrayList();
         
         _enableImages = true;
+        _viewSizeModifier = 0;
     
         buildMenus();
         pickBodyMenu();
@@ -216,6 +221,29 @@ public class PageRenderer {
                 if (_msg != null) rerender();
             }
         });
+        _text.addKeyListener(new KeyListener() {
+            public void keyReleased(KeyEvent evt) { }
+            public void keyPressed(KeyEvent evt) {
+                //System.out.println("character pressed: " + (int)evt.character + " state: " + (int)evt.stateMask + " keycode: " + evt.keyCode);
+                switch (evt.character) {
+                    case '=': // ^=
+                    case '+': // ^+
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _viewSizeModifier += 2;
+                            rerender();
+                        }
+                        break;
+                    case '_': // ^_
+                    case '-': // ^-
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _viewSizeModifier -= 2;
+                            rerender();
+                        }
+                        break;
+                }
+            }
+        });
+        
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
@@ -292,7 +320,7 @@ public class PageRenderer {
         String text = builder.getAsText();
         _text.setText(text);
         HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
-        sbuilder.buildStyles();
+        sbuilder.buildStyles(_viewSizeModifier);
         _fonts = sbuilder.getFonts();
         _colors = sbuilder.getCustomColors();
         _text.setStyleRanges(sbuilder.getStyleRanges());

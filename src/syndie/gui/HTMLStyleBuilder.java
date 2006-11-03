@@ -62,6 +62,8 @@ class HTMLStyleBuilder {
     
     private Color _bgColor;
     private Image _bgImage;
+    
+    private int _viewSizeModifier;
 
     static Image ICON_LINK_END;
     static Image ICON_IMAGE_UNKNOWN;
@@ -91,12 +93,14 @@ class HTMLStyleBuilder {
     public Image getBackgroundImage() { return _bgImage; }
     public Color getBackgroundColor() { return _bgColor; }
     
-    public void buildStyles() {
+    public void buildStyles() { buildStyles(0); }
+    public void buildStyles(int viewSizeModifier) {
+        _viewSizeModifier = viewSizeModifier;
         // get a list of points where any tag starts or ends
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
-            if ("a".equals(tag.getName())) {
+            if ("a".equals(tag.getName()) && (tag.getAttribValue("href") != null)) {
                 _linkTags.add(tag);
             } else if ("img".equals(tag.getName())) {
                 _imageTags.add(tag);
@@ -402,7 +406,7 @@ class HTMLStyleBuilder {
         if (fgColor != null)
             style.foreground = fgColor;
         
-        if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) ) {
+        if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
             // ok, we can't use a default font, so lets construct a new one (or use a cached one)
             style.font = buildFont(style.font, customStyle, sizeModifier, fontName);
         }
@@ -626,11 +630,12 @@ class HTMLStyleBuilder {
     }
     
     private int getSize(int baseSize, int sizeModifier) {
-        int rv = baseSize + 2*sizeModifier;
+        int rv = baseSize + _viewSizeModifier + 2*sizeModifier;
+        //System.out.println("size: " + rv + " base: " + baseSize + " sizeMod: " + sizeModifier + " viewSizeMod: " + _viewSizeModifier);
         if (rv <= 4)
             rv = 4;
-        if (rv >= 64)
-            rv = 64;
+        if (rv >= 32)
+            rv = 32;
         //System.out.println("new size: " + rv + " baseSize: " + baseSize + " mod: " + sizeModifier);
         return rv;
     }
