@@ -151,6 +151,8 @@ public class PageEditor {
     /** true if the find already wrapped around */
     private boolean _findWrapped;
     
+    private LinkBuilderPopup _linkPopup;
+    
     public PageEditor(Composite parent, MessageEditor msg, String type) {
         _parent = parent;
         _messageEditor = msg;
@@ -216,6 +218,8 @@ public class PageEditor {
         createSpellchecker();
         createFind();
         
+        _linkPopup = new LinkBuilderPopup(_parent.getShell());
+        
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
         GridData gd = new GridData();
@@ -256,6 +260,10 @@ public class PageEditor {
         _htmlLink = new Button(grpHTML, SWT.PUSH);
         _htmlLink.setText("link");
         _htmlLink.setToolTipText("Add a new hyperlink");
+        _htmlLink.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(); }
+        });
         _htmlImg = new Button(grpHTML, SWT.PUSH);
         _htmlImg.setText("img");
         _htmlImg.setToolTipText("Add a new image");
@@ -703,6 +711,7 @@ public class PageEditor {
     }
     
     private void showStyleChooser() { resetTextStyle(); _txtShell.setVisible(true); }
+    private void showLinkPopup() { _linkPopup.showPopup(); }
     
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) { return buildColorCombo(parent, name, tooltip, defaultColor, enable, null); }
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {
