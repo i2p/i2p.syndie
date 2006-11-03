@@ -101,8 +101,6 @@ public class PageEditor {
     private Button _metaCut;
     private Button _metaSpell;
     private Button _metaFind;
-    private Button _metaReplace;
-    private Button _metaPreview;
     
     // text style chooser dialog
     private Shell _txtShell;
@@ -140,7 +138,18 @@ public class PageEditor {
     private Button _spellCancel;
     /** list of words we are ignoring for the current spellcheck iteration */
     private ArrayList _spellIgnoreAllList;
-    private SpellDictionary _spellDictionary;
+    private static SpellDictionary _spellDictionary;
+
+    // search and replace dialog
+    private Shell _findShell;
+    private Text _findText;
+    private Text _findReplace;
+    private Button _findMatchCase;
+    private Button _findWrapAround;
+    private Button _findBackwards;
+    private StyleRange _findHighlight;
+    /** true if the find already wrapped around */
+    private boolean _findWrapped;
     
     public PageEditor(Composite parent, MessageEditor msg, String type) {
         _parent = parent;
@@ -205,6 +214,7 @@ public class PageEditor {
         
         createStyleChooser();
         createSpellchecker();
+        createFind();
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -318,15 +328,9 @@ public class PageEditor {
         _metaFind = new Button(grpMeta, SWT.PUSH);
         _metaFind.setText("^F");
         _metaFind.setToolTipText("find");
-        _metaReplace = new Button(grpMeta, SWT.PUSH);
-        _metaReplace.setText("^R");
-        _metaReplace.setToolTipText("replace");
-        _metaPreview = new Button(grpMeta, SWT.PUSH);
-        _metaPreview.setText("preview");
-        _metaPreview.setToolTipText("preview");
-        _metaPreview.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { preview(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { preview(); }
+        _metaFind.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { find(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { find(); }
         });
         
         grpMeta.setEnabled(enable);
@@ -801,8 +805,20 @@ public class PageEditor {
                             newOffset -= "</b>".length();
                             _text.setCaretOffset(newOffset);
                             evt.doit = false;
-                            break;
                         }
+                        break;
+                    case 0x06: // ^F
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            if (_findText.getText().length() > 0) {
+                                boolean wasHighlighted = _findHighlight.length > 0;
+                                findNext();
+                                if (!wasHighlighted && (_findHighlight.length <= 0))
+                                    find();
+                            } else {
+                                find();
+                            }
+                        }
+                        break;
                     case 0x09: // ^I
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             int off = _text.getCaretOffset();
@@ -812,8 +828,16 @@ public class PageEditor {
                             newOffset -= "</i>".length();
                             _text.setCaretOffset(newOffset);
                             evt.doit = false;
-                            break;
                         }
+                        break;
+                    case 0x12: // ^R
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            if (_findText.getText().length() > 0)
+                                findReplace();
+                            else
+                                find();
+                        }
+                        break;
                     case 0x15: // ^U
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             insertAtCaret("<u></u>");
@@ -821,26 +845,27 @@ public class PageEditor {
                             newOffset -= "</u>".length();
                             _text.setCaretOffset(newOffset);
                             evt.doit = false;
-                            break;
                         }
+                        break;
                     case 0x03: // ^C
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             _text.copy();
                             evt.doit = false;
-                            break;
                         }
-                    case 0x16: // ^V
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            _text.paste();
-                            evt.doit = false;
-                            break;
-                        }
+                        break;
+                    //this is done automatically
+                    //case 0x16: // ^V
+                    //    if ( (evt.stateMask & SWT.MOD1) != 0) {
+                    //        _text.paste();
+                    //        evt.doit = false;
+                    //        break;
+                    //    }
                     case 0x18: // ^X
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             _text.cut();
                             evt.doit = false;
-                            break;
                         }
+                        break;
                 }
                 /*
                 StringBuffer buf = new StringBuffer();
@@ -879,7 +904,6 @@ public class PageEditor {
             }
         }
     };
-
     
     private void createSpellchecker() {
         _spellShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
@@ -888,11 +912,6 @@ public class PageEditor {
         _spellShell.setLayout(gl);
         
         _spellIgnoreAllList = new ArrayList();
-        try {
-            _spellDictionary = new SpellDictionaryHashMap(getDictionaryReader());
-        } catch (IOException ioe) {
-            try { _spellDictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}
-        }
         
         _spellContext = new StyledText(_spellShell, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.READ_ONLY);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
@@ -1113,6 +1132,10 @@ public class PageEditor {
         return;
     }
     
+    /**
+     * returns the list of suggested words to replace the given word, or null if
+     * the word is spelled correctly
+     */
     private ArrayList getSuggestions(String word) {
         if (!_spellDictionary.isCorrect(word)) {
             java.util.List suggestions = _spellDictionary.getSuggestions(word, 5); // 5?!  why?
@@ -1163,11 +1186,222 @@ public class PageEditor {
         _spellIgnoreAllList.clear();
     }
 
-    private Reader getDictionaryReader() {
+    /*
+     * initialize the dictionary, shared across all page editors
+     */
+    static {
+        try {
+            _spellDictionary = new SpellDictionaryHashMap(getDictionaryReader());
+        } catch (IOException ioe) {
+            // use an empty one
+            try { _spellDictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}
+        }
+    }
+    private static Reader getDictionaryReader() {
         // read from the db/etc
         try {
             return new InputStreamReader(new FileInputStream("/usr/share/dict/words"), "UTF-8");
         } catch (IOException ioe) {}
         return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
+    }
+
+    private void createFind() {
+        _findShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
+        _findShell.setText("Search and replace");
+        GridLayout gl = new GridLayout(2, false);
+        _findShell.setLayout(gl);
+    
+        Label l = new Label(_findShell, SWT.NONE);
+        l.setText("Find what: ");
+        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = false;
+        l.setLayoutData(gd);
+        _findText = new Text(_findShell, SWT.BORDER | SWT.SINGLE);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        _findText.setLayoutData(gd);
+        
+        l = new Label(_findShell, SWT.NONE);
+        l.setText("Replace with: ");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = false;
+        l.setLayoutData(gd);
+        _findReplace = new Text(_findShell, SWT.BORDER | SWT.SINGLE);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        _findReplace.setLayoutData(gd);
+        
+        _findMatchCase = new Button(_findShell, SWT.CHECK | SWT.LEFT);
+        _findMatchCase.setText("match case");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        _findMatchCase.setLayoutData(gd);
+        
+        _findWrapAround = new Button(_findShell, SWT.CHECK | SWT.LEFT);
+        _findWrapAround.setText("wrap around");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        _findWrapAround.setLayoutData(gd);
+        
+        _findBackwards = new Button(_findShell, SWT.CHECK | SWT.LEFT);
+        _findBackwards.setText("backwards");
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        _findBackwards.setLayoutData(gd);
+        
+        Composite actionRow = new Composite(_findShell, SWT.NONE);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        actionRow.setLayoutData(gd);
+        actionRow.setLayout(new FillLayout(SWT.HORIZONTAL));
+        
+        final Button findNext = new Button(actionRow, SWT.PUSH);
+        findNext.setText("Find next");
+        findNext.setToolTipText("Find the next occurrence of the word");
+        findNext.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { findNext(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { findNext(); }
+        });
+        
+        final Button close = new Button(actionRow, SWT.PUSH);
+        close.setText("Close");
+        close.setToolTipText("Finish searching");
+        close.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _text.setStyleRanges(null, null); _findShell.setVisible(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _text.setStyleRanges(null, null); _findShell.setVisible(false); }
+        });
+        
+        final Button replace = new Button(actionRow, SWT.PUSH);
+        replace.setText("Replace");
+        replace.setToolTipText("Replace the current occurrence of the word");
+        replace.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { findReplace(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { findReplace(); }
+        });
+        
+        final Button replaceAll = new Button(actionRow, SWT.PUSH);
+        replaceAll.setText("Replace all");
+        replaceAll.setToolTipText("Replace all remaining occurrences of the word");
+        replaceAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { findReplaceAll(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { findReplaceAll(); }
+        });
+
+        _findHighlight = new StyleRange();
+        _findHighlight.background = ColorUtil.getColor("yellow", null);
+        
+        _findText.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) {
+                    findNext.forceFocus();
+                    findNext();
+                }
+            }
+        });
+        _findReplace.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) {
+                    replace.forceFocus();
+                    findReplace();
+                }
+            }
+        });
+        
+        _findShell.pack();
+    }
+    private void find() {
+        _findWrapped = false;
+        _findText.setText("");
+        _findReplace.setText("");
+        _findBackwards.setSelection(false);
+        _findMatchCase.setSelection(false);
+        _findWrapAround.setSelection(false);
+        _findHighlight.length = 0;
+        _findShell.setVisible(true);
+        _findText.forceFocus();
+    }
+    private void findReplace() {
+        if (_findHighlight.length <= 0)
+            findNext();
+        if (_findHighlight.length > 0) {
+            String replaceWith = _findReplace.getText();
+            _text.replaceTextRange(_findHighlight.start, _findHighlight.length, replaceWith);
+            _text.setCaretOffset(_findHighlight.start + replaceWith.length());
+            _findHighlight.length = 0;
+            _text.setStyleRanges(null, null);
+            findNext();
+        }
+    }
+    private void findReplaceAll() {
+        if (_findHighlight.length <= 0)
+            findNext(false);
+        while (_findHighlight.length > 0) {
+            String replaceWith = _findReplace.getText();
+            _text.replaceTextRange(_findHighlight.start, _findHighlight.length, replaceWith);
+            _text.setCaretOffset(_findHighlight.start + replaceWith.length());
+            _findHighlight.length = 0;
+            _text.setStyleRanges(null, null);
+            findNext(false);
+        }
+    }
+    private void findNext() { findNext(true); }
+    private void findNext(boolean wrapForever) {
+        String searchFor = _findText.getText();
+        if ( (searchFor == null) || (searchFor.length() <= 0) ) return;
+        String txt = _text.getText();
+        boolean caseSensitive = _findMatchCase.getSelection();
+        boolean backwards = _findBackwards.getSelection();
+        if (!caseSensitive) {
+            searchFor = searchFor.toLowerCase();
+            txt = txt.toLowerCase();
+        }
+        int caret = _text.getCaretOffset();
+        int nextStart = -1;
+        if (backwards) {
+            nextStart = txt.lastIndexOf(searchFor, caret);
+        } else {
+            nextStart = txt.indexOf(searchFor, caret);
+        }
+        if (nextStart == caret) {
+            if (backwards) {
+                if (caret > 0)
+                    nextStart = txt.lastIndexOf(searchFor, caret-1);
+                else
+                    nextStart = -1;
+            } else {
+                if (caret >= _text.getCharCount())
+                    nextStart = -1;
+                else
+                    nextStart = txt.indexOf(searchFor, caret+1);
+            }
+        }
+        if (nextStart == -1) {
+            if (_findWrapAround.getSelection() && (!_findWrapped || wrapForever)) {
+                if (backwards)
+                    nextStart = txt.lastIndexOf(searchFor);
+                else
+                    nextStart = txt.indexOf(searchFor);
+                _findWrapped = true;
+            }
+        }
+        System.out.println("findNext @ " + nextStart + " (started @ " + caret + ")");
+        if (nextStart != -1) {
+            _text.setCaretOffset(nextStart);
+            _text.setStyleRanges(null, null);
+            _findHighlight.start = nextStart;
+            _findHighlight.length = searchFor.length();
+            _text.setStyleRange(_findHighlight);
+            int line = _text.getLineAtOffset(nextStart);
+            _text.setTopIndex(line);
+        } else {
+            _findHighlight.length = 0;
+            _text.setStyleRanges(null, null);
+            int line = _text.getLineAtOffset(caret);
+            _text.setTopIndex(line);
+        }
     }
 }
