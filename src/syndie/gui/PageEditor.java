@@ -1061,8 +1061,10 @@ public class PageEditor {
                 char c = 0;
                 if (cur < len)
                     c = lineText.charAt(cur);
+                if (c == '<') inTag = true;
+                else if (c == '>') inTag = false;
                 if ( (cur < len) && (Character.isLetterOrDigit(c)) ) {
-                    if (wordStart < 0) {
+                    if ( (!inTag) && (wordStart < 0) ) {
                         wordStart = cur;
                         //System.out.println("wordStart reached @ " + cur);
                     }
