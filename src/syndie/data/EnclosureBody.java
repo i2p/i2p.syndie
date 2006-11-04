@@ -188,7 +188,8 @@ public class EnclosureBody {
     public byte[] getHeaderBytes(String key) { return Enclosure.toBytes(_headers.getProperty(key)); }
     public SyndieURI getHeaderURI(String key) { return Enclosure.toURI(_headers.getProperty(key)); }
     public SyndieURI[] getHeaderURIs(String key) { return Enclosure.toURIs(_headers.getProperty(key)); }
-    public String[] getHeaderStrings(String key) { return Enclosure.toStrings(_headers.getProperty(key)); }
+    public String[] getHeaderStrings(String key) { return getHeaderStrings(key, false); }
+    public String[] getHeaderStrings(String key, boolean splitByCommaToo) { return Enclosure.toStrings(_headers.getProperty(key), splitByCommaToo); }
     public Boolean getHeaderBoolean(String key) { return Enclosure.toBoolean(_headers.getProperty(key)); }
     public Long getHeaderLong(String key) { return Enclosure.toLong(_headers.getProperty(key)); }
     public SessionKey getHeaderSessionKey(String key) { return Enclosure.toSessionKey(_headers.getProperty(key)); }

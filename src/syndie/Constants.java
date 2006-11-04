@@ -103,14 +103,16 @@ public class Constants {
 
     public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";
 
-
-    public static final String[] split(char elem, String orig) {
+    /** split on the given character, with the resulting tokens not including that character */
+    public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
+    /** split on all of the characters in splitElements, with the resulting tokens not including that character */
+    public static final String[] split(String splitElements, String orig) {
         List vals = new ArrayList();
         int off = 0;
         int start = 0;
         char str[] = orig.toCharArray();
         while (off < str.length) {
-            if (str[off] == elem) {
+            if (splitElements.indexOf(str[off]) != -1) {
                 if (off-start > 0) {
                     vals.add(new String(str, start, off-start));
                 } else {

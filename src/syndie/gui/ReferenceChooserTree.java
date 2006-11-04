@@ -70,7 +70,8 @@ public class ReferenceChooserTree {
         _searchResults = new ArrayList();
         initComponents();
     }
-    
+
+    DBClient getClient() { return _client; }
     public Control getControl() { return _tree; }
     /**
      * update the search results to display.  this then redraws the seach result entry in the
@@ -216,7 +217,7 @@ public class ReferenceChooserTree {
         for (int i = 0; i < child.getChildCount(); i++)
             add(childItem, (NymReferenceNode)child.getChild(i));
     }
-    protected void redrawSearchResults() {
+    private void redrawSearchResults() {
         _searchRoot.removeAll();
         _searchNodes.clear();
         for (int i = 0; i < _searchResults.size(); i++) {
@@ -226,12 +227,16 @@ public class ReferenceChooserTree {
     }
     private void add(TreeItem parent, ReferenceNode child) {
         TreeItem childItem = new TreeItem(parent, SWT.NONE);
-        childItem.setText(child.getName() + "-" + child.getDescription());
+        if (child.getDescription() != null)
+            childItem.setText(child.getDescription());
+        else 
+            childItem.setText(child.getName());
         _searchNodes.put(childItem, child);
         for (int i = 0; i < child.getChildCount(); i++)
             add(childItem, child.getChild(i));
     }
 
+    /** tell the listener about each selected item */
     private void fireSelectionEvents() {
         ChoiceListener lsnr = _choiceListener;
         if (lsnr == null) return;

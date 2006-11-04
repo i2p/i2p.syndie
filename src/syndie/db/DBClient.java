@@ -1087,6 +1087,120 @@ public class DBClient {
         
         return rv;
     }
+
+    public static class ChannelSearchCriteria {
+        private String _name;
+        private Set _tagsInclude;
+        private Set _tagsRequire;
+        private Set _tagsExclude;
+        private String _hashPrefix;
+        
+        public ChannelSearchCriteria() {
+            _name = null;
+            _tagsInclude = new HashSet();
+            _tagsRequire = new HashSet();
+            _tagsExclude = new HashSet();
+            _hashPrefix = null;
+        }
+        
+        public String getName() { return _name; }
+        public String getHashPrefix() { return _hashPrefix; }
+        public void setName(String name) { _name = name; }
+        public void setHashPrefix(String prefix) { _hashPrefix = prefix; }
+        public void requireTag(String tag) { _tagsRequire.add(tag); }
+        public void includeTag(String tag) { _tagsInclude.add(tag); }
+        public void excludeTag(String tag) { _tagsExclude.add(tag); }
+        
+        public Set getInclude() { return _tagsInclude; }
+        public Set getExclude() { return _tagsExclude; }
+        public Set getRequire() { return _tagsRequire; }
+    }
+    
+    /**
+     * search through the channels for those matching the given criteria
+     * @param name channel name must start with this
+     * @param tagsInclude channel tags should include one or more of these
+     * @param tagsRequire channel tags must include all of these
+     * @param tagsExclude channel tags must not include any of these
+     * @param hashPrefix channel hash must start with this base64 value
+     * @return list of matching channels (ChannelInfo)
+     */
+    public List getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
+        String name = criteria.getName();
+        String hashPrefix = criteria.getHashPrefix();
+        Set tagsInclude = criteria.getInclude();
+        Set tagsExclude = criteria.getExclude();
+        Set tagsRequire = criteria.getRequire();
+
+        if ( (name != null) && (name.trim().length() <= 0) ) name = null;
+        if ( (hashPrefix != null) && (hashPrefix.trim().length() <= 0) ) hashPrefix = null;
+        if ( (tagsInclude != null) && (tagsInclude.size() <= 0) ) tagsInclude = null;
+        if ( (tagsRequire != null) && (tagsRequire.size() <= 0) ) tagsRequire = null;
+        if ( (tagsExclude != null) && (tagsExclude.size() <= 0) ) tagsExclude = null;
+        
+        // this could of course be optimized to do the work in the db, saving some memory churn
+        // instead of all these getChannel calls.  but this'll do the trick for now
+        List rv = new ArrayList();
+        Map allIds = getChannelIds();
+        for (Iterator iter = allIds.keySet().iterator(); iter.hasNext(); ) {
+            Long chanId = (Long)iter.next();
+            Hash chan = (Hash)allIds.get(chanId);
+            if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
+                continue;
+            ChannelInfo info = getChannel(chanId.longValue());
+            if ( (name != null) && (!info.getName().startsWith(name)) )
+                continue;
+            Set pub = info.getPublicTags();
+            Set priv= info.getPrivateTags();
+            if (tagsExclude != null) {
+                boolean found = false;
+                for (Iterator titer = tagsExclude.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if (pub.contains(tag) || priv.contains(tag)) { 
+                        //System.out.println("Not including " + info.getChannelHash().toBase64() + " found tag [" + tag + "]");
+                        found = true;
+                        break; 
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+            }
+            if (tagsRequire != null) {
+                boolean foundAll = true;
+                for (Iterator titer = tagsRequire.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if ( (!pub.contains(tag)) && (!priv.contains(tag)) ) {
+                        foundAll = false;
+                        //System.out.println("Not including " + info.getChannelHash().toBase64() + " missing tag [" + tag + "]");
+                        break;
+                    }
+                }
+                if (!foundAll) {
+                    continue;
+                }
+            }
+            if (tagsInclude != null) {
+                boolean found = false;
+                for (Iterator titer = tagsInclude.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if ( (pub.contains(tag)) || (priv.contains(tag)) ) {
+                        found = true;
+                        break;
+                    } else {
+                        //System.out.println("tag '" + tag + "' was not found in " + pub + " or " + priv);
+                    }
+                }
+                if (!found) {
+                    //System.out.println("Not including " + info.getChannelHash().toBase64() + " pub: " + pub + "/" + pub.size() + " priv: " + priv);
+                    continue;
+                }
+            }
+            
+            rv.add(info);
+        }
+        return rv;
+    }
     
     private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt FROM channel WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";

@@ -421,8 +421,8 @@ class ImportMeta {
             if (stmt != null) stmt.close();
         }
         
-        String unencryptedTags[] = enc.getHeaderStrings(Constants.MSG_META_HEADER_TAGS);
-        String encryptedTags[] = body.getHeaderStrings(Constants.MSG_META_HEADER_TAGS);
+        String unencryptedTags[] = enc.getHeaderStrings(Constants.MSG_META_HEADER_TAGS, true);
+        String encryptedTags[] = body.getHeaderStrings(Constants.MSG_META_HEADER_TAGS, true);
         try {
             stmt = con.prepareStatement(SQL_INSERT_TAG);
             if (unencryptedTags != null) {
