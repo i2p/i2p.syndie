@@ -21,6 +21,7 @@ import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
+import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 
 import syndie.data.SyndieURI;
@@ -91,7 +92,7 @@ public class DBClient {
     String getPass() { return _pass; }
     public boolean isLoggedIn() { return _login != null; }
     /** if logged in, the internal nymId associated with that login */
-    long getLoggedInNymId() { return _nymId; }
+    public long getLoggedInNymId() { return _nymId; }
     
     File getTempDir() { return new File(_rootDir, "tmp"); }
     File getOutboundDir() { return new File(_rootDir, "outbound"); }
@@ -925,6 +926,168 @@ public class DBClient {
     }
      */
 
+
+    /** gather a bunch of nym-scoped channel details */
+    public class ChannelCollector {
+        /** list of ChannelInfo for matching channels */
+        List _identityChannels;
+        List _managedChannels;
+        List _postChannels;
+        List _publicPostChannels;
+        List _internalIds;
+        public ChannelCollector() {
+            _identityChannels = new ArrayList();
+            _managedChannels = new ArrayList();
+            _postChannels = new ArrayList();
+            _publicPostChannels = new ArrayList();
+            _internalIds = new ArrayList();
+        }
+        public int getIdentityChannelCount() { return _identityChannels.size(); }
+        public ChannelInfo getIdentityChannel(int idx) { return (ChannelInfo)_identityChannels.get(idx); }
+        public int getManagedChannelCount() { return _managedChannels.size(); }
+        public ChannelInfo getManagedChannel(int idx) { return (ChannelInfo)_managedChannels.get(idx); }
+        public int getPostChannelCount() { return _postChannels.size(); }
+        public ChannelInfo getPostChannel(int idx) { return (ChannelInfo)_postChannels.get(idx); }
+        public int getPublicPostChannelCount() { return _publicPostChannels.size(); }
+        public ChannelInfo getPublicPostChannel(int idx) { return (ChannelInfo)_publicPostChannels.get(idx); }
+    }
+    
+    
+    private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
+    private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
+    /** channels */
+    public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
+        ChannelCollector rv = new ChannelCollector();
+        
+        List pubKeys = new ArrayList();
+        
+        List manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
+        // first, go through and find all the 'identity' channels - those that we have
+        // the actual channel signing key for
+        for (int i = 0; i < manageKeys.size(); i++) {
+            NymKey key = (NymKey)manageKeys.get(i);
+            if (key.getAuthenticated()) {
+                SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                SigningPublicKey pub = ctx().keyGenerator().getSigningPublicKey(priv);
+                pubKeys.add(pub);
+                if (includeIdent) {
+                    Hash chan = pub.calculateHash();
+                    long chanId = getChannelId(chan);
+                    if (chanId >= 0) {
+                        //ui.debugMessage("nym has the identity key for " + chan.toBase64());
+                        ChannelInfo info = getChannel(chanId);
+                        rv._identityChannels.add(info);
+                        rv._internalIds.add(new Long(chanId));
+                    } else {
+                        //ui.debugMessage("nym has a key that is not an identity key (" + chan.toBase64() + ")");
+                    }
+                }
+            }
+        }
+
+        Connection con = con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        if (includeManage) {
+            // now, go through and see what other channels our management keys are
+            // authorized to manage (beyond their identity channels)
+            try {
+                stmt = con.prepareStatement(SQL_LIST_MANAGED_CHANNELS);
+                for (int i = 0; i < pubKeys.size(); i++) {
+                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    stmt.setBytes(1, key.getData());
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        // channelId
+                        long chanId = rs.getLong(1);
+                        if (!rs.wasNull()) {
+                            Long id = new Long(chanId);
+                            if (!rv._internalIds.contains(id)) {
+                                ChannelInfo info = getChannel(chanId);
+                                if (info != null) {
+                                    //ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
+                                    rv._managedChannels.add(info);
+                                    rv._internalIds.add(id);
+                                    //_itemKeys.add(id);
+                                    //_itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                                } else {
+                                    //ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
+                                }
+                            }
+                        }
+                    }
+                    rs.close();
+                }
+            } catch (SQLException se) {
+                //ui.errorMessage("Internal error listing channels", se);
+                //ui.commandComplete(-1, null);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+        
+        if (includePost) {
+            // continue on to see what channels our management keys are
+            // authorized to post in (beyond their identity and manageable channels)
+            stmt = null;
+            rs = null;
+            try {
+                stmt = con.prepareStatement(SQL_LIST_POST_CHANNELS);
+                for (int i = 0; i < pubKeys.size(); i++) {
+                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    stmt.setBytes(1, key.getData());
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        // channelId
+                        long chanId = rs.getLong(1);
+                        if (!rs.wasNull()) {
+                            Long id = new Long(chanId);
+                            if (!rv._internalIds.contains(id)) {
+                                ChannelInfo info = getChannel(chanId);
+                                if (info != null) {
+                                    //ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
+                                    rv._postChannels.add(info);
+                                    rv._internalIds.add(id);
+                                    //_itemKeys.add(id);
+                                    //_itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                                } else {
+                                    //ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
+                                }
+                            }
+                        }
+                    }
+                    rs.close();
+                }
+            } catch (SQLException se) {
+                //ui.errorMessage("Internal error listing channels", se);
+                //ui.commandComplete(-1, null);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+            
+        if (includePublicPost) {
+            List channelIds = getPublicPostingChannelIds();
+            for (int i = 0; i < channelIds.size(); i++) {
+                Long id = (Long)channelIds.get(i);
+                if (!rv._internalIds.contains(id)) {
+                    ChannelInfo info = getChannel(id.longValue());
+                    if (info != null) {
+                        rv._publicPostChannels.add(info);
+                        rv._internalIds.add(id);
+                        //_itemKeys.add(id);
+                        //_itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                    }
+                }            
+            }
+        }
+        
+        return rv;
+    }
+    
     private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt FROM channel WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
@@ -2052,6 +2215,73 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+    }
+
+    private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
+    /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
+    public List getNymReferences(long nymId) {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCES);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, 
+                // isBanned, loadOnStartup
+                long groupId = rs.getLong(1);
+                if (rs.wasNull()) groupId = -1;
+                long parentGroupId = rs.getLong(2);
+                if (rs.wasNull()) parentGroupId = -1;
+                int order = rs.getInt(3);
+                if (rs.wasNull()) order = 0;
+                String name = rs.getString(4);
+                String desc = rs.getString(5);
+                long uriId = rs.getLong(6);
+                if (rs.wasNull()) uriId = -1;
+                boolean isIgnored = rs.getBoolean(7);
+                if (rs.wasNull()) isIgnored = false;
+                boolean isBanned = rs.getBoolean(8);
+                if (rs.wasNull()) isBanned = false;
+                boolean onStartup = rs.getBoolean(9);
+                if (rs.wasNull()) onStartup = false;
+                
+                SyndieURI uri = getURI(uriId);
+                NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, isIgnored, isBanned, onStartup);
+                boolean parentFound = false;
+                for (int i = 0; i < rv.size(); i++) {
+                    NymReferenceNode cur = (NymReferenceNode)rv.get(i);
+                    if (cur.getGroupId() == parentGroupId) {
+                        cur.addChild(ref);
+                        parentFound = true;
+                    }
+                }
+                if (!parentFound)
+                    rv.add(ref); // rewt
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the nym's references", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+    /** update the reference in the database, keyed off the nymId and newValue's getGroupId() field */
+    public void updateNymReference(long nymId, NymReferenceNode newValue) {
+        ensureLoggedIn();
+    }
+    /** add a new reference, then updating the groupId, uriId, and siblingOrder fields in newValue */
+    public void addNymReference(long nymId, NymReferenceNode newValue) {
+        ensureLoggedIn();
+    }
+    /** recursively delete the reference, any children, and any URIs they refer to */
+    public void deleteNymReference(long nymId, NymReferenceNode newValue) {
+        ensureLoggedIn();
     }
     
     private void ensureLoggedIn() throws IllegalStateException {
