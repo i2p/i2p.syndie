@@ -32,6 +32,7 @@ public class ReferenceChooserCommand implements CLI.Command {
             public void run() {
                 ReferenceChooserTree tree = showTree(display, opts, ui, client);
                 showSearch(display, opts, ui, client, tree);
+                showInfo(display, opts, ui, client, tree);
             }
         });
     }
@@ -69,6 +70,30 @@ public class ReferenceChooserCommand implements CLI.Command {
         scroll.setContent(search.getControl());
         shell.setLayout(new FillLayout());
         scroll.setLayout(new FillLayout());
+
+        shell.pack();
+        shell.open();
+    }
+    
+    private void showInfo(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree) {
+        Shell shell = new Shell(display, SWT.SHELL_TRIM);
+        ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
+        scroll.setExpandHorizontal(true);
+        scroll.setExpandVertical(true);
+        ReferenceChooserInfo info = new ReferenceChooserInfo(scroll, tree);
+        scroll.setContent(info.getControl());
+        shell.setLayout(new FillLayout());
+        scroll.setLayout(new FillLayout());
+
+        Point setSize = info.getControl().getSize();
+        Point preferredSize = info.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
+                                  Math.min(setSize.y, preferredSize.y));
+        Point size = new Point(Math.max(minSize.x, 200),
+                               Math.max(minSize.y, 200));
+        //System.out.println("setSize: " + setSize + " pref: " + preferredSize + " min: " + minSize + " sz: " + size);
+        info.getControl().setSize(size);
+        scroll.setMinSize(size);
 
         shell.pack();
         shell.open();
