@@ -30,19 +30,25 @@ public class ReferenceChooserCommand implements CLI.Command {
         final Display display = Display.getDefault();
         display.asyncExec(new Runnable() {
             public void run() {
-                ReferenceChooserTree tree = showTree(display, opts, ui, client);
-                ReferenceChooserSearch search = showSearch(display, opts, ui, client, tree);
-                showInfo(display, opts, ui, client, tree, search);
+                AcceptListener lsnr = new AcceptListener(ui);
+                if (true) {
+                    ReferenceChooserPopup popup = new ReferenceChooserPopup(null, client, lsnr);
+                    popup.show();
+                } else {
+                    ReferenceChooserTree tree = showTree(display, opts, ui, client, lsnr);
+                    ReferenceChooserSearch search = showSearch(display, opts, ui, client, tree);
+                    showInfo(display, opts, ui, client, tree, search, lsnr);
+                }
             }
         });
     }
     
-    private ReferenceChooserTree showTree(Display display, Opts opts, UI ui, DBClient client) {
+    private ReferenceChooserTree showTree(Display display, Opts opts, UI ui, DBClient client, AcceptListener lsnr) {
         Shell shell = new Shell(display, SWT.SHELL_TRIM);
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
         scroll.setExpandHorizontal(true);
         scroll.setExpandVertical(true);
-        ReferenceChooserTree chooser = new ReferenceChooserTree(client, scroll, new RefListener(ui));
+        ReferenceChooserTree chooser = new ReferenceChooserTree(client, scroll, new RefListener(ui), lsnr);
         scroll.setContent(chooser.getControl());
         shell.setLayout(new FillLayout());
         scroll.setLayout(new FillLayout());
@@ -76,12 +82,11 @@ public class ReferenceChooserCommand implements CLI.Command {
         return search;
     }
     
-    private void showInfo(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree, ReferenceChooserSearch search) {
+    private void showInfo(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree, ReferenceChooserSearch search, AcceptListener lsnr) {
         Shell shell = new Shell(display, SWT.SHELL_TRIM);
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
         scroll.setExpandHorizontal(true);
         scroll.setExpandVertical(true);
-        AcceptListener lsnr = new AcceptListener(ui);
         ReferenceChooserInfo info = new ReferenceChooserInfo(scroll, tree, lsnr);
         lsnr.setChooser(tree);
         lsnr.setInfo(info);
@@ -95,7 +100,7 @@ public class ReferenceChooserCommand implements CLI.Command {
         Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
                                   Math.min(setSize.y, preferredSize.y));
         Point size = new Point(Math.max(minSize.x, 200),
-                               Math.max(minSize.y, 200));
+                               Math.max(minSize.y, 100));
         //System.out.println("setSize: " + setSize + " pref: " + preferredSize + " min: " + minSize + " sz: " + size);
         info.getControl().setSize(size);
         scroll.setMinSize(size);
@@ -123,7 +128,7 @@ public class ReferenceChooserCommand implements CLI.Command {
             _ui.statusMessage("other item selected [" + item.getText() + "]");
         }
     }
-    private class AcceptListener implements ReferenceChooserInfo.AcceptanceListener {
+    private class AcceptListener implements ReferenceChooserTree.AcceptanceListener {
         private UI _ui;
         private ReferenceChooserTree _chooser;
         private ReferenceChooserSearch _search;
@@ -131,6 +136,10 @@ public class ReferenceChooserCommand implements CLI.Command {
         public AcceptListener(UI ui) { _ui = ui; }
         public void referenceAccepted(SyndieURI uri) {
             _ui.statusMessage("reference accepted: " + uri.toString());
+            close();
+        }
+        public void referenceChoiceAborted() { close(); }
+        private void close() {
             _chooser.getControl().getShell().setVisible(false);
             _search.getControl().getShell().setVisible(false);
             _info.getControl().getShell().setVisible(false);

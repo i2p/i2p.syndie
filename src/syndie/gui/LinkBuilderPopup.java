@@ -1,12 +1,15 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.util.List;
+import net.i2p.data.Base64;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
@@ -15,24 +18,30 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.Constants;
+import syndie.data.ChannelInfo;
+import syndie.data.NymKey;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 
 /**
  *
  */
-class LinkBuilderPopup {
+class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener {
+    private DBClient _client;
     private Shell _parentShell;
     private Shell _shell;
+    private PageEditor _target;
+    
     private Group _linkTypeGroup;
     private Button _linkTypeWeb;
     private Text _linkTypeWebText;
     private Button _linkTypeSyndie;
     private Text _linkTypeSyndieText;
-    private Combo _syndieForumCombo;
+    private Label _syndieForum;
     private Button _syndieForumBrowse;
-    private Combo _syndieMessageCombo;
+    private Label _syndieMessage;
     private Button _syndieMessageBrowse;
-    private Button _syndieMessageView;
 
     private Button _syndieMessageDetailPage;
     private Combo _syndieMessageDetailPageNum;
@@ -55,11 +64,17 @@ class LinkBuilderPopup {
     private Text _linkTypeArchiveText;
     private Button _actionOk;
     private Button _actionCancel;
+
+    private ReferenceChooserPopup _refChooser;
     
     private SyndieURI _selectedURI;
+    private long _forumId;
+    private long _internalMsgId;
     
-    public LinkBuilderPopup(Shell parent) {
+    public LinkBuilderPopup(DBClient client, Shell parent, PageEditor target) {
+        _client = client;
         _parentShell = parent;
+        _target = target;
         initComponents();
     }
     private void initComponents() {
@@ -96,6 +111,7 @@ class LinkBuilderPopup {
         syndieLines.setLayout(new GridLayout(1, true));
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
+        gd.widthHint = 300;
         syndieLines.setLayoutData(gd);
         _linkTypeSyndieText = new Text(syndieLines, SWT.SINGLE | SWT.BORDER);
         _linkTypeSyndieText.setToolTipText("Full syndie URL");
@@ -107,11 +123,16 @@ class LinkBuilderPopup {
         syndieForumLine.setLayout(new RowLayout(SWT.HORIZONTAL));
         Label l = new Label(syndieForumLine, SWT.NONE);
         l.setText("Forum: ");
-        _syndieForumCombo = new Combo(syndieForumLine, SWT.SIMPLE);
-        _syndieForumCombo.add("My forum [bF9afg]");
+        _syndieForum = new Label(syndieForumLine, SWT.NONE);
+        _syndieForum.setText("");
+        _syndieForum.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         _syndieForumBrowse = new Button(syndieForumLine, SWT.PUSH);
         _syndieForumBrowse.setText("Browse...");
+        _syndieForumBrowse.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickForum(); }
+        });
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         syndieForumLine.setLayoutData(gd);
@@ -120,14 +141,13 @@ class LinkBuilderPopup {
         syndieMessageLine.setLayout(new RowLayout(SWT.HORIZONTAL));
         l = new Label(syndieMessageLine, SWT.NONE);
         l.setText("Message: ");
-        _syndieMessageCombo = new Combo(syndieMessageLine, SWT.SIMPLE);
-        _syndieMessageCombo.add("hi how are you? [2006/11/15]");
+        _syndieMessage = new Label(syndieMessageLine, SWT.NONE);
+        _syndieMessage.setText("");
+        _syndieMessage.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         _syndieMessageBrowse = new Button(syndieMessageLine, SWT.PUSH);
         _syndieMessageBrowse.setText("Browse...");
         
-        _syndieMessageView = new Button(syndieMessageLine, SWT.PUSH);
-        _syndieMessageView.setText("View...");
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         syndieMessageLine.setLayoutData(gd);
@@ -142,9 +162,6 @@ class LinkBuilderPopup {
         _syndieMessageDetailPage.setText("Page: ");
         
         _syndieMessageDetailPageNum = new Combo(syndieMessageDetailGroup, SWT.SIMPLE);
-        _syndieMessageDetailPageNum.add("1");
-        _syndieMessageDetailPageNum.add("2");
-        _syndieMessageDetailPageNum.add("3");
         
         _syndieMessageDetailPageView = new Button(syndieMessageDetailGroup, SWT.PUSH);
         _syndieMessageDetailPageView.setText("View...");
@@ -153,9 +170,6 @@ class LinkBuilderPopup {
         _syndieMessageDetailAttachment.setText("Attachment: ");
         
         _syndieMessageDetailAttachmentNum = new Combo(syndieMessageDetailGroup, SWT.SIMPLE);
-        _syndieMessageDetailAttachmentNum.add("1");
-        _syndieMessageDetailAttachmentNum.add("2");
-        _syndieMessageDetailAttachmentNum.add("3");
         
         _syndieMessageDetailAttachmentView = new Button(syndieMessageDetailGroup, SWT.PUSH);
         _syndieMessageDetailAttachmentView.setText("View...");
@@ -165,28 +179,28 @@ class LinkBuilderPopup {
         _syndieReadKey = new Button(syndieReadKeyLine, SWT.CHECK);
         _syndieReadKey.setText("include read key");
         _syndieReadKeyCombo = new Combo(syndieReadKeyLine, SWT.SIMPLE);
-        _syndieReadKeyCombo.add("key xcxcvasfd");
+        _syndieReadKeyCombo.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         Composite syndiePostKeyLine = new Composite(syndieLines, SWT.NONE);
         syndiePostKeyLine.setLayout(new RowLayout(SWT.HORIZONTAL));
         _syndiePostKey = new Button(syndiePostKeyLine, SWT.CHECK);
         _syndiePostKey.setText("include post key");
         _syndiePostKeyCombo = new Combo(syndiePostKeyLine, SWT.SIMPLE);
-        _syndiePostKeyCombo.add("key xcxcvasfd");
+        _syndiePostKeyCombo.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         Composite syndieReplyKeyLine = new Composite(syndieLines, SWT.NONE);
         syndieReplyKeyLine.setLayout(new RowLayout(SWT.HORIZONTAL));
         _syndieReplyKey = new Button(syndieReplyKeyLine, SWT.CHECK);
         _syndieReplyKey.setText("include reply key");
         _syndieReplyKeyCombo = new Combo(syndieReplyKeyLine, SWT.SIMPLE);
-        _syndieReplyKeyCombo.add("key xcxcvasfd");
+        _syndieReplyKeyCombo.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         Composite syndieManageKeyLine = new Composite(syndieLines, SWT.NONE);
         syndieManageKeyLine.setLayout(new RowLayout(SWT.HORIZONTAL));
         _syndieManageKey = new Button(syndieManageKeyLine, SWT.CHECK);
         _syndieManageKey.setText("include manage key");
         _syndieManageKeyCombo = new Combo(syndieManageKeyLine, SWT.SIMPLE);
-        _syndieManageKeyCombo.add("key xcxcvasfd");
+        _syndieManageKeyCombo.setLayoutData(new RowData(50, SWT.DEFAULT));
         
         _linkTypeArchive = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeArchive.setText("Archive:");
@@ -219,13 +233,16 @@ class LinkBuilderPopup {
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
         });
         
+        _refChooser = new ReferenceChooserPopup(_shell, _client, this);
+        
         //_linkTypeGroup.setSize(_linkTypeGroup.computeSize(400, SWT.DEFAULT));
         //_shell.setSize(_shell.computeSize(400, SWT.DEFAULT));
         _shell.pack();
     }
     
+    private void pickForum() { _refChooser.show(); }
+    
     private void onOk() {
-        _shell.setVisible(false);
         if (_linkTypeWeb.getSelection()) {
             _selectedURI = SyndieURI.createURL(_linkTypeWebText.getText());
         } else if (_linkTypeSyndie.getSelection()) {
@@ -237,8 +254,14 @@ class LinkBuilderPopup {
         } else if (_linkTypeArchive.getSelection()) {
             _selectedURI = SyndieURI.createArchive(_linkTypeArchiveText.getText(), null);
         }
+        
+        if (_selectedURI != null)
+            _target.insertAtCaret("<a href=\"" + _selectedURI.toString() + "\">link target</a>");
+        _refChooser.hide();
+        _shell.setVisible(false);
     }
     private void onCancel() {
+        _refChooser.hide();
         _shell.setVisible(false);
         _selectedURI = null;
     }
@@ -253,6 +276,109 @@ class LinkBuilderPopup {
         _linkTypeSyndieText.setText("");
         _linkTypeArchive.setSelection(false);
         _linkTypeArchiveText.setText("");
+        
+        _syndieForum.setText("");
+        _syndieMessageBrowse.setEnabled(false);
+        _syndieMessageDetailAttachment.setEnabled(false);
+        _syndieMessageDetailAttachmentNum.setEnabled(false);
+        _syndieMessageDetailAttachmentView.setEnabled(false);
+        _syndieMessageDetailPage.setEnabled(false);
+        _syndieMessageDetailPageNum.setEnabled(false);
+        _syndieMessageDetailPageView.setEnabled(false);
+
         _shell.setVisible(true);
     }
+
+    public void referenceAccepted(SyndieURI uri) {
+        _linkTypeSyndie.setSelection(true);
+        _linkTypeSyndieText.setText(uri.toString());
+        _forumId = _client.getChannelId(uri.getScope());
+        if (_forumId >= 0) {
+            ChannelInfo chan = _client.getChannel(_forumId);
+            if (chan != null) {
+                _syndieForum.setText(chan.getName());
+                _syndieMessageBrowse.setEnabled(true);
+                
+                _syndiePostKey.setEnabled(false);
+                _syndiePostKeyCombo.setEnabled(false);
+                _syndieReadKey.setEnabled(false);
+                _syndieReadKeyCombo.setEnabled(false);
+                _syndieReplyKey.setEnabled(false);
+                _syndieReplyKeyCombo.setEnabled(false);
+                _syndieManageKey.setEnabled(false);
+                _syndieManageKeyCombo.setEnabled(false);
+                
+                _syndiePostKeyCombo.removeAll();
+                _syndieReadKeyCombo.removeAll();
+                _syndieReplyKeyCombo.removeAll();
+                _syndieManageKeyCombo.removeAll();
+                List nymKeys = _client.getNymKeys(uri.getScope(), null);
+                for (int i = 0; i < nymKeys.size(); i++) {
+                    NymKey key = (NymKey)nymKeys.get(i);
+                    if (Constants.KEY_FUNCTION_POST.equalsIgnoreCase(key.getFunction())) {
+                        _syndiePostKey.setEnabled(true);
+                        _syndiePostKeyCombo.setEnabled(true);
+                        _syndiePostKeyCombo.add(Base64.encode(key.getData()));
+                        if (_syndiePostKeyCombo.getItemCount() == 1)
+                            _syndiePostKeyCombo.select(0);
+                    } else if (Constants.KEY_FUNCTION_MANAGE.equalsIgnoreCase(key.getFunction())) {
+                        _syndieManageKey.setEnabled(true);
+                        _syndieManageKeyCombo.setEnabled(true);
+                        _syndieManageKeyCombo.add(Base64.encode(key.getData()));
+                        if (_syndieManageKeyCombo.getItemCount() == 1)
+                            _syndieManageKeyCombo.select(0);
+                    } else if (Constants.KEY_FUNCTION_READ.equalsIgnoreCase(key.getFunction())) {
+                        _syndieReadKey.setEnabled(true);
+                        _syndieReadKeyCombo.setEnabled(true);
+                        _syndieReadKeyCombo.add(Base64.encode(key.getData()));
+                        if (_syndieReadKeyCombo.getItemCount() == 1)
+                            _syndieReadKeyCombo.select(0);
+                    } else if (Constants.KEY_FUNCTION_REPLY.equalsIgnoreCase(key.getFunction())) {
+                        _syndieReplyKey.setEnabled(true);
+                        _syndieReplyKeyCombo.setEnabled(true);
+                        _syndieReplyKeyCombo.add(Base64.encode(key.getData()));
+                        if (_syndieReplyKeyCombo.getItemCount() == 1)
+                            _syndieReplyKeyCombo.select(0);
+                    }
+                }
+            } else {
+                _syndieForum.setText(uri.getScope().toBase64().substring(0,6));
+                _syndieMessageBrowse.setEnabled(false);
+                _syndieMessageDetailAttachment.setEnabled(false);
+                _syndieMessageDetailAttachmentNum.setEnabled(false);
+                _syndieMessageDetailAttachmentView.setEnabled(false);
+                _syndieMessageDetailPage.setEnabled(false);
+                _syndieMessageDetailPageNum.setEnabled(false);
+                _syndieMessageDetailPageView.setEnabled(false);
+                _syndiePostKey.setEnabled(false);
+                _syndiePostKeyCombo.setEnabled(false);
+                _syndieReadKey.setEnabled(false);
+                _syndieReadKeyCombo.setEnabled(false);
+                _syndieReplyKey.setEnabled(false);
+                _syndieReplyKeyCombo.setEnabled(false);
+                _syndieManageKey.setEnabled(false);
+                _syndieManageKeyCombo.setEnabled(false);
+            }
+        } else {
+            _syndieForum.setText(uri.getScope().toBase64().substring(0,6));
+            _syndieMessageBrowse.setEnabled(false);
+            _syndieMessageDetailAttachment.setEnabled(false);
+            _syndieMessageDetailAttachmentNum.setEnabled(false);
+            _syndieMessageDetailAttachmentView.setEnabled(false);
+            _syndieMessageDetailPage.setEnabled(false);
+            _syndieMessageDetailPageNum.setEnabled(false);
+            _syndieMessageDetailPageView.setEnabled(false);
+            _syndiePostKey.setEnabled(false);
+            _syndiePostKeyCombo.setEnabled(false);
+            _syndieReadKey.setEnabled(false);
+            _syndieReadKeyCombo.setEnabled(false);
+            _syndieReplyKey.setEnabled(false);
+            _syndieReplyKeyCombo.setEnabled(false);
+            _syndieManageKey.setEnabled(false);
+            _syndieManageKeyCombo.setEnabled(false);
+        }
+        _shell.pack();
+    }
+
+    public void referenceChoiceAborted() {}
 }

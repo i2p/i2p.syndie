@@ -64,11 +64,13 @@ import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
 import com.swabunga.spell.engine.SpellDictionary;
+import syndie.db.DBClient;
 
 /**
  * wysiwyg editor for text or html pages in a message
  */
 public class PageEditor {
+    private DBClient _client;
     private MessageEditor _messageEditor;
     private String _contentType;
     private Composite _parent;
@@ -153,7 +155,8 @@ public class PageEditor {
     
     private LinkBuilderPopup _linkPopup;
     
-    public PageEditor(Composite parent, MessageEditor msg, String type) {
+    public PageEditor(DBClient client, Composite parent, MessageEditor msg, String type) {
+        _client = client;
         _parent = parent;
         _messageEditor = msg;
         _contentType = type;
@@ -218,7 +221,7 @@ public class PageEditor {
         createSpellchecker();
         createFind();
         
-        _linkPopup = new LinkBuilderPopup(_parent.getShell());
+        _linkPopup = new LinkBuilderPopup(_client, _parent.getShell(), this);
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -657,7 +660,7 @@ public class PageEditor {
         insertAtCaret(buf.toString());
     }
     
-    private void insertAtCaret(String text) {
+    void insertAtCaret(String text) {
         if (text != null) {
             // rather than replacing everything selected, just insert at the caret
             _text.replaceTextRange(_text.getCaretOffset(), 0, text);

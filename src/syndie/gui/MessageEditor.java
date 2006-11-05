@@ -5,11 +5,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import syndie.db.DBClient;
 
 /**
  *
  */
 public class MessageEditor {
+    private DBClient _client;
     /** list of (byte[]) instances */
     private ArrayList _attachments;
     /** list of Properties associated with each attachment */
@@ -22,7 +24,8 @@ public class MessageEditor {
     private StackLayout _rootLayout;
     
     /** Creates a new instance of MessageEditor */
-    public MessageEditor(Composite parent) {
+    public MessageEditor(DBClient client, Composite parent) {
+        _client = client;
         _parent = parent;
         _root = new Composite(parent, SWT.NONE);
         _rootLayout = new StackLayout();
@@ -45,7 +48,7 @@ public class MessageEditor {
         }
     }
     public void addPage() {
-        _pages.add(new PageEditor(_root, this, "text/html"));
+        _pages.add(new PageEditor(_client, _root, this, "text/html"));
         showPage(_pages.size()-1);
     }
 }

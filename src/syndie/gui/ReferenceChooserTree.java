@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
+import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
 /**
@@ -57,11 +58,13 @@ public class ReferenceChooserTree {
     private Map _searchNodes;
     
     private ChoiceListener _choiceListener;
+    private AcceptanceListener _acceptanceListener;
     
-    public ReferenceChooserTree(DBClient client, Composite parent, ChoiceListener lsnr) {
+    public ReferenceChooserTree(DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         _client = client;
         _parent = parent;
         _choiceListener = lsnr;
+        _acceptanceListener = accept;
         _nymRefs = new ArrayList();
         _bookmarkNodes = new HashMap();
         _postChannels = new HashMap();
@@ -87,6 +90,7 @@ public class ReferenceChooserTree {
         _tree.getDisplay().asyncExec(new Runnable() { public void run() { redrawSearchResults(); } });
     }
     public void setListener(ChoiceListener lsnr) { _choiceListener = lsnr; }
+    public void setAcceptanceListener(AcceptanceListener lsnr) { _acceptanceListener = lsnr; }
 
     public interface ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node);
@@ -95,6 +99,12 @@ public class ReferenceChooserTree {
         public void searchResultSelected(TreeItem item, ReferenceNode node);
         public void otherSelected(TreeItem item);
     }
+    
+    public interface AcceptanceListener {
+        public void referenceAccepted(SyndieURI uri);
+        public void referenceChoiceAborted();
+    }
+    
     
     private void initComponents() {
         _tree = new Tree(_parent, SWT.BORDER | SWT.SINGLE);
