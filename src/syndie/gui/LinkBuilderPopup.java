@@ -6,6 +6,8 @@ import net.i2p.data.Base64;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -78,7 +80,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener {
         initComponents();
     }
     private void initComponents() {
-        _shell = new Shell(_parentShell, SWT.SHELL_TRIM);
+        _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setText("Link to...");
         _shell.setLayout(new GridLayout(1, true));
         _linkTypeGroup = new Group(_shell, SWT.NONE);
@@ -286,7 +288,15 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener {
         _syndieMessageDetailPageNum.setEnabled(false);
         _syndieMessageDetailPageView.setEnabled(false);
 
-        _shell.setVisible(true);
+        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
+        _shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; onCancel(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        _shell.open();
     }
 
     public void referenceAccepted(SyndieURI uri) {

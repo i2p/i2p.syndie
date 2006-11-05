@@ -3,6 +3,8 @@ package syndie.gui;
 import javax.naming.ldap.Rdn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -35,14 +37,14 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
         initComponents();
     }
     
-    public void show() { _shell.setVisible(true); }
+    public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
     
     private void initComponents() {
         if (_parent == null)
-            _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
+            _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         else
-            _shell = new Shell(_parent, SWT.SHELL_TRIM);
+            _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setText("Reference chooser");
         _shell.setLayout(new FillLayout());
         
@@ -63,6 +65,15 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
         _info.getControl().setLayoutData(gd);
         
         _shell.pack();
+        
+        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
+        _shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; referenceChoiceAborted(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
     }
 
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) { _info.bookmarkSelected(item, node); }
