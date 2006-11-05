@@ -1,0 +1,96 @@
+package syndie.gui;
+
+import java.util.ArrayList;
+import java.util.List;
+import net.i2p.data.Base64;
+import net.i2p.data.Hash;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import syndie.data.ReferenceNode;
+import syndie.data.SyndieURI;
+import syndie.db.*;
+
+/**
+ * pop up and display an swt message editor
+ */
+public class MessageTreeCommand implements CLI.Command {
+    public MessageTreeCommand() {}
+    public DBClient runCommand(Opts opts, UI ui, DBClient client) {
+        view(opts, ui, client);
+        return client;
+    }
+    
+    private void view(final Opts opts, final UI ui, final DBClient client) {
+        final Display display = Display.getDefault();
+        display.asyncExec(new Runnable() {
+            public void run() {
+                Shell shell = new Shell(display, SWT.SHELL_TRIM);
+                ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
+                scroll.setExpandHorizontal(true);
+                scroll.setExpandVertical(true);
+                MessageTree tree = new MessageTree(client, scroll, new Listener());
+                scroll.setContent(tree.getControl());
+                shell.setLayout(new FillLayout());
+                scroll.setLayout(new FillLayout());
+
+                List msgs = getThreads(client);
+                tree.sortDate(true);
+                tree.setMessages(msgs);
+                Point setSize = tree.getControl().getSize();
+                Point preferredSize = tree.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+                Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
+                                          Math.min(setSize.y, preferredSize.y));
+                Point size = new Point(Math.max(minSize.x, 200),
+                                       Math.max(minSize.y, 200));
+                //System.out.println("setSize: " + setSize + " pref: " + preferredSize + " min: " + minSize + " sz: " + size);
+                tree.getControl().setSize(size);
+                scroll.setMinSize(size);
+                shell.pack();
+                shell.open();
+            }
+        });
+    }
+    
+    private static List getThreads(DBClient client) {
+        List rv = new ArrayList();
+        Hash h = new Hash(Base64.decode("QU7SmeHqW1etRmXNEfCR6jP7CC0Tyln5V7YalYq1jnY="));
+        SyndieURI uri = SyndieURI.createMessage(h, 1161059215163L);
+        rv.add(new ReferenceNode(null, uri, null, null));
+        rv.add(new ReferenceNode(null, uri, null, null));
+        ReferenceNode node = new ReferenceNode(null, uri, null, null);
+        node.addChild(null, uri, null, null);
+        node.addChild(null, uri, null, null);
+        ReferenceNode sub = node.addChild(null, uri, null, null);
+        sub.addChild(null, uri, null, null);
+        sub.addChild(null, uri, null, null);
+        node.addChild(null, uri, null, null);
+        SyndieURI nonexistantURI = SyndieURI.createMessage(h, 1161059215162L);
+        sub = node.addChild(null, nonexistantURI, null, null);
+        sub.addChild(null, uri, null, null);
+        sub.addChild(null, nonexistantURI, null, null);
+        rv.add(node);
+        rv.add(new ReferenceNode(null, uri, null, null));
+        rv.add(new ReferenceNode(null, uri, null, null));
+        rv.add(new ReferenceNode(null, uri, null, null));
+        return rv;
+    }
+    
+    private class Listener implements MessageTree.MessageTreeListener {
+        public void messageSelected(SyndieURI uri, boolean toView) {
+            if ( (uri != null) && (uri.getScope() != null) ) {
+                if (toView)
+                    System.out.println("view " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());
+                else
+                    System.out.println("hover over " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());
+            }
+        }
+        
+    }
+}

@@ -118,40 +118,13 @@ public class ReferenceChooserTree {
         _manageRoot.setText("Manageable forums");
         _searchRoot.setText("Search results...");
         
-        _tree.addKeyListener(new KeyListener() {
-            public void keyPressed(KeyEvent keyEvent) {}
-            public void keyReleased(KeyEvent evt) {
-                if (evt.keyCode == SWT.ARROW_LEFT) {
-                    TreeItem selected = getSelected();
-                    if (selected.getExpanded()) {
-                        selected.setExpanded(false);
-                    } else {
-                        TreeItem parent = selected.getParentItem();
-                        if (parent != null) {
-                            parent.setExpanded(false);
-                            _tree.setSelection(parent);
-                        }
-                    }
-                } else if (evt.keyCode == SWT.ARROW_RIGHT) {
-                    TreeItem selected = getSelected();
-                    selected.setExpanded(true);
-                } else if (evt.character == ' ') {
-                    TreeItem selected = getSelected();
-                    selected.setExpanded(!selected.getExpanded());
-                }
-            }
-        });
-        _tree.addTraverseListener(new TraverseListener() {
-            public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN) {
-                    TreeItem selected = getSelected();
-                    selected.setExpanded(!selected.getExpanded());        }
-            }
-        });
-        _tree.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fireSelectionEvents(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fireSelectionEvents(); }
-        });
+        SyndieTreeListener lsnr = new SyndieTreeListener(_tree) { 
+            public void selected() { fireSelectionEvents(); } 
+        };
+        _tree.addKeyListener(lsnr);
+        _tree.addTraverseListener(lsnr);
+        _tree.addSelectionListener(lsnr);
+        _tree.addControlListener(lsnr);
         
         rebuildBookmarks();
         refetchNymChannels();
@@ -159,7 +132,6 @@ public class ReferenceChooserTree {
         redrawManageable();
         redrawSearchResults();
     }
-    private TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
     private void rebuildBookmarks() {
         _nymRefs.clear();
         _nymRefs.addAll(_client.getNymReferences(_client.getLoggedInNymId()));
