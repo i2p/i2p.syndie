@@ -31,8 +31,8 @@ public class ReferenceChooserCommand implements CLI.Command {
         display.asyncExec(new Runnable() {
             public void run() {
                 ReferenceChooserTree tree = showTree(display, opts, ui, client);
-                showSearch(display, opts, ui, client, tree);
-                showInfo(display, opts, ui, client, tree);
+                ReferenceChooserSearch search = showSearch(display, opts, ui, client, tree);
+                showInfo(display, opts, ui, client, tree, search);
             }
         });
     }
@@ -61,7 +61,7 @@ public class ReferenceChooserCommand implements CLI.Command {
         return chooser;
     }
     
-    private void showSearch(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree) {
+    private ReferenceChooserSearch showSearch(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree) {
         Shell shell = new Shell(display, SWT.SHELL_TRIM);
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
         scroll.setExpandHorizontal(true);
@@ -73,14 +73,19 @@ public class ReferenceChooserCommand implements CLI.Command {
 
         shell.pack();
         shell.open();
+        return search;
     }
     
-    private void showInfo(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree) {
+    private void showInfo(Display display, Opts opts, UI ui, DBClient client, ReferenceChooserTree tree, ReferenceChooserSearch search) {
         Shell shell = new Shell(display, SWT.SHELL_TRIM);
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
         scroll.setExpandHorizontal(true);
         scroll.setExpandVertical(true);
-        ReferenceChooserInfo info = new ReferenceChooserInfo(scroll, tree);
+        AcceptListener lsnr = new AcceptListener(ui);
+        ReferenceChooserInfo info = new ReferenceChooserInfo(scroll, tree, lsnr);
+        lsnr.setChooser(tree);
+        lsnr.setInfo(info);
+        lsnr.setSearch(search);
         scroll.setContent(info.getControl());
         shell.setLayout(new FillLayout());
         scroll.setLayout(new FillLayout());
@@ -117,5 +122,22 @@ public class ReferenceChooserCommand implements CLI.Command {
         public void otherSelected(TreeItem item) {
             _ui.statusMessage("other item selected [" + item.getText() + "]");
         }
+    }
+    private class AcceptListener implements ReferenceChooserInfo.AcceptanceListener {
+        private UI _ui;
+        private ReferenceChooserTree _chooser;
+        private ReferenceChooserSearch _search;
+        private ReferenceChooserInfo _info;
+        public AcceptListener(UI ui) { _ui = ui; }
+        public void referenceAccepted(SyndieURI uri) {
+            _ui.statusMessage("reference accepted: " + uri.toString());
+            _chooser.getControl().getShell().setVisible(false);
+            _search.getControl().getShell().setVisible(false);
+            _info.getControl().getShell().setVisible(false);
+        }
+
+        private void setChooser(ReferenceChooserTree chooser) { _chooser = chooser; }
+        private void setSearch(ReferenceChooserSearch search) { _search = search; }
+        private void setInfo(ReferenceChooserInfo info) { _info = info; }
     }
 }
