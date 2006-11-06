@@ -205,7 +205,7 @@ class SyndicateMenu implements TextEngine.Menu {
             if (index != null) {
                 ui.statusMessage("Fetched archive loaded with " + index.getChannelCount() + " channels");
                 _currentIndex = index;
-                _syndicator = new HTTPSyndicator(_baseUrl, _proxyHost, _proxyPort, client, ui, _currentIndex);
+                _syndicator = new HTTPSyndicator(_baseUrl, _proxyHost, _proxyPort, client, ui, _currentIndex, opts.getOptBoolean("reimport", false));
                 processDiff(client, ui, opts);
             } else {
                 ui.errorMessage("Unable to load the fetched archive");
@@ -422,7 +422,7 @@ class SyndicateMenu implements TextEngine.Menu {
         File f = new File(dir);
         File files[] = f.listFiles(_metafilter);
         for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i]);
+            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {
                 boolean deleted = files[i].delete();
                 if (!deleted)
@@ -435,7 +435,7 @@ class SyndicateMenu implements TextEngine.Menu {
         
         files = f.listFiles(_postfilter);
         for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i]);
+            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {
                 boolean deleted = files[i].delete();
                 if (!deleted)
@@ -450,13 +450,13 @@ class SyndicateMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     
-    private void importMsg(DBClient client, UI ui, File f) {
+    private void importMsg(DBClient client, UI ui, File f, boolean forceReimport) {
         Importer imp = new Importer(client, client.getPass());
         ui.debugMessage("Importing from " + f.getPath());
         boolean ok;
         try {
             NestedUI nested = new NestedUI(ui);
-            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null);
+            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null, forceReimport);
             if (ok && (nested.getExitCode() >= 0) ) {
                 if (nested.getExitCode() == 1) {
                     ui.errorMessage("Imported but could not decrypt " + f.getPath());
@@ -480,7 +480,7 @@ class SyndicateMenu implements TextEngine.Menu {
     private static PostFilter _postfilter = new PostFilter();
     private static class PostFilter implements FilenameFilter {
         public boolean accept(File dir, String name) {
-            return name.startsWith("post") && name.endsWith(Constants.FILENAME_SUFFIX);
+            return (!name.startsWith("post")) && name.endsWith(Constants.FILENAME_SUFFIX);
         }
     }
 

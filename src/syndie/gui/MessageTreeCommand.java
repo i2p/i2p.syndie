@@ -45,6 +45,8 @@ public class MessageTreeCommand implements CLI.Command {
                 scroll.setLayout(new FillLayout());
 
                 List msgs = getThreads(client, chan);
+                if (chan != null)
+                    tree.showChannel(false);
                 tree.sortDate(true);
                 tree.setMessages(msgs);
                 Point setSize = tree.getControl().getSize();

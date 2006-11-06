@@ -108,6 +108,11 @@ public class MessageTree {
     public void sortSubject(boolean aToZ) { _tree.setSortColumn(_colSubject); _tree.setSortDirection(aToZ ? SWT.UP : SWT.DOWN); }
     public void sortTags(boolean aToZ) { _tree.setSortColumn(_colTags); _tree.setSortDirection(aToZ ? SWT.UP : SWT.DOWN); }
     
+    public void showChannel(boolean show) { _showChannel = show; }
+    public void showDate(boolean show) { _showDate = show; }
+    public void showAuthor(boolean show) { _showAuthor = show; }
+    public void showTags(boolean show) { _showTags = show; }
+    
     public void setMessages(List referenceNodes) {
         _tree.setRedraw(false);
         _tree.removeAll();

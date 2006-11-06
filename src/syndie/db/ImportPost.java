@@ -34,8 +34,9 @@ public class ImportPost {
     private boolean _authenticated;
     private boolean _authorized;
     private String _bodyPassphrase;
+    private boolean _forceReimport;
     
-    private ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase) {
+    private ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
         _client = client;
         _ui = ui;
         _enc = enc;
@@ -43,6 +44,7 @@ public class ImportPost {
         _pass = pass;
         _privateMessage = false;
         _bodyPassphrase = bodyPassphrase;
+        _forceReimport = forceReimport;
     }
     
     /*
@@ -51,8 +53,8 @@ public class ImportPost {
      * or the post's authentication key.  the exit code in ui.commandComplete is
      * -1 if unimportable, 0 if imported fully, or 1 if imported but not decryptable
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase) {
-        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase);
+    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
+        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
         return imp.process();
     }
     private boolean process() {
@@ -430,10 +432,15 @@ public class ImportPost {
         }
         MessageInfo msg = _client.getMessage(channelId, _uri.getMessageId());
         if (msg != null) {
-            _ui.debugMessage("Existing message: " + msg.getInternalId());
-            if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
+            if (_forceReimport) {
+                _ui.debugMessage("Message exists (" + msg.getInternalId() + ") but we want to force reimport, so drop it");
+                _client.deleteFromDB(_uri, _ui);
+                msg = null;
+            } else if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
+                _ui.debugMessage("Existing message: " + msg.getInternalId());
                 return false;
             } else {
+                _ui.debugMessage("Existing message: " + msg.getInternalId());
                 // we have the post, but don't have the passphrase or keys.  So...
                 // delete it, then import it again clean
                 _ui.debugMessage("Known message was not decrypted, so lets drop it and try again...");

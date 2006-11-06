@@ -23,6 +23,7 @@ import syndie.data.Enclosure;
  * --login $login
  * --pass $pass
  * --in $filename
+ * [--reimport $boolean]
  * [--passphrase $bodyPassphrase]
  */
 public class Importer extends CommandImpl {
@@ -88,7 +89,7 @@ public class Importer extends CommandImpl {
             
             _client = client;
             _passphrase = client.getPass();
-            boolean ok = processMessage(ui, new FileInputStream(file), nymId, client.getPass(), args.getOptValue("passphrase"));
+            boolean ok = processMessage(ui, new FileInputStream(file), nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false));
             ui.debugMessage("Metadata processed");
             if (!ok) // successful imports specify whether they were decrypted (exit code of 0) or undecryptable (exit code of 1)
                 ui.commandComplete(-1, null);
@@ -147,7 +148,7 @@ public class Importer extends CommandImpl {
      * and read, it will fire ui.commandComplete with an exit value of 0.  otherwise,
      * it will not fire an implicit ui.commandComplete.
      */
-    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase) throws IOException {
+    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase, boolean forceReimport) throws IOException {
         if (bodyPassphrase != null)
             ui.debugMessage("Processing message with body passphrase " + bodyPassphrase);
         else
@@ -170,9 +171,9 @@ public class Importer extends CommandImpl {
                 rv = importMeta(ui, enc, nymId, bodyPassphrase);
                 isMeta = true;
             } else if (Constants.MSG_TYPE_POST.equals(type)) { // validate and import content message
-                rv = importPost(ui, enc, nymId, pass, bodyPassphrase);
+                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
             } else if (Constants.MSG_TYPE_REPLY.equals(type)) { // validate and import reply message
-                rv = importPost(ui, enc, nymId, pass, bodyPassphrase);
+                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
             } else {
                 throw new IOException("Invalid message type: " + type);
             }
@@ -226,7 +227,7 @@ public class Importer extends CommandImpl {
         return ok;
     }
     
-    protected boolean importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase) {
-        return ImportPost.process(_client, ui, enc, nymId, pass, bodyPassphrase);
+    protected boolean importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
+        return ImportPost.process(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
     }
 }

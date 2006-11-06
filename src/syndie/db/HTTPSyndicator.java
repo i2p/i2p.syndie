@@ -51,13 +51,17 @@ public class HTTPSyndicator {
     private ArchiveIndex _remoteIndex;
     private List _postToDelete;
     
-    public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, ArchiveIndex index) {
+    private boolean _forceReimport;
+    
+    public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, ArchiveIndex index, boolean forceReimport) {
         _archiveURL = archiveURL;
         _proxyHost = proxyHost;
         _proxyPort = proxyPort;
         _client = client;
         _ui = ui;
         _remoteIndex = index;
+        
+        _forceReimport = forceReimport;
         
         _fetchedFiles = new ArrayList();
         _fetchedURIs = new ArrayList();
@@ -245,7 +249,7 @@ public class HTTPSyndicator {
             boolean ok;
             try {
                 NestedUI nested = new NestedUI(_ui);
-                ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), null);
+                ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), null, _forceReimport);
                 if (ok && (nested.getExitCode() >= 0) && (!imp.wasPBE()) ) {
                     _ui.debugMessage("Import successful for " + uri);
                     f.delete();
@@ -286,7 +290,7 @@ public class HTTPSyndicator {
         boolean ok;
         try {
             NestedUI nested = new NestedUI(_ui);
-            ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), passphrase);
+            ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), passphrase, _forceReimport);
             if (ok && (nested.getExitCode() >= 0) && (nested.getExitCode() != 1) ) {
                 f.delete();
                 _pendingPBEFiles.remove(index);

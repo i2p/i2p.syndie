@@ -30,6 +30,9 @@
       tag criteria instead of just two: threads must be tagged with all of the
       "+" marked tags, none of the "-" marked tags, and at least one of the
       remaining unmarked tags.
+    - (syndie.gui branch) add a "--reimport" flag to a bunch of commands so
+      that posts can be reimported if their earlier import didn't get
+      everything right (or new features were added)
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as
