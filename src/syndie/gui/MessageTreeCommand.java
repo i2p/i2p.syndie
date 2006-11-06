@@ -7,6 +7,7 @@ import java.util.HashSet;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
@@ -36,14 +37,9 @@ public class MessageTreeCommand implements CLI.Command {
         display.asyncExec(new Runnable() {
             public void run() {
                 Shell shell = new Shell(display, SWT.SHELL_TRIM);
-                ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
-                scroll.setExpandHorizontal(true);
-                scroll.setExpandVertical(true);
-                MessageTree tree = new MessageTree(client, scroll, new Listener());
-                scroll.setContent(tree.getControl());
+                MessageTree tree = new MessageTree(client, shell, new Listener());
                 shell.setLayout(new FillLayout());
-                scroll.setLayout(new FillLayout());
-
+                
                 List msgs = getThreads(client, chan);
                 if (chan != null)
                     tree.showChannel(false);
@@ -57,11 +53,26 @@ public class MessageTreeCommand implements CLI.Command {
                                        Math.max(minSize.y, 200));
                 //System.out.println("setSize: " + setSize + " pref: " + preferredSize + " min: " + minSize + " sz: " + size);
                 tree.getControl().setSize(size);
-                scroll.setMinSize(size);
+       
                 shell.pack();
                 shell.open();
+                if (opts.getOptBoolean("filter", true))
+                    showFilter(display, client, tree);
             }
         });
+    }
+    
+    private static void showFilter(Display display, DBClient client, MessageTree tree) {
+        Shell shell = new Shell(display, SWT.SHELL_TRIM);
+        ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
+        scroll.setExpandHorizontal(true);
+        scroll.setExpandVertical(true);
+        MessageTreeFilter filter = new MessageTreeFilter(client, scroll, tree);
+        scroll.setContent(filter.getControl());
+        shell.setLayout(new FillLayout());
+        scroll.setLayout(new FillLayout());
+        shell.pack();
+        shell.open();        
     }
     
     private static List getThreads(DBClient client, byte chan[]) {
@@ -103,7 +114,7 @@ public class MessageTreeCommand implements CLI.Command {
     }
     
     private class Listener implements MessageTree.MessageTreeListener {
-        public void messageSelected(SyndieURI uri, boolean toView) {
+        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
             if ( (uri != null) && (uri.getScope() != null) ) {
                 if (toView)
                     System.out.println("view " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());
@@ -111,6 +122,8 @@ public class MessageTreeCommand implements CLI.Command {
                     System.out.println("hover over " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());
             }
         }
-        
+        public void filterApplied(MessageTree tree, String filter) {
+            System.out.println("filter applied [" + filter + "]");
+        }
     }
 }

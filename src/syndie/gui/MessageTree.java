@@ -16,8 +16,13 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
@@ -33,12 +38,15 @@ import syndie.db.DBClient;
 public class MessageTree {
     private DBClient _client;
     private Composite _parent;
+    private Composite _root;
     private Tree _tree;
     private TreeColumn _colSubject;
     private TreeColumn _colAuthor;
     private TreeColumn _colChannel;
     private TreeColumn _colDate;
     private TreeColumn _colTags;
+
+    private Text _filter;
     
     private boolean _showAuthor;
     private boolean _showChannel;
@@ -61,7 +69,7 @@ public class MessageTree {
         initComponents();
     }
     
-    public Control getControl() { return _tree; }
+    public Control getControl() { return _root; } //return _tree; }
 
     public interface MessageTreeListener {
         /** 
@@ -70,11 +78,16 @@ public class MessageTree {
          *        though they'd probably be ok with some contextual info regarding the
          *        selected message
          */
-        public void messageSelected(SyndieURI uri, boolean toView);
+        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView);
+        /** the new filter was applied */
+        public void filterApplied(MessageTree tree, String filter);
     }
     
     private void initComponents() {
-        _tree = new Tree(_parent, SWT.BORDER | SWT.SINGLE);
+        _root = new Composite(_parent, SWT.NONE);
+        _root.setLayout(new GridLayout(1, true));
+        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
+        _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
         _colSubject.setText("Subject");
@@ -89,6 +102,30 @@ public class MessageTree {
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
+        
+        Composite filterRow = new Composite(_root, SWT.BORDER);
+        filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        filterRow.setLayout(new GridLayout(4, false));
+        Label l = new Label(filterRow, SWT.NONE);
+        l.setText("Filters: ");
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _filter = new Text(filterRow, SWT.SINGLE | SWT.BORDER);
+        _filter.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _filter.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) applyFilter();
+            }
+        });
+        Button filter = new Button(filterRow, SWT.PUSH);
+        filter.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        filter.setText("Apply");
+        filter.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
+        });
+        Button edit = new Button(filterRow, SWT.PUSH);
+        edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        edit.setText("Edit...");
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void resized() { resizeCols(); }
@@ -112,6 +149,13 @@ public class MessageTree {
     public void showDate(boolean show) { _showDate = show; }
     public void showAuthor(boolean show) { _showAuthor = show; }
     public void showTags(boolean show) { _showTags = show; }
+    
+    public void setFilter(String filter) { 
+        if (filter != null) 
+            _filter.setText(filter); 
+        else 
+            _filter.setText("");
+    }
     
     public void setMessages(List referenceNodes) {
         _tree.setRedraw(false);
@@ -254,9 +298,9 @@ public class MessageTree {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if (_listener != null)
-                    _listener.messageSelected(uri, toView);
+                    _listener.messageSelected(this, uri, toView);
             }
         }
     }
-    
+    private void applyFilter() { if (_listener != null) _listener.filterApplied(this, _filter.getText().trim()); }
 }

@@ -7,6 +7,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TreeItem;
@@ -140,9 +141,16 @@ public class ReferenceChooserCommand implements CLI.Command {
         }
         public void referenceChoiceAborted() { close(); }
         private void close() {
-            _chooser.getControl().getShell().setVisible(false);
-            _search.getControl().getShell().setVisible(false);
-            _info.getControl().getShell().setVisible(false);
+            hideShell(_chooser.getControl());
+            hideShell(_search.getControl());
+            hideShell(_info.getControl());
+        }
+        private void hideShell(Control control) {
+            if (control == null) return;
+            Shell shell = control.getShell();
+            if ( (shell == null) || (shell.isDisposed()) || (!shell.getVisible()) ) 
+                return;
+            shell.setVisible(false);
         }
 
         private void setChooser(ReferenceChooserTree chooser) { _chooser = chooser; }
