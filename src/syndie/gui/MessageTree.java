@@ -144,18 +144,40 @@ public class MessageTree {
             String tags = "";
 
             long chanId = _client.getChannelId(uri.getScope());
-            ChannelInfo chanInfo = _client.getChannel(chanId);
+            ChannelInfo scopeInfo = _client.getChannel(chanId);
             MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
             if (msg != null) {
-                subj = msg.getSubject() + "";
+                if (msg.getSubject() != null)
+                    subj = msg.getSubject();
                 long authorId = msg.getAuthorChannelId();
                 if (authorId != chanId) {
                     ChannelInfo authInfo = _client.getChannel(authorId);
                     if (authInfo != null) {
                         auth = authInfo.getName() + " [" + authInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    } else {
+                        auth = "[unknown]";
                     }
+                    //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
+                } else {
+                    //System.out.println("author is the scope chan for " + uri.toString());
+                    auth = scopeInfo.getName() + " [" + scopeInfo.getChannelHash().toBase64().substring(0,6) + "]";
                 }
-                chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                ChannelInfo chanInfo = scopeInfo;
+                if (msg.getTargetChannelId() != scopeInfo.getChannelId()) {
+                    System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
+                    //System.out.println("msg: " + uri.toString());
+                    chanInfo = _client.getChannel(msg.getTargetChannelId());
+                    if (chanInfo == null) {
+                        chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
+                    } else {
+                        chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    }
+                } else {
+                    System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
+                    //System.out.println("msg: " + uri.toString());
+                    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                }
+                
                 if (auth.length() <= 0) {
                      auth = chan;
                 }
@@ -172,11 +194,11 @@ public class MessageTree {
             } else {
                 // message is not locally known
                 subj = "[unknown]";
-                auth = "[unknown]";
-                if (chanInfo != null)
-                    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                if (scopeInfo != null)
+                    auth = scopeInfo.getName() + " [" + scopeInfo.getChannelHash().toBase64().substring(0,6) + "]";
                 else
-                    chan = uri.getScope().toBase64().substring(0,6);
+                    auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
+                chan = "[unknown]";
                 date = getDate(uri.getMessageId().longValue());
                 tags = "[unknown]";
             }
@@ -218,7 +240,7 @@ public class MessageTree {
         _colDate.setWidth(dateWidth);
         _colTags.setWidth(tagsWidth);
         
-        System.out.println("resize w/ total=" + total + " colSubject=" + _colSubject.getWidth());
+        //System.out.println("resize w/ total=" + total + " colSubject=" + _colSubject.getWidth());
     }
 
     private void fireSelected(boolean toView) {

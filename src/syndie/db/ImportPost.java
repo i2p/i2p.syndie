@@ -379,18 +379,26 @@ public class ImportPost {
         
         Long messageId = _uri.getMessageId();
         
+        Boolean forceNewThread = _body.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
+        if (forceNewThread == null)
+            forceNewThread = _enc.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
+        
+        Boolean refuseReplies = _body.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
+        if (refuseReplies == null)
+            refuseReplies = _enc.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
+        
         long scopeChannelId = _client.getChannelId(_channel);
         long targetChannelId = scopeChannelId;
         byte target[] = _body.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
         if (target != null) {
             Hash targetHash = new Hash(target);
             long targetId = _client.getChannelId(targetHash);
-            if (isAuthorizedFor(targetHash, targetId, author)) {
+            if (isAuthorizedFor(targetHash, targetId, author, forceNewThread)) {
                 targetChannelId = targetId;
                 _authorized = true;
             }
         } else {
-            if (isAuthorizedFor(_channel, targetChannelId, author)) {
+            if (isAuthorizedFor(_channel, targetChannelId, author, forceNewThread)) {
                 _authorized = true;
             }
         }
@@ -406,14 +414,6 @@ public class ImportPost {
             overwriteHash = overwrite.getScope();
             overwriteMsg = overwrite.getMessageId();
         }
-        
-        Boolean forceNewThread = _body.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
-        if (forceNewThread == null)
-            forceNewThread = _enc.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
-        
-        Boolean refuseReplies = _body.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
-        if (refuseReplies == null)
-            refuseReplies = _enc.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
         
         boolean wasEncrypted = !_publishedBodyKey;
         boolean wasPrivate = _privateMessage;
@@ -556,7 +556,7 @@ public class ImportPost {
      * or may allow unauthorized replies (and if we are replying to an authorized
      * post, we are thereby authorized)
      */
-    private boolean isAuthorizedFor(Hash targetHash, long targetId, Hash author) {
+    private boolean isAuthorizedFor(Hash targetHash, long targetId, Hash author, Boolean forceNewThread) {
         if (targetId >= 0) {
             ChannelInfo chanInfo = _client.getChannel(targetId);
             if (chanInfo != null) {
@@ -571,23 +571,57 @@ public class ImportPost {
                     // implicitly allowed to start new threads
                     _ui.debugMessage("Message is an unauthorized post to a chan that doesnt require auth, so allow it");
                     return true;
-                } else if (chanInfo.getAllowPublicReplies()) {
+                } else if (chanInfo.getAllowPublicReplies() && ( (forceNewThread == null) || (!forceNewThread.booleanValue()) )) {
                     SyndieURI parents[] = _body.getHeaderURIs(Constants.MSG_HEADER_REFERENCES);
+                    SyndieURI pubParents[] = _enc.getHeaderURIs(Constants.MSG_HEADER_REFERENCES);
+                    if ((parents == null) || (parents.length == 0)) {
+                        parents = pubParents;
+                        _ui.debugMessage("replacing private parent set with public one");
+                    } else if ( (parents != null) && (pubParents != null) && (parents.length > 0) && (pubParents.length > 0) ) {
+                        SyndieURI merged[] = new SyndieURI[parents.length + pubParents.length];
+                        for (int i = 0; i < parents.length; i++)
+                            merged[i] = parents[i];
+                        for (int i = 0; i < pubParents.length; i++)
+                            merged[i+parents.length] = pubParents[i];
+                        parents = merged;
+                        _ui.debugMessage("Merging parent sets (" + parents.length + "/" + pubParents.length + ")");
+                    }
                     if ( (parents != null) && (parents.length > 0) ) {
                         for (int i = 0; i < parents.length; i++) {
                             Hash scope = parents[i].getScope();
-                            if ( (scope != null) && (scope.equals(targetHash)) ) {
-                                MessageInfo parentMsg = _client.getMessage(targetId, parents[i].getMessageId());
-                                if ( (parentMsg != null) && (parentMsg.getWasAuthorized()) ) {
-                                    // post is a reply to a message in the channel
-                                    _ui.debugMessage("Message is an unauthorized reply to an authorized post, so allow it");
-                                    return true;
-                                }
+                            // problem: if the parent refers to a post whose scope is authorized (implicitly or
+                            // explicitly), how can we tell whether that parent exists and just isn't known locally
+                            // vs. whether that parent does not exist?
+                            // without this differentiation, anyone could create new threads in forums that allow
+                            // public replies but do not allow public posts.  perhaps this could just be addressed
+                            // in a UI fashion though - only show the threads if there is a locally known authorized
+                            // ancestor.
+                            if (scope == null) continue;
+                            if (scope.equals(targetHash)) {
+                                _ui.debugMessage("Message is an unauthorized reply to an implicitly authorized post (which we may not have, and which may not even exist...), so allow it");
+                                return true;
+                            } else if (isAuth(chanInfo.getAuthorizedManagers(), scope) ||
+                                       isAuth(chanInfo.getAuthorizedPosters(), scope)) {
+                                _ui.debugMessage("parent is explicitly authorized: " + parents[i].toString());
+                                return true;
+                            } else {
+                                _ui.debugMessage("parent is neither implicitly nor explicitly authorized: " + parents[i].toString());
                             }
                         }
-                    } // no parents, and !allowPublicPosts
+                        _ui.debugMessage("done iterating over the parents of " + _uri.toString());
+                    } else {
+                        // no parents, and !allowPublicPosts
+                        _ui.debugMessage("no parents for " + _uri);
+                    }
+                } else {
+                    // dont allow public replies or the post tried to force a new thread and the author isn't authorized
+                    _ui.debugMessage("no public replies allowed for unauthorized: " + _uri);
                 }
+            } else {
+                _ui.debugMessage("target channel is unknown: " + targetId);
             }
+        } else {
+            _ui.debugMessage("target channel is unspecified");
         }
         return false;
     }

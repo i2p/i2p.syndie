@@ -2,6 +2,8 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -16,6 +18,7 @@ import org.eclipse.swt.widgets.Shell;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.*;
+import syndie.db.NullUI;
 
 /**
  * pop up and display an swt message editor
@@ -28,6 +31,7 @@ public class MessageTreeCommand implements CLI.Command {
     }
     
     private void view(final Opts opts, final UI ui, final DBClient client) {
+        final byte chan[] = opts.getOptBytes("channel");
         final Display display = Display.getDefault();
         display.asyncExec(new Runnable() {
             public void run() {
@@ -40,7 +44,7 @@ public class MessageTreeCommand implements CLI.Command {
                 shell.setLayout(new FillLayout());
                 scroll.setLayout(new FillLayout());
 
-                List msgs = getThreads(client);
+                List msgs = getThreads(client, chan);
                 tree.sortDate(true);
                 tree.setMessages(msgs);
                 Point setSize = tree.getControl().getSize();
@@ -58,6 +62,20 @@ public class MessageTreeCommand implements CLI.Command {
         });
     }
     
+    private static List getThreads(DBClient client, byte chan[]) {
+        HashSet channels = null;
+        if (chan != null) {
+            channels = new HashSet();
+            channels.add(new Hash(chan));
+        }
+        System.out.println("getting threads in channels: " + channels);
+        ThreadAccumulator acc = new ThreadAccumulator(client, new NullUI());
+        acc.gatherThreads(channels, null, null, null);
+        List threads = new ArrayList();
+        for (int i = 0; i < acc.getThreadCount(); i++)
+            threads.add(acc.getRootThread(i));
+        return threads;
+    }
     private static List getThreads(DBClient client) {
         List rv = new ArrayList();
         Hash h = new Hash(Base64.decode("QU7SmeHqW1etRmXNEfCR6jP7CC0Tyln5V7YalYq1jnY="));

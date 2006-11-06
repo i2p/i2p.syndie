@@ -16,6 +16,8 @@ public class ThreadAccumulator {
     private UI _ui;
     
     private List _rootURIs;
+    /** fully populated threads, in ReferenceNode form */
+    private List _roots;
     /** one List of tags for each root URI, duplicates allowed */
     private List _threadTags;
     /** Integer for each thread specifying how many messages are in the thread */
@@ -36,7 +38,13 @@ public class ThreadAccumulator {
     
     private static final String SQL_LIST_THREADS_ALL = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy)";
     private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy) )";
-    public void gatherThreads(Set channelHashes, Set tagsRequired, Set tagsRejected) {
+    /**
+     * @param channelHashes set of Hash for each channel to pull threads out of (null means all channels!)
+     * @param tagsRequired threads must have all of the tags in this set
+     * @param tagsWanted threads must have at least one of the tags in this set
+     * @param tagsRejected threads must not have any of the tags in this set
+     */
+    public void gatherThreads(Set channelHashes, Set tagsRequired, Set tagsWanted, Set tagsRejected) {
         init();
         
         // - iterate across all matching channels
@@ -114,7 +122,7 @@ public class ThreadAccumulator {
                 ReferenceNode root = builder.buildThread(_client.getMessage(msgId.longValue()));
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
-                loadInfo(root, tagsRequired, tagsRejected);
+                loadInfo(root, tagsRequired, tagsWanted, tagsRejected);
             }
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);
@@ -122,6 +130,7 @@ public class ThreadAccumulator {
     }
     
     private void init() {
+        _roots = new ArrayList();
         _rootURIs = new ArrayList();
         _threadTags = new ArrayList();
         _threadMessages = new ArrayList();
@@ -133,6 +142,7 @@ public class ThreadAccumulator {
     
     public int getThreadCount() { return _rootURIs.size(); }
     public SyndieURI getRootURI(int index) { return (SyndieURI)_rootURIs.get(index); }
+    public ReferenceNode getRootThread(int index) { return (ReferenceNode)_roots.get(index); }
     /** sorted set of tags in the given thread */
     public Set getTags(int index) { return new TreeSet((List)_threadTags.get(index)); }
     public int getTagCount(int index, String tag) {
@@ -177,7 +187,7 @@ public class ThreadAccumulator {
         }        
     }
     
-    private void loadInfo(ReferenceNode threadRoot, Set tagsRequired, Set tagsRejected) {
+    private void loadInfo(ReferenceNode threadRoot, Set tagsRequired, Set tagsWanted, Set tagsRejected) {
         // walk the thread to find the latest post / message count / tags
         Harvester visitor = new Harvester();
         List roots = new ArrayList();
@@ -210,6 +220,20 @@ public class ThreadAccumulator {
                 }
             }
         }
+        if ( (tagsWanted != null) && (tagsWanted.size() > 0) ) {
+            boolean found = false;
+            for (Iterator iter = tagsWanted.iterator(); iter.hasNext(); ) {
+                String tag = (String)iter.next();
+                if (tags.contains(tag)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + tagsWanted + ") : " + threadRoot.getURI().toString());
+                return;
+            }
+        }
         
         // passed the filter.  add to the accumulator
         _rootURIs.add(threadRoot.getURI());
@@ -219,5 +243,6 @@ public class ThreadAccumulator {
         _threadMessages.add(new Integer(messageCount));
         _threadRootAuthorId.add(new Long(rootAuthorId));
         _threadTags.add(tags);
+        _roots.add(threadRoot);
     }
 }

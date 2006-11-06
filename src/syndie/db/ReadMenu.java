@@ -614,23 +614,27 @@ class ReadMenu implements TextEngine.Menu {
             }
 
             Set tagsRequired = new HashSet();
+            Set tagsWanted = new HashSet();
             Set tagsRejected = new HashSet();
             if (tags != null) {
                 for (int i = 0; i < tags.size(); i++) {
                     String tag = (String)tags.get(i);
-                    if (tag.startsWith("-"))
+                    if (tag.startsWith("-") && (tag.length() > 1))
                         tagsRejected.add(tag.substring(1));
+                    else if (tag.startsWith("+") && (tag.length() > 1))
+                        tagsRequired.add(tag.substring(1));
                     else
-                        tagsRequired.add(tag);
+                        tagsWanted.add(tag);
                 }
             }
 
             ui.debugMessage("Channels: " + (channelHashes == null ? "ALL" : channelHashes.toString()));
             ui.debugMessage("Required tags: " + tagsRequired.toString());
+            ui.debugMessage("Wanted tags:   " + tagsWanted.toString());
             ui.debugMessage("Rejected tags: " + tagsRejected.toString());
 
             ThreadAccumulator accumulator = new ThreadAccumulator(client, ui);
-            accumulator.gatherThreads(channelHashes, tagsRequired, tagsRejected);
+            accumulator.gatherThreads(channelHashes, tagsRequired, tagsWanted, tagsRejected);
             Map order = new TreeMap(new HighestFirstComparator());
             for (int i = 0; i < accumulator.getThreadCount(); i++) {
                 long mostRecentDate = accumulator.getMostRecentDate(i);

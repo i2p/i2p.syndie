@@ -20,6 +20,16 @@
       rendering of pages not in the database
     - (syndie.gui branch) stubs for the wysiwyg editor, and refactor the system
       colors out into a shared component
+    - (syndie.gui branch) allow unauthorized replies to be imported into
+      channels that allow unauthorized replies if one of their ancestors seems
+      to be authorized even if we don't have that ancestor locally.  to reduce
+      the impact of references to nonexistant ancestors in such cases, the
+      unauthorized replies should only be shown when an authorized ancestor is
+      locally known.
+    - (syndie.gui branch) allow threaded searching by tags with three sets of
+      tag criteria instead of just two: threads must be tagged with all of the
+      "+" marked tags, none of the "-" marked tags, and at least one of the
+      remaining unmarked tags.
 
 * 2006-10-22  0.917b released
     - add hooks for scripts to be run on syndie startup and login, as well as
