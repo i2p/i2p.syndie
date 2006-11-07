@@ -1,6 +1,8 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,14 +16,18 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
@@ -31,6 +37,8 @@ import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.NullUI;
+import syndie.db.ThreadAccumulator;
 
 /**
  * 
@@ -47,6 +55,9 @@ public class MessageTree {
     private TreeColumn _colTags;
 
     private Text _filter;
+    private SyndieURI _appliedFilter;
+    private MessageTreeFilter _filterEditor;
+    private Shell _filterEditorShell;
     
     private boolean _showAuthor;
     private boolean _showChannel;
@@ -80,7 +91,7 @@ public class MessageTree {
          */
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView);
         /** the new filter was applied */
-        public void filterApplied(MessageTree tree, String filter);
+        public void filterApplied(MessageTree tree, SyndieURI searchURI);
     }
     
     private void initComponents() {
@@ -126,6 +137,10 @@ public class MessageTree {
         Button edit = new Button(filterRow, SWT.PUSH);
         edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         edit.setText("Edit...");
+        edit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { editFilter(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { editFilter(); }
+        });
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void resized() { resizeCols(); }
@@ -137,6 +152,25 @@ public class MessageTree {
         _tree.addControlListener(lsnr);
         _tree.addTraverseListener(lsnr);
         _tree.addKeyListener(lsnr);
+        
+        createFilterEditor();
+    }
+    
+    private void createFilterEditor() {
+        _filterEditorShell = new Shell(_parent.getShell(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
+        _filterEditorShell.setText("Message filter");
+        _filterEditorShell.setLayout(new FillLayout());
+        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
+        _filterEditorShell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; hideFilterEditor(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        _filterEditor = new MessageTreeFilter(_client, _filterEditorShell, this);
+        _filterEditorShell.pack();
+        _filterEditorShell.setSize(_filterEditor.getControl().computeSize(400, 400));
     }
     
     public void sortDate(boolean newestFirst) { _tree.setSortColumn(_colDate); _tree.setSortDirection(newestFirst ? SWT.DOWN : SWT.UP); }
@@ -150,14 +184,65 @@ public class MessageTree {
     public void showAuthor(boolean show) { _showAuthor = show; }
     public void showTags(boolean show) { _showTags = show; }
     
-    public void setFilter(String filter) { 
-        if (filter != null) 
-            _filter.setText(filter); 
-        else 
+    public void setFilter(SyndieURI searchURI) {
+        if (searchURI != null)
+            _filter.setText(searchURI.toString());
+        else
             _filter.setText("");
     }
+    public void setFilter(String filter) {
+        if ( (filter != null) && (filter.trim().length() > 0) ) {
+            try {
+                SyndieURI uri = new SyndieURI(filter);
+                _filter.setText(uri.toString());
+            } catch (URISyntaxException use) {
+                _filter.setText("");
+            }
+        } else {
+            _filter.setText("");
+        }
+    }
     
-    public void setMessages(List referenceNodes) {
+    public void applyFilter() {
+        String txt = _filter.getText();
+        if (txt.trim().length() > 0) {
+            try {
+                SyndieURI uri = new SyndieURI(txt);
+                List nodes = calculateNodes(uri);
+                setMessages(nodes);
+                _appliedFilter = uri;
+                _filter.setText(uri.toString()); // normalize manually edited uris
+                if (_listener != null)
+                    _listener.filterApplied(this, uri);
+            } catch (URISyntaxException use) {
+                // noop
+                System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
+            }
+        }
+    }
+    
+    /**
+     * actually generate the sorted list of matches
+     *
+     * @return list of ReferenceNode for the root of each thread, or if it isn't
+     *         threaded, simply one per message
+     */
+    private List calculateNodes(SyndieURI uri) {
+        ThreadAccumulator acc = new ThreadAccumulator(_client, new NullUI());
+        acc.setFilter(uri);
+        acc.gatherThreads();
+        // now sort it...
+        List threads = new ArrayList();
+        for (int i = 0; i < acc.getThreadCount(); i++)
+            threads.add(acc.getRootThread(i));
+        
+        // now sort...
+        // (or not...)
+        
+        return threads;
+    }
+    
+    void setMessages(List referenceNodes) {
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
@@ -213,7 +298,7 @@ public class MessageTree {
                 }
                 ChannelInfo chanInfo = scopeInfo;
                 if (msg.getTargetChannelId() != scopeInfo.getChannelId()) {
-                    System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
+                    //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
                     //System.out.println("msg: " + uri.toString());
                     chanInfo = _client.getChannel(msg.getTargetChannelId());
                     if (chanInfo == null) {
@@ -222,7 +307,7 @@ public class MessageTree {
                         chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
                     }
                 } else {
-                    System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
+                    //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
                     //System.out.println("msg: " + uri.toString());
                     chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
                 }
@@ -302,5 +387,12 @@ public class MessageTree {
             }
         }
     }
-    private void applyFilter() { if (_listener != null) _listener.filterApplied(this, _filter.getText().trim()); }
+
+    private void editFilter() { 
+        String txt = _filter.getText();
+        System.out.println("showing edit for [" + txt + "]");
+        _filterEditor.setFilter(txt);
+        _filterEditorShell.open();
+    }
+    void hideFilterEditor() { _filterEditorShell.setVisible(false); }
 }

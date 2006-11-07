@@ -41,8 +41,8 @@ public class MessageTreeCommand implements CLI.Command {
                 shell.setLayout(new FillLayout());
                 
                 List msgs = getThreads(client, chan);
-                if (chan != null)
-                    tree.showChannel(false);
+                //if (chan != null)
+                //    tree.showChannel(false);
                 tree.sortDate(true);
                 tree.setMessages(msgs);
                 Point setSize = tree.getControl().getSize();
@@ -56,23 +56,8 @@ public class MessageTreeCommand implements CLI.Command {
        
                 shell.pack();
                 shell.open();
-                if (opts.getOptBoolean("filter", true))
-                    showFilter(display, client, tree);
             }
         });
-    }
-    
-    private static void showFilter(Display display, DBClient client, MessageTree tree) {
-        Shell shell = new Shell(display, SWT.SHELL_TRIM);
-        ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
-        scroll.setExpandHorizontal(true);
-        scroll.setExpandVertical(true);
-        MessageTreeFilter filter = new MessageTreeFilter(client, scroll, tree);
-        scroll.setContent(filter.getControl());
-        shell.setLayout(new FillLayout());
-        scroll.setLayout(new FillLayout());
-        shell.pack();
-        shell.open();        
     }
     
     private static List getThreads(DBClient client, byte chan[]) {
@@ -83,7 +68,8 @@ public class MessageTreeCommand implements CLI.Command {
         }
         System.out.println("getting threads in channels: " + channels);
         ThreadAccumulator acc = new ThreadAccumulator(client, new NullUI());
-        acc.gatherThreads(channels, null, null, null);
+        acc.setScope(channels);
+        acc.gatherThreads();
         List threads = new ArrayList();
         for (int i = 0; i < acc.getThreadCount(); i++)
             threads.add(acc.getRootThread(i));
@@ -122,7 +108,7 @@ public class MessageTreeCommand implements CLI.Command {
                     System.out.println("hover over " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());
             }
         }
-        public void filterApplied(MessageTree tree, String filter) {
+        public void filterApplied(MessageTree tree, SyndieURI filter) {
             System.out.println("filter applied [" + filter + "]");
         }
     }

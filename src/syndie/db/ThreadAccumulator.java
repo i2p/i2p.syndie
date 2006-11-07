@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import syndie.data.*;
 
@@ -36,6 +37,172 @@ public class ThreadAccumulator {
         _ui = ui;
     }
     
+    public void setFilter(SyndieURI criteria) {
+        // split up the individual attributes. see doc/web/spec.html#uri_search
+        String scope[] = criteria.getStringArray("scope");
+        if ( (scope == null) || (scope.length == 0) || ( (scope.length == 1) && ("all".equals(scope[0]))) ) {
+            _channelHashes = null;
+        } else {
+            Set chans = new HashSet();
+            for (int i = 0; i < scope.length; i++) {
+                byte b[] = Base64.decode(scope[i]);
+                if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
+                    chans.add(new Hash(b));
+            }
+            _channelHashes = chans;
+        }
+        
+        String author = criteria.getString("author");
+        if ( (author != null) && ("any".equals(author)) ) {
+            _includeOwners = true;
+            _includeManagers = true;
+            _includeAuthorizedPosters = true;
+            _includeAuthorizedReplies = true;
+            _includeUnauthorizedPosts = true;
+        } else if ( (author != null) && ("manager".equals(author)) ) {
+            _includeOwners = true;
+            _includeManagers = true;
+            _includeAuthorizedPosters = false;
+            _includeAuthorizedReplies = false;
+            _includeUnauthorizedPosts = false;
+        } else if ( (author != null) && ("owner".equals(author)) ) {
+            _includeOwners = true;
+            _includeManagers = false;
+            _includeAuthorizedPosters = false;
+            _includeAuthorizedReplies = false;
+            _includeUnauthorizedPosts = false;
+        } else {
+            _includeOwners = true;
+            _includeManagers = true;
+            _includeAuthorizedPosters = true;
+            _includeAuthorizedReplies = true;
+            _includeUnauthorizedPosts = false;
+        }
+        
+        _earliestPostDate = getStartDate(criteria.getLong("age"));
+        _earliestReceiveDate = getStartDate(criteria.getLong("agelocal"));
+        
+        _requiredTags = getTags(criteria.getStringArray("tagrequired"));
+        _rejectedTags = getTags(criteria.getStringArray("tagexclude"));
+        _wantedTags = getTags(criteria.getStringArray("taginclude"));
+        _applyTagFilterToMessages = criteria.getBoolean("tagmessages", false);
+    
+        _minPages = getInt(criteria.getLong("pagemin"));
+        _maxPages = getInt(criteria.getLong("pagemax"));
+        _minAttachments = getInt(criteria.getLong("attachmin"));
+        _maxAttachments = getInt(criteria.getLong("attachmax"));
+        _minReferences = getInt(criteria.getLong("refmin"));
+        _maxReferences = getInt(criteria.getLong("refmax"));
+        _minKeys = getInt(criteria.getLong("keymin"));
+        _maxKeys = getInt(criteria.getLong("keymax"));
+    
+        _alreadyDecrypted = !criteria.getBoolean("encrypted", false);
+        _pbe = criteria.getBoolean("pbe", false);
+        _privateMessage = criteria.getBoolean("private", false);
+    }
+    
+    private static final Set getTags(String tags[]) {
+        Set rv = new HashSet();
+        if (tags != null) {
+            for (int i = 0; i < tags.length; i++) {
+                String s = tags[i].trim();
+                if (s.length() > 0)
+                    rv.add(s);
+            }
+        }
+        return rv;
+    }
+    
+    private static final long getStartDate(Long numDaysAgo) {
+        if (numDaysAgo == null) return -1;
+        long now = System.currentTimeMillis();
+        long dayBegin = now - (now % 24*60*60*1000L);
+        dayBegin -= numDaysAgo.longValue()*24*60*60*1000L;
+        return dayBegin;
+    }
+    private static final int getInt(Long val) { 
+        if (val == null) 
+            return -1; 
+        else 
+            return val.intValue();
+    }
+
+    private boolean _includeOwners;
+    private boolean _includeManagers;
+    private boolean _includeAuthorizedPosters;
+    private boolean _includeAuthorizedReplies;
+    private boolean _includeUnauthorizedPosts;
+    /**
+     * @param owners include posts by the channel owner
+     * @param managers include posts by those authorized to manage the channel 
+     * @param posters include posts by those authorized to create new threads
+     * @param authReplies include authorized messages by those allowed to reply to authorized posts
+     * @param unauthorizedPosts include authentic yet unauthorized posts
+     */
+    public void setAuthorFilter(boolean owners, boolean managers, boolean posters, boolean authReplies, boolean unauthorizedPosts) {
+        _includeOwners = owners;
+        _includeManagers = managers;
+        _includeAuthorizedPosters = posters;
+        _includeAuthorizedReplies = authReplies;
+        _includeUnauthorizedPosts = unauthorizedPosts;
+    }
+    private long _earliestReceiveDate;
+    /** the post was received locally on or after the given date */
+    public void setReceivedSince(long date) { _earliestReceiveDate = date; }
+    private long _earliestPostDate;
+    /** the post was created on or after the given date */
+    public void setPostSince(long date) { _earliestPostDate = date; }
+    private boolean _applyTagFilterToMessages;
+    /** apply the tag filters to individual messages, not threads as a whole */
+    public void applyTagFilterToMessages(boolean apply) { _applyTagFilterToMessages = apply; }
+    private int _minPages;
+    private int _maxPages;
+    private int _minAttachments;
+    private int _maxAttachments;
+    private int _minReferences;
+    private int _maxReferences;
+    private int _minKeys;
+    private int _maxKeys;
+    /**
+     * minimum and maximum values (inclusive) for various post attributes, or -1 if
+     * the value is not relevent
+     */
+    public void setContentFilter(int minPages, int maxPages, int minAttachments, int maxAttachments,
+                                 int minReferences, int maxReferences, int minKeys, int maxKeys) {
+        _minPages = minPages;
+        _maxPages = maxPages;
+        _minAttachments = minAttachments;
+        _maxAttachments = maxAttachments;
+        _minReferences = minReferences;
+        _maxReferences = maxReferences;
+        _minKeys = minKeys;
+        _maxKeys = maxKeys;
+    }
+    private boolean _alreadyDecrypted;
+    private boolean _pbe;
+    private boolean _privateMessage;
+    /**
+     * @param alreadyDecrypted included posts must already be readable (false means they must not be readable)
+     * @param pbe the post was or is encrypted with a passphrase
+     * @param privateMessage the post was or is encrypted to the channel reply key
+     */
+    public void setStatus(boolean alreadyDecrypted, boolean pbe, boolean privateMessage) {
+        _alreadyDecrypted = alreadyDecrypted;
+        _pbe = pbe;
+        _privateMessage = privateMessage;
+    }
+
+    private Set _channelHashes;
+    private Set _requiredTags;
+    private Set _wantedTags;
+    private Set _rejectedTags;
+    public void setScope(Set channelHashes) { _channelHashes = channelHashes; }
+    public void setTags(Set required, Set wanted, Set rejected) {
+        _requiredTags = required;
+        _wantedTags = wanted;
+        _rejectedTags = rejected;
+    }
+    
     private static final String SQL_LIST_THREADS_ALL = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy)";
     private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy) )";
     /**
@@ -44,7 +211,7 @@ public class ThreadAccumulator {
      * @param tagsWanted threads must have at least one of the tags in this set
      * @param tagsRejected threads must not have any of the tags in this set
      */
-    public void gatherThreads(Set channelHashes, Set tagsRequired, Set tagsWanted, Set tagsRejected) {
+    public void gatherThreads() {
         init();
         
         // - iterate across all matching channels
@@ -56,7 +223,7 @@ public class ThreadAccumulator {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            if (channelHashes == null) {
+            if (_channelHashes == null) {
                 stmt = _client.con().prepareStatement(SQL_LIST_THREADS_ALL);
                 rs = stmt.executeQuery();
                 while (rs.next()) {
@@ -82,7 +249,7 @@ public class ThreadAccumulator {
                 stmt.close();
                 stmt = null;
             } else {
-                for (Iterator iter = channelHashes.iterator(); iter.hasNext(); ) {
+                for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
                     long chanId = _client.getChannelId(chan);
                     stmt = _client.con().prepareStatement(SQL_LIST_THREADS_CHAN);
@@ -122,7 +289,7 @@ public class ThreadAccumulator {
                 ReferenceNode root = builder.buildThread(_client.getMessage(msgId.longValue()));
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
-                loadInfo(root, tagsRequired, tagsWanted, tagsRejected);
+                loadInfo(root);
             }
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);
@@ -187,7 +354,7 @@ public class ThreadAccumulator {
         }        
     }
     
-    private void loadInfo(ReferenceNode threadRoot, Set tagsRequired, Set tagsWanted, Set tagsRejected) {
+    private void loadInfo(ReferenceNode threadRoot) {
         // walk the thread to find the latest post / message count / tags
         Harvester visitor = new Harvester();
         List roots = new ArrayList();
@@ -202,8 +369,8 @@ public class ThreadAccumulator {
         List tags = visitor.getTags();
         
         // now filter
-        if (tagsRejected != null) {
-            for (Iterator iter = tagsRejected.iterator(); iter.hasNext(); ) {
+        if (_rejectedTags != null) {
+            for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (tags.contains(tag)) {
                     _ui.debugMessage("Rejecting thread tagged with " + tag + ": " + threadRoot.getURI().toString());
@@ -211,8 +378,8 @@ public class ThreadAccumulator {
                 }
             }
         }
-        if ( (tagsRequired != null) && (tagsRequired.size() > 0) ) {
-            for (Iterator iter = tagsRequired.iterator(); iter.hasNext(); ) {
+        if ( (_requiredTags != null) && (_requiredTags.size() > 0) ) {
+            for (Iterator iter = _requiredTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (!tags.contains(tag)) {
                     _ui.debugMessage("Rejecting thread not tagged with " + tag + ": " + threadRoot.getURI().toString());
@@ -220,9 +387,9 @@ public class ThreadAccumulator {
                 }
             }
         }
-        if ( (tagsWanted != null) && (tagsWanted.size() > 0) ) {
+        if ( (_wantedTags != null) && (_wantedTags.size() > 0) ) {
             boolean found = false;
-            for (Iterator iter = tagsWanted.iterator(); iter.hasNext(); ) {
+            for (Iterator iter = _wantedTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (tags.contains(tag)) {
                     found = true;
@@ -230,7 +397,7 @@ public class ThreadAccumulator {
                 }
             }
             if (!found) {
-                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + tagsWanted + ") : " + threadRoot.getURI().toString());
+                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + _wantedTags + ") : " + threadRoot.getURI().toString());
                 return;
             }
         }

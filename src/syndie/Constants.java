@@ -106,7 +106,8 @@ public class Constants {
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
     /** split on all of the characters in splitElements, with the resulting tokens not including that character */
-    public static final String[] split(String splitElements, String orig) {
+    public static final String[] split(String splitElements, String orig) { return split(splitElements, orig, true); }
+    public static final String[] split(String splitElements, String orig, boolean includeZeroSizedElem) {
         List vals = new ArrayList();
         int off = 0;
         int start = 0;
@@ -115,7 +116,7 @@ public class Constants {
             if (splitElements.indexOf(str[off]) != -1) {
                 if (off-start > 0) {
                     vals.add(new String(str, start, off-start));
-                } else {
+                } else if (includeZeroSizedElem) {
                     vals.add(new String(""));
                 }
                 start = off+1;
@@ -124,7 +125,7 @@ public class Constants {
         }
         if (off-start > 0)
             vals.add(new String(str, start, off-start));
-        else
+        else if (includeZeroSizedElem)
             vals.add(new String(""));
         String rv[] = new String[vals.size()];
         for (int i = 0; i < rv.length; i++)

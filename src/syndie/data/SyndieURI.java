@@ -28,6 +28,22 @@ public class SyndieURI {
     public SyndieURI(String type, Map attributes) {
         this(type, new TreeMap(attributes));
     }
+    /** 
+     * populate the new URI with the given primary URI's settings, falling back on the given
+     * default values for attriutes that aren't in the primary URI
+     */
+    public SyndieURI(SyndieURI primary, SyndieURI defaultValues) {
+        if (defaultValues != null) {
+            _attributes = new TreeMap(defaultValues.getAttributes());
+            _type = defaultValues.getType();
+        }
+        if (primary != null) {
+            if (primary.getType() != null)
+                _type = primary.getType();
+            if (primary.getAttributes() != null)
+                _attributes.putAll(primary.getAttributes());
+        }
+    }
     
     public static SyndieURI createSearch(String searchString) {
         String searchURI = "urn:syndie:search:d7:keyword" + searchString.length() + ":" + searchString + "e";

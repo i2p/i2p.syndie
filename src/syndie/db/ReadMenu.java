@@ -634,7 +634,9 @@ class ReadMenu implements TextEngine.Menu {
             ui.debugMessage("Rejected tags: " + tagsRejected.toString());
 
             ThreadAccumulator accumulator = new ThreadAccumulator(client, ui);
-            accumulator.gatherThreads(channelHashes, tagsRequired, tagsWanted, tagsRejected);
+            accumulator.setTags(tagsRequired, tagsWanted, tagsRejected);
+            accumulator.setScope(channelHashes);
+            accumulator.gatherThreads();
             Map order = new TreeMap(new HighestFirstComparator());
             for (int i = 0; i < accumulator.getThreadCount(); i++) {
                 long mostRecentDate = accumulator.getMostRecentDate(i);

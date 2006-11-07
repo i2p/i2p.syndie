@@ -1,15 +1,22 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ExpandEvent;
 import org.eclipse.swt.events.ExpandListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -23,9 +30,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
+import syndie.data.ChannelInfo;
+import syndie.data.SyndieURI;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
-import syndie.db.NullUI;
-import syndie.db.ThreadAccumulator;
 
 /**
  *
@@ -34,8 +42,8 @@ public class MessageTreeFilter {
     private DBClient _client;
     private Composite _parent;
     private MessageTree _tree;
-    private Set _channels;
-    private Group _root;
+    private Hash _channels[];
+    private Composite _root;
     private Text _filterText;
     private ExpandBar _bar;
     // filter by scope
@@ -95,28 +103,24 @@ public class MessageTreeFilter {
     private ExpandItem _itemDisplay;
     private Button _displayThreaded;
     
+    private FilterModifyListener _modListener;
+    
     public MessageTreeFilter(DBClient client, Composite parent, MessageTree tree) {
         _client = client;
         _parent = parent;
         _tree = tree;
-        _channels = new HashSet();
+        _modListener = new FilterModifyListener();
         initComponents();
     }
 
     public Control getControl() { return _root; }
-    public void setChannels(Set channels) { 
-        _channels.clear(); 
-        if (channels != null) 
-            _channels.addAll(channels); 
-    }
     public void setFilter(String filter) { 
         _filterText.setText(filter); 
         parseFilter(); 
     }
     
     private void initComponents() {
-        _root = new Group(_parent, SWT.SHADOW_ETCHED_IN);
-        _root.setText("Message filter");
+        _root = new Composite(_parent, SWT.NONE);
         GridLayout gl = new GridLayout(1, true);
         //gl.marginLeft = 10;
         //gl.marginRight = 0;
@@ -124,6 +128,10 @@ public class MessageTreeFilter {
         
         _filterText = new Text(_root, SWT.SINGLE | SWT.BORDER);
         _filterText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _filterText.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent focusEvent) {}
+            public void focusLost(FocusEvent evt) { parseFilter(); }
+        });
         
         _bar = new ExpandBar(_root, SWT.V_SCROLL);
         _bar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -141,8 +149,8 @@ public class MessageTreeFilter {
         Button ok = new Button(actions, SWT.PUSH);
         ok.setText("Apply");
         ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { apply(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { apply(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { updateFilter(); apply(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { updateFilter(); apply(); }
         });
         
         Button cancel = new Button(actions, SWT.PUSH);
@@ -151,56 +159,307 @@ public class MessageTreeFilter {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
         });
-        
-        //_bar.addExpandListener(new ExpandListener() {
-        //    public void itemCollapsed(ExpandEvent expandEvent) { _parent.pack(); }
-        //    public void itemExpanded(ExpandEvent expandEvent) { _parent.pack(); }
-        //});
     }
     
     /** interpret the _filterText and update the gui components to display the correct state */
-    private void parseFilter() {}
-    
-    private Set getTags(Text component) {
-        HashSet rv = new HashSet();
-        String str = component.getText();
-        String tags[] = Constants.split(" \t;,", str);
-        if (tags != null)
-            for (int i = 0; i < tags.length; i++)
-                rv.add(tags[i].trim());
-        return rv;
+    private void parseFilter() {
+        SyndieURI uri = null;
+        String txt = _filterText.getText().trim();
+        if (txt.length() > 0) {
+            try {
+                System.out.println("read: " + txt);
+                uri = new SyndieURI(_filterText.getText().trim());
+                System.out.println("parsed: " + uri.toString());
+                uri = new SyndieURI(uri, DEFAULT_SEARCH_URI);
+                System.out.println("merged: " + uri.toString());
+            } catch (URISyntaxException use) {
+                // invalid
+                use.printStackTrace();
+                uri = DEFAULT_SEARCH_URI;
+            }
+        } else {
+            uri = DEFAULT_SEARCH_URI;
+        }
+        // see doc/web/spec.html#uri_search for the attributes of the uri
+        
+        // now go through the gui components and pick the right value to display, 
+        // using the attributes from DEFAULT_SEARCH_URI to fill in for unspecified
+        // values
+        parseChannels(uri.getStringArray("scope"));
+        parseAuthor(uri.getString("author"));
+        parseAge(uri.getLong("age"), uri.getLong("ageLocal"));
+        parseTags(uri.getStringArray("taginclude"), uri.getStringArray("tagrequire"), 
+                  uri.getStringArray("tagexclude"), uri.getBoolean("tagmessages", false));
+        parseContent(uri.getLong("pagemin"), uri.getLong("pagemax"),
+                     uri.getLong("attachmin"), uri.getLong("attachmax"),
+                     uri.getLong("refmin"), uri.getLong("refmax"),
+                     uri.getLong("keymin"), uri.getLong("keymax"));
+        parseStatus(uri.getBoolean("encrypted", false), uri.getBoolean("pbe", false), 
+                    uri.getBoolean("private", false));
+        parseDisplay(uri.getBoolean("threaded", true));
     }
+    
+    private void parseChannels(String channelHashes[]) {
+        if (channelHashes != null)
+            System.out.println("parse channels: " + channelHashes[0]);
+        else
+            System.out.println("parse NO channels");
+        _channels = null;
+        if ( (channelHashes == null) || (channelHashes.length == 0) || ("all".equals(channelHashes[0])) ) {
+            _forumName.setText("all");
+            _channels = null;
+        } else {
+            StringBuffer buf = new StringBuffer();
+            _channels = new Hash[channelHashes.length];
+            for (int i = 0; i < channelHashes.length; i++) {
+                byte h[] = Base64.decode(channelHashes[i]);
+                if ( (h != null) && (h.length == Hash.HASH_LENGTH) ) {
+                    _channels[i] = new Hash(h);
+                    long id = _client.getChannelId(_channels[i]);
+                    if (id >= 0) {
+                        ChannelInfo info = _client.getChannel(id);
+                        if ( (info != null) && (info.getName() != null) ) {
+                            buf.append(CommandImpl.strip(info.getName(), "[]\r\n", ' '));
+                            buf.append(' ');
+                        }
+                    }
+                    buf.append('[').append(_channels[i].toBase64().substring(0,6)).append(']');
+                    if (i + 1 < channelHashes.length)
+                        buf.append(", ");
+                }
+            }
+            _forumName.setText(buf.toString());
+        }
+    }
+    private void parseAuthor(String author) {
+        _authorAny.setSelection(false);
+        _authorAuthorized.setSelection(false);
+        _authorManager.setSelection(false);
+        _authorOwner.setSelection(false);
+        
+        if ("any".equalsIgnoreCase(author))
+            _authorAny.setSelection(true);
+        else if ("manager".equalsIgnoreCase(author))
+            _authorManager.setSelection(true);
+        else if ("owner".equalsIgnoreCase(author))
+            _authorOwner.setSelection(true);
+        else // if ("authorized".equalsIgnoreCase(author))
+            _authorAuthorized.setSelection(true);
+    }
+    private void parseAge(Long postDays, Long recvDays) {
+        _ageDay.setSelection(false);
+        _age2Days.setSelection(false);
+        _ageWeek.setSelection(false);
+        _age2Weeks.setSelection(false);
+        _ageMonth.setSelection(false);
+        _age2Months.setSelection(false);
+        _ageCustom.setSelection(false);
+        _ageCustomText.setText("");
+        
+        int days = Integer.MAX_VALUE;
+        if (recvDays != null)
+            days = Math.min(days, recvDays.intValue());
+        if (postDays != null)
+            days = Math.min(days, postDays.intValue());
+        if ( (recvDays == null) && (postDays == null) )
+            days = 2;
+        
+        if (days <= 1)
+            _ageDay.setSelection(true);
+        else if (days == 2)
+            _age2Days.setSelection(true);
+        else if (days <= 7)
+            _ageWeek.setSelection(true);
+        else if (days <= 14)
+            _age2Weeks.setSelection(true);
+        else if (days <= 31)
+            _ageMonth.setSelection(true);
+        else if (days <= 62)
+            _age2Months.setSelection(true);
+        else {
+            _ageCustom.setSelection(true);
+            _ageCustomText.setText(days+"");
+        }
+    }
+    private void parseTags(String inc[], String req[], String excl[], boolean msgs) {
+        _tagsRequireText.setText(parseTags(req));
+        _tagsIncludeText.setText(parseTags(inc));
+        _tagsExcludeText.setText(parseTags(excl));
+        _tagsApplyToMessages.setSelection(msgs);
+    }
+    private static final String parseTags(String tags[]) {
+        if ( (tags == null) || (tags.length == 0) ) return "";
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < tags.length; i++) {
+            String str = tags[i].trim();
+            if (str.length() > 0)
+                buf.append(str).append(' ');
+        }
+        return buf.toString().trim();
+    }
+    private void parseContent(Long pageMin, Long pageMax, Long attachMin, Long attachMax,
+                              Long refMin, Long refMax, Long keyMin, Long keyMax) {
+        if ( (pageMin != null) && (pageMin.intValue() > 0) )
+            _contentPageYes.setSelection(true);
+        else if ( (pageMax != null) && (pageMax.intValue() <= 0) )
+            _contentPageNo.setSelection(true);
+        else
+            _contentPageIgnore.setSelection(true);
+        
+        if ( (attachMin != null) && (attachMin.intValue() > 0) )
+            _contentAttachYes.setSelection(true);
+        else if ( (attachMax != null) && (attachMax.intValue() <= 0) )
+            _contentAttachNo.setSelection(true);
+        else
+            _contentAttachIgnore.setSelection(true);
+        
+        if ( (refMin != null) && (refMin.intValue() > 0) )
+            _contentRefYes.setSelection(true);
+        else if ( (refMax != null) && (refMax.intValue() <= 0) )
+            _contentRefNo.setSelection(true);
+        else
+            _contentRefIgnore.setSelection(true);
+        
+        if ( (keyMin != null) && (keyMin.intValue() > 0) )
+            _contentKeyYes.setSelection(true);
+        else if ( (keyMax != null) && (keyMax.intValue() <= 0) )
+            _contentKeyNo.setSelection(true);
+        else
+            _contentKeyIgnore.setSelection(true);
+    }
+    private void parseStatus(boolean encrypted, boolean pbe, boolean priv) {
+        _statusDecrypted.setSelection(!encrypted);
+        _statusPBE.setSelection(pbe);
+        _statusPrivate.setSelection(priv);
+    }
+    private void parseDisplay(boolean threaded) {
+        _displayThreaded.setSelection(threaded);
+    }
+    
+    /** update the filter text to reflect the gui state */
+    private void updateFilter() {
+        // get all the attributes together and call buildSearchURI(...)
+        
+        String scopes[] = null;
+        if (_channels == null) {
+            scopes = new String[] { "all" };
+        } else {
+            scopes = new String[_channels.length];
+            for (int i = 0; i < _channels.length; i++)
+                scopes[i] = _channels[i].toBase64();
+        }
+        String author = null;
+        if (_authorAny.getSelection()) author = "any";
+        else if (_authorManager.getSelection()) author = "manager";
+        else if (_authorOwner.getSelection()) author = "owner";
+        else author = "authorized";
+        Long postDays = null;
+        if (_ageDay.getSelection()) postDays = new Long(1);
+        else if (_age2Days.getSelection()) postDays = new Long(2);
+        else if (_ageWeek.getSelection()) postDays = new Long(7);
+        else if (_age2Weeks.getSelection()) postDays = new Long(14);
+        else if (_ageMonth.getSelection()) postDays = new Long(31);
+        else if (_age2Months.getSelection()) postDays = new Long(62);
+        else if (_ageCustom.getSelection()) postDays = getAge(_ageCustomText.getText());
+        Long recvDays = null;
+        String inc[] = Constants.split(" \t\r\n,", _tagsIncludeText.getText(), false);
+        String req[] = Constants.split(" \t\r\n,", _tagsRequireText.getText(), false);
+        String excl[] = Constants.split(" \t\r\n,", _tagsExcludeText.getText(), false);
+        boolean msgs = _tagsApplyToMessages.getSelection();
+        Long pageMin = (_contentPageYes.getSelection() ? new Long(1) : null);
+        Long pageMax = (_contentPageNo.getSelection() ? new Long(0) : null);
+        Long attachMin = (_contentAttachYes.getSelection() ? new Long(1) : null);
+        Long attachMax = (_contentAttachNo.getSelection() ? new Long(0) : null);
+        Long refMin = (_contentRefYes.getSelection() ? new Long(1) : null);
+        Long refMax = (_contentRefNo.getSelection() ? new Long(0) : null);
+        Long keyMin = (_contentKeyYes.getSelection() ? new Long(1) : null);
+        Long keyMax = (_contentKeyNo.getSelection() ? new Long(0) : null);
+        boolean encrypted = !_statusDecrypted.getSelection();
+        boolean pbe = _statusPBE.getSelection();
+        boolean priv = _statusPrivate.getSelection();
+        boolean threaded = _displayThreaded.getSelection();
+        
+        SyndieURI uri = buildSearchURI(scopes, author, postDays, recvDays, inc, req, excl, msgs, pageMin,
+                                       pageMax, attachMin, attachMax, refMin, refMax, keyMin, keyMax,
+                                       encrypted, pbe, priv, threaded);
+        _filterText.setText(uri.toString());
+    }
+    private static final Long getAge(String age) {
+        try {
+            int split = age.indexOf('d');
+            if (split > 0)
+                return new Long(age.substring(0, split).trim());
+            split = age.indexOf('w');
+            if (split > 0)
+                return new Long(7 * Long.parseLong(age.substring(0,split).trim()));
+            split = age.indexOf('m');
+            if (split > 0)
+                return new Long(31 * Long.parseLong(age.substring(0,split).trim()));
+            return new Long(Long.parseLong(age));
+        } catch (NumberFormatException nfe) {
+            return null;
+        }
+    }
+    
+    private static final SyndieURI DEFAULT_SEARCH_URI = buildSearchURI(null, "authorized", new Long(2), 
+            null, null, null, null, false, null, null, null, null, null, null, null, null, 
+            false, false, false, true);
+    
     /**
-     * actually generate the sorted list of matches
-     *
-     * @return list of ReferenceNode for the root of each thread, or if it isn't
-     *         threaded, simply one per message
+     * parameters here map to the fields @ doc/web/spec.html#uri_search
      */
-    private List calculateMatches() {
-        System.out.println("getting threads in channels: " + _channels);
-        Set required = getTags(_tagsRequireText);
-        Set include = getTags(_tagsIncludeText);
-        Set exclude = getTags(_tagsExcludeText);
-        ThreadAccumulator acc = new ThreadAccumulator(_client, new NullUI());
-        acc.gatherThreads((_channels.size() == 0 ? null : _channels), required, include, exclude);
-        List threads = new ArrayList();
-        for (int i = 0; i < acc.getThreadCount(); i++)
-            threads.add(acc.getRootThread(i));
-        return threads;
+    private static SyndieURI buildSearchURI(String scopes[], String author, Long postDays, Long recvDays,
+                                            String inc[], String req[], String excl[], boolean msgs,
+                                            Long pageMin, Long pageMax, Long attachMin, Long attachMax,
+                                            Long refMin, Long refMax, Long keyMin, Long keyMax,
+                                            boolean encrypted, boolean pbe, boolean priv, boolean threaded) {
+        HashMap attributes = new HashMap();
+        if ( (scopes != null) && (scopes.length > 0) )
+            attributes.put("scope", scopes);
+        if (author != null)
+            attributes.put("author", author);
+        if (recvDays != null)
+            attributes.put("agelocal", recvDays);
+        if (postDays != null)
+            attributes.put("age", postDays);
+        if ( (inc != null) && (inc.length > 0) )
+            attributes.put("taginclude", inc);
+        if ( (excl != null) && (excl.length > 0) )
+            attributes.put("tagexclude", excl);
+        if ( (req != null) && (req.length > 0) )
+            attributes.put("tagrequire", req);
+        if ( (pageMin != null) && (pageMin.intValue() >= 0) )
+            attributes.put("pagemin", pageMin);
+        if ( (pageMax != null) && (pageMax.intValue() >= 0) )
+            attributes.put("pagemax", pageMax);
+        if ( (attachMin != null) && (attachMin.intValue() >= 0) )
+            attributes.put("attachmin", attachMin);
+        if ( (attachMax != null) && (attachMax.intValue() >= 0) )
+            attributes.put("attachmax", attachMax);
+        if ( (refMin != null) && (refMin.intValue() >= 0) )
+            attributes.put("refmin", refMin);
+        if ( (refMax != null) && (refMax.intValue() >= 0) )
+            attributes.put("refmax", refMax);
+        if ( (keyMin != null) && (keyMin.intValue() >= 0) )
+            attributes.put("keymin", keyMin);
+        if ( (keyMax != null) && (keyMax.intValue() >= 0) )
+            attributes.put("keymax", keyMax);
+        
+        attributes.put("tagmessages", msgs ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("encrypted", encrypted ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("pbe", pbe ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("private", priv ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("threaded", threaded ? Boolean.TRUE : Boolean.FALSE);
+        
+        return new SyndieURI("search", attributes);
     }
     
-    private void apply() {
-        // actually gather the messages
-        _tree.setMessages(calculateMatches());
-        _tree.setFilter(_filterText.getText());
-        hide();
+    private void apply() { 
+        _tree.setFilter(_filterText.getText()); 
+        _tree.applyFilter();
+        _tree.hideFilterEditor();
     }
-    private void cancel() {
-        hide();
-    }
-    private void hide() { 
-        //
-    }
+    private void cancel() { _tree.hideFilterEditor(); }
     
     private void buildScopeFilter() {
         _itemScope = new ExpandItem(_bar, SWT.NONE);
@@ -216,6 +475,7 @@ public class MessageTreeFilter {
         _forumSelect = new Button(scope, SWT.PUSH);
         _forumSelect.setText("Select...");
         _forumSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _forumSelect.setEnabled(false); // todo: later... tie in a new ReferenceChooser
         
         _authorLabel = new Label(scope, SWT.NONE);
         _authorLabel.setText("Author: ");
@@ -232,6 +492,11 @@ public class MessageTreeFilter {
         _authorAny = new Button(_authorGroup, SWT.RADIO);
         _authorAny.setText("anyone, even unauthorized users");
         _authorAuthorized.setSelection(true);
+        
+        _authorAuthorized.addSelectionListener(_modListener);
+        _authorManager.addSelectionListener(_modListener);
+        _authorOwner.addSelectionListener(_modListener);
+        _authorAny.addSelectionListener(_modListener);
         
         _itemScope.setControl(scope);
         _itemScope.setHeight(scope.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
@@ -266,8 +531,17 @@ public class MessageTreeFilter {
         _ageCustomText = new Text(age, SWT.BORDER | SWT.SINGLE);
         _ageCustomText.setText("yyyy/MM/dd");
         _ageCustomText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        
         _ageDay.setSelection(true);
+        
+        _ageDay.addSelectionListener(_modListener);
+        _age2Days.addSelectionListener(_modListener);
+        _ageWeek.addSelectionListener(_modListener);
+        _age2Weeks.addSelectionListener(_modListener);
+        _ageMonth.addSelectionListener(_modListener);
+        _age2Months.addSelectionListener(_modListener);
+        _ageCustom.addSelectionListener(_modListener);
+        _ageCustomText.addFocusListener(_modListener);
+        
         _itemAge.setControl(age);
         _itemAge.setHeight(age.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
@@ -301,6 +575,11 @@ public class MessageTreeFilter {
         _tagsApplyToMessages = new Button(tags, SWT.CHECK);
         _tagsApplyToMessages.setText("apply to messages individually, not just to threads");
         _tagsApplyToMessages.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false, 2, 1));
+        
+        _tagsExcludeText.addFocusListener(_modListener);
+        _tagsIncludeText.addFocusListener(_modListener);
+        _tagsRequireText.addFocusListener(_modListener);
+        _tagsApplyToMessages.addSelectionListener(_modListener);
         
         _itemTags.setControl(tags);
         _itemTags.setHeight(tags.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
@@ -356,6 +635,19 @@ public class MessageTreeFilter {
         _contentKeyIgnore.setText("don't care");
         _contentKeyIgnore.setSelection(true);
         
+        _contentAttachIgnore.addSelectionListener(_modListener);
+        _contentAttachNo.addSelectionListener(_modListener);
+        _contentAttachYes.addSelectionListener(_modListener);
+        _contentKeyIgnore.addSelectionListener(_modListener);
+        _contentKeyNo.addSelectionListener(_modListener);
+        _contentKeyYes.addSelectionListener(_modListener);
+        _contentPageIgnore.addSelectionListener(_modListener);
+        _contentPageNo.addSelectionListener(_modListener);
+        _contentPageYes.addSelectionListener(_modListener);
+        _contentRefIgnore.addSelectionListener(_modListener);
+        _contentRefNo.addSelectionListener(_modListener);
+        _contentRefYes.addSelectionListener(_modListener);
+        
         _itemContent.setControl(content);
         _itemContent.setHeight(content.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
@@ -379,6 +671,11 @@ public class MessageTreeFilter {
         _statusPrivate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _statusDecrypted.setSelection(true);
+        
+        _statusDecrypted.addSelectionListener(_modListener);
+        _statusPBE.addSelectionListener(_modListener);
+        _statusPrivate.addSelectionListener(_modListener);
+        
         _itemStatus.setControl(status);
         _itemStatus.setHeight(status.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
@@ -399,7 +696,18 @@ public class MessageTreeFilter {
          */
         
         _displayThreaded.setSelection(true);
+        
+        _displayThreaded.addSelectionListener(_modListener);
+        
         _itemDisplay.setControl(display);
         _itemDisplay.setHeight(display.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+    }
+    
+    private class FilterModifyListener implements SelectionListener, TraverseListener, FocusListener {
+        public void widgetSelected(SelectionEvent selectionEvent) { updateFilter(); }
+        public void widgetDefaultSelected(SelectionEvent selectionEvent) { updateFilter(); }
+        public void keyTraversed(TraverseEvent traverseEvent) { updateFilter(); }
+        public void focusGained(FocusEvent focusEvent) {}
+        public void focusLost(FocusEvent focusEvent) { updateFilter(); }
     }
 }
