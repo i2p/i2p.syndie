@@ -216,7 +216,7 @@ public class MessageTree {
                     _listener.filterApplied(this, uri);
             } catch (URISyntaxException use) {
                 // noop
-                System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
+                //System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
             }
         }
     }
@@ -390,7 +390,7 @@ public class MessageTree {
 
     private void editFilter() { 
         String txt = _filter.getText();
-        System.out.println("showing edit for [" + txt + "]");
+        //System.out.println("showing edit for [" + txt + "]");
         _filterEditor.setFilter(txt);
         _filterEditorShell.open();
     }

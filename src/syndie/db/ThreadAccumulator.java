@@ -31,7 +31,33 @@ public class ThreadAccumulator {
     private List _threadLatestAuthorId;
     /** when (Long) the most recent post was made */
     private List _threadLatestPostDate;
-    
+
+    // parsed search critera
+    private boolean _showThreaded;
+    private boolean _includeOwners;
+    private boolean _includeManagers;
+    private boolean _includeAuthorizedPosters;
+    private boolean _includeAuthorizedReplies;
+    private boolean _includeUnauthorizedPosts;
+    private long _earliestReceiveDate;
+    private long _earliestPostDate;
+    private boolean _applyTagFilterToMessages;
+    private int _minPages;
+    private int _maxPages;
+    private int _minAttachments;
+    private int _maxAttachments;
+    private int _minReferences;
+    private int _maxReferences;
+    private int _minKeys;
+    private int _maxKeys;
+    private boolean _alreadyDecrypted;
+    private boolean _pbe;
+    private boolean _privateMessage;
+    private Set _channelHashes;
+    private Set _requiredTags;
+    private Set _wantedTags;
+    private Set _rejectedTags;
+        
     public ThreadAccumulator(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
@@ -99,6 +125,7 @@ public class ThreadAccumulator {
         _alreadyDecrypted = !criteria.getBoolean("encrypted", false);
         _pbe = criteria.getBoolean("pbe", false);
         _privateMessage = criteria.getBoolean("private", false);
+        _showThreaded = criteria.getBoolean("threaded", true);
     }
     
     private static final Set getTags(String tags[]) {
@@ -127,11 +154,6 @@ public class ThreadAccumulator {
             return val.intValue();
     }
 
-    private boolean _includeOwners;
-    private boolean _includeManagers;
-    private boolean _includeAuthorizedPosters;
-    private boolean _includeAuthorizedReplies;
-    private boolean _includeUnauthorizedPosts;
     /**
      * @param owners include posts by the channel owner
      * @param managers include posts by those authorized to manage the channel 
@@ -146,23 +168,12 @@ public class ThreadAccumulator {
         _includeAuthorizedReplies = authReplies;
         _includeUnauthorizedPosts = unauthorizedPosts;
     }
-    private long _earliestReceiveDate;
     /** the post was received locally on or after the given date */
     public void setReceivedSince(long date) { _earliestReceiveDate = date; }
-    private long _earliestPostDate;
     /** the post was created on or after the given date */
     public void setPostSince(long date) { _earliestPostDate = date; }
-    private boolean _applyTagFilterToMessages;
     /** apply the tag filters to individual messages, not threads as a whole */
     public void applyTagFilterToMessages(boolean apply) { _applyTagFilterToMessages = apply; }
-    private int _minPages;
-    private int _maxPages;
-    private int _minAttachments;
-    private int _maxAttachments;
-    private int _minReferences;
-    private int _maxReferences;
-    private int _minKeys;
-    private int _maxKeys;
     /**
      * minimum and maximum values (inclusive) for various post attributes, or -1 if
      * the value is not relevent
@@ -178,9 +189,6 @@ public class ThreadAccumulator {
         _minKeys = minKeys;
         _maxKeys = maxKeys;
     }
-    private boolean _alreadyDecrypted;
-    private boolean _pbe;
-    private boolean _privateMessage;
     /**
      * @param alreadyDecrypted included posts must already be readable (false means they must not be readable)
      * @param pbe the post was or is encrypted with a passphrase
@@ -192,10 +200,6 @@ public class ThreadAccumulator {
         _privateMessage = privateMessage;
     }
 
-    private Set _channelHashes;
-    private Set _requiredTags;
-    private Set _wantedTags;
-    private Set _rejectedTags;
     public void setScope(Set channelHashes) { _channelHashes = channelHashes; }
     public void setTags(Set required, Set wanted, Set rejected) {
         _requiredTags = required;
@@ -369,12 +373,192 @@ public class ThreadAccumulator {
         List tags = visitor.getTags();
         
         // now filter
+        if (filterPassed(tags, threadRoot.getURI(), threadRoot, visitor, true)) {
+            _rootURIs.add(threadRoot.getURI());
+            _threadSubject.add(threadRoot.getDescription());
+            _threadLatestAuthorId.add(new Long(latestAuthorId));
+            _threadLatestPostDate.add(new Long(latestPostDate));
+            _threadMessages.add(new Integer(messageCount));
+            _threadRootAuthorId.add(new Long(rootAuthorId));
+            _threadTags.add(tags);
+            _roots.add(threadRoot);
+        } else {
+            // the root didn't pass, but maybe its children will
+        }
+        
+        removeFilteredChildren(threadRoot, visitor);
+        
+        // passed the filter.  add to the accumulator
+        if (!_showThreaded) {
+            // add the depth-first traversal of the thread, and update the threadRoot
+            // to remove its children
+            
+            //add(threadRoot, rootAuthorId, visitor);
+            while (threadRoot.getChildCount() > 0) {
+                ReferenceNode child = threadRoot.getChild(0);
+                threadRoot.removeChild(child);
+                add(child, rootAuthorId, visitor);
+            }
+        }
+    }
+    
+    /**
+     * currently, this requires the entire thread to pass the filter, trimming 
+     * it off at each leaf that does not pass.  todo: this should instead remove
+     * filtered elements and reparent the thread for orphaned messages that do
+     * pass the filter
+     */
+    private void removeFilteredChildren(ReferenceNode cur, Harvester harvester) {
+        for (int i = 0; i < cur.getChildCount(); i++) {
+            ReferenceNode child = cur.getChild(i);
+            
+            long chanId = _client.getChannelId(child.getURI().getScope());
+            MessageInfo msg = _client.getMessage(chanId, child.getURI().getMessageId());
+            List tags = new ArrayList();
+            tags.addAll(msg.getPublicTags());
+            tags.addAll(msg.getPrivateTags());
+            if (!filterPassed(tags, child.getURI(), child, harvester, false)) {
+                cur.removeChild(child);
+                i--;
+            } else {
+                removeFilteredChildren(child, harvester);
+            }
+        }
+    }
+    
+    private void add(ReferenceNode cur, long rootAuthorId, Harvester harvester) {
+        long chanId = _client.getChannelId(cur.getURI().getScope());
+        MessageInfo msg = _client.getMessage(chanId, cur.getURI().getMessageId());
+        List tags = new ArrayList();
+        tags.addAll(msg.getPublicTags());
+        tags.addAll(msg.getPrivateTags());
+
+        // all filtered messages were removed above in removeFilteredChildren
+        _rootURIs.add(cur.getURI());
+        _threadSubject.add(cur.getDescription());
+        _threadLatestAuthorId.add(new Long(msg.getAuthorChannelId()));
+        _threadLatestPostDate.add(cur.getURI().getMessageId());
+        _threadMessages.add(new Integer(1));
+        _threadRootAuthorId.add(new Long(rootAuthorId));
+        _threadTags.add(tags);
+        _roots.add(cur);
+        while (cur.getChildCount() > 0) {
+            ReferenceNode child = cur.getChild(0);
+            cur.removeChild(child);
+            add(child, rootAuthorId, harvester);
+        }
+    }
+    
+    private boolean filterPassed(List tags, SyndieURI uri, ReferenceNode node, Harvester harvester, boolean isRoot) {
+        ReferenceNode rv = node;
+        boolean ok = true;
+        if (isRoot || _applyTagFilterToMessages)
+            if (!tagFilterPassed(tags, uri))
+                ok = false;
+        
+        long chanId = -1;
+        if (ok) {
+            chanId = _client.getChannelId(uri.getScope());
+            if (chanId == -1) ok = false;
+        }
+        ChannelInfo chan = null;
+        MessageInfo msg = null;
+        if (ok) {
+            chan = _client.getChannel(chanId);
+            msg = _client.getMessage(chanId, uri.getMessageId());
+            if ( (chan == null) || (msg == null) ) 
+                ok = false;
+        }
+        if (ok) {
+            if (!authorFilterPassed(msg, chan, node))
+                ok = false;
+        }
+        
+        if (ok) {
+            long when = -1;
+            if (isRoot)
+                when = harvester.getLatestPost().getURI().getMessageId().longValue();
+            else
+                when = uri.getMessageId().longValue();
+            if ( ( (_earliestReceiveDate >= 0) && (when < _earliestReceiveDate) ) ||
+                 ( (_earliestPostDate >= 0) && (when < _earliestPostDate) ) )
+                ok = false;
+        }
+        
+        if ( ok && ( (_pbe && !msg.getWasPassphraseProtected()) || (!_pbe && msg.getWasPassphraseProtected()) ) )
+            ok = false;
+        if ( ok && ( (_privateMessage && !msg.getWasPrivate()) || (!_privateMessage && msg.getWasPrivate()) ) )
+            ok = false;
+        if ( ok && ( (_alreadyDecrypted && (msg.getReadKeyUnknown() || msg.getPassphrasePrompt() != null) ) ||
+                     (!_alreadyDecrypted && !msg.getReadKeyUnknown() && (msg.getPassphrasePrompt() == null) ) ) )
+            ok = false;
+        if ( ok && ((_minPages >= 0) && (msg.getPageCount() < _minPages)) )
+            ok = false;
+        if ( ok && ((_maxPages >= 0) && (msg.getPageCount() > _maxPages)) )
+            ok = false;
+        if ( ok && ((_minAttachments >= 0) && (msg.getAttachmentCount() < _minAttachments)) )
+            ok = false;
+        if ( ok && ((_maxAttachments >= 0) && (msg.getAttachmentCount() > _maxAttachments)) )
+            ok = false;
+        if ( ok && ((_minReferences >= 0) && ( (msg.getReferences() == null) || (msg.getReferences().size() < _minReferences) ) ))
+            ok = false;
+        if ( ok && ((_maxReferences >= 0) && ( (msg.getReferences() != null) && (msg.getReferences().size() > _maxReferences) ) ))
+            ok = false;
+        // todo: honor minKeys and maxKeys
+        
+        return ok;
+    }
+    private boolean authorFilterPassed(MessageInfo msg, ChannelInfo chan, ReferenceNode node) {
+        if (_includeUnauthorizedPosts || chan.getAllowPublicPosts()) return true;
+        Hash author = msg.getURI().getScope();
+        long authorId = msg.getAuthorChannelId();
+        if (authorId != msg.getScopeChannelId())
+            author = _client.getChannelHash(authorId);
+        if (allowedToPost(author, chan))
+            return true;
+        if (chan.getAllowPublicReplies()) {
+            // not explicitly authorized, so check its parents
+            ReferenceNode cur = node.getParent();
+            while (cur != null) {
+                long curChanId = _client.getChannelId(cur.getURI().getScope());
+                MessageInfo curMsg = _client.getMessage(curChanId, cur.getURI().getMessageId());
+                if (curMsg != null) {
+                    Hash curAuthor = cur.getURI().getScope();
+                    if (curMsg.getAuthorChannelId() != curMsg.getScopeChannelId())
+                        curAuthor = _client.getChannelHash(curMsg.getAuthorChannelId());
+                    if (allowedToPost(curAuthor, chan))
+                        return true;
+                }
+                cur = cur.getParent();
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+    private boolean allowedToPost(Hash author, ChannelInfo chan) {
+        if (chan.getChannelHash().equals(author)) {
+            if (_includeOwners || _includeManagers || _includeAuthorizedPosters || _includeAuthorizedReplies)
+                return true;
+        }
+        if (chan.getAuthorizedManagers().contains(author)) {
+            if (_includeManagers || _includeAuthorizedPosters || _includeAuthorizedReplies)
+                return true;
+        }
+        if (chan.getAuthorizedPosters().contains(author)) {
+            if (_includeAuthorizedPosters || _includeAuthorizedReplies)
+                return true;
+        }
+        return false;
+    }
+    /** return true if the tags for the message meet our search criteria */
+    private boolean tagFilterPassed(List tags, SyndieURI msg) {
         if (_rejectedTags != null) {
             for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (tags.contains(tag)) {
-                    _ui.debugMessage("Rejecting thread tagged with " + tag + ": " + threadRoot.getURI().toString());
-                    return;
+                    _ui.debugMessage("Rejecting thread tagged with " + tag + ": " + msg.toString());
+                    return false;
                 }
             }
         }
@@ -382,8 +566,8 @@ public class ThreadAccumulator {
             for (Iterator iter = _requiredTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (!tags.contains(tag)) {
-                    _ui.debugMessage("Rejecting thread not tagged with " + tag + ": " + threadRoot.getURI().toString());
-                    return;
+                    _ui.debugMessage("Rejecting thread not tagged with " + tag + ": " + msg.toString());
+                    return false;
                 }
             }
         }
@@ -397,19 +581,10 @@ public class ThreadAccumulator {
                 }
             }
             if (!found) {
-                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + _wantedTags + ") : " + threadRoot.getURI().toString());
-                return;
+                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + _wantedTags + ") : " + msg.toString());
+                return false;
             }
         }
-        
-        // passed the filter.  add to the accumulator
-        _rootURIs.add(threadRoot.getURI());
-        _threadSubject.add(threadRoot.getDescription());
-        _threadLatestAuthorId.add(new Long(latestAuthorId));
-        _threadLatestPostDate.add(new Long(latestPostDate));
-        _threadMessages.add(new Integer(messageCount));
-        _threadRootAuthorId.add(new Long(rootAuthorId));
-        _threadTags.add(tags);
-        _roots.add(threadRoot);
+        return true;
     }
 }

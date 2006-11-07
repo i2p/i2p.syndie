@@ -53,7 +53,61 @@ public class SyndieURI {
             throw new RuntimeException("Hmm, encoded search URI is not valid: " + use.getMessage() + " [" + searchURI + "]");
         }
     }
-
+    
+    
+    public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch(null, "authorized", new Long(2), 
+            null, null, null, null, false, null, null, null, null, null, null, null, null, 
+            false, false, false, true);
+    
+    /**
+     * parameters here map to the fields @ doc/web/spec.html#uri_search
+     */
+    public static SyndieURI createSearch(String scopes[], String author, Long postDays, Long recvDays,
+                                         String inc[], String req[], String excl[], boolean msgs,
+                                         Long pageMin, Long pageMax, Long attachMin, Long attachMax,
+                                         Long refMin, Long refMax, Long keyMin, Long keyMax,
+                                         boolean encrypted, boolean pbe, boolean priv, boolean threaded) {
+        HashMap attributes = new HashMap();
+        if ( (scopes != null) && (scopes.length > 0) )
+            attributes.put("scope", scopes);
+        if (author != null)
+            attributes.put("author", author);
+        if (recvDays != null)
+            attributes.put("agelocal", recvDays);
+        if (postDays != null)
+            attributes.put("age", postDays);
+        if ( (inc != null) && (inc.length > 0) )
+            attributes.put("taginclude", inc);
+        if ( (excl != null) && (excl.length > 0) )
+            attributes.put("tagexclude", excl);
+        if ( (req != null) && (req.length > 0) )
+            attributes.put("tagrequire", req);
+        if ( (pageMin != null) && (pageMin.intValue() >= 0) )
+            attributes.put("pagemin", pageMin);
+        if ( (pageMax != null) && (pageMax.intValue() >= 0) )
+            attributes.put("pagemax", pageMax);
+        if ( (attachMin != null) && (attachMin.intValue() >= 0) )
+            attributes.put("attachmin", attachMin);
+        if ( (attachMax != null) && (attachMax.intValue() >= 0) )
+            attributes.put("attachmax", attachMax);
+        if ( (refMin != null) && (refMin.intValue() >= 0) )
+            attributes.put("refmin", refMin);
+        if ( (refMax != null) && (refMax.intValue() >= 0) )
+            attributes.put("refmax", refMax);
+        if ( (keyMin != null) && (keyMin.intValue() >= 0) )
+            attributes.put("keymin", keyMin);
+        if ( (keyMax != null) && (keyMax.intValue() >= 0) )
+            attributes.put("keymax", keyMax);
+        
+        attributes.put("tagmessages", msgs ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("encrypted", encrypted ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("pbe", pbe ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("private", priv ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("threaded", threaded ? Boolean.TRUE : Boolean.FALSE);
+        
+        return new SyndieURI("search", attributes);
+    }
+    
     public static SyndieURI createURL(String url) {
         StringBuffer buf = new StringBuffer();
         buf.append("urn:syndie:url:d");
