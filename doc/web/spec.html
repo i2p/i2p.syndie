@@ -185,7 +185,9 @@ Attributes:
 The canonical encoding is: "urn:syndie:$refType:$bencodedAttributes",
 with $refType being one of the five types above, and $bencodedAttributes
 being the bencoded attributes.  Strings are UTF-8, and the bencoded attributes
-are ordered according to the UK locale (in the canonical form).
+are ordered according to the UK locale (in the canonical form).  Keys have
+leading 0x0 bytes stripped prior to Base64 encoding, which must be expanded
+upon decoding.
 
 Examples:
  urn:syndie:url:d3:url19:http://www.i2p.net/e

@@ -69,7 +69,7 @@ public class KeyGenerator {
     }
     
     /** standard exponent size */
-    private static final int PUBKEY_EXPONENT_SIZE_FULL = 2048;
+    public static final int PUBKEY_EXPONENT_SIZE_FULL = 2048;
     /** 
      * short exponent size, which should be safe for use with the Oakley primes,
      * per "On Diffie-Hellman Key Agreement with Short Exponents" - van Oorschot, Weiner
@@ -79,8 +79,8 @@ public class KeyGenerator {
      * http://groups.google.com/group/sci.crypt/browse_thread/thread/1855a5efa7416677/339fa2f945cc9ba0#339fa2f945cc9ba0
      * (damn commercial access to http://www.springerlink.com/(xrkdvv45w0cmnur4aimsxx55)/app/home/contribution.asp?referrer=parent&backto=issue,13,31;journal,893,3280;linkingpublicationresults,1:105633,1 )
      */
-    private static final int PUBKEY_EXPONENT_SIZE_SHORT = 226;
-    public static final int PUBKEY_EXPONENT_SIZE = PUBKEY_EXPONENT_SIZE_SHORT;
+    public static final int PUBKEY_EXPONENT_SIZE_SHORT = 226;
+    public static int PUBKEY_EXPONENT_SIZE = PUBKEY_EXPONENT_SIZE_SHORT;
 
     /** Generate a pair of keys, where index 0 is a PublicKey, and
      * index 1 is a PrivateKey

@@ -116,7 +116,8 @@ public class MessageTreeFilter {
     public Control getControl() { return _root; }
     public void setFilter(String filter) { 
         _filterText.setText(filter); 
-        parseFilter(); 
+        parseFilter();
+        _itemAge.setExpanded(true);
     }
     
     private void initComponents() {
@@ -372,14 +373,9 @@ public class MessageTreeFilter {
         boolean priv = _statusPrivate.getSelection();
         boolean threaded = _displayThreaded.getSelection();
         
-        SyndieURI uri = SyndieURI.createSearchURI(scopes, author, postDays, recvDays, inc, req, excl, msgs, pageMin,
-                                       pageMax, attachMin, attachMax, refMin, refMax, keyMin, keyMax,
-                                       encrypted, pbe, priv, threaded);
-                                       /*
-        SyndieURI uri = buildSearchURI(scopes, author, postDays, recvDays, inc, req, excl, msgs, pageMin,
-                                       pageMax, attachMin, attachMax, refMin, refMax, keyMin, keyMax,
-                                       encrypted, pbe, priv, threaded);
-                                        */
+        SyndieURI uri = SyndieURI.createSearch(scopes, author, postDays, recvDays, inc, req, excl, msgs, pageMin,
+                                               pageMax, attachMin, attachMax, refMin, refMax, keyMin, keyMax,
+                                               encrypted, pbe, priv, threaded);
         _filterText.setText(uri.toString());
     }
     private static final Long getAge(String age) {

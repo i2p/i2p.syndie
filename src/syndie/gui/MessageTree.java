@@ -81,6 +81,18 @@ public class MessageTree {
     }
     
     public Control getControl() { return _root; } //return _tree; }
+    public SyndieURI getSelected() {
+        TreeItem items[] = _tree.getSelection();
+        if (items != null) {
+            for (int i = 0; i < items.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(items[i]);
+                if (uri != null)
+                    return uri;
+            }
+        }
+        // nothing selected (or at least no uris)
+        return null;
+    }
 
     public interface MessageTreeListener {
         /** 
@@ -146,12 +158,14 @@ public class MessageTree {
             public void resized() { resizeCols(); }
             public void selected() { fireSelected(false); }
             public void returnHit() { fireSelected(true); }
+            public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
         };
         _tree.addSelectionListener(lsnr);
         _tree.addControlListener(lsnr);
         _tree.addTraverseListener(lsnr);
         _tree.addKeyListener(lsnr);
+        _tree.addMouseListener(lsnr);
         
         createFilterEditor();
     }

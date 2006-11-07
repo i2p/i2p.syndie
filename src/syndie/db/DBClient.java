@@ -56,6 +56,10 @@ public class DBClient {
         
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
+        // we are probably safe with the small exponent size, but asym 
+        // encryption and decryption is rare enough in syndie that its reasonable
+        // to go up to the full 2048bits
+        ctx.keyGenerator().PUBKEY_EXPONENT_SIZE = ctx.keyGenerator().PUBKEY_EXPONENT_SIZE_FULL;
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;

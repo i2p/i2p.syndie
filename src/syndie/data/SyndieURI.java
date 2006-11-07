@@ -55,9 +55,14 @@ public class SyndieURI {
     }
     
     
-    public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch(null, "authorized", new Long(2), 
-            null, null, null, null, false, null, null, null, null, null, null, null, null, 
-            false, false, false, true);
+    public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch((Hash)null);
+    public static SyndieURI createSearch(Hash channel) {
+        String scopes[] = null;
+        if (channel != null)
+            scopes = new String[] { channel.toBase64() };
+        return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
+                            null, null, null, null, null, null, null, null, false, false, false, true);
+    }
     
     /**
      * parameters here map to the fields @ doc/web/spec.html#uri_search
@@ -306,35 +311,35 @@ public class SyndieURI {
         return null;
     }
     public SessionKey getReadKey() {
-        byte val[] = getBytes("readKey");
+        byte val[] = decodeKey(getString("readKey"), SessionKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
             return new SessionKey(val);
         else
             return null;
     }
     public SessionKey getArchiveKey() {
-        byte val[] = getBytes(Constants.URI_ARCHIVE_PASSPHRASE);
+        byte val[] = decodeKey(getString(Constants.URI_ARCHIVE_PASSPHRASE), SessionKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
             return new SessionKey(val);
         else
             return null;
     }
     public SigningPrivateKey getPostKey() {
-        byte val[] = getBytes("postKey");
+        byte val[] = decodeKey(getString("postKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
             return new SigningPrivateKey(val);
         else
             return null;
     }
     public SigningPrivateKey getManageKey() {
-        byte val[] = getBytes("manageKey");
+        byte val[] = decodeKey(getString("manageKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
             return new SigningPrivateKey(val);
         else
             return null;
     }
     public PrivateKey getReplyKey() {
-        byte val[] = getBytes("replyKey");
+        byte val[] = decodeKey(getString("replyKey"), PrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == PrivateKey.KEYSIZE_BYTES) )
             return new PrivateKey(val);
         else
@@ -348,6 +353,8 @@ public class SyndieURI {
             return null;
     }
     public Long getMessageId() { return getLong("messageId"); }
+    public Long getAttachment() { return getLong("attachment"); }
+    public Long getPage() { return getLong("page"); }
     
     public void fromString(String bencodedURI) throws URISyntaxException {
         if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");
@@ -373,6 +380,25 @@ public class SyndieURI {
     
     public boolean equals(Object obj) { return toString().equals(obj.toString()); }
     public int hashCode() { return toString().hashCode(); }
+
+    public static String encodeKey(byte orig[]) {
+        int remaining = orig.length;
+        int start = 0;
+        while ( (remaining > 0) && (orig[start] == 0x00) ) {
+            remaining--;
+            start++;
+        }
+        return Base64.encode(orig, start, remaining);
+    }
+    public static byte[] decodeKey(String orig, int size) {
+        byte rv[] = new byte[size];
+        byte decoded[] = Base64.decode(orig);
+        if (decoded == null) return null;
+        if (decoded.length > size) return null;
+        for (int i = 0; i < decoded.length; i++)
+            rv[size-i-1] = decoded[decoded.length-1-i];
+        return rv;
+    }
     
     public static void main(String args[]) { test(); }
     private static void test() {

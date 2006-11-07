@@ -5,6 +5,8 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -16,14 +18,16 @@ import org.eclipse.swt.widgets.TreeItem;
  * encapsulate standard tree interaction functionality - override selected(), 
  * returnHit(), and/or resized() as necessary
  */
-public class SyndieTreeListener implements KeyListener, TraverseListener, SelectionListener, ControlListener {
+public class SyndieTreeListener implements KeyListener, TraverseListener, SelectionListener, ControlListener, MouseListener {
     private Tree _tree;
 
     public SyndieTreeListener(Tree tree) { _tree = tree; }
     
     /** the tree's selection was updated */
     public void selected() {}
-    /** the user hit return or double clicked on the selected row */
+    /** the user doubleclicked on the selected row */
+    public void doubleclick() {}
+    /** the user hit return on the selected row */
     public void returnHit() {}
     /** the tree was resized */
     public void resized() {}
@@ -68,6 +72,10 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
 
     public void controlMoved(ControlEvent controlEvent) {}
     public void controlResized(ControlEvent evt) { resized(); }
+
+    public void mouseDoubleClick(MouseEvent evt) { doubleclick(); }
+    public void mouseDown(MouseEvent evt) {}
+    public void mouseUp(MouseEvent evt) {}
     
     private TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
 }

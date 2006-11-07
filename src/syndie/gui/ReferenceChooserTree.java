@@ -119,7 +119,7 @@ public class ReferenceChooserTree {
         _searchRoot.setText("Search results...");
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) { 
-            public void selected() { fireSelectionEvents(); } 
+            public void selected() { fireSelectionEvents(); }
         };
         _tree.addKeyListener(lsnr);
         _tree.addTraverseListener(lsnr);
