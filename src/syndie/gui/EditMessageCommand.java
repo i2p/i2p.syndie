@@ -40,8 +40,8 @@ public class EditMessageCommand implements CLI.Command {
                 Point preferredSize = editor.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
                 Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
                                           Math.min(setSize.y, preferredSize.y));
-                Point size = new Point(Math.max(minSize.x, 200),
-                                       Math.max(minSize.y, 200));
+                Point size = new Point(Math.max(minSize.x, 400),
+                                       Math.max(minSize.y, 400));
                 //System.out.println("setSize: " + setSize + " pref: " + preferredSize + " min: " + minSize + " sz: " + size);
                 editor.getControl().setSize(size);
                 scroll.setMinSize(size);

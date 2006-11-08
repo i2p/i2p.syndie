@@ -205,11 +205,11 @@ public class PageEditor {
 
     private void buildControls() {
         _root = new Composite(_parent, SWT.BORDER);
-        if ("text/html".equals(_contentType)) {
+        boolean html = "text/html".equals(_contentType);
+        if (html)
             createHTMLToolbar();
-        } else {
+        else
             createTextToolbar();
-        }
         _sash = new SashForm(_root, SWT.VERTICAL);
         _text = new StyledText(_sash, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
         _text.setEditable(true);
@@ -217,8 +217,12 @@ public class PageEditor {
         addEditListeners();
         
         _preview = new PageRenderer(_sash, true);
-        _sash.setMaximizedControl(null);
-        _sash.setWeights(new int[] { 80, 20 });
+        if (html) {
+            _sash.setMaximizedControl(null);
+            _sash.setWeights(new int[] { 80, 20 });
+        } else {
+            _sash.setMaximizedControl(_text);
+        }
         
         createStyleChooser();
         createSpellchecker();
@@ -355,16 +359,14 @@ public class PageEditor {
         });
         _metaPreview.setSelection(true);
         
-        grpMeta.setEnabled(enable);
+        enableActions(enable, grpMeta, grpList, grpPage, grpHTML);
+        
         RowLayout rl = new RowLayout(SWT.HORIZONTAL);
         grpMeta.setLayout(rl);
-        grpList.setEnabled(enable);
         rl = new RowLayout(SWT.HORIZONTAL);
         grpList.setLayout(rl);
-        grpPage.setEnabled(enable);
         rl = new RowLayout(SWT.HORIZONTAL);
         grpPage.setLayout(rl);
-        grpHTML.setEnabled(enable);
         rl = new RowLayout(SWT.HORIZONTAL);
         grpHTML.setLayout(rl);
         
@@ -372,6 +374,34 @@ public class PageEditor {
         rl.fill = false;
         rl.wrap = true;
         _toolbars.setLayout(rl);
+    }
+    
+    private void enableActions(boolean enable, Group meta, Group list, Group page, Group html) {
+        meta.setEnabled(enable);
+        list.setEnabled(enable);
+        page.setEnabled(enable);
+        html.setEnabled(enable);
+        
+        _htmlImg.setEnabled(enable);
+        _htmlHeader.setEnabled(enable);
+        _htmlLink.setEnabled(enable);
+        _htmlPre.setEnabled(enable);
+        _htmlQuote.setEnabled(enable);
+        _htmlStyleChooser.setEnabled(enable);
+        _htmlSymbol.setEnabled(enable);
+        
+        _metaCopy.setEnabled(enable);
+        _metaCut.setEnabled(enable);
+        _metaFind.setEnabled(enable);
+        _metaPaste.setEnabled(enable);
+        _metaPreview.setEnabled(enable);
+        _metaSpell.setEnabled(enable);
+        
+        _pageBGColor.setEnabled(enable);
+        _pageBGImage.setEnabled(enable);
+        
+        _listOrdered.setEnabled(enable);
+        _listUnordered.setEnabled(enable);
     }
     
     private void setBodyTags() {
