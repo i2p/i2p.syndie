@@ -113,6 +113,7 @@ public class PageRenderer {
     private MenuItem _imgLinkImportArchiveKey;
 
     private boolean _enableImages;
+    private boolean _enableRender;
     
     private SyndieURI _currentEventURI;
     private HTMLTag _currentEventLinkTag;
@@ -134,6 +135,7 @@ public class PageRenderer {
         _linkTags = new ArrayList();
         
         _enableImages = true;
+        _enableRender = true;
         _viewSizeModifier = 0;
     
         buildMenus();
@@ -218,7 +220,7 @@ public class PageRenderer {
         _text.addControlListener(new ControlListener() {
             public void controlMoved(ControlEvent controlEvent) {}
             public void controlResized(ControlEvent controlEvent) {
-                if (_msg != null) rerender();
+                if ( (_msg != null) && (_enableRender) ) rerender();
             }
         });
         _text.addKeyListener(new KeyListener() {
@@ -248,6 +250,7 @@ public class PageRenderer {
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
     public Composite getComposite() { return _text; }
+    public void setRender(boolean render) { _enableRender = render; }
     
     public void renderPage(PageRendererSource src, SyndieURI uri) {
         Hash chan = uri.getScope();

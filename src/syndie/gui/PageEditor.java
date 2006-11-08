@@ -103,6 +103,7 @@ public class PageEditor {
     private Button _metaCut;
     private Button _metaSpell;
     private Button _metaFind;
+    private Button _metaPreview;
     
     // text style chooser dialog
     private Shell _txtShell;
@@ -216,6 +217,8 @@ public class PageEditor {
         addEditListeners();
         
         _preview = new PageRenderer(_sash, true);
+        _sash.setMaximizedControl(null);
+        _sash.setWeights(new int[] { 80, 20 });
         
         createStyleChooser();
         createSpellchecker();
@@ -343,6 +346,14 @@ public class PageEditor {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { find(); }
             public void widgetSelected(SelectionEvent selectionEvent) { find(); }
         });
+        _metaPreview = new Button(grpMeta, SWT.CHECK);
+        _metaPreview.setText("preview");
+        _metaPreview.setToolTipText("Show the preview pane");
+        _metaPreview.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { togglePreview(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { togglePreview(); }
+        });
+        _metaPreview.setSelection(true);
         
         grpMeta.setEnabled(enable);
         RowLayout rl = new RowLayout(SWT.HORIZONTAL);
@@ -776,6 +787,7 @@ public class PageEditor {
 
     private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void preview() {
+        if (!_metaPreview.getSelection()) return;
         MessageInfo msgInfo = new MessageInfo();
         msgInfo.setURI(_dummyURI);
         msgInfo.setTargetChannel(_dummyURI.getScope());
@@ -790,7 +802,9 @@ public class PageEditor {
         HashMap attachments = new HashMap();
         ArrayList attachmentOrder = new ArrayList();
         PageRendererSourceMem src = new PageRendererSourceMem(null, msgInfo, pageData, attachments, attachmentOrder);
+        _preview.setRender(true);
         _preview.renderPage(src, _dummyURI);
+        _preview.setRender(false);
         _lastPreviewed = System.currentTimeMillis();
         _lastModified = -1;
     }
@@ -912,6 +926,7 @@ public class PageEditor {
                 } else {
                     //System.out.println("idle for " + idle + "ms, NOT previewing");
                     SimpleTimer.getInstance().addEvent(_timedPreview, 100);
+                    _preview.setRender(false);
                 }
             }
         }
@@ -1416,6 +1431,17 @@ public class PageEditor {
             _text.setStyleRanges(null, null);
             int line = _text.getLineAtOffset(caret);
             _text.setTopIndex(line);
+        }
+    }
+    
+    private void togglePreview() {
+        if (_metaPreview.getSelection()) {
+            _sash.setMaximizedControl(null);
+            _preview.setRender(true);
+            preview();
+        } else {
+            _sash.setMaximizedControl(_text);
+            _preview.setRender(false);
         }
     }
 }
