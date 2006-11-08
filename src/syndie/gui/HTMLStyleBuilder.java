@@ -278,6 +278,7 @@ class HTMLStyleBuilder {
     }
     
     private StyleRange buildStyle(List tags, int start, int length) {
+        /*
         System.out.print("building style for [" + start + " through " + (start+length) + "]: ");
         for (int i = 0; i < tags.size(); i++)
             System.out.print(((HTMLTag)tags.get(i)).getName() + " ");
@@ -285,7 +286,8 @@ class HTMLStyleBuilder {
             System.out.println("\t[" + _msgText.substring(start, start+length).trim() + "]");
         else
             System.out.println();
-    
+         */
+        
         return getStyle(start, length, tags);
     }
     

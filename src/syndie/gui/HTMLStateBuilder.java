@@ -48,10 +48,10 @@ class HTMLStateBuilder {
         
         // heuristic to check for html formatted pages that assume <html><body>
         // this isn't perfect, since the body could be in a comment, but, well...
-        String lowerHTML = _html.toLowerCase();
+        String lowerHTML = HTMLTag.lowercase(_html);
         boolean assumeBody = ( (lowerHTML.indexOf("<body>") == -1) && (lowerHTML.indexOf("<body ") == -1));
         
-        System.out.println("unparsed html:\n" + _html);
+        //System.out.println("unparsed html:\n" + _html);
         
         _plainText = parse(off, len, assumeBody);
     }
@@ -317,7 +317,7 @@ class HTMLStateBuilder {
                     appendBody(body, PLACEHOLDER_LINK_END);
                 }
                 _closedTags.add(open);
-                System.out.println("Closing tag " + open.toString());
+                //System.out.println("Closing tag " + open.toString());
                 // should we remove all of the child tags too? 
                 // no.  think about: <b><i>bold italic</b>italic not bold</i>
                 return;
@@ -333,7 +333,8 @@ class HTMLStateBuilder {
      *         decoded, the escape body itself (so the typo &am; would return "&am;")
      */
     private String getCharacter(String escapeBody) {
-        Character rv = (Character)_charMap.get(escapeBody.toLowerCase());
+        // note: escapes are case sensitive, so no lowercasing here
+        Character rv = (Character)_charMap.get(escapeBody);
         if (rv != null) {
             //System.out.println("Escaping [" + escapeBody + "] and replacing it with [" + rv + "]");
             return rv.toString();
@@ -354,7 +355,7 @@ class HTMLStateBuilder {
         } else {
             // not a unicode escape, and not one of the known chars in charMap
             // fallthrough
-            System.out.println("Escape [" + escapeBody + "] is not a number");
+            //System.out.println("Escape [" + escapeBody + "] is not a number");
         }
         return "&" + escapeBody + ";";
     }
