@@ -220,7 +220,7 @@ public class PageRenderer {
         _text.addControlListener(new ControlListener() {
             public void controlMoved(ControlEvent controlEvent) {}
             public void controlResized(ControlEvent controlEvent) {
-                if ( (_msg != null) && (_enableRender) ) rerender();
+                //if ( (_msg != null) && (_enableRender) ) rerender();
             }
         });
         _text.addKeyListener(new KeyListener() {
@@ -324,6 +324,7 @@ public class PageRenderer {
         _text.setText(text);
         HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
         sbuilder.buildStyles(_viewSizeModifier);
+        sbuilder.ts("styles completely built");
         _fonts = sbuilder.getFonts();
         _colors = sbuilder.getCustomColors();
         _text.setStyleRanges(sbuilder.getStyleRanges());

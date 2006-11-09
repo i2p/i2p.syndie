@@ -418,7 +418,7 @@ public class PageEditor {
             } else {
                 int bodyEnd = txt.indexOf('>', body);
                 String attributes = txt.substring(body+1, bodyEnd);
-                HTMLTag bodyTag = new HTMLTag(attributes, 0, null);
+                HTMLTag bodyTag = new HTMLTag(attributes, 0, null, -1);
                 bodyTag.setAttribValue("bgcolor", bodyColor);
                 _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
             }

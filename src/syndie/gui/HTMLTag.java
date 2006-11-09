@@ -13,13 +13,15 @@ class HTMLTag {
     /** start index for the body text that the tag is applicable to */
     private int _startIndex;
     private int _endIndex;
+    private int _srcLine;
     private HTMLTag _parent;
     private boolean _consumed;
     
-    public HTMLTag(String tagBody, int startIndex, HTMLTag parent) {
+    public HTMLTag(String tagBody, int startIndex, HTMLTag parent, int srcLine) {
         _startIndex = startIndex;
         _endIndex = -1;
         _parent = parent;
+        _srcLine = srcLine;
         _consumed = false;
         _attributes = new Properties();
         int attribNameStart = -1;
@@ -122,7 +124,7 @@ class HTMLTag {
     public String toString() {
         StringBuffer rv = new StringBuffer();
         rv.append(toHTML());
-        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + "]");
+        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + ":" + _srcLine + "]");
         return rv.toString();
     }
     public String toHTML() {

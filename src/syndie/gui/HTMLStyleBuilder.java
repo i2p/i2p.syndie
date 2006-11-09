@@ -85,7 +85,9 @@ class HTMLStyleBuilder {
         _customColors = new HashMap();
         _bgImage = null;
         _bgColor = null;
+        ts("building fonts");
         buildFonts(getFontConfig(src));
+        ts("fonts built");
     }
     
     public ArrayList getImageTags() { return _imageTags; }
@@ -96,6 +98,7 @@ class HTMLStyleBuilder {
     public void buildStyles() { buildStyles(0); }
     public void buildStyles(int viewSizeModifier) {
         _viewSizeModifier = viewSizeModifier;
+        ts("building styles for " + _htmlTags.size() + " tags");
         // get a list of points where any tag starts or ends
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
@@ -131,7 +134,7 @@ class HTMLStyleBuilder {
                 breakPointTags.put(new Integer(tag.getEndIndex()), tags);
             }
             tags.add(tag);
-            //System.out.println("breakpoints for tag " + tag + ": " + tag.getStartIndex() + ", " + tag.getEndIndex());
+            //ts("breakpoints for tag " + tag + ": " + tag.getStartIndex() + ", " + tag.getEndIndex());
         }
         
         // include special characters
@@ -139,6 +142,8 @@ class HTMLStyleBuilder {
             insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_IMAGE, breakPointTags, _imageIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LINK_END, breakPointTags, _linkIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LISTITEM, breakPointTags, _listItemIndexes);
+
+        ts("character breakpoints inserted");
         
         // make sure it covers the whole schebang
         List startTags = (List)breakPointTags.get(new Integer(0));
@@ -148,21 +153,52 @@ class HTMLStyleBuilder {
         // dont need the end anymore
         breakPointTags.remove(new Integer(_msgText.length()));
         
+        int bps = breakPointTags.size();
+        System.out.println("breakpoints: " + bps);
         // now go through the breakpoints and check what other tags are applicable there.
         // the list of tags will contain all tags that are in that set, but it can contain
         // tags that should not be
         for (Iterator iter = breakPointTags.keySet().iterator(); iter.hasNext(); ) {
             Integer bp = (Integer)iter.next();
             List tags = (List)breakPointTags.get(bp);
+            int orig = tags.size();
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
                 while (tag.getParent() != null) {
-                    if (!tags.contains(tag.getParent()))
-                        tags.add(tag.getParent());
-                    tag = tag.getParent();
+                    HTMLTag cParent = tag.getParent();
+                    if (!tags.contains(cParent)) {
+                        if ( (cParent.getStartIndex() <= bp.intValue()) && (cParent.getEndIndex() >= bp.intValue()) ) {
+                            tags.add(cParent);
+                        } else {
+                            break;
+                        }
+                    }
+                    tag = cParent;
                 }
             }
+            /*
+            int num = tags.size();
+            if (num < 10) {
+                //System.out.print("0");
+            } else if (num < 20) {
+                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+                System.out.print("1");
+            } else if (num < 30) {
+                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+                System.out.print("2");
+            } else if (num < 40) {
+                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+                System.out.print("3");
+            } else if (num < 50) {
+                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+                System.out.print("4");
+            } else {
+                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+            }
+             */
         }
+        
+        ts("tag children found");
         
         // iterate across those points, building a new StyleRange out of all tags applicable there
         _styleRanges = new StyleRange[breakPointTags.size()];
@@ -170,6 +206,7 @@ class HTMLStyleBuilder {
         Iterator iter = breakPointTags.keySet().iterator();
         Integer nextIndex = null;
         for (;;) {
+            //ts("iterating over breakpoint");
             Integer curBreakPoint = nextIndex;
             if (nextIndex == null) {
                 if (iter.hasNext())
@@ -208,6 +245,8 @@ class HTMLStyleBuilder {
             rangeIndex++;
         }
         
+        ts("done iterating over breakpoints");
+        
         if (_enableImages) {
             // put images in for all the <img> tags
             for (int i = 0; i < _imageTags.size(); i++) {
@@ -222,6 +261,8 @@ class HTMLStyleBuilder {
             }
         }
         
+        ts("done including images");
+        
         // now put images in the range after <a> tags
         for (int i = 0; i < _linkTags.size(); i++) {
             HTMLTag linkTag = (HTMLTag)_linkTags.get(i);
@@ -233,6 +274,13 @@ class HTMLStyleBuilder {
                 }
             }
         }
+        
+        ts("done including anchor end images");
+    }
+    
+    private static final long _start = System.currentTimeMillis();
+    static final void ts(String msg) {
+        System.out.println((System.currentTimeMillis()-_start) + ": " + msg);
     }
     
     public ArrayList getImageIndexes() { return _imageIndexes; }
@@ -278,15 +326,15 @@ class HTMLStyleBuilder {
     }
     
     private StyleRange buildStyle(List tags, int start, int length) {
-        /*
-        System.out.print("building style for [" + start + " through " + (start+length) + "]: ");
+        StringBuffer buf = new StringBuffer();
+        buf.append("building style for [" + start + " through " + (start+length) + "]: ");
         for (int i = 0; i < tags.size(); i++)
-            System.out.print(((HTMLTag)tags.get(i)).getName() + " ");
+            buf.append(((HTMLTag)tags.get(i)).getName() + " ");
         if (length > 0)
-            System.out.println("\t[" + _msgText.substring(start, start+length).trim() + "]");
+            buf.append("\t[" + _msgText.substring(start, start+length).trim() + "]");
         else
-            System.out.println();
-         */
+            buf.append("\n");
+        ts(buf.toString());
         
         return getStyle(start, length, tags);
     }

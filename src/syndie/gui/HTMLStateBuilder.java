@@ -22,8 +22,11 @@ class HTMLStateBuilder {
     /** rough attempt to figure out our own line wrapping so we can indent appropriately */
     private int _charsPerLine;
     
+    private int _curLine;
+    
     private static final Map _charMap = new HashMap();
     private static final Set _noBodyTags = new HashSet();
+    private static final Set _noNestTags = new HashSet();
     static {
         buildEntities(); // populates _charMap
         // tags that don't allow bodies (and should be implicitly closed if not done so explicitly)
@@ -31,6 +34,12 @@ class HTMLStateBuilder {
         _noBodyTags.add("br");
         _noBodyTags.add("hr");
         _noBodyTags.add("meta");
+        _noBodyTags.add("link");
+        // tags that can't nest (and should be closed implicitly when a new occurence of that same tag is reached)
+        _noNestTags.add("p");
+        _noNestTags.add("dd");
+        _noNestTags.add("dt");
+        _noNestTags.add("dl");
     }
     
     public HTMLStateBuilder(String html, MessageInfo msg) { this(html, msg, -1); }
@@ -38,6 +47,7 @@ class HTMLStateBuilder {
         _html = html;
         _msg = msg;
         _charsPerLine = charsPerLine;
+        _curLine = 1;
     }
 
     public void buildState() {
@@ -64,6 +74,8 @@ class HTMLStateBuilder {
         StringBuffer body = new StringBuffer();
         for (int i = 0; i < len; i++) {
             char c = _html.charAt(i);
+            if (c == '\n')
+                _curLine++;
             switch (c) {
                 case '<':
                     if (_isInComment)
@@ -220,10 +232,30 @@ class HTMLStateBuilder {
         HTMLTag parent = null;
         if (_activeTags.size() > 0)
             parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
-        HTMLTag tag = new HTMLTag(tagContent, bodyIndex, parent);
+        HTMLTag tag = new HTMLTag(tagContent, bodyIndex, parent, _curLine);
+        
+        String tagName = tag.getName();
+        // implicitly close any open paragraphs / dds / dts
+        if (_noNestTags.contains(tagName)) {
+            for (int i = 0; i < _activeTags.size(); i++) {
+                HTMLTag c = (HTMLTag)_activeTags.get(i);
+                if (tagName.equals(c.getName())) {
+                    // ok, implicitly close everything in that block
+                    // e.g. with "<dl><dt>hi<dd>ho<dt>new def</dl>", the
+                    // second <dt> closes both the previous <dt> and the <dd>
+                    // this is, shall we say, questionable.
+                    while (_activeTags.size() > i) {
+                        HTMLTag r = (HTMLTag)_activeTags.remove(_activeTags.size()-1);
+                        r.setEndIndex(bodyIndex);
+                        _closedTags.add(r);
+                    }
+                    break;
+                }
+            }
+        }
+        
         _activeTags.add(tag);
         //System.out.println("tag parsed: " + tag.toString());
-        String tagName = tag.getName();
         // some tags insert data into the document as soon as they begin (br, img, p, pre, li, etc),
         // while others only insert data when they end or not at all
         if ("br".equals(tagName)) {
@@ -234,24 +266,24 @@ class HTMLStateBuilder {
             _prevWasWhitespace = false;
         } else if ("p".equals(tagName)) {
             // make sure the <p>foo</p> starts off with a blank line before it
-            if ( (bodyIndex > 1) && (body.charAt(bodyIndex-1) != '\n') && (body.charAt(bodyIndex-2) != '\n') ) {
+            if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
                 _prevWasWhitespace = true;
             }
         } else if ("quote".equals(tagName)) {
             // make sure the <quote>foo</quote> starts off with a blank line before it
-            if ( (bodyIndex > 1) && (body.charAt(bodyIndex-1) != '\n') && (body.charAt(bodyIndex-2) != '\n') ) {
+            if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
                 _prevWasWhitespace = true;
             }
         } else if ("pre".equals(tagName)) {
             // make sure the <pre>foo</pre> starts off on a new line
-            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') ) {
+            if (!isStartOfLine(body, bodyIndex)) {
                 appendBody(body, '\n');
                 _prevWasWhitespace = true;
             }
         } else if ("li".equals(tagName)) {
-            if ( (bodyIndex > 0) && (body.charAt(bodyIndex-1) != '\n') )
+            if (!isStartOfLine(body, bodyIndex))
                 appendBody(body, '\n');
             appendBody(body, PLACEHOLDER_LISTITEM);
             _prevWasWhitespace = true;
@@ -261,6 +293,24 @@ class HTMLStateBuilder {
         if ( (_noBodyTags.contains(tagName) || (tagName.startsWith("!"))) && 
              (content.charAt(content.length()-1) != '/') )
             receiveTagEnd(content, body.length(), body);
+    }
+    
+    private boolean isStartOfLine(StringBuffer body, int bodyIndex) { return isStartOfLine(body, bodyIndex, 0); }
+    private boolean isStartOfLine(StringBuffer body, int bodyIndex, int numPrecedingBlankLines) {
+        int blank = 0;
+        for (int i = bodyIndex - 1; i >= 0; i--) {
+            char c = body.charAt(i);
+            if ( (c == '\n') || (c == '\r') ) {
+                if (blank >= numPrecedingBlankLines)
+                    return true;
+                else
+                    blank++;
+            } else if (!Character.isWhitespace(c)) {
+                return false;
+            }
+        }
+        // beginning of body reached
+        return true;
     }
     
     /** the following character is inserted into the document whenever there should be an image */
@@ -278,7 +328,7 @@ class HTMLStateBuilder {
         HTMLTag parent = null;
         if (_activeTags.size() > 0)
             parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
-        HTMLTag tag = new HTMLTag(content, bodyIndex, parent);
+        HTMLTag tag = new HTMLTag(content, bodyIndex, parent, _curLine);
         for (int i = _activeTags.size()-1; i >= 0; i--) {
             HTMLTag open = (HTMLTag)_activeTags.get(i);
             if (tag.getName().equals(open.getName())) {
