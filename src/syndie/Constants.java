@@ -103,6 +103,8 @@ public class Constants {
 
     public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";
 
+    public static final long MAX_ATTACHMENT_SIZE = 4*1024*1024;
+
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
     /** split on all of the characters in splitElements, with the resulting tokens not including that character */

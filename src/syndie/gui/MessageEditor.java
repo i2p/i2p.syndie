@@ -1,6 +1,13 @@
 package syndie.gui;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.SelectionEvent;
@@ -14,10 +21,15 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Label;
+import syndie.Constants;
+import syndie.data.Enclosure;
+import syndie.data.EnclosureBody;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 
 /**
@@ -31,7 +43,7 @@ public class MessageEditor {
     private ArrayList _attachmentConfig;
     /** list of PageEditor instances */
     private ArrayList _pages;
-    
+
     private Composite _parent;
     private Composite _root;
     private Composite _pageRoot;
@@ -56,6 +68,7 @@ public class MessageEditor {
     private Button _controlPageAction;
     private Label _controlAttachment;
     private Combo _controlAttachmentCombo;
+    private Menu _controlAttachmentMenu;
     private Button _controlAttachmentAction;
     private Label _controlRef;
     private Button _controlRefAction;
@@ -207,6 +220,25 @@ public class MessageEditor {
         _controlAttachmentAction = new Button(line3, SWT.PUSH);
         _controlAttachmentAction.setText("+/-");
         _controlAttachmentAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _controlAttachmentMenu = new Menu(_controlAttachmentAction);
+        _controlAttachmentAction.setMenu(_controlAttachmentMenu);
+        _controlAttachmentAction.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _controlAttachmentMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _controlAttachmentMenu.setVisible(true); }
+        });
+        MenuItem attachmentAdd = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
+        attachmentAdd.setText("Add new file...");
+        attachmentAdd.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addAttachment(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addAttachment(); }
+        });
+        new MenuItem(_controlAttachmentMenu, SWT.SEPARATOR);
+        MenuItem attachmentRemove = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
+        attachmentRemove.setText("Remove current attachment");
+        attachmentRemove.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeAttachment(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { removeAttachment(); }
+        });
         
         _controlRef = new Label(line3, SWT.NONE);
         _controlRef.setText("References:");
@@ -276,5 +308,104 @@ public class MessageEditor {
         }
          
         _controlPageCombo.setRedraw(true);
+    }
+    
+    private void addAttachment() {
+        FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
+        if (dialog.open() == null) return; // cancelled
+        String selected[] = dialog.getFileNames();
+        String base = dialog.getFilterPath();
+        File baseFile = null;
+        if ( (base != null) && (base.trim().length() > 0) )
+            baseFile = new File(base);
+        for (int i = 0; i < selected.length; i++) {
+            File cur = null;
+            if (base == null)
+                cur = new File(selected[i]);
+            else
+                cur = new File(base, selected[i]);
+            if (cur.exists() && cur.isFile() && cur.canRead()) {
+                addAttachment(cur);
+            }
+        }
+    }
+
+    private static final Map _extensionToType;
+    static {
+        _extensionToType = new HashMap();
+        _extensionToType.put("png", "image/png");
+        _extensionToType.put("jpg", "image/jpg");
+        _extensionToType.put("jpeg", "image/jpg");
+        _extensionToType.put("gif", "image/gif");
+        _extensionToType.put("html", "text/html");
+        _extensionToType.put("htm", "text/html");
+        _extensionToType.put("txt", "text/plain");
+        _extensionToType.put("syndie", "application/x-syndie");
+    }
+    
+    private void addAttachment(File file) {
+        String fname = file.getName();
+        String name = Constants.stripFilename(fname, false);
+        String type = "application/octet-stream";
+        fname = HTMLTag.lowercase(fname);
+        int split = fname.lastIndexOf('.');
+        if ( (split >= 0) && (split + 1 < fname.length()) ) {
+            String ntype = (String)_extensionToType.get(fname.substring(split+1));
+            if (ntype != null)
+                type = ntype;
+        }
+        
+        if (file.length() > Constants.MAX_ATTACHMENT_SIZE)
+            return;
+        
+        byte data[] = new byte[(int)file.length()];
+        try {
+            int read = DataHelper.read(new FileInputStream(file), data);
+            if (read != data.length) return;
+        } catch (IOException ioe) {
+            return;
+        }
+        Properties cfg = new Properties();
+        cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, type);
+        cfg.setProperty(Constants.MSG_ATTACH_NAME, name);
+        _attachmentConfig.add(cfg);
+        _attachments.add(data);
+        rebuildAttachmentsCombo();
+    }
+    private void removeAttachment() {
+        if (_attachments.size() > 0) {
+            // should this check to make sure there aren't any pages referencing
+            // this attachment first?
+            int idx = _controlAttachmentCombo.getSelectionIndex();
+            _attachments.remove(idx);
+            _attachmentConfig.remove(idx);
+        }
+        rebuildAttachmentsCombo();
+    }
+    
+    private void rebuildAttachmentsCombo() {
+        _controlAttachmentCombo.setRedraw(false);
+        _controlAttachmentCombo.removeAll();
+        if (_attachments.size() > 0) {
+            for (int i = 0; i < _attachments.size(); i++) {
+                byte data[] = (byte[])_attachments.get(i);
+                Properties cfg = (Properties)_attachmentConfig.get(i);
+                StringBuffer buf = new StringBuffer();
+                buf.append((i+1) + ": ");
+                String name = cfg.getProperty(Constants.MSG_ATTACH_NAME);
+                if (name != null)
+                    buf.append(name).append(" ");
+                String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
+                if (type != null)
+                    buf.append('(').append(type).append(") ");
+                buf.append("[" + data.length + " bytes]");
+                _controlAttachmentCombo.add(buf.toString());
+            }
+        } else {
+            _controlAttachmentCombo.add("none");
+        }
+        _controlAttachmentCombo.select(0);
+         
+        _controlAttachmentCombo.setRedraw(true);
     }
 }
