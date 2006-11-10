@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.DataHelper;
@@ -407,5 +408,18 @@ public class MessageEditor {
         _controlAttachmentCombo.select(0);
          
         _controlAttachmentCombo.setRedraw(true);
+    }
+
+    int getPageCount() { return _pages.size(); }
+
+    List getAttachmentDescriptions() {
+        ArrayList rv = new ArrayList();
+        int items = _controlAttachmentCombo.getItemCount();
+        for (int i = 0; i < items; i++) {
+            String item = (String)_controlAttachmentCombo.getItem(i);
+            if (!"none".equals(item))
+                rv.add(item);
+        }
+        return rv;
     }
 }

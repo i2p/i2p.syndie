@@ -44,7 +44,23 @@ public class SyndieURI {
                 _attributes.putAll(primary.getAttributes());
         }
     }
-    
+
+    public static SyndieURI createRelativePage(int pageNum) {
+        String uri = "urn:syndie:channel:d4:pagei" + pageNum + "ee";
+        try {
+            return new SyndieURI(uri);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Hmm, encoded URI is not valid: " + use.getMessage() + " [" + uri + "]");
+        }
+    }
+    public static SyndieURI createRelativeAttachment(int attachmentNum) {
+        String uri = "urn:syndie:channel:d10:attachmenti" + attachmentNum + "ee";
+        try {
+            return new SyndieURI(uri);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Hmm, encoded URI is not valid: " + use.getMessage() + " [" + uri + "]");
+        }
+    }
     public static SyndieURI createSearch(String searchString) {
         String searchURI = "urn:syndie:search:d7:keyword" + searchString.length() + ":" + searchString + "e";
         try {

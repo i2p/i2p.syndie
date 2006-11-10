@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.Hash;
@@ -1474,4 +1475,7 @@ public class PageEditor {
             _preview.setRender(false);
         }
     }
+
+    int getPageCount() { return _messageEditor.getPageCount(); }
+    List getAttachmentDescriptions() { return _messageEditor.getAttachmentDescriptions(); }
 }

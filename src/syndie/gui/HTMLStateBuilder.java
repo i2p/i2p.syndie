@@ -27,6 +27,7 @@ class HTMLStateBuilder {
     private static final Map _charMap = new HashMap();
     private static final Set _noBodyTags = new HashSet();
     private static final Set _noNestTags = new HashSet();
+    private static final Set _closeNestedTags = new HashSet();
     static {
         buildEntities(); // populates _charMap
         // tags that don't allow bodies (and should be implicitly closed if not done so explicitly)
@@ -37,9 +38,17 @@ class HTMLStateBuilder {
         _noBodyTags.add("link");
         // tags that can't nest (and should be closed implicitly when a new occurence of that same tag is reached)
         _noNestTags.add("p");
-        _noNestTags.add("dd");
-        _noNestTags.add("dt");
-        _noNestTags.add("dl");
+        //_noNestTags.add("dd");
+        //_noNestTags.add("dt");
+        //_noNestTags.add("dl");
+        // tags that can't have overlapping elements, so children should all be closed when the tag is closed
+        _closeNestedTags.add("dl");
+        _closeNestedTags.add("ol");
+        _closeNestedTags.add("ul");
+        _closeNestedTags.add("td");
+        _closeNestedTags.add("tr");
+        _closeNestedTags.add("th");
+        _closeNestedTags.add("table");
     }
     
     public HTMLStateBuilder(String html, MessageInfo msg) { this(html, msg, -1); }
@@ -237,19 +246,33 @@ class HTMLStateBuilder {
         String tagName = tag.getName();
         // implicitly close any open paragraphs / dds / dts
         if (_noNestTags.contains(tagName)) {
-            for (int i = 0; i < _activeTags.size(); i++) {
+            for (int i = _activeTags.size()-1; i >= 0; i--) {
                 HTMLTag c = (HTMLTag)_activeTags.get(i);
                 if (tagName.equals(c.getName())) {
                     // ok, implicitly close everything in that block
                     // e.g. with "<dl><dt>hi<dd>ho<dt>new def</dl>", the
                     // second <dt> closes both the previous <dt> and the <dd>
                     // this is, shall we say, questionable.
-                    while (_activeTags.size() > i) {
-                        HTMLTag r = (HTMLTag)_activeTags.remove(_activeTags.size()-1);
-                        r.setEndIndex(bodyIndex);
-                        _closedTags.add(r);
+                    if (!"p".equals(tagName)) {
+                        //System.out.print("tags underneath " + c + " @ " + bodyIndex + "/" + _curLine + ": ");
+                        ArrayList toRemove = new ArrayList();
+                        for (int j = _activeTags.size()-1; j > i; j--) 
+                            toRemove.add(_activeTags.remove(j));
+                        //System.out.println(toRemove.toString());
+                        //System.out.println(body.substring(c.getStartIndex(), bodyIndex));
+                        for (int j = 0; j < toRemove.size(); j++) {
+                            HTMLTag r = (HTMLTag)toRemove.get(j);
+                            r.setEndIndex(bodyIndex);
+                            _closedTags.add(r);
+                            //System.out.println("implicitly closing nested tag: " + r + " when receiving a new " + tag);
+                        }
+                        break;
+                    } else {
+                        _activeTags.remove(i);
+                        c.setEndIndex(bodyIndex);
+                        _closedTags.add(c);
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -270,6 +293,12 @@ class HTMLStateBuilder {
                 appendBody(body, '\n');
                 _prevWasWhitespace = true;
             }
+        } else if ("h1".equals(tagName) || "h2".equals(tagName) || "h3".equals(tagName) || "h4".equals(tagName)) {
+            // make sure the <h*>foo</h*> starts off with a blank line before it
+            if (!isStartOfLine(body, bodyIndex, 1)) {
+                appendBody(body, '\n');
+                _prevWasWhitespace = true;
+            }
         } else if ("quote".equals(tagName)) {
             // make sure the <quote>foo</quote> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
@@ -286,6 +315,14 @@ class HTMLStateBuilder {
             if (!isStartOfLine(body, bodyIndex))
                 appendBody(body, '\n');
             appendBody(body, PLACEHOLDER_LISTITEM);
+            _prevWasWhitespace = true;
+        } else if ("dd".equals(tagName)) {
+            if (!isStartOfLine(body, bodyIndex))
+                appendBody(body, '\n');
+            _prevWasWhitespace = true;
+        } else if ("dt".equals(tagName)) {
+            if (!isStartOfLine(body, bodyIndex))
+                appendBody(body, '\n');
             _prevWasWhitespace = true;
         }
         
@@ -356,16 +393,28 @@ class HTMLStateBuilder {
                 } else if ("li".equals(tag.getName())) {
                     //body.append("\n");
                     //_prevWasWhitespace = true;
-                } else if ("ul".equals(tag.getName())) {
-                    appendBody(body, '\n');
-                    _prevWasWhitespace = true;
-                } else if ("ol".equals(tag.getName())) {
+                } else if ("dl".equals(tag.getName()) ||
+                           "ul".equals(tag.getName()) ||
+                           "ol".equals(tag.getName())) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("a".equals(tag.getName())) {
                     appendBody(body, ' ');
                     appendBody(body, PLACEHOLDER_LINK_END);
                 }
+                
+                if (_closeNestedTags.contains(tag.getName())) {
+                    for (int j = _activeTags.size()-1; j > i; j--) {
+                        HTMLTag nested = (HTMLTag)_activeTags.remove(j);
+                        nested.setEndIndex(bodyIndex);
+                        _closedTags.add(nested);
+                        //System.out.println("closing nested tag: " + nested + " when receiving tag end of " + open);
+                        //System.out.println("------------------------");
+                        //System.out.println(body.substring(open.getStartIndex(), bodyIndex));
+                        //System.out.println("------------------------");
+                    }
+                }
+                
                 _closedTags.add(open);
                 //System.out.println("Closing tag " + open.toString());
                 // should we remove all of the child tags too? 
@@ -373,8 +422,9 @@ class HTMLStateBuilder {
                 return;
             }
         }
-        System.out.println("tag closed that was never opened: " + tag);
-        System.out.println("tags: " + _activeTags);
+        //System.out.println("tag closed that was never opened: " + tag);
+        //System.out.println(body.substring(tag.getStartIndex(), bodyIndex));
+        //System.out.println("tags: " + _activeTags);
     }
 
     /**

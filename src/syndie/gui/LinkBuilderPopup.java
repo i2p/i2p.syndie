@@ -74,6 +74,11 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private Button _syndieManageKey;
     private Combo _syndieManageKeyCombo;
     
+    private Button _linkTypePage;
+    private Combo _linkTypePageCombo;
+    private Button _linkTypeAttachment;
+    private Combo _linkTypeAttachmentCombo;
+    
     private Button _linkTypeArchive;
     private Text _linkTypeArchiveText;
     private Button _actionOk;
@@ -126,6 +131,22 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeWebText.setLayoutData(gd);
         _linkTypeWebText.addTraverseListener(new GroupPickListener(_linkTypeWeb));
         _linkTypeWebText.addSelectionListener(new GroupPickListener(_linkTypeWeb));
+        
+        _linkTypePage = new Button(_linkTypeGroup, SWT.RADIO);
+        _linkTypePage.setText("Page:");
+        _linkTypePage.setLayoutData(new GridData());
+        _linkTypePageCombo = new Combo(_linkTypeGroup, SWT.SIMPLE);
+        _linkTypePageCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        _linkTypePageCombo.addTraverseListener(new GroupPickListener(_linkTypePage));
+        _linkTypePageCombo.addSelectionListener(new GroupPickListener(_linkTypePage));
+        
+        _linkTypeAttachment = new Button(_linkTypeGroup, SWT.RADIO);
+        _linkTypeAttachment.setText("Attachment:");
+        _linkTypeAttachment.setLayoutData(new GridData());
+        _linkTypeAttachmentCombo = new Combo(_linkTypeGroup, SWT.SIMPLE);
+        _linkTypeAttachmentCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
+        _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
         
         _linkTypeSyndie = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeSyndie.setText("Syndie:");
@@ -345,6 +366,14 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             }
         } else if (_linkTypeArchive.getSelection()) {
             _selectedURI = SyndieURI.createArchive(_linkTypeArchiveText.getText(), null);
+        } else if (_linkTypePage.getSelection()) {
+            int idx = _linkTypePageCombo.getSelectionIndex();
+            if (idx >= 0)
+                _selectedURI = SyndieURI.createRelativePage(idx);
+        } else if (_linkTypeAttachment.getSelection()) {
+            int idx = _linkTypeAttachmentCombo.getSelectionIndex();
+            if (idx >= 0)
+                _selectedURI = SyndieURI.createRelativeAttachment(idx);
         }
         
         if (_selectedURI != null)
@@ -369,6 +398,8 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         
         _linkTypeWeb.setSelection(false);
         _linkTypeWebText.setText("");
+        _linkTypePage.setSelection(false);
+        _linkTypeAttachment.setSelection(false);
         _linkTypeSyndie.setSelection(false);
         _linkTypeSyndieText.setText("");
         _linkTypeArchive.setSelection(false);
@@ -405,6 +436,31 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieManageKeyCombo.setEnabled(false);
         _syndieManageKeyCombo.removeAll();
         _syndieManageKey.setSelection(false);
+        
+        int pages = _target.getPageCount();
+        List attachments = _target.getAttachmentDescriptions();
+        if (pages <= 1) {
+            _linkTypePage.setEnabled(false);
+            _linkTypePageCombo.setEnabled(false);
+            _linkTypePageCombo.removeAll();
+        } else {
+            _linkTypePage.setEnabled(true);
+            _linkTypePageCombo.setEnabled(true);
+            _linkTypePageCombo.removeAll();
+            for (int i = 1; i <= pages; i++)
+                _linkTypePageCombo.add(i+"");
+        }
+        if ( (attachments == null) || (attachments.size() <= 0) ) {
+            _linkTypeAttachment.setEnabled(false);
+            _linkTypeAttachmentCombo.setEnabled(false);
+            _linkTypeAttachmentCombo.removeAll();
+        } else {
+            _linkTypeAttachment.setEnabled(true);
+            _linkTypeAttachmentCombo.setEnabled(true);
+            _linkTypeAttachmentCombo.removeAll();
+            for (int i = 0; i < attachments.size(); i++)
+                _linkTypeAttachmentCombo.add((String)attachments.get(i));
+        }
 
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {

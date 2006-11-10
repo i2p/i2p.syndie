@@ -460,6 +460,12 @@ public class PageRenderer {
                 }
             }
             
+            // look for <dd/dt> tags, and indent $x times the nesting layer
+            if (HTMLStyleBuilder.containsTag(tags, "dd"))
+                indentLevel += 2;
+            if (HTMLStyleBuilder.containsTag(tags, "dt"))
+                indentLevel++;
+            
             //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: quote? " + quoteFound + " tags: " + tags 
             //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
             //                   + " indent: " + indentLevel + ")");
