@@ -6,23 +6,30 @@ import java.io.File;
 import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.FileDialog;
@@ -51,8 +58,8 @@ public class ImageBuilderPopup {
     private Composite _config;
     private Button _configPreview;
     private ScrolledComposite _configPreviewScroll;
-    private Image _configPreviewImage;
-    private Label _configPreviewLabel;
+    private Image _configPreviewImageOrig;
+    private ImageCanvas _configPreviewCanvas;
     private Label _configResizeTo;
     private Combo _configResizeToCombo;
     private Label _configResizeAlt;
@@ -129,12 +136,8 @@ public class ImageBuilderPopup {
             public void widgetSelected(SelectionEvent selectionEvent) { refreshPreview(); }
         });
         
-        _configPreviewScroll = new ScrolledComposite(_config, SWT.H_SCROLL | SWT.V_SCROLL);
-        _configPreviewScroll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 5));
-        _configPreviewLabel = new Label(_configPreviewScroll, SWT.BORDER);
-        _configPreviewScroll.setAlwaysShowScrollBars(false);
-        _configPreviewScroll.setContent(_configPreviewLabel);
-        _configPreviewScroll.setSize(_configPreviewLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        _configPreviewCanvas = new ImageCanvas(_config);
+        _configPreviewCanvas.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 5));
         
         _configResizeTo = new Label(_config, SWT.NONE);
         _configResizeTo.setText("Resize to:");
@@ -247,7 +250,7 @@ public class ImageBuilderPopup {
         public void modifyText(ModifyEvent modifyEvent) { choiceUpdated(); }
         private void choiceUpdated() { _choiceUpdated = true; _choiceFile.setSelection(true); _choiceAttach.setSelection(false); showConfig(true); }
     }
-    
+ 
     public void showPopup() {
         List attachments = _page.getAttachmentDescriptions(true);
         if ( (attachments != null) && (attachments.size() > 0) ) {
@@ -271,16 +274,20 @@ public class ImageBuilderPopup {
     }
     public void hide() {
         _shell.setVisible(false);
-        if ( (_configPreviewImage != null) && (!_configPreviewImage.isDisposed()) )
-            _configPreviewImage.dispose();
-        _configPreviewImage = null;
+        _configPreviewCanvas.disposeImage();
+        if ( (_configPreviewImageOrig != null) && (!_configPreviewImageOrig.isDisposed()) )
+            _configPreviewImageOrig.dispose();
+        _configPreviewImageOrig = null;
     }
     
     private void insertImage() {
         // add the attachment if necessary (perhaps resizing it), then insert the
         // image html into the page
+        /*
+        foo
         Image img = _configPreviewLabel.getImage();
         if ( (img != null) && (!img.isDisposed()) ) {
+            foo. png not supported on early SWT. also should use GC.drawImage instead of scaleTo
             ImageLoader loader = new ImageLoader();
             ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
             loader.data = new ImageData[] { img.getImageData() };
@@ -288,15 +295,17 @@ public class ImageBuilderPopup {
             byte written[] = outBuf.toByteArray();
             System.out.println("image size: " + written.length + " bytes");
         }
+         */
     }
     
     private Image getImage() {
-        if (!_choiceUpdated) return _configPreviewImage;
+        if (!_choiceUpdated) return _configPreviewCanvas.getImage(); 
         if (_choiceFile.getSelection()) {
             File fname = new File(_choiceFileText.getText().trim());
             if (fname.exists()) {
                 Image rv = new Image(_shell.getDisplay(), fname.getPath());
-                _configPreviewImage = rv;
+                _configPreviewImageOrig = rv;
+                _configPreviewCanvas.setImage(rv);
                 return rv;
             } else {
                 return null;
@@ -307,7 +316,8 @@ public class ImageBuilderPopup {
                 byte attachment[] = _page.getImageAttachment(idx);
                 if (attachment != null) {
                     Image rv = new Image(_shell.getDisplay(), new ByteArrayInputStream(attachment));
-                    _configPreviewImage = rv;
+                    _configPreviewImageOrig = rv;
+                    _configPreviewCanvas.setImage(rv);
                     return rv;
                 } else {
                     return null;
@@ -340,22 +350,19 @@ public class ImageBuilderPopup {
         Image img = null;
         if (visible)
             img = getImage();
-        System.out.println("Showing config [" + visible + "] / " + _configPreviewImage);
+        //System.out.println("Showing config [" + visible + "] / " + _configPreviewCanvas.getImage());
         if (visible && (img != null)) {
             int pxWidth = img.getBounds().width;
             int pxHeight = img.getBounds().height;
             int size = getImageSize();
-            System.out.println("image found [" + pxWidth + "x" + pxHeight + ", " + size + " bytes]");
+            //System.out.println("image found [" + pxWidth + "x" + pxHeight + ", " + size + " bytes]");
             
             _configPreview.setEnabled(false);
             _configPreview.setSelection(true);
-            _configPreviewLabel.setRedraw(false);
-            Image old = _configPreviewLabel.getImage();
-            if ( (old != null) && (old != _configPreviewImage) )
-                old.dispose();
-            _configPreviewLabel.setImage(img);
-            _configPreviewLabel.setRedraw(true);
-
+            _configPreviewCanvas.setRedraw(false);
+            _configPreviewCanvas.setImage(img);
+            _configPreviewCanvas.setRedraw(true);
+            
             _configResizeTo.setEnabled(true);
             _configResizeToCombo.setEnabled(true);
             _configResizeToCombo.select(3); // 100%
@@ -374,13 +381,12 @@ public class ImageBuilderPopup {
             _configStrip.setEnabled(true);
             _configStrip.setSelection(false);
         } else {
-            System.out.println("image not found or not visible");
+            //System.out.println("image not found or not visible");
             _configPreview.setEnabled(false);
             _configPreview.setSelection(false);
-            Image old = _configPreviewLabel.getImage();
-            if ( (old != null) && (old != _configPreviewImage) )
-                old.dispose();
-
+            if (_configPreviewImageOrig != _configPreviewCanvas.getImage())
+                _configPreviewCanvas.disposeImage();
+            
             _configResizeTo.setEnabled(false);
             _configResizeToCombo.setEnabled(false);
             _configResizeToCombo.select(3); // 100%
@@ -406,16 +412,16 @@ public class ImageBuilderPopup {
     
     private void refreshPreview() {
         if (_configPreview.getSelection()) {
-            Image img = _configPreviewLabel.getImage();
+            Image img = _configPreviewCanvas.getImage();//_configPreviewImageCurrent; //_configPreviewLabel.getImage();
             if ( (img != null) && (!img.isDisposed()) ) {
                 redrawPreview(img);
             } else {
-                _configPreviewLabel.setVisible(false);
-                _configPreviewScroll.setSize(50, 50);
+                _configPreviewCanvas.setVisible(false);
+                //_configPreviewScroll.setSize(50, 50);
             }
         } else {
-            _configPreviewLabel.setVisible(false);
-            _configPreviewScroll.setSize(50, 50);
+            _configPreviewCanvas.setVisible(false);
+            //_configPreviewScroll.setSize(50, 50);
         }
         _shell.layout(true, true);
     }
@@ -435,25 +441,25 @@ public class ImageBuilderPopup {
     
     private void redrawPreview(Image img) {
         if (img == null) {
-            _configPreviewLabel.setVisible(false);
-            _configPreviewLabel.setSize(50, 50);
-            _configPreviewScroll.setSize(50, 50);
+            _configPreviewCanvas.setVisible(false);
+            _configPreviewCanvas.setSize(50, 50);
+            //_configPreviewScroll.setSize(50, 50);
         } else {
-            _configPreviewLabel.setVisible(true);
+            _configPreviewCanvas.setVisible(true);
             int width = Math.min(600, img.getBounds().width);
             int height = Math.min(600, img.getBounds().height);
-            Point size = _configPreviewScroll.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-            _configPreviewLabel.setSize(img.getBounds().width, img.getBounds().height);//width, height);
-            _configPreviewScroll.setSize(width, height);
-            System.out.println("redrawing preview w/ size=" + size + " width=" + width + " height=" + height);
+            Point size = _configPreviewCanvas.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+            //_configPreviewCanvas.setSize(img.getBounds().width, img.getBounds().height);//width, height);
+            _configPreviewCanvas.setSize(width, height);
+            //System.out.println("redrawing preview w/ size=" + size + " width=" + width + " height=" + height);
             if ( (size.x > width) && (size.y > height) )
                 _shell.pack();
         }
     }
     
     private void resizePct() {
-        Image img = _configPreviewImage;
-        System.out.println("resize pct [" + img + "]");
+        Image img = _configPreviewImageOrig;
+        //System.out.println("resize pct [" + img + "]");
         if ( (img != null) && (!img.isDisposed()) ) {
             ImageData data = img.getImageData();
             float scale = 1.0f;
@@ -469,14 +475,14 @@ public class ImageBuilderPopup {
             }
             int width = (int)(((float)data.width) * scale);
             int height = (int)(((float)data.height) * scale);
-            System.out.println("scaling to " + width + "x" + height + " [" + _configResizeToCombo.getText() + "]");
+            //System.out.println("scaling to " + width + "x" + height + " [" + _configResizeToCombo.getText() + "]");
             resize(data, width, height);
             _shell.layout(true, true);
         }
     }
     private void resizePx(boolean resizeHeight) {
         if (!_configResizeHeightModified && !_configResizeWidthModified) return;
-        Image img = _configPreviewImage;
+        Image img = _configPreviewImageOrig;
         if ( (img != null) && (!img.isDisposed()) ) {
             int width = 0;
             int height = 0;
@@ -496,7 +502,7 @@ public class ImageBuilderPopup {
             width = (int)(((float)data.width) * scale);
             height = (int)(((float)data.height) * scale);
             
-            System.out.println("scaling to " + width + "x" + height);
+            //System.out.println("scaling to " + width + "x" + height);
             resize(data, width, height);
             _configResizeHeightModified = false;
             _configResizeWidthModified = false;
@@ -505,20 +511,22 @@ public class ImageBuilderPopup {
     }
     private void resize(ImageData data, int width, int height) {
         if ( (width < 1) || (height < 1) ) return; // too small
-        ImageData scaled = null;
-        Image scaledImage = null;
-        Image old = _configPreviewLabel.getImage();
         try {
-            scaled = data.scaledTo(width, height);
-            scaledImage = new Image(_configPreviewLabel.getDisplay(), scaled);
-            _configPreviewLabel.setImage(scaledImage);
-            if ( (old != null) && (old != _configPreviewImage) )
-                old.dispose();
-            redrawPreview(scaledImage);
+            if (_configPreviewImageOrig != _configPreviewCanvas.getImage())
+                _configPreviewCanvas.disposeImage();
+            Image img = new Image(_shell.getDisplay(), width, height);
+            GC gc = new GC(img);
+            Rectangle orig = _configPreviewImageOrig.getBounds();
+            gc.drawImage(_configPreviewImageOrig, 0, 0, orig.width, orig.height, 0, 0, width, height);
+            gc.dispose();
+            
+            _configPreviewCanvas.setImage(img);
+            redrawPreview(img);
             _configResizeWidth.setText(width+"");
             _configResizeHeight.setText(height+"");
         } catch (OutOfMemoryError oom) {
             System.out.println("Image size is too large (OOMed): " + width + "x" + height + ": " + oom.getMessage());
+            /*
             if (scaledImage != null) {
                 if (!scaledImage.isDisposed())
                     scaledImage.dispose();
@@ -532,6 +540,7 @@ public class ImageBuilderPopup {
                 _configPreviewLabel.setImage(null);
                 redrawPreview(null);
             }
+             */
         }
     }
 }
