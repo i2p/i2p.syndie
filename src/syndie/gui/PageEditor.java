@@ -156,6 +156,7 @@ public class PageEditor {
     private boolean _findWrapped;
     
     private LinkBuilderPopup _linkPopup;
+    private ImageBuilderPopup _imagePopup;
     
     public PageEditor(DBClient client, Composite parent, MessageEditor msg, String type) {
         _client = client;
@@ -230,6 +231,7 @@ public class PageEditor {
         createFind();
         
         _linkPopup = new LinkBuilderPopup(_client, _parent.getShell(), this);
+        _imagePopup = new ImageBuilderPopup(this);
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -278,6 +280,10 @@ public class PageEditor {
         _htmlImg = new Button(grpHTML, SWT.PUSH);
         _htmlImg.setText("img");
         _htmlImg.setToolTipText("Add a new image");
+        _htmlImg.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(); }
+        });
         _htmlSymbol = new Button(grpHTML, SWT.PUSH);
         _htmlSymbol.setText("sym");
         _htmlSymbol.setToolTipText("Add a new symbol");
@@ -757,6 +763,7 @@ public class PageEditor {
     
     private void showStyleChooser() { resetTextStyle(); _txtShell.setVisible(true); }
     private void showLinkPopup() { _linkPopup.showPopup(); }
+    private void showImagePopup() { _imagePopup.showPopup(); }
     
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) { return buildColorCombo(parent, name, tooltip, defaultColor, enable, null); }
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {
@@ -1478,4 +1485,7 @@ public class PageEditor {
 
     int getPageCount() { return _messageEditor.getPageCount(); }
     List getAttachmentDescriptions() { return _messageEditor.getAttachmentDescriptions(); }
+    List getAttachmentDescriptions(boolean imagesOnly) { return _messageEditor.getAttachmentDescriptions(imagesOnly); }
+
+    byte[] getImageAttachment(int idx) { return _messageEditor.getImageAttachment(idx); }
 }

@@ -306,6 +306,15 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _refChooser = new ReferenceChooserPopup(_shell, _client, this);
         _messageChooser = new MessageChooserPopup(_shell, _client, this);
         
+        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
+        _shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; onCancel(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        
         //_linkTypeGroup.setSize(_linkTypeGroup.computeSize(400, SWT.DEFAULT));
         //_shell.setSize(_shell.computeSize(400, SWT.DEFAULT));
         _shell.pack();
@@ -462,14 +471,6 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                 _linkTypeAttachmentCombo.add((String)attachments.get(i));
         }
 
-        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
-        _shell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; onCancel(); }
-            public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
-        });
         _shell.open();
     }
     

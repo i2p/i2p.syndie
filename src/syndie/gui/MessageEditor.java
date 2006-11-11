@@ -412,14 +412,32 @@ public class MessageEditor {
 
     int getPageCount() { return _pages.size(); }
 
-    List getAttachmentDescriptions() {
+    List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
+    List getAttachmentDescriptions(boolean imagesOnly) {
         ArrayList rv = new ArrayList();
-        int items = _controlAttachmentCombo.getItemCount();
-        for (int i = 0; i < items; i++) {
+        for (int i = 0; i < _attachmentConfig.size(); i++) {
+            if (imagesOnly) {
+                Properties cfg = (Properties)_attachmentConfig.get(i);
+                String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
+                if ( (type == null) || (!type.startsWith("image")) )
+                    continue;
+            }
             String item = (String)_controlAttachmentCombo.getItem(i);
-            if (!"none".equals(item))
-                rv.add(item);
+            rv.add(item);
         }
         return rv;
+    }
+    byte[] getImageAttachment(int idx) {
+        int cur = 0;
+        for (int i = 0; i < _attachmentConfig.size(); i++) {
+            Properties cfg = (Properties)_attachmentConfig.get(i);
+            String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
+            if ( (type == null) || (!type.startsWith("image")) )
+                continue;
+            if (cur == idx)
+                return (byte[])_attachments.get(i);
+            cur++;
+        }
+        return null;
     }
 }
