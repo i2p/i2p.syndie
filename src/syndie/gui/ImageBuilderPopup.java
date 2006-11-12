@@ -224,8 +224,8 @@ public class ImageBuilderPopup {
         _ok = new Button(actions, SWT.PUSH);
         _ok.setText("ok");
         _ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { insertImage(); hide(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { insertImage(); hide(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
         });
         
         _cancel = new Button(actions, SWT.PUSH);
@@ -311,7 +311,7 @@ public class ImageBuilderPopup {
         }
     }
     
-    private void insertImage() {
+    private void imageAccepted() {
         // add the attachment if necessary (perhaps resizing it), then insert the
         // image html into the page
         int attachment = -1;

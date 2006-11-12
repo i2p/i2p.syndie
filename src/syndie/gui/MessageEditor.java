@@ -12,9 +12,13 @@ import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -64,6 +68,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private Composite _msgControl;
     private Label _controlAvatar;
     private Image _controlAvatarImage;
+    private Image _controlAvatarImageDefault;
+    private FileDialog _controlAvatarDialog;
     private Text _controlAuthor;
     private Menu _controlAuthorMenu;
     private Label _controlSubject;
@@ -123,10 +129,20 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _msgControl.setLayout(new GridLayout(3, false));
         _msgControl.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _controlAvatarImage = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
+        _controlAvatarImageDefault = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
+        _controlAvatarImage = _controlAvatarImageDefault;
         _controlAvatar = new Label(_msgControl, SWT.BORDER);
         _controlAvatar.setImage(_controlAvatarImage);
         _controlAvatar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 1, 2));
+        _controlAvatar.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) { pickAvatar(); }
+            public void mouseUp(MouseEvent mouseEvent) {}
+        });
+        
+        _controlAvatarDialog = new FileDialog(_root.getShell(), SWT.OPEN | SWT.SINGLE);
+        _controlAvatarDialog.setFilterExtensions(new String[] { "*.png; *.jpeg; *.jpg; *.gif; *.ico", "*.*" });
+        _controlAvatarDialog.setFilterNames(new String[] { "Images", "All files" });
         
         _controlSubject = new Label(_msgControl, SWT.NONE);
         _controlSubject.setText("Subject:");
@@ -621,9 +637,53 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _target = uri.getScope();
         updateAuthor();
     }
-
+    
     public void referenceChoiceAborted() {
         _refChooser.hide();
         updateAuthor();
+    }
+    
+    private void pickAvatar() {
+        String file = _controlAvatarDialog.open();
+        if (file != null) {
+            File f = new File(file);
+            //ignoring it here, since we scale it down later
+            //if (f.length() > Constants.MAX_AVATAR_SIZE)
+            //    return;
+            _controlAvatar.setRedraw(false);
+            try {
+                Image img = new Image(_root.getDisplay(), file);
+                Rectangle bounds = img.getBounds();
+                if ( (bounds.width != Constants.MAX_AVATAR_WIDTH) || (bounds.height != Constants.MAX_AVATAR_HEIGHT) )
+                    img = rescaleAvatar(img);
+                if ( (_controlAvatarImage != null) && (_controlAvatarImageDefault != _controlAvatarImage) && (!_controlAvatarImage.isDisposed()) )
+                    _controlAvatarImage.dispose();
+                _controlAvatarImage = img;
+                _controlAvatar.setImage(img);
+            } catch (IllegalArgumentException iae) {
+                // deal with invalid image
+            }
+            _controlAvatar.setRedraw(true);
+        }
+    }
+    
+    private Image rescaleAvatar(Image orig) {
+        ImageData scaledData = null;
+        Image rv = null;
+        try {
+            scaledData = orig.getImageData().scaledTo(Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_WIDTH);
+            rv = new Image(_root.getDisplay(), scaledData);
+            if (orig != _controlAvatarImageDefault)
+                orig.dispose();
+            return rv;
+        } catch (OutOfMemoryError oom) {
+            System.err.println("OOM trying to scale the image");
+        }
+        if ( (rv != null) && (!rv.isDisposed()) )
+            rv.dispose();
+        rv = null;
+        scaledData = null;
+        System.gc();
+        return orig;
     }
 }
