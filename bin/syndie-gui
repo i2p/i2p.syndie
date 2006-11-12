@@ -6,5 +6,6 @@ JAVA=java
 LOC=`which $0`
 SYNDIEBINDIR=`dirname ${LOC}`
 SYNDIELIBDIR=${SYNDIEBINDIR}/../lib
-SWTLIBDIR=${SYNDIEBINDIR}/../../swt-I20060602-1317-gtk-linux-x86
+SWTLIBDIR=${SYNDIEBINDIR}/../../swt-I20060922-0010-gtk-linux-x86
+#SWTLIBDIR=${SYNDIEBINDIR}/../../swt-I20060602-1317-gtk-linux-x86
 $JAVA -cp ${SYNDIELIBDIR}/syndie.jar:${SYNDIELIBDIR}/hsqldb.jar:${SWTLIBDIR}/swt.jar -Djava.library.path=${SWTLIBDIR} syndie.gui.SWTUI $@

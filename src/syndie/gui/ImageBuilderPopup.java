@@ -304,8 +304,8 @@ public class ImageBuilderPopup {
             ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
             loader.data = new ImageData[] { img.getImageData() };
             // foo. png not supported on early SWT (though newer swt revs do)
-            //loader.save(outBuf, SWT.IMAGE_PNG);
-            loader.save(outBuf, SWT.IMAGE_JPEG);
+            loader.save(outBuf, SWT.IMAGE_PNG);
+            //loader.save(outBuf, SWT.IMAGE_JPEG);
             _configPreviewImageSerialized = outBuf.toByteArray();
             System.out.println("image size: " + _configPreviewImageSerialized.length + " bytes");
         }
@@ -323,7 +323,7 @@ public class ImageBuilderPopup {
             if (_configPreviewImageSerialized != null) {
                 // insert the modified file
                 data = _configPreviewImageSerialized;
-                type = "image/jpeg";
+                type = "image/png";
             } else {
                 // insert the orig file
                 byte buf[] = new byte[(int)fname.length()];
@@ -346,7 +346,7 @@ public class ImageBuilderPopup {
             int img = _choiceAttachCombo.getSelectionIndex();
             if (_configPreviewImageSerialized != null) {
                 // image was resized
-                _page.updateImageAttachment(img, "image/jpeg", _configPreviewImageSerialized);
+                _page.updateImageAttachment(img, "image/png", _configPreviewImageSerialized);
                 System.out.println("Updating image attachment to " + _configPreviewImageSerialized.length);
             }
             attachment = _page.getImageAttachmentNum(img);
