@@ -261,6 +261,12 @@ public class ImageBuilderPopup {
  
     public void showPopup(boolean forBodyBackground) {
         _forBodyBackground = forBodyBackground;
+        if ( (_configPreviewImageOrig != null) && (!_configPreviewImageOrig.isDisposed()) ) {
+            _configPreviewImageOrig.dispose();
+            _configPreviewImageOrig = null;
+        }
+        _configPreviewImageSerialized = null;
+        _configPreviewCanvas.disposeImage();
         List attachments = _page.getAttachmentDescriptions(true);
         if ( (attachments != null) && (attachments.size() > 0) ) {
             _choiceAttach.setEnabled(true);
@@ -276,6 +282,8 @@ public class ImageBuilderPopup {
             _choiceAttachCombo.removeAll();
             _choiceAttachCombo.setEnabled(false);
         }
+        
+        _choiceFileText.setText("");
         
         showConfig(false);
         

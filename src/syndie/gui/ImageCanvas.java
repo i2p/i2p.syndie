@@ -48,6 +48,7 @@ public class ImageCanvas extends Canvas {
     public void disposeImage() {
         if ( (_imageCurrent != null) && (!_imageCurrent.isDisposed()) )
             _imageCurrent.dispose();
+        _imageCurrent = null;
     }
     
     private class ScrollListener implements SelectionListener {
