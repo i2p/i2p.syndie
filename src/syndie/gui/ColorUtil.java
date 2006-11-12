@@ -70,45 +70,56 @@ public class ColorUtil {
     /** alphabetically ordered list of system colors */
     public static ArrayList getSystemColorNames() { return _systemColorNames; }
     
+    private static class ColorQuery {
+        Color rv;
+        String color;
+        Map cache;
+        public ColorQuery(String col, Map cacheVal) { color = col; cache = cacheVal; }
+    }
+    
     /**
      * get the given color, pulling it from the set of system colors or the cache,
-     * if possible.
+     * if possible.  can be called from any thread
      */
     public static Color getColor(String color, Map cache) {
-        Color rv = null;
-        if (color != null) {
-            color = color.trim();
-            String rgb = (String)_colorNameToRGB.get(color);
-            if (rgb != null)
-                color = rgb;
-            //System.out.println("color: " + color);
-            if (color.startsWith("#") && (color.length() == 7)) {
-                Color cached = (Color)_colorRGBToSystem.get(color);
-                if ( (cache != null) && (cached == null) )
-                    cached = (Color)cache.get(color);
-                if (cached == null) {
-                    try {
-                        int r = Integer.parseInt(color.substring(1, 3), 16);
-                        int g = Integer.parseInt(color.substring(3, 5), 16);
-                        int b = Integer.parseInt(color.substring(5, 7), 16);
-                        cached = new Color(Display.getDefault(), r, g, b);
-                        if (cache != null)
-                            cache.put(color, cached);
-                        //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
-                    } catch (NumberFormatException nfe) {
+        final ColorQuery q = new ColorQuery(color, cache);
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                if (q.color != null) {
+                    q.color = q.color.trim();
+                    String rgb = (String)_colorNameToRGB.get(q.color);
+                    if (rgb != null)
+                        q.color = rgb;
+                    //System.out.println("color: " + color);
+                    if (q.color.startsWith("#") && (q.color.length() == 7)) {
+                        Color cached = (Color)_colorRGBToSystem.get(q.color);
+                        if ( (q.cache != null) && (cached == null) )
+                            cached = (Color)q.cache.get(q.color);
+                        if (cached == null) {
+                            try {
+                                int r = Integer.parseInt(q.color.substring(1, 3), 16);
+                                int g = Integer.parseInt(q.color.substring(3, 5), 16);
+                                int b = Integer.parseInt(q.color.substring(5, 7), 16);
+                                cached = new Color(Display.getDefault(), r, g, b);
+                                if (q.cache != null)
+                                    q.cache.put(q.color, cached);
+                                //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
+                            } catch (NumberFormatException nfe) {
+                                // invalid rgb
+                                System.out.println("invalid rgb");
+                                nfe.printStackTrace();
+                            }
+                        }
+                        if (cached != null)
+                            q.rv = cached;
+                    } else {
                         // invalid rgb
-                        System.out.println("invalid rgb");
-                        nfe.printStackTrace();
+                        //System.out.println("rgb is not valid [" + color + "]");
                     }
                 }
-                if (cached != null)
-                    rv = cached;
-            } else {
-                // invalid rgb
-                //System.out.println("rgb is not valid [" + color + "]");
             }
-        }
-        return rv;
+        });
+        return q.rv;
     }
 
     /**

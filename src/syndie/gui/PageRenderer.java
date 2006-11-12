@@ -121,6 +121,7 @@ public class PageRenderer {
     private HTMLTag _currentEventImageTag;
     
     private int _viewSizeModifier;
+    private int _charsPerLine;
     
     public PageRenderer(Composite parent) { this(parent, false); }
     public PageRenderer(Composite parent, boolean scrollbars) {
@@ -273,12 +274,16 @@ public class PageRenderer {
         _source = src;
         _msg = msg;
         _page = pageNum;
-        if (msg == null) {
+        PageRendererThread.enqueue(this);
+    }
+    /** called from the PageRendererThread - note that this thread cannot update SWT components! */
+    void threadedRender() {
+        if (_msg == null) {
             renderText("");
             return;
         }
-        String cfg = src.getMessagePageConfig(msg.getInternalId(), pageNum);
-        String body = src.getMessagePageData(msg.getInternalId(), pageNum);
+        String cfg = _source.getMessagePageConfig(_msg.getInternalId(), _page);
+        String body = _source.getMessagePageData(_msg.getInternalId(), _page);
         Properties props = new Properties();
         CommandImpl.parseProps(cfg, props);
         String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
@@ -288,46 +293,60 @@ public class PageRenderer {
             renderText(body);
         }
     }
-    private void renderText(String body) {
-        disposeFonts();
-        disposeColors();
-        disposeImages();
-        _text.setText(body);
-        _text.setStyleRanges(null, null);
+    private void renderText(final String body) {
+        _text.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                disposeFonts();
+                disposeColors();
+                disposeImages();
+                _text.setText(body);
+                _text.setStyleRanges(null, null);
+            }
+        });
     }
-    private void renderHTML(String html) {
-        disposeFonts();
-        disposeColors();
-        disposeImages();
-
-        int charsPerLine = -1;
+    private int getCharsPerLine() {
         if (true) {
             // have the HTMLStateBuilder inject fake line wrapping, even though
             // the wrapping won't be right all of the time.  this lets wrapped
             // lines have the right indentation.  however, it can cause problems
             // for bullet points, as each line is given a bullet
-            GC gc = new GC(_text);
-            FontMetrics metrics = gc.getFontMetrics();
-            int charWidth = metrics.getAverageCharWidth();
-            int paneWidth = _text.getBounds().width;
-            int w = _text.getClientArea().width;
-            int ww = _parent.getClientArea().width;
-            //if (paneWidth > 800) paneWidth = 800;
-            //else if (paneWidth < 100) paneWidth = 100;
-            charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
-            System.out.println("max chars per line: " + charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
+            _text.getDisplay().syncExec(new Runnable() {
+                public void run() {
+                    GC gc = new GC(_text);
+                    FontMetrics metrics = gc.getFontMetrics();
+                    int charWidth = metrics.getAverageCharWidth();
+                    int paneWidth = _text.getBounds().width;
+                    int w = _text.getClientArea().width;
+                    int ww = _parent.getClientArea().width;
+                    //if (paneWidth > 800) paneWidth = 800;
+                    //else if (paneWidth < 100) paneWidth = 100;
+                    _charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
+                    System.out.println("max chars per line: " + _charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
+                }
+            });
         }
+        return _charsPerLine;
+    }
+    private void renderHTML(String html) {
+        _text.getDisplay().syncExec(new Runnable() {
+            public void run() {
+                disposeFonts();
+                disposeColors();
+                disposeImages();
+            }
+        });
+
+        _charsPerLine = getCharsPerLine();
         
-        HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, charsPerLine);
+        final HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, _charsPerLine);
         builder.buildState();
-        String text = builder.getAsText();
-        _text.setText(text);
-        HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
+        final String text = builder.getAsText();
+        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
+        //todo: do this in two parts, once in the current thread, another in the swt thread
         sbuilder.buildStyles(_viewSizeModifier);
         sbuilder.ts("styles completely built");
         _fonts = sbuilder.getFonts();
         _colors = sbuilder.getCustomColors();
-        _text.setStyleRanges(sbuilder.getStyleRanges());
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
         // so that the listeners registered in the constructor can do their thing
         _imageIndexes = sbuilder.getImageIndexes();
@@ -340,21 +359,28 @@ public class PageRenderer {
         // we may want to keep track of them separately for menu handling
         Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
         
-        setLineProperties(builder, sbuilder);
         _linkTags = sbuilder.getLinkTags();
         _imageTags = sbuilder.getImageTags();
         
-        _bgImage = sbuilder.getBackgroundImage();
-        if (_bgImage != null) {
-            _text.setBackgroundImage(_bgImage);
-        } else {
-            _text.setBackgroundImage(null);
-            _text.setBackgroundMode(SWT.INHERIT_DEFAULT); // use the container's background
-        }
-        
-        _bgColor = sbuilder.getBackgroundColor();
-        if (_bgColor != null)
-            _text.setBackground(_bgColor);
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                _text.setText(text);
+                _text.setStyleRanges(sbuilder.getStyleRanges());
+                setLineProperties(builder, sbuilder);
+
+                _bgImage = sbuilder.getBackgroundImage();
+                if (_bgImage != null) {
+                    _text.setBackgroundImage(_bgImage);
+                } else {
+                    _text.setBackgroundImage(null);
+                    _text.setBackgroundMode(SWT.INHERIT_DEFAULT); // use the container's background
+                }
+
+                _bgColor = sbuilder.getBackgroundColor();
+                if (_bgColor != null)
+                    _text.setBackground(_bgColor);
+            }
+        });
     }
     
     /**
@@ -537,7 +563,7 @@ public class PageRenderer {
                 if (!img.isDisposed())
                     img.dispose();
             }
-            _images = null;
+            _images.clear();
         }
     }
     

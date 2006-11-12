@@ -99,6 +99,10 @@ class HTMLStyleBuilder {
     public void buildStyles(int viewSizeModifier) {
         _viewSizeModifier = viewSizeModifier;
         ts("building styles for " + _htmlTags.size() + " tags");
+        
+        String bodyBgImage = null;
+        String bodyBgColor = null;
+        
         // get a list of points where any tag starts or ends
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
@@ -108,17 +112,8 @@ class HTMLStyleBuilder {
             } else if ("img".equals(tag.getName())) {
                 _imageTags.add(tag);
             } else if ("body".equals(tag.getName())) {
-                String bgimage = tag.getAttribValue("bgimage");
-                if (bgimage != null) {
-                    Image img = getImage(getURI(bgimage));
-                    if (img != null)
-                        _bgImage = img;
-                }
-                Color color = getColor(tag.getAttribValue("bgcolor"));
-                if (color != null) {
-                    _bgColor = color;
-                    System.out.println("setting the body bgcolor to " + color);
-                }
+                bodyBgImage = tag.getAttribValue("bgimage");
+                bodyBgColor = tag.getAttribValue("bgcolor");
             }
             List tags = (List)breakPointTags.get(new Integer(tag.getStartIndex()));
             if (tags == null) {
@@ -200,6 +195,8 @@ class HTMLStyleBuilder {
         
         ts("tag children found");
         
+        setBodyOptions(bodyBgImage, bodyBgColor);
+        
         // iterate across those points, building a new StyleRange out of all tags applicable there
         _styleRanges = new StyleRange[breakPointTags.size()];
         int rangeIndex = 0;
@@ -278,6 +275,25 @@ class HTMLStyleBuilder {
         ts("done including anchor end images");
     }
     
+    private void setBodyOptions(final String bodyBgImage, final String bodyBgColor) {
+        Display.getDefault().syncExec(new Runnable() { 
+            public void run() {
+                if (bodyBgImage != null) {
+                    Image img = getImage(getURI(bodyBgImage));
+                    if (img != null)
+                        _bgImage = img;
+                }
+                if (bodyBgColor != null) {
+                    Color color = getColor(bodyBgColor);
+                    if (color != null) {
+                        _bgColor = color;
+                        System.out.println("setting the body bgcolor to " + color);
+                    }
+                }
+            }
+        });
+    }
+    
     private static final long _start = System.currentTimeMillis();
     static final void ts(String msg) {
         System.out.println((System.currentTimeMillis()-_start) + ": " + msg);
@@ -334,7 +350,7 @@ class HTMLStyleBuilder {
             buf.append("\t[" + _msgText.substring(start, start+length).trim() + "]");
         else
             buf.append("\n");
-        ts(buf.toString());
+        //ts(buf.toString());
         
         return getStyle(start, length, tags);
     }
@@ -458,7 +474,8 @@ class HTMLStyleBuilder {
         
         if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
             // ok, we can't use a default font, so lets construct a new one (or use a cached one)
-            style.font = buildFont(style.font, customStyle, sizeModifier, fontName);
+            //style.font = 
+            buildFont(style.font, customStyle, sizeModifier, fontName, style);
         }
         
         // images are built later
@@ -469,21 +486,25 @@ class HTMLStyleBuilder {
         return ColorUtil.getColor(color, _customColors);
     }
     
-    private void includeImage(StyleRange style, HTMLTag imgTag) {
+    private void includeImage(final StyleRange style, final HTMLTag imgTag) {
         if (imgTag == null) {
             _images.add(ICON_IMAGE_UNKNOWN);
             return;
         }
-        Image img = getImage(getURI(imgTag.getAttribValue("src")));
-        if (img == null)
-            img = ICON_IMAGE_UNKNOWN;
-        int width = img.getBounds().width;
-        int ascent = img.getBounds().height;
-        _images.add(img);
-        
-        int descent = 0;
-        style.metrics = new GlyphMetrics(ascent, 0, width);
-        //style.background = _imgBGColor;
+        Display.getDefault().syncExec(new Runnable() { 
+            public void run() {
+                Image img = getImage(getURI(imgTag.getAttribValue("src")));
+                if (img == null)
+                    img = ICON_IMAGE_UNKNOWN;
+                int width = img.getBounds().width;
+                int ascent = img.getBounds().height;
+                _images.add(img);
+
+                int descent = 0;
+                style.metrics = new GlyphMetrics(ascent, 0, width);
+                //style.background = _imgBGColor;
+            }
+        });
     }
     
     private Image getImage(SyndieURI imgURI) {
@@ -519,7 +540,7 @@ class HTMLStyleBuilder {
         return img;
     }
     
-    private void includeLinkEnd(StyleRange style, HTMLTag aTag) {
+    private void includeLinkEnd(final StyleRange style, final HTMLTag aTag) {
         SyndieURI targetURI = getURI(aTag.getAttribValue("href"));
         //if (targetURI == null) {
         //    System.out.println("no target uri in " + aTag);
@@ -531,17 +552,21 @@ class HTMLStyleBuilder {
         // archives, a special external link icon for generic URLs, a special icon
         // for links with keys on them, etc
         
-        Image img = ICON_LINK_END;
-        int width = img.getBounds().width;
-        int ascent = img.getBounds().height;
-        Integer idx = new Integer(style.start);
-        if (_imageIndexes.contains(idx))
-            throw new RuntimeException("wtf, already have an image at " + idx + ": " + _imageIndexes);
-        _imageIndexes.add(idx);
-        _images.add(img);
-        
-        int descent = 0;
-        style.metrics = new GlyphMetrics(ascent, 0, width);
+        Display.getDefault().syncExec(new Runnable() { 
+            public void run() {
+                Image img = ICON_LINK_END;
+                int width = img.getBounds().width;
+                int ascent = img.getBounds().height;
+                Integer idx = new Integer(style.start);
+                if (_imageIndexes.contains(idx))
+                    throw new RuntimeException("wtf, already have an image at " + idx + ": " + _imageIndexes);
+                _imageIndexes.add(idx);
+                _images.add(img);
+
+                int descent = 0;
+                style.metrics = new GlyphMetrics(ascent, 0, width);
+            }
+        });
     }
     
     
@@ -643,6 +668,14 @@ class HTMLStyleBuilder {
         if (styleLower.indexOf("italic") >= 0)
             fontStyle |= SWT.ITALIC;
         return new Font(Display.getDefault(), fontName, fontHeight, fontStyle);
+    }
+    
+    private void buildFont(final Font oldFont, final int swtAttribs, final int sizeModifier, final String fontName, final StyleRange style) {
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                style.font = buildFont(oldFont, swtAttribs, sizeModifier, fontName);
+            }
+        });
     }
     
     /**

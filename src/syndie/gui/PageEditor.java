@@ -863,7 +863,10 @@ public class PageEditor {
         }
         PageRendererSourceMem src = new PageRendererSourceMem(null, msgInfo, pageData, attachments, attachmentOrder);
         _preview.setRender(true);
+        long before = System.currentTimeMillis();
         _preview.renderPage(src, _dummyURI);
+        long renderTime = System.currentTimeMillis()-before;
+        System.out.println("** render time: " + renderTime);
         _preview.setRender(false);
         _lastPreviewed = System.currentTimeMillis();
         _lastModified = -1;
