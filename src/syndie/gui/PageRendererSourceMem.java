@@ -15,14 +15,14 @@ import syndie.db.DBClient;
 public class PageRendererSourceMem extends PageRendererSource {
     /** contents of each page (as String) */
     private List _pageData;
-    /** map of attachment name (String) to attachment data (byte[]) */
-    private Map _attachments;
+    /** ordered attachment data (byte[]) */
+    private List _attachments;
     /** ordered list of attachment names */
     private List _attachmentOrder;
     /** contains the message's general config data */
     private MessageInfo _msg;
     
-    public PageRendererSourceMem(DBClient client, MessageInfo msg, List pageData, Map attachments, List attachmentOrder) {
+    public PageRendererSourceMem(DBClient client, MessageInfo msg, List pageData, List attachments, List attachmentOrder) {
         super(client);
         _msg = msg;
         _pageData = pageData;
@@ -64,7 +64,7 @@ public class PageRendererSourceMem extends PageRendererSource {
     }
     public String getMessagePageData(long internalMsgId, int pageNum) {
         if (_msg.getInternalId() == internalMsgId)
-            return (String)_pageData.get(pageNum);
+            return (String)_pageData.get(pageNum-1);
         else
             return super.getMessagePageData(internalMsgId, pageNum);
     }
@@ -72,16 +72,23 @@ public class PageRendererSourceMem extends PageRendererSource {
         if (_msg.getInternalId() != internalMsgId)
             return super.getMessageAttachmentConfig(internalMsgId, attachmentNum);
         Properties rv = new Properties();
-        String name = (String)_attachmentOrder.get(attachmentNum);
+        if ( (attachmentNum <= 0) || (attachmentNum > _attachmentOrder.size()) ) return null;
+        String name = (String)_attachmentOrder.get(attachmentNum-1);
         rv.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, "application/octet-stream");
         rv.setProperty(Constants.MSG_ATTACH_DESCRIPTION, CommandImpl.strip(name));
         rv.setProperty(Constants.MSG_ATTACH_NAME, CommandImpl.strip(name));
         return rv;
     }
     public byte[] getMessageAttachmentData(long internalMsgId, int attachmentNum) {
-        if (_msg.getInternalId() != internalMsgId)
+        if (_msg.getInternalId() != internalMsgId) {
+            System.out.println("not the current message... fetch other attachment");
             return super.getMessageAttachmentData(internalMsgId, attachmentNum);
-        return (byte[])_attachments.get((String)_attachmentOrder.get(attachmentNum));
+        }
+        if ( (attachmentNum <= 0) || (attachmentNum > _attachmentOrder.size()) ) return null;
+        String name = (String)_attachmentOrder.get(attachmentNum-1);
+        byte data[] = (byte[])_attachments.get(attachmentNum-1);
+        System.out.println("current message... attachment count " + _attachmentOrder.size() + " (" + name + "): " + (data != null ? data.length+"" : "null"));
+        return data;
     }
     
     /** just treat all pages as html */

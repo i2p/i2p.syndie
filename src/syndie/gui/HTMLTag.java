@@ -100,6 +100,7 @@ class HTMLTag {
     public String getName() { return _name; }
     public String getAttribValue(String name) { return _attributes.getProperty(lowercase(name)); }
     public void setAttribValue(String name, String value) { _attributes.setProperty(lowercase(name), value); }
+    public void removeAttribValue(String name) { _attributes.remove(lowercase(name)); }
     public int getStartIndex() { return _startIndex; }
     /** the tag was closed at the given body index */
     public void setEndIndex(int index) { _endIndex = index; }

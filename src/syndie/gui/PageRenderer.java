@@ -262,10 +262,10 @@ public class PageRenderer {
         Long page = null;
         page = uri.getLong("page");
         if (page != null) {
-            if ( (page.longValue() > msg.getPageCount()) || (page.longValue() < 0) )
-                page = new Long(0);
+            if ( (page.longValue() > msg.getPageCount()) || (page.longValue() <= 0) )
+                page = new Long(1);
         } else {
-            page = new Long(0);
+            page = new Long(1);
         }
         renderPage(src, msg, page.intValue());
     }

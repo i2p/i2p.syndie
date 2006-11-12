@@ -3,7 +3,10 @@ package syndie.gui;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
+import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlEvent;
@@ -38,6 +41,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Text;
+import syndie.Constants;
+import syndie.data.SyndieURI;
 
 /**
  *
@@ -59,6 +64,7 @@ public class ImageBuilderPopup {
     private Button _configPreview;
     private ScrolledComposite _configPreviewScroll;
     private Image _configPreviewImageOrig;
+    private byte[] _configPreviewImageSerialized;
     private ImageCanvas _configPreviewCanvas;
     private Label _configResizeTo;
     private Combo _configResizeToCombo;
@@ -76,6 +82,8 @@ public class ImageBuilderPopup {
     
     private Button _ok;
     private Button _cancel;
+    
+    private boolean _forBodyBackground;
     
     public ImageBuilderPopup(PageEditor page) {
         _page = page;
@@ -251,7 +259,8 @@ public class ImageBuilderPopup {
         private void choiceUpdated() { _choiceUpdated = true; _choiceFile.setSelection(true); _choiceAttach.setSelection(false); showConfig(true); }
     }
  
-    public void showPopup() {
+    public void showPopup(boolean forBodyBackground) {
+        _forBodyBackground = forBodyBackground;
         List attachments = _page.getAttachmentDescriptions(true);
         if ( (attachments != null) && (attachments.size() > 0) ) {
             _choiceAttach.setEnabled(true);
@@ -280,22 +289,66 @@ public class ImageBuilderPopup {
         _configPreviewImageOrig = null;
     }
     
-    private void insertImage() {
-        // add the attachment if necessary (perhaps resizing it), then insert the
-        // image html into the page
-        /*
-        foo
-        Image img = _configPreviewLabel.getImage();
+    private void serializeImage() {
+        Image img = _configPreviewCanvas.getImage();
         if ( (img != null) && (!img.isDisposed()) ) {
-            foo. png not supported on early SWT. also should use GC.drawImage instead of scaleTo
             ImageLoader loader = new ImageLoader();
             ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
             loader.data = new ImageData[] { img.getImageData() };
+            // foo. png not supported on early SWT (though newer swt revs do)
+            //loader.save(outBuf, SWT.IMAGE_PNG);
             loader.save(outBuf, SWT.IMAGE_JPEG);
-            byte written[] = outBuf.toByteArray();
-            System.out.println("image size: " + written.length + " bytes");
+            _configPreviewImageSerialized = outBuf.toByteArray();
+            System.out.println("image size: " + _configPreviewImageSerialized.length + " bytes");
         }
-         */
+    }
+    
+    private void insertImage() {
+        // add the attachment if necessary (perhaps resizing it), then insert the
+        // image html into the page
+        int attachment = -1;
+        if (_choiceFile.getSelection()) {
+            // insert a new image
+            File fname = new File(_choiceFileText.getText().trim());
+            byte data[] = null;
+            String type = null;
+            if (_configPreviewImageSerialized != null) {
+                // insert the modified file
+                data = _configPreviewImageSerialized;
+                type = "image/jpeg";
+            } else {
+                // insert the orig file
+                byte buf[] = new byte[(int)fname.length()];
+                FileInputStream fin = null;
+                try {
+                    fin = new FileInputStream(fname);
+                    int read = DataHelper.read(fin, buf);
+                    if (read != buf.length)
+                        return;
+                    data = buf;
+                    type = MessageEditor.guessContentType(fname.getName());
+                } catch (IOException ioe) {
+                    return;
+                }
+            }
+            
+            attachment = _page.addAttachment(type, Constants.stripFilename(fname.getName(), false), data);
+            System.out.println("Adding image attachment of size " + data.length + " at attachment " + attachment);
+        } else if (_choiceAttach.getSelection()) {
+            int img = _choiceAttachCombo.getSelectionIndex();
+            if (_configPreviewImageSerialized != null) {
+                // image was resized
+                _page.updateImageAttachment(img, "image/jpeg", _configPreviewImageSerialized);
+                System.out.println("Updating image attachment to " + _configPreviewImageSerialized.length);
+            }
+            attachment = _page.getImageAttachmentNum(img);
+        }
+        
+        if (_forBodyBackground) {
+            _page.setBodyTags(SyndieURI.createRelativeAttachment(attachment).toString());
+        } else {
+            _page.insertAtCaret("<img src=\"" + SyndieURI.createRelativeAttachment(attachment).toString() + "\" />");
+        }
     }
     
     private Image getImage() {
@@ -313,7 +366,7 @@ public class ImageBuilderPopup {
         } else if (_choiceAttach.getSelection()) {
             int idx = _choiceAttachCombo.getSelectionIndex();
             if (idx >= 0) {
-                byte attachment[] = _page.getImageAttachment(idx);
+                byte attachment[] = _page.getImageAttachment(idx+1);
                 if (attachment != null) {
                     Image rv = new Image(_shell.getDisplay(), new ByteArrayInputStream(attachment));
                     _configPreviewImageOrig = rv;
@@ -331,7 +384,9 @@ public class ImageBuilderPopup {
     }
     
     private int getImageSize() {
-        if (_choiceFile.getSelection()) {
+        if (_configPreviewImageSerialized != null) {
+            return _configPreviewImageSerialized.length;
+        } else if (_choiceFile.getSelection()) {
             File fname = new File(_choiceFileText.getText().trim());
             if (fname.exists())
                 return (int)fname.length();
@@ -376,10 +431,10 @@ public class ImageBuilderPopup {
             _configSize.setEnabled(true);
             _configSizeAmount.setText(((size+1023)/1024)+"KB");
             _configSizeAmount.setEnabled(true);
-            _configThumbnail.setEnabled(true);
-            _configThumbnail.setSelection(false);
-            _configStrip.setEnabled(true);
-            _configStrip.setSelection(false);
+            //_configThumbnail.setEnabled(true);
+            //_configThumbnail.setSelection(false);
+            //_configStrip.setEnabled(true);
+            //_configStrip.setSelection(false);
         } else {
             //System.out.println("image not found or not visible");
             _configPreview.setEnabled(false);
@@ -511,10 +566,11 @@ public class ImageBuilderPopup {
     }
     private void resize(ImageData data, int width, int height) {
         if ( (width < 1) || (height < 1) ) return; // too small
+        Image img = null;
         try {
             if (_configPreviewImageOrig != _configPreviewCanvas.getImage())
                 _configPreviewCanvas.disposeImage();
-            Image img = new Image(_shell.getDisplay(), width, height);
+            img = new Image(_shell.getDisplay(), width, height);
             GC gc = new GC(img);
             Rectangle orig = _configPreviewImageOrig.getBounds();
             gc.drawImage(_configPreviewImageOrig, 0, 0, orig.width, orig.height, 0, 0, width, height);
@@ -524,23 +580,18 @@ public class ImageBuilderPopup {
             redrawPreview(img);
             _configResizeWidth.setText(width+"");
             _configResizeHeight.setText(height+"");
+            serializeImage();
         } catch (OutOfMemoryError oom) {
             System.out.println("Image size is too large (OOMed): " + width + "x" + height + ": " + oom.getMessage());
-            /*
-            if (scaledImage != null) {
-                if (!scaledImage.isDisposed())
-                    scaledImage.dispose();
-                scaledImage = null;
-            }
-            scaled = null;
-            if ( (old != null) && (!old.isDisposed()) ) {
-                _configPreviewLabel.setImage(old);
-                redrawPreview(old);
-            } else {
-                _configPreviewLabel.setImage(null);
-                redrawPreview(null);
-            }
-             */
+            data = null;
+            if ( (img != null) && (!img.isDisposed()) )
+                img.dispose();
+            _configPreviewCanvas.setImage(_configPreviewImageOrig);
+            redrawPreview(_configPreviewImageOrig);
+            width = _configPreviewImageOrig.getBounds().width;
+            height = _configPreviewImageOrig.getBounds().height;
+            _configResizeWidth.setText(width+"");
+            _configResizeHeight.setText(height+"");
         }
     }
 }

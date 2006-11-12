@@ -343,18 +343,22 @@ public class MessageEditor {
         _extensionToType.put("txt", "text/plain");
         _extensionToType.put("syndie", "application/x-syndie");
     }
+    public static final String guessContentType(String filename) {
+        filename = HTMLTag.lowercase(filename);
+        int split = filename.lastIndexOf('.');
+        if ( (split >= 0) && (split + 1 < filename.length()) ) {
+            String type = (String)_extensionToType.get(filename.substring(split+1));
+            if (type != null)
+                return type;
+        }
+        return "application/octet-stream";
+    } 
     
     private void addAttachment(File file) {
         String fname = file.getName();
         String name = Constants.stripFilename(fname, false);
-        String type = "application/octet-stream";
+        String type = guessContentType(fname);
         fname = HTMLTag.lowercase(fname);
-        int split = fname.lastIndexOf('.');
-        if ( (split >= 0) && (split + 1 < fname.length()) ) {
-            String ntype = (String)_extensionToType.get(fname.substring(split+1));
-            if (ntype != null)
-                type = ntype;
-        }
         
         if (file.length() > Constants.MAX_ATTACHMENT_SIZE)
             return;
@@ -372,6 +376,17 @@ public class MessageEditor {
         _attachmentConfig.add(cfg);
         _attachments.add(data);
         rebuildAttachmentsCombo();
+    }
+    int addAttachment(String contentType, String name, byte[] data) {
+        int rv = -1;
+        Properties cfg = new Properties();
+        cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
+        cfg.setProperty(Constants.MSG_ATTACH_NAME, name);
+        _attachmentConfig.add(cfg);
+        _attachments.add(data);
+        rv = _attachments.size();
+        rebuildAttachmentsCombo();
+        return rv;
     }
     private void removeAttachment() {
         if (_attachments.size() > 0) {
@@ -427,6 +442,18 @@ public class MessageEditor {
         }
         return rv;
     }
+    List getAttachmentNames() {
+        ArrayList rv = new ArrayList();
+        for (int i = 0; i < _attachmentConfig.size(); i++) {
+            Properties cfg = (Properties)_attachmentConfig.get(i);
+            rv.add(cfg.getProperty(Constants.MSG_ATTACH_NAME));
+        }
+        return rv;
+    }
+    byte[] getAttachmentData(int attachment) {
+        if ( (attachment <= 0) || (attachment > _attachments.size()) ) return null;
+        return (byte[])_attachments.get(attachment-1);
+    }
     byte[] getImageAttachment(int idx) {
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
@@ -434,10 +461,39 @@ public class MessageEditor {
             String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
             if ( (type == null) || (!type.startsWith("image")) )
                 continue;
-            if (cur == idx)
+            if (cur + 1 == idx)
                 return (byte[])_attachments.get(i);
             cur++;
         }
         return null;
+    }
+    int getImageAttachmentNum(int imageNum) { 
+        int cur = 0;
+        for (int i = 0; i < _attachmentConfig.size(); i++) {
+            Properties cfg = (Properties)_attachmentConfig.get(i);
+            String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
+            if ( (type == null) || (!type.startsWith("image")) )
+                continue;
+            if (cur == imageNum)
+                return cur+1;
+            cur++;
+        }
+        return -1;
+    }
+    void updateImageAttachment(int imageNum, String contentType, byte data[]) { 
+        int cur = 0;
+        for (int i = 0; i < _attachmentConfig.size(); i++) {
+            Properties cfg = (Properties)_attachmentConfig.get(i);
+            String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
+            if ( (type == null) || (!type.startsWith("image")) )
+                continue;
+            if (cur == imageNum) {
+                cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
+                _attachments.set(cur, data);
+                rebuildAttachmentsCombo();
+                return;
+            }
+            cur++;
+        }
     }
 }

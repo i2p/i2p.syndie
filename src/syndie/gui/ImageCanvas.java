@@ -87,7 +87,7 @@ public class ImageCanvas extends Canvas {
     private void rescaleScrollbars(int x, int y) {
         Rectangle target = getClientArea();
         Rectangle size = null;
-        if (_imageCurrent == null)
+        if ( (_imageCurrent == null) || (_imageCurrent.isDisposed()) )
             size = new Rectangle(0, 0, 0, 0);
         else
             size = _imageCurrent.getBounds();

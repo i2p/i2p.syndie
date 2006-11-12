@@ -506,10 +506,16 @@ class HTMLStyleBuilder {
         
                 long internalMsgId = _source.getMessageId(scopeId, msgId.longValue());
                 byte imgData[] = _source.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
-                if (imgData != null)
+                if (imgData != null) {
                     img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
+                    System.out.println("image attachment is valid [" + imgData.length + " bytes]");
+                } else {
+                    System.out.println("image attachment is null (" + attachmentId + ")");
+                }
             }
         }
+        if (img == null)
+            System.out.println("no image attachment for " + imgURI);
         return img;
     }
     

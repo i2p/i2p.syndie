@@ -302,13 +302,14 @@ delimited <code>name=value</code> pairs)</p>
       input until terminated with a line containing only a single ".".  The
       newlines are stripped on each line so that it ends with "\n" for all
       users, regardless of whether their OS uses "\n", "\r\n", or "\r" for line
-      terminators.</dd>
+      terminators.  The <code>$num</code> is 1-based, so the first page is page 1.</dd>
   <dt id="post_listpages"><code>listpages</code></dt>
   <dd>Display a list of pages already scheduled for inclusion in the post</dd>
   <dt id="post_delpage"><code>delpage $index</code></dt>
   <dd>Remove the $index-th page</dd>
   <dt id="post_addattachment"><code>addattachment [--attachment $num] --in $filename [--type $contentType] [--name $name] [--description $desc]</code></dt>
-  <dd>Add a new attachment to the post</dd>
+  <dd>Add a new attachment to the post  The <code>$num</code> is 1-based, so 
+      the first attachment is attachment 1.</dd>
   <dt id="post_listattachments"><code>listattachments</code></dt>
   <dd>Display a list of attachments already scheduled for inclusion in the post</dd>
   <dt id="post_delattachment"><code>delattachment $index</code></dt>

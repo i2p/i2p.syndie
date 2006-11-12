@@ -281,8 +281,8 @@ public class PageEditor {
         _htmlImg.setText("img");
         _htmlImg.setToolTipText("Add a new image");
         _htmlImg.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
         });
         _htmlSymbol = new Button(grpHTML, SWT.PUSH);
         _htmlSymbol.setText("sym");
@@ -302,8 +302,8 @@ public class PageEditor {
         _pageBGImage.setText("bgimg");
         _pageBGImage.setToolTipText("Set the background image");
         _pageBGImage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { setBodyTags(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { setBodyTags(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(true); }
         });
         _pageBGColor = buildColorCombo(grpPage, "pagebg", "Adjust the page bg color", "white", enable, new Runnable() {
             public void run() { setBodyTags(); }
@@ -411,22 +411,37 @@ public class PageEditor {
         _listUnordered.setEnabled(enable);
     }
     
-    private void setBodyTags() {
+    void setBodyTags() { setBodyTags(null); }
+    void setBodyTags(String bgImageURL) {
         String bodyColor = ColorUtil.getSystemColorName(_pageBGColor.getBackground());
-        if (bodyColor != null) {
+        if ( (bodyColor != null) || (bgImageURL != null) ) {
             String txt = _text.getText();
             int body = txt.indexOf("<body");
             if (body == -1) {
                 // ok, this assumes that if they don't have a <body> tag, they don't have an <html>
                 // tag either
-                _text.replaceTextRange(0, 0, "<html>\n<body bgcolor=\"" + bodyColor + "\">\n");
+                StringBuffer buf = new StringBuffer();
+                buf.append("<html>\n<body ");
+                if (bodyColor != null)
+                    buf.append("bgcolor=\"").append(bodyColor).append("\" ");
+                if (bgImageURL != null)
+                    buf.append("bgimage=\"").append(bgImageURL).append("\" ");
+                buf.append(">\n");
+                _text.replaceTextRange(0, 0, buf.toString());
                 int sz = _text.getCharCount();
                 _text.replaceTextRange(sz, 0, "\n</body>\n</html>\n");
             } else {
                 int bodyEnd = txt.indexOf('>', body);
                 String attributes = txt.substring(body+1, bodyEnd);
                 HTMLTag bodyTag = new HTMLTag(attributes, 0, null, -1);
-                bodyTag.setAttribValue("bgcolor", bodyColor);
+                if (bodyColor != null)
+                    bodyTag.setAttribValue("bgcolor", bodyColor);
+                else
+                    bodyTag.removeAttribValue("bgcolor");
+                if (bgImageURL != null)
+                    bodyTag.setAttribValue("bgimage", bgImageURL);
+                else
+                    bodyTag.removeAttribValue("bgimage");
                 _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
             }
         }
@@ -763,7 +778,7 @@ public class PageEditor {
     
     private void showStyleChooser() { resetTextStyle(); _txtShell.setVisible(true); }
     private void showLinkPopup() { _linkPopup.showPopup(); }
-    private void showImagePopup() { _imagePopup.showPopup(); }
+    private void showImagePopup(boolean forBodyBackground) { _imagePopup.showPopup(forBodyBackground); }
     
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) { return buildColorCombo(parent, name, tooltip, defaultColor, enable, null); }
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {
@@ -837,8 +852,15 @@ public class PageEditor {
         msgInfo.setPageCount(1);
         ArrayList pageData = new ArrayList();
         pageData.add(_text.getText());
-        HashMap attachments = new HashMap();
+        ArrayList attachments = new ArrayList();
         ArrayList attachmentOrder = new ArrayList();
+        List names = _messageEditor.getAttachmentNames();
+        for (int i = 0; i < names.size(); i++) {
+            String name = (String)names.get(i);
+            byte data[] = _messageEditor.getAttachmentData(i+1);
+            attachmentOrder.add(name);
+            attachments.add(data);
+        }
         PageRendererSourceMem src = new PageRendererSourceMem(null, msgInfo, pageData, attachments, attachmentOrder);
         _preview.setRender(true);
         _preview.renderPage(src, _dummyURI);
@@ -1488,4 +1510,7 @@ public class PageEditor {
     List getAttachmentDescriptions(boolean imagesOnly) { return _messageEditor.getAttachmentDescriptions(imagesOnly); }
 
     byte[] getImageAttachment(int idx) { return _messageEditor.getImageAttachment(idx); }
+    int getImageAttachmentNum(int imageNum) { return _messageEditor.getImageAttachmentNum(imageNum); }
+    void updateImageAttachment(int imageNum, String contentType, byte data[]) { _messageEditor.updateImageAttachment(imageNum, contentType, data); }
+    int addAttachment(String contentType, String name, byte[] data) { return _messageEditor.addAttachment(contentType, name, data); }
 }
