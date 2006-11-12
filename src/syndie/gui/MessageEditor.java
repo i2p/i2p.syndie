@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.SelectionEvent;
@@ -28,15 +29,18 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Label;
 import syndie.Constants;
+import syndie.data.ChannelInfo;
 import syndie.data.Enclosure;
 import syndie.data.EnclosureBody;
+import syndie.data.NymKey;
+import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 
 /**
  *
  */
-public class MessageEditor {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private DBClient _client;
     /** list of (byte[]) instances */
     private ArrayList _attachments;
@@ -44,7 +48,13 @@ public class MessageEditor {
     private ArrayList _attachmentConfig;
     /** list of PageEditor instances */
     private ArrayList _pages;
+    private Hash _author;
+    private Hash _target;
+    private List _targetList;
+    private DBClient.ChannelCollector _nymChannels;
 
+    private ReferenceChooserPopup _refChooser;
+    
     private Composite _parent;
     private Composite _root;
     private Composite _pageRoot;
@@ -55,6 +65,7 @@ public class MessageEditor {
     private Label _controlAvatar;
     private Image _controlAvatarImage;
     private Text _controlAuthor;
+    private Menu _controlAuthorMenu;
     private Label _controlSubject;
     private Text _controlSubjectText;
     private Label _controlForum;
@@ -83,7 +94,11 @@ public class MessageEditor {
         _pages = new ArrayList();
         _attachments = new ArrayList();
         _attachmentConfig = new ArrayList();
+        _targetList = new ArrayList();
+        
+        _nymChannels = _client.getChannels(true, true, true, true);
         initComponents();
+        _refChooser = new ReferenceChooserPopup(_root.getShell(), _client, this);
     }
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -134,8 +149,12 @@ public class MessageEditor {
         
         _controlForumCombo = new Combo(line2, SWT.SIMPLE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, false);
-        gd.widthHint = 100;
+        gd.widthHint = 200;
         _controlForumCombo.setLayoutData(gd);
+        _controlForumCombo.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { forumSelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { forumSelected(); }
+        });
         
         _controlTags = new Label(line2, SWT.NONE);
         _controlTags.setText("Tags:");
@@ -155,9 +174,15 @@ public class MessageEditor {
         _controlPrivacyCombo.select(0);
         
         // author is under the avatar
-        _controlAuthor = new Text(_msgControl, SWT.SINGLE | SWT.BORDER);
-        _controlAuthor.setText("Author...");
+        _controlAuthor = new Text(_msgControl, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _controlAuthor.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
+        
+        _controlAuthorMenu = new Menu(_controlAuthor);
+        _controlAuthor.setMenu(_controlAuthorMenu);
+        _controlAuthor.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _controlAuthorMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _controlAuthorMenu.setVisible(true); }
+        });
         
         _controlPage = new Label(_msgControl, SWT.NONE);
         _controlPage.setText("Pages:");
@@ -258,6 +283,8 @@ public class MessageEditor {
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 50;
         _controlExpirationText.setLayoutData(gd);
+        
+        updateAuthor();
     }
     
     public Control getControl() { return _root; }
@@ -495,5 +522,108 @@ public class MessageEditor {
             }
             cur++;
         }
+    }
+
+    private void forumSelected() {
+        int idx = _controlForumCombo.getSelectionIndex();
+        if ( (idx < 0) || (idx > _targetList.size()) )
+            return;
+        if (idx == _targetList.size()) {
+            // "other...""
+            _refChooser.show();
+            return;
+        }
+        _target = (Hash)_targetList.get(idx);
+        updateAuthor();
+    }
+    private void updateAuthor() {
+        _controlAuthor.setRedraw(false);
+        _controlForumCombo.setRedraw(false);
+        _controlForumCombo.removeAll();
+        _targetList.clear();
+        while (_controlAuthorMenu.getItemCount() > 0)
+            _controlAuthorMenu.getItem(0).dispose();
+        
+        boolean targetFound = false;
+        
+        for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
+            ChannelInfo info = _nymChannels.getIdentityChannel(i);
+            MenuItem pickAuthor = new MenuItem(_controlAuthorMenu, SWT.PUSH);
+            pickAuthor.setText(info.getName() + ": " + info.getChannelHash().toBase64().substring(0,6));
+            if (_author == null) {
+                _author = info.getChannelHash();
+                _controlAuthor.setText(info.getName());
+                _controlAuthor.setToolTipText(info.getName() + ": " + info.getDescription());
+                pickAuthor.setSelection(true);
+            } else if (_author == info.getChannelHash()) {
+                _controlAuthor.setText(info.getName());
+                _controlAuthor.setToolTipText(info.getName() + ": " + info.getDescription());
+                pickAuthor.setSelection(true);
+            }
+            _targetList.add(info.getChannelHash());
+            _controlForumCombo.add("! " + info.getName() + " [" + info.getChannelHash().toBase64().substring(0,6) + "]");
+            if ( (_target != null) && (_target.equals(info.getChannelHash()))) {
+                _controlForumCombo.select(_controlForumCombo.getItemCount()-1);
+                targetFound = true;
+            }
+        }
+        for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
+            ChannelInfo info = _nymChannels.getManagedChannel(i);
+            _targetList.add(info.getChannelHash());
+            _controlForumCombo.add("* " + info.getName() + " [" + info.getChannelHash().toBase64().substring(0,6) + "]");
+            if ( (_target != null) && (_target.equals(info.getChannelHash()))) {
+                _controlForumCombo.select(_controlForumCombo.getItemCount()-1);
+                targetFound = true;
+            }
+        }
+        for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
+            ChannelInfo info = _nymChannels.getPostChannel(i);
+            _targetList.add(info.getChannelHash());
+            _controlForumCombo.add("= " + info.getName() + " [" + info.getChannelHash().toBase64().substring(0,6) + "]");
+            if ( (_target != null) && (_target.equals(info.getChannelHash()))) {
+                _controlForumCombo.select(_controlForumCombo.getItemCount()-1);
+                targetFound = true;
+            }
+        }
+        for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
+            ChannelInfo info = _nymChannels.getPublicPostChannel(i);
+            _targetList.add(info.getChannelHash());
+            _controlForumCombo.add("- " + info.getName() + " [" + info.getChannelHash().toBase64().substring(0,6) + "]");
+            if ( (_target != null) && (_target.equals(info.getChannelHash()))) {
+                _controlForumCombo.select(_controlForumCombo.getItemCount()-1);
+                targetFound = true;
+            }
+        }
+        
+        if (_author == null)
+            _controlAuthor.setText("author...");
+        
+        if (!targetFound && (_target != null)) {
+            // other forum chosen
+            long id = _client.getChannelId(_target);
+            if (id >= 0) {
+                ChannelInfo info = _client.getChannel(id);
+                _targetList.add(info.getChannelHash());
+                _controlForumCombo.add(info.getName() + " [" + info.getChannelHash().toBase64().substring(0,6) + "]");
+                _controlForumCombo.select(_controlForumCombo.getItemCount()-1);
+            }
+        }
+        
+        _controlForumCombo.add("other...");
+                
+        _controlAuthor.setRedraw(true);
+        _controlForumCombo.setRedraw(true);
+    }
+
+    public void referenceAccepted(SyndieURI uri) {
+        _refChooser.hide();
+        if (uri == null) return;
+        _target = uri.getScope();
+        updateAuthor();
+    }
+
+    public void referenceChoiceAborted() {
+        _refChooser.hide();
+        updateAuthor();
     }
 }

@@ -36,4 +36,14 @@ public class NymKey {
         return _function + " for " + _channel.toBase64() + " " + Base64.encode(_data) 
                + (_dataHash != null ? " / " + _dataHash : "") + " (" + _authenticated + ")";
     }
+
+    public boolean isIdentity() {
+        if ( (_data == null) || (_data.length != SigningPrivateKey.KEYSIZE_BYTES) || (_channel == null) )
+            return false;
+        SigningPrivateKey priv = new SigningPrivateKey(_data);
+        SigningPublicKey pub = priv.toPublic();
+        if (pub == null)
+            return false;
+        return _channel.equals(pub.calculateHash());
+    }
 }
