@@ -24,6 +24,7 @@ import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
@@ -274,6 +275,9 @@ public class PageRenderer {
         _source = src;
         _msg = msg;
         _page = pageNum;
+        Cursor cursor = _parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
+        _parent.setCursor(cursor);
+        _text.setVisible(false);
         PageRendererThread.enqueue(this);
     }
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
@@ -301,6 +305,8 @@ public class PageRenderer {
                 disposeImages();
                 _text.setText(body);
                 _text.setStyleRanges(null, null);
+                _text.setVisible(true);
+                _parent.setCursor(null);
             }
         });
     }
@@ -379,6 +385,8 @@ public class PageRenderer {
                 _bgColor = sbuilder.getBackgroundColor();
                 if (_bgColor != null)
                     _text.setBackground(_bgColor);
+                _text.setVisible(true);
+                _parent.setCursor(null);
             }
         });
     }
