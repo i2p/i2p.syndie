@@ -45,7 +45,7 @@ class MessageCreator {
      * so.  otherwise, post in the author's channel
      */
     private Hash getScope(Hash author, Hash target) {
-        System.out.println("getScope [author = " + author + " target = " + target + "]");
+        //System.out.println("getScope [author = " + author + " target = " + target + "]");
         if (target == null) {
             return author;
         } else if (target.equals(author)) {

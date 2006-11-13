@@ -38,7 +38,7 @@ import syndie.db.DBClient;
 /**
  *
  */
-public class MessageTreeFilter {
+public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListener {
     private DBClient _client;
     private Composite _parent;
     private MessageTree _tree;
@@ -105,11 +105,14 @@ public class MessageTreeFilter {
     
     private FilterModifyListener _modListener;
     
+    private ReferenceChooserPopup _refChooser;
+    
     public MessageTreeFilter(DBClient client, Composite parent, MessageTree tree) {
         _client = client;
         _parent = parent;
         _tree = tree;
         _modListener = new FilterModifyListener();
+        _refChooser = new ReferenceChooserPopup(_parent.getShell(), client, this);
         initComponents();
     }
 
@@ -416,7 +419,10 @@ public class MessageTreeFilter {
         _forumSelect = new Button(scope, SWT.PUSH);
         _forumSelect.setText("Select...");
         _forumSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _forumSelect.setEnabled(false); // todo: later... tie in a new ReferenceChooser
+        _forumSelect.addSelectionListener(new SelectionListener() {
+            public void widgetSelected(SelectionEvent selectionEvent) { pickScope(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickScope(); }
+        });
         
         _authorLabel = new Label(scope, SWT.NONE);
         _authorLabel.setText("Author: ");
@@ -643,6 +649,32 @@ public class MessageTreeFilter {
         _itemDisplay.setControl(display);
         _itemDisplay.setHeight(display.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
+    
+    private void pickScope() { _refChooser.show(); }
+
+    public void referenceAccepted(SyndieURI uri) {
+        if ( (uri != null) && (uri.getScope() != null) ) {
+            _channels = new Hash[1];
+            _channels[0] = uri.getScope();
+
+            long id = _client.getChannelId(_channels[0]);
+            if (id >= 0) {
+                ChannelInfo info = _client.getChannel(id);
+                if ( (info != null) && (info.getName() != null) ) {
+                    _forumName.setText(CommandImpl.strip(info.getName(), "[]\r\n", ' '));
+                } else {
+                    _forumName.setText(_channels[0].toBase64().substring(0,6));
+                }
+            } else {
+                _forumName.setText(_channels[0].toBase64().substring(0,6));
+            }
+                            
+            updateFilter();
+        }
+        _refChooser.hide();
+    }
+
+    public void referenceChoiceAborted() { _refChooser.hide(); }
     
     private class FilterModifyListener implements SelectionListener, TraverseListener, FocusListener {
         public void widgetSelected(SelectionEvent selectionEvent) { updateFilter(); }
