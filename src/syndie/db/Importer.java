@@ -36,7 +36,7 @@ public class Importer extends CommandImpl {
         _passphrase = pass;
         _wasPBE = false;
     }
-    Importer() {}
+    public Importer() {}
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "in" });

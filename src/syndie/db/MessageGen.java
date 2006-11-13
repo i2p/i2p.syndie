@@ -51,7 +51,7 @@ import syndie.data.SyndieURI;
  * --out $filename
  */
 public class MessageGen extends CommandImpl {
-    MessageGen() {}
+    public MessageGen() {}
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "out" });
@@ -444,6 +444,13 @@ public class MessageGen extends CommandImpl {
         byte raw[] = baos.toByteArray();
         return raw;
     }
+    
+    public static long createMessageId(DBClient client) {
+        long now = client.ctx().clock().now();
+        now = now - (now % 24*60*60*1000);
+        now += client.ctx().random().nextLong(24*60*60*1000);
+        return now;
+    }
     private Map generatePublicHeaders(DBClient client, UI ui, Opts args, Hash channel, Hash targetChannel, SessionKey bodyKey, boolean bodyKeyIsPublic, byte salt[], boolean postAsUnauthorized) {
         Map rv = new HashMap();
         if (args.getOptBoolean("postAsReply", false)) {
@@ -467,10 +474,7 @@ public class MessageGen extends CommandImpl {
         
         long msgId = args.getOptLong("messageId", -1);
         if (msgId < 0) { // YYYYMMDD+rand
-            long now = client.ctx().clock().now();
-            now = now - (now % 24*60*60*1000);
-            now += client.ctx().random().nextLong(24*60*60*1000);
-            msgId = now;
+            msgId = createMessageId(client);
         }
         rv.put(Constants.MSG_HEADER_POST_URI, strip(SyndieURI.createMessage(channel, msgId).toString()));
         

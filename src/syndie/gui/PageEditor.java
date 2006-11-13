@@ -1516,4 +1516,14 @@ public class PageEditor {
     int getImageAttachmentNum(int imageNum) { return _messageEditor.getImageAttachmentNum(imageNum); }
     void updateImageAttachment(int imageNum, String contentType, byte data[]) { _messageEditor.updateImageAttachment(imageNum, contentType, data); }
     int addAttachment(String contentType, String name, byte[] data) { return _messageEditor.addAttachment(contentType, name, data); }
+    
+    void dispose() {
+        // destroy all the data.  the page has been dropped or cancelled
+        if (!_root.isDisposed())
+            _root.dispose();
+        // todo: the rest
+    }
+    
+    String getContent() { return _text.getText(); }
+    String getContentType() { return _contentType; }
 }

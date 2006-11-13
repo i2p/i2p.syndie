@@ -89,6 +89,7 @@ public class DBClient {
     }
     I2PAppContext ctx() { return _context; }
     Connection con() { return _con; }
+    public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
     
     /** if logged in, the login used is returned here */
     String getLogin() { return _login; }
@@ -98,9 +99,9 @@ public class DBClient {
     /** if logged in, the internal nymId associated with that login */
     public long getLoggedInNymId() { return _nymId; }
     
-    File getTempDir() { return new File(_rootDir, "tmp"); }
-    File getOutboundDir() { return new File(_rootDir, "outbound"); }
-    File getArchiveDir() { return new File(_rootDir, "archive"); }
+    public File getTempDir() { return new File(_rootDir, "tmp"); }
+    public File getOutboundDir() { return new File(_rootDir, "outbound"); }
+    public File getArchiveDir() { return new File(_rootDir, "archive"); }
     
     String getDefaultHTTPProxyHost() { return _httpProxyHost; }
     void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
