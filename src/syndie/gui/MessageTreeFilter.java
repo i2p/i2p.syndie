@@ -175,7 +175,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
                 uri = new SyndieURI(uri, SyndieURI.DEFAULT_SEARCH_URI);
             } catch (URISyntaxException use) {
                 // invalid
-                use.printStackTrace();
+                //use.printStackTrace();
                 uri = SyndieURI.DEFAULT_SEARCH_URI;
             }
         } else {

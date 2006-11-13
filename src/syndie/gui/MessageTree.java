@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
@@ -337,7 +338,7 @@ public class MessageTree {
                     buf.append(((String)iter.next()).trim()).append(" ");
                 }
                 tags = buf.toString().trim();
-                date = getDate(msg.getMessageId());
+                date = Constants.getDate(msg.getMessageId());
                 item.setGrayed(false);
             } else {
                 // message is not locally known
@@ -347,7 +348,7 @@ public class MessageTree {
                 else
                     auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
                 chan = "[unknown]";
-                date = getDate(uri.getMessageId().longValue());
+                date = Constants.getDate(uri.getMessageId().longValue());
                 tags = "[unknown]";
             }
             item.setText(0, subj);
@@ -362,9 +363,6 @@ public class MessageTree {
         for (int i = 0; i < node.getChildCount(); i++)
             add(node.getChild(i), item);
     }
-    
-    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
-    private static final String getDate(long msgId) { synchronized (_dayFmt) { return _dayFmt.format(new Date(msgId)); } }
     
     private void resizeCols() {
         int total = _tree.getClientArea().width;

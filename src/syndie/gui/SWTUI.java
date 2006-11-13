@@ -12,6 +12,7 @@ public class SWTUI {
             }
         }, "text ui").start();
         Display d = Display.getDefault();
+        ColorUtil.init();
         while (!d.isDisposed()) {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 

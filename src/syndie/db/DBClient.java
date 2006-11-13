@@ -1936,6 +1936,7 @@ public class DBClient {
         return info;
     }
 
+    /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageData(long internalMessageId, int pageNum) {
         ensureLoggedIn();
@@ -1959,6 +1960,7 @@ public class DBClient {
         return null;
     }
 
+    /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_CONFIG = "SELECT dataString FROM messagePageConfig WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageConfig(long internalMessageId, int pageNum) {
         ensureLoggedIn();
@@ -1981,7 +1983,8 @@ public class DBClient {
         }
         return null;
     }
-    
+
+    /** attachment number starts at 0 */    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
     public byte[] getMessageAttachmentData(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
@@ -2005,6 +2008,7 @@ public class DBClient {
         return null;
     }
     
+    /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
     public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
@@ -2028,6 +2032,7 @@ public class DBClient {
         return 0;
     }
     
+    /** attachment number starts at 0 */
     public Properties getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
         String cfg = getMessageAttachmentConfigRaw(internalMessageId, attachmentNum);
         Properties rv = new Properties();
@@ -2036,6 +2041,7 @@ public class DBClient {
         return rv;
     }
     
+    /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
     public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();

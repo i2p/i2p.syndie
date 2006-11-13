@@ -9,6 +9,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -21,8 +22,13 @@ public class ImageCanvas extends Canvas {
     private int _previewX;
     private int _previewY;
     private Image _imageCurrent;
-    public ImageCanvas(Composite parent) {
-        super(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);// | SWT.NO_BACKGROUND);
+    
+    private int _forcedWidth;
+    private int _forcedHeight;
+    
+    public ImageCanvas(Composite parent) { this(parent, true); }
+    public ImageCanvas(Composite parent, boolean scroll) {
+        super(parent, SWT.BORDER | (scroll ? SWT.H_SCROLL | SWT.V_SCROLL : 0));// | SWT.NO_BACKGROUND);
         _previewX = 0;
         _previewY = 0;
         _imageCurrent = null;
@@ -31,13 +37,53 @@ public class ImageCanvas extends Canvas {
                 drawPreview(evt.gc);
             }
         });
-        getHorizontalBar().addSelectionListener(new ScrollListener(true));
-        getVerticalBar().addSelectionListener(new ScrollListener(false));
-        addControlListener(new ControlListener() {
-            public void controlMoved(ControlEvent controlEvent) { syncScrollbars(false); }
-            public void controlResized(ControlEvent controlEvent) { syncScrollbars(true); }
-        });
+        if (scroll) {
+            getHorizontalBar().addSelectionListener(new ScrollListener(true));
+            getVerticalBar().addSelectionListener(new ScrollListener(false));
+            addControlListener(new ControlListener() {
+                public void controlMoved(ControlEvent controlEvent) { syncScrollbars(false); }
+                public void controlResized(ControlEvent controlEvent) { syncScrollbars(true); }
+            });
+        }
         setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+        
+        _forcedWidth = 0;
+        _forcedHeight = 0;
+    }
+    
+    public void forceSize(int width, int height) {
+        _forcedWidth = width;
+        _forcedHeight = height;
+    }
+    public Point computeSize(int wHint, int hHint) {
+        if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
+            return new Point(_forcedWidth, _forcedHeight);
+        else
+            return super.computeSize(wHint, hHint);
+    }
+    public Point computeSize(int wHint, int hHint, boolean changed) {
+        if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
+            return new Point(_forcedWidth, _forcedHeight);
+        else
+            return super.computeSize(wHint, hHint, changed);
+    }
+    public Rectangle getBounds() {
+        if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
+            return new Rectangle(0, 0, _forcedWidth, _forcedHeight);
+        else
+            return super.getBounds();
+    }
+    public Point getSize() { 
+        if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
+            return new Point(_forcedWidth, _forcedHeight);
+        else
+            return super.getSize();
+    }
+    public Rectangle getClientArea() {
+        if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
+            return new Rectangle(0, 0, _forcedWidth, _forcedHeight);
+        else
+            return super.getClientArea();
     }
     
     public void setImage(Image img) {
@@ -83,7 +129,6 @@ public class ImageCanvas extends Canvas {
         _previewY = 0;
         
         rescaleScrollbars(0, 0);
-        
     }
     private void rescaleScrollbars(int x, int y) {
         Rectangle target = getClientArea();
@@ -96,7 +141,10 @@ public class ImageCanvas extends Canvas {
         ScrollBar hb = getHorizontalBar();
         ScrollBar vb = getVerticalBar();
         
-        //System.out.println("rescale " + size.width + "x" + size.height + " into " + target.width + "x" + target.height + " (" + hb.getSize().x + " and " + vb.getSize().y + ")");
+        if ( (hb == null) || (vb == null) )
+            return;
+        
+        System.out.println("rescale " + size.width + "x" + size.height + " into " + target.width + "x" + target.height + " (" + hb.getSize().x + " and " + vb.getSize().y + ")");
         
         int excessWidth = size.width - (target.width);
         int excessHeight = size.height - (target.height);
@@ -146,8 +194,19 @@ public class ImageCanvas extends Canvas {
                 y = bounds.height-height;
                 //System.out.println("(too tall, y=" + y +")");
             }
+        
+            System.out.println("drawing the image onto " + pane.width +"x" + pane.height + " from " + bounds.width + "x" + bounds.height);
             
-            gc.drawImage(_imageCurrent, x, y, width, height, 0, 0, width, height);
+            // center the image if its smaller than the pane
+            int xOff = 0;
+            int yOff = 0;
+            
+            if (pane.width > bounds.width)
+                xOff = (pane.width - bounds.width)/2;
+            if (pane.height > bounds.height)
+                yOff = (pane.height - bounds.height)/2;
+            
+            gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
         }
     }
 }

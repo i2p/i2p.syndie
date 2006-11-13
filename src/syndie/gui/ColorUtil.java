@@ -62,7 +62,7 @@ public class ColorUtil {
             _systemColorSwatches.put(color, img);
         }
     }
-    static {
+    public static void init() {
         buildColorNameToSystemColor();
         buildSystemColorSwatches();
     }

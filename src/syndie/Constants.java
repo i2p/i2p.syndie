@@ -1,6 +1,7 @@
 package syndie;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -162,6 +163,13 @@ public class Constants {
         return new String(rv);
     }
 
+    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
+    public static final String getDate(long msgId) { 
+        synchronized (_dayFmt) { 
+            return _dayFmt.format(new Date(msgId)); 
+        } 
+    }
+    
     public static void main(String args[]) {
         String split[] = split('\n', "hi\nhow are you?\n\nw3wt\n\nthe above is a blank line");
         for (int i = 0; i < split.length; i++)

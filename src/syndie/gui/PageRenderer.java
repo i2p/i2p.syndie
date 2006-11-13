@@ -254,13 +254,28 @@ public class PageRenderer {
     public Composite getComposite() { return _text; }
     public void setRender(boolean render) { _enableRender = render; }
     
+    private void showNoPage() {
+        _text.setVisible(false);
+        _text.setText("");
+        _text.setStyleRanges(null, null);
+    }
+    
     public void renderPage(PageRendererSource src, SyndieURI uri) {
         Hash chan = uri.getScope();
-        if (chan == null) return;
+        if (chan == null) {
+            showNoPage();
+            return;
+        }
         long chanId = src.getChannelId(chan);
-        if (chanId < 0) return;
+        if (chanId < 0) {
+            showNoPage();
+            return;
+        }
         MessageInfo msg = src.getMessage(chanId, uri.getMessageId());
-        if (msg == null) return;
+        if (msg == null) {
+            showNoPage();
+            return;
+        }
         Long page = null;
         page = uri.getLong("page");
         if (page != null) {
@@ -275,6 +290,7 @@ public class PageRenderer {
         _source = src;
         _msg = msg;
         _page = pageNum;
+        //System.out.println("rendering "+ msg + ": " + pageNum);
         Cursor cursor = _parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
         _parent.setCursor(cursor);
         _text.setVisible(false);
@@ -283,11 +299,16 @@ public class PageRenderer {
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
     void threadedRender() {
         if (_msg == null) {
-            renderText("");
+            renderText(null);
             return;
         }
         String cfg = _source.getMessagePageConfig(_msg.getInternalId(), _page);
         String body = _source.getMessagePageData(_msg.getInternalId(), _page);
+        if ( (cfg == null) || (body == null) ) {
+            //System.out.println("threaded render had no body or config: " + _msg.getInternalId() + ", page " + _page + ", body? " + (body != null) + " cfg? " + (cfg != null));
+            renderText(null);
+            return;
+        }
         Properties props = new Properties();
         CommandImpl.parseProps(cfg, props);
         String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
@@ -303,10 +324,18 @@ public class PageRenderer {
                 disposeFonts();
                 disposeColors();
                 disposeImages();
-                _text.setText(body);
+                if (body != null) {
+                    _text.setText(body);
+                } else {
+                    _text.setText("");
+                }
                 _text.setStyleRanges(null, null);
                 _text.setVisible(true);
                 _parent.setCursor(null);
+                if (body == null)
+                    _text.setEnabled(false);
+                else
+                    _text.setEnabled(true);
             }
         });
     }
@@ -370,6 +399,7 @@ public class PageRenderer {
         
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
+                _text.setEnabled(true);
                 _text.setText(text);
                 _text.setStyleRanges(sbuilder.getStyleRanges());
                 setLineProperties(builder, sbuilder);

@@ -20,16 +20,20 @@ public class PageRendererSource {
     public Hash getChannelHash(long authorId) { return _client.getChannelHash(authorId); }
     public long getMessageId(long scopeId, long msgId) { return _client.getMessageId(scopeId, msgId); }
     public long getChannelId(Hash scope) { return _client.getChannelId(scope); }
+    /** page number starts at 1 */
     public String getMessagePageConfig(long internalMsgId, int pageNum) {
-        return _client.getMessagePageConfig(internalMsgId, pageNum);
+        return _client.getMessagePageConfig(internalMsgId, pageNum-1);
     }
+    /** page number starts at 1 */
     public String getMessagePageData(long internalMsgId, int pageNum) {
-        return _client.getMessagePageData(internalMsgId, pageNum);
+        return _client.getMessagePageData(internalMsgId, pageNum-1);
     }
+    /** attachment number starts at 1 */
     public Properties getMessageAttachmentConfig(long internalMsgId, int attachmentNum) {
-        return _client.getMessageAttachmentConfig(internalMsgId, attachmentNum);
+        return _client.getMessageAttachmentConfig(internalMsgId, attachmentNum-1);
     }
+    /** attachment number starts at 1 */
     public byte[] getMessageAttachmentData(long internalMsgId, int attachmentId) {
-        return _client.getMessageAttachmentData(internalMsgId, attachmentId);
+        return _client.getMessageAttachmentData(internalMsgId, attachmentId-1);
     }
 }
