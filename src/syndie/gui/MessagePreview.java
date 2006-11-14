@@ -1,11 +1,15 @@
 package syndie.gui;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
@@ -18,10 +22,13 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
@@ -43,8 +50,11 @@ public class MessagePreview {
     private Label _headerStatus;
     private Label _headerPrivacy;
     private Label _headerInfo;
+    private Menu _headerInfoMenu;
     private Combo _headerPages;
     private Combo _headerActions;
+    
+    private AttachmentPreviewPopup _attachmentPopup;
     
     private PageRenderer _body;
     private SyndieURI _uri;
@@ -134,6 +144,8 @@ public class MessagePreview {
             _headerActions.select(0);
         }
         
+        updateInfoMenu(msg);
+        
         _header.pack();
         
         SyndieURI uri = _uri;
@@ -141,6 +153,84 @@ public class MessagePreview {
             uri = SyndieURI.createMessage(uri.getScope(), uri.getMessageId().longValue(), _page);
         _body.renderPage(new PageRendererSource(_client), uri);
         _root.layout(true);
+    }
+    
+    private void updateInfoMenu(MessageInfo msg) {
+        while (_headerInfoMenu.getItemCount() > 0)
+            _headerInfoMenu.getItem(0).dispose();
+        boolean infoFound = false;
+        if (msg != null) {
+            if (msg.getAttachmentCount() > 0) {
+                infoFound = true;
+                MenuItem attachmentMenu = new MenuItem(_headerInfoMenu, SWT.CASCADE);
+                attachmentMenu.setText("attachments");
+                Menu sub = new Menu(attachmentMenu);
+                attachmentMenu.setMenu(sub);
+                for (int i = 0; i < msg.getAttachmentCount(); i++) {
+                    MenuItem item = new MenuItem(sub, SWT.PUSH);
+                    Properties cfg = _client.getMessageAttachmentConfig(msg.getInternalId(), i);
+                    int size = _client.getMessageAttachmentSize(msg.getInternalId(), i);
+                    StringBuffer buf = new StringBuffer();
+                    buf.append((i+1)).append(": ");
+                    String name = null;
+                    if (cfg != null)
+                        name = cfg.getProperty(Constants.MSG_ATTACH_NAME);
+                    //String desc = cfg.getProperty(Constants.MSG_ATTACH_DESCRIPTION);
+                    if (name != null)
+                        buf.append(name);
+                    buf.append(" [size: ").append(size).append("]");
+                    item.setText(buf.toString());
+                    final SyndieURI uri = SyndieURI.createAttachment(msg.getScopeChannel(), msg.getMessageId(), i+1);
+                    item.addSelectionListener(new SelectionListener() {
+                        public void widgetDefaultSelected(SelectionEvent selectionEvent) { _attachmentPopup.showURI(uri); }
+                        public void widgetSelected(SelectionEvent selectionEvent) { _attachmentPopup.showURI(uri); }
+                    });
+                }
+                MenuItem item = new MenuItem(sub, SWT.PUSH);
+                item.setText("Save all");
+            }
+            List refs = msg.getReferences();
+            if ( (refs != null) && (refs.size() > 0) ) {
+                infoFound = true;
+                MenuItem refMenu = new MenuItem(_headerInfoMenu, SWT.CASCADE);
+                refMenu.setText("references");
+                Menu sub = new Menu(refMenu);
+                refMenu.setMenu(sub);
+                for (int i = 0; i < refs.size(); i++) {
+                    ReferenceNode node = (ReferenceNode)refs.get(i);
+                    addRef(node, sub);
+                }
+            }
+        }
+        if (infoFound)
+            _headerInfo.setBackground(ColorUtil.getColor("green", null));
+        else
+            _headerInfo.setBackground(null);
+    }
+    private void addRef(ReferenceNode node, Menu menu) {
+        MenuItem item = null;
+        if (node.getChildCount() > 0) {
+            item = new MenuItem(menu, SWT.CASCADE);
+            Menu sub = new Menu(item);
+            item.setMenu(sub);
+            for (int i = 0; i < node.getChildCount(); i++)
+                addRef(node.getChild(i), sub);
+        } else {
+            item = new MenuItem(menu, SWT.PUSH);
+        }
+        
+        if (node.getName() != null)
+            item.setText(node.getName());
+        else if (node.getDescription() != null)
+            item.setText(node.getDescription());
+        else if (node.getURI() != null)
+            item.setText(node.getURI().toString()); // ugly!  make pretty.
+        
+        // adjust this listener depending upon the uri target
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetSelected(SelectionEvent selectionEvent) {}
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {}
+        });
     }
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -179,6 +269,13 @@ public class MessagePreview {
         _headerPrivacy.setLayoutData(new GridData(12, 12));
         _headerInfo = new Label(metaInfo, SWT.BORDER);
         _headerInfo.setLayoutData(new GridData(12, 12));
+        _headerInfoMenu = new Menu(_headerInfo);
+        _headerInfo.setMenu(_headerInfoMenu);
+        _headerInfo.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) { _headerInfoMenu.setVisible(true); }
+            public void mouseDown(MouseEvent mouseEvent) { _headerInfoMenu.setVisible(true); }
+            public void mouseUp(MouseEvent mouseEvent) { _headerInfoMenu.setVisible(true); }
+        });
         
         _headerPages = new Combo(_header, SWT.SIMPLE | SWT.READ_ONLY);
         _headerPages.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -195,6 +292,8 @@ public class MessagePreview {
         _headerActions.add("Reply");
         _headerActions.add("Reply to author");
     
+        _attachmentPopup = new AttachmentPreviewPopup(_client, _root.getShell());
+        
         _body = new PageRenderer(_root, true);
         _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _body.setListener(new PageRenderer.PageActionListener() {

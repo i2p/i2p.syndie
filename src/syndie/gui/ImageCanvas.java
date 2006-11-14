@@ -25,10 +25,12 @@ public class ImageCanvas extends Canvas {
     
     private int _forcedWidth;
     private int _forcedHeight;
+    private boolean _scroll;
     
     public ImageCanvas(Composite parent) { this(parent, true); }
     public ImageCanvas(Composite parent, boolean scroll) {
         super(parent, SWT.BORDER | (scroll ? SWT.H_SCROLL | SWT.V_SCROLL : 0));// | SWT.NO_BACKGROUND);
+        _scroll = scroll;
         _previewX = 0;
         _previewY = 0;
         _imageCurrent = null;
@@ -141,7 +143,7 @@ public class ImageCanvas extends Canvas {
         ScrollBar hb = getHorizontalBar();
         ScrollBar vb = getVerticalBar();
         
-        if ( (hb == null) || (vb == null) )
+        if (!_scroll)
             return;
         
         System.out.println("rescale " + size.width + "x" + size.height + " into " + target.width + "x" + target.height + " (" + hb.getSize().x + " and " + vb.getSize().y + ")");
@@ -206,7 +208,11 @@ public class ImageCanvas extends Canvas {
             if (pane.height > bounds.height)
                 yOff = (pane.height - bounds.height)/2;
             
-            gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
+            if (_scroll) {
+                gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
+            } else {
+                gc.drawImage(_imageCurrent, x, y, bounds.width, bounds.height, xOff, yOff, pane.width, pane.height);
+            }
         }
     }
 }
