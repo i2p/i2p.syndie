@@ -36,6 +36,7 @@ public class LoginPrompt {
     public void login() { _shell.open(); }
     
     private void loginComplete() {
+        _browser.debugMessage("loginComplete");
         synchronized (this) {
             Display.getDefault().asyncExec(new Runnable() { 
                 public void run() {

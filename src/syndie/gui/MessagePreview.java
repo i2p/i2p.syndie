@@ -277,14 +277,14 @@ public class MessagePreview {
             public void mouseUp(MouseEvent mouseEvent) { _headerInfoMenu.setVisible(true); }
         });
         
-        _headerPages = new Combo(_header, SWT.SIMPLE | SWT.READ_ONLY);
+        _headerPages = new Combo(_header, SWT.DROP_DOWN | SWT.READ_ONLY);
         _headerPages.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _headerPages.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showPage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showPage(); }
         });
         
-        _headerActions = new Combo(_header, SWT.SIMPLE | SWT.READ_ONLY);
+        _headerActions = new Combo(_header, SWT.DROP_DOWN | SWT.READ_ONLY);
         _headerActions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _headerActions.add("Action");

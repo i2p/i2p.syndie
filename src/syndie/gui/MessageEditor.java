@@ -220,7 +220,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         gl.verticalSpacing = 0;
         line2.setLayout(gl);
         
-        _controlForumCombo = new Combo(line2, SWT.SIMPLE);
+        _controlForumCombo = new Combo(line2, SWT.DROP_DOWN);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 200;
         _controlForumCombo.setLayoutData(gd);
@@ -238,7 +238,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _controlPrivacy = new Label(line2, SWT.NONE);
         _controlPrivacy.setText("Privacy:");
         _controlPrivacy.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _controlPrivacyCombo = new Combo(line2, SWT.SIMPLE);
+        _controlPrivacyCombo = new Combo(line2, SWT.DROP_DOWN);
         _controlPrivacyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
 
         // values indexed per:
@@ -275,7 +275,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         line3.setLayout(gl);
         line3.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _controlPageCombo = new Combo(line3, SWT.SIMPLE);
+        _controlPageCombo = new Combo(line3, SWT.DROP_DOWN);
         _controlPageCombo.add("none");
         _controlPageCombo.select(0);
         _controlPageCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -317,7 +317,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _controlAttachment.setText("Attachments:");
         _controlAttachment.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _controlAttachmentCombo = new Combo(line3, SWT.SIMPLE);
+        _controlAttachmentCombo = new Combo(line3, SWT.DROP_DOWN);
         _controlAttachmentCombo.add("none");
         _controlAttachmentCombo.select(0);
         _controlAttachmentCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));

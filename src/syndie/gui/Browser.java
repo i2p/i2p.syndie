@@ -61,17 +61,21 @@ public class Browser implements UI {
         _uiListeners = new ArrayList();
         _commands = new ArrayList();
         _initialized = false;
+        debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
     }
 
     private void initComponents() {
+        debugMessage("browser initComponents");
         _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
         _shell.setText("Syndie");
         _shell.setLayout(new GridLayout(2, false));
         
+        debugMessage("before creating the menu");
         initMenu();
+        debugMessage("before creating the systray");
         initSystray();
         
         _bookmarks = new ReferenceChooserTree(_client, _shell, new BookmarkChoiceListener(), new BookmarkAcceptListener());
@@ -104,6 +108,7 @@ public class Browser implements UI {
     
     public void setEngine(TextEngine engine) { _engine = engine; }
     public void startup() {
+        debugMessage("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
         if (_client.isLoggedIn() && !_initialized) {
             _initialized = true;
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
@@ -111,6 +116,7 @@ public class Browser implements UI {
         Display.getDefault().syncExec(new Runnable() { public void run() { doStartup(); } });
     }
     private void doStartup() {
+        debugMessage("doStartup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized + " nymId? " + _client.getLoggedInNymId());
         if (!_initialized || (_client.getLoggedInNymId() < 0)) {
             // show a login prompt
             LoginPrompt prompt = new LoginPrompt(_client, this);
@@ -213,7 +219,7 @@ public class Browser implements UI {
     }
     
     public void view(SyndieURI uri) {
-        System.out.println("Viewing [" + uri.toString() + "]");
+        debugMessage("Viewing [" + uri.toString() + "]");
         BrowserTab tab = null;
         synchronized (_openTabs) {
             tab = (BrowserTab)_openTabs.get(uri);
@@ -272,17 +278,19 @@ public class Browser implements UI {
     }
     
     private class BookmarkAcceptListener implements ReferenceChooserTree.AcceptanceListener {
-        public void referenceAccepted(SyndieURI uri) { System.out.println("accepted"); view(uri); }
+        public void referenceAccepted(SyndieURI uri) { debugMessage("accepted"); view(uri); }
         public void referenceChoiceAborted() {}        
     }
 
     
-    public void insertCommand(String cmd) { synchronized (_commands) { _commands.add(cmd); _commands.notifyAll(); } }
+    public void insertCommand(String cmd) { 
+        synchronized (_commands) { _commands.add(cmd); _commands.notifyAll(); }
+    }
     public Opts readCommand() {
         while (true) {
             synchronized (_commands) {
                 try {
-                    if (_commands.size() < 0)
+                    if (_commands.size() <= 0)
                         _commands.wait();
                 } catch (InterruptedException ie) {}
                 if (_commands.size() > 0)
@@ -297,12 +305,10 @@ public class Browser implements UI {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
         }
-        /*
-        if (msg != null)
-            System.err.println(msg);
-        if (cause != null)
-            cause.printStackTrace();
-         */
+        //if (msg != null)
+        //    System.err.println(msg);
+        //if (cause != null)
+        //    cause.printStackTrace();
     }
 
     public void statusMessage(String msg) {
@@ -318,12 +324,10 @@ public class Browser implements UI {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
         }
-        /*
-        if (msg != null)
-            System.out.println(msg);
-        if (cause != null)
-            cause.printStackTrace();
-         */
+        //if (msg != null)
+        //    System.out.println(msg);
+        //if (cause != null)
+        //    cause.printStackTrace();
     }
 
     public void commandComplete(int status, List location) {
@@ -334,7 +338,10 @@ public class Browser implements UI {
     }
     public boolean toggleDebug() { return true; }
     public boolean togglePaginate() { return false; }
-    public String readStdIn() { return null; }
+    public String readStdIn() { 
+        debugMessage("readStdIn()");
+        return null;
+    }
     
     private Image createSystrayIcon() {
         return ImageUtil.resize(ImageUtil.ICON_INFORMATION, 16, 16, false);

@@ -135,7 +135,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypePage = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypePage.setText("Page:");
         _linkTypePage.setLayoutData(new GridData());
-        _linkTypePageCombo = new Combo(_linkTypeGroup, SWT.SIMPLE);
+        _linkTypePageCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
         _linkTypePageCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         _linkTypePageCombo.addTraverseListener(new GroupPickListener(_linkTypePage));
         _linkTypePageCombo.addSelectionListener(new GroupPickListener(_linkTypePage));
@@ -143,7 +143,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeAttachment = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeAttachment.setText("Attachment:");
         _linkTypeAttachment.setLayoutData(new GridData());
-        _linkTypeAttachmentCombo = new Combo(_linkTypeGroup, SWT.SIMPLE);
+        _linkTypeAttachmentCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
         _linkTypeAttachmentCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
         _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
@@ -205,7 +205,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieMessageDetailPage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailPage.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailPageNum = new Combo(syndieMessageDetailGroup, SWT.SIMPLE);
+        _syndieMessageDetailPageNum = new Combo(syndieMessageDetailGroup, SWT.DROP_DOWN);
         _syndieMessageDetailPageNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailPageNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailPage));
         
@@ -218,7 +218,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieMessageDetailAttachment.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailAttachment.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailAttachmentNum = new Combo(syndieMessageDetailGroup, SWT.SIMPLE);
+        _syndieMessageDetailAttachmentNum = new Combo(syndieMessageDetailGroup, SWT.DROP_DOWN);
         _syndieMessageDetailAttachmentNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailAttachmentNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailAttachment));
         
@@ -233,7 +233,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieReadKey.setText("include read key");
         _syndieReadKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReadKey.addSelectionListener(new UpdateURIListener());
-        _syndieReadKeyCombo = new Combo(syndieReadKeyLine, SWT.SIMPLE | SWT.READ_ONLY);
+        _syndieReadKeyCombo = new Combo(syndieReadKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieReadKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieReadKeyCombo.addSelectionListener(new GroupPickListener(_syndieReadKey));
         
@@ -244,7 +244,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndiePostKey.setText("include post key");
         _syndiePostKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndiePostKey.addSelectionListener(new UpdateURIListener());
-        _syndiePostKeyCombo = new Combo(syndiePostKeyLine, SWT.SIMPLE | SWT.READ_ONLY);
+        _syndiePostKeyCombo = new Combo(syndiePostKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndiePostKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndiePostKeyCombo.addSelectionListener(new GroupPickListener(_syndiePostKey));
         
@@ -255,7 +255,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieReplyKey.setText("include reply key");
         _syndieReplyKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReplyKey.addSelectionListener(new UpdateURIListener());
-        _syndieReplyKeyCombo = new Combo(syndieReplyKeyLine, SWT.SIMPLE | SWT.READ_ONLY);
+        _syndieReplyKeyCombo = new Combo(syndieReplyKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieReplyKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieReplyKeyCombo.addSelectionListener(new GroupPickListener(_syndieReplyKey));
         
@@ -266,7 +266,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieManageKey.setText("include manage key");
         _syndieManageKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieManageKey.addSelectionListener(new UpdateURIListener());
-        _syndieManageKeyCombo = new Combo(syndieManageKeyLine, SWT.SIMPLE | SWT.READ_ONLY);
+        _syndieManageKeyCombo = new Combo(syndieManageKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieManageKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieManageKeyCombo.addSelectionListener(new GroupPickListener(_syndieManageKey));
         

@@ -104,7 +104,7 @@ public class ImageBuilderPopup {
         _choiceAttach.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _choiceAttach.addSelectionListener(new ChoiceUpdateListener());
         
-        _choiceAttachCombo = new Combo(_choices, SWT.SIMPLE | SWT.READ_ONLY);
+        _choiceAttachCombo = new Combo(_choices, SWT.DROP_DOWN | SWT.READ_ONLY);
         _choiceAttachCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         _choiceAttachCombo.addSelectionListener(new ChoiceUpdateListener());
         
@@ -151,7 +151,7 @@ public class ImageBuilderPopup {
         _configResizeTo.setText("Resize to:");
         _configResizeTo.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _configResizeToCombo = new Combo(_config, SWT.SIMPLE);
+        _configResizeToCombo = new Combo(_config, SWT.DROP_DOWN);
         _configResizeToCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 4, 1));
         _configResizeToCombo.add("25%");
         _configResizeToCombo.add("50%");

@@ -2720,15 +2720,19 @@ public class DBClient {
         File script = new File(scriptDir, scriptName);
         if (script.exists()) {
             try {
+                ui.debugMessage("running script from " + script.getAbsolutePath());
                 BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
-                while ( (line = in.readLine()) != null)
+                while ( (line = in.readLine()) != null) {
                     ui.insertCommand(line);
+                }
             } catch (UnsupportedEncodingException uee) {
                 ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 ui.errorMessage("Error running the script " + script, ioe);
             }
+        } else {
+            ui.debugMessage("script does not exist [" + script.getAbsolutePath() + "]");
         }
     }
 }

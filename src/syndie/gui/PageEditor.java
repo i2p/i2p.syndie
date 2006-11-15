@@ -1024,7 +1024,7 @@ public class PageEditor {
         gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.grabExcessHorizontalSpace = false;
         l.setLayoutData(gd);
-        _spellSuggestions = new Combo(_spellShell, SWT.SIMPLE);
+        _spellSuggestions = new Combo(_spellShell, SWT.DROP_DOWN);
         gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.grabExcessHorizontalSpace = true;
         _spellSuggestions.setLayoutData(gd);
