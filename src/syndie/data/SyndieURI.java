@@ -69,7 +69,8 @@ public class SyndieURI {
             throw new RuntimeException("Hmm, encoded search URI is not valid: " + use.getMessage() + " [" + searchURI + "]");
         }
     }
-    
+
+    public SyndieURI createSearch() { return createSearch(getScope()); }
     
     public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch((Hash)null);
     public static SyndieURI createSearch(Hash channel) {
@@ -289,6 +290,7 @@ public class SyndieURI {
     private static final String TYPE_CHANNEL = "channel";
     private static final String TYPE_ARCHIVE = "archive";
     private static final String TYPE_TEXT = "text";
+    private static final String TYPE_SEARCH = "search";
     
     /** does this this URI maintain a reference to a URL? */
     public boolean isURL() { return TYPE_URL.equals(_type); }
@@ -298,6 +300,7 @@ public class SyndieURI {
     public boolean isArchive() { return TYPE_ARCHIVE.equals(_type); }
     /** does this this URI maintain a reference to a URL? */
     public boolean isText() { return TYPE_TEXT.equals(_type); }
+    public boolean isSearch() { return TYPE_SEARCH.equals(_type); }
     
     public String getType() { return _type; }
     public Map getAttributes() { return _attributes; }

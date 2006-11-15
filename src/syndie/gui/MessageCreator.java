@@ -361,7 +361,6 @@ class MessageCreator {
     /**
      * save the state so we can resume & execute or edit later
      */
-    public void postpone() {
-        
-    }
+    public long postpone() { return -1; }
+    public boolean resume(long postponementId) { return false; }
 }

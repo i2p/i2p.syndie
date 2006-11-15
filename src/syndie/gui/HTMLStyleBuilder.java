@@ -65,10 +65,6 @@ class HTMLStyleBuilder {
     
     private int _viewSizeModifier;
 
-    static Image ICON_LINK_END;
-    static Image ICON_IMAGE_UNKNOWN;
-    static { buildDefaultIcons(); }
-    
     public HTMLStyleBuilder(PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
         _source = src;
         _htmlTags = htmlTags;
@@ -488,14 +484,14 @@ class HTMLStyleBuilder {
     
     private void includeImage(final StyleRange style, final HTMLTag imgTag) {
         if (imgTag == null) {
-            _images.add(ICON_IMAGE_UNKNOWN);
+            _images.add(ImageUtil.ICON_IMAGE_UNKNOWN);
             return;
         }
         Display.getDefault().syncExec(new Runnable() { 
             public void run() {
                 Image img = getImage(getURI(imgTag.getAttribValue("src")));
                 if (img == null)
-                    img = ICON_IMAGE_UNKNOWN;
+                    img = ImageUtil.ICON_IMAGE_UNKNOWN;
                 int width = img.getBounds().width;
                 int ascent = img.getBounds().height;
                 _images.add(img);
@@ -528,7 +524,7 @@ class HTMLStyleBuilder {
                 long internalMsgId = _source.getMessageId(scopeId, msgId.longValue());
                 byte imgData[] = _source.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
                 if (imgData != null) {
-                    img = new Image(Display.getDefault(), new ByteArrayInputStream(imgData));
+                    img = ImageUtil.createImage(imgData);
                     System.out.println("image attachment is valid [" + imgData.length + " bytes]");
                 } else {
                     System.out.println("image attachment is null (" + attachmentId + ")");
@@ -554,7 +550,7 @@ class HTMLStyleBuilder {
         
         Display.getDefault().syncExec(new Runnable() { 
             public void run() {
-                Image img = ICON_LINK_END;
+                Image img = ImageUtil.ICON_LINK_END;
                 int width = img.getBounds().width;
                 int ascent = img.getBounds().height;
                 Integer idx = new Integer(style.start);
@@ -729,19 +725,6 @@ class HTMLStyleBuilder {
         return rv;
     }
 
-    private static void buildDefaultIcons() {
-        InputStream in = HTMLStyleBuilder.class.getResourceAsStream("iconUnknown.png");
-        ICON_IMAGE_UNKNOWN = new Image(Display.getDefault(), in);
-        in = HTMLStyleBuilder.class.getResourceAsStream("iconLink.png");
-        if (in != null) {
-            ICON_LINK_END = new Image(Display.getDefault(), in);
-        } else {
-            ICON_LINK_END = ICON_IMAGE_UNKNOWN;
-            throw new RuntimeException("could not load the link end icon");
-        }
-        
-    }
-    
     public static void main(String args[]) {
         test("<html><body>hi<br />how are you?</body></html>");
         test("<html><body>hi<br />how are you?</html>");

@@ -1,0 +1,81 @@
+package syndie.gui;
+
+import net.i2p.data.Hash;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
+import syndie.data.ChannelInfo;
+import syndie.data.SyndieURI;
+
+/**
+ *
+ */
+public class EditMessageTab extends BrowserTab {
+    private MessageEditor _editor;
+    private String _name;
+    private String _description;
+    private Image _icon;
+    private Hash _scope;
+    private SyndieURI _parent;
+    
+    public EditMessageTab(Browser browser, SyndieURI uri, Hash scope, SyndieURI parent) {
+        super(browser, uri); 
+        if (scope != null) {
+            long chanId = getClient().getChannelId(scope);
+            if (chanId >= 0) {
+                ChannelInfo chan = getClient().getChannel(chanId);
+                if (chan != null) {
+                    _name = chan.getName();
+                    _description = chan.getDescription();
+                    _icon = createAvatar(chan);
+                }
+            }
+            if (_name == null) {
+                _name = scope.toBase64().substring(0,6);
+                _description = "forum: " + scope.toBase64();
+                _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_QUESTION);
+            }
+        } else {
+            _name = "post";
+            _description = "post a new message";
+            _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_QUESTION);
+        }
+        reconfigItem();
+    }
+    
+    protected void initComponents() {
+        _editor = new MessageEditor(getClient(), getRoot(), new EditorListener());
+        _editor.addPage();
+        getRoot().setLayout(new FillLayout());
+    }
+    
+    private class EditorListener implements MessageEditor.MessageEditorListener {
+        public void messageCreated(MessageEditor editor, SyndieURI postedURI) { closeTab(); }
+        public void messagePostponed(MessageEditor editor, long postponementId) { closeTab(); }
+        public void messageCancelled(MessageEditor editor) { closeTab(); }
+    }
+        
+    public Image getIcon() { return _icon; }
+    public String getName() { return _name; }
+    public String getDescription() { return _description; }
+    
+    protected boolean allowClose() {
+        MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
+        confirm.setText("Postpone message?");
+        confirm.setMessage("Do you want to postpone this message to resume it later?");
+        int rc = confirm.open();
+        if (rc == SWT.YES) {
+            _editor.postponeMessage();
+            return true;
+        } else if (rc == SWT.CANCEL) {
+            return false;
+        } else if (rc == SWT.NO) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    protected void disposeDetails() {}
+}

@@ -52,14 +52,7 @@ public class ColorUtil {
         Device dev = Display.getDefault();
         for (Iterator iter = _colorNameToSystem.values().iterator(); iter.hasNext(); ) {
             Color color = (Color)iter.next();
-            Image img = new Image(dev, 16, 16);
-            GC gc = new GC(img);
-            gc.setForeground(color);
-            gc.setBackground(color);
-            //gc.drawRectangle(0, 0, 16, 16);
-            gc.fillRectangle(0, 0, 16, 16);
-            gc.dispose();
-            _systemColorSwatches.put(color, img);
+            _systemColorSwatches.put(color, ImageUtil.createImage(16, 16, color, true));
         }
     }
     public static void init() {

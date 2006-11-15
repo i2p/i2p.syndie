@@ -89,7 +89,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private Composite _msgControl;
     private Label _controlAvatar;
     private Image _controlAvatarImage;
-    private Image _controlAvatarImageDefault;
     /** 
      * file the avatar was loaded from, or null if either the avatar hasn't
      * been selected or if it was scaled/updated in-process (so we should use _controlAvatarImage as
@@ -120,10 +119,13 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private Label _controlExpiration;
     private Text _controlExpirationText;
     
+    private MessageEditorListener _listener;
+    
     /** Creates a new instance of MessageEditor */
-    public MessageEditor(DBClient client, Composite parent) {
+    public MessageEditor(DBClient client, Composite parent, MessageEditorListener lsnr) {
         _client = client;
         _parent = parent;
+        _listener = lsnr;
         _pages = new ArrayList();
         _attachments = new ArrayList();
         _attachmentConfig = new ArrayList();
@@ -135,6 +137,13 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         initComponents();
         _refChooser = new ReferenceChooserPopup(_root.getShell(), _client, this);
     }
+    
+    public interface MessageEditorListener {
+        public void messageCreated(MessageEditor editor, SyndieURI postedURI);
+        public void messagePostponed(MessageEditor editor, long postponementId);
+        public void messageCancelled(MessageEditor editor);
+    }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
@@ -178,8 +187,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _msgControl.setLayout(new GridLayout(3, false));
         _msgControl.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _controlAvatarImageDefault = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
-        _controlAvatarImage = _controlAvatarImageDefault;
+        _controlAvatarImage = ImageUtil.ICON_QUESTION;
         _controlAvatar = new Label(_msgControl, SWT.BORDER);
         _controlAvatar.setImage(_controlAvatarImage);
         _controlAvatar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 1, 2));
@@ -741,16 +749,15 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             //    return;
             _controlAvatar.setRedraw(false);
             try {
-                Image img = new Image(_root.getDisplay(), file);
+                Image img = ImageUtil.createImageFromFile(file);
                 Rectangle bounds = img.getBounds();
                 if ( (bounds.width != Constants.MAX_AVATAR_WIDTH) || (bounds.height != Constants.MAX_AVATAR_HEIGHT) ) {
-                    img = rescaleAvatar(img);
+                    img = ImageUtil.resize(img, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
                     _controlAvatarImageSource = null;
                 } else {
                     _controlAvatarImageSource = file;
                 }
-                if ( (_controlAvatarImage != null) && (_controlAvatarImageDefault != _controlAvatarImage) && (!_controlAvatarImage.isDisposed()) )
-                    _controlAvatarImage.dispose();
+                ImageUtil.dispose(_controlAvatarImage);
                 _controlAvatarImage = img;
                 _controlAvatar.setImage(img);
             } catch (IllegalArgumentException iae) {
@@ -759,26 +766,26 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             _controlAvatar.setRedraw(true);
         }
     }
-    
+
+    /*
     private Image rescaleAvatar(Image orig) {
         ImageData scaledData = null;
         Image rv = null;
         try {
             scaledData = orig.getImageData().scaledTo(Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_WIDTH);
             rv = new Image(_root.getDisplay(), scaledData);
-            if (orig != _controlAvatarImageDefault)
-                orig.dispose();
+            ImageUtil.dispose(orig);
             return rv;
         } catch (OutOfMemoryError oom) {
             System.err.println("OOM trying to scale the image");
         }
-        if ( (rv != null) && (!rv.isDisposed()) )
-            rv.dispose();
+        ImageUtil.dispose(rv);
         rv = null;
         scaledData = null;
         System.gc();
         return orig;
     }
+     */
     
     Hash getAuthor() { return _author; }
     Hash getTarget() { return _target; }
@@ -792,7 +799,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             box.setMessage("Message created and imported successfully!  Please be sure to syndicate it to others so they can read it: " + creator.getCreatedURI().toString());
             box.setText("Message created!");
             box.open();
-            editorComplete();
+            if (_listener != null)
+                _listener.messageCreated(this, creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setMessage("There was an error creating the message.  Please view the log for more information: " + creator.getErrors());
@@ -800,9 +808,11 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             box.open();
         }
     }
-    private void postponeMessage() {
+    void postponeMessage() {
         MessageCreator creator = new MessageCreator(this);
-        creator.execute();
+        long postponementId = creator.postpone();
+        if (_listener != null)
+            _listener.messagePostponed(this, postponementId);
     }
     private void cancelMessage() {
         // confirm
@@ -811,8 +821,13 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         dialog.setText("Confirm message cancellation");
         int rv = dialog.open();
         if (rv == SWT.YES) {
-            editorComplete();
+            if (_listener != null)
+                _listener.messageCancelled(this);
         }
+    }
+
+    public void dispose() { 
+        editorComplete();
     }
     
     private void editorComplete() {
@@ -842,14 +857,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     public byte[] getAvatarModifiedData() {
         if (_controlAvatarImageSource == null) {
             Image img = _controlAvatarImage;
-            if ( (img != null) && (!img.isDisposed()) && (img != _controlAvatarImageDefault) ) {
-                ImageLoader loader = new ImageLoader();
-                ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
-                loader.data = new ImageData[] { img.getImageData() };
-                // foo. png not supported on early SWT (though newer swt revs do)
-                loader.save(outBuf, SWT.IMAGE_PNG);
-                //loader.save(outBuf, SWT.IMAGE_JPEG);
-                byte rv[] = outBuf.toByteArray();
+            if ( (img != null) && (!img.isDisposed()) && (img != ImageUtil.ICON_QUESTION) ) {
+                byte rv[] = ImageUtil.serializeImage(img);
                 System.out.println("avatar size: " + rv.length + " bytes");
                 if (rv.length > Constants.MAX_AVATAR_SIZE)
                     return null;

@@ -595,11 +595,10 @@ public class PageRenderer {
         if (_images != null) {
             for (int i = 0; i < _images.size(); i++) {
                 Image img = (Image)_images.get(i);
-                if (img == HTMLStyleBuilder.ICON_IMAGE_UNKNOWN) continue;
-                if (img == HTMLStyleBuilder.ICON_LINK_END) continue;
-                if (ColorUtil.isSystemColorSwatch(img)) continue;
-                if (!img.isDisposed())
-                    img.dispose();
+                ImageUtil.dispose(img);
+                //if (img == ImageUtil.ICON_IMAGE_UNKNOWN) continue;
+                //if (img == ImageUtil.ICON_LINK_END) continue;
+                //if (ColorUtil.isSystemColorSwatch(img)) continue;
             }
             _images.clear();
         }

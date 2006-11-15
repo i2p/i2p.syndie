@@ -364,7 +364,7 @@ public class ImageBuilderPopup {
         if (_choiceFile.getSelection()) {
             File fname = new File(_choiceFileText.getText().trim());
             if (fname.exists()) {
-                Image rv = new Image(_shell.getDisplay(), fname.getPath());
+                Image rv = ImageUtil.createImageFromFile(fname.getPath());
                 _configPreviewImageOrig = rv;
                 _configPreviewCanvas.setImage(rv);
                 return rv;
@@ -376,7 +376,7 @@ public class ImageBuilderPopup {
             if (idx >= 0) {
                 byte attachment[] = _page.getImageAttachment(idx+1);
                 if (attachment != null) {
-                    Image rv = new Image(_shell.getDisplay(), new ByteArrayInputStream(attachment));
+                    Image rv = ImageUtil.createImage(attachment);
                     _configPreviewImageOrig = rv;
                     _configPreviewCanvas.setImage(rv);
                     return rv;
@@ -578,12 +578,7 @@ public class ImageBuilderPopup {
         try {
             if (_configPreviewImageOrig != _configPreviewCanvas.getImage())
                 _configPreviewCanvas.disposeImage();
-            img = new Image(_shell.getDisplay(), width, height);
-            GC gc = new GC(img);
-            Rectangle orig = _configPreviewImageOrig.getBounds();
-            gc.drawImage(_configPreviewImageOrig, 0, 0, orig.width, orig.height, 0, 0, width, height);
-            gc.dispose();
-            
+            img = ImageUtil.resize(_configPreviewImageOrig, width, height, false);
             _configPreviewCanvas.setImage(img);
             redrawPreview(img);
             _configResizeWidth.setText(width+"");

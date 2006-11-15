@@ -16,6 +16,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
@@ -55,7 +56,7 @@ class AttachmentPreviewPopup {
     }
     
     private void initComponents() {
-        _shell = new Shell(_parent, SWT.SHELL_TRIM);
+        _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setText("Preview attachment");
         _shell.setLayout(new GridLayout(4, false));
         
@@ -66,7 +67,8 @@ class AttachmentPreviewPopup {
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _preview = new ImageCanvas(_shell, false);
-        _preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 4));
+        _preview.setLayoutData(new GridData(GridData.BEGINNING, GridData.BEGINNING, false, false, 2, 4));
+        _preview.forceSize(64, 64);
         
         _descLabel = new Label(_shell, SWT.NONE);
         _descLabel.setText("Description:");
@@ -160,28 +162,26 @@ class AttachmentPreviewPopup {
     
     private void showPreviewIfPossible(String contentType, byte data[]) {
         Image old = _preview.getImage();
-        if ( (old != null) && (!old.isDisposed()) )
-            old.dispose();
+        ImageUtil.dispose(old);
         boolean show = false;
         if (contentType.startsWith("image/") && (data != null)) {
-            try {
-                Image img = new Image(_shell.getDisplay(), new ByteArrayInputStream(data));
-                if (img != null) {
-                    _preview.setImage(img);
-                    show = true;
-                } else {
-                    show = false;
-                }
-            } catch (IllegalArgumentException iae) {}
+            Image img = ImageUtil.createImage(data);
+            if (img != null) {
+                _preview.setImage(img);
+                show = true;
+            } else {
+                show = false;
+            }
         }
         GridData gd = (GridData)_preview.getLayoutData();
         if (show) {
             _preview.setVisible(true);
-            gd.exclude = false;
+            System.out.println("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+            //gd.exclude = false;
         } else {
             _preview.setImage(null);
             _preview.setVisible(false);
-            gd.exclude = true;
+            //gd.exclude = true;
         }
     }
     
@@ -203,11 +203,17 @@ class AttachmentPreviewPopup {
             fos.write(_data);
             fos.close();
             fos = null;
-            System.out.println("saved to " + out.getAbsolutePath());
+            MessageBox box = new MessageBox(_shell, SWT.OK | SWT.ICON_INFORMATION);
+            box.setText("Attachment saved");
+            box.setMessage("Attachment saved to " + out.getAbsolutePath());
+            box.open();
+            _shell.setVisible(false);
         } catch (IOException ioe) {
             // hrm
-            out.delete();
+            MessageBox box = new MessageBox(_shell, SWT.OK | SWT.ICON_ERROR);
+            box.setText("Error saving attachment");
+            box.setMessage("Attachment could not be saved to " + out.getAbsolutePath() + ": " + ioe.getMessage());
+            box.open();
         }
-        _shell.setVisible(false);
     }
 }

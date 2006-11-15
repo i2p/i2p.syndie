@@ -94,8 +94,7 @@ public class ImageCanvas extends Canvas {
     }
     public Image getImage() { return _imageCurrent; }
     public void disposeImage() {
-        if ( (_imageCurrent != null) && (!_imageCurrent.isDisposed()) )
-            _imageCurrent.dispose();
+        ImageUtil.dispose(_imageCurrent);
         _imageCurrent = null;
     }
     
@@ -146,7 +145,7 @@ public class ImageCanvas extends Canvas {
         if (!_scroll)
             return;
         
-        System.out.println("rescale " + size.width + "x" + size.height + " into " + target.width + "x" + target.height + " (" + hb.getSize().x + " and " + vb.getSize().y + ")");
+        //System.out.println("rescale " + size.width + "x" + size.height + " into " + target.width + "x" + target.height + " (" + hb.getSize().x + " and " + vb.getSize().y + ")");
         
         int excessWidth = size.width - (target.width);
         int excessHeight = size.height - (target.height);
@@ -182,6 +181,7 @@ public class ImageCanvas extends Canvas {
             int width = bounds.width;
             int height = bounds.height;
             Rectangle pane = getClientArea();
+            //Point pane = computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
             width = Math.min(width, pane.width);
             height = Math.min(height, pane.height);
             if (bounds.width <= pane.width)
@@ -202,15 +202,16 @@ public class ImageCanvas extends Canvas {
             // center the image if its smaller than the pane
             int xOff = 0;
             int yOff = 0;
-            
-            if (pane.width > bounds.width)
+
+            if (pane.x > bounds.width)
                 xOff = (pane.width - bounds.width)/2;
-            if (pane.height > bounds.height)
+            if (pane.y > bounds.height)
                 yOff = (pane.height - bounds.height)/2;
-            
+
             if (_scroll) {
                 gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
             } else {
+                System.out.println("x=" + x + " y=" + y + " img.w=" + bounds.width + " img.h=" + bounds.height + " xoff=" + xOff + " yoff=" + yOff + " p.w=" + pane.width + " p.h=" + pane.height);
                 gc.drawImage(_imageCurrent, x, y, bounds.width, bounds.height, xOff, yOff, pane.width, pane.height);
             }
         }
