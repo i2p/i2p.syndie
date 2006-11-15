@@ -42,6 +42,9 @@ public class ImageUtil {
     /** shown in place of a nonexistant image when rendering */
     public static final Image ICON_IMAGE_UNKNOWN = createImageFromResource("iconUnknown.png");
     
+    public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
+    public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, 16, 16, false);
+    
     public static void init() {
         _indisposableImages.add(ICON_ERROR);
         _indisposableImages.add(ICON_INFORMATION);
@@ -51,6 +54,9 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_LINK_END);
         _indisposableImages.add(ICON_IMAGE_UNKNOWN);
+        
+        _indisposableImages.add(ICON_TAB_EDIT);
+        _indisposableImages.add(ICON_TAB_TEXTUI);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

@@ -46,6 +46,26 @@ public class TextEngine {
         buildInstallDir();
         _client.runScript(_ui, "startup");
     }
+
+    public TextEngine(DBClient client, UI ui) {
+        _client = client;
+        _realUI = new MenuUI(ui);
+        _ui = _realUI;
+        _gobbleUI = new NestedGobbleUI(_realUI);
+        _exit = false;
+        _rootFile = client.getRootDir().getAbsolutePath();
+        _commandHistory = new ArrayList();
+        rebuildMenus();
+        buildInstallDir();
+        if ( (_client != null) && (_client.isLoggedIn()) ) {
+            _ui.statusMessage("Already logged in");
+            _currentMenu = LoggedInMenu.NAME;
+            processPrefs(new Opts());
+        } else {
+            _ui.statusMessage("Custom text engine is not yet logged in");
+        }
+        _client.runScript(_ui, "startup");
+    }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
     private void rebuildMenus() {
@@ -72,11 +92,11 @@ public class TextEngine {
 
     public boolean runStep() {
         try {
-	    return doRunStep();
-	} catch (RuntimeException re) {
-	    _ui.errorMessage("Internal error", re);
-	    return true;
-	}
+            return doRunStep();
+        } catch (RuntimeException re) {
+            _ui.errorMessage("Internal error", re);
+            return true;
+        }
     }
 
     private boolean doRunStep() {
@@ -153,7 +173,8 @@ public class TextEngine {
         if (!archiveIntro.exists())
             installResource("/defaultarchiveindex", archiveIntro);
         
-        _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
+        if (_client == null)
+            _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
         
         if (dbDirCreated) {
             // so it doesn't gather 'command completed'/etc messages on the screen
@@ -649,6 +670,7 @@ public class TextEngine {
     }
     
     private void processInit(Opts opts) {
+        if (_client != null) return;
         List args = opts.getArgs();
         String url = getDefaultURL();
         if (args.size() == 1)

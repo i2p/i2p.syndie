@@ -27,10 +27,13 @@ abstract class BrowserTab {
     private Composite _root;
     
     private static final int TAB_ICON_SIZE = 16;
+    static final String TYPE_POST = "post";
+    static final String TYPE_TEXTUI = "textui";
+    static final String TYPE_LOGS = "logs";
     
     public static BrowserTab build(Browser browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
-        if ("post".equalsIgnoreCase(uri.getType())) {
+        if (TYPE_POST.equalsIgnoreCase(uri.getType())) {
             Hash scope = uri.getScope();
             String parentURI = uri.getString("parent");
             SyndieURI parent = null;
@@ -42,7 +45,10 @@ abstract class BrowserTab {
         } else if ("channel".equalsIgnoreCase(uri.getType())) {
             if ( (uri.getScope() != null) && (uri.getMessageId() == null) )
                 return new BrowseForumTab(browser, uri);
+        } else if (TYPE_TEXTUI.equals(uri.getType())) {
+            return new TextUITab(browser, uri);
         }
+        
         return null;
     }
     
@@ -95,6 +101,7 @@ abstract class BrowserTab {
     
     protected Composite getRoot() { return _root; }
     protected DBClient getClient() { return _browser.getClient(); }
+    protected Browser getBrowser() { return _browser; }
     protected void closeTab() { _browser.unview(getURI()); }
     
     public CTabItem getTabItem() { return _item; }

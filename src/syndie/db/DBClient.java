@@ -99,6 +99,7 @@ public class DBClient {
     /** if logged in, the internal nymId associated with that login */
     public long getLoggedInNymId() { return _nymId; }
     
+    public File getRootDir() { return _rootDir; }
     public File getTempDir() { return new File(_rootDir, "tmp"); }
     public File getOutboundDir() { return new File(_rootDir, "outbound"); }
     public File getArchiveDir() { return new File(_rootDir, "archive"); }

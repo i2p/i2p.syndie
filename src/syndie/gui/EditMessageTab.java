@@ -15,12 +15,11 @@ public class EditMessageTab extends BrowserTab {
     private MessageEditor _editor;
     private String _name;
     private String _description;
-    private Image _icon;
     private Hash _scope;
     private SyndieURI _parent;
     
     public EditMessageTab(Browser browser, SyndieURI uri, Hash scope, SyndieURI parent) {
-        super(browser, uri); 
+        super(browser, uri);
         if (scope != null) {
             long chanId = getClient().getChannelId(scope);
             if (chanId >= 0) {
@@ -28,18 +27,18 @@ public class EditMessageTab extends BrowserTab {
                 if (chan != null) {
                     _name = chan.getName();
                     _description = chan.getDescription();
-                    _icon = createAvatar(chan);
+                    //_icon = createAvatar(chan);
                 }
             }
             if (_name == null) {
                 _name = scope.toBase64().substring(0,6);
                 _description = "forum: " + scope.toBase64();
-                _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_QUESTION);
+                //_icon = ImageUtil.ICON_QUESTION;
             }
         } else {
             _name = "post";
             _description = "post a new message";
-            _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_QUESTION);
+            //_icon = ImageUtil.ICON_QUESTION;
         }
         reconfigItem();
     }
@@ -56,7 +55,7 @@ public class EditMessageTab extends BrowserTab {
         public void messageCancelled(MessageEditor editor) { closeTab(); }
     }
         
-    public Image getIcon() { return _icon; }
+    public Image getIcon() { return ImageUtil.ICON_TAB_EDIT; }
     public String getName() { return _name; }
     public String getDescription() { return _description; }
     

@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.Opts;
+import syndie.db.TextEngine;
 import syndie.db.UI;
 
 /**
@@ -40,6 +42,7 @@ import syndie.db.UI;
  */
 public class Browser implements UI {
     private DBClient _client;
+    private TextEngine _engine;
     private Shell _shell;
     private Menu _mainMenu;
     private ReferenceChooserTree _bookmarks;
@@ -48,13 +51,22 @@ public class Browser implements UI {
     
     private Map _openTabs;
     
+    private List _uiListeners;
+    private List _commands;
+    private volatile boolean _initialized;
+    
     public Browser(DBClient client) {
         _client = client;
         _openTabs = new HashMap();
-        Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
+        _uiListeners = new ArrayList();
+        _commands = new ArrayList();
+        _initialized = false;
+        if (client.isLoggedIn())
+            Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
     }
 
     private void initComponents() {
+        _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
         _shell.setText("Syndie");
         _shell.setLayout(new GridLayout(2, false));
@@ -90,13 +102,20 @@ public class Browser implements UI {
         _shell.setVisible(false);
     }
     
+    public void setEngine(TextEngine engine) { _engine = engine; }
     public void startup() {
+        if (_client.isLoggedIn() && !_initialized) {
+            _initialized = true;
+            Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
+        }
         Display.getDefault().syncExec(new Runnable() { public void run() { doStartup(); } });
     }
     private void doStartup() {
-        if (_client.getLoggedInNymId() < 0) {
+        if (!_initialized || (_client.getLoggedInNymId() < 0)) {
             // show a login prompt
-        } else {
+            LoginPrompt prompt = new LoginPrompt(_client, this);
+            prompt.login();
+        } else if (!_shell.isVisible()) {
             _shell.open();
         }
     }
@@ -131,6 +150,23 @@ public class Browser implements UI {
         new MenuItem(postMenu, SWT.PUSH).setText("Resume existing...");
         
         new MenuItem(_mainMenu, SWT.CASCADE).setText("Syndicate");
+        
+        MenuItem advanced = new MenuItem(_mainMenu, SWT.CASCADE);
+        advanced.setText("Advanced");
+        Menu advancedMenu = new Menu(advanced);
+        advanced.setMenu(advancedMenu);
+        MenuItem advancedText = new MenuItem(advancedMenu, SWT.PUSH);
+        advancedText.setText("Text interface");
+        advancedText.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showTextUI(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showTextUI(); }
+        });
+        MenuItem advancedLogs = new MenuItem(advancedMenu, SWT.PUSH);
+        advancedLogs.setText("Logs");
+        advancedLogs.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLogs(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLogs(); }
+        });
         
         new MenuItem(_mainMenu, SWT.SEPARATOR);
         
@@ -206,9 +242,9 @@ public class Browser implements UI {
         }
     }
     
-    private void postNew() {
-        view(createPostURI(null, null));
-    }
+    private void postNew() { view(createPostURI(null, null)); }
+    private void showTextUI() { view(createTextUIURI()); }
+    private void showLogs() { view(createLogsURI()); }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         Map attributes = new HashMap();
@@ -217,9 +253,12 @@ public class Browser implements UI {
         if (parent != null)
             attributes.put("parent", parent.toString());
         attributes.put("uniq", "" + System.currentTimeMillis()); // just a local uniq
-        SyndieURI uri = new SyndieURI("post", attributes);
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
+    
+    public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
+    public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
     
     CTabFolder getTabFolder() { return _tabs; }
     DBClient getClient() { return _client; }
@@ -236,33 +275,80 @@ public class Browser implements UI {
         public void referenceAccepted(SyndieURI uri) { System.out.println("accepted"); view(uri); }
         public void referenceChoiceAborted() {}        
     }
+
     
-    public Opts readCommand() { return null; }
-    public Opts readCommand(boolean displayPrompt) { return null; }
+    public void insertCommand(String cmd) { synchronized (_commands) { _commands.add(cmd); _commands.notifyAll(); } }
+    public Opts readCommand() {
+        while (true) {
+            synchronized (_commands) {
+                try {
+                    if (_commands.size() < 0)
+                        _commands.wait();
+                } catch (InterruptedException ie) {}
+                if (_commands.size() > 0)
+                    return new Opts((String)_commands.remove(0));
+            }
+        }
+    }
+    public Opts readCommand(boolean displayPrompt) { return readCommand(); }
     public void errorMessage(String msg) { errorMessage(msg, null); }
     public void errorMessage(String msg, Exception cause) {
+        synchronized (_uiListeners) {
+            for (int i = 0; i < _uiListeners.size(); i++)
+                ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
+        }
+        /*
         if (msg != null)
             System.err.println(msg);
         if (cause != null)
             cause.printStackTrace();
+         */
     }
 
-    public void statusMessage(String msg) { System.out.println(msg); }
+    public void statusMessage(String msg) {
+        synchronized (_uiListeners) {
+            for (int i = 0; i < _uiListeners.size(); i++)
+                ((UIListener)_uiListeners.get(i)).statusMessage(msg);
+        }
+        //System.out.println(msg);
+    }
     public void debugMessage(String msg) { debugMessage(msg, null); }
     public void debugMessage(String msg, Exception cause) {
+        synchronized (_uiListeners) {
+            for (int i = 0; i < _uiListeners.size(); i++)
+                ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
+        }
+        /*
         if (msg != null)
             System.out.println(msg);
         if (cause != null)
             cause.printStackTrace();
+         */
     }
 
-    public void commandComplete(int status, List location) {}
+    public void commandComplete(int status, List location) {
+        synchronized (_uiListeners) {
+            for (int i = 0; i < _uiListeners.size(); i++)
+                ((UIListener)_uiListeners.get(i)).commandComplete(status, location);
+        }
+    }
     public boolean toggleDebug() { return true; }
     public boolean togglePaginate() { return false; }
-    public void insertCommand(String commandline) {}
     public String readStdIn() { return null; }
     
     private Image createSystrayIcon() {
         return ImageUtil.resize(ImageUtil.ICON_INFORMATION, 16, 16, false);
+    }
+
+    public void addUIListener(UIListener lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
+    public void removeUIListener(UIListener lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
+    
+    public interface UIListener {
+        public void errorMessage(String msg);
+        public void errorMessage(String msg, Exception cause);
+        public void statusMessage(String msg);
+        public void debugMessage(String msg);
+        public void debugMessage(String msg, Exception cause);
+        public void commandComplete(int status, List location);
     }
 }

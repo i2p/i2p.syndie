@@ -1,19 +1,41 @@
 package syndie.gui;
 
+import java.io.File;
+import net.i2p.I2PAppContext;
 import org.eclipse.swt.widgets.Display;
+import syndie.db.DBClient;
+import syndie.db.TextEngine;
 import syndie.db.TextUI;
 
 /** swt's readAndDispatch needs to be in the main thread */
 public class SWTUI {
     public static void main(final String args[]) {
-        new Thread(new Runnable() {
-            public void run() {
-                TextUI.main(args);
-            }
-        }, "text ui").start();
+        System.setProperty("jbigi.dontLog", "true");
+        System.setProperty("jcpuid.dontLog", "true");
+        
         Display d = Display.getDefault();
         ColorUtil.init();
         ImageUtil.init();
+        
+        String root = TextEngine.getRootPath();
+        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
+        final Browser browser = new Browser(client);
+        final TextEngine engine = new TextEngine(client, browser);
+        browser.setEngine(engine);
+        
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                engine.run();
+            }
+        }, "text ui");
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
+        
+        // to allow the startup scripts to run, which may include 'login',
+        // so we dont have to show a login prompt.  perhaps toss up a splash screen
+        try { Thread.sleep(2000); } catch (InterruptedException ie) {}
+        browser.startup();
+        
         while (!d.isDisposed()) {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
