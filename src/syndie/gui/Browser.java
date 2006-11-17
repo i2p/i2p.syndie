@@ -40,7 +40,7 @@ import syndie.db.UI;
 /**
  * main gui wrapper
  */
-public class Browser implements UI {
+public class Browser implements UI, BrowserControl {
     private DBClient _client;
     private TextEngine _engine;
     private Shell _shell;
@@ -220,20 +220,27 @@ public class Browser implements UI {
     
     public void view(SyndieURI uri) {
         debugMessage("Viewing [" + uri.toString() + "]");
+        _shell.setCursor(ImageUtil.CURSOR_WAIT);
         BrowserTab tab = null;
         synchronized (_openTabs) {
             tab = (BrowserTab)_openTabs.get(uri);
             if (tab == null) {
+                debugMessage("building tab");
                 tab = BrowserTab.build(this, uri);
+                debugMessage("tab built");
                 if (tab != null) {
                     _openTabs.put(uri, tab);
                 }
             }
         }
         if (tab != null) {
+            debugMessage("showing tab");
             _tabs.showItem(tab.getTabItem());
+            debugMessage("tab shown");
             _tabs.setSelection(tab.getTabItem());
+            debugMessage("tab selected");
         }
+        _shell.setCursor(null);
     }
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;
@@ -247,6 +254,7 @@ public class Browser implements UI {
             tab.dispose();
         }
     }
+    public UI getUI() { return this; }
     
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
@@ -266,8 +274,8 @@ public class Browser implements UI {
     public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
     
-    CTabFolder getTabFolder() { return _tabs; }
-    DBClient getClient() { return _client; }
+    public CTabFolder getTabFolder() { return _tabs; }
+    public DBClient getClient() { return _client; }
     
     private class BookmarkChoiceListener implements ReferenceChooserTree.ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) { view(node.getURI()); }

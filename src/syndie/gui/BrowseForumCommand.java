@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Shell;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.*;
-import syndie.db.NullUI;
 
 /**
  */
@@ -37,7 +36,7 @@ public class BrowseForumCommand implements CLI.Command {
             public void run() {
                 Shell shell = new Shell(display, SWT.SHELL_TRIM);
                 shell.setLayout(new FillLayout());
-                BrowseForum browse = new BrowseForum(shell, client, new Listener());
+                BrowseForum browse = new BrowseForum(shell, client, new Listener(), new NullUI());
 
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) )
                     browse.setFilter(SyndieURI.createSearch(new Hash(chan)));

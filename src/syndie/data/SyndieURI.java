@@ -320,8 +320,17 @@ public class SyndieURI {
             return Boolean.valueOf(str).booleanValue();
     }
     public Hash getScope() { return getHash("channel"); }
-    private Hash getHash(String key) {
-        String val = (String)_attributes.get(key);
+    public Hash getHash(String key) {
+        Object obj = _attributes.get(key);
+        if (obj == null) return null;
+        String val = null;
+        if (obj.getClass().isArray()) {
+            String vals[] = (String[])obj;
+            if (vals.length == 0) return null;
+            val = vals[0];
+        } else {
+            val = obj.toString();
+        }
         if (val != null) {
             byte b[] = Base64.decode(val);
             if ( (b != null) && (b.length == Hash.HASH_LENGTH) )

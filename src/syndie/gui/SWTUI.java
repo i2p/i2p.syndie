@@ -50,7 +50,7 @@ public class SWTUI {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
             } catch (RuntimeException e) {
-                e.printStackTrace();
+                browser.errorMessage("Internal error", e);
             }
         }
     }

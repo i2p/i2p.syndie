@@ -18,7 +18,7 @@ public class EditMessageTab extends BrowserTab {
     private Hash _scope;
     private SyndieURI _parent;
     
-    public EditMessageTab(Browser browser, SyndieURI uri, Hash scope, SyndieURI parent) {
+    public EditMessageTab(BrowserControl browser, SyndieURI uri, Hash scope, SyndieURI parent) {
         super(browser, uri);
         if (scope != null) {
             long chanId = getClient().getChannelId(scope);
