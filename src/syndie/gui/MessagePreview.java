@@ -37,6 +37,7 @@ import syndie.db.DBClient;
  *
  */
 public class MessagePreview {
+    private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
@@ -60,7 +61,13 @@ public class MessagePreview {
     private PageRenderer _body;
     private SyndieURI _uri;
     private int _page;
+    private Hash _author;
+    private Hash _target;
     
+    public MessagePreview(BrowserControl browser, Composite parent) {
+        this(browser.getClient(), parent);
+        _browser = browser;
+    }
     public MessagePreview(DBClient client, Composite parent) {
         _client = client;
         _parent = parent;
@@ -107,6 +114,8 @@ public class MessagePreview {
             _headerInfo.setEnabled(false);
             _headerPages.setEnabled(false);
             _headerActions.setEnabled(false);
+            _author = null;
+            _target = null;
         } else {
             String subject = msg.getSubject();
             if (subject == null)
@@ -145,6 +154,9 @@ public class MessagePreview {
             if (_headerPages.getItemCount() > 0)
                 _headerPages.select(_page-1);
             _headerActions.select(0);
+            
+            _author = (authorInfo != null ? authorInfo.getChannelHash() : msg.getTargetChannel());
+            _target = msg.getTargetChannel();
         }
         
         updateInfoMenu(msg);
@@ -291,18 +303,32 @@ public class MessagePreview {
         _headerActions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _headerActions.add("Action");
+        // order is tied to ACTION_*
         _headerActions.add("View");
         _headerActions.add("Reply");
         _headerActions.add("Reply to author");
+        _headerActions.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { honorAction(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { honorAction(); }
+        });
     
         _attachmentPopup = new AttachmentPreviewPopup(_client, _root.getShell());
         
         _body = new PageRenderer(_root, true);
         _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _body.setListener(new PageRenderer.PageActionListener() {
-            public void viewScopeMessages(PageRenderer renderer, Hash scope) {}
-            public void viewScopeMetadata(PageRenderer renderer, Hash scope) {}
-            public void view(PageRenderer renderer, SyndieURI uri) {}
+            public void viewScopeMessages(PageRenderer renderer, Hash scope) {
+                if (_browser != null)
+                    _browser.view(SyndieURI.createScope(scope));
+            }
+            public void viewScopeMetadata(PageRenderer renderer, Hash scope) {
+                if (_browser != null)
+                    _browser.view(_browser.createMetaURI(scope));
+            }
+            public void view(PageRenderer renderer, SyndieURI uri) {
+                if (_browser != null)
+                    _browser.view(uri);
+            }
             public void bookmark(PageRenderer renderer, SyndieURI uri) {}
             public void banScope(PageRenderer renderer, Hash scope) {}
             public void viewImage(PageRenderer renderer, Image img) {}
@@ -314,8 +340,36 @@ public class MessagePreview {
             public void importArchiveKey(PageRenderer renderer, Hash referencedBy, SyndieURI archiveURI, SessionKey key) {}
             public void saveAllImages(PageRenderer renderer, Map images) {}
             public void saveImage(PageRenderer renderer, String suggestedName, Image img) {}
-            public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {}
-            public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {}
+            public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {
+                if (_browser != null)
+                    _browser.view(_browser.createPostURI(author, msg, true));
+            }
+            public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
+                if (_browser != null)
+                    _browser.view(_browser.createPostURI(forum, msg));
+            }
         });
+    }
+    
+    // indexes into the _headerAction
+    private static final int ACTION_VIEW = 1;
+    private static final int ACTION_REPLY_TO_FORUM = 2;
+    private static final int ACTION_REPLY_TO_AUTHOR = 3;
+    private void honorAction() {
+        int idx = _headerActions.getSelectionIndex();
+        switch (idx) {
+            case ACTION_VIEW:
+                if (_browser != null)
+                    _browser.view(_uri);
+                return;
+            case ACTION_REPLY_TO_AUTHOR:
+                if (_browser != null)
+                    _browser.view(_browser.createPostURI(_author, _uri, true));
+                return;
+            case ACTION_REPLY_TO_FORUM:
+                if (_browser != null)
+                    _browser.view(_browser.createPostURI(_target, _uri));
+                return;
+        }
     }
 }

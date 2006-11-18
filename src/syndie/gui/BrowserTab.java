@@ -30,6 +30,7 @@ abstract class BrowserTab {
     static final String TYPE_POST = "post";
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
+    static final String TYPE_META = "meta";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -40,11 +41,20 @@ abstract class BrowserTab {
             if (parentURI != null) {
                 try { parent = new SyndieURI(parentURI); } catch (URISyntaxException use) {}
             }
+            boolean asReply = uri.getBoolean("reply", false);
             // create a new editor tab
-            return new EditMessageTab(browser, uri, scope, parent);
+            return new EditMessageTab(browser, uri, scope, parent, asReply);
         } else if ("channel".equalsIgnoreCase(uri.getType())) {
-            if ( (uri.getScope() != null) && (uri.getMessageId() == null) )
-                return new BrowseForumTab(browser, uri);
+            if (uri.getScope() != null) {
+                if (uri.getMessageId() == null) {
+                    // browse the forum as a whole
+                    return new BrowseForumTab(browser, uri);
+                } else {
+                    // view a specific message
+                    // todo: perhaps a separate tab instead of this browse w/ preview?
+                    return new BrowseForumTab(browser, uri);
+                }
+            }
         } else if (TYPE_TEXTUI.equals(uri.getType())) {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {

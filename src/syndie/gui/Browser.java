@@ -261,13 +261,24 @@ public class Browser implements UI, BrowserControl {
     private void showLogs() { view(createLogsURI()); }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
+        return createPostURI(forum, parent, false);
+    }
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("scope", forum.toBase64());
         if (parent != null)
             attributes.put("parent", parent.toString());
+        attributes.put("reply", ""+asPrivateReply);
         attributes.put("uniq", "" + System.currentTimeMillis()); // just a local uniq
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
+        return uri;
+    }
+    public SyndieURI createMetaURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("scope", forum.toBase64());
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
         return uri;
     }
     

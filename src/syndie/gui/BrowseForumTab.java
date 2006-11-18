@@ -46,15 +46,18 @@ public class BrowseForumTab extends BrowserTab {
     
     protected void initComponents() {
         debugMessage("browseforumtab.initComponents");
-        _browse = new BrowseForum(getRoot(), getClient(), new ForumListener(), getBrowser().getUI());
+        _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener());
         debugMessage("browseforumtab.initComponents: browseforum constructed");
         SyndieURI uri = getURI();
-        if (uri.isChannel())
+        if (uri.isChannel()) {
             _browse.setFilter(uri.createSearch());
-        else if (uri.isSearch())
+            if (uri.getMessageId() != null)
+                _browse.preview(uri);
+        } else if (uri.isSearch()) {
             _browse.setFilter(uri);
-        else
+        } else {
             _browse.setFilter(SyndieURI.DEFAULT_SEARCH_URI);
+        }
         getRoot().setLayout(new FillLayout());
         debugMessage("browseforumtab.initComponents: complete");
     }

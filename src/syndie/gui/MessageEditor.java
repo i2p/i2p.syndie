@@ -47,6 +47,7 @@ import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
@@ -120,12 +121,14 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private Text _controlExpirationText;
     
     private MessageEditorListener _listener;
+    private UI _ui;
     
     /** Creates a new instance of MessageEditor */
-    public MessageEditor(DBClient client, Composite parent, MessageEditorListener lsnr) {
+    public MessageEditor(DBClient client, Composite parent, MessageEditorListener lsnr, UI ui) {
         _client = client;
         _parent = parent;
         _listener = lsnr;
+        _ui = ui;
         _pages = new ArrayList();
         _attachments = new ArrayList();
         _attachmentConfig = new ArrayList();
@@ -143,6 +146,19 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         public void messagePostponed(MessageEditor editor, long postponementId);
         public void messageCancelled(MessageEditor editor);
     }
+    
+    public void setParentMessage(SyndieURI uri) {
+        _parents.clear();
+        if (uri != null)
+            _parents.add(uri);
+    }
+    
+    public void setScope(Hash scope) {
+        _target = scope;
+        updateAuthor();
+    }
+    
+    UI getUI() { return _ui; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -175,6 +191,11 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancelMessage(); }
         });
+    }
+    
+    public void setAsReply(boolean asReply) {
+        if (asReply)
+            _controlPrivacyCombo.select(PRIVACY_REPLY);
     }
 
     private static final int PRIVACY_PUBLIC = 0;

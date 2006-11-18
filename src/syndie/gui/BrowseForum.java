@@ -19,11 +19,14 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
@@ -38,7 +41,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     private Composite _meta;
     private ImageCanvas _metaAvatar;
     private Link _metaName;
-    private Text _metaDescription;
+    private Menu _metaNameMenu;
     private Button _metaIconManageable;
     private Button _metaIconPostable;
     private Button _metaIconReferences;
@@ -48,15 +51,17 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     private MessagePreview _preview;
     private Hash _scope;
     private UI _ui;
+    private BrowserControl _browser;
     
-    public BrowseForum(Composite parent, DBClient client, MessageTree.MessageTreeListener lsnr, UI ui) {
-        _client = client;
+    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr) {
+        _browser = browser;
+        _client = browser.getClient();
         _parent = parent;
         _listener = lsnr;
-        _ui = ui;
-        ui.debugMessage("initializing browse");
+        _ui = browser.getUI();
+        _ui.debugMessage("initializing browse");
         initComponents();
-        ui.debugMessage("browse initialized");
+        _ui.debugMessage("browse initialized");
     }
     
     public Control getControl() { return _root; }
@@ -70,25 +75,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _top.setLayout(new GridLayout(1, true));
         _meta = new Composite(_top, SWT.NONE);
         _meta.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _meta.setLayout(new GridLayout(8, false));
+        _meta.setLayout(new GridLayout(6, false));
 
         _metaAvatar = new ImageCanvas(_meta, false);
         _metaAvatar.forceSize(20, 20);
         _metaAvatar.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
         _metaName = new Link(_meta, SWT.NONE);
-        _metaName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _metaName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
         _metaName.setText("");
-        _metaName.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { System.out.println("selected name"); }
-            public void widgetSelected(SelectionEvent selectionEvent) { System.out.println("selected name"); }
-        });
-        Label l = new Label(_meta, SWT.NONE);
-        l.setText(": ");
-        l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false ,false));
-        _metaDescription = new Text(_meta, SWT.SINGLE|SWT.READ_ONLY|SWT.BORDER);
-        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-        //gd.widthHint = 100;
-        _metaDescription.setLayoutData(gd);
         _metaIconManageable = new Button(_meta, SWT.PUSH);
         _metaIconPostable = new Button(_meta, SWT.PUSH);
         _metaIconReferences = new Button(_meta, SWT.PUSH);
@@ -110,9 +104,29 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _metaIconReferences.setEnabled(false);
         _metaIconAdmins.setEnabled(false);
         
+        _metaNameMenu = new Menu(_metaName);
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Bookmark this forum");
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Mark all messages read");
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Delete read messages");
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Copy forum URI");
+        new MenuItem(_metaNameMenu, SWT.SEPARATOR);
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Delete all messages");
+        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Ban this forum");
+        
+        _metaName.setMenu(_metaNameMenu);
+        _metaName.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
+        });
+        
+        _metaIconPostable.addSelectionListener(new SelectionListener() {
+            public void widgetSelected(SelectionEvent selectionEvent) { post(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { post(); }
+        });
+        
         _tree = new MessageTree(_client, _top, this);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _preview = new MessagePreview(_client, _root);
+        _preview = new MessagePreview(_browser, _root);
         _root.setWeights(new int[] { 80, 20 });
         _root.setMaximizedControl(_top);
     }
@@ -137,10 +151,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         if (info != null) {
             String name = info.getName();
             if (name == null) name = scope.toBase64().substring(0,6);
-            _metaName.setText(name);
+            StringBuffer buf = new StringBuffer();
+            buf.append("<a>");
+            buf.append(CommandImpl.strip(name, "\n\r\t<>", ' '));
+            buf.append("</a>: ");
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
-            _metaDescription.setText(desc);
+            buf.append(desc);
+            _metaName.setText(buf.toString());
             boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
             _metaIconManageable.setEnabled(manage);
             if (manage)
@@ -157,8 +175,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             else
                 _metaIconAdmins.setEnabled(false);
         } else {
-            _metaName.setText("");
-            _metaDescription.setText("multiple forums selected");
+            _metaName.setText("multiple forums selected");
             _metaIconManageable.setEnabled(false);
             _metaIconPostable.setEnabled(false);
             _metaIconReferences.setEnabled(false);
@@ -192,12 +209,19 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             _listener.filterApplied(tree, searchURI);
     }
     
-    private void preview(SyndieURI uri) { 
+    void preview(SyndieURI uri) { 
+        _tree.select(uri);
         _root.setMaximizedControl(null);
         _ui.debugMessage("updating metadata in preview...");
         updateMetadata(uri);
         _ui.debugMessage("previewing...");
         _preview.preview(uri);
         _ui.debugMessage("preview complete");
+    }
+    
+    private void post() {
+        if (_browser != null) {
+            _browser.view(_browser.createPostURI(_scope, null));
+        }
     }
 }

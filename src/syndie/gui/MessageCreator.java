@@ -26,6 +26,7 @@ import syndie.db.MessageGen;
 import syndie.db.NestedUI;
 import syndie.db.NullUI;
 import syndie.db.Opts;
+import syndie.db.UI;
 
 /**
  
@@ -34,9 +35,11 @@ class MessageCreator {
     private MessageEditor _editor;
     private SyndieURI _createdURI;
     private StringBuffer _errorBuf;
+    private UI _ui;
     
     public MessageCreator(MessageEditor editor) {
         _editor = editor;
+        _ui = editor.getUI();
         _errorBuf = new StringBuffer();
     }
     
@@ -77,7 +80,7 @@ class MessageCreator {
         Hash target = _editor.getTarget();
         Hash scope = getScope(author, target);
         
-        NullUI ui = new NullUI();
+        NestedUI ui = new NestedUI(_ui);
         
         long msgId = MessageGen.createMessageId(client);
         
@@ -300,6 +303,8 @@ class MessageCreator {
         //    genOpts.setOptValue("overwrite", SyndieURI.createMessage(_currentMessage.getOverwriteChannel(), _currentMessage.getOverwriteMessage()).toString());
 
         StringBuffer parentBuf = new StringBuffer();
+        // todo: rework this to include parents of parents (of parents of parents, etc), up to a certain
+        // depth (so the structure can remain intact even with messages missing from the middle)
         for (int i = 0; i < _editor.getParentCount(); i++) {
             SyndieURI uri = _editor.getParent(i);
             parentBuf.append(uri.toString());

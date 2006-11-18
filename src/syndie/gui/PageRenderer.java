@@ -150,14 +150,14 @@ public class PageRenderer {
         });
         _text.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
-            public void mouseDown(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
+            public void mouseDown(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, true); }
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         _text.addMouseTrackListener(new MouseTrackListener() {
-            public void mouseEnter(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
-            public void mouseExit(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y); }
+            public void mouseEnter(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, false); }
+            public void mouseExit(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, false); }
             public void mouseHover(MouseEvent mouseEvent) {
-                pickMenu(mouseEvent.x, mouseEvent.y);
+                pickMenu(mouseEvent.x, mouseEvent.y, false);
                 _text.setToolTipText("");
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
@@ -608,7 +608,7 @@ public class PageRenderer {
     public int getCurrentPage() { return _page; }
     //public DBClient getCurrentClient() { return _client; }
 
-    private void pickMenu(int x, int y) {
+    private void pickMenu(int x, int y, boolean showMenu) {
         Point p = new Point(x, y);
         int off = -1;
         try {
@@ -631,18 +631,22 @@ public class PageRenderer {
             }
             if ( (imgTag != null) && (linkTag != null) ) {
                 pickImageLinkMenu(linkTag, imgTag);
+                if (showMenu) _text.getMenu().setVisible(true);
                 return;
             } else if (linkTag != null) {
                 pickLinkMenu(linkTag);
+                if (showMenu) _text.getMenu().setVisible(true);
                 return;
             } else if (imgTag != null) {
                 pickImageMenu(imgTag);
+                if (showMenu) _text.getMenu().setVisible(true);
                 return;
             }
         } catch (IllegalArgumentException iae) {
             // no char at that point (why doesn't swt just return -1?)
         }
         pickBodyMenu();
+        //_text.getMenu().setVisible(true);
     }
     
     private void pickImageLinkMenu(HTMLTag linkTag, HTMLTag imgTag) {
