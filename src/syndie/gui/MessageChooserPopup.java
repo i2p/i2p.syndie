@@ -18,6 +18,7 @@ import syndie.db.DBClient;
  *
  */
 public class MessageChooserPopup implements MessageTree.MessageTreeListener {
+    private BrowserControl _browser;
     private DBClient _client;
     private Shell _parentShell;
     private Shell _shell;
@@ -27,8 +28,9 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     private Button _cancel;
     
     /** Creates a new instance of MessageChooserPopup */
-    public MessageChooserPopup(Shell parentShell, DBClient client, MessageTree.MessageTreeListener lsnr) {
-        _client = client;
+    public MessageChooserPopup(Shell parentShell, BrowserControl browser, MessageTree.MessageTreeListener lsnr) {
+        _browser = browser;
+        _client = browser.getClient();
         _parentShell = parentShell;
         _listener = lsnr;
         initComponents();
@@ -38,7 +40,7 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM);
         _shell.setText("Message chooser");
         _shell.setLayout(new GridLayout(2, true));
-        _tree = new MessageTree(_client, _shell, this);
+        _tree = new MessageTree(_browser, _shell, this);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
         gd.widthHint = 300;
         gd.heightHint = 200;

@@ -157,9 +157,9 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     }
     
     private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
-    private static final String now() { 
-        synchronized (_fmt) { 
-            return _fmt.format(new Date(System.currentTimeMillis()));
+    private static final String ts(long when) { 
+        synchronized (_fmt) {
+            return _fmt.format(new Date(when));
         }
     }
     
@@ -223,7 +223,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
                     int start = _out.getCharCount();
                     int end = -1;
                     if (r.msg != null) {
-                        _out.append(now() + ":");
+                        _out.append(ts(r.when) + ":");
                         if (STYLE_LOGS) {
                             end = _out.getCharCount();
                             StyleRange range = new StyleRange(start, end-start, _tsFGColor, _tsBGColor);
@@ -237,7 +237,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
                         StringWriter out = new StringWriter();
                         r.e.printStackTrace(new PrintWriter(out));
                         start = _out.getCharCount();
-                        _out.append(now());
+                        _out.append(ts(r.when));
                         if (STYLE_LOGS) {
                             end = _out.getCharCount();
                             _out.setStyleRange(new StyleRange(start, end-start, _tsFGColor, _tsBGColor));
@@ -291,10 +291,11 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     public String getDescription() { return "Log messages"; }
     
     private static class Record {
+        long when;
         int type;
         String msg;
         Exception e;
-        public Record(int stat, String newMsg) { type = stat; msg = newMsg; }
-        public Record(int stat, String newMsg, Exception cause) { type = stat; msg = newMsg; e = cause; }
+        public Record(int stat, String newMsg) { this(stat, newMsg, null); }
+        public Record(int stat, String newMsg, Exception cause) { when = System.currentTimeMillis(); type = stat; msg = newMsg; e = cause; }
     }
 }

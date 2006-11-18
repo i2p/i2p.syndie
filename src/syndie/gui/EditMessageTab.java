@@ -52,8 +52,11 @@ public class EditMessageTab extends BrowserTab {
     }
     
     protected void initComponents() {
-        _editor = new MessageEditor(getClient(), getRoot(), new EditorListener(), getBrowser().getUI());
+        getBrowser().getUI().debugMessage("Initializing message editor");
+        _editor = new MessageEditor(getBrowser(), getRoot(), new EditorListener());
+        getBrowser().getUI().debugMessage("message editor initialized.  adding page");
         _editor.addPage();
+        getBrowser().getUI().debugMessage("page added");
         getRoot().setLayout(new FillLayout());
     }
     

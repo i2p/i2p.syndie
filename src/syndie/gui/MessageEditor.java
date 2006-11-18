@@ -53,6 +53,7 @@ import syndie.db.UI;
  *
  */
 public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
+    private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
     private ArrayList _attachments;
@@ -124,20 +125,24 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private UI _ui;
     
     /** Creates a new instance of MessageEditor */
-    public MessageEditor(DBClient client, Composite parent, MessageEditorListener lsnr, UI ui) {
-        _client = client;
+    public MessageEditor(BrowserControl browser, Composite parent, MessageEditorListener lsnr) {
+        _browser = browser;
+        _client = browser.getClient();
         _parent = parent;
         _listener = lsnr;
-        _ui = ui;
+        _ui = browser.getUI();
         _pages = new ArrayList();
         _attachments = new ArrayList();
         _attachmentConfig = new ArrayList();
         _targetList = new ArrayList();
         _parents = new ArrayList();
         _referenceNodes = new ArrayList();
-        
+    
+        _browser.getUI().debugMessage("editor: fetching channels");
         _nymChannels = _client.getChannels(true, true, true, true);
+        _browser.getUI().debugMessage("editor: channels fetched.  init components");
         initComponents();
+        _browser.getUI().debugMessage("editor: components initialized");
         _refChooser = new ReferenceChooserPopup(_root.getShell(), _client, this);
     }
     
@@ -159,6 +164,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     }
     
     UI getUI() { return _ui; }
+    BrowserControl getBrowser() { return _browser; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -401,8 +407,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     }
     public void addPage() { addPage("text/html"); }
     public void addPage(String type) {
-        _pages.add(new PageEditor(_client, _pageRoot, this, type));
+        _browser.getUI().debugMessage("addPage: creating editor");
+        PageEditor page = new PageEditor(_client, _pageRoot, this, type);
+        _browser.getUI().debugMessage("addPage: editor created");
+        _pages.add(page);
         showPage(_pages.size()-1);
+        _browser.getUI().debugMessage("addPage: page shown");
         rebuildPagesCombo();
     }
     public void removePage() {

@@ -371,5 +371,6 @@ public class MessagePreview {
                     _browser.view(_browser.createPostURI(_target, _uri));
                 return;
         }
+        _headerActions.select(0);
     }
 }

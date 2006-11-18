@@ -45,6 +45,7 @@ import syndie.db.ThreadAccumulator;
  * 
  */
 public class MessageTree {
+    private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
@@ -68,9 +69,10 @@ public class MessageTree {
     private MessageTreeListener _listener;
     private Map _itemToURI;
     
-    public MessageTree(DBClient client, Composite parent, MessageTreeListener lsnr) { this(client, parent, lsnr, true, true, true, true); }        
-    public MessageTree(DBClient client, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags) {
-        _client = client;
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, true, true, true, true); }        
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags) {
+        _browser = browser;
+        _client = browser.getClient();
         _parent = parent;
         _listener = lsnr;
         _showAuthor = showAuthor;
@@ -236,8 +238,11 @@ public class MessageTree {
         if (txt.trim().length() > 0) {
             try {
                 SyndieURI uri = new SyndieURI(txt);
+                _browser.getUI().debugMessage("calculating nodes in the tree");
                 List nodes = calculateNodes(uri);
+                _browser.getUI().debugMessage("nodes calculated, setting them");
                 setMessages(nodes);
+                _browser.getUI().debugMessage("nodes set");
                 _appliedFilter = uri;
                 _filter.setText(uri.toString()); // normalize manually edited uris
                 if (_listener != null)

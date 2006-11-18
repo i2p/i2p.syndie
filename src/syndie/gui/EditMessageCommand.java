@@ -30,7 +30,7 @@ public class EditMessageCommand implements CLI.Command {
                 ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
                 scroll.setExpandHorizontal(true);
                 scroll.setExpandVertical(true);
-                MessageEditor editor = new MessageEditor(client, scroll, null, null);
+                MessageEditor editor = new MessageEditor(new DummyBrowserControl(client, new NullUI()), scroll, null);
                 scroll.setContent(editor.getControl());
                 shell.setLayout(new FillLayout());
                 scroll.setLayout(new FillLayout());

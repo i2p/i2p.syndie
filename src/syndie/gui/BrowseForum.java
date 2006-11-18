@@ -124,9 +124,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { post(); }
         });
         
-        _tree = new MessageTree(_client, _top, this);
+        _browser.getUI().debugMessage("browseForum.initialize: creating tree");
+        _tree = new MessageTree(_browser, _top, this);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _browser.getUI().debugMessage("browseForum.initialize: creating preview");
         _preview = new MessagePreview(_browser, _root);
+        _browser.getUI().debugMessage("browseForum.initialize: preview created");
         _root.setWeights(new int[] { 80, 20 });
         _root.setMaximizedControl(_top);
     }
@@ -221,6 +224,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     
     private void post() {
         if (_browser != null) {
+            _browser.getUI().debugMessage("posting...");
             _browser.view(_browser.createPostURI(_scope, null));
         }
     }

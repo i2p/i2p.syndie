@@ -16,6 +16,7 @@ public class SWTUI {
         Display d = Display.getDefault();
         ColorUtil.init();
         ImageUtil.init();
+        SpellUtil.init();
         
         String root = TextEngine.getRootPath();
         if (args.length > 0)

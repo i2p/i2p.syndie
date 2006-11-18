@@ -40,6 +40,7 @@ import syndie.db.DBClient;
  *
  */
 class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener {
+    private BrowserControl _browser;
     private DBClient _client;
     private Shell _parentShell;
     private Shell _shell;
@@ -101,8 +102,9 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     /** list of NymKey instances shown in the syndieManageKeyCombo */
     private List _manageKeys;
     
-    public LinkBuilderPopup(DBClient client, Shell parent, PageEditor target) {
-        _client = client;
+    public LinkBuilderPopup(BrowserControl browser, Shell parent, PageEditor target) {
+        _browser = browser;
+        _client = browser.getClient();
         _parentShell = parent;
         _target = target;
         initComponents();
@@ -304,7 +306,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         });
         
         _refChooser = new ReferenceChooserPopup(_shell, _client, this);
-        _messageChooser = new MessageChooserPopup(_shell, _client, this);
+        _messageChooser = new MessageChooserPopup(_shell, _browser, this);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {

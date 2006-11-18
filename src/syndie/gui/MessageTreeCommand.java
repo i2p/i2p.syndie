@@ -37,7 +37,7 @@ public class MessageTreeCommand implements CLI.Command {
         display.asyncExec(new Runnable() {
             public void run() {
                 Shell shell = new Shell(display, SWT.SHELL_TRIM);
-                MessageTree tree = new MessageTree(client, shell, new Listener());
+                MessageTree tree = new MessageTree(new DummyBrowserControl(client, new NullUI()), shell, new Listener());
                 shell.setLayout(new FillLayout());
                 
                 List msgs = getThreads(client, chan);

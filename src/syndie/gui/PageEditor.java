@@ -1,6 +1,5 @@
 package syndie.gui;
 
-import com.swabunga.spell.engine.SpellDictionaryHashMap;
 import com.swabunga.spell.engine.Word;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -64,8 +63,8 @@ import org.eclipse.swt.widgets.ToolItem;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
-import com.swabunga.spell.engine.SpellDictionary;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * wysiwyg editor for text or html pages in a message
@@ -142,8 +141,7 @@ public class PageEditor {
     private Button _spellCancel;
     /** list of words we are ignoring for the current spellcheck iteration */
     private ArrayList _spellIgnoreAllList;
-    private static SpellDictionary _spellDictionary;
-
+    
     // search and replace dialog
     private Shell _findShell;
     private Text _findText;
@@ -205,20 +203,27 @@ public class PageEditor {
         return buf.toString();
     }
 
+    private UI getUI() { return _messageEditor.getBrowser().getUI(); }
+    
     private void buildControls() {
+        getUI().debugMessage("pageEditor.buildControls started");
         _root = new Composite(_parent, SWT.BORDER);
         boolean html = "text/html".equals(_contentType);
         if (html)
             createHTMLToolbar();
         else
             createTextToolbar();
+        getUI().debugMessage("pageEditor.buildControls toolbars created");
         _sash = new SashForm(_root, SWT.VERTICAL);
         _text = new StyledText(_sash, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
         _text.setEditable(true);
         _text.setDoubleClickEnabled(true);
+        getUI().debugMessage("pageEditor.buildControls styledText built");
         addEditListeners();
         
+        getUI().debugMessage("pageEditor.buildControls building page renderer");
         _preview = new PageRenderer(_sash, true);
+        getUI().debugMessage("pageEditor.buildControls page renderer built");
         if (html) {
             _sash.setMaximizedControl(null);
             _sash.setWeights(new int[] { 80, 20 });
@@ -226,11 +231,16 @@ public class PageEditor {
             _sash.setMaximizedControl(_text);
         }
         
+        getUI().debugMessage("pageEditor.buildControls creating style chooser");
         createStyleChooser();
+        getUI().debugMessage("pageEditor.buildControls creating spell checker");
         createSpellchecker();
+        getUI().debugMessage("pageEditor.buildControls creating find");
         createFind();
         
-        _linkPopup = new LinkBuilderPopup(_client, _parent.getShell(), this);
+        getUI().debugMessage("pageEditor.buildControls creating link popup");
+        _linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), this);
+        getUI().debugMessage("pageEditor.buildControls creating image popup");
         _imagePopup = new ImageBuilderPopup(this);
         
         GridLayout gl = new GridLayout(1, true);
@@ -1229,8 +1239,8 @@ public class PageEditor {
      * the word is spelled correctly
      */
     private ArrayList getSuggestions(String word) {
-        if (!_spellDictionary.isCorrect(word)) {
-            java.util.List suggestions = _spellDictionary.getSuggestions(word, 5); // 5?!  why?
+        if (!SpellUtil.getDictionary().isCorrect(word)) {
+            java.util.List suggestions = SpellUtil.getDictionary().getSuggestions(word, 5); // 5?!  why?
             ArrayList rv = new ArrayList(suggestions.size());
             for (int i = 0; i < suggestions.size(); i++) {
                 Word suggestedWord = (Word)suggestions.get(i);
@@ -1276,25 +1286,6 @@ public class PageEditor {
         _spellLine = 0;
         _spellWordIndex = 0;
         _spellIgnoreAllList.clear();
-    }
-
-    /*
-     * initialize the dictionary, shared across all page editors
-     */
-    static {
-        try {
-            _spellDictionary = new SpellDictionaryHashMap(getDictionaryReader());
-        } catch (IOException ioe) {
-            // use an empty one
-            try { _spellDictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}
-        }
-    }
-    private static Reader getDictionaryReader() {
-        // read from the db/etc
-        try {
-            return new InputStreamReader(new FileInputStream("/usr/share/dict/words"), "UTF-8");
-        } catch (IOException ioe) {}
-        return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
     }
 
     private void createFind() {
