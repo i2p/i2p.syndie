@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
@@ -25,6 +26,7 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * The reference chooser tree has four roots:
@@ -56,15 +58,22 @@ public class ReferenceChooserTree {
     private TreeItem _searchRoot;
     /** map of TreeItem to ReferenceNode */
     private Map _searchNodes;
-    
+
     private ChoiceListener _choiceListener;
     private AcceptanceListener _acceptanceListener;
+    private boolean _chooseAllStartupItems;
+    private UI _ui;
     
-    public ReferenceChooserTree(DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+    public ReferenceChooserTree(UI ui, DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+        this(ui, client, parent, lsnr, accept, false);
+    }
+    public ReferenceChooserTree(UI ui, DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems) {
+        _ui = ui;
         _client = client;
         _parent = parent;
         _choiceListener = lsnr;
         _acceptanceListener = accept;
+        _chooseAllStartupItems = chooseAllStartupItems;
         _nymRefs = new ArrayList();
         _bookmarkNodes = new HashMap();
         _postChannels = new HashMap();
@@ -92,6 +101,10 @@ public class ReferenceChooserTree {
     public void setListener(ChoiceListener lsnr) { _choiceListener = lsnr; }
     public void setAcceptanceListener(AcceptanceListener lsnr) { _acceptanceListener = lsnr; }
 
+    protected ChoiceListener getChoiceListener() { return _choiceListener; }
+    protected AcceptanceListener getAcceptanceListener() { return _acceptanceListener; }
+    protected Tree getTree() { return _tree; }
+    
     public interface ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node);
         public void manageChannelSelected(TreeItem item, ChannelInfo channel);
@@ -104,7 +117,51 @@ public class ReferenceChooserTree {
         public void referenceAccepted(SyndieURI uri);
         public void referenceChoiceAborted();
     }
+
+    public void refreshBookmarks() {
+        _tree.setRedraw(false);
+        boolean rootWasOpen = _bookmarkRoot.getExpanded();
+        ArrayList openGroupIds = new ArrayList();
+        if (rootWasOpen) {
+            for (int i = 0; i < _bookmarkRoot.getItemCount(); i++)
+                getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
+        }
+        rebuildBookmarks();
+        if (rootWasOpen) {
+            _bookmarkRoot.setExpanded(true);
+            ArrayList pending = new ArrayList();
+            TreeItem cur = _bookmarkRoot;
+            while (cur != null) {
+                boolean includeChildren = false;
+                if (cur != _bookmarkRoot) {
+                    NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
+                    if ( (curNode != null) && (openGroupIds.contains(new Long(curNode.getGroupId()))) ) {
+                        cur.setExpanded(true);
+                        includeChildren = true;
+                    }
+                } else {
+                    includeChildren = true; 
+                }
+                if (includeChildren) {
+                    for (int i = 0; i < cur.getItemCount(); i++)
+                        pending.add(cur.getItem(i));
+                }
+                if (pending.size() > 0)
+                    cur = (TreeItem)pending.remove(0);
+                else
+                    cur = null;
+            }
+        }
+        _tree.setRedraw(true);
+    }
     
+    private void getOpenGroupIds(TreeItem base, ArrayList openGroupIds) {
+        if (base.getExpanded()) {
+            openGroupIds.add(new Long((((NymReferenceNode)_bookmarkNodes.get(base)).getGroupId())));
+            for (int i = 0; i < base.getItemCount(); i++)
+                getOpenGroupIds(base.getItem(i), openGroupIds);
+        }
+    }
     
     private void initComponents() {
         _tree = new Tree(_parent, SWT.BORDER | SWT.SINGLE);
@@ -118,23 +175,41 @@ public class ReferenceChooserTree {
         _manageRoot.setText("Manageable forums");
         _searchRoot.setText("Search results...");
         
-        SyndieTreeListener lsnr = new SyndieTreeListener(_tree) { 
-            public void selected() { fireSelectionEvents(); }
-        };
-        _tree.addKeyListener(lsnr);
-        _tree.addTraverseListener(lsnr);
-        _tree.addSelectionListener(lsnr);
-        _tree.addControlListener(lsnr);
+        configTreeListeners(_tree);
         
         rebuildBookmarks();
         refetchNymChannels();
         redrawPostable();
         redrawManageable();
         redrawSearchResults();
+        
+        _chooseAllStartupItems = false;
     }
+    
+    protected void configTreeListeners(final Tree tree) {
+        SyndieTreeListener lsnr = new SyndieTreeListener(tree) { 
+            public void selected() { fireSelectionEvents(); }
+        };
+        tree.addKeyListener(lsnr);
+        tree.addTraverseListener(lsnr);
+        tree.addSelectionListener(lsnr);
+        tree.addControlListener(lsnr);
+    }
+
+    protected NymReferenceNode getBookmark(TreeItem item) { return (NymReferenceNode)_bookmarkNodes.get(item); }
+    protected ChannelInfo getPostChannel(TreeItem item) { return (ChannelInfo)_postChannels.get(item); }
+    protected ChannelInfo getManageChannel(TreeItem item) { return (ChannelInfo)_manageChannels.get(item); }
+    protected ReferenceNode getSearchResult(TreeItem item) { return (ReferenceNode)_searchNodes.get(item); }
+    
+    protected TreeItem getSearchRoot() { return _searchRoot; }
+    protected TreeItem getManageRoot() { return _manageRoot; }
+    protected TreeItem getPostRoot() { return _postRoot; }
+    protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
+    
     private void rebuildBookmarks() {
         _nymRefs.clear();
-        _nymRefs.addAll(_client.getNymReferences(_client.getLoggedInNymId()));
+        List refs = _client.getNymReferences(_client.getLoggedInNymId());
+        _nymRefs.addAll(refs);
         redrawBookmarks();
     }
     private void refetchNymChannels() {
@@ -189,15 +264,24 @@ public class ReferenceChooserTree {
         _bookmarkNodes.clear();
         for (int i = 0; i < _nymRefs.size(); i++) {
             NymReferenceNode ref = (NymReferenceNode)_nymRefs.get(i);
+            _ui.debugMessage("redrawBookmarks: add root ref " + i + ": " + ref.getGroupId());
             add(_bookmarkRoot, ref);
         }
     }
     private void add(TreeItem parent, NymReferenceNode child) {
+        _ui.debugMessage("redrawBookmarks: parent = " + parent.getText() + ", child = " + child.getGroupId() + "/" + child.getParentGroupId() + "/" + child.getName() + "/" + child.getChildCount());
         TreeItem childItem = new TreeItem(parent, SWT.NONE);
+        if (_chooseAllStartupItems && child.getLoadOnStart()) {
+            if (_choiceListener != null)
+                _choiceListener.bookmarkSelected(childItem, child);
+        }
         childItem.setText(child.getName() + "-" + child.getDescription());
         _bookmarkNodes.put(childItem, child);
-        for (int i = 0; i < child.getChildCount(); i++)
-            add(childItem, (NymReferenceNode)child.getChild(i));
+        for (int i = 0; i < child.getChildCount(); i++) {
+            NymReferenceNode sub = (NymReferenceNode)child.getChild(i);
+            _ui.debugMessage("redrawBookmarks: add child ref " + i + " of " + child.getGroupId() +": " + sub.getGroupId());
+            add(childItem, sub);
+        }
     }
     private void redrawSearchResults() {
         _searchRoot.removeAll();

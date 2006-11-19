@@ -17,12 +17,14 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
 class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener {
     private Shell _parent;
+    private UI _ui;
     private DBClient _client;
     private Shell _shell;
     private ReferenceChooserTree.AcceptanceListener _lsnr;
@@ -30,8 +32,9 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     private ReferenceChooserSearch _search;
     private ReferenceChooserInfo _info;
     
-    public ReferenceChooserPopup(Shell parent, DBClient client, ReferenceChooserTree.AcceptanceListener lsnr) {
+    public ReferenceChooserPopup(Shell parent, UI ui, DBClient client, ReferenceChooserTree.AcceptanceListener lsnr) {
         _parent = parent;
+        _ui = ui;
         _client = client;
         _lsnr = lsnr;
         initComponents();
@@ -49,7 +52,7 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
         _shell.setLayout(new FillLayout());
         
         SashForm sash = new SashForm(_shell, SWT.HORIZONTAL);
-        _tree = new ReferenceChooserTree(_client, sash, this, this);
+        _tree = new ReferenceChooserTree(_ui, _client, sash, this, this);
         
         Composite right = new Composite(sash, SWT.NONE);
         right.setLayout(new GridLayout(1, true));

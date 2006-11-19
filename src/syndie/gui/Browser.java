@@ -7,6 +7,7 @@ import java.util.Map;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -45,9 +46,11 @@ public class Browser implements UI, BrowserControl {
     private TextEngine _engine;
     private Shell _shell;
     private Menu _mainMenu;
+    private SashForm _sash;
     private ReferenceChooserTree _bookmarks;
     private CTabFolder _tabs;
     private Composite _statusRow;
+    private BookmarkEditorPopup _bookmarkEditor;
     
     private Map _openTabs;
     
@@ -71,27 +74,32 @@ public class Browser implements UI, BrowserControl {
         _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
         _shell.setText("Syndie");
-        _shell.setLayout(new GridLayout(2, false));
+        _shell.setLayout(new GridLayout(1, true));
         
         debugMessage("before creating the menu");
         initMenu();
         debugMessage("before creating the systray");
         initSystray();
         
-        _bookmarks = new ReferenceChooserTree(_client, _shell, new BookmarkChoiceListener(), new BookmarkAcceptListener());
-        _bookmarks.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
-
-        _tabs = new CTabFolder(_shell, SWT.MULTI | SWT.TOP | SWT.CLOSE);
-        _tabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _sash = new SashForm(_shell, SWT.HORIZONTAL);
+        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        
+        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener(), true);
+        
+        _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
         _tabs.setMinimizeVisible(false);
         _tabs.setMinimumCharacters(8);
         _tabs.setUnselectedImageVisible(true);
         _tabs.setBorderVisible(true);
         
+        _sash.setWeights(new int[] { 25, 75 });
+        
         _statusRow = new Composite(_shell, SWT.BORDER);
-        _statusRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        _statusRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _statusRow.setLayout(new FillLayout(SWT.HORIZONTAL));
         new Text(_statusRow, SWT.SINGLE|SWT.READ_ONLY|SWT.BORDER).setText("this is the status bar");
+        
+        _bookmarkEditor = new BookmarkEditorPopup(this, _shell);
         
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -102,7 +110,7 @@ public class Browser implements UI, BrowserControl {
         });
         
         _shell.pack();
-        _shell.setSize(_shell.computeSize(750, 600));
+        _shell.setSize(_shell.computeSize(800, 600));
         _shell.setVisible(false);
     }
     
@@ -218,8 +226,9 @@ public class Browser implements UI, BrowserControl {
         }
     }
     
-    public void view(SyndieURI uri) {
-        debugMessage("Viewing [" + uri.toString() + "]");
+    public void view(SyndieURI uri) { 
+        debugMessage("Viewing [" + uri + "]");
+        if (uri == null) return;
         _shell.setCursor(ImageUtil.CURSOR_WAIT);
         BrowserTab tab = null;
         synchronized (_openTabs) {
@@ -254,6 +263,44 @@ public class Browser implements UI, BrowserControl {
             tab.dispose();
         }
     }
+    /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+    public void bookmark(SyndieURI uri) {
+        debugMessage("bookmarking "+uri);
+        String name = "bookmark name";
+        String desc = "bookmark description";
+        int siblingOrder = -1;
+        long parentGroupId = -1;
+        boolean loadOnStart = false;
+        
+        // bookmark should always set these to false (ban/ignore would set them to true)
+        boolean ignored = false;
+        boolean banned = false;
+        
+        // the following is set by addNymReference
+        long uriId = -1;
+        long groupId = -1;
+        
+        NymReferenceNode node = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, siblingOrder, ignored, banned, loadOnStart);
+        
+        _bookmarkEditor.setBookmark(node);
+        _bookmarkEditor.open();
+        //bookmark(node);
+    }
+    /** called by the bookmark editor, or other things that can populate the fields properly */
+    public void bookmark(NymReferenceNode node) {
+        _client.addNymReference(_client.getLoggedInNymId(), node);
+        _bookmarks.refreshBookmarks();
+        debugMessage("bookmarks refreshed");
+    }
+    public void deleteBookmark(long bookmarkGroupId) {
+        _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
+        _bookmarks.refreshBookmarks();
+    }
+    public void updateBookmark(NymReferenceNode bookmark) {
+        _client.updateNymReference(_client.getLoggedInNymId(), bookmark);
+        _bookmarks.refreshBookmarks();
+    }
+    
     public UI getUI() { return this; }
     
     private void postNew() { view(createPostURI(null, null)); }

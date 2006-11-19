@@ -33,7 +33,7 @@ public class ReferenceChooserCommand implements CLI.Command {
             public void run() {
                 AcceptListener lsnr = new AcceptListener(ui);
                 if (true) {
-                    ReferenceChooserPopup popup = new ReferenceChooserPopup(null, client, lsnr);
+                    ReferenceChooserPopup popup = new ReferenceChooserPopup(null, ui, client, lsnr);
                     popup.show();
                 } else {
                     ReferenceChooserTree tree = showTree(display, opts, ui, client, lsnr);
@@ -49,7 +49,7 @@ public class ReferenceChooserCommand implements CLI.Command {
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
         scroll.setExpandHorizontal(true);
         scroll.setExpandVertical(true);
-        ReferenceChooserTree chooser = new ReferenceChooserTree(client, scroll, new RefListener(ui), lsnr);
+        ReferenceChooserTree chooser = new ReferenceChooserTree(ui, client, scroll, new RefListener(ui), lsnr);
         scroll.setContent(chooser.getControl());
         shell.setLayout(new FillLayout());
         scroll.setLayout(new FillLayout());

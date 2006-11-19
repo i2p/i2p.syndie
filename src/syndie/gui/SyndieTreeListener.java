@@ -77,5 +77,5 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void mouseDown(MouseEvent evt) {}
     public void mouseUp(MouseEvent evt) {}
     
-    private TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
+    protected TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
 }

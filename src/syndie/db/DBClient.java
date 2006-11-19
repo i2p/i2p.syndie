@@ -35,6 +35,7 @@ public class DBClient {
         , org.hsqldb.persist.GCJKludge.class
     };
     private I2PAppContext _context;
+    private UI _ui;
     private Log _log;
     
     private Connection _con;
@@ -90,6 +91,7 @@ public class DBClient {
     I2PAppContext ctx() { return _context; }
     Connection con() { return _con; }
     public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
+    public void setDefaultUI(UI ui) { _ui = ui; }
     
     /** if logged in, the login used is returned here */
     String getLogin() { return _login; }
@@ -1030,6 +1032,7 @@ public class DBClient {
             } catch (SQLException se) {
                 //ui.errorMessage("Internal error listing channels", se);
                 //ui.commandComplete(-1, null);
+                log(se);
             } finally {
                 if (rs != null) try { rs.close(); } catch (SQLException se) {}
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -1071,6 +1074,7 @@ public class DBClient {
             } catch (SQLException se) {
                 //ui.errorMessage("Internal error listing channels", se);
                 //ui.commandComplete(-1, null);
+                log(se);
             } finally {
                 if (rs != null) try { rs.close(); } catch (SQLException se) {}
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -1487,9 +1491,11 @@ public class DBClient {
                 boolean parentFound = false;
                 for (int i = 0; i < refs.size(); i++) {
                     DBReferenceNode cur = (DBReferenceNode)refs.get(i);
-                    if (cur.getGroupId() == parentGroupId) {
-                        cur.addChild(ref);
+                    ReferenceNode found = cur.getByUniqueId(parentGroupId);
+                    if (found != null) {
+                        found.addChild(ref);
                         parentFound = true;
+                        break;
                     }
                 }
                 if (!parentFound)
@@ -1528,6 +1534,7 @@ public class DBClient {
         public long getParentGroupId() { return _parentGroupId; }
         public int getSiblingOrder() { return _siblingOrder; }
         public boolean getEncrypted() { return _encrypted; }
+        public long getUniqueId() { return _groupId; }
     }
     
     private static final String SQL_GET_ARCHIVE = "SELECT postAllowed, readAllowed, uriId FROM archive WHERE archiveId = ?";
@@ -2381,9 +2388,11 @@ public class DBClient {
                 boolean parentFound = false;
                 for (int i = 0; i < rv.size(); i++) {
                     NymReferenceNode cur = (NymReferenceNode)rv.get(i);
-                    if (cur.getGroupId() == parentGroupId) {
-                        cur.addChild(ref);
+                    ReferenceNode found = cur.getByUniqueId(parentGroupId);
+                    if (found != null) {
+                        found.addChild(ref);
                         parentFound = true;
+                        break;
                     }
                 }
                 if (!parentFound)
@@ -2399,17 +2408,200 @@ public class DBClient {
         }
         return rv;
     }
+
+    private static final String SQL_DELETE_URI = "DELETE FROM uriAttribute WHERE uriId = ?";
+    private static final String SQL_UPDATE_NYM_REFERENCE = "UPDATE resourceGroup SET parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ? WHERE groupId = ?";
     /** update the reference in the database, keyed off the nymId and newValue's getGroupId() field */
     public void updateNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
+        // todo: reorder the existing nodes with the same parent so the newValue.getSiblingOrder is correct
+        
+        long uriId = -1;
+        if (newValue.getURI() != null) {
+            if (newValue.getURIId() >= 0) {
+                // ok, no change
+                uriId = newValue.getURIId();
+            } else {
+                uriId = addURI(newValue.getURI());
+                newValue.updateData(newValue.getGroupId(), newValue.getSiblingOrder(), -1);
+            }
+        } else {
+            if (newValue.getURIId() >= 0) {
+                try {
+                    exec(SQL_DELETE_URI, newValue.getURIId());
+                } catch (SQLException se) {
+                    log(se);
+                }
+                newValue.updateData(newValue.getGroupId(), newValue.getSiblingOrder(), -1);
+            } else {
+                // ok, no change
+            }
+        }
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_UPDATE_NYM_REFERENCE);
+            //"parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, 
+            //uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ?
+            //WHERE groupId = ?";
+            stmt.setLong(1, newValue.getParentGroupId());
+            stmt.setInt(2, newValue.getSiblingOrder());
+            if (newValue.getName() != null)
+                stmt.setString(3, newValue.getName());
+            else
+                stmt.setNull(3, Types.VARCHAR);
+            if (newValue.getDescription() != null)
+                stmt.setString(4, newValue.getDescription());
+            else
+                stmt.setNull(4, Types.VARCHAR);
+            if (uriId >= 0)
+                stmt.setLong(5, uriId);
+            else
+                stmt.setNull(5, Types.INTEGER);
+            stmt.setBoolean(6, newValue.getIsIgnored());
+            stmt.setBoolean(7, newValue.getIsBanned());
+            stmt.setBoolean(8, newValue.getLoadOnStart());
+            stmt.setLong(9, newValue.getGroupId());
+            
+            int rc = stmt.executeUpdate();
+            if (rc == 1) {
+                // whee!
+            } else {
+                // wtf
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
     }
+    
+    private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     /** add a new reference, then updating the groupId, uriId, and siblingOrder fields in newValue */
     public void addNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
+        // todo: reorder the existing nodes with the same parent so the newValue.getSiblingOrder is correct
+        
+        long groupId = nextId("resourceGroupIdSequence");
+        int siblingOrder = 0;
+        if (newValue.getParentGroupId() >= 0) {
+            siblingOrder = getNymReferenceChildCount(nymId, newValue.getParentGroupId());
+        } else {
+            siblingOrder = getNymReferenceChildCount(nymId, -1);
+        }
+        long uriId = -1;
+        if (newValue.getURI() != null)
+            uriId = addURI(newValue.getURI());
+        
+        System.out.println("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ADD_NYM_REFERENCE);
+            // (groupId,parentGroupId,siblingOrder,name,description,uriId,isIgnored,isBanned,loadOnStartup,nymId)
+            stmt.setLong(1, groupId);
+            stmt.setLong(2, newValue.getParentGroupId());
+            stmt.setInt(3, siblingOrder);
+            if (newValue.getName() != null)
+                stmt.setString(4, newValue.getName());
+            else
+                stmt.setNull(4, Types.VARCHAR);
+            if (newValue.getDescription() != null)
+                stmt.setString(5, newValue.getDescription());
+            else
+                stmt.setNull(5, Types.VARCHAR);
+            stmt.setLong(6, uriId);
+            stmt.setBoolean(7, newValue.getIsIgnored());
+            stmt.setBoolean(8, newValue.getIsBanned());
+            stmt.setBoolean(9, newValue.getLoadOnStart());
+            stmt.setLong(10, nymId);
+            
+            int rc = stmt.executeUpdate();
+            if (rc == 1) {
+                newValue.updateData(groupId, siblingOrder, uriId);
+            } else {
+                // wtf
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
     }
+    private static final String SQL_GET_NYM_REFERENCE_CHILD_COUNT = "SELECT COUNT(groupId) FROM resourceGroup WHERE parentGroupId = ? AND nymId = ?";
+    private int getNymReferenceChildCount(long nymId, long groupId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCE_CHILD_COUNT);
+            stmt.setLong(1, groupId);
+            stmt.setLong(2, nymId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long count = rs.getLong(1);
+                return (int)count;
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            log(se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_DELETE_NYM_REFERENCE = "DELETE FROM resourceGroup WHERE groupId = ?";
+    private static final String SQL_DELETE_NYM_REFERENCE_URI = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE groupId = ?)";
     /** recursively delete the reference, any children, and any URIs they refer to */
-    public void deleteNymReference(long nymId, NymReferenceNode newValue) {
+    public void deleteNymReference(long nymId, long groupId) {
         ensureLoggedIn();
+        
+        ArrayList groupIdsToDelete = new ArrayList();
+        groupIdsToDelete.add(new Long(groupId));
+        while (groupIdsToDelete.size() > 0) {
+            Long id = (Long)groupIdsToDelete.remove(0);
+            try {
+                exec(SQL_DELETE_NYM_REFERENCE_URI, id.longValue());
+            } catch (SQLException se) {
+                log(se);
+            }
+            try {
+                exec(SQL_DELETE_NYM_REFERENCE, id.longValue());
+            } catch (SQLException se) {
+                log(se);
+            }
+            getNymReferenceChildIds(id.longValue(), groupIdsToDelete);
+        }
+    }
+    
+    private static final String SQL_GET_NYM_REFERENCE_CHILD_IDS = "SELECT groupId FROM resourceGroup WHERE parentGroupId = ?";
+    private void getNymReferenceChildIds(long parentGroupId, ArrayList addTo) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCE_CHILD_IDS);
+            stmt.setLong(1, parentGroupId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long group = rs.getLong(1);
+                if (!rs.wasNull()) {
+                    Long grp = new Long(group);
+                    if (!addTo.contains(grp))
+                        addTo.add(grp);
+                }
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
     }
     
     private void ensureLoggedIn() throws IllegalStateException {
@@ -2418,6 +2610,7 @@ public class DBClient {
                 return;
         } catch (SQLException se) {
             // problem detecting isClosed?
+            log(se);
         }
         throw new IllegalStateException("Not logged in");
     }
@@ -2734,5 +2927,12 @@ public class DBClient {
         } else {
             ui.debugMessage("script does not exist [" + script.getAbsolutePath() + "]");
         }
+    }
+    
+    private void log(SQLException se) {
+        if (_ui != null)
+            _ui.errorMessage("Internal error", se);
+        else
+            se.printStackTrace();
     }
 }

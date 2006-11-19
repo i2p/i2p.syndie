@@ -19,6 +19,7 @@ public class SyndieURIDAO {
     
     private static final String SQL_FETCH = "SELECT attribKey, attribValString, attribValLong, attribValBool, attribValStrings FROM uriAttribute WHERE uriId = ?";
     public SyndieURI fetch(long uriId) {
+        if (uriId < 0) return null;
         PreparedStatement stmt = null;
         Map attribs = new TreeMap();
         String type = null;
@@ -61,6 +62,7 @@ public class SyndieURIDAO {
         }
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("URI found for " + uriId + ": " + type + ":" + attribs);
+        if (type == null) return null;
         return new SyndieURI(type, attribs);
     }
     

@@ -47,6 +47,7 @@ public class ReferenceNode {
     public ReferenceNode getParent() { return _parent; }
     public String getTreeIndex() { return _treeIndex; }
     public int getTreeIndexNum() { return _treeIndexNum; }
+    public long getUniqueId() { return hashCode(); }
     
     public void setName(String name) { _name = name; }
     public void setURI(SyndieURI uri) { _uri = uri; }
@@ -77,6 +78,20 @@ public class ReferenceNode {
         _children.remove(child);
         // does not reindex!
         child._parent = null;
+    }
+    
+    public ReferenceNode getByUniqueId(long id) {
+        if (getUniqueId() == id) {
+            return this;
+        } else {
+            for (int i = 0; i < getChildCount(); i++) {
+                ReferenceNode child = getChild(i);
+                ReferenceNode found = child.getByUniqueId(id);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
     }
     
     /** 

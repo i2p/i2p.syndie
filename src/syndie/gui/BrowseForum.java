@@ -42,6 +42,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     private ImageCanvas _metaAvatar;
     private Link _metaName;
     private Menu _metaNameMenu;
+    private MenuItem _metaNameMenuBookmark;
+    private MenuItem _metaNameMenuMarkRead;
+    private MenuItem _metaNameMenuDeleteRead;
+    private MenuItem _metaNameMenuCopyURI;
+    private MenuItem _metaNameMenuDeleteAll;
+    private MenuItem _metaNameMenuBan;
     private Button _metaIconManageable;
     private Button _metaIconPostable;
     private Button _metaIconReferences;
@@ -105,13 +111,24 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _metaIconAdmins.setEnabled(false);
         
         _metaNameMenu = new Menu(_metaName);
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Bookmark this forum");
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Mark all messages read");
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Delete read messages");
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Copy forum URI");
-        new MenuItem(_metaNameMenu, SWT.SEPARATOR);
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Delete all messages");
-        new MenuItem(_metaNameMenu, SWT.PUSH).setText("Ban this forum");
+        _metaNameMenuBookmark = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuMarkRead = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuDeleteRead = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuCopyURI = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuBan = new MenuItem(_metaNameMenu, SWT.PUSH);
+        
+        _metaNameMenuBookmark.setText("Bookmark this forum");
+        _metaNameMenuMarkRead.setText("Mark all messages read");
+        _metaNameMenuDeleteRead.setText("Delete read messages");
+        _metaNameMenuCopyURI.setText("Copy forum URI");
+        _metaNameMenuDeleteAll.setText("Delete all messages");
+        _metaNameMenuBan.setText("Ban this forum");
+        
+        _metaNameMenuBookmark.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
+        });
         
         _metaName.setMenu(_metaNameMenu);
         _metaName.addSelectionListener(new SelectionListener() {

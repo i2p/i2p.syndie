@@ -34,6 +34,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
@@ -107,12 +108,12 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     
     private ReferenceChooserPopup _refChooser;
     
-    public MessageTreeFilter(DBClient client, Composite parent, MessageTree tree) {
+    public MessageTreeFilter(UI ui, DBClient client, Composite parent, MessageTree tree) {
         _client = client;
         _parent = parent;
         _tree = tree;
         _modListener = new FilterModifyListener();
-        _refChooser = new ReferenceChooserPopup(_parent.getShell(), client, this);
+        _refChooser = new ReferenceChooserPopup(_parent.getShell(), ui, client, this);
         initComponents();
     }
 

@@ -25,6 +25,7 @@ public class SWTUI {
         final Browser browser = new Browser(client);
         final TextEngine engine = new TextEngine(client, browser);
         browser.setEngine(engine);
+        client.setDefaultUI(browser.getUI());
         
         Thread t = new Thread(new Runnable() {
             public void run() {

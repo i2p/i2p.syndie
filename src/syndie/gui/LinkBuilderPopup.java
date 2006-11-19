@@ -305,7 +305,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
         });
         
-        _refChooser = new ReferenceChooserPopup(_shell, _client, this);
+        _refChooser = new ReferenceChooserPopup(_shell, _browser.getUI(), _client, this);
         _messageChooser = new MessageChooserPopup(_shell, _browser, this);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden

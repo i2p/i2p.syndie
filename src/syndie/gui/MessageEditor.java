@@ -143,7 +143,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _browser.getUI().debugMessage("editor: channels fetched.  init components");
         initComponents();
         _browser.getUI().debugMessage("editor: components initialized");
-        _refChooser = new ReferenceChooserPopup(_root.getShell(), _client, this);
+        _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser.getUI(), _client, this);
     }
     
     public interface MessageEditorListener {

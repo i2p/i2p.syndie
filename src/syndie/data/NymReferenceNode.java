@@ -32,4 +32,12 @@ public class NymReferenceNode extends ReferenceNode {
     public void setIsBanned(boolean banned) { _isBanned = banned; }
     public boolean getLoadOnStart() { return _loadOnStart; }
     public void setLoadOnStart(boolean load) { _loadOnStart = load; }
+    
+    public void updateData(long groupId, int siblingOrder, long uriId) {
+        _groupId = groupId;
+        _siblingOrder = siblingOrder;
+        _uriId = uriId;
+    }
+    
+    public long getUniqueId() { return _groupId; }
 }

@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.data.SyndieURI;
@@ -10,6 +11,12 @@ import org.eclipse.swt.custom.CTabFolder;
 public interface BrowserControl {
     public void view(SyndieURI uri);
     public void unview(SyndieURI uri);
+    /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+    public void bookmark(SyndieURI uri);
+    /** just add the given bookmark.  the node's groupId, siblingOrder, and uriId will be populated */
+    public void bookmark(NymReferenceNode node);
+    public void deleteBookmark(long bookmarkGroupId);
+    public void updateBookmark(NymReferenceNode bookmark);
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);

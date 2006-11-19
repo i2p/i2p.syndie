@@ -2,6 +2,7 @@ package syndie.gui;
 
 import net.i2p.data.Hash;
 import org.eclipse.swt.custom.CTabFolder;
+import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -31,4 +32,9 @@ public class DummyBrowserControl implements BrowserControl {
     public CTabFolder getTabFolder() { return null; }
     public void addUIListener(Browser.UIListener lsnr) {}
     public void removeUIListener(Browser.UIListener lsnr) {}
+
+    public void bookmark(SyndieURI uri) {}
+    public void deleteBookmark(long bookmarkGroupId) {}
+    public void updateBookmark(NymReferenceNode bookmark) {}
+    public void bookmark(NymReferenceNode node) {}
 }
