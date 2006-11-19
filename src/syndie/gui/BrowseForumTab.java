@@ -17,13 +17,13 @@ public class BrowseForumTab extends BrowserTab {
     
     public BrowseForumTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri); 
-        debugMessage("browseForum construct: super complete");
+        debug("browseForum construct: super complete");
         if (uri.getScope() != null) {
             long chanId = getClient().getChannelId(uri.getScope());
-            debugMessage("browseForum construct: fetch chanId");
+            debug("browseForum construct: fetch chanId");
             if (chanId >= 0) {
                 ChannelInfo chan = getClient().getChannel(chanId);
-                debugMessage("browseForum construct: fetch chan");
+                debug("browseForum construct: fetch chan");
                 if (chan != null) {
                     _name = chan.getName();
                     _description = chan.getDescription();
@@ -40,14 +40,14 @@ public class BrowseForumTab extends BrowserTab {
             _description = "browse forums";
             _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_INFORMATION);
         }
-        debugMessage("browseForum construct: done, now reconfig");
+        debug("browseForum construct: done, now reconfig");
         reconfigItem();
     }
     
     protected void initComponents() {
-        debugMessage("browseforumtab.initComponents");
+        debug("browseforumtab.initComponents");
         _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener());
-        debugMessage("browseforumtab.initComponents: browseforum constructed");
+        debug("browseforumtab.initComponents: browseforum constructed");
         SyndieURI uri = getURI();
         if (uri.isChannel()) {
             _browse.setFilter(uri.createSearch());
@@ -59,7 +59,7 @@ public class BrowseForumTab extends BrowserTab {
             _browse.setFilter(SyndieURI.DEFAULT_SEARCH_URI);
         }
         getRoot().setLayout(new FillLayout());
-        debugMessage("browseforumtab.initComponents: complete");
+        debug("browseforumtab.initComponents: complete");
     }
     
     private class ForumListener implements MessageTree.MessageTreeListener {

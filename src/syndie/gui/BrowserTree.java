@@ -31,10 +31,21 @@ class BrowserTree extends ReferenceChooserTree {
     
     private BookmarkEditorPopup _bookmarkEditor;
     
-    public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems) {
-        super(browser.getUI(), browser.getClient(), parent, lsnr, accept, chooseAllStartupItems);
+    public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+        super(browser.getUI(), browser.getClient(), parent, lsnr, accept, false);
         _browser = browser;
         _bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
+    }
+    
+    public void viewStartupItems() { viewStartupItems(getBookmarkRoot()); }
+    // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
+    private void viewStartupItems(TreeItem item) {
+        if (item == null) return;
+        NymReferenceNode node = getBookmark(item);
+        if ( (node != null) && node.getLoadOnStart())
+            _browser.view(node.getURI());
+        for (int i = 0; i < item.getItemCount(); i++)
+            viewStartupItems(item.getItem(i));
     }
     
     protected void configTreeListeners(final Tree tree) {

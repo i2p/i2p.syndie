@@ -61,6 +61,7 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_TAB_EDIT);
         _indisposableImages.add(ICON_TAB_TEXTUI);
+        _indisposableImages.add(ICON_TAB_LOGS);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

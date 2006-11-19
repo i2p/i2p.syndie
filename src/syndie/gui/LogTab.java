@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -50,7 +51,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     
     private int _sizeModifier;
     
-    private List _pendingMessages = new ArrayList();
+    private List _pendingMessages;
     
     private static final boolean STYLE_LOGS = false; // doesn't work with font resizing
     
@@ -87,6 +88,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     }
     
     protected void initComponents() {
+        _pendingMessages = new ArrayList();
         getRoot().setLayout(new GridLayout(1, true));
         
         _out = new StyledText(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
@@ -138,14 +140,24 @@ class LogTab extends BrowserTab implements Browser.UIListener {
             public void widgetSelected(SelectionEvent selectionEvent) { _debug = _levelDebug.getSelection(); }
         });
         
-        _debug = false;
-        _error = true;
-        _status = true;
+        _debug = super.getURI().getBoolean("debug", false);
+        _error = super.getURI().getBoolean("error", true);
+        _status = super.getURI().getBoolean("status", true);
+        
         _levelError.setSelection(_error);
         _levelStatus.setSelection(_status);
         _levelDebug.setSelection(_debug);
         
         getBrowser().addUIListener(this);
+    }
+    
+    public SyndieURI getURI() {
+        SyndieURI old = super.getURI();
+        Map attributes = old.getAttributes();
+        attributes.put("debug", _levelDebug.getSelection() ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("status", _levelStatus.getSelection() ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("error", _levelError.getSelection() ? Boolean.TRUE : Boolean.FALSE);
+        return new SyndieURI(old.getType(), attributes);
     }
 
     protected void disposeDetails() { 

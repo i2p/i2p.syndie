@@ -2,12 +2,17 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabFolder2Listener;
+import org.eclipse.swt.custom.CTabFolderEvent;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -30,6 +35,7 @@ import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ChannelInfo;
+import syndie.data.MessageInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -47,11 +53,14 @@ public class Browser implements UI, BrowserControl {
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
-    private ReferenceChooserTree _bookmarks;
+    private BrowserTree _bookmarks;
     private CTabFolder _tabs;
+    private Menu _tabMenu;
+    private MenuItem _copyTabLocation;
+    private MenuItem _bookmarkTab;
     private Composite _statusRow;
     private BookmarkEditorPopup _bookmarkEditor;
-    
+    /** uri to BrowserTab */
     private Map _openTabs;
     
     private List _uiListeners;
@@ -84,13 +93,29 @@ public class Browser implements UI, BrowserControl {
         _sash = new SashForm(_shell, SWT.HORIZONTAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
         
-        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener(), true);
+        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
         _tabs.setMinimizeVisible(false);
         _tabs.setMinimumCharacters(8);
         _tabs.setUnselectedImageVisible(true);
         _tabs.setBorderVisible(true);
+        
+        _tabMenu = new Menu(_tabs);
+        _tabs.setMenu(_tabMenu);
+        
+        _copyTabLocation = new MenuItem(_tabMenu, SWT.PUSH);
+        _copyTabLocation.setText("copy tab location");
+        _copyTabLocation.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { copyTabLocation(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { copyTabLocation(); }
+        });
+        _bookmarkTab = new MenuItem(_tabMenu, SWT.PUSH);
+        _bookmarkTab.setText("bookmark tab");
+        _bookmarkTab.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
+        });
         
         _sash.setWeights(new int[] { 25, 75 });
         
@@ -108,6 +133,8 @@ public class Browser implements UI, BrowserControl {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        
+        _bookmarks.viewStartupItems();
         
         _shell.pack();
         _shell.setSize(_shell.computeSize(800, 600));
@@ -267,10 +294,42 @@ public class Browser implements UI, BrowserControl {
     public void bookmark(SyndieURI uri) {
         debugMessage("bookmarking "+uri);
         String name = "bookmark name";
-        String desc = "bookmark description";
+        String desc = "";
         int siblingOrder = -1;
         long parentGroupId = -1;
         boolean loadOnStart = false;
+        
+        if (uri.isChannel() && (uri.getScope() != null)) {
+            long chanId = _client.getChannelId(uri.getScope());
+            if (uri.getMessageId() != null) {
+                MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+                if (msg != null) {
+                    name = msg.getSubject();
+                    desc = "";
+                } else {
+                    name = "";
+                    desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+                }
+            } else {
+                ChannelInfo chan = _client.getChannel(chanId);
+                if (chan != null) {
+                    name = chan.getName();
+                    desc = chan.getDescription();
+                } else {
+                    name = "";
+                    desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+                }
+            }
+        } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
+            name = "logs";
+            desc = "watch log messages";
+        } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
+            name = "post";
+            desc = "post a new message";
+        } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
+            name = "text UI";
+            desc = "text based interface";
+        }
         
         // bookmark should always set these to false (ban/ignore would set them to true)
         boolean ignored = false;
@@ -284,7 +343,6 @@ public class Browser implements UI, BrowserControl {
         
         _bookmarkEditor.setBookmark(node);
         _bookmarkEditor.open();
-        //bookmark(node);
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
     public void bookmark(NymReferenceNode node) {
@@ -334,6 +392,35 @@ public class Browser implements UI, BrowserControl {
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
+
+    private void bookmarkTab() {
+        CTabItem item = _tabs.getSelection();
+        if (item != null) {
+            for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
+                SyndieURI uri = (SyndieURI)iter.next();
+                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                if (tab.getTabItem() == item) {
+                    SyndieURI curURI = tab.getURI(); // may have changed since insert
+                    bookmark(curURI);
+                    return;
+                }
+            }
+        }
+    }
+    private void copyTabLocation() {
+        CTabItem item = _tabs.getSelection();
+        if (item != null) {
+            for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
+                SyndieURI uri = (SyndieURI)iter.next();
+                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                if (tab.getTabItem() == item) {
+                    SyndieURI curURI = tab.getURI(); // may have changed since insert
+                    //
+                    return;
+                }
+            }
+        }
+    }
     
     private class BookmarkChoiceListener implements ReferenceChooserTree.ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) { view(node.getURI()); }

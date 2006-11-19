@@ -291,19 +291,16 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         _rootURI.setText("URI summary");
         _rootURI.setLayout(new GridLayout(2, false));
         
-        Label title = new Label(_rootArchive, SWT.NONE);
+        Label title = new Label(_rootURI, SWT.NONE);
         //title.setFont(bold)
         title.setText("URI: ");
-        title.setLayoutData(new GridData(GridData.FILL_BOTH));
+        title.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _uri = new Text(_rootURI, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
-        _uri.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL));
+        _uri.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         Composite actions = addActions(_rootURI);
-        if (actions != null) {
-            GridData gd = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
-            gd.horizontalSpan = 2;
-            actions.setLayoutData(gd);
-        }
+        if (actions != null)
+            actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 2, 1));
     }
     
     private Composite addActions(Composite parent) {
@@ -329,13 +326,14 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
     
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) {
-        System.out.println("bookmark selected [" + item.getText() + "]: " + node);
+        //System.out.println("bookmark selected [" + item.getText() + "]: " + node);
         _curReference = node.getURI();
         refSelected();
         // _root.pack();
         _root.layout();
     }
     private void refSelected() {
+        if (_curReference == null) return;
         if (_curReference.isArchive()) {
             updateArchive(_curReference);
             _rootLayout.topControl = _rootArchive;
@@ -369,7 +367,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
             } else {
                 // channel URI but no scope?  noop
             }
-        } else if (_curReference.isURL()) {
+        } else { //if (_curReference.isURL()) {
             updateURI(_curReference);
             _rootLayout.topControl = _rootURI;
         }

@@ -4,6 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1459,14 +1460,13 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
-
         stmt = null;
         rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_REFERENCES);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            List refs = new ArrayList();
+            HashMap groupIdToNode = new HashMap();
             while (rs.next()) {
                 // groupId, parentGroupId, siblingOrder, name, description, 
                 // uriId, referenceType, wasEncrypted 
@@ -1488,20 +1488,43 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 DBReferenceNode ref = new DBReferenceNode(name, uri, desc, type, uriId, groupId, parentGroupId, order, enc);
-                boolean parentFound = false;
-                for (int i = 0; i < refs.size(); i++) {
-                    DBReferenceNode cur = (DBReferenceNode)refs.get(i);
-                    ReferenceNode found = cur.getByUniqueId(parentGroupId);
-                    if (found != null) {
-                        found.addChild(ref);
-                        parentFound = true;
-                        break;
-                    }
-                }
-                if (!parentFound)
-                    refs.add(ref); // rewt
+                groupIdToNode.put(new Long(groupId), ref);
             }
-            info.setReferences(refs);
+            
+            // now build the tree out of the nodes
+            List roots = new ArrayList();
+            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode cur = (DBReferenceNode)iter.next();
+                long parentId = cur.getParentGroupId();
+                if (parentId >= 0) {
+                    DBReferenceNode parent = (DBReferenceNode)groupIdToNode.get(new Long(parentId));
+                    if (parent != null)
+                        parent.addChild(cur);
+                    else
+                        roots.add(cur);
+                } else {
+                    roots.add(cur);
+                }
+            }
+            // another pass to sort the children
+            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode cur = (DBReferenceNode)iter.next();
+                cur.sortChildren();
+            }
+            // sort the roots
+            TreeMap sorted = new TreeMap();
+            for (int i = 0; i < roots.size(); i++) {
+                DBReferenceNode cur = (DBReferenceNode)roots.get(i);
+                int off = 0;
+                while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+                    off++;
+                sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+            }
+            roots.clear();
+            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
+                roots.add(iter.next());
+
+            info.setReferences(roots);
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
@@ -1535,6 +1558,22 @@ public class DBClient {
         public int getSiblingOrder() { return _siblingOrder; }
         public boolean getEncrypted() { return _encrypted; }
         public long getUniqueId() { return _groupId; }
+        
+        public void sortChildren() {
+            TreeMap sorted = new TreeMap();
+            for (int i = 0; i < _children.size(); i++) {
+                DBReferenceNode child = (DBReferenceNode)_children.get(i);
+                int off = 0;
+                while (sorted.containsKey(new Long(child.getSiblingOrder()+off)))
+                    off++;
+                sorted.put(new Long(child.getSiblingOrder()+off), child);
+            }
+            _children.clear();
+            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode child = (DBReferenceNode)iter.next();
+                _children.add(child);
+            }
+        }
     }
     
     private static final String SQL_GET_ARCHIVE = "SELECT postAllowed, readAllowed, uriId FROM archive WHERE archiveId = ?";
@@ -2356,7 +2395,7 @@ public class DBClient {
     /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
     public List getNymReferences(long nymId) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        Map groupIdToNode = new TreeMap();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -2385,18 +2424,7 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, isIgnored, isBanned, onStartup);
-                boolean parentFound = false;
-                for (int i = 0; i < rv.size(); i++) {
-                    NymReferenceNode cur = (NymReferenceNode)rv.get(i);
-                    ReferenceNode found = cur.getByUniqueId(parentGroupId);
-                    if (found != null) {
-                        found.addChild(ref);
-                        parentFound = true;
-                        break;
-                    }
-                }
-                if (!parentFound)
-                    rv.add(ref); // rewt
+                groupIdToNode.put(new Long(groupId), ref);
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2406,15 +2434,78 @@ public class DBClient {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        return rv;
+        
+        // now build the tree out of the nodes
+        List roots = new ArrayList();
+        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+            NymReferenceNode cur = (NymReferenceNode)iter.next();
+            long parentId = cur.getParentGroupId();
+            if (parentId >= 0) {
+                NymReferenceNode parent = (NymReferenceNode)groupIdToNode.get(new Long(parentId));
+                if (parent != null)
+                    parent.addChild(cur);
+                else
+                    roots.add(cur);
+            } else {
+                roots.add(cur);
+            }
+        }
+        // another pass to sort the children
+        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+            NymReferenceNode cur = (NymReferenceNode)iter.next();
+            cur.sortChildren();
+        }
+        // sort the roots
+        TreeMap sorted = new TreeMap();
+        for (int i = 0; i < roots.size(); i++) {
+            NymReferenceNode cur = (NymReferenceNode)roots.get(i);
+            int off = 0;
+            while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+                off++;
+            sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+        }
+        roots.clear();
+        for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
+            roots.add(iter.next());
+        
+        return roots;
     }
 
+    private static final String SQL_EXPAND_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = siblingOrder + 1 WHERE parentGroupId = ? AND nymId = ? AND siblingOrder >= ?";
+    //private static final String SQL_UPDATE_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = ? WHERE groupId = ? AND nymId = ?";
+    /**
+     * make sure the given parent/siblingOrder value is not in use by incrementing the siblingOrder
+     * of all equal or greater siblingOrder values
+     */
+    private void createNymReferenceOrderHole(long nymId, long parentGroupId, int siblingOrder) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_EXPAND_NYM_REFERENCE_ORDER);
+            stmt.setLong(1, parentGroupId);
+            stmt.setLong(2, nymId);
+            stmt.setInt(3, siblingOrder);
+            int rows = stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            if (rows > 0) {
+                // ok, some items were reordered, so we need to know by how much, and then contract them
+                // todo: contract them
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_DELETE_URI = "DELETE FROM uriAttribute WHERE uriId = ?";
     private static final String SQL_UPDATE_NYM_REFERENCE = "UPDATE resourceGroup SET parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ? WHERE groupId = ?";
     /** update the reference in the database, keyed off the nymId and newValue's getGroupId() field */
     public void updateNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
-        // todo: reorder the existing nodes with the same parent so the newValue.getSiblingOrder is correct
+        createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
         long uriId = -1;
         if (newValue.getURI() != null) {
@@ -2464,6 +2555,9 @@ public class DBClient {
             stmt.setBoolean(8, newValue.getLoadOnStart());
             stmt.setLong(9, newValue.getGroupId());
             
+            if (_ui != null)
+                _ui.debugMessage("updating ref w/ parent=" + newValue.getParentGroupId() + ", sibling=" + newValue.getSiblingOrder() + " groupId=" + newValue.getGroupId());
+
             int rc = stmt.executeUpdate();
             if (rc == 1) {
                 // whee!
@@ -2482,20 +2576,16 @@ public class DBClient {
     /** add a new reference, then updating the groupId, uriId, and siblingOrder fields in newValue */
     public void addNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
-        // todo: reorder the existing nodes with the same parent so the newValue.getSiblingOrder is correct
+        createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
         long groupId = nextId("resourceGroupIdSequence");
-        int siblingOrder = 0;
-        if (newValue.getParentGroupId() >= 0) {
-            siblingOrder = getNymReferenceChildCount(nymId, newValue.getParentGroupId());
-        } else {
-            siblingOrder = getNymReferenceChildCount(nymId, -1);
-        }
+        int siblingOrder = newValue.getSiblingOrder();
         long uriId = -1;
         if (newValue.getURI() != null)
             uriId = addURI(newValue.getURI());
         
-        System.out.println("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
+        if (_ui != null)
+            _ui.debugMessage("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
         
         PreparedStatement stmt = null;
         ResultSet rs = null;

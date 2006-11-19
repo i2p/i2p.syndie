@@ -25,6 +25,7 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener {
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
+        _shell.setText("Bookmark editor");
         _editor = new BookmarkEditor(_browser, _shell, this);
         _shell.pack();
         

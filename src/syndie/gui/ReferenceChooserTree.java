@@ -275,7 +275,11 @@ public class ReferenceChooserTree {
             if (_choiceListener != null)
                 _choiceListener.bookmarkSelected(childItem, child);
         }
-        childItem.setText(child.getName() + "-" + child.getDescription());
+        String desc = child.getDescription();
+        if ( (desc != null) && (desc.trim().length() > 0) )
+            childItem.setText(child.getName() + "-" + child.getDescription());
+        else
+            childItem.setText(child.getName());
         _bookmarkNodes.put(childItem, child);
         for (int i = 0; i < child.getChildCount(); i++) {
             NymReferenceNode sub = (NymReferenceNode)child.getChild(i);

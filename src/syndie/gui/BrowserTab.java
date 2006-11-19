@@ -66,13 +66,13 @@ abstract class BrowserTab {
     
     protected BrowserTab(BrowserControl browser, SyndieURI uri) {
         _browser = browser;
-        debugMessage("constructing base browser tab");
+        debug("constructing base browser tab");
         _item = new CTabItem(browser.getTabFolder(), SWT.CLOSE | SWT.BORDER);
         _uri = uri;
         _root = new Composite(browser.getTabFolder(), SWT.NONE);
-        debugMessage("constructing base browser tab: initializing components");
+        debug("constructing base browser tab: initializing components");
         initComponents();
-        debugMessage("constructing base browser tab: configuring the item");
+        debug("constructing base browser tab: configuring the item");
         configItem();
     }
     
@@ -98,7 +98,7 @@ abstract class BrowserTab {
         });
     }
     protected void reconfigItem() {
-        debugMessage("reconfiguring item: begin");
+        debug("reconfiguring item: begin");
         Image old = _item.getImage();
         Image icon = getIcon();
         if (icon != null) {
@@ -113,7 +113,7 @@ abstract class BrowserTab {
             ImageUtil.dispose(old);
         _item.setText((null != getName() ? getName() : ""));
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
-        debugMessage("reconfiguring item: complete");
+        debug("reconfiguring item: complete");
     }
     
     protected Composite getRoot() { return _root; }
@@ -133,11 +133,11 @@ abstract class BrowserTab {
     }
     protected abstract void disposeDetails();
     
-    protected void debugMessage(String msg) { _browser.getUI().debugMessage(msg); }
-    protected void debugMessage(String msg, Exception e) { _browser.getUI().debugMessage(msg, e); }
-    protected void statusMessage(String msg) { _browser.getUI().statusMessage(msg); }
-    protected void errorMessage(String msg) { _browser.getUI().errorMessage(msg); }
-    protected void errorMessage(String msg, Exception e) { _browser.getUI().errorMessage(msg, e); }
+    protected void debug(String msg) { _browser.getUI().debugMessage(msg); }
+    protected void debug(String msg, Exception e) { _browser.getUI().debugMessage(msg, e); }
+    protected void status(String msg) { _browser.getUI().statusMessage(msg); }
+    protected void error(String msg) { _browser.getUI().errorMessage(msg); }
+    protected void error(String msg, Exception e) { _browser.getUI().errorMessage(msg, e); }
     
     protected Image createAvatar(ChannelInfo chan) {
         return ImageUtil.resize(ImageUtil.ICON_QUESTION, 16, 16, false);

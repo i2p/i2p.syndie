@@ -634,7 +634,10 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                 _syndieManageKey.setSelection(false);
             }
         } else {
-            _syndieForum.setText(uri.getScope().toBase64().substring(0,6));
+            if (uri.isChannel() && (uri.getScope() != null))
+                _syndieForum.setText(uri.getScope().toBase64().substring(0,6));
+            else
+                _syndieForum.setText("");
             _syndieMessageBrowse.setEnabled(false);
             _syndieMessageDetailAttachment.setEnabled(false);
             _syndieMessageDetailAttachmentNum.setEnabled(false);
