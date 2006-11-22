@@ -28,7 +28,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) { return null; }
     public SyndieURI createTextUIURI() { return null; }
     public SyndieURI createLogsURI() { return null; }
-    public SyndieURI createMetaURI(Hash forum) { return null; }
+    public SyndieURI createManageURI(Hash forum) { return null; }
     public CTabFolder getTabFolder() { return null; }
     public void addUIListener(Browser.UIListener lsnr) {}
     public void removeUIListener(Browser.UIListener lsnr) {}
@@ -37,4 +37,6 @@ public class DummyBrowserControl implements BrowserControl {
     public void deleteBookmark(long bookmarkGroupId) {}
     public void updateBookmark(NymReferenceNode bookmark) {}
     public void bookmark(NymReferenceNode node) {}
+    
+    public void showWaitCursor(boolean show) {}
 }

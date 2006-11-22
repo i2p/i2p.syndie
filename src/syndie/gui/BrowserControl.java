@@ -22,8 +22,10 @@ public interface BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
-    public SyndieURI createMetaURI(Hash forum);
+    public SyndieURI createManageURI(Hash forum);
 
+    public void showWaitCursor(boolean wait);
+    
     public UI getUI();
     public DBClient getClient();
 

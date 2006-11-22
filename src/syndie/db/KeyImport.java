@@ -17,7 +17,7 @@ import syndie.data.NymKey;
  * [--authentic $boolean]
  */
 public class KeyImport extends CommandImpl {
-    KeyImport() {}
+    public KeyImport() {}
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "keyfile" });

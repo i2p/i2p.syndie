@@ -94,8 +94,8 @@ class BrowserTree extends ReferenceChooserTree {
         MenuItem manage = new MenuItem(_manageMenu, SWT.PUSH);
         manage.setText("Manage");
         manage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createMetaURI(getManageScope(getSelectedItem()))); }
-            public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createMetaURI(getManageScope(getSelectedItem()))); }
+            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
+            public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
         });
         
         _searchMenu = new Menu(tree);

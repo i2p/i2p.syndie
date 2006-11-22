@@ -317,12 +317,7 @@ class ManageMenu implements TextEngine.Menu {
     }
     
     /** today's date, but with a randomized hhmmss.SSS component */
-    private long createEdition(DBClient client) {
-        long now = System.currentTimeMillis();
-        now -= (now % 24*60*60*1000);
-        now += client.ctx().random().nextLong(24*60*60*1000);
-        return now;
-    }
+    private long createEdition(DBClient client) { return client.createEdition(_currentChannel.getEdition()); }
 
     /** update --channel ($index|$hash): begin the process of updating an existing channel */
     private void processUpdate(DBClient client, UI ui, Opts opts) {

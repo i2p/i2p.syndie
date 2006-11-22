@@ -319,6 +319,7 @@ public class SyndieURI {
         else
             return Boolean.valueOf(str).booleanValue();
     }
+    public String getURL() { return getString("url"); }
     public Hash getScope() { return getHash("channel"); }
     public Hash getHash(String key) {
         Object obj = _attributes.get(key);

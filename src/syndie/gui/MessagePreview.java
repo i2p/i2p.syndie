@@ -323,7 +323,7 @@ public class MessagePreview {
             }
             public void viewScopeMetadata(PageRenderer renderer, Hash scope) {
                 if (_browser != null)
-                    _browser.view(_browser.createMetaURI(scope));
+                    _browser.view(_browser.createManageURI(scope));
             }
             public void view(PageRenderer renderer, SyndieURI uri) {
                 if (_browser != null)

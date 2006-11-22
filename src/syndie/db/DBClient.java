@@ -3025,4 +3025,12 @@ public class DBClient {
         else
             se.printStackTrace();
     }
+    
+    public long createEdition(long lastValue) {
+        long now = System.currentTimeMillis();
+        now -= (now % 24*60*60*1000);
+        while (now < lastValue)
+            now += ctx().random().nextLong(24*60*60*1000);
+        return now;
+    }
 }

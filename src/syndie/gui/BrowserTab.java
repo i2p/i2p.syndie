@@ -31,6 +31,7 @@ abstract class BrowserTab {
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
     static final String TYPE_META = "meta";
+    static final String TYPE_MANAGE = "manage";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -55,6 +56,8 @@ abstract class BrowserTab {
                     return new BrowseForumTab(browser, uri);
                 }
             }
+        } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
+            return new ManageForumTab(browser, uri);
         } else if (TYPE_TEXTUI.equals(uri.getType())) {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {

@@ -12,7 +12,6 @@ import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -253,10 +252,17 @@ public class Browser implements UI, BrowserControl {
         }
     }
     
+    public void showWaitCursor(boolean show) {
+        if (show)
+            _shell.setCursor(ImageUtil.CURSOR_WAIT);
+        else
+            _shell.setCursor(null);
+    }
+    
     public void view(SyndieURI uri) { 
         debugMessage("Viewing [" + uri + "]");
         if (uri == null) return;
-        _shell.setCursor(ImageUtil.CURSOR_WAIT);
+        showWaitCursor(true);
         BrowserTab tab = null;
         synchronized (_openTabs) {
             tab = (BrowserTab)_openTabs.get(uri);
@@ -276,7 +282,7 @@ public class Browser implements UI, BrowserControl {
             _tabs.setSelection(tab.getTabItem());
             debugMessage("tab selected");
         }
-        _shell.setCursor(null);
+        showWaitCursor(false);
     }
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;
@@ -379,11 +385,11 @@ public class Browser implements UI, BrowserControl {
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
-    public SyndieURI createMetaURI(Hash forum) {
+    public SyndieURI createManageURI(Hash forum) {
         Map attributes = new HashMap();
         if (forum != null)
-            attributes.put("scope", forum.toBase64());
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+            attributes.put("channel", forum.toBase64());
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_MANAGE, attributes);
         return uri;
     }
     
