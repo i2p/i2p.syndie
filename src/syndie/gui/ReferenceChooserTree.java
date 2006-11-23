@@ -35,7 +35,8 @@ import syndie.db.UI;
  *  - the channels the nym can manage
  *  - search results
  */
-public class ReferenceChooserTree {
+public class ReferenceChooserTree implements Translatable {
+    private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */
@@ -64,12 +65,13 @@ public class ReferenceChooserTree {
     private boolean _chooseAllStartupItems;
     private UI _ui;
     
-    public ReferenceChooserTree(UI ui, DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        this(ui, client, parent, lsnr, accept, false);
+    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+        this(control, parent, lsnr, accept, false);
     }
-    public ReferenceChooserTree(UI ui, DBClient client, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems) {
-        _ui = ui;
-        _client = client;
+    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems) {
+        _ui = control.getUI();
+        _client = control.getClient();
+        _browser = control;
         _parent = parent;
         _choiceListener = lsnr;
         _acceptanceListener = accept;
@@ -170,11 +172,6 @@ public class ReferenceChooserTree {
         _manageRoot = new TreeItem(_tree, SWT.NONE);
         _searchRoot = new TreeItem(_tree, SWT.NONE);
         
-        _bookmarkRoot.setText("Bookmarked references");
-        _postRoot.setText("Writable forums");
-        _manageRoot.setText("Manageable forums");
-        _searchRoot.setText("Search results...");
-        
         configTreeListeners(_tree);
         
         rebuildBookmarks();
@@ -184,6 +181,11 @@ public class ReferenceChooserTree {
         redrawSearchResults();
         
         _chooseAllStartupItems = false;
+        _browser.getTranslationRegistry().register(this);
+    }
+    
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
     }
     
     protected void configTreeListeners(final Tree tree) {
@@ -221,13 +223,13 @@ public class ReferenceChooserTree {
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
-            item.setText("ident: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             _manageChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
-            item.setText("manage: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
             _manageChannels.put(item, info);
         }
     }
@@ -237,25 +239,25 @@ public class ReferenceChooserTree {
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setText("ident: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setText("manage: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setText("post: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setText("public: " + info.getName());
+            item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
             _postChannels.put(item, info);
         }
     }
@@ -338,5 +340,29 @@ public class ReferenceChooserTree {
                 lsnr.otherSelected(items[i]);
             }
         }
+    }
+
+    private static final String T_BOOKMARK_ROOT = "syndie.gui.refchoosertree.bookmarkroot";
+    private static final String T_POST_ROOT = "syndie.gui.refchoosertree.postroot";
+    private static final String T_MANAGE_ROOT = "syndie.gui.refchoosertree.manageroot";
+    private static final String T_SEARCH_ROOT = "syndie.gui.refchoosertree.searchroot";
+    
+    private static final String T_MANAGE_IDENT_PREFIX = "syndie.gui.refchoosertree.manage.identprefix";
+    private static final String T_MANAGE_PREFIX = "syndie.gui.refchoosertree.manage.prefix";
+
+    private static final String T_POST_IDENT_PREFIX = "syndie.gui.refchoosertree.post.identprefix";
+    private static final String T_POST_MANAGE_PREFIX = "syndie.gui.refchoosertree.post.manageprefix";
+    private static final String T_POST_PREFIX = "syndie.gui.refchoosertree.post.prefix";
+    private static final String T_POST_PUBLIC_PREFIX = "syndie.gui.refchoosertree.post.publicprefix";
+    
+    public void translate(TranslationRegistry registry) {
+        _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));
+        _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
+        _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
+        _searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
+        refreshBookmarks();
+        redrawPostable();
+        redrawManageable();
+        redrawSearchResults();
     }
 }

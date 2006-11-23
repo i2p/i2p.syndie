@@ -27,6 +27,7 @@ public interface BrowserControl {
     public void showWaitCursor(boolean wait);
     
     public UI getUI();
+    public TranslationRegistry getTranslationRegistry();
     public DBClient getClient();
 
     public CTabFolder getTabFolder();

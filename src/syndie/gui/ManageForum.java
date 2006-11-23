@@ -428,7 +428,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
         });
         
-        _refChooser = new ReferenceChooserPopup(_parent.getShell(), _browser.getUI(), _browser.getClient(), this);
+        _refChooser = new ReferenceChooserPopup(_parent.getShell(), _browser, this);
     }
     
     private static final int PRIV_PUBLIC = 0;

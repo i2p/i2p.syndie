@@ -22,8 +22,9 @@ import syndie.db.UI;
 /**
  *
  */
-class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener {
+class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener, Translatable {
     private Shell _parent;
+    private BrowserControl _browser;
     private UI _ui;
     private DBClient _client;
     private Shell _shell;
@@ -32,10 +33,11 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     private ReferenceChooserSearch _search;
     private ReferenceChooserInfo _info;
     
-    public ReferenceChooserPopup(Shell parent, UI ui, DBClient client, ReferenceChooserTree.AcceptanceListener lsnr) {
+    public ReferenceChooserPopup(Shell parent, BrowserControl browser, ReferenceChooserTree.AcceptanceListener lsnr) {
         _parent = parent;
-        _ui = ui;
-        _client = client;
+        _browser = browser;
+        _ui = browser.getUI();
+        _client = browser.getClient();
         _lsnr = lsnr;
         initComponents();
     }
@@ -43,25 +45,32 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
     
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+        _tree.dispose();
+        _search.dispose();
+        _info.dispose();
+        _shell.dispose();
+    }
+    
     private void initComponents() {
         if (_parent == null)
             _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         else
             _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
-        _shell.setText("Reference chooser");
         _shell.setLayout(new FillLayout());
         
         SashForm sash = new SashForm(_shell, SWT.HORIZONTAL);
-        _tree = new ReferenceChooserTree(_ui, _client, sash, this, this);
+        _tree = new ReferenceChooserTree(_browser, sash, this, this);
         
         Composite right = new Composite(sash, SWT.NONE);
         right.setLayout(new GridLayout(1, true));
-        _search = new ReferenceChooserSearch(right, _tree);
+        _search = new ReferenceChooserSearch(right, _tree, _browser);
         GridData gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         gd.grabExcessVerticalSpace = false;
         _search.getControl().setLayoutData(gd);
-        _info = new ReferenceChooserInfo(right, _tree, this);
+        _info = new ReferenceChooserInfo(right, _tree, this, _browser);
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         gd.grabExcessVerticalSpace = true;
@@ -77,6 +86,7 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        _browser.getTranslationRegistry().register(this);
     }
 
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) { _info.bookmarkSelected(item, node); }
@@ -92,5 +102,11 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     public void referenceChoiceAborted() {
         _shell.setVisible(false);
         _lsnr.referenceChoiceAborted();
+    }
+    
+    private static final String T_TITLE = "syndie.gui.referencechooser.title";
+    
+    public void translate(TranslationRegistry registry) {
+        _shell.setText(registry.getText(T_TITLE, "Reference chooser"));
     }
 }

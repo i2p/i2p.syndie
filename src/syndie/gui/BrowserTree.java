@@ -22,7 +22,7 @@ import syndie.db.DBClient;
 /**
  *
  */
-class BrowserTree extends ReferenceChooserTree {
+class BrowserTree extends ReferenceChooserTree implements Translatable {
     private BrowserControl _browser;
     private Menu _bookmarkMenu;
     private Menu _postMenu;
@@ -30,11 +30,20 @@ class BrowserTree extends ReferenceChooserTree {
     private Menu _searchMenu;
     
     private BookmarkEditorPopup _bookmarkEditor;
+
+    private MenuItem _bookmarkMenuView;
+    private MenuItem _bookmarkMenuEdit;
+    private MenuItem _bookmarkMenuDelete;
+    private MenuItem _bookmarkMenuAdd;
+    private MenuItem _postMenuItem;
+    private MenuItem _manageMenuItem;
+    private MenuItem _searchMenuView;
     
     public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        super(browser.getUI(), browser.getClient(), parent, lsnr, accept, false);
+        super(browser, parent, lsnr, accept, false);
         _browser = browser;
         _bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
+        browser.getTranslationRegistry().register(this);
     }
     
     public void viewStartupItems() { viewStartupItems(getBookmarkRoot()); }
@@ -57,51 +66,44 @@ class BrowserTree extends ReferenceChooserTree {
         tree.addMouseListener(lsnr);
     
         _bookmarkMenu = new Menu(tree);
-        MenuItem view = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        view.setText("View");
-        view.addSelectionListener(new SelectionListener() {
+        _bookmarkMenuView = new MenuItem(_bookmarkMenu, SWT.PUSH);
+        _bookmarkMenuView.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(getBookmarkURI(getSelectedItem())); }
             public void widgetSelected(SelectionEvent evt) { _browser.view(getBookmarkURI(getSelectedItem())); }
         });
-        MenuItem edit = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        edit.setText("Edit");
-        edit.addSelectionListener(new SelectionListener() {
+        _bookmarkMenuEdit = new MenuItem(_bookmarkMenu, SWT.PUSH);
+        _bookmarkMenuEdit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { editBookmark(getSelectedItem()); }
             public void widgetSelected(SelectionEvent evt) { editBookmark(getSelectedItem()); }
         });
-        MenuItem delete = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        delete.setText("Delete");
-        delete.addSelectionListener(new SelectionListener() {
+        _bookmarkMenuDelete = new MenuItem(_bookmarkMenu, SWT.PUSH);
+        _bookmarkMenuDelete.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { deleteBookmark(getSelectedItem()); }
             public void widgetSelected(SelectionEvent evt) { deleteBookmark(getSelectedItem()); }
         });
-        MenuItem add = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        add.setText("Add");
-        add.addSelectionListener(new SelectionListener() {
+        _bookmarkMenuAdd = new MenuItem(_bookmarkMenu, SWT.PUSH);
+        _bookmarkMenuAdd.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { addBookmark(); }
             public void widgetSelected(SelectionEvent evt) { addBookmark(); }
         });
         
         _postMenu = new Menu(tree);
-        MenuItem post = new MenuItem(_postMenu, SWT.PUSH);
-        post.setText("Post");
-        post.addSelectionListener(new SelectionListener() {
+        _postMenuItem = new MenuItem(_postMenu, SWT.PUSH);
+        _postMenuItem.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createPostURI(getPostScope(getSelectedItem()), null, false)); }
             public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createPostURI(getPostScope(getSelectedItem()), null, false)); }
         });
         
         _manageMenu = new Menu(tree);
-        MenuItem manage = new MenuItem(_manageMenu, SWT.PUSH);
-        manage.setText("Manage");
-        manage.addSelectionListener(new SelectionListener() {
+        _manageMenuItem = new MenuItem(_manageMenu, SWT.PUSH);
+        _manageMenuItem.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
             public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
         });
         
         _searchMenu = new Menu(tree);
-        view = new MenuItem(_searchMenu, SWT.PUSH);
-        view.setText("View");
-        view.addSelectionListener(new SelectionListener() {
+        _searchMenuView = new MenuItem(_searchMenu, SWT.PUSH);
+        _searchMenuView.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(getSearchResultURI(getSelectedItem())); }
             public void widgetSelected(SelectionEvent evt) { _browser.view(getSearchResultURI(getSelectedItem())); }
         });
@@ -134,8 +136,8 @@ class BrowserTree extends ReferenceChooserTree {
         NymReferenceNode node = getBookmark(item);
         if (node != null) {
             MessageBox box = new MessageBox(getControl().getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            box.setMessage("Are you sure you want to delete this bookmark?");
-            box.setText("Confirm");
+            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Are you sure you want to delete this bookmark?"));
+            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_TITLE, "Confirm"));
             int rc = box.open();
             if (rc == SWT.YES)
                 _browser.deleteBookmark(node.getGroupId());
@@ -255,5 +257,27 @@ class BrowserTree extends ReferenceChooserTree {
             _browser.view(search.getURI());
             return;
         }
+    }
+    
+    private static final String T_BOOKMARK_VIEW = "syndie.gui.browsertree.bookmark.view";
+    private static final String T_BOOKMARK_EDIT = "syndie.gui.browsertree.bookmark.edit";
+    private static final String T_BOOKMARK_DELETE = "syndie.gui.browsertree.bookmark.delete";
+    private static final String T_BOOKMARK_ADD = "syndie.gui.browsertree.bookmark.add";
+    private static final String T_POST_TITLE = "syndie.gui.browsertree.post.title";
+    private static final String T_MANAGE_TITLE = "syndie.gui.browsertree.manage.title";
+    private static final String T_SEARCH_VIEW = "syndie.gui.browsertree.search.view";
+    // confirm delete is created on demand, and translated on creation
+    private static final String T_CONFIRM_DELETE_TITLE = "syndie.gui.confirmdelete.title";
+    private static final String T_CONFIRM_DELETE_MESSAGE = "syndie.gui.confirmdelete.message";
+    
+    public void translate(TranslationRegistry registry) {
+        super.translate(registry);
+        _bookmarkMenuView.setText(registry.getText(T_BOOKMARK_VIEW, "View"));
+        _bookmarkMenuEdit.setText(registry.getText(T_BOOKMARK_EDIT, "Edit"));
+        _bookmarkMenuDelete.setText(registry.getText(T_BOOKMARK_DELETE, "Delete"));
+        _bookmarkMenuAdd.setText(registry.getText(T_BOOKMARK_ADD, "Add"));
+        _postMenuItem.setText(registry.getText(T_POST_TITLE, "Post"));
+        _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
+        _searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
     }
 }

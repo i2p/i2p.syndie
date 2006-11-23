@@ -7,6 +7,7 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.GC;
@@ -24,6 +25,7 @@ abstract class BrowserTab {
     private BrowserControl _browser;
     private CTabItem _item;
     private SyndieURI _uri;
+    private ScrolledComposite _scroll;
     private Composite _root;
     
     private static final int TAB_ICON_SIZE = 16;
@@ -72,9 +74,14 @@ abstract class BrowserTab {
         debug("constructing base browser tab");
         _item = new CTabItem(browser.getTabFolder(), SWT.CLOSE | SWT.BORDER);
         _uri = uri;
-        _root = new Composite(browser.getTabFolder(), SWT.NONE);
+        _scroll = new ScrolledComposite(browser.getTabFolder(), SWT.H_SCROLL | SWT.V_SCROLL);
+        _root = new Composite(_scroll, SWT.NONE);
+        _scroll.setContent(_root);
+        _scroll.setExpandHorizontal(true);
+        _scroll.setExpandVertical(true);
         debug("constructing base browser tab: initializing components");
         initComponents();
+        _scroll.setMinSize(_root.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         debug("constructing base browser tab: configuring the item");
         configItem();
     }
@@ -83,7 +90,7 @@ abstract class BrowserTab {
     protected boolean allowClose() { return true; }
     protected void configItem() {
         reconfigItem();
-        _item.setControl(_root);
+        _item.setControl(_scroll);
         _item.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent evt) { _browser.unview(_uri); }
         });

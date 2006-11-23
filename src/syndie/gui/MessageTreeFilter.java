@@ -40,6 +40,7 @@ import syndie.db.UI;
  *
  */
 public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListener {
+    private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     private MessageTree _tree;
@@ -108,12 +109,13 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     
     private ReferenceChooserPopup _refChooser;
     
-    public MessageTreeFilter(UI ui, DBClient client, Composite parent, MessageTree tree) {
-        _client = client;
+    public MessageTreeFilter(BrowserControl browser, Composite parent, MessageTree tree) {
+        _browser = browser;
+        _client = browser.getClient();
         _parent = parent;
         _tree = tree;
         _modListener = new FilterModifyListener();
-        _refChooser = new ReferenceChooserPopup(_parent.getShell(), ui, client, this);
+        _refChooser = new ReferenceChooserPopup(_parent.getShell(), browser, this);
         initComponents();
     }
 

@@ -20,7 +20,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class BookmarkEditor {
+class BookmarkEditor implements Translatable {
     private BrowserControl _browser;
     private NymReferenceNode _node;
     private Composite _parent;
@@ -68,21 +68,18 @@ class BookmarkEditor {
         
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _nameLabel.setText("Name:");
         
         _name = new Text(_root, SWT.SINGLE | SWT.BORDER);
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
         _descriptionLabel = new Label(_root, SWT.NONE);
         _descriptionLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _descriptionLabel.setText("Description:");
         
         _description = new Text(_root, SWT.MULTI | SWT.BORDER | SWT.WRAP);
         _description.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         
         _parentGroupLabel = new Label(_root, SWT.NONE);
         _parentGroupLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _parentGroupLabel.setText("Parent:");
         
         _parentGroup = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
         _parentGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
@@ -94,33 +91,27 @@ class BookmarkEditor {
         
         _siblingOrderLabel = new Label(_root, SWT.NONE);
         _siblingOrderLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _siblingOrderLabel.setText("After:");
         
         _siblingOrder = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
         _siblingOrder.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
         _uriLabel = new Label(_root, SWT.NONE);
         _uriLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _uriLabel.setText("Target:");
         
         _uri = new Text(_root, SWT.SINGLE | SWT.BORDER);
         _uri.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _uriBrowse = new Button(_root, SWT.PUSH);
-        _uriBrowse.setText("Browse...");
         _uriBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _loadOnStart = new Button(_root, SWT.CHECK);
-        _loadOnStart.setText("Load on startup?");
         _loadOnStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
         Composite actions = new Composite(_root, SWT.NONE);
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _save = new Button(actions, SWT.PUSH);
-        _save.setText("OK");
         _cancel = new Button(actions, SWT.PUSH);
-        _cancel.setText("Cancel");
         
         _save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { 
@@ -138,6 +129,8 @@ class BookmarkEditor {
                 _lsnr.cancelEditor(BookmarkEditor.this);
             }
         });
+        
+        _browser.getTranslationRegistry().register(this);
     }
     
     private NymReferenceNode getState() {
@@ -244,7 +237,7 @@ class BookmarkEditor {
         if (_node != null)
             order = _node.getSiblingOrder();
         
-        _siblingOrder.add("At the beginning");
+        _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_BEGINNING, "At the beginning"));
         if (order == 0)
             _siblingOrder.select(0);
         
@@ -253,20 +246,20 @@ class BookmarkEditor {
             for (int i = 0; i < parent.getChildCount(); i++) {
                 NymReferenceNode child = (NymReferenceNode)parent.getChild(i);
                 if ( (_node != null) && (child.getGroupId() == _node.getGroupId()) ) {
-                    _siblingOrder.add("Same as before");
+                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
                     _siblingOrder.select(_siblingOrder.getItemCount()-1);
                 } else {
-                    _siblingOrder.add("After: " + getElementName(child));
+                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
                 }
             }
         } else {
             for (int i = 0; i < _roots.size(); i++) {
                 NymReferenceNode child = (NymReferenceNode)_roots.get(i);
                 if ( (_node != null) && (child.getGroupId() == _node.getGroupId()) ) {
-                    _siblingOrder.add("Same as before");
+                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
                     _siblingOrder.select(_siblingOrder.getItemCount()-1);
                 } else {
-                    _siblingOrder.add("After: " + getElementName(child));
+                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
                 }
             }
         }
@@ -290,7 +283,7 @@ class BookmarkEditor {
         _parentGroup.setRedraw(false);
         _parentGroup.removeAll();
         _parentNodes.clear();
-        _parentGroup.add("Top level bookmark");
+        _parentGroup.add(_browser.getTranslationRegistry().getText(T_TOPLEVELBOOKMARK, "Top level bookmark"));
         _browser.getUI().debugMessage("bookmarkEditor: populating parent(" + parentId + ")");
         if (parentId == -1)
             _parentGroup.select(0);
@@ -327,6 +320,34 @@ class BookmarkEditor {
         else if ( (cur.getURI() != null) && (cur.getURI().getScope() != null) )
             return cur.getURI().getScope().toBase64().substring(0,6);
         else
-            return "unnamed";
+            return _browser.getTranslationRegistry().getText(T_UNNAMED, "unnamed");
+    }
+    
+    private static final String T_NAME = "syndie.gui.bookmarkeditor.name";
+    private static final String T_DESC = "syndie.gui.bookmarkeditor.desc";
+    private static final String T_PARENT = "syndie.gui.bookmarkeditor.parent";
+    private static final String T_SIBLINGORDER = "syndie.gui.bookmarkeditor.siblingorder";
+    private static final String T_URILABEL = "syndie.gui.bookmarkeditor.urilabel";
+    private static final String T_URIBROWSE = "syndie.gui.bookmarkeditor.uribrowse";
+    private static final String T_LOADONSTARTUP = "syndie.gui.bookmarkeditor.loadonstartup";
+    private static final String T_OK = "syndie.gui.bookmarkeditor.ok";
+    private static final String T_CANCEL = "syndie.gui.bookmarkeditor.cancel";
+    private static final String T_SIBLINGORDER_BEGINNING = "syndie.gui.bookmarkeditor.siblingorder.beginning";
+    private static final String T_SIBLINGORDER_SAME = "syndie.gui.bookmarkeditor.siblingorder.same";
+    private static final String T_SIBLINGORDER_AFTER = "syndie.gui.bookmarkeditor.siblingorder.after";
+    private static final String T_TOPLEVELBOOKMARK = "syndie.gui.bookmarkeditor.toplevelbookmark";
+    private static final String T_UNNAMED = "syndie.gui.bookmarkeditor.unnamed";
+    
+    public void translate(TranslationRegistry registry) {
+        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
+        _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
+        _parentGroupLabel.setText(registry.getText(T_PARENT, "Parent:"));
+        _siblingOrderLabel.setText(registry.getText(T_SIBLINGORDER, "After:"));
+        _uriLabel.setText(registry.getText(T_URILABEL, "Target:"));
+        _uriBrowse.setText(registry.getText(T_URIBROWSE, "Browse..."));
+        _loadOnStart.setText(registry.getText(T_LOADONSTARTUP, "Load on startup?"));
+        _save.setText(registry.getText(T_OK, "OK"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        updateUI();
     }
 }

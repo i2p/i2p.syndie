@@ -198,7 +198,7 @@ public class MessageTree {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-        _filterEditor = new MessageTreeFilter(_browser.getUI(), _client, _filterEditorShell, this);
+        _filterEditor = new MessageTreeFilter(_browser, _filterEditorShell, this);
         _filterEditorShell.pack();
         _filterEditorShell.setSize(_filterEditor.getControl().computeSize(400, 400));
     }

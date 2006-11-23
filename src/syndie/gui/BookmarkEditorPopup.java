@@ -10,7 +10,7 @@ import syndie.data.NymReferenceNode;
 /**
  *
  */
-class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener {
+class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Translatable {
     private BrowserControl _browser;
     private Shell _parent;
     private Shell _shell;
@@ -25,7 +25,6 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener {
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
-        _shell.setText("Bookmark editor");
         _editor = new BookmarkEditor(_browser, _shell, this);
         _shell.pack();
         
@@ -37,6 +36,8 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        
+        _browser.getTranslationRegistry().register(this);
     }
     
     public void setBookmark(NymReferenceNode node) { _editor.setBookmark(node); }
@@ -58,5 +59,11 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener {
 
     public void cancelEditor(BookmarkEditor editor) {
         _shell.setVisible(false);
+    }
+    
+    private static final String T_TITLE = "syndie.gui.bookmarkeditor.title";
+    
+    public void translate(TranslationRegistry registry) {
+        _shell.setText(registry.getText(T_TITLE, "Bookmark editor"));
     }
 }

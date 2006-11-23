@@ -29,7 +29,8 @@ import syndie.db.DBClient;
  * summarize the currently selected reference
  *
  */
-public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener {
+public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener, Translatable {
+    private BrowserControl _browser;
     private Composite _parent;
     private ReferenceChooserTree _chooser;
     private ReferenceChooserTree.AcceptanceListener _listener;
@@ -47,11 +48,16 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     private Group _rootURI;
     
     // fields for displaying channel references
+    private Label _channelNameLabel;
+    private Label _channelDescLabel;
+    private Label _channelHashLabel;
     private Text _channelHash;
     private Text _channelName;
     private Text _channelDesc;
     private Button _channelPubPost;
     private Button _channelPubReply;
+    private Button _channelAccept;
+    private Button _channelCancel;
     
     // fields for displaying message references
     private Text _messageChannelHash;
@@ -60,22 +66,41 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     private Text _messageSubject;
     private Text _messageAuthor;
     private Text _messageDate;
+    private Label _messageChannelHashLabel;
+    private Label _messageChannelNameLabel;
+    private Label _messageChannelDescLabel;
+    private Label _messageSubjectLabel;
+    private Label _messageAuthorLabel;
+    private Label _messageDateLabel;
+    private Button _messageAccept;
+    private Button _messageCancel;
     
     // fields for displaying archives
+    private Label _archiveLabel;
     private Text _archiveURI;
+    private Button _archiveAccept;
+    private Button _archiveCancel;
     
     // fields for displaying uris
+    private Label _uriLabel;
     private Text _uri;
+    private Button _uriAccept;
+    private Button _uriCancel;
     
     /** Creates a new instance of ReferenceChooserInfo */
-    public ReferenceChooserInfo(Composite parent, ReferenceChooserTree chooser, ReferenceChooserTree.AcceptanceListener lsnr) {
+    public ReferenceChooserInfo(Composite parent, ReferenceChooserTree chooser, ReferenceChooserTree.AcceptanceListener lsnr, BrowserControl browser) {
         _parent = parent;
         _chooser = chooser;
         _listener = lsnr;
+        _browser = browser;
         initComponents();
     }
     
     public Control getControl() { return _root; }
+    
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+    }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -88,20 +113,18 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         initURIComponents();
         
         updateChannel(null, null);
+        _browser.getTranslationRegistry().register(this);
         _rootLayout.topControl = _rootChannel;
         _chooser.setListener(this);
     }
     
     private void initChannelComponents() {
         _rootChannel = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _rootChannel.setText("Forum summary");
         
-        Label name = new Label(_rootChannel, SWT.NONE);
-        name.setText("Name: ");
+        _channelNameLabel = new Label(_rootChannel, SWT.NONE);
         _channelName = new Text(_rootChannel, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         
-        Label desc = new Label(_rootChannel, SWT.NONE);
-        desc.setText("Description: ");
+        _channelDescLabel = new Label(_rootChannel, SWT.NONE);
         ScrolledComposite channelDescScroll = new ScrolledComposite(_rootChannel, SWT.BORDER);
         //_channelDesc = new Text(_rootChannel, SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.WRAP);
         _channelDesc = new Text(channelDescScroll, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP);
@@ -109,19 +132,16 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         channelDescScroll.setExpandHorizontal(true);
         channelDescScroll.setExpandVertical(true);
         
-        Label hash = new Label(_rootChannel, SWT.NONE);
-        hash.setText("Hash: ");
+        _channelHashLabel = new Label(_rootChannel, SWT.NONE);
         _channelHash = new Text(_rootChannel, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         
         _channelPubPost = new Button(_rootChannel, SWT.CHECK);
-        _channelPubPost.setText("anyone can post");
         _channelPubPost.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _channelPubPost.setSelection(!_channelPubPost.getSelection()); }
             public void widgetSelected(SelectionEvent evt) { _channelPubPost.setSelection(!_channelPubPost.getSelection()); }
         });
 
         _channelPubReply = new Button(_rootChannel, SWT.CHECK);
-        _channelPubReply.setText("anyone can reply to posts");
         _channelPubReply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { _channelPubReply.setSelection(!_channelPubReply.getSelection()); }
             public void widgetSelected(SelectionEvent evt) { _channelPubReply.setSelection(!_channelPubReply.getSelection()); }
@@ -138,7 +158,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         //gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         //gd.verticalAlignment = GridData.VERTICAL_ALIGN_BEGINNING;
         gd.horizontalSpan = 1;
-        name.setLayoutData(gd);
+        _channelNameLabel.setLayoutData(gd);
         
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
@@ -155,7 +175,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         //gd.verticalAlignment = GridData.VERTICAL_ALIGN_BEGINNING;
         gd.horizontalSpan = 1;
-        desc.setLayoutData(gd);
+        _channelDescLabel.setLayoutData(gd);
         
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
@@ -173,7 +193,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         gd.verticalAlignment = GridData.VERTICAL_ALIGN_BEGINNING;
         gd.horizontalSpan = 1;
-        hash.setLayoutData(gd);
+        _channelHashLabel.setLayoutData(gd);
         
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
@@ -213,48 +233,41 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     
     private void initMessageComponents() {
         _rootMessage = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _rootMessage.setText("Message summary");
         _rootMessage.setLayout(new GridLayout(2, false));
         
-        Label name = new Label(_rootMessage, SWT.NONE);
+        _messageChannelNameLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        name.setText("Name: ");
-        name.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageChannelNameLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageChannelName = new Text(_rootMessage, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _messageChannelName.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL));
         
-        Label desc = new Label(_rootMessage, SWT.NONE);
+        _messageChannelDescLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        desc.setText("Description: ");
-        desc.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageChannelDescLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageChannelDesc = new Text(_rootMessage, SWT.MULTI | SWT.BORDER | SWT.READ_ONLY);
         _messageChannelDesc.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         
-        Label title = new Label(_rootMessage, SWT.NONE);
+        _messageChannelHashLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        title.setText("Hash: ");
-        title.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageChannelHashLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageChannelHash = new Text(_rootMessage, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _messageChannelHash.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL));
         
-        Label subject = new Label(_rootMessage, SWT.NONE);
+        _messageSubjectLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        subject.setText("Subject: ");
-        subject.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageSubjectLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageSubject = new Text(_rootMessage, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _messageSubject.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         
-        Label author = new Label(_rootMessage, SWT.NONE);
+        _messageAuthorLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        author.setText("Author: ");
-        author.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageAuthorLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageAuthor = new Text(_rootMessage, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _messageAuthor.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         
-        Label date = new Label(_rootMessage, SWT.NONE);
+        _messageDateLabel = new Label(_rootMessage, SWT.NONE);
         //title.setFont(bold)
-        date.setText("Date: ");
-        date.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
+        _messageDateLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_END));
         _messageDate = new Text(_rootMessage, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _messageDate.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         
@@ -268,13 +281,11 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     
     private void initArchiveComponents() {
         _rootArchive = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _rootArchive.setText("Archive summary");
         _rootArchive.setLayout(new GridLayout(2, false));
         
-        Label title = new Label(_rootArchive, SWT.NONE);
+        _archiveLabel = new Label(_rootArchive, SWT.NONE);
         //title.setFont(bold)
-        title.setText("Archive: ");
-        title.setLayoutData(new GridData(GridData.FILL_BOTH));
+        _archiveLabel.setLayoutData(new GridData(GridData.FILL_BOTH));
         _archiveURI = new Text(_rootArchive, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _archiveURI.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL));
         
@@ -288,13 +299,11 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     
     private void initURIComponents() {
         _rootURI = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _rootURI.setText("URI summary");
         _rootURI.setLayout(new GridLayout(2, false));
         
-        Label title = new Label(_rootURI, SWT.NONE);
+        _uriLabel = new Label(_rootURI, SWT.NONE);
         //title.setFont(bold)
-        title.setText("URI: ");
-        title.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _uriLabel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _uri = new Text(_rootURI, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _uri.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
@@ -308,17 +317,28 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
             Composite row = new Composite(parent, SWT.BORDER);
             row.setLayout(new FillLayout(SWT.HORIZONTAL));
             Button accept = new Button(row, SWT.PUSH);
-            accept.setText("Accept");
             accept.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { if (_curReference != null) _listener.referenceAccepted(_curReference); }
                 public void widgetSelected(SelectionEvent selectionEvent) { if (_curReference != null) _listener.referenceAccepted(_curReference); }
             });
             Button cancel = new Button(row, SWT.PUSH);
-            cancel.setText("Cancel");
             cancel.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _listener.referenceChoiceAborted(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { _listener.referenceChoiceAborted(); }
             });
+            if (parent == _rootArchive) {
+                _archiveAccept = accept;
+                _archiveCancel = cancel;
+            } else if (parent == _rootChannel) {
+                _channelAccept = accept;
+                _channelCancel = cancel;
+            } else if (parent == _rootMessage) {
+                _messageAccept = accept;
+                _messageCancel = cancel;
+            } else if (parent == _rootURI) {
+                _uriAccept = accept;
+                _uriCancel = cancel;
+            }
             return row;
         } else {
             return null;
@@ -382,8 +402,14 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
     private void updateMessage(ChannelInfo chan, MessageInfo msg, long msgId) {
         _messageChannelHash.setText(chan.getChannelHash().toBase64());
-        _messageChannelName.setText(chan.getName() + "");
-        _messageChannelDesc.setText(chan.getDescription() + "");
+        if (chan.getName() != null)
+            _messageChannelName.setText(chan.getName());
+        else
+            _messageChannelName.setText("");
+        if (chan.getDescription() != null)
+            _messageChannelDesc.setText(chan.getDescription());
+        else
+            _messageChannelDesc.setText("");
         _messageDate.setText(getDate(msgId));
         if (msg == null) {
             _messageAuthor.setText("");
@@ -393,7 +419,10 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         } else {
             long authorChanId = msg.getAuthorChannelId();
             if (authorChanId == chan.getChannelId()) {
-                _messageAuthor.setText(chan.getName() + "");
+                if (chan.getName() != null)
+                    _messageAuthor.setText(chan.getName());
+                else
+                    _messageAuthor.setText("");
             } else {
                 ChannelInfo author = _chooser.getClient().getChannel(authorChanId);
                 if (author == null) { // implicit author
@@ -402,7 +431,10 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
                     _messageAuthor.setText(author.getName() + " [" + author.getChannelHash().toBase64().substring(0,6) + "]");
                 }
             }
-            _messageSubject.setText(msg.getSubject() + "");
+            if (msg.getSubject() != null)
+                _messageSubject.setText(msg.getSubject());
+            else
+                _messageSubject.setText("");
             _messageAuthor.setEnabled(true);
             _messageSubject.setEnabled(true);
         }
@@ -425,8 +457,14 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
             _channelPubPost.setEnabled(false);
             _channelPubReply.setEnabled(false);
         } else {
-            _channelDesc.setText(chan.getDescription() + "");
-            _channelName.setText(chan.getName() + "");
+            if (chan.getDescription() != null)
+                _channelDesc.setText(chan.getDescription());
+            else
+                _channelDesc.setText("");
+            if (chan.getName() != null)
+                _channelName.setText(chan.getName());
+            else
+                _channelName.setText("");
             _channelPubPost.setSelection(chan.getAllowPublicPosts());
             _channelPubReply.setSelection(chan.getAllowPublicReplies() || chan.getAllowPublicPosts());
             _channelDesc.setEnabled(true);
@@ -440,7 +478,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
     
     public void manageChannelSelected(TreeItem item, ChannelInfo channel) {
-        System.out.println("manage channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
+        _browser.getUI().debugMessage("manage channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
         _curReference = SyndieURI.createScope(channel.getChannelHash());
         updateChannel(channel.getChannelHash(), channel);
         _rootChannel.layout(true, true);
@@ -449,7 +487,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
 
     public void postChannelSelected(TreeItem item, ChannelInfo channel) {
-        System.out.println("post channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
+        _browser.getUI().debugMessage("post channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
         _curReference = SyndieURI.createScope(channel.getChannelHash());
         updateChannel(channel.getChannelHash(), channel);
         _rootLayout.topControl = _rootChannel;
@@ -457,13 +495,78 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
 
     public void searchResultSelected(TreeItem item, ReferenceNode node) {
-        System.out.println("search result selected [" + item.getText() + "]: " + node.getURI().toString());
+        _browser.getUI().debugMessage("search result selected [" + item.getText() + "]: " + node.getURI().toString());
         _curReference = node.getURI();
         refSelected();
         _root.layout();
     }
 
     public void otherSelected(TreeItem item) {
-        System.out.println("other item selected [" + item.getText() + "]");
+        _browser.getUI().debugMessage("other item selected [" + item.getText() + "]");
+    }
+    
+    private static final String T_CHANNEL_ROOT = "syndie.gui.refchooserinfo.channel";
+    private static final String T_CHANNEL_NAME = "syndie.gui.refchooserinfo.channel.name";
+    private static final String T_CHANNEL_DESC = "syndie.gui.refchooserinfo.channel.desc";
+    private static final String T_CHANNEL_HASH = "syndie.gui.refchooserinfo.channel.hash";
+    private static final String T_CHANNEL_PUBPOST = "syndie.gui.refchooserinfo.channel.pubpost";
+    private static final String T_CHANNEL_PUBREPLY = "syndie.gui.refchooserinfo.channel.pubreply";
+    private static final String T_CHANNEL_ACCEPT = "syndie.gui.refchooserinfo.channel.accept";
+    private static final String T_CHANNEL_CANCEL = "syndie.gui.refchooserinfo.channel.cancel";
+    private static final String T_MESSAGE_ROOT = "syndie.gui.refchooserinfo.message";
+    private static final String T_MESSAGE_NAME = "syndie.gui.refchooserinfo.message.name";
+    private static final String T_MESSAGE_DESC = "syndie.gui.refchooserinfo.message.desc";
+    private static final String T_MESSAGE_HASH = "syndie.gui.refchooserinfo.message.hash";
+    private static final String T_MESSAGE_SUBJECT = "syndie.gui.refchooserinfo.message.subject";
+    private static final String T_MESSAGE_AUTHOR = "syndie.gui.refchooserinfo.message.author";
+    private static final String T_MESSAGE_DATE = "syndie.gui.refchooserinfo.message.date";
+    private static final String T_MESSAGE_ACCEPT = "syndie.gui.refchooserinfo.message.accept";
+    private static final String T_MESSAGE_CANCEL = "syndie.gui.refchooserinfo.message.cancel";
+    private static final String T_ARCHIVE_ROOT = "syndie.gui.refchooserinfo.archive";
+    private static final String T_ARCHIVE_LABEL = "syndie.gui.refchooserinfo.archive.label";
+    private static final String T_ARCHIVE_ACCEPT = "syndie.gui.refchooserinfo.archive.accept";
+    private static final String T_ARCHIVE_CANCEL = "syndie.gui.refchooserinfo.archive.cancel";
+    private static final String T_URI_ROOT = "syndie.gui.refchooserinfo.uri";
+    private static final String T_URI_LABEL = "syndie.gui.refchooserinfo.uri.label";
+    private static final String T_URI_ACCEPT = "syndie.gui.refchooserinfo.uri.accept";
+    private static final String T_URI_CANCEL = "syndie.gui.refchooserinfo.uri.cancel";
+
+    public void translate(TranslationRegistry registry) {
+        _rootChannel.setText(registry.getText(T_CHANNEL_ROOT, "Forum summary"));
+        _channelNameLabel.setText(registry.getText(T_CHANNEL_NAME, "Name: "));
+        _channelDescLabel.setText(registry.getText(T_CHANNEL_DESC, "Description: "));
+        _channelHashLabel.setText(registry.getText(T_CHANNEL_HASH, "Hash: "));
+        _channelPubPost.setText(registry.getText(T_CHANNEL_PUBPOST, "anyone can post"));
+        _channelPubReply.setText(registry.getText(T_CHANNEL_PUBREPLY, "anyone can reply to posts"));
+        if (_channelAccept != null)
+            _channelAccept .setText(registry.getText(T_CHANNEL_ACCEPT, "Accept"));
+        if (_channelCancel != null)
+            _channelCancel.setText(registry.getText(T_CHANNEL_CANCEL, "Cancel"));
+        
+        _rootMessage.setText(registry.getText(T_MESSAGE_ROOT, "Message summary"));
+        _messageChannelNameLabel.setText(registry.getText(T_MESSAGE_NAME, "Name: "));
+        _messageChannelDescLabel.setText(registry.getText(T_MESSAGE_DESC, "Description: "));
+        _messageChannelHashLabel.setText(registry.getText(T_MESSAGE_HASH, "Hash: "));
+        _messageSubjectLabel.setText(registry.getText(T_MESSAGE_SUBJECT, "Subject: "));
+        _messageAuthorLabel.setText(registry.getText(T_MESSAGE_AUTHOR, "Author: "));
+        _messageDateLabel.setText(registry.getText(T_MESSAGE_DATE, "Date: "));
+        if (_messageAccept != null)
+            _messageAccept .setText(registry.getText(T_MESSAGE_ACCEPT, "Accept"));
+        if (_messageCancel != null)
+            _messageCancel.setText(registry.getText(T_MESSAGE_CANCEL, "Cancel"));
+        
+        _rootArchive.setText(registry.getText(T_ARCHIVE_ROOT, "Archive summary"));
+        _archiveLabel.setText(registry.getText(T_ARCHIVE_LABEL, "Archive: "));
+        if (_archiveAccept != null)
+            _archiveAccept.setText(registry.getText(T_ARCHIVE_ACCEPT, "Accept"));
+        if (_archiveCancel != null)
+            _archiveCancel.setText(registry.getText(T_ARCHIVE_CANCEL, "Cancel"));
+        
+        _rootURI.setText(registry.getText(T_URI_ROOT, "URI summary"));
+        _uriLabel.setText(registry.getText(T_URI_LABEL, "URI: "));
+        if (_uriAccept != null)
+            _uriAccept.setText(registry.getText(T_URI_ACCEPT, "Accept"));
+        if (_uriCancel != null)
+            _uriCancel.setText(registry.getText(T_URI_CANCEL, "Cancel"));
     }
 }

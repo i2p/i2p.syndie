@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -33,6 +34,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.gui.TranslationRegistry;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymReferenceNode;
@@ -46,9 +48,10 @@ import syndie.db.UI;
 /**
  * main gui wrapper
  */
-public class Browser implements UI, BrowserControl {
+public class Browser implements UI, BrowserControl, Translatable {
     private DBClient _client;
     private TextEngine _engine;
+    private TranslationRegistry _translation;
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
@@ -57,6 +60,25 @@ public class Browser implements UI, BrowserControl {
     private Menu _tabMenu;
     private MenuItem _copyTabLocation;
     private MenuItem _bookmarkTab;
+    private MenuItem _fileMenuRoot;
+    private MenuItem _fileMenuOpen;
+    private MenuItem _fileMenuImport;
+    private MenuItem _fileMenuExport;
+    private MenuItem _fileMenuExit;
+    private MenuItem _postMenuRoot;
+    private MenuItem _postMenuNew;
+    private MenuItem _postMenuResume;
+    private MenuItem _syndicateMenuRoot;
+    private MenuItem _advancedMenuRoot;
+    private MenuItem _advancedMenuTextUI;
+    private MenuItem _advancedMenuLogs;
+    private MenuItem _helpMenuRoot;
+    private MenuItem _helpMenuAbout;
+    private MenuItem _helpMenuFAQ;
+    private MenuItem _helpMenuGUIManual;
+    private MenuItem _helpMenuTextManual;
+    private ToolTip _systrayTip;
+    
     private Composite _statusRow;
     private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
@@ -72,6 +94,7 @@ public class Browser implements UI, BrowserControl {
         _uiListeners = new ArrayList();
         _commands = new ArrayList();
         _initialized = false;
+        _translation = new TranslationRegistry();
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
@@ -81,7 +104,6 @@ public class Browser implements UI, BrowserControl {
         debugMessage("browser initComponents");
         _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
-        _shell.setText("Syndie");
         _shell.setLayout(new GridLayout(1, true));
         
         debugMessage("before creating the menu");
@@ -104,13 +126,11 @@ public class Browser implements UI, BrowserControl {
         _tabs.setMenu(_tabMenu);
         
         _copyTabLocation = new MenuItem(_tabMenu, SWT.PUSH);
-        _copyTabLocation.setText("copy tab location");
         _copyTabLocation.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { copyTabLocation(); }
             public void widgetSelected(SelectionEvent selectionEvent) { copyTabLocation(); }
         });
         _bookmarkTab = new MenuItem(_tabMenu, SWT.PUSH);
-        _bookmarkTab.setText("bookmark tab");
         _bookmarkTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
@@ -132,6 +152,8 @@ public class Browser implements UI, BrowserControl {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        
+        _translation.register(this);
         
         _bookmarks.viewStartupItems();
         
@@ -163,61 +185,54 @@ public class Browser implements UI, BrowserControl {
     private void initMenu() {
         _mainMenu = new Menu(_shell, SWT.BAR);
         
-        MenuItem file = new MenuItem(_mainMenu, SWT.CASCADE);
-        file.setText("File");
-        Menu fileMenu = new Menu(file);
-        file.setMenu(fileMenu);
-        new MenuItem(fileMenu, SWT.PUSH).setText("Open Syndie URI");
-        new MenuItem(fileMenu, SWT.PUSH).setText("Import");
-        new MenuItem(fileMenu, SWT.PUSH).setText("Export");
-        MenuItem exit = new MenuItem(fileMenu, SWT.PUSH);
-        exit.setText("Exit");
-        exit.addSelectionListener(new SelectionListener() {
+        _fileMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        
+        Menu fileMenu = new Menu(_fileMenuRoot);
+        _fileMenuRoot.setMenu(fileMenu);
+        _fileMenuOpen = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuExit = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuExit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { exit(); }
             public void widgetSelected(SelectionEvent selectionEvent) { exit(); }
         });
         
-        MenuItem post = new MenuItem(_mainMenu, SWT.CASCADE);
-        post.setText("Post");
-        Menu postMenu = new Menu(post);
-        post.setMenu(postMenu);
-        MenuItem postNew = new MenuItem(postMenu, SWT.PUSH);
-        postNew.setText("Post new");
-        postNew.addSelectionListener(new SelectionListener() {
+        _postMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        Menu postMenu = new Menu(_postMenuRoot);
+        _postMenuRoot.setMenu(postMenu);
+        _postMenuNew = new MenuItem(postMenu, SWT.PUSH);
+        _postMenuNew.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postNew(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postNew(); }
         });
-        new MenuItem(postMenu, SWT.PUSH).setText("Resume existing...");
+        _postMenuResume = new MenuItem(postMenu, SWT.PUSH);
         
-        new MenuItem(_mainMenu, SWT.CASCADE).setText("Syndicate");
+        _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         
-        MenuItem advanced = new MenuItem(_mainMenu, SWT.CASCADE);
-        advanced.setText("Advanced");
-        Menu advancedMenu = new Menu(advanced);
-        advanced.setMenu(advancedMenu);
-        MenuItem advancedText = new MenuItem(advancedMenu, SWT.PUSH);
-        advancedText.setText("Text interface");
-        advancedText.addSelectionListener(new SelectionListener() {
+        _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        Menu advancedMenu = new Menu(_advancedMenuRoot);
+        _advancedMenuRoot.setMenu(advancedMenu);
+        _advancedMenuTextUI = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuTextUI.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showTextUI(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showTextUI(); }
         });
-        MenuItem advancedLogs = new MenuItem(advancedMenu, SWT.PUSH);
-        advancedLogs.setText("Logs");
-        advancedLogs.addSelectionListener(new SelectionListener() {
+        _advancedMenuLogs = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuLogs.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLogs(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showLogs(); }
         });
         
         new MenuItem(_mainMenu, SWT.SEPARATOR);
         
-        MenuItem help = new MenuItem(_mainMenu, SWT.CASCADE);
-        help.setText("Help");
-        Menu helpMenu = new Menu(help);
-        help.setMenu(helpMenu);
-        new MenuItem(helpMenu, SWT.PUSH).setText("About");
-        new MenuItem(helpMenu, SWT.PUSH).setText("FAQ");
-        new MenuItem(helpMenu, SWT.PUSH).setText("GUI manual");
-        new MenuItem(helpMenu, SWT.PUSH).setText("Text interface manual");
+        _helpMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        Menu helpMenu = new Menu(_helpMenuRoot);
+        _helpMenuRoot.setMenu(helpMenu);
+        _helpMenuAbout = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuGUIManual = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuTextManual = new MenuItem(helpMenu, SWT.PUSH);
         
         _shell.setMenuBar(_mainMenu);
     }
@@ -225,11 +240,9 @@ public class Browser implements UI, BrowserControl {
     private void initSystray() {
         Tray tray = _shell.getDisplay().getSystemTray();
         TrayItem root = new TrayItem(tray, SWT.NONE);
-        ToolTip tip = new ToolTip(_shell, SWT.BALLOON);
-        tip.setText("Syndie");
-        tip.setMessage("Syndie is running");
-        tip.setAutoHide(true);
-        root.setToolTip(tip);
+        _systrayTip = new ToolTip(_shell, SWT.BALLOON);
+        _systrayTip.setAutoHide(true);
+        root.setToolTip(_systrayTip);
         root.setImage(createSystrayIcon());
         root.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -243,8 +256,8 @@ public class Browser implements UI, BrowserControl {
     
     private void exit() {
         MessageBox confirm = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText("Confirm exit");
-        confirm.setMessage("Are you sure you want to exit Syndie?");
+        confirm.setText(_translation.getText(T_CONFIRM_EXIT_TITLE, "Confirm exit"));
+        confirm.setMessage(_translation.getText(T_CONFIRM_EXIT_MESSAGE, "Are you sure you want to exit Syndie?"));
         int rv = confirm.open();
         if (rv == SWT.YES) {
             _shell.setVisible(false);
@@ -327,14 +340,14 @@ public class Browser implements UI, BrowserControl {
                 }
             }
         } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
-            name = "logs";
-            desc = "watch log messages";
+            name = _translation.getText(T_BOOKMARK_LOGS_NAME, "logs");
+            desc = _translation.getText(T_BOOKMARK_LOGS_DESC, "watch log messages");
         } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
-            name = "post";
-            desc = "post a new message";
+            name = _translation.getText(T_BOOKMARK_POST_NAME, "post");
+            desc = _translation.getText(T_BOOKMARK_POST_DESC, "post a new message");
         } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
-            name = "text UI";
-            desc = "text based interface";
+            name = _translation.getText(T_BOOKMARK_TEXTUI_NAME, "text UI");
+            desc = _translation.getText(T_BOOKMARK_TEXTUI_DESC, "text based interface");
         }
         
         // bookmark should always set these to false (ban/ignore would set them to true)
@@ -366,6 +379,7 @@ public class Browser implements UI, BrowserControl {
     }
     
     public UI getUI() { return this; }
+    public TranslationRegistry getTranslationRegistry() { return _translation; }
     
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
@@ -441,7 +455,6 @@ public class Browser implements UI, BrowserControl {
         public void referenceChoiceAborted() {}        
     }
 
-    
     public void insertCommand(String cmd) { 
         synchronized (_commands) { _commands.add(cmd); _commands.notifyAll(); }
     }
@@ -516,5 +529,69 @@ public class Browser implements UI, BrowserControl {
         public void debugMessage(String msg);
         public void debugMessage(String msg, Exception cause);
         public void commandComplete(int status, List location);
+    }
+    
+    private static final String T_SHELL_TITLE = "syndie.gui.browser.title";
+    private static final String T_COPY_TAB_LOC = "syndie.gui.browser.tabmenu.copylocation";
+    private static final String T_BOOKMARK_TAB = "syndie.gui.browser.tabmenu.bookmark";
+    private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
+    private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
+    private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
+    private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
+    private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
+    private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
+    private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
+    private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
+    private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
+    private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
+    private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
+    private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
+    private static final String T_HELP_MENU_TITLE = "syndie.gui.browser.helpmenu.title";
+    private static final String T_HELP_MENU_ABOUT = "syndie.gui.browser.helpmenu.about";
+    private static final String T_HELP_MENU_FAQ = "syndie.gui.browser.helpmenu.faq";
+    private static final String T_HELP_MENU_GUIMAN = "syndie.gui.browser.helpmenu.guiman";
+    private static final String T_HELP_MENU_TEXTMAN = "syndie.gui.browser.helpmenu.textman";
+    private static final String T_SYSTRAY_TOOLTIP_TITLE = "syndie.gui.browser.systray.title";
+    private static final String T_SYSTRAY_TOOLTIP_TEXT = "syndie.gui.browser.systray.text";
+    // the confirm popup is created on the fly, so translated only on creation, not on translate(...)
+    private static final String T_CONFIRM_EXIT_TITLE = "syndie.gui.browser.confirmexit.title";
+    private static final String T_CONFIRM_EXIT_MESSAGE = "syndie.gui.browser.confirmexit.message";
+    // the bookmark popup is created on the fly, so translated only on creation, not on translate(...)
+    private static final String T_BOOKMARK_LOGS_NAME = "syndie.gui.browser.bookmarklogs.name";
+    private static final String T_BOOKMARK_LOGS_DESC = "syndie.gui.browser.bookmarklogs.desc";
+    private static final String T_BOOKMARK_POST_NAME = "syndie.gui.browser.bookmarkpost.name";
+    private static final String T_BOOKMARK_POST_DESC = "syndie.gui.browser.bookmarkpost.desc";
+    private static final String T_BOOKMARK_TEXTUI_NAME = "syndie.gui.browser.bookmarktextui.name";
+    private static final String T_BOOKMARK_TEXTUI_DESC = "syndie.gui.browser.bookmarktextui.desc";
+    
+    public void translate(TranslationRegistry registry) {
+        _shell.setText(registry.getText(T_SHELL_TITLE, "Syndie"));
+        _copyTabLocation.setText(registry.getText(T_COPY_TAB_LOC, "copy tab location"));
+        _bookmarkTab.setText(registry.getText(T_BOOKMARK_TAB, "bookmark tab"));
+        
+        _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "File"));
+        _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "Open Syndie URI"));
+        _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "Import"));
+        _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "Export"));
+        _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "Exit"));
+    
+        _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "Post"));
+        _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post new"));
+        _postMenuResume.setText(registry.getText(T_POST_MENU_RESUME, "Resume existing"));
+        
+        _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "Syndicate"));
+
+        _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "Advanced"));
+        _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "Logs"));
+        _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "Text interface"));
+
+        _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "Help"));
+        _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "About"));
+        _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "FAQ"));
+        _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "GUI manual"));
+        _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "Text interface manual"));
+        
+        _systrayTip.setText(registry.getText(T_SYSTRAY_TOOLTIP_TITLE, "Syndie"));
+        _systrayTip.setMessage(registry.getText(T_SYSTRAY_TOOLTIP_TEXT, "Syndie is running"));
     }
 }

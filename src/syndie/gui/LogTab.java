@@ -53,6 +53,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     
     private List _pendingMessages;
     
+    private static int MAX_LINES = 300;
     private static final boolean STYLE_LOGS = false; // doesn't work with font resizing
     
     public LogTab(BrowserControl browser, SyndieURI uri) {
@@ -201,8 +202,6 @@ class LogTab extends BrowserTab implements Browser.UIListener {
         _out.setRedraw(true);
         _out.redraw();
     }
-    
-    private static int MAX_LINES = 100;
     
     private Color _tsBGColor = ColorUtil.getColor("gray", null);
     private Color _tsFGColor = ColorUtil.getColor("black", null);

@@ -39,4 +39,5 @@ public class DummyBrowserControl implements BrowserControl {
     public void bookmark(NymReferenceNode node) {}
     
     public void showWaitCursor(boolean show) {}
+    public TranslationRegistry getTranslationRegistry() { return null; }
 }

@@ -52,7 +52,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, Translatable {
     private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
@@ -123,6 +123,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     
     private MessageEditorListener _listener;
     private UI _ui;
+
+    private MenuItem _pageAddHTML;
+    private MenuItem _pageAddText;
+    private MenuItem _pageRemove;
+    private MenuItem _attachmentAdd;
+    private MenuItem _attachmentRemove;
     
     /** Creates a new instance of MessageEditor */
     public MessageEditor(BrowserControl browser, Composite parent, MessageEditorListener lsnr) {
@@ -143,7 +149,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _browser.getUI().debugMessage("editor: channels fetched.  init components");
         initComponents();
         _browser.getUI().debugMessage("editor: components initialized");
-        _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser.getUI(), _client, this);
+        _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, this);
     }
     
     public interface MessageEditorListener {
@@ -180,23 +186,22 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _ok = new Button(_actions, SWT.PUSH);
-        _ok.setText("Post message!");
         _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postMessage(); }
         });
         _save = new Button(_actions, SWT.PUSH);
-        _save.setText("Save for later");
         _save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postponeMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postponeMessage(); }
         });
         _cancel = new Button(_actions, SWT.PUSH);
-        _cancel.setText("Cancel");
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancelMessage(); }
         });
+        
+        getBrowser().getTranslationRegistry().register(this);
     }
     
     public void setAsReply(boolean asReply) {
@@ -229,14 +234,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _controlAvatarDialog.setFilterNames(new String[] { "Images", "All files" });
         
         _controlSubject = new Label(_msgControl, SWT.NONE);
-        _controlSubject.setText("Subject:");
         _controlSubject.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _controlSubjectText = new Text(_msgControl, SWT.SINGLE | SWT.BORDER);
         _controlSubjectText.setText("");
         _controlSubjectText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _controlForum = new Label(_msgControl, SWT.NONE);
-        _controlForum.setText("Forum:");
         _controlForum.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         Composite line2 = new Composite(_msgControl, SWT.NONE);
@@ -257,31 +260,22 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         });
         
         _controlTags = new Label(line2, SWT.NONE);
-        _controlTags.setText("Tags:");
         _controlTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _controlTagsText = new Text(line2, SWT.BORDER | SWT.SINGLE);
-        _controlTagsText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 50;
+        _controlTagsText.setLayoutData(gd);
         
         _controlPrivacy = new Label(line2, SWT.NONE);
-        _controlPrivacy.setText("Privacy:");
         _controlPrivacy.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _controlPrivacyCombo = new Combo(line2, SWT.DROP_DOWN);
         _controlPrivacyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-
-        // values indexed per:
-        //int PRIVACY_PUBLIC = 0;
-        //int PRIVACY_AUTHORIZED = 1;
-        //int PRIVACY_PBE = 2;
-        //int PRIVACY_REPLY = 3;
-        _controlPrivacyCombo.add("Publicly readable");
-        _controlPrivacyCombo.add("Authorized readers only");
-        _controlPrivacyCombo.add("Passphrase protected...");
-        _controlPrivacyCombo.add("Private reply to forum owner");
-        _controlPrivacyCombo.select(PRIVACY_AUTHORIZED);
         
         // author is under the avatar
         _controlAuthor = new Text(_msgControl, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
-        _controlAuthor.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
+        gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
+        gd.widthHint = Constants.MAX_AVATAR_WIDTH;
+        _controlAuthor.setLayoutData(gd);
         
         _controlAuthorMenu = new Menu(_controlAuthor);
         _controlAuthor.setMenu(_controlAuthorMenu);
@@ -291,7 +285,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         });
         
         _controlPage = new Label(_msgControl, SWT.NONE);
-        _controlPage.setText("Pages:");
         _controlPage.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         Composite line3 = new Composite(_msgControl, SWT.NONE);
@@ -303,8 +296,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         line3.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _controlPageCombo = new Combo(line3, SWT.DROP_DOWN);
-        _controlPageCombo.add("none");
-        _controlPageCombo.select(0);
         _controlPageCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _controlPageCombo.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { if (_pages.size() > 0) showPage(_controlPageCombo.getSelectionIndex()); }
@@ -312,25 +303,21 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         });
         
         _controlPageAction = new Button(line3, SWT.PUSH);
-        _controlPageAction.setText("+/-");
         _controlPageAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _controlPageMenu = new Menu(_controlPageAction);
-        MenuItem pageAddHTML = new MenuItem(_controlPageMenu, SWT.PUSH);
-        pageAddHTML.setText("Add HTML page");
-        pageAddHTML.addSelectionListener(new SelectionListener() {
+        _pageAddHTML = new MenuItem(_controlPageMenu, SWT.PUSH);
+        _pageAddHTML.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPage("text/html"); }
             public void widgetSelected(SelectionEvent selectionEvent) { addPage("text/html"); }
         });
-        MenuItem pageAddText = new MenuItem(_controlPageMenu, SWT.PUSH);
-        pageAddText.setText("Add text page");
-        pageAddText.addSelectionListener(new SelectionListener() {
+        _pageAddText = new MenuItem(_controlPageMenu, SWT.PUSH);
+        _pageAddText.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPage("text/plain"); }
             public void widgetSelected(SelectionEvent selectionEvent) { addPage("text/plain"); }
         });
         new MenuItem(_controlPageMenu, SWT.SEPARATOR);
-        MenuItem pageRemove = new MenuItem(_controlPageMenu, SWT.PUSH);
-        pageRemove.setText("Remove current page");
-        pageRemove.addSelectionListener(new SelectionListener() {
+        _pageRemove = new MenuItem(_controlPageMenu, SWT.PUSH);
+        _pageRemove.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { removePage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { removePage(); }
         });
@@ -341,16 +328,14 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         });
         
         _controlAttachment = new Label(line3, SWT.NONE);
-        _controlAttachment.setText("Attachments:");
         _controlAttachment.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _controlAttachmentCombo = new Combo(line3, SWT.DROP_DOWN);
-        _controlAttachmentCombo.add("none");
-        _controlAttachmentCombo.select(0);
-        _controlAttachmentCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 100;
+        _controlAttachmentCombo.setLayoutData(gd);
         
         _controlAttachmentAction = new Button(line3, SWT.PUSH);
-        _controlAttachmentAction.setText("+/-");
         _controlAttachmentAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _controlAttachmentMenu = new Menu(_controlAttachmentAction);
         _controlAttachmentAction.setMenu(_controlAttachmentMenu);
@@ -358,34 +343,28 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _controlAttachmentMenu.setVisible(true); }
             public void widgetSelected(SelectionEvent selectionEvent) { _controlAttachmentMenu.setVisible(true); }
         });
-        MenuItem attachmentAdd = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
-        attachmentAdd.setText("Add new file...");
-        attachmentAdd.addSelectionListener(new SelectionListener() {
+        _attachmentAdd = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
+        _attachmentAdd.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addAttachment(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addAttachment(); }
         });
         new MenuItem(_controlAttachmentMenu, SWT.SEPARATOR);
-        MenuItem attachmentRemove = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
-        attachmentRemove.setText("Remove current attachment");
-        attachmentRemove.addSelectionListener(new SelectionListener() {
+        _attachmentRemove = new MenuItem(_controlAttachmentMenu, SWT.PUSH);
+        _attachmentRemove.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeAttachment(); }
             public void widgetSelected(SelectionEvent selectionEvent) { removeAttachment(); }
         });
         
         _controlRef = new Label(line3, SWT.NONE);
-        _controlRef.setText("References:");
         _controlRef.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _controlRefAction = new Button(line3, SWT.PUSH);
-        _controlRefAction.setText("none");
         _controlRefAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _controlExpiration = new Label(line3, SWT.NONE);
-        _controlExpiration.setText("Expiration:");
         _controlExpiration.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _controlExpirationText = new Text(line3, SWT.BORDER | SWT.SINGLE);
-        _controlExpirationText.setText("none");
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 50;
         _controlExpirationText.setLayoutData(gd);
@@ -408,7 +387,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     public void addPage() { addPage("text/html"); }
     public void addPage(String type) {
         _browser.getUI().debugMessage("addPage: creating editor");
-        PageEditor page = new PageEditor(_client, _pageRoot, this, type);
+        PageEditor page = new PageEditor(_client, _pageRoot, this, type, _browser);
         _browser.getUI().debugMessage("addPage: editor created");
         _pages.add(page);
         showPage(_pages.size()-1);
@@ -442,7 +421,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             }
             _controlPageCombo.select(page);
         } else {
-            _controlPageCombo.add("none");
+            _controlPageCombo.add(_browser.getTranslationRegistry().getText(T_PAGE_NONE, "none"));
             _controlPageCombo.select(0);
         }
          
@@ -556,7 +535,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
                 _controlAttachmentCombo.add(buf.toString());
             }
         } else {
-            _controlAttachmentCombo.add("none");
+            _controlAttachmentCombo.add(_browser.getTranslationRegistry().getText(T_ATTACHMENTS_NONE, "none"));
         }
         _controlAttachmentCombo.select(0);
          
@@ -666,7 +645,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             return;
         }
         _target = (Hash)_targetList.get(idx);
-        System.out.println("forum selected, setting target to " + _target + " / " + idx);
+        getBrowser().getUI().debugMessage("forum selected, setting target to " + _target + " / " + idx);
         updateAuthor();
     }
     private void updateAuthor() {
@@ -738,9 +717,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             }
         }
         
-        if (_author == null)
-            _controlAuthor.setText("author...");
-        
         if (!targetFound && (_target != null)) {
             // other forum chosen
             long id = _client.getChannelId(_target);
@@ -752,7 +728,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             }
         }
         
-        _controlForumCombo.add("other...");
+        _controlForumCombo.add(getBrowser().getTranslationRegistry().getText(T_FORUM_OTHER, "other..."));
                 
         _controlAuthor.setRedraw(true);
         _controlForumCombo.setRedraw(true);
@@ -762,7 +738,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _refChooser.hide();
         if (uri == null) return;
         _target = uri.getScope();
-        System.out.println("reference accepted, setting target to " + _target);
+        getBrowser().getUI().debugMessage("reference accepted, setting target to " + _target);
         updateAuthor();
     }
     
@@ -798,44 +774,24 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         }
     }
 
-    /*
-    private Image rescaleAvatar(Image orig) {
-        ImageData scaledData = null;
-        Image rv = null;
-        try {
-            scaledData = orig.getImageData().scaledTo(Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_WIDTH);
-            rv = new Image(_root.getDisplay(), scaledData);
-            ImageUtil.dispose(orig);
-            return rv;
-        } catch (OutOfMemoryError oom) {
-            System.err.println("OOM trying to scale the image");
-        }
-        ImageUtil.dispose(rv);
-        rv = null;
-        scaledData = null;
-        System.gc();
-        return orig;
-    }
-     */
-    
     Hash getAuthor() { return _author; }
     Hash getTarget() { return _target; }
     DBClient getClient() { return _client; }
-    
+
     private void postMessage() {
         MessageCreator creator = new MessageCreator(this);
         boolean ok = creator.execute();
         if (ok) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setMessage("Message created and imported successfully!  Please be sure to syndicate it to others so they can read it: " + creator.getCreatedURI().toString());
-            box.setText("Message created!");
+            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+            box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
             box.open();
             if (_listener != null)
                 _listener.messageCreated(this, creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage("There was an error creating the message.  Please view the log for more information: " + creator.getErrors());
-            box.setText("Error creating the message");
+            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
+            box.setText(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_TITLE, "Error creating the message"));
             box.open();
         }
     }
@@ -848,8 +804,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     private void cancelMessage() {
         // confirm
         MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-        dialog.setMessage("Are you sure you want to cancel this message?");
-        dialog.setText("Confirm message cancellation");
+        dialog.setMessage(getBrowser().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
+        dialog.setText(getBrowser().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
         int rv = dialog.open();
         if (rv == SWT.YES) {
             if (_listener != null)
@@ -871,6 +827,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
         _attachments.clear();
         _attachmentConfig.clear();
         _root.dispose();
+        _refChooser.dispose();
+        getBrowser().getTranslationRegistry().unregister(this);
     }
     
     public int getParentCount() { return _parents.size(); }
@@ -890,7 +848,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
             Image img = _controlAvatarImage;
             if ( (img != null) && (!img.isDisposed()) && (img != ImageUtil.ICON_QUESTION) ) {
                 byte rv[] = ImageUtil.serializeImage(img);
-                System.out.println("avatar size: " + rv.length + " bytes");
+                getBrowser().getUI().debugMessage("avatar size: " + rv.length + " bytes");
                 if (rv.length > Constants.MAX_AVATAR_SIZE)
                     return null;
                 else
@@ -920,4 +878,91 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener {
     }
     public boolean getForceNewThread() { return false; }
     public boolean getRefuseReplies() { return false; }
+    
+    private static final String T_TAGS = "syndie.gui.messageeditor.tags";
+    private static final String T_FORUM = "syndie.gui.messageeditor.forum";
+    private static final String T_CANCEL = "syndie.gui.messageeditor.cancel";
+    private static final String T_POSTPONE = "syndie.gui.messageeditor.postpone";
+    private static final String T_POST = "syndie.gui.messageeditor.post";
+    private static final String T_SUBJECT = "syndie.gui.messageeditor.subject";
+    private static final String T_PRIVACY = "syndie.gui.messageeditor.privacy";
+    private static final String T_PRIVACY_PUBLIC = "syndie.gui.messageeditor.privacy.public";
+    private static final String T_PRIVACY_PBE = "syndie.gui.messageeditor.privacy.pbe";
+    private static final String T_PRIVACY_AUTHORIZED = "syndie.gui.messageeditor.privacy.authorized";
+    private static final String T_PRIVACY_REPLY = "syndie.gui.messageeditor.privacy.reply";
+    private static final String T_PAGE = "syndie.gui.messageeditor.page";
+    private static final String T_PAGE_NONE = "syndie.gui.messageeditor.page.none";
+    private static final String T_PAGE_ACTION = "syndie.gui.messageeditor.page.action";
+    private static final String T_PAGE_ADD_HTML = "syndie.gui.messageeditor.page.addhtml";
+    private static final String T_PAGE_ADD_TEXT = "syndie.gui.messageeditor.page.addtext";
+    private static final String T_PAGE_REMOVE = "syndie.gui.messageeditor.page.remove";
+    private static final String T_ATTACHMENTS = "syndie.gui.messageeditor.attachments";
+    private static final String T_ATTACHMENTS_NONE = "syndie.gui.messageeditor.attachments.none";
+    private static final String T_ATTACHMENT_ACTION = "syndie.gui.messageeditor.attachments.action";
+    private static final String T_ATTACHMENT_ADD = "syndie.gui.messageeditor.attachments.add";
+    private static final String T_ATTACHMENT_REMOVE = "syndie.gui.messageeditor.attachments.remove";
+    private static final String T_REFERENCES = "syndie.gui.messageeditor.references";
+    private static final String T_REFERENCES_NONE = "syndie.gui.messageeditor.references.none";
+    private static final String T_EXPIRATION = "syndie.gui.messageeditor.expiration";
+    private static final String T_EXPIRATION_NONE = "syndie.gui.messageeditor.expiration.none";
+    private static final String T_AUTHOR_UNKNOWN = "syndie.gui.messageeditor.author";
+    private static final String T_FORUM_OTHER = "syndie.gui.messageeditor.forum.other";
+    private static final String T_POSTED_MESSAGE = "syndie.gui.messageeditor.post.message";
+    private static final String T_POSTED_TITLE = "syndie.gui.messageeditor.post.title";
+    private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
+    private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
+    private static final String T_CANCEL_MESSAGE = "syndie.gui.messageeditor.cancel.message";
+    private static final String T_CANCEL_TITLE = "syndie.gui.messageeditor.cancel.title";
+    
+    public void translate(TranslationRegistry registry) {
+        _controlTags.setText(registry.getText(T_TAGS, "Tags:"));
+        _controlForum.setText(registry.getText(T_FORUM, "Forum:"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _save.setText(registry.getText(T_POSTPONE, "Save for later"));
+        _ok.setText(registry.getText(T_POST, "Post message!"));
+        _controlSubject.setText(registry.getText(T_SUBJECT, "Subject:"));
+        _controlPrivacy.setText(registry.getText(T_PRIVACY, "Privacy:"));
+        
+        // values indexed per:
+        //int PRIVACY_PUBLIC = 0;
+        //int PRIVACY_AUTHORIZED = 1;
+        //int PRIVACY_PBE = 2;
+        //int PRIVACY_REPLY = 3;
+        int privSelected = PRIVACY_AUTHORIZED;
+        if (_controlPrivacyCombo.getItemCount() > 0)
+            privSelected = _controlPrivacyCombo.getSelectionIndex();
+        _controlPrivacyCombo.setRedraw(false);
+        _controlPrivacyCombo.removeAll();
+        _controlPrivacyCombo.add(registry.getText(T_PRIVACY_PUBLIC, "Publicly readable"));
+        _controlPrivacyCombo.add(registry.getText(T_PRIVACY_AUTHORIZED, "Authorized readers only"));
+        _controlPrivacyCombo.add(registry.getText(T_PRIVACY_PBE, "Passphrase protected..."));
+        _controlPrivacyCombo.add(registry.getText(T_PRIVACY_REPLY, "Private reply to forum owner"));
+        _controlPrivacyCombo.select(privSelected);
+        _controlPrivacyCombo.setRedraw(true);
+        
+        _controlPage.setText(registry.getText(T_PAGE, "Pages:"));
+        
+        rebuildPagesCombo();
+        
+        _controlPageAction.setText(registry.getText(T_PAGE_ACTION, "+/-"));
+        _pageAddHTML.setText(registry.getText(T_PAGE_ADD_HTML, "Add HTML page"));
+        _pageAddText.setText(registry.getText(T_PAGE_ADD_TEXT, "Add text page"));
+        _pageRemove.setText(registry.getText(T_PAGE_REMOVE, "Remove current page"));
+        _controlAttachment.setText(registry.getText(T_ATTACHMENTS, "Attachments:"));
+
+        rebuildAttachmentsCombo();
+        
+        _controlAttachmentAction.setText(registry.getText(T_ATTACHMENT_ACTION, "+/-"));
+        _attachmentAdd.setText(registry.getText(T_ATTACHMENT_ADD, "Add new file..."));
+        _attachmentRemove.setText(registry.getText(T_ATTACHMENT_REMOVE, "Remove current attachment"));
+        _controlRef.setText(registry.getText(T_REFERENCES, "References:"));
+        _controlRefAction.setText(registry.getText(T_REFERENCES_NONE, "none")); //todo: fix when supported
+        _controlExpiration.setText(registry.getText(T_EXPIRATION, "Expiration:"));
+        
+        if (getExpiration() == null)
+            _controlExpirationText.setText(registry.getText(T_EXPIRATION_NONE, "none"));
+        
+        if (_author == null)
+            _controlAuthor.setText(registry.getText(T_AUTHOR_UNKNOWN, "author..."));
+    }
 }

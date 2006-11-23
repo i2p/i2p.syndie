@@ -27,19 +27,24 @@ import syndie.db.DBClient;
 /**
  * search control for a ReferenceChooserTree
  */
-public class ReferenceChooserSearch {
+public class ReferenceChooserSearch implements Translatable {
+    private BrowserControl _browser;
     private ReferenceChooserTree _chooser;
     private Composite _parent;
     private Group _root;
+    private Label _searchCriteria;
     private Text _name;
+    private Label _searchTags;
     private Text _tags;
+    private Label _searchHash;
     private Text _hash;
     private Button _publicPost;
     private Button _search;
     
-    public ReferenceChooserSearch(Composite parent, ReferenceChooserTree chooser) {
+    public ReferenceChooserSearch(Composite parent, ReferenceChooserTree chooser, BrowserControl browser) {
         _parent = parent;
         _chooser = chooser;
+        _browser = browser;
         initComponents();
     }
     
@@ -48,47 +53,37 @@ public class ReferenceChooserSearch {
     private void initComponents() {
         _root = new Group(_parent, SWT.SHADOW_ETCHED_OUT);
         _root.setLayout(new GridLayout(2, false));
-        _root.setText("Forum search criteria:");
         
-        Label l = new Label(_root, SWT.NONE);
-        l.setText("Name: ");
+        _searchCriteria = new Label(_root, SWT.NONE);
         GridData gd = new GridData();
         gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         gd.verticalAlignment = GridData.VERTICAL_ALIGN_CENTER;
-        l.setLayoutData(gd);
+        _searchCriteria.setLayoutData(gd);
         _name = new Text(_root, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-        _name.setToolTipText("the channel name must start with this string");
         _name.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        l = new Label(_root, SWT.NONE);
-        l.setText("Tags: ");
+        _searchTags = new Label(_root, SWT.NONE);
         gd = new GridData();
         gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         gd.verticalAlignment = GridData.VERTICAL_ALIGN_CENTER;
-        l.setLayoutData(gd);
+        _searchTags.setLayoutData(gd);
         _tags = new Text(_root, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-        _tags.setToolTipText("-tag excludes, +tag requires all, without a prefix requires one or more");
         _tags.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        l = new Label(_root, SWT.NONE);
-        l.setText("Hash: ");
+        _searchHash = new Label(_root, SWT.NONE);
         gd = new GridData();
         gd.horizontalAlignment = GridData.HORIZONTAL_ALIGN_END;
         gd.verticalAlignment = GridData.VERTICAL_ALIGN_CENTER;
-        l.setLayoutData(gd);
+        _searchHash.setLayoutData(gd);
         _hash = new Text(_root, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-        _hash.setToolTipText("the channel's hash must start with this string");
         _hash.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         _publicPost = new Button(_root, SWT.CHECK);
-        _publicPost.setText("anyone can post?");
-        _publicPost.setToolTipText("if true, include channels that anyone is allowed to post to");
         gd = new GridData(GridData.FILL_BOTH);
         gd.horizontalSpan = 2;
         _publicPost.setLayoutData(gd);
         
         _search = new Button(_root, SWT.PUSH);
-        _search.setText("Search");
         gd = new GridData(GridData.FILL_BOTH);
         gd.horizontalSpan = 2;
         _search.setLayoutData(gd);
@@ -112,6 +107,12 @@ public class ReferenceChooserSearch {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { search(); }
             public void widgetSelected(SelectionEvent selectionEvent) { search(); }
         });
+        
+        _browser.getTranslationRegistry().register(this);
+    }
+    
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
     }
     
     private void search() {
@@ -157,5 +158,30 @@ public class ReferenceChooserSearch {
             matches.add(match);
         }
         _chooser.setSearchResults(matches);
+    }
+    
+    private static final String T_ROOT = "syndie.gui.rechoosersearch.root";
+    private static final String T_NAME = "syndie.gui.rechoosersearch.name";
+    private static final String T_NAME_TOOLTIP = "syndie.gui.rechoosersearch.name.tooltip";
+    private static final String T_TAGS = "syndie.gui.rechoosersearch.tags";
+    private static final String T_TAGS_TOOLTIP = "syndie.gui.rechoosersearch.tags.tooltip";
+    private static final String T_HASH = "syndie.gui.rechoosersearch.hash";
+    private static final String T_HASH_TOOLTIP = "syndie.gui.rechoosersearch.hash.tooltip";
+    private static final String T_PUBLICPOST = "syndie.gui.rechoosersearch.publicpost";
+    private static final String T_PUBLICPOST_TOOLTIP = "syndie.gui.rechoosersearch.publicpost.tooltip";
+    private static final String T_SEARCH = "syndie.gui.rechoosersearch.search";
+    
+    public void translate(TranslationRegistry registry) {
+        _searchTags.setText(registry.getText(T_TAGS, "Tags: "));
+        _name.setToolTipText(registry.getText(T_NAME_TOOLTIP, "the channel name must start with this string"));
+        _root.setText(registry.getText(T_ROOT, "Forum search criteria:"));
+        _searchCriteria.setText(registry.getText(T_NAME, "Name: "));
+        _tags.setToolTipText(registry.getText(T_TAGS_TOOLTIP, "-tag excludes, +tag requires all, without a prefix requires one or more"));
+        _searchHash.setText(registry.getText(T_HASH, "Hash: "));
+        _hash.setToolTipText(registry.getText(T_HASH_TOOLTIP, "the channel's hash must start with this string"));
+        _publicPost.setText(registry.getText(T_PUBLICPOST, "anyone can post?"));
+        _publicPost.setToolTipText(registry.getText(T_PUBLICPOST_TOOLTIP, "if true, include channels that anyone is allowed to post to"));
+        _search.setText(registry.getText(T_SEARCH, "Search"));
+                
     }
 }
