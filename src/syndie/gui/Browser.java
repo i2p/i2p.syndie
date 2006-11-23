@@ -117,6 +117,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
+        _tabs.setSimple(false);
         _tabs.setMinimizeVisible(false);
         _tabs.setMinimumCharacters(8);
         _tabs.setUnselectedImageVisible(true);
@@ -136,8 +137,6 @@ public class Browser implements UI, BrowserControl, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
         });
         
-        _sash.setWeights(new int[] { 25, 75 });
-        
         _statusRow = new Composite(_shell, SWT.BORDER);
         _statusRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _statusRow.setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -155,10 +154,17 @@ public class Browser implements UI, BrowserControl, Translatable {
         
         _translation.register(this);
         
-        _bookmarks.viewStartupItems();
+        debugMessage("=tabs: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        _sash.setWeights(new int[] { 20, 80 });
         
-        _shell.pack();
-        _shell.setSize(_shell.computeSize(800, 600));
+        debugMessage("=tabs weghted: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        //_shell.pack();
+        debugMessage("=tabs packed: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        _shell.setSize(_shell.computeSize(800, 500));
+        debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        _bookmarks.viewStartupItems();
+        debugMessage("=tabs w items: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        
         _shell.setVisible(false);
     }
     

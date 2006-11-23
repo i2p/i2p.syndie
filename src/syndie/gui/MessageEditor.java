@@ -964,5 +964,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
         
         if (_author == null)
             _controlAuthor.setText(registry.getText(T_AUTHOR_UNKNOWN, "author..."));
+        
+        _root.pack(true);
     }
 }

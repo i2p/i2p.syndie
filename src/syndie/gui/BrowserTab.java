@@ -12,6 +12,7 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import syndie.data.ChannelInfo;
@@ -81,8 +82,10 @@ abstract class BrowserTab {
         _scroll.setExpandVertical(true);
         debug("constructing base browser tab: initializing components");
         initComponents();
-        _scroll.setMinSize(_root.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        debug("constructing base browser tab: configuring the item");
+        Rectangle sz2 = browser.getTabFolder().getClientArea();
+        Point sz1 = _root.computeSize(sz2.width, sz2.height);
+        _scroll.setMinSize(sz1);
+        debug("**constructing base browser tab: configuring the item: " + sz1 +" / " + sz2 + " - " + getClass().getName());
         configItem();
     }
     
