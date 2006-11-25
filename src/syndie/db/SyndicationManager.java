@@ -160,6 +160,7 @@ public class SyndicationManager {
         String baseUrl = archive.getURI().getURL();
         if (baseUrl == null) return;
 
+        _ui.debugMessage("fetchIndex: " + idx + " started");
         fireIndexStatus(archive.getName(), INDEX_STATUS_START, null);
         
         String proxyHost = archive.getCustomProxyHost();
@@ -216,6 +217,7 @@ public class SyndicationManager {
         }
 	if (includeForceDownload) url = url + "?forcedownload";
 
+        _ui.debugMessage("fetchIndex: " + idx + " fetching: " + url);
         fireIndexStatus(archive.getName(), INDEX_STATUS_FETCHING, null);
 
         boolean shouldProxy = (proxyHost != null) && (proxyPort > 0);
@@ -223,10 +225,12 @@ public class SyndicationManager {
         File out = null;
         if (baseUrl.startsWith("/")) {
             out = new File(url);
+            _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
             fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             archiveWasRemote = false;
         } else if (baseUrl.startsWith("file://")) {
             out = new File(baseUrl.substring("file://".length()));
+            _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
             fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             archiveWasRemote = false;
         } else {
@@ -237,11 +241,12 @@ public class SyndicationManager {
                 boolean fetched = get.fetch();
                 if (!fetched) {
                     _ui.errorMessage("Fetch failed of " + url);
+                    _ui.debugMessage("fetchIndex: " + idx + " fetch error: " + url);
                     fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
                     out.delete();
                     return;
                 }
-                _ui.statusMessage("Fetch complete");
+                _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
                 fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             } catch (IOException ioe) {
                 _ui.errorMessage("Error pulling the index", ioe);
@@ -256,11 +261,14 @@ public class SyndicationManager {
                 archive.setIndex(index);
                 HTTPSyndicator syndicator = new HTTPSyndicator(baseUrl, proxyHost, proxyPort, _client, _ui, index, false); //opts.getOptBoolean("reimport", false));
                 archive.setSyndicator(syndicator);
+                _ui.debugMessage("fetchIndex: " + idx + " index loaded");
                 fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
                 ArchiveDiff diff = index.diff(_client, _ui, new Opts());
                 archive.setDiff(diff);
+                _ui.debugMessage("fetchIndex: " + idx + " diff loaded");
                 fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
             } else {
+                _ui.debugMessage("fetchIndex: " + idx + " load error");
                 fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, "index was not valid");
             }
         } catch (IOException ioe) {

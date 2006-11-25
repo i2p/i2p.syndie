@@ -1,6 +1,8 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -41,7 +43,9 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private TableColumn _colNumNewMsgs;
     private TableColumn _colLastSync;
     private TableColumn _colCustomProxy;
+    private TableColumn _colError;
     private ArrayList _names;
+    private Map _errors;
     private Button _fetch;
     private Label _proxyHostLabel;
     private Text _proxyHost;
@@ -65,6 +69,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _manager = _browser.getSyndicationManager();
         _manager.addListener(this);
         _names = new ArrayList(16);
+        _errors = new HashMap();
         initComponents();
         redrawArchives();
     }
@@ -113,6 +118,11 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             String numNewMsgs = (diff == null ? "?" : diff.totalNewMessages+"");
             String lastSyncStr = (lastSync > 0 ? Constants.getDate(lastSync) : "");
             String proxy = (proxyHost != null && proxyHost.trim().length() > 0 ? proxyHost + ":" + proxyPort : "");
+            String error = (String)_errors.get(name);
+            if (error == null)
+                error = "";
+            else
+                error = error.trim();
             
             _browser.getUI().debugMessage("archive row: " + name + "/" + numForums + "/" + numMsgs + "/" + numNewForums + "/" + numNewMsgs + "/" + lastSyncStr + "/" + proxy);
             
@@ -125,6 +135,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             row.setText(5, numNewMsgs);
             row.setText(6, lastSyncStr);
             row.setText(7, proxy);
+            row.setText(8, error);
             _names.add(name);
         }
         _browser.getUI().debugMessage("archive rows: " + _names.size());
@@ -140,6 +151,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colNumNewMsgs.pack();
         _colLastSync.pack();
         _colCustomProxy.pack();
+        _colError.pack();
         _colName.pack();// pack last
         
         _table.setRedraw(true);
@@ -158,6 +170,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colNumNewMsgs = new TableColumn(_table, SWT.LEFT);
         _colLastSync = new TableColumn(_table, SWT.LEFT);
         _colCustomProxy = new TableColumn(_table, SWT.LEFT);
+        _colError = new TableColumn(_table, SWT.LEFT);
         _table.setHeaderVisible(true);
         
         _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
@@ -165,6 +178,10 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         
         _fetch = new Button(_root, SWT.PUSH);
         _fetch.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _fetch.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fetchSelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fetchSelected(); }
+        });
         
         _proxyHostLabel = new Label(_root, SWT.NONE);
         _proxyHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -236,6 +253,14 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         }
     }
     
+    private void fetchSelected() {
+        ArrayList names = getSelectedNames();
+        for (int i = 0; i < names.size(); i++) {
+            int archive = _manager.getArchiveNum((String)names.get(i));
+            _manager.fetchIndex(archive);
+        }
+    }
+    
     private ArrayList getSelectedNames() {
         ArrayList rv = new ArrayList();
         int indexes[] = _table.getSelectionIndices();
@@ -262,6 +287,8 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private static final String T_LASTSYNC_TOOLTIP = "syndie.gui.syndicationarchiveview.lastsync_tooltip";
     private static final String T_CUSTOMPROXY = "syndie.gui.syndicationarchiveview.customproxy";
     private static final String T_CUSTOMPROXY_TOOLTIP = "syndie.gui.syndicationarchiveview.customproxy_tooltip";
+    private static final String T_ERROR = "syndie.gui.syndicationarchiveview.error";
+    private static final String T_ERROR_TOOLTIP = "syndie.gui.syndicationarchiveview.error_tooltip";
     
     private static final String T_SYNC = "syndie.gui.syndicationarchiveview.sync";
     private static final String T_SYNC_TOOLTIP = "syndie.gui.syndicationarchiveview.sync_tooltip";
@@ -294,6 +321,8 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colLastSync.setToolTipText(registry.getText(T_LASTSYNC_TOOLTIP, "When did we last fetch their index?"));
         _colCustomProxy.setText(registry.getText(T_CUSTOMPROXY, "proxy"));
         _colCustomProxy.setToolTipText(registry.getText(T_CUSTOMPROXY_TOOLTIP, "Proxy override"));
+        _colError.setText(registry.getText(T_ERROR, ""));
+        _colError.setToolTipText(registry.getText(T_ERROR_TOOLTIP, "Any error from the last index sync"));
         
         _fetch.setText(registry.getText(T_SYNC, "sync"));
         _fetch.setToolTipText(registry.getText(T_SYNC_TOOLTIP, "Fetch the selected archive indexes"));
@@ -314,6 +343,11 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         redrawArchives(newName);
     }
     public void archiveIndexStatus(SyndicationManager mgr, String archiveName, int status, String msg) {
+        if (msg != null) {
+            _errors.put(archiveName, msg);
+        } else {
+            _errors.put(archiveName, "");
+        }
         redrawArchives(archiveName);
     }
 
