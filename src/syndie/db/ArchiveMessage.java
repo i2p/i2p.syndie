@@ -10,7 +10,6 @@ public class ArchiveMessage {
     private long _recvDate;
     private long _entrySize;
     private int _flags;
-    private boolean _isNew;
     private Hash _primaryScope;
     
     /** is the post authorized */
@@ -38,4 +37,13 @@ public class ArchiveMessage {
     void setEntrySize(long size) { _entrySize = size; }
     void setFlags(int flags) { _flags = flags; }
     void setPrimaryScope(Hash channel) { _primaryScope = channel; }
+    
+    /** true if they refer to the same message */
+    public boolean equals(Object o) {
+        ArchiveMessage msg = (ArchiveMessage)o;
+        if ((msg.getPrimaryScope() == null) || (getPrimaryScope() == null))
+            return msg == this;
+        return (msg.getPrimaryScope().equals(getPrimaryScope()) && (msg.getMessageId() == getMessageId()));
+    }
+    public int hashCode() { return (getPrimaryScope() == null ? 0 : getPrimaryScope().hashCode()) ^ ((int)getMessageId()); }
 }

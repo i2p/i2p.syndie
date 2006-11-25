@@ -16,7 +16,7 @@ public class ArchiveChannel {
     private List _unauthMessageEntries;
     private long _knownMessageCount;
     private long _entrySize;
-    private UI _ui;
+    protected UI _ui;
 
     public ArchiveChannel(UI ui) {
         _ui = ui;
@@ -25,6 +25,7 @@ public class ArchiveChannel {
         _unauthMessageEntries = null;
         _knownMessageCount = -1;
     }
+    
     public byte[] getScope() { return _scope; }
     public long getVersion() { return _metaVersion; }
     public long getReceiveDate() { return _receiveDate; }
@@ -229,4 +230,17 @@ public class ArchiveChannel {
             throw new IOException("Invalid number: " + dfe.getMessage());
         }
     }
+
+    public boolean isKnownMessage(ArchiveMessage msg) { return _messageEntries.contains(msg); }
+    public void addMessage(ArchiveMessage msg) { _messageEntries.add(msg); }
+    public boolean isKnownPseudoAuthorizedMessage(ArchiveMessage msg) { return _pseudoAuthorizedMessages.contains(msg); }
+    public void addPseudoAuthorizedMessage(ArchiveMessage msg) { _pseudoAuthorizedMessages.add(msg); }
+    public boolean isKnownUnauthorizedMessage(ArchiveMessage msg) { return _unauthMessageEntries.contains(msg); }
+    public void addUnauthorizedMessage(ArchiveMessage msg) { _unauthMessageEntries.add(msg); }
+    
+    public boolean equals(Object o) {
+        ArchiveChannel chan = (ArchiveChannel)o;
+        return DataHelper.eq(chan.getScope(), getScope()) && (chan.getVersion() == getVersion());
+    }
+    public int hashCode() { return DataHelper.hashCode(getScope()) ^ (int)getVersion(); }
 }

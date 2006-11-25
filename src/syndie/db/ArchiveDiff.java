@@ -7,21 +7,25 @@ import java.util.*;
  */
 public class ArchiveDiff {
     // class fields are being exposed directly contrary to good standards so that
-    // the archive index and syndicators can simply rework the data.  it is
-    // package scoped though, so the tight coupling isn't too bad
+    // the archive index and syndicators can simply rework the data.
+    
+    /** total # of channels */
+    public int totalChannels;
+    /** total # of messages */
+    public int totalMessages;
     
     /** how many new channels the index has that we do not */
-    int totalNewChannels;
+    public int totalNewChannels;
     /** how many new messages the index has that we do not */
-    int totalNewMessages;
+    public int totalNewMessages;
     /** how many new messages they have that we do not */
-    int totalNewMessagesOnKnownChannels;
+    public int totalNewMessagesOnKnownChannels;
     /** hopefully pretty self-explanatory */
-    int totalKnownChannelsWithNewMessages;
+    public int totalKnownChannelsWithNewMessages;
     /** channels that we know whose metadata has been updated remotely */
-    int totalUpdatedChannels;
+    public int totalUpdatedChannels;
     /** if we wanted to only fetch things we did not already have, how much data would we fetch? */
-    long fetchNewBytes;
+    public long fetchNewBytes;
     /** if we wanted to only fetch things we did not already have, how many metadata messages would we fetch? contains SyndieURIs*/
     List fetchNewMetadata;
     /** if we wanted to only fetch things we did not already have, how many posts would we fetch? contains SyndieURIs */
@@ -29,7 +33,7 @@ public class ArchiveDiff {
     /** if we wanted to only fetch things we did not already have, how many replies would we fetch?  contains SyndieURIs */
     List fetchNewReplies;
     /** if we wanted to only fetch posts on channels known locally, how much data would we fetch?  contains SyndieURIs */
-    long fetchKnownBytes;
+    public long fetchKnownBytes;
     /** if we wanted to only fetch posts on channels known locally, how many metadata messages would we fetch?  contains SyndieURIs */
     List fetchKnownMetadata;
     /** if we wanted to only fetch posts on channels known locally, how many posts would we fetch?  contains SyndieURIs */
@@ -37,7 +41,7 @@ public class ArchiveDiff {
     /** if we wanted to only fetch posts on channels known locally, how many replies would we fetch?  contains SyndieURIs */
     List fetchKnownReplies;
     /** if we wanted to only fetch updated metatdata, how much data would we fetch?  */
-    long fetchMetaBytes;
+    public long fetchMetaBytes;
     /** if we wanted to only fetch updated metadata, how many metadata messages would we fetch?  contains SyndieURIs */
     List fetchMetaMessages;
     /**
@@ -45,7 +49,7 @@ public class ArchiveDiff {
      * we already have it locally (as a crude form of information-theoretic anonymity via
      * private information retrieval), how much data would we need to download?
      */
-    long fetchPIRBytes;
+    public long fetchPIRBytes;
     /**
      * if we wanted to fetch all of the information the archive marks as "new", even if
      * we already have it locally (as a crude form of information-theoretic anonymity via
@@ -65,7 +69,7 @@ public class ArchiveDiff {
      */
     List fetchPIRReplies;
     /** if we wanted to only fetch new unauthorized posts, how much data would we fetch? */
-    long fetchNewUnauthorizedBytes;
+    public long fetchNewUnauthorizedBytes;
     /** if we wanted to only fetch new unauthorized posts, how many metadata messages would we fetch? */
     List fetchNewUnauthorizedMetadata;
     /** if we wanted to only fetch new unauthorized posts, how many posts would we fetch? */
@@ -74,7 +78,7 @@ public class ArchiveDiff {
     List fetchNewUnauthorizedReplies;
     
     /** what was the max message size used when calculating the diff */
-    long maxSizeUsed;
+    public long maxSizeUsed;
 
     public ArchiveDiff() {
         fetchNewMetadata = new ArrayList();

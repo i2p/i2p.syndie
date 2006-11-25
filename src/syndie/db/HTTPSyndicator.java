@@ -78,14 +78,15 @@ public class HTTPSyndicator {
 
     /**
      * fetch the posts/replies/metadata from the archive, saving them to disk
-     * but not attempting to import them yet
+     * but not attempting to import them yet.  returns true if all of the urls
+     * were fetched
      */
     public boolean fetch(List syndieURIs) {
         _syndieURIs = syndieURIs;
         if (_archiveURL.startsWith("https")) {
             fetchSSL();
         } else if (_archiveURL.startsWith("http")) {
-            fetchHTTP();
+            return fetchHTTP();
         } else {
             fetchFiles();
         }
@@ -96,7 +97,7 @@ public class HTTPSyndicator {
         // URL fetch
         _ui.errorMessage("SSL not yet supported");
     }
-    private void fetchHTTP() {
+    private boolean fetchHTTP() {
         // eepget-driven, one at a time via EepGetScheduler
         if (!_archiveURL.endsWith("/"))
             _archiveURL = _archiveURL + "/";
@@ -136,6 +137,7 @@ public class HTTPSyndicator {
         //while (lsnr.transfersPending()) {
         //    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
         //}
+        return (_syndieURIs.size() == files.size());
     }
     
     private class HTTPStatusListener implements EepGet.StatusListener {

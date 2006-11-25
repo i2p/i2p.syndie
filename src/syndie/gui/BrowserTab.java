@@ -35,6 +35,7 @@ abstract class BrowserTab {
     static final String TYPE_LOGS = "logs";
     static final String TYPE_META = "meta";
     static final String TYPE_MANAGE = "manage";
+    static final String TYPE_SYNDICATE = "syndicate";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -65,6 +66,8 @@ abstract class BrowserTab {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {
             return new LogTab(browser, uri);
+        } else if (TYPE_SYNDICATE.equals(uri.getType())) {
+            return new SyndicationTab(browser, uri);
         }
         
         return null;

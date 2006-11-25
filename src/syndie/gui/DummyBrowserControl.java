@@ -5,6 +5,7 @@ import org.eclipse.swt.custom.CTabFolder;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.SyndicationManager;
 import syndie.db.UI;
 
 /**
@@ -40,4 +41,7 @@ public class DummyBrowserControl implements BrowserControl {
     
     public void showWaitCursor(boolean show) {}
     public TranslationRegistry getTranslationRegistry() { return null; }
+
+    public SyndieURI createSyndicationURI() { return null; }
+    public SyndicationManager getSyndicationManager() { return null; }
 }

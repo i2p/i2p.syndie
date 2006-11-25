@@ -43,9 +43,14 @@ public class ImageUtil {
     /** shown in place of a nonexistant image when rendering */
     public static final Image ICON_IMAGE_UNKNOWN = createImageFromResource("iconUnknown.png");
     
+    public static final Image ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
+    public static final Image ICON_SYNDICATE_TYPE_INDIRECT = createImageFromResource("iconIndirect.png");
+    public static final Image ICON_SYNDICATE_TYPE_FREENET = createImageFromResource("iconFreenet.png");
+    
     public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
+    public static final Image ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, 16, 16, false);
 
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
@@ -59,9 +64,14 @@ public class ImageUtil {
         _indisposableImages.add(ICON_LINK_END);
         _indisposableImages.add(ICON_IMAGE_UNKNOWN);
         
+        _indisposableImages.add(ICON_SYNDICATE_TYPE_DIRECT);
+        _indisposableImages.add(ICON_SYNDICATE_TYPE_INDIRECT);
+        _indisposableImages.add(ICON_SYNDICATE_TYPE_FREENET);
+        
         _indisposableImages.add(ICON_TAB_EDIT);
         _indisposableImages.add(ICON_TAB_TEXTUI);
         _indisposableImages.add(ICON_TAB_LOGS);
+        _indisposableImages.add(ICON_TAB_SYNDICATE);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

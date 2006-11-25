@@ -13,12 +13,15 @@ import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -34,6 +37,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.db.SyndicationManager;
 import syndie.gui.TranslationRegistry;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -52,6 +56,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private DBClient _client;
     private TextEngine _engine;
     private TranslationRegistry _translation;
+    private SyndicationManager _syndicationManager;
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
@@ -69,6 +74,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private MenuItem _postMenuNew;
     private MenuItem _postMenuResume;
     private MenuItem _syndicateMenuRoot;
+    private MenuItem _syndicateMenuItem;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
     private MenuItem _advancedMenuLogs;
@@ -95,6 +101,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _commands = new ArrayList();
         _initialized = false;
         _translation = new TranslationRegistry();
+        _syndicationManager = new SyndicationManager(_client, this);
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
@@ -151,16 +158,17 @@ public class Browser implements UI, BrowserControl, Translatable {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-        
         _translation.register(this);
         
         debugMessage("=tabs: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         _sash.setWeights(new int[] { 20, 80 });
         
         debugMessage("=tabs weghted: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        //_shell.pack();
+        _shell.pack();
         debugMessage("=tabs packed: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        _shell.setSize(_shell.computeSize(800, 500));
+        final Point min = _shell.computeSize(SWT.DEFAULT, 500);
+        _shell.setSize(min);//800, 500));
+        
         debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         _bookmarks.viewStartupItems();
         debugMessage("=tabs w items: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -183,8 +191,10 @@ public class Browser implements UI, BrowserControl, Translatable {
             // show a login prompt
             LoginPrompt prompt = new LoginPrompt(_client, this);
             prompt.login();
-        } else if (!_shell.isVisible()) {
-            _shell.open();
+        } else {
+            _syndicationManager.loadArchives();
+            if (!_shell.isVisible())
+                _shell.open();
         }
     }
     
@@ -215,6 +225,13 @@ public class Browser implements UI, BrowserControl, Translatable {
         _postMenuResume = new MenuItem(postMenu, SWT.PUSH);
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        Menu syndicateMenu = new Menu(_syndicateMenuRoot);
+        _syndicateMenuRoot.setMenu(syndicateMenu);
+        _syndicateMenuItem = new MenuItem(syndicateMenu, SWT.PUSH);
+        _syndicateMenuItem.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showSyndicate(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showSyndicate(); }
+        });
         
         _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu advancedMenu = new Menu(_advancedMenuRoot);
@@ -390,6 +407,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
     private void showLogs() { view(createLogsURI()); }
+    private void showSyndicate() { view(createSyndicationURI()); }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
@@ -415,9 +433,11 @@ public class Browser implements UI, BrowserControl, Translatable {
     
     public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
+    public SyndieURI createSyndicationURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
+    public SyndicationManager getSyndicationManager() { return _syndicationManager; }
 
     private void bookmarkTab() {
         CTabItem item = _tabs.getSelection();
@@ -549,6 +569,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
+    private static final String T_SYNDICATE_MENU_ITEM = "syndie.gui.browser.syndicatemenu.item";
     private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
     private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
@@ -586,6 +607,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _postMenuResume.setText(registry.getText(T_POST_MENU_RESUME, "Resume existing"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "Syndicate"));
+        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "Now"));
 
         _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "Advanced"));
         _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "Logs"));

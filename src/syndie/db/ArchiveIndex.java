@@ -17,13 +17,13 @@ public class ArchiveIndex {
     /** default max file size to include in the index when filtering */
     static final long DEFAULT_MAX_SIZE = 32*1024;
     
-    private ArchiveIndex() {
+    protected ArchiveIndex() {
         _channelEntries = new ArrayList();
     }
     
     public int getChannelCount() { return _channelEntries.size(); }
     public ArchiveChannel getChannel(int index) { return (ArchiveChannel)_channelEntries.get(index); }
-    private void addChannel(ArchiveChannel channel) { _channelEntries.add(channel); }
+    protected void addChannel(ArchiveChannel channel) { _channelEntries.add(channel); }
 
     public ArchiveMessage getMessage(SyndieURI uri) {
         ArchiveChannel chan = getChannel(uri);
@@ -279,7 +279,7 @@ public class ArchiveIndex {
         ArchiveDiff rv = new ArchiveDiff();
         List banned = client.getBannedChannels();
         for (int i = 0; i < _channelEntries.size(); i++) {
-            ArchiveChannel chan = (ArchiveChannel)_channelEntries.get(i);            
+            ArchiveChannel chan = (ArchiveChannel)_channelEntries.get(i);
 
             if (chan.getEntrySize() > maxSize) {
                 ui.debugMessage("Indexed channel metadata is too large (" + chan.getEntrySize() + " bytes)");
@@ -291,6 +291,8 @@ public class ArchiveIndex {
                 ui.debugMessage("Skipping banned channel " + Base64.encode(scope));
                 continue;
             }
+            
+            rv.totalChannels++;
             
             if (chan.getUnauthorizedMessageCount() > 0) {
                 diffUnauth(client, ui, opts, chan, banned, rv);
@@ -330,6 +332,7 @@ public class ArchiveIndex {
                 ArchiveMessage msg = (ArchiveMessage)chanMsgs.get(j);
                 SyndieURI msgURI = SyndieURI.createMessage(msg.getPrimaryScope(), msg.getMessageId());
                 if (!banned.contains(msg.getPrimaryScope())) {
+                    rv.totalMessages++;
                     long scopeId = client.getChannelId(msg.getPrimaryScope());
                     long msgId = client.getMessageId(scopeId, msg.getMessageId());
                     if ( (msgId < 0) && (msg.getEntrySize() <= maxSize) ) {

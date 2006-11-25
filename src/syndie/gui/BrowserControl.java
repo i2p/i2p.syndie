@@ -2,6 +2,7 @@ package syndie.gui;
 
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
+import syndie.db.SyndicationManager;
 import syndie.db.UI;
 import syndie.data.SyndieURI;
 import net.i2p.data.Hash;
@@ -23,6 +24,7 @@ public interface BrowserControl {
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
     public SyndieURI createManageURI(Hash forum);
+    public SyndieURI createSyndicationURI();
 
     public void showWaitCursor(boolean wait);
     
@@ -31,6 +33,8 @@ public interface BrowserControl {
     public DBClient getClient();
 
     public CTabFolder getTabFolder();
+    
+    public SyndicationManager getSyndicationManager();
 
     public void addUIListener(Browser.UIListener lsnr);
     public void removeUIListener(Browser.UIListener lsnr);
