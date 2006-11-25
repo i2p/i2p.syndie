@@ -30,7 +30,7 @@ import syndie.data.*;
  * if it succeeds, delete the file
  * display the summary of the import process
  */
-public class HTTPSyndicator {
+public class HTTPSyndicator implements Cloneable {
     private String _archiveURL;
     private String _proxyHost;
     private int _proxyPort;
@@ -75,7 +75,11 @@ public class HTTPSyndicator {
         _postURLOverride = null;
         _postPassphrase = null;
     }
-
+    
+    public Object clone() {
+        return new HTTPSyndicator(_archiveURL, _proxyHost, _proxyPort, _client, _ui, _remoteIndex, _forceReimport);
+    }
+    
     /**
      * fetch the posts/replies/metadata from the archive, saving them to disk
      * but not attempting to import them yet.  returns true if all of the urls
@@ -252,7 +256,7 @@ public class HTTPSyndicator {
             try {
                 NestedUI nested = new NestedUI(_ui);
                 ok = imp.processMessage(nested, new FileInputStream(f), _client.getLoggedInNymId(), _client.getPass(), null, _forceReimport);
-                if (ok && (nested.getExitCode() >= 0) && (!imp.wasPBE()) ) {
+                if (imp.wasAlreadyImported() || (ok && (nested.getExitCode() >= 0) && (!imp.wasPBE())) ) {
                     _ui.debugMessage("Import successful for " + uri);
                     f.delete();
                     imported++;

@@ -85,6 +85,9 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         int top = _table.getTopIndex();
         if (top < 0) top = 0;
         
+        TableItem items[] = _table.getItems();
+        for (int i = 0; i < items.length; i++)
+            items[i].dispose();
         _table.removeAll();
         _names.clear();
         for (int i = 0; i < _manager.getArchiveCount(); i++) {
@@ -171,6 +174,8 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colLastSync = new TableColumn(_table, SWT.LEFT);
         _colCustomProxy = new TableColumn(_table, SWT.LEFT);
         _colError = new TableColumn(_table, SWT.LEFT);
+        _colName.setResizable(true);
+        _table.setLinesVisible(true);
         _table.setHeaderVisible(true);
         
         _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
@@ -247,14 +252,21 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             confirm.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Remove the archive from the monitored list?"));
             int rc = confirm.open();
             if (rc == SWT.YES) {
-                for (int i = 0; i < names.size(); i++)
-                    _manager.delete((String)names.get(i));
+                for (int i = 0; i < names.size(); i++) {
+                    String name = (String)names.get(i);
+                    _browser.getUI().debugMessage("Deleting " + name);
+                    _manager.delete(name);
+                    _names.remove(name);
+                }
+                _browser.getUI().debugMessage("Archives deleted");
             }
         }
     }
     
     private void fetchSelected() {
         ArrayList names = getSelectedNames();
+        if (names.size() == 0)
+            names = new ArrayList(_names);
         for (int i = 0; i < names.size(); i++) {
             int archive = _manager.getArchiveNum((String)names.get(i));
             _manager.fetchIndex(archive);
@@ -338,17 +350,20 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
 
     public void archiveAdded(SyndicationManager mgr, String name) { redrawArchives(name); }
-    public void archiveRemoved(SyndicationManager mgr, String name) { redrawArchives(); }
-    public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {
-        redrawArchives(newName);
+    public void archiveRemoved(SyndicationManager mgr, String name) { 
+        _browser.getUI().debugMessage("redraw after deleting " + name);
+        redrawArchives();
     }
-    public void archiveIndexStatus(SyndicationManager mgr, String archiveName, int status, String msg) {
+    public void archiveUpdated(SyndicationManager mgr, String oldName, final String newName) {
+        _root.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(newName); } });
+    }
+    public void archiveIndexStatus(SyndicationManager mgr, final String archiveName, int status, String msg) {
         if (msg != null) {
             _errors.put(archiveName, msg);
         } else {
             _errors.put(archiveName, "");
         }
-        redrawArchives(archiveName);
+        _root.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(archiveName); } });
     }
 
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.FetchRecord record) {}

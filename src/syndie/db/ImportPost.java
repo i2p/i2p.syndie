@@ -35,8 +35,9 @@ public class ImportPost {
     private boolean _authorized;
     private String _bodyPassphrase;
     private boolean _forceReimport;
+    private boolean _alreadyImported;
     
-    private ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
+    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
         _client = client;
         _ui = ui;
         _enc = enc;
@@ -45,7 +46,10 @@ public class ImportPost {
         _privateMessage = false;
         _bodyPassphrase = bodyPassphrase;
         _forceReimport = forceReimport;
+        _alreadyImported = false;
     }
+    
+    public boolean getAlreadyImported() { return _alreadyImported; }
     
     /*
      * The post message is ok if it is either signed by the channel's
@@ -57,7 +61,7 @@ public class ImportPost {
         ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
         return imp.process();
     }
-    private boolean process() {
+    public boolean process() {
         _uri = _enc.getHeaderURI(Constants.MSG_HEADER_POST_URI);
         if (_uri == null) {
             _ui.errorMessage("No URI in the post");
@@ -438,6 +442,7 @@ public class ImportPost {
                 msg = null;
             } else if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
                 _ui.debugMessage("Existing message: " + msg.getInternalId());
+                _alreadyImported = true;
                 return false;
             } else {
                 _ui.debugMessage("Existing message: " + msg.getInternalId());

@@ -43,7 +43,7 @@ public class SyndicationView implements Translatable {
         
         _pendingGroup = new Group(_root, SWT.NONE);
         _pendingGroup.setLayout(new FillLayout());
-        _pendingGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _pendingGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _pending = new SyndicationPendingView(_browser, _pendingGroup);
         

@@ -503,10 +503,10 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
         }
-        //if (msg != null)
-        //    System.err.println(msg);
-        //if (cause != null)
-        //    cause.printStackTrace();
+//        if (msg != null)
+//            System.err.println(msg);
+//        if (cause != null)
+//            cause.printStackTrace();
     }
 
     public void statusMessage(String msg) {
@@ -514,7 +514,7 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).statusMessage(msg);
         }
-        //System.out.println(msg);
+//        System.out.println(msg);
     }
     public void debugMessage(String msg) { debugMessage(msg, null); }
     public void debugMessage(String msg, Exception cause) {
@@ -522,10 +522,10 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
         }
-        //if (msg != null)
-        //    System.out.println(msg);
-        //if (cause != null)
-        //    cause.printStackTrace();
+//        if (msg != null)
+//            System.out.println(msg);
+//        if (cause != null)
+//            cause.printStackTrace();
     }
 
     public void commandComplete(int status, List location) {

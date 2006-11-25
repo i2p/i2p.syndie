@@ -42,8 +42,14 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void keyTraversed(TraverseEvent evt) {
         if (evt.detail == SWT.TRAVERSE_RETURN) {
             TreeItem selected = getSelected();
-            if (collapseOnReturn() && selected.getExpanded() && (selected.getItemCount() > 0))
-                selected.setExpanded(!selected.getExpanded());
+            if (collapseOnReturn() && selected.getExpanded() && (selected.getItemCount() > 0)) {
+                boolean expand = !selected.getExpanded();
+                selected.setExpanded(expand);
+                if (expand)
+                    expanded();
+                else
+                    collapsed();
+            }
             returnHit();
         }
     }
@@ -54,19 +60,27 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
             TreeItem selected = getSelected();
             if (selected.getExpanded()) {
                 selected.setExpanded(false);
+                collapsed();
             } else {
                 TreeItem parent = selected.getParentItem();
                 if (parent != null) {
                     parent.setExpanded(false);
+                    collapsed();
                     _tree.setSelection(parent);
                 }
             }
         } else if (evt.keyCode == SWT.ARROW_RIGHT) {
             TreeItem selected = getSelected();
             selected.setExpanded(true);
+            expanded();
         } else if (evt.character == ' ') {
             TreeItem selected = getSelected();
-            selected.setExpanded(!selected.getExpanded());
+            boolean expand = !selected.getExpanded();
+            selected.setExpanded(expand);
+            if (expand)
+                expanded();
+            else
+                collapsed();
         }
     }
 
@@ -76,6 +90,8 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void mouseDoubleClick(MouseEvent evt) { doubleclick(); }
     public void mouseDown(MouseEvent evt) {}
     public void mouseUp(MouseEvent evt) {}
+    public void collapsed() {}
+    public void expanded() {}
     
     protected TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
 }

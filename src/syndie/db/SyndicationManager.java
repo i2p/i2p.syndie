@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -25,6 +26,7 @@ public class SyndicationManager {
     private List _fetchRecords;
     private MergedArchiveIndex _mergedIndex;
     private ArchiveDiff _mergedDiff;
+    private int _concurrent;
             
     public static final int INDEX_STATUS_START = 0;
     public static final int INDEX_STATUS_FETCHING = 1;
@@ -34,13 +36,19 @@ public class SyndicationManager {
     public static final int INDEX_STATUS_FETCH_ERROR = 5;
     public static final int INDEX_STATUS_DIFF_OK = 6;
     
-    private static final int FETCH_SCHEDULED = 0;
-    private static final int FETCH_STARTED = 1;
-    private static final int FETCH_COMPLETE = 2;
-    private static final int FETCH_FAILED = 3;
-    private static final int FETCH_IMPORT_OK = 4;
-    private static final int FETCH_IMPORT_PBE = 5;
-    private static final int FETCH_IMPORT_CORRUPT = 6;
+    public static final int FETCH_SCHEDULED = 0;
+    public static final int FETCH_STARTED = 1;
+    public static final int FETCH_COMPLETE = 2;
+    public static final int FETCH_FAILED = 3;
+    public static final int FETCH_IMPORT_OK = 4;
+    public static final int FETCH_IMPORT_PBE = 5;
+    public static final int FETCH_IMPORT_CORRUPT = 6;
+    
+    public static final int STRATEGY_DELTA = 0;
+    public static final int STRATEGY_DELTAKNOWN = 1;
+    public static final int STRATEGY_PIR = 2;
+    public static final int STRATEGY_DEFAULT = STRATEGY_DELTA;
+    
 
     public SyndicationManager(DBClient client, UI ui) {
         _client = client;
@@ -51,6 +59,10 @@ public class SyndicationManager {
         _mergedIndex = null;
     }
     
+    /** 
+     * note that callbacks on this interface can be hit from any thread, so if they
+     * touch an SWT resource, they should do so via display.asyncExec(runnable)
+     */
     public interface SyndicationListener {
         public void archiveAdded(SyndicationManager mgr, String name);
         public void archiveRemoved(SyndicationManager mgr, String name);
@@ -145,7 +157,8 @@ public class SyndicationManager {
      * run this many concurrent http fetches/imports at a time
      */
     public void startFetching(int concurrentFetches) {
-        for (int i = 0; i < concurrentFetches; i++) {
+        for (int i = _concurrent; i < concurrentFetches; i++) {
+            _concurrent++;
             Thread t = new Thread(new Fetcher(), "Fetcher" + i);
             t.setDaemon(true);
             t.start();
@@ -243,7 +256,8 @@ public class SyndicationManager {
                     _ui.errorMessage("Fetch failed of " + url);
                     _ui.debugMessage("fetchIndex: " + idx + " fetch error: " + url);
                     fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
-                    out.delete();
+                    if (archiveWasRemote)
+                        out.delete();
                     return;
                 }
                 _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
@@ -251,7 +265,8 @@ public class SyndicationManager {
             } catch (IOException ioe) {
                 _ui.errorMessage("Error pulling the index", ioe);
                 fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, ioe.getMessage());
-                out.delete();
+                if (archiveWasRemote)
+                    out.delete();
                 return;
             }
         }
@@ -292,6 +307,68 @@ public class SyndicationManager {
         synchronized (_fetchRecords) {
             _fetchRecords.add(rec);
             _fetchRecords.notifyAll();
+        }
+    }
+    
+    /** 
+     * queue up the fetch for entries matching the given strategy, as well as pushes
+     * @param maxkb don't pull posts larger than this size
+     * @param strategy STRATEGY_* to determine which entries to pull
+     * @param push should we push too
+     */
+    public void sync(int maxkb, int strategy, boolean push) {
+        HashSet uris = new HashSet();
+        switch (strategy) {
+            case STRATEGY_DELTAKNOWN:
+                for (int i = 0; i < _archives.size(); i++) {
+                    NymArchive archive = (NymArchive)_archives.get(i);
+                    ArchiveDiff diff = archive.getDiff();
+                    if (diff != null) {
+                        List toFetch = diff.getFetchKnownURIs(true);
+                        for (int j = 0; j < toFetch.size(); j++) {
+                            SyndieURI uri = (SyndieURI)toFetch.get(j);
+                            if (uris.add(uri)) {
+                                fetch(archive.getName(), uri);
+                            }
+                        }
+                    }
+                }
+                break;
+            case STRATEGY_PIR:
+                for (int i = 0; i < _archives.size(); i++) {
+                    NymArchive archive = (NymArchive)_archives.get(i);
+                    ArchiveDiff diff = archive.getDiff();
+                    if (diff != null) {
+                        List toFetch = diff.getFetchPIRURIs();
+                        for (int j = 0; j < toFetch.size(); j++) {
+                            SyndieURI uri = (SyndieURI)toFetch.get(j);
+                            if (uris.add(uri)) {
+                                fetch(archive.getName(), uri);
+                            }
+                        }
+                    }
+                }
+                break;
+            case STRATEGY_DELTA:
+            default:
+                for (int i = 0; i < _archives.size(); i++) {
+                    NymArchive archive = (NymArchive)_archives.get(i);
+                    ArchiveDiff diff = archive.getDiff();
+                    if (diff != null) {
+                        List toFetch = diff.getFetchNewURIs(true);
+                        for (int j = 0; j < toFetch.size(); j++) {
+                            SyndieURI uri = (SyndieURI)toFetch.get(j);
+                            if (uris.add(uri)) {
+                                fetch(archive.getName(), uri);
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+        
+        if (push) {
+            // ...
         }
     }
     
@@ -553,6 +630,8 @@ public class SyndicationManager {
             stmt.close();
             stmt = null;
             
+            _archives.remove(getArchive(name));
+            
             for (int i = 0; i < _listeners.size(); i++) {
                 SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
                 lsnr.archiveRemoved(this, name);
@@ -706,7 +785,7 @@ public class SyndicationManager {
         private String _archiveName;
         private SyndieURI _uri;
         private int _status;
-        private String _pbePrompt;
+        private String _detail;
         
         public FetchRecord(String name, SyndieURI uri) {
             _archiveName = name;
@@ -717,10 +796,11 @@ public class SyndicationManager {
         NymArchive getArchive() { return SyndicationManager.this.getArchive(_archiveName); }
         public SyndieURI getURI() { return _uri; }
         public int getStatus() { return _status; }
+        public String getSource() { return _archiveName; }
         void setStatus(int status) { _status = status; }
-        /** PBE prompt, if the fetch succeeded but a passphrase is required to import it correctly */
-        public String getPrompt() { return _pbePrompt; }
-        void setPrompt(String prompt) { _pbePrompt = prompt; }
+        /** status message detail */
+        public String getDetail() { return _detail; }
+        void setDetail(String detail) { _detail = detail; }
     }
     
     private class Fetcher implements Runnable {
@@ -751,7 +831,10 @@ public class SyndicationManager {
         private void fetch(FetchRecord rec) {
             fireFetchStatusUpdated(rec); // scheduled-->start
             NymArchive archive = rec.getArchive();
-            HTTPSyndicator syndicator = archive.getSyndicator();
+            HTTPSyndicator template = archive.getSyndicator();
+            // the syndicator was built with sequential operation in mind, not multithreaded/reused,
+            // so just make another copy for our current sequence
+            HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
             ArrayList uris = new ArrayList(1);
             uris.add(rec.getURI());
             boolean fetchComplete = syndicator.fetch(uris);
@@ -761,11 +844,14 @@ public class SyndicationManager {
                 rec.setStatus(FETCH_FAILED);
             fireFetchStatusUpdated(rec);
             
+            if (!fetchComplete)
+                return;
+            
             int importCount = syndicator.importFetched();
             if (importCount == 1) {
                 rec.setStatus(FETCH_IMPORT_OK);
             } else if (syndicator.countMissingPassphrases() == 1) {
-                rec.setPrompt(syndicator.getMissingPrompt(0));
+                rec.setDetail(syndicator.getMissingPrompt(0));
                 rec.setStatus(FETCH_IMPORT_PBE);
             } else {
                 rec.setStatus(FETCH_IMPORT_CORRUPT);
@@ -793,9 +879,5 @@ public class SyndicationManager {
         public void attempting(String url) {
             _ui.debugMessage("Fetching " + url + "...");
         }
-    }
-
-    public int getFETCH_COMPLETE() {
-        return FETCH_COMPLETE;
     }
 }

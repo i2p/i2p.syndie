@@ -15,7 +15,7 @@ public class ArchiveIndex {
     private List _channelEntries;
 
     /** default max file size to include in the index when filtering */
-    static final long DEFAULT_MAX_SIZE = 32*1024;
+    public static final long DEFAULT_MAX_SIZE = 32*1024;
     
     protected ArchiveIndex() {
         _channelEntries = new ArrayList();
