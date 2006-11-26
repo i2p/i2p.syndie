@@ -1,6 +1,8 @@
 package syndie.gui;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 import net.i2p.I2PAppContext;
 import org.eclipse.swt.widgets.Display;
 import syndie.db.DBClient;
@@ -21,9 +23,12 @@ public class SWTUI {
         String root = TextEngine.getRootPath();
         if (args.length > 0)
             root = args[0];
+        StartupListener lsnr = new StartupListener();
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
         final Browser browser = new Browser(client);
-        final TextEngine engine = new TextEngine(client, browser);
+        browser.debugMessage("constructing engine");
+        final TextEngine engine = new TextEngine(client, browser, lsnr);
+        browser.debugMessage("engine constructed");
         browser.setEngine(engine);
         client.setDefaultUI(browser.getUI());
         
@@ -43,8 +48,8 @@ public class SWTUI {
         
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
-        try { Thread.sleep(2000); } catch (InterruptedException ie) {}
-        browser.debugMessage("starting the browser");
+        lsnr.waitFor("login");
+        browser.debugMessage("db login complete, starting browser...");
         browser.startup();
         browser.debugMessage("browser started");
         
@@ -53,6 +58,27 @@ public class SWTUI {
                 if (!d.readAndDispatch()) d.sleep(); 
             } catch (RuntimeException e) {
                 browser.errorMessage("Internal error", e);
+            }
+        }
+    }
+    
+    private static class StartupListener implements TextEngine.ScriptListener {
+        private Set _complete;
+        
+        public StartupListener() { _complete = new HashSet(); }
+        public void scriptComplete(String script) {
+            synchronized (_complete) { _complete.add(script); _complete.notifyAll(); }
+        }
+        public void waitFor(String scriptName) {
+            for (;;) {
+                try {
+                    synchronized (_complete) {
+                        if (_complete.contains(scriptName))
+                            return;
+                        else
+                            _complete.wait();
+                    }
+                } catch (InterruptedException ie) {}
             }
         }
     }

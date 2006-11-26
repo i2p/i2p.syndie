@@ -1,7 +1,7 @@
 package syndie.gui;
 
+import java.io.File;
 import java.net.URISyntaxException;
-import javax.print.attribute.URISyntax;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -12,6 +12,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
@@ -34,6 +35,9 @@ class SyndicationArchivePopup implements Translatable {
     private Text _url;
     private Button _freenetRadio;
     private Text _freenetKey;
+    private Button _fileRadio;
+    private Text _file;
+    private Button _fileBrowse;
     private Button _syndieRadio;
     private Text _syndie;
     private Label _proxyLabel;
@@ -51,6 +55,8 @@ class SyndicationArchivePopup implements Translatable {
     private SyndieURI _uri;
     private String _oldName;
     
+    private DirectoryDialog _browse;
+    
     public SyndicationArchivePopup(BrowserControl browser, Shell parent) {
         _browser = browser;
         _parent = parent;
@@ -66,6 +72,8 @@ class SyndicationArchivePopup implements Translatable {
         _urlRadio.setSelection(false);
         _freenetRadio.setSelection(false);
         _syndieRadio.setSelection(false);
+        _fileRadio.setSelection(false);
+        _file.setText("");
         _syndie.setText("");
         _freenetKey.setText("");
         _url.setText("");
@@ -92,10 +100,17 @@ class SyndicationArchivePopup implements Translatable {
                 else
                     _freenetKey.setText(url.substring(idx));
                 _freenetRadio.setSelection(true);
+            } else if ( url.startsWith("/") || 
+                        ((url.length() > 2) && (url.charAt(1) == ':') && (url.charAt(2) == '\\')) || 
+                        (url.startsWith("file://")) ) {
+                _file.setText(url);
+                _fileRadio.setSelection(true);
             } else {
                 _url.setText(url);
                 _urlRadio.setSelection(true);
             }
+        } else {
+            _urlRadio.setSelection(true);
         }
         
         if (proxy == null) {
@@ -126,22 +141,33 @@ class SyndicationArchivePopup implements Translatable {
         
         Composite target = new Composite(_shell, SWT.NONE);
         target.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        target.setLayout(new GridLayout(2, false));
+        target.setLayout(new GridLayout(3, false));
         
         _urlRadio = new Button(target, SWT.RADIO);
         _urlRadio.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _url = new Text(target, SWT.BORDER);
-        _url.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _url.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
         _freenetRadio = new Button(target, SWT.RADIO);
         _freenetRadio.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _freenetKey = new Text(target, SWT.BORDER);
-        _freenetKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _freenetKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        
+        _fileRadio = new Button(target, SWT.RADIO);
+        _fileRadio.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _file = new Text(target, SWT.BORDER);
+        _file.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _fileBrowse = new Button(target, SWT.PUSH);
+        _fileBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _fileBrowse.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { browse(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { browse(); }
+        });
         
         _syndieRadio = new Button(target, SWT.RADIO);
         _syndieRadio.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndie = new Text(target, SWT.BORDER);
-        _syndie.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _syndie.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
         Composite proxy = new Composite(_shell, SWT.NONE);
         proxy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
@@ -187,6 +213,9 @@ class SyndicationArchivePopup implements Translatable {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        
+        _browse = new DirectoryDialog(_shell, SWT.NONE);
+        _browse.setFilterPath(_browser.getClient().getRootDir().getPath());
         
         _browser.getTranslationRegistry().register(this);
     }
@@ -243,6 +272,19 @@ class SyndicationArchivePopup implements Translatable {
                     return;
                 }
             }
+        } else if (_fileRadio.getSelection()) {
+            String filename = _file.getText().trim();
+            if (filename.startsWith("file://"))
+                filename = filename.substring("file://".length());
+            File f = new File(filename);
+            if (!f.exists() || !f.isDirectory()) {
+                MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
+                box.setText(_browser.getTranslationRegistry().getText(T_ERROR, "Error"));
+                box.setMessage(_browser.getTranslationRegistry().getText(T_ERROR_BADFILE, "The file archive must point to the archive directory"));
+                box.open();
+                return;
+            } else {
+                uri = SyndieURI.createURL(f.getAbsolutePath());            }
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(_browser.getTranslationRegistry().getText(T_ERROR, "Error"));
@@ -280,9 +322,21 @@ class SyndicationArchivePopup implements Translatable {
             _browser.getSyndicationManager().add(name, uri, proxy, port, null, null);
         config("", null, null, -1);
     }
+    
     private void cancel() {
         config("", null, null, -1);
         _shell.setVisible(false);
+    }
+    
+    private void browse() {
+        String old = _file.getText().trim();
+        if (old.length() > 0)
+            _browse.setFilterPath(old);
+        String dir = _browse.open();
+        if (dir != null) {
+            _file.setText(dir);
+            _fileRadio.setSelection(true);
+        }
     }
 
     private static final String T_ERROR = "syndie.gui.syndicationarchivepopup.error";
@@ -292,12 +346,15 @@ class SyndicationArchivePopup implements Translatable {
     private static final String T_ERROR_NOSYNDIE = "syndie.gui.syndicationarchivepopup.error.nosyndie";
     private static final String T_ERROR_BADSYNDIE = "syndie.gui.syndicationarchivepopup.error.badsyndie";
     private static final String T_ERROR_BADPROXY = "syndie.gui.syndicationarchivepopup.error.badproxy";
+    private static final String T_ERROR_BADFILE = "syndie.gui.syndicationarchivepopup.error.badfile";
     private static final String T_ERROR_NOTARGET = "syndie.gui.syndicationarchivepopup.error.notarget";
     
     private static final String T_TITLE = "syndie.gui.syndicationarchivepopup.title";
     private static final String T_NAME = "syndie.gui.syndicationarchivepopup.name";
     private static final String T_URL = "syndie.gui.syndicationarchivepopup.url";
     private static final String T_FREENET = "syndie.gui.syndicationarchivepopup.freenet";
+    private static final String T_FILE = "syndie.gui.syndicationarchivepopup.file";
+    private static final String T_FILE_BROWSE = "syndie.gui.syndicationarchivepopup.file.browse";
     private static final String T_OTHER = "syndie.gui.syndicationarchivepopup.other";
     private static final String T_PROXY = "syndie.gui.syndicationarchivepopup.proxy";
     private static final String T_PROXY_DEFAULT = "syndie.gui.syndicationarchivepopup.default";
@@ -307,6 +364,8 @@ class SyndicationArchivePopup implements Translatable {
     private static final String T_PROXY_CUSTOM_PORT = "syndie.gui.syndicationarchivepopup.customport";
     private static final String T_OK = "syndie.gui.syndicationarchivepopup.ok";
     private static final String T_CANCEL = "syndie.gui.syndicationarchivepopup.cancel";
+    private static final String T_BROWSE = "syndie.gui.syndicationarchivepopup.browse";
+    private static final String T_BROWSE_MESSAGE = "syndie.gui.syndicationarchivepopup.browsemessage";
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_TITLE, "Archive"));
@@ -314,6 +373,8 @@ class SyndicationArchivePopup implements Translatable {
         _urlRadio.setText(registry.getText(T_URL, "HTTP archive URL: "));
         _freenetRadio.setText(registry.getText(T_FREENET, "Freenet archive URL: "));
         _syndieRadio.setText(registry.getText(T_OTHER, "Other archive URL: "));
+        _fileRadio.setText(registry.getText(T_FILE, "File: "));
+        _fileBrowse.setText(registry.getText(T_FILE_BROWSE, "Browse"));
         _proxyLabel.setText(registry.getText(T_PROXY, "Proxy: "));
         _proxyDefault.setText(registry.getText(T_PROXY_DEFAULT, "Default"));
         _proxyNone.setText(registry.getText(T_PROXY_NONE, "None"));
@@ -322,5 +383,7 @@ class SyndicationArchivePopup implements Translatable {
         _proxyCustomPortLabel.setText(registry.getText(T_PROXY_CUSTOM_PORT, "Port: "));
         _ok.setText(registry.getText(T_OK, "Save"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _browse.setMessage(registry.getText(T_BROWSE_MESSAGE, "Pick an archive directory containing an archive index-all.dat"));
+        _browse.setText(registry.getText(T_BROWSE, "Pick archive"));
     }
 }

@@ -78,6 +78,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _browser.getTranslationRegistry().unregister(this);
         _editPopup.dispose();
     }
+    public void shown() { redrawArchives(); }
     
     private void redrawArchives() { redrawArchives(null); }
     private void redrawArchives(String highlightName) {

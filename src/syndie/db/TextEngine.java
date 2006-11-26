@@ -34,8 +34,12 @@ public class TextEngine {
     private NestedGobbleUI _gobbleUI;
     private UI _realUI;
     private List _commandHistory;
+    private List _scriptListeners;
         
-    public TextEngine(String rootDir, UI ui) {
+    public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
+    public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
+        _scriptListeners = new ArrayList();
+        _scriptListeners.add(lsnr);
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
@@ -47,7 +51,10 @@ public class TextEngine {
         _client.runScript(_ui, "startup");
     }
 
-    public TextEngine(DBClient client, UI ui) {
+    public TextEngine(DBClient client, UI ui) { this(client, ui, null); }
+    public TextEngine(DBClient client, UI ui, ScriptListener lsnr) {
+        _scriptListeners = new ArrayList();
+        _scriptListeners.add(lsnr);
         _client = client;
         _realUI = new MenuUI(ui);
         _ui = _realUI;
@@ -65,6 +72,10 @@ public class TextEngine {
             _ui.statusMessage("Custom text engine is not yet logged in");
         }
         _client.runScript(_ui, "startup");
+    }
+    
+    public interface ScriptListener {
+        public void scriptComplete(String script);
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -465,6 +476,16 @@ public class TextEngine {
         } else if ("?".equalsIgnoreCase(cmd) || "help".equalsIgnoreCase(cmd)) {
             help();
             _ui.commandComplete(0, null);
+            return true;
+        } else if ("notifyscriptend".equals(cmd)) {
+            List args = opts.getArgs();
+            _ui.debugMessage("notifyscriptend found: " + args);
+            if (args.size() > 0) {
+                String script = (String)args.get(0);
+                _ui.debugMessage("notifying for " + script);
+                for (int i = 0; i < _scriptListeners.size(); i++)
+                    ((ScriptListener)_scriptListeners.get(i)).scriptComplete(script);
+            }
             return true;
         } else {
             return false;

@@ -24,12 +24,14 @@ public class SyndicationView implements Translatable {
     public SyndicationView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
+        browser.getSyndicationManager().loadArchives();
         initComponents();
     }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
     }
+    public void shown() { _archives.shown(); }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);

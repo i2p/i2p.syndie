@@ -11,6 +11,8 @@ import java.util.HashMap;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
+import org.eclipse.swt.graphics.Drawable;
+import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -46,6 +48,16 @@ public class ImageUtil {
     public static final Image ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
     public static final Image ICON_SYNDICATE_TYPE_INDIRECT = createImageFromResource("iconIndirect.png");
     public static final Image ICON_SYNDICATE_TYPE_FREENET = createImageFromResource("iconFreenet.png");
+    public static final Image ICON_SYNDICATE_STATUS_INPROGRESS = createImageFromResource("iconSynInProgress.png");
+    public static final Image ICON_SYNDICATE_STATUS_SCHEDULED = createImageFromResource("iconSynScheduled.png");
+    public static final Image ICON_SYNDICATE_STATUS_NOKEY = createImageFromResource("iconSynNoKey.png");
+    public static final Image ICON_SYNDICATE_STATUS_ERROR = createImageFromResource("iconSynError.png");
+    public static final Image ICON_SYNDICATE_STATUS_PBE = createImageFromResource("iconSynPBE.png");
+    public static final Image ICON_SYNDICATE_STATUS_OK = createImageFromResource("iconSynOk.png");
+    
+    public static final Image ICON_MSG_TYPE_NORMAL = createImageFromResource("iconMsgNormal.png");
+    public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
+    public static final Image ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
     
     public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, 16, 16, false);
@@ -67,6 +79,17 @@ public class ImageUtil {
         _indisposableImages.add(ICON_SYNDICATE_TYPE_DIRECT);
         _indisposableImages.add(ICON_SYNDICATE_TYPE_INDIRECT);
         _indisposableImages.add(ICON_SYNDICATE_TYPE_FREENET);
+        
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_ERROR);
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_INPROGRESS);
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_SCHEDULED);
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_NOKEY);
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_PBE);
+        _indisposableImages.add(ICON_SYNDICATE_STATUS_OK);
+        
+        _indisposableImages.add(ICON_MSG_TYPE_NORMAL);
+        _indisposableImages.add(ICON_MSG_TYPE_META);
+        _indisposableImages.add(ICON_MSG_TYPE_PRIVATE);
         
         _indisposableImages.add(ICON_TAB_EDIT);
         _indisposableImages.add(ICON_TAB_TEXTUI);
@@ -139,5 +162,14 @@ public class ImageUtil {
         loader.save(outBuf, SWT.IMAGE_PNG);
         //loader.save(outBuf, SWT.IMAGE_JPEG);
         return outBuf.toByteArray();
+    }
+    
+    public static int getWidth(String text, Drawable target) {
+        GC gc = new GC(target);
+        FontMetrics fm = gc.getFontMetrics();
+        int per = fm.getAverageCharWidth();
+        gc.dispose();
+        int rv = per * text.length();
+        return rv;
     }
 }

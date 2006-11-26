@@ -192,7 +192,7 @@ public class Browser implements UI, BrowserControl, Translatable {
             LoginPrompt prompt = new LoginPrompt(_client, this);
             prompt.login();
         } else {
-            _syndicationManager.loadArchives();
+            //_syndicationManager.loadArchives();
             if (!_shell.isVisible())
                 _shell.open();
         }
@@ -317,6 +317,7 @@ public class Browser implements UI, BrowserControl, Translatable {
             debugMessage("tab shown");
             _tabs.setSelection(tab.getTabItem());
             debugMessage("tab selected");
+            tab.tabShown();
         }
         showWaitCursor(false);
     }
@@ -503,10 +504,8 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
         }
-//        if (msg != null)
-//            System.err.println(msg);
-//        if (cause != null)
-//            cause.printStackTrace();
+        if ( (msg != null) || (cause != null) )
+            _client.logError(msg, cause);
     }
 
     public void statusMessage(String msg) {
@@ -514,7 +513,8 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).statusMessage(msg);
         }
-//        System.out.println(msg);
+        if (msg != null)
+            _client.logInfo(msg);
     }
     public void debugMessage(String msg) { debugMessage(msg, null); }
     public void debugMessage(String msg, Exception cause) {
@@ -522,10 +522,8 @@ public class Browser implements UI, BrowserControl, Translatable {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
         }
-//        if (msg != null)
-//            System.out.println(msg);
-//        if (cause != null)
-//            cause.printStackTrace();
+        if ( (msg != null) || (cause != null) )
+            _client.logDebug(msg, cause);
     }
 
     public void commandComplete(int status, List location) {

@@ -43,6 +43,7 @@ public class SyndicationManager {
     public static final int FETCH_IMPORT_OK = 4;
     public static final int FETCH_IMPORT_PBE = 5;
     public static final int FETCH_IMPORT_CORRUPT = 6;
+    public static final int FETCH_STOPPED = 7;
     
     public static final int STRATEGY_DELTA = 0;
     public static final int STRATEGY_DELTAKNOWN = 1;
@@ -661,6 +662,19 @@ public class SyndicationManager {
         return -1;
     }
     
+    public void stopFetching(SyndieURI uri) {
+        synchronized (_fetchRecords) {
+            for (int i = 0; i < _fetchRecords.size(); i++) {
+                FetchRecord record = (FetchRecord)_fetchRecords.get(i);
+                if (record.getURI().equals(uri)) {
+                    record.stop();
+                    break;
+                }
+            }
+            _fetchRecords.notifyAll();
+        }
+    }
+    
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
         _ui.debugMessage("Loading archives");
@@ -801,6 +815,20 @@ public class SyndicationManager {
         /** status message detail */
         public String getDetail() { return _detail; }
         void setDetail(String detail) { _detail = detail; }
+        void stop() { 
+            switch (_status) {
+                case FETCH_FAILED:
+                case FETCH_IMPORT_OK:
+                case FETCH_IMPORT_PBE:
+                case FETCH_IMPORT_CORRUPT:
+                    return; // already done
+                case FETCH_COMPLETE:
+                case FETCH_SCHEDULED:
+                case FETCH_STARTED:
+                default:
+                    _status = FETCH_STOPPED;
+            }
+        }
     }
     
     private class Fetcher implements Runnable {
@@ -830,6 +858,7 @@ public class SyndicationManager {
         }
         private void fetch(FetchRecord rec) {
             fireFetchStatusUpdated(rec); // scheduled-->start
+            if (rec.getStatus() == FETCH_STOPPED) return;
             NymArchive archive = rec.getArchive();
             HTTPSyndicator template = archive.getSyndicator();
             // the syndicator was built with sequential operation in mind, not multithreaded/reused,
@@ -837,7 +866,9 @@ public class SyndicationManager {
             HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
             ArrayList uris = new ArrayList(1);
             uris.add(rec.getURI());
+            if (rec.getStatus() == FETCH_STOPPED) return;
             boolean fetchComplete = syndicator.fetch(uris);
+            if (rec.getStatus() == FETCH_STOPPED) return;
             if (fetchComplete)
                 rec.setStatus(FETCH_COMPLETE);
             else
@@ -847,13 +878,16 @@ public class SyndicationManager {
             if (!fetchComplete)
                 return;
             
+            if (rec.getStatus() == FETCH_STOPPED) return;
             int importCount = syndicator.importFetched();
             if (importCount == 1) {
+                if (rec.getStatus() == FETCH_STOPPED) return;
                 rec.setStatus(FETCH_IMPORT_OK);
             } else if (syndicator.countMissingPassphrases() == 1) {
                 rec.setDetail(syndicator.getMissingPrompt(0));
                 rec.setStatus(FETCH_IMPORT_PBE);
             } else {
+                if (rec.getStatus() == FETCH_STOPPED) return;
                 rec.setStatus(FETCH_IMPORT_CORRUPT);
             }
             fireFetchStatusUpdated(rec);

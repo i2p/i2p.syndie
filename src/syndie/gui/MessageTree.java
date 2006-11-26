@@ -50,6 +50,7 @@ public class MessageTree {
     private Composite _parent;
     private Composite _root;
     private Tree _tree;
+    private TreeColumn _colType;
     private TreeColumn _colSubject;
     private TreeColumn _colAuthor;
     private TreeColumn _colChannel;
@@ -130,6 +131,7 @@ public class MessageTree {
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
         _colSubject.setText("Subject");
+        _colType = new TreeColumn(_tree, SWT.LEFT);
         _colAuthor = new TreeColumn(_tree, SWT.LEFT);
         _colAuthor.setText("Author");
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
@@ -234,24 +236,39 @@ public class MessageTree {
     }
     
     public void applyFilter() {
-        String txt = _filter.getText();
+        final String txt = _filter.getText();
         if (txt.trim().length() > 0) {
             try {
-                SyndieURI uri = new SyndieURI(txt);
-                _browser.getUI().debugMessage("calculating nodes in the tree");
-                List nodes = calculateNodes(uri);
+                final SyndieURI uri = new SyndieURI(txt);
+                // better to pool this... but...
+                Thread t = new Thread(new Runnable() {
+                    public void run() {
+                        _browser.getUI().debugMessage("begin async calculating nodes in the tree");
+                        //try { Thread.sleep(200); } catch (InterruptedException ie) {}
+                        applyFilter(txt, uri, calculateNodes(uri)); 
+                        _browser.getUI().debugMessage("end async calculating nodes in the tree");
+                    }
+                });
+                t.setPriority(Thread.MIN_PRIORITY);
+                t.start();
+            } catch (URISyntaxException use) {
+                // noop
+                //System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
+            }
+        }
+    }
+    private void applyFilter(final String txt, final SyndieURI uri, final List nodes) {
+        _tree.getDisplay().asyncExec(new Runnable() {
+            public void run() { 
                 _browser.getUI().debugMessage("nodes calculated, setting them");
                 setMessages(nodes);
                 _browser.getUI().debugMessage("nodes set");
                 _appliedFilter = uri;
                 _filter.setText(uri.toString()); // normalize manually edited uris
                 if (_listener != null)
-                    _listener.filterApplied(this, uri);
-            } catch (URISyntaxException use) {
-                // noop
-                //System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
+                    _listener.filterApplied(MessageTree.this, uri);
             }
-        }
+        });     
     }
     
     /**
@@ -261,10 +278,13 @@ public class MessageTree {
      *         threaded, simply one per message
      */
     private List calculateNodes(SyndieURI uri) {
-        ThreadAccumulator acc = new ThreadAccumulator(_client, new NullUI());
+        ThreadAccumulator acc = new ThreadAccumulator(_client, _browser.getUI());
+        _browser.getUI().debugMessage("setting the filter");
         acc.setFilter(uri);
+        _browser.getUI().debugMessage("gathering the threads");
         acc.gatherThreads();
         // now sort it...
+        _browser.getUI().debugMessage("sorting the threads");
         List threads = new ArrayList();
         for (int i = 0; i < acc.getThreadCount(); i++)
             threads.add(acc.getRootThread(i));
@@ -283,6 +303,7 @@ public class MessageTree {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
             add(node, null);
         }
+        _colType.pack();
         _colSubject.pack();
         _colDate.pack();
         _colChannel.pack();
@@ -370,10 +391,14 @@ public class MessageTree {
                 tags = "[unknown]";
             }
             item.setText(0, subj);
-            item.setText(1, auth);
-            item.setText(2, chan);
-            item.setText(3, date);
-            item.setText(4, tags);
+            if (msg.getWasPrivate())
+                item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
+            else
+                item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
+            item.setText(2, auth);
+            item.setText(3, chan);
+            item.setText(4, date);
+            item.setText(5, tags);
         } else {
             // reference node does not point to a uri, so don't build a row
             item = parent;
@@ -395,9 +420,10 @@ public class MessageTree {
         int tagsWidth = 100;
         if (!_showTags) tagsWidth = 0;
         
-        if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth)
-            subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth;
+        if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
+            subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
         
+        _colType.setWidth(24);
         _colSubject.setWidth(subjWidth);
         _colChannel.setWidth(chanWidth);
         _colAuthor.setWidth(authWidth);

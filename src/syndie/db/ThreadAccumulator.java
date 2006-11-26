@@ -217,6 +217,7 @@ public class ThreadAccumulator {
      */
     public void gatherThreads() {
         init();
+        _ui.debugMessage("beginning gather threads");
         
         // - iterate across all matching channels
         //  - list all threads in the channel
@@ -228,6 +229,7 @@ public class ThreadAccumulator {
         ResultSet rs = null;
         try {
             if (_channelHashes == null) {
+                _ui.debugMessage("gather across all channels");
                 stmt = _client.con().prepareStatement(SQL_LIST_THREADS_ALL);
                 rs = stmt.executeQuery();
                 while (rs.next()) {
@@ -255,6 +257,7 @@ public class ThreadAccumulator {
             } else {
                 for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
+                    //_ui.debugMessage("gather threads across " + chan.toBase64());
                     long chanId = _client.getChannelId(chan);
                     stmt = _client.con().prepareStatement(SQL_LIST_THREADS_CHAN);
                     stmt.setLong(1, chanId);
@@ -276,13 +279,14 @@ public class ThreadAccumulator {
                         //else
                         //    _threadRootAuthorId.add(new Long(scopeId));
                         rootMsgIds.add(new Long(msgId));        
+                        //_ui.debugMessage("accumulate root msgId: " + msgId);
                     }
                     rs.close();
                     rs = null;
                     stmt.close();
                     stmt = null;
                     
-                    _ui.debugMessage("Found root messageIds including those for channel " + chan.toBase64() + ": " + rootMsgIds);
+                    //_ui.debugMessage("Found root messageIds including those for channel " + chan.toBase64() + ": " + rootMsgIds);
                 } // end iterating over channels
             } // if (all channels) {} else {}
             
@@ -290,10 +294,13 @@ public class ThreadAccumulator {
             for (int i = 0; i < rootMsgIds.size(); i++) {
                 Long msgId = (Long)rootMsgIds.get(i);
                 MessageThreadBuilder builder = new MessageThreadBuilder(_client, _ui);
+                //_ui.debugMessage("building thread for root msgId: " + msgId);
                 ReferenceNode root = builder.buildThread(_client.getMessage(msgId.longValue()));
+                //_ui.debugMessage("thread built for root msgId: " + msgId);
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
                 loadInfo(root);
+                //_ui.debugMessage("thread loaded for root msgId: " + msgId);
             }
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);

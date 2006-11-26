@@ -43,4 +43,6 @@ public class SyndicationTab extends BrowserTab implements Translatable {
         _icon = ImageUtil.ICON_TAB_SYNDICATE;
     }
     
+    
+    protected void tabShown() { _view.shown(); }
 }

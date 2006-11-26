@@ -94,6 +94,7 @@ abstract class BrowserTab {
     
     protected abstract void initComponents();
     protected boolean allowClose() { return true; }
+    protected void tabShown() {}
     protected void configItem() {
         reconfigItem();
         _item.setControl(_scroll);

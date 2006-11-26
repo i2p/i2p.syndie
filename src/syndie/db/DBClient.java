@@ -3007,6 +3007,8 @@ public class DBClient {
                 BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null) {
+                    if (line.startsWith("//") || line.startsWith("#") || line.startsWith(";"))
+                        continue;
                     ui.insertCommand(line);
                 }
             } catch (UnsupportedEncodingException uee) {
@@ -3017,6 +3019,8 @@ public class DBClient {
         } else {
             ui.debugMessage("script does not exist [" + script.getAbsolutePath() + "]");
         }
+        ui.insertCommand("notifyscriptend " + scriptName);
+        ui.debugMessage("added notifyscriptend " + scriptName);
     }
     
     private void log(SQLException se) {
@@ -3032,5 +3036,18 @@ public class DBClient {
         while (now < lastValue)
             now += ctx().random().nextLong(24*60*60*1000);
         return now;
+    }
+    
+    public void logError(String msg, Exception cause) { 
+        if (_log.shouldLog(Log.ERROR))
+            _log.error(msg, cause);
+    }
+    public void logInfo(String msg) { 
+        if (_log.shouldLog(Log.INFO)) 
+            _log.info(msg); 
+    }
+    public void logDebug(String msg, Exception cause) { 
+        if (_log.shouldLog(Log.DEBUG)) 
+            _log.debug(msg, cause); 
     }
 }
