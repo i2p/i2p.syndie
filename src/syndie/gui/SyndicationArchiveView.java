@@ -230,6 +230,24 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _editPopup = new SyndicationArchivePopup(_browser, _root.getShell());
         
         _browser.getTranslationRegistry().register(this);
+        
+        loadProxyDefaults();
+    }
+    
+    private void loadProxyDefaults() {
+        String host = _browser.getClient().getDefaultHTTPProxyHost();
+        if (host == null) host = "";
+        _proxyHost.setText(host);
+        int port = _browser.getClient().getDefaultHTTPProxyPort();
+        if ( (port > 0) && (host.length() > 0) )
+            _proxyPort.setText(Integer.toString(port));
+        
+        host = _browser.getClient().getDefaultFreenetHost();
+        if (host == null) host = "";
+        _fcpHost.setText(host);
+        port = _browser.getClient().getDefaultFreenetPort();
+        if ( (port > 0) && (host.length() > 0) )
+            _fcpPort.setText(Integer.toString(port));
     }
     
     private void add() { _editPopup.open(); }
@@ -265,6 +283,14 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
     
     private void fetchSelected() {
+        int proxyPort = -1;
+        String proxyHost = _proxyHost.getText().trim();
+        try { int i = Integer.parseInt(_proxyPort.getText()); proxyPort = i; } catch (NumberFormatException nfe) {}
+        int fcpPort = 8481;
+        String fcpHost = _fcpHost.getText();
+        try { int i = Integer.parseInt(_fcpPort.getText()); fcpPort = i; } catch (NumberFormatException nfe) {}
+        
+        _manager.setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
         ArrayList names = getSelectedNames();
         if (names.size() == 0)
             names = new ArrayList(_names);

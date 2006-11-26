@@ -107,21 +107,21 @@ public class DBClient {
     public File getOutboundDir() { return new File(_rootDir, "outbound"); }
     public File getArchiveDir() { return new File(_rootDir, "archive"); }
     
-    String getDefaultHTTPProxyHost() { return _httpProxyHost; }
-    void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
-    int getDefaultHTTPProxyPort() { return _httpProxyPort; }
-    void setDefaultHTTPProxyPort(int port) { _httpProxyPort = port; }
-    String getDefaultHTTPArchive() { return _defaultArchive; }
-    void setDefaultHTTPArchive(String archive) { _defaultArchive = archive; }
+    public String getDefaultHTTPProxyHost() { return _httpProxyHost; }
+    public void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
+    public int getDefaultHTTPProxyPort() { return _httpProxyPort; }
+    public void setDefaultHTTPProxyPort(int port) { _httpProxyPort = port; }
+    public String getDefaultHTTPArchive() { return _defaultArchive; }
+    public void setDefaultHTTPArchive(String archive) { _defaultArchive = archive; }
     
-    String getDefaultFreenetHost() { return _fcpHost; }
-    void setDefaultFreenetHost(String host) { _fcpHost = host; }
-    int getDefaultFreenetPort() { return _fcpPort; }
-    void setDefaultFreenetPort(int port) { _fcpPort = port; }
-    String getDefaultFreenetPrivateKey() { return _freenetPrivateKey; }
-    void setDefaultFreenetPrivateKey(String privateSSK) { _freenetPrivateKey = privateSSK; }
-    String getDefaultFreenetPublicKey() { return _freenetPublicKey; }
-    void setDefaultFreenetPublicKey(String publicSSK) { _freenetPublicKey = publicSSK; }
+    public String getDefaultFreenetHost() { return _fcpHost; }
+    public void setDefaultFreenetHost(String host) { _fcpHost = host; }
+    public int getDefaultFreenetPort() { return _fcpPort; }
+    public void setDefaultFreenetPort(int port) { _fcpPort = port; }
+    public String getDefaultFreenetPrivateKey() { return _freenetPrivateKey; }
+    public void setDefaultFreenetPrivateKey(String privateSSK) { _freenetPrivateKey = privateSSK; }
+    public String getDefaultFreenetPublicKey() { return _freenetPublicKey; }
+    public void setDefaultFreenetPublicKey(String publicSSK) { _freenetPublicKey = publicSSK; }
     
     public void close() {
         _login = null;

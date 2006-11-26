@@ -27,6 +27,10 @@ public class SyndicationManager {
     private MergedArchiveIndex _mergedIndex;
     private ArchiveDiff _mergedDiff;
     private int _concurrent;
+    private String _httpProxyHost;
+    private int _httpProxyPort;
+    private String _fcpHost;
+    private int _fcpPort;
             
     public static final int INDEX_STATUS_START = 0;
     public static final int INDEX_STATUS_FETCHING = 1;
@@ -154,6 +158,13 @@ public class SyndicationManager {
         return _mergedDiff;
     }
     
+    public void setProxies(String httpHost, int httpPort, String fcpHost, int fcpPort) {
+        _httpProxyHost = httpHost;
+        _httpProxyPort = httpPort;
+        _fcpHost = fcpHost;
+        _fcpPort = fcpPort;
+    }
+    
     /**
      * run this many concurrent http fetches/imports at a time
      */
@@ -180,9 +191,9 @@ public class SyndicationManager {
         String proxyHost = archive.getCustomProxyHost();
         int proxyPort = archive.getCustomProxyPort();
         if ( ( (proxyHost == null) || (proxyPort <= 0) ) &&
-             ( (_client.getDefaultHTTPProxyHost() != null) && (_client.getDefaultHTTPProxyPort() > 0) ) ) {
-            proxyHost = _client.getDefaultHTTPProxyHost();
-            proxyPort = _client.getDefaultHTTPProxyPort();
+             ( (_httpProxyHost != null) && (_httpProxyPort > 0) ) ) {
+            proxyHost = _httpProxyHost;
+            proxyPort = _httpProxyPort;
         }
         
         int keyStart = -1;
