@@ -67,8 +67,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private MenuItem _posterRemove;
     
     private Group _archives;
-    private Composite _archiveElements;
-    private Button _archiveAdd;
+    private ManageForumArchiveChooser _archiveChooser;
     
     private Group _references;
 
@@ -79,7 +78,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     
     private long _channelId;
     private ChannelInfo _origInfo;
-    private ArrayList _archiveInfos;
     private ArrayList _managerKeys;
     private ArrayList _posterKeys;
     private String _passphrase;
@@ -92,7 +90,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _parent = parent;
         _browser = browser;
         _listener = lsnr;
-        _archiveInfos = new ArrayList();
         _managerKeys = new ArrayList();
         _posterKeys = new ArrayList();
         initComponents();
@@ -102,24 +99,15 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         public void manageComplete(ManageForum manage);
     }
     
-    private void clearChildren(Composite container) {
-        Control children[] = container.getChildren();
-        for (int i = 0; i < children.length; i++)
-            children[i].dispose();
-    }
-    
     public void setForum(SyndieURI uri) {
-        _archiveInfos.clear();
         _managerKeys.clear();
         _posterKeys.clear();
         _origInfo = null;
         _channelId = -1;
         
-        _archiveElements.setRedraw(false);
         _managerList.setRedraw(false);
         _posterList.setRedraw(false);
         
-        clearChildren(_archiveElements);
         _managerList.removeAll();
         _posterList.removeAll();
         
@@ -197,35 +185,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 tags.append(((String)iter.next()).trim()).append(" ");
             }
             _tags.setText(tags.toString().trim());
-            
-            for (Iterator iter = info.getPublicArchives().iterator(); iter.hasNext(); ) {
-                final ArchiveInfo archive = (ArchiveInfo)iter.next();
-                Button b = new Button(_archiveElements, SWT.PUSH);
-                if (archive.getURI().isURL()) {
-                    String url = archive.getURI().getURL();
-                    if (url.startsWith("http")) {
-                        // format http/https urls one way...
-                        b.setText(CommandImpl.strip(url, " \r\n\t<>", '_'));
-                        b.setToolTipText("http archive");
-                    } else if (url.startsWith("USK@") || url.startsWith("SSK@") || url.startsWith("CHK@")) {
-                        // perhaps some special treatment for freenet keys?
-                        b.setText(CommandImpl.strip(url, " \r\n\t<>", '_'));
-                        b.setToolTipText("freenet archive");
-                    } else {
-                        // everything else...
-                        b.setText(CommandImpl.strip(url, " \r\n\t<>", '_'));
-                    }
-                    _archiveInfos.add(archive);
-                } else {
-                    // unknown
-                    b.setText("unknown archive uri");
-                    b.setToolTipText(archive.getURI().toString());
-                }
-                b.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(archive.getURI()); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(archive.getURI()); }
-                });
-            }
+
+            _archiveChooser.setArchives(info.getPublicArchives(), info.getPrivateArchives());
             
             for (Iterator iter = info.getAuthorizedManagers().iterator(); iter.hasNext(); ) {
                 SigningPublicKey pub = (SigningPublicKey)iter.next();
@@ -262,9 +223,9 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             _name.setText("");
             _expire.setText(_browser.getTranslationRegistry().getText(T_EXPIRE_NEVER, "never"));
             _tags.setText("");
+            _archiveChooser.setArchives(null, null);
         }
         
-        _archiveElements.setRedraw(true);
         _managerList.setRedraw(true);
         _posterList.setRedraw(true);
     }
@@ -381,17 +342,10 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         });
         
         _archives = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _archives.setLayout(new GridLayout(2, false));
+        _archives.setLayout(new FillLayout());
         _archives.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1));
         
-        _archiveElements = new Composite(_archives, SWT.NONE);
-        RowLayout rl = new RowLayout(SWT.HORIZONTAL);
-        rl.wrap = true;
-        _archiveElements.setLayout(rl);
-        _archiveElements.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        
-        _archiveAdd = new Button(_archives, SWT.PUSH);
-        _archiveAdd.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        _archiveChooser = new ManageForumArchiveChooser(_archives, _browser, this);
         
         _references = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _references.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1));
@@ -464,7 +418,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     }
     Set getAuthorizedPosters() { return new HashSet(_posterKeys); }
     Set getAuthorizedManagers() { return new HashSet(_managerKeys); }
-    Set getPublicArchives() { return new HashSet(_archiveInfos); }
+    Set getPublicArchives() { return _archiveChooser.getPublicArchives(); }
+    Set getPrivateArchives() { return _archiveChooser.getPrivateArchives(); }
     boolean getEncryptContent() {
         return _privacy.getSelectionIndex() == PRIV_PASSPHRASE || 
                _privacy.getSelectionIndex() == PRIV_AUTHORIZED; 
@@ -579,7 +534,10 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         }
     }
     
-    public void dispose() { _browser.getTranslationRegistry().unregister(this); }
+    public void dispose() { 
+        _browser.getTranslationRegistry().unregister(this);
+        _archiveChooser.dispose();
+    }
 
     private static final String T_PRIV_PUBLIC = "syndie.gui.manageforum.priv.public";
     private static final String T_PRIV_AUTHORIZED = "syndie.gui.manageforum.priv.authorized";
@@ -608,7 +566,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final String T_POSTERS_VIEW = "syndie.gui.manageforum.posters.view";
     private static final String T_POSTERS_REMOVE = "syndie.gui.manageforum.posters.remove";
     private static final String T_ARCHIVES = "syndie.gui.manageforum.archives";
-    private static final String T_ARCHIVES_ADD = "syndie.gui.manageforum.archives.add";
     private static final String T_REFERENCES = "syndie.gui.manageforum.references";
     private static final String T_SAVE = "syndie.gui.manageforum.save";
     private static final String T_CANCEL = "syndie.gui.manageforum.cancel";
@@ -629,7 +586,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _posterView.setText(registry.getText(T_POSTERS_VIEW, "view"));
         _posterRemove.setText(registry.getText(T_POSTERS_REMOVE, "remove"));
         _archives.setText(registry.getText(T_ARCHIVES, "Archives"));
-        _archiveAdd.setText(registry.getText(T_ARCHIVES_ADD, "Add"));
         _references.setText(registry.getText(T_REFERENCES, "References"));
         _save.setText(registry.getText(T_SAVE, "Save"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));

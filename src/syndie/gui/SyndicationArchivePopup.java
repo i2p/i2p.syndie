@@ -55,12 +55,18 @@ class SyndicationArchivePopup implements Translatable {
     private SyndieURI _uri;
     private String _oldName;
     
+    private boolean _withProxy;
+    
     private DirectoryDialog _browse;
     
     public SyndicationArchivePopup(BrowserControl browser, Shell parent) {
+        this(browser, parent, true);
+    }
+    public SyndicationArchivePopup(BrowserControl browser, Shell parent, boolean withProxy) {
         _browser = browser;
         _parent = parent;
         _oldName = null;
+        _withProxy = withProxy;
         initComponents();
     }
     
@@ -191,6 +197,9 @@ class SyndicationArchivePopup implements Translatable {
         _proxyCustomPort = new Text(proxy, SWT.BORDER);
         _proxyCustomPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
     
+        if (!_withProxy)
+            ((GridData)proxy.getLayoutData()).exclude = true;
+        
         Composite actions = new Composite(_shell, SWT.NONE);
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -316,11 +325,15 @@ class SyndicationArchivePopup implements Translatable {
         }
         
         _shell.setVisible(false);
-        if (_oldName != null)
-            _browser.getSyndicationManager().update(_oldName, name, uri, proxy, port, null, null);
+        fireAccept(_oldName, name, uri, proxy, port);
+        config("", null, null, -1);
+    }
+    
+    protected void fireAccept(String oldName, String name, SyndieURI uri, String proxy, int port) {
+        if (oldName != null)
+            _browser.getSyndicationManager().update(oldName, name, uri, proxy, port, null, null);
         else
             _browser.getSyndicationManager().add(name, uri, proxy, port, null, null);
-        config("", null, null, -1);
     }
     
     private void cancel() {

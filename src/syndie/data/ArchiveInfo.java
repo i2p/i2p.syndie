@@ -15,6 +15,10 @@ public class ArchiveInfo {
         _readAllowed = false;
         _uri = null;
     }
+    public ArchiveInfo(SyndieURI uri) {
+        this();
+        _uri = uri;
+    }
     
     public long getArchiveId() { return _archiveId; }
     public void setArchiveId(long id) { _archiveId = id; }

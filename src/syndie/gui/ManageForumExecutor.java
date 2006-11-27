@@ -109,7 +109,7 @@ class ManageForumExecutor {
                 chanGenOpts.addOptValue("pubArchive", archive.getURI().toString());
             }
         }
-        archives = null; //_currentChannel.getPrivateArchives();
+        archives = _state.getPrivateArchives();
         if (archives != null) {
             for (Iterator iter = archives.iterator(); iter.hasNext(); ) {
                 ArchiveInfo archive = (ArchiveInfo)iter.next();

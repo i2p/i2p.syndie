@@ -54,6 +54,11 @@ public class ImageUtil {
     public static final Image ICON_SYNDICATE_STATUS_ERROR = createImageFromResource("iconSynError.png");
     public static final Image ICON_SYNDICATE_STATUS_PBE = createImageFromResource("iconSynPBE.png");
     public static final Image ICON_SYNDICATE_STATUS_OK = createImageFromResource("iconSynOk.png");
+
+    public static final Image ICON_ARCHIVE_TYPE_FILE = createImageFromResource("iconArchiveFile.png");
+    public static final Image ICON_ARCHIVE_TYPE_FREENET = createImageFromResource("iconArchiveFreenet.png");
+    public static final Image ICON_ARCHIVE_TYPE_URL = createImageFromResource("iconArchiveURL.png");
+    public static final Image ICON_ARCHIVE_TYPE_SYNDIE = createImageFromResource("iconArchiveSyndie.png");
     
     public static final Image ICON_MSG_TYPE_NORMAL = createImageFromResource("iconMsgNormal.png");
     public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");

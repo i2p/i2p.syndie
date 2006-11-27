@@ -165,7 +165,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(9, false));
     
-        _table = new Table(_root, SWT.BORDER | SWT.MULTI);
+        _table = new Table(_root, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
         _colType = new TableColumn(_table, SWT.RIGHT);
         _colName = new TableColumn(_table, SWT.LEFT);
         _colNumForums = new TableColumn(_table, SWT.LEFT);
@@ -180,7 +180,6 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _table.setHeaderVisible(true);
         
         _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
-        _table.setLinesVisible(true);
         
         _fetch = new Button(_root, SWT.PUSH);
         _fetch.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));

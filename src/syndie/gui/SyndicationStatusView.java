@@ -68,7 +68,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
         
-        _table = new Table(_root, SWT.MULTI|SWT.BORDER);
+        _table = new Table(_root, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
         _table.setHeaderVisible(true);
         _table.setLinesVisible(true);
         _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
