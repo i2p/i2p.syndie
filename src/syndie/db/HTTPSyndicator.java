@@ -51,6 +51,8 @@ public class HTTPSyndicator implements Cloneable {
     private ArchiveIndex _remoteIndex;
     private List _postToDelete;
     
+    private int _missingKeys;
+    
     private boolean _forceReimport;
     
     public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, ArchiveIndex index, boolean forceReimport) {
@@ -74,6 +76,7 @@ public class HTTPSyndicator implements Cloneable {
         _postShouldDeleteOutbound = false;
         _postURLOverride = null;
         _postPassphrase = null;
+        _missingKeys = 0;
     }
     
     public Object clone() {
@@ -260,6 +263,8 @@ public class HTTPSyndicator implements Cloneable {
                     _ui.debugMessage("Import successful for " + uri);
                     f.delete();
                     imported++;
+                    if (imp.wasMissingKey())
+                        _missingKeys++;
                 } else {
                     _ui.debugMessage("Could not import " + f.getPath());
                     importFailed(uri, f);
@@ -281,6 +286,7 @@ public class HTTPSyndicator implements Cloneable {
             // record why the import failed in the db (missing readKey, missing replyKey, corrupt, unauthorized, etc)
         }
     }
+    public int countMissingKeys() { return _missingKeys; }
     public int countMissingPassphrases() { return _pendingPBEPrompts.size(); }
     public String getMissingPrompt(int index) { return (String)_pendingPBEPrompts.get(index); }
     public SyndieURI getMissingURI(int index) { return (SyndieURI)_pendingPBEURIs.get(index); }

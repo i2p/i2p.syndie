@@ -37,6 +37,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.db.JobRunner;
 import syndie.db.SyndicationManager;
 import syndie.gui.TranslationRegistry;
 import syndie.data.ChannelInfo;
@@ -102,6 +103,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _initialized = false;
         _translation = new TranslationRegistry();
         _syndicationManager = new SyndicationManager(_client, this);
+        JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
@@ -284,6 +286,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         int rv = confirm.open();
         if (rv == SWT.YES) {
             _shell.setVisible(false);
+            JobRunner.instance().stop();
             System.exit(0);
         }
     }

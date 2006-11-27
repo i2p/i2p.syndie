@@ -246,6 +246,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         else
             item.setText(3, "");
         item.setText(4, record.getSource());
+        
         switch (record.getStatus()) {
             case SyndicationManager.FETCH_COMPLETE:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
@@ -262,6 +263,9 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
             case SyndicationManager.FETCH_IMPORT_PBE:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
                 //item.setText(5, "pbe");
+                break;
+            case SyndicationManager.FETCH_IMPORT_NOKEY:
+                item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 break;
             case SyndicationManager.FETCH_SCHEDULED:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);

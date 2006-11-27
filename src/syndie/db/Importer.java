@@ -31,6 +31,7 @@ public class Importer extends CommandImpl {
     private String _passphrase;
     private boolean _wasPBE;
     private boolean _wasAlreadyImported;
+    private boolean _noKey;
     
     public Importer(DBClient client, String pass) {
         _client = client;
@@ -186,6 +187,7 @@ public class Importer extends CommandImpl {
     /** was the last message processed encrypted with a passphrase? */
     public boolean wasPBE() { return _wasPBE; }
     public boolean wasAlreadyImported() { return _wasAlreadyImported; }
+    public boolean wasMissingKey() { return _noKey; }
     
     protected boolean importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
         // first check that the metadata is signed by an authorized key
@@ -233,6 +235,7 @@ public class Importer extends CommandImpl {
         ImportPost post = new ImportPost(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
         boolean rv = post.process();
         _wasAlreadyImported = post.getAlreadyImported();
+        _noKey = post.getNoKey();
         return rv;
     }
 }

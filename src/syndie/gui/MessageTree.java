@@ -38,6 +38,7 @@ import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.ThreadAccumulator;
 
@@ -242,8 +243,7 @@ public class MessageTree implements Translatable {
         if (txt.trim().length() > 0) {
             try {
                 final SyndieURI uri = new SyndieURI(txt);
-                // better to pool this... but...
-                Thread t = new Thread(new Runnable() {
+                JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
                         _browser.getUI().debugMessage("begin async calculating nodes in the tree");
                         //try { Thread.sleep(200); } catch (InterruptedException ie) {}
@@ -251,8 +251,6 @@ public class MessageTree implements Translatable {
                         _browser.getUI().debugMessage("end async calculating nodes in the tree");
                     }
                 });
-                t.setPriority(Thread.MIN_PRIORITY);
-                t.start();
             } catch (URISyntaxException use) {
                 // noop
                 //System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");

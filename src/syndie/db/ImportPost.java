@@ -50,6 +50,7 @@ public class ImportPost {
     }
     
     public boolean getAlreadyImported() { return _alreadyImported; }
+    public boolean getNoKey() { return (_body != null) && (_body instanceof UnreadableEnclosureBody); }
     
     /*
      * The post message is ok if it is either signed by the channel's
@@ -107,7 +108,7 @@ public class ImportPost {
                     }
                 }
                 if (_body == null)
-                    _ui.errorMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
+                    _ui.debugMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
             }
 
             if (_body == null) {
@@ -139,7 +140,7 @@ public class ImportPost {
             }
             
             if (_body == null) {
-                _ui.errorMessage("Cannot import a reply that we do not have the private key to read");
+                _ui.debugMessage("Cannot import a reply that we do not have the private key to read");
                 _body = new UnreadableEnclosureBody(_client.ctx());
             }
         } else if (_enc.isPost()) {

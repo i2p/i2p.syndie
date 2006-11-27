@@ -46,8 +46,9 @@ public class SyndicationManager {
     public static final int FETCH_FAILED = 3;
     public static final int FETCH_IMPORT_OK = 4;
     public static final int FETCH_IMPORT_PBE = 5;
-    public static final int FETCH_IMPORT_CORRUPT = 6;
-    public static final int FETCH_STOPPED = 7;
+    public static final int FETCH_IMPORT_NOKEY = 6;
+    public static final int FETCH_IMPORT_CORRUPT = 7;
+    public static final int FETCH_STOPPED = 8;
     
     public static final int STRATEGY_DELTA = 0;
     public static final int STRATEGY_DELTAKNOWN = 1;
@@ -822,7 +823,22 @@ public class SyndicationManager {
         public SyndieURI getURI() { return _uri; }
         public int getStatus() { return _status; }
         public String getSource() { return _archiveName; }
-        void setStatus(int status) { _status = status; }
+        void setStatus(int status) { 
+            switch (_status) {
+                case FETCH_FAILED:
+                case FETCH_IMPORT_OK:
+                case FETCH_IMPORT_PBE:
+                case FETCH_IMPORT_NOKEY:
+                case FETCH_IMPORT_CORRUPT:
+                case FETCH_STOPPED:
+                    return; // already done
+                case FETCH_COMPLETE:
+                case FETCH_SCHEDULED:
+                case FETCH_STARTED:
+                default:
+                    _status = status;
+            }
+        }
         /** status message detail */
         public String getDetail() { return _detail; }
         void setDetail(String detail) { _detail = detail; }
@@ -831,6 +847,7 @@ public class SyndicationManager {
                 case FETCH_FAILED:
                 case FETCH_IMPORT_OK:
                 case FETCH_IMPORT_PBE:
+                case FETCH_IMPORT_NOKEY:
                 case FETCH_IMPORT_CORRUPT:
                     return; // already done
                 case FETCH_COMPLETE:
@@ -893,7 +910,11 @@ public class SyndicationManager {
             int importCount = syndicator.importFetched();
             if (importCount == 1) {
                 if (rec.getStatus() == FETCH_STOPPED) return;
-                rec.setStatus(FETCH_IMPORT_OK);
+                if (syndicator.countMissingKeys() >= 1) {
+                    rec.setStatus(FETCH_IMPORT_NOKEY);
+                } else {
+                    rec.setStatus(FETCH_IMPORT_OK);
+                }
             } else if (syndicator.countMissingPassphrases() == 1) {
                 rec.setDetail(syndicator.getMissingPrompt(0));
                 rec.setStatus(FETCH_IMPORT_PBE);
