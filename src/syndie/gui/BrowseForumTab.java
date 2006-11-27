@@ -44,6 +44,8 @@ public class BrowseForumTab extends BrowserTab {
         reconfigItem();
     }
     
+    public void setFilter(SyndieURI uri) { _browse.setFilter(uri); }
+    
     protected void initComponents() {
         debug("browseforumtab.initComponents");
         _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener());
@@ -71,5 +73,7 @@ public class BrowseForumTab extends BrowserTab {
     public String getName() { return _name; }
     public String getDescription() { return _description; }
     
-    protected void disposeDetails() {}
+    protected void disposeDetails() {
+        _browse.dispose();
+    }
 }

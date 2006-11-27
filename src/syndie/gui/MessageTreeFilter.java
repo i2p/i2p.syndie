@@ -39,7 +39,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListener {
+public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListener, Translatable {
     private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
@@ -50,6 +50,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     private ExpandBar _bar;
     // filter by scope
     private ExpandItem _itemScope;
+    private Composite _scope;
     private Label _forumLabel;
     private Text _forumName;
     private Button _forumSelect;
@@ -61,6 +62,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     private Button _authorAny;
     // filter by age
     private ExpandItem _itemAge;
+    private Group _age;
     private Button _ageDay;
     private Button _age2Days;
     private Button _ageWeek;
@@ -71,6 +73,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     private Text _ageCustomText;
     // filter by tags
     private ExpandItem _itemTags;
+    private Composite _tags;
     private Label _tagsInclude;
     private Text _tagsRequireText;
     private Label _tagsRequire;
@@ -80,6 +83,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     private Button _tagsApplyToMessages;
     // filter by content
     private ExpandItem _itemContent;
+    private Composite _content;
     private Group _contentPageGroup;
     private Button _contentPageYes;
     private Button _contentPageNo;
@@ -98,12 +102,17 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     private Button _contentKeyIgnore;
     // filter by status
     private ExpandItem _itemStatus;
+    private Composite _status;
     private Button _statusDecrypted;
     private Button _statusPBE;
     private Button _statusPrivate;
     // display options
     private ExpandItem _itemDisplay;
+    private Composite _display;
     private Button _displayThreaded;
+    
+    private Button _ok;
+    private Button _cancel;
     
     private FilterModifyListener _modListener;
     
@@ -127,6 +136,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     }
     
     private void initComponents() {
+        _browser.getUI().debugMessage("** init msgTreeFilter");
         _root = new Composite(_parent, SWT.NONE);
         GridLayout gl = new GridLayout(1, true);
         //gl.marginLeft = 10;
@@ -143,6 +153,8 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _bar = new ExpandBar(_root, SWT.V_SCROLL);
         _bar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
+        _browser.getUI().debugMessage("** init msgTreeFilter: build filters");
+        
         buildScopeFilter();
         buildAgeFilter();
         buildTagsFilter();
@@ -150,26 +162,28 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         buildStatusFilter();
         buildDisplayFilter();
         
+        _browser.getUI().debugMessage("** init msgTreeFilter: filters built");
         Composite actions = new Composite(_root, SWT.NONE);
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        Button ok = new Button(actions, SWT.PUSH);
-        ok.setText("Apply");
-        ok.addSelectionListener(new SelectionListener() {
+        _ok = new Button(actions, SWT.PUSH);
+        _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { updateFilter(); apply(); }
             public void widgetSelected(SelectionEvent selectionEvent) { updateFilter(); apply(); }
         });
         
-        Button cancel = new Button(actions, SWT.PUSH);
-        cancel.setText("Cancel");
-        cancel.addSelectionListener(new SelectionListener() {
+        _cancel = new Button(actions, SWT.PUSH);
+        _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
         });
+        
+        _browser.getTranslationRegistry().register(this);
     }
     
     /** interpret the _filterText and update the gui components to display the correct state */
     private void parseFilter() {
+        _browser.getUI().debugMessage("** parsing filters");
         SyndieURI uri = null;
         String txt = _filterText.getText().trim();
         if (txt.length() > 0) {
@@ -189,7 +203,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         // now go through the gui components and pick the right value to display, 
         // using the attributes from SyndieURI.DEFAULT_SEARCH_URI to fill in for unspecified
         // values
-        parseChannels(uri.getStringArray("scope"));
+        parseChannels(uri.getStringArray("scope"), uri);
         parseAuthor(uri.getString("author"));
         parseAge(uri.getLong("age"), uri.getLong("ageLocal"));
         parseTags(uri.getStringArray("taginclude"), uri.getStringArray("tagrequire"), 
@@ -203,19 +217,24 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         parseDisplay(uri.getBoolean("threaded", true));
     }
     
-    private void parseChannels(String channelHashes[]) {
-        _channels = null;
+    private void parseChannels(String channelHashes[], SyndieURI uri) {
+        synchronized (this) {
+            _channels = null;
+        }
         if ( (channelHashes == null) || (channelHashes.length == 0) || ("all".equals(channelHashes[0])) ) {
             _forumName.setText("all");
-            _channels = null;
+            synchronized (this) {
+                _channels = null;
+            }
         } else {
             StringBuffer buf = new StringBuffer();
-            _channels = new Hash[channelHashes.length];
+            Hash channels[] = new Hash[channelHashes.length];
+            int curChan = 0;
             for (int i = 0; i < channelHashes.length; i++) {
                 byte h[] = Base64.decode(channelHashes[i]);
                 if ( (h != null) && (h.length == Hash.HASH_LENGTH) ) {
-                    _channels[i] = new Hash(h);
-                    long id = _client.getChannelId(_channels[i]);
+                    channels[curChan] = new Hash(h);
+                    long id = _client.getChannelId(channels[curChan]);
                     if (id >= 0) {
                         ChannelInfo info = _client.getChannel(id);
                         if ( (info != null) && (info.getName() != null) ) {
@@ -223,10 +242,21 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
                             buf.append(' ');
                         }
                     }
-                    buf.append('[').append(_channels[i].toBase64().substring(0,6)).append(']');
+                    buf.append('[').append(channels[curChan].toBase64().substring(0,6)).append(']');
                     if (i + 1 < channelHashes.length)
                         buf.append(", ");
+                    curChan++;
+                } else {
+                    _browser.getUI().errorMessage("invalid channel hash: " + channelHashes[i]);
+                    _browser.getUI().errorMessage("uri attributes: " + uri.getAttributes());
+                    Hash nchannels[] = new Hash[channels.length-1];
+                    System.arraycopy(channels, 0, nchannels, 0, i-1);
+                    channels = nchannels;
+                    //return;
                 }
+            }
+            synchronized (this) {
+                _channels = channels;
             }
             _forumName.setText(buf.toString());
         }
@@ -344,9 +374,11 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         if (_channels == null) {
             scopes = new String[] { "all" };
         } else {
-            scopes = new String[_channels.length];
-            for (int i = 0; i < _channels.length; i++)
-                scopes[i] = _channels[i].toBase64();
+            synchronized (this) {
+                scopes = new String[_channels.length];
+                for (int i = 0; i < _channels.length; i++)
+                    scopes[i] = _channels[i].toBase64();
+            }
         }
         String author = null;
         if (_authorAny.getSelection()) author = "any";
@@ -410,37 +442,28 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
     
     private void buildScopeFilter() {
         _itemScope = new ExpandItem(_bar, SWT.NONE);
-        _itemScope.setText("Filter scope");
-        Composite scope = new Composite(_bar, SWT.BORDER);
-        scope.setLayout(new GridLayout(3, false));
-        _forumLabel = new Label(scope, SWT.NONE);
-        _forumLabel.setText("Forum: ");
+        _scope = new Composite(_bar, SWT.BORDER);
+        _scope.setLayout(new GridLayout(3, false));
+        _forumLabel = new Label(_scope, SWT.NONE);
         _forumLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _forumName = new Text(scope, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
-        _forumName.setText("(forum name)");
+        _forumName = new Text(_scope, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _forumName.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _forumSelect = new Button(scope, SWT.PUSH);
-        _forumSelect.setText("Select...");
+        _forumSelect = new Button(_scope, SWT.PUSH);
         _forumSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _forumSelect.addSelectionListener(new SelectionListener() {
             public void widgetSelected(SelectionEvent selectionEvent) { pickScope(); }
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickScope(); }
         });
         
-        _authorLabel = new Label(scope, SWT.NONE);
-        _authorLabel.setText("Author: ");
+        _authorLabel = new Label(_scope, SWT.NONE);
         _authorLabel.setLayoutData(new GridData(GridData.END, GridData.BEGINNING, false, false));
-        _authorGroup = new Group(scope, SWT.NONE);
+        _authorGroup = new Group(_scope, SWT.NONE);
         _authorGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         _authorGroup.setLayout(new FillLayout(SWT.VERTICAL));
         _authorAuthorized = new Button(_authorGroup, SWT.RADIO);
-        _authorAuthorized.setText("any authorized user");
         _authorManager = new Button(_authorGroup, SWT.RADIO);
-        _authorManager.setText("forum managers only");
         _authorOwner = new Button(_authorGroup, SWT.RADIO);
-        _authorOwner.setText("forum owner only");
         _authorAny = new Button(_authorGroup, SWT.RADIO);
-        _authorAny.setText("anyone, even unauthorized users");
         _authorAuthorized.setSelection(true);
         
         _authorAuthorized.addSelectionListener(_modListener);
@@ -448,37 +471,29 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _authorOwner.addSelectionListener(_modListener);
         _authorAny.addSelectionListener(_modListener);
         
-        _itemScope.setControl(scope);
-        _itemScope.setHeight(scope.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemScope.setControl(_scope);
+        _itemScope.setHeight(_scope.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     
     private void buildAgeFilter() {
         _itemAge = new ExpandItem(_bar, SWT.NONE);
-        _itemAge.setText("Filter age");
-        Group age = new Group(_bar, SWT.BORDER);
-        age.setLayout(new GridLayout(2, false));
-        _ageDay = new Button(age, SWT.RADIO);
-        _ageDay.setText("posted today");
+        _age = new Group(_bar, SWT.BORDER);
+        _age.setLayout(new GridLayout(2, false));
+        _ageDay = new Button(_age, SWT.RADIO);
         _ageDay.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _age2Days = new Button(age, SWT.RADIO);
-        _age2Days.setText("posted in the last 2 days");
+        _age2Days = new Button(_age, SWT.RADIO);
         _age2Days.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _ageWeek = new Button(age, SWT.RADIO);
-        _ageWeek.setText("posted in the last week");
+        _ageWeek = new Button(_age, SWT.RADIO);
         _ageWeek.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _age2Weeks = new Button(age, SWT.RADIO);
-        _age2Weeks.setText("posted in the last 2 weeks");
+        _age2Weeks = new Button(_age, SWT.RADIO);
         _age2Weeks.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _ageMonth = new Button(age, SWT.RADIO);
-        _ageMonth.setText("posted in the last month");
+        _ageMonth = new Button(_age, SWT.RADIO);
         _ageMonth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _age2Months = new Button(age, SWT.RADIO);
-        _age2Months.setText("posted in the last 2 months");
+        _age2Months = new Button(_age, SWT.RADIO);
         _age2Months.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1));
-        _ageCustom = new Button(age, SWT.RADIO);
-        _ageCustom.setText("posted since: ");
+        _ageCustom = new Button(_age, SWT.RADIO);
         _ageCustom.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _ageCustomText = new Text(age, SWT.BORDER | SWT.SINGLE);
+        _ageCustomText = new Text(_age, SWT.BORDER | SWT.SINGLE);
         _ageCustomText.setText("yyyy/MM/dd");
         _ageCustomText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _ageDay.setSelection(true);
@@ -492,38 +507,33 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _ageCustom.addSelectionListener(_modListener);
         _ageCustomText.addFocusListener(_modListener);
         
-        _itemAge.setControl(age);
-        _itemAge.setHeight(age.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemAge.setControl(_age);
+        _itemAge.setHeight(_age.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     private void buildTagsFilter() {
         _itemTags = new ExpandItem(_bar, SWT.NONE);
-        _itemTags.setText("Filter tags");
         
-        Composite tags = new Composite(_bar, SWT.BORDER);
-        tags.setLayout(new GridLayout(2, false));
-        _tagsInclude = new Label(tags, SWT.NONE);
-        _tagsInclude.setText("include tags: ");
+        _tags = new Composite(_bar, SWT.BORDER);
+        _tags.setLayout(new GridLayout(2, false));
+        _tagsInclude = new Label(_tags, SWT.NONE);
         _tagsInclude.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _tagsIncludeText = new Text(tags, SWT.SINGLE | SWT.BORDER);
+        _tagsIncludeText = new Text(_tags, SWT.SINGLE | SWT.BORDER);
         _tagsIncludeText.setText("");
         _tagsIncludeText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _tagsRequire = new Label(tags, SWT.NONE);
-        _tagsRequire.setText("require tags: ");
+        _tagsRequire = new Label(_tags, SWT.NONE);
         _tagsRequire.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _tagsRequireText = new Text(tags, SWT.SINGLE | SWT.BORDER);
+        _tagsRequireText = new Text(_tags, SWT.SINGLE | SWT.BORDER);
         _tagsRequireText.setText("");
         _tagsRequireText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _tagsExclude = new Label(tags, SWT.NONE);
-        _tagsExclude.setText("exclude tags: ");
+        _tagsExclude = new Label(_tags, SWT.NONE);
         _tagsExclude.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _tagsExcludeText = new Text(tags, SWT.SINGLE | SWT.BORDER);
+        _tagsExcludeText = new Text(_tags, SWT.SINGLE | SWT.BORDER);
         _tagsExcludeText.setText("");
         _tagsExcludeText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _tagsApplyToMessages = new Button(tags, SWT.CHECK);
-        _tagsApplyToMessages.setText("apply to messages individually, not just to threads");
+        _tagsApplyToMessages = new Button(_tags, SWT.CHECK);
         _tagsApplyToMessages.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false, 2, 1));
         
         _tagsExcludeText.addFocusListener(_modListener);
@@ -531,58 +541,41 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _tagsRequireText.addFocusListener(_modListener);
         _tagsApplyToMessages.addSelectionListener(_modListener);
         
-        _itemTags.setControl(tags);
-        _itemTags.setHeight(tags.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemTags.setControl(_tags);
+        _itemTags.setHeight(_tags.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     private void buildContentFilter() {
         _itemContent = new ExpandItem(_bar, SWT.NONE);
-        _itemContent.setText("Filter content");
         
-        Composite content = new Composite(_bar, SWT.NONE);
-        content.setLayout(new FillLayout(SWT.VERTICAL));
+        _content = new Composite(_bar, SWT.NONE);
+        _content.setLayout(new FillLayout(SWT.VERTICAL));
         
-        _contentPageGroup = new Group(content, SWT.HORIZONTAL);
+        _contentPageGroup = new Group(_content, SWT.HORIZONTAL);
         _contentPageGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _contentPageGroup.setText("Pages:");
         _contentPageYes = new Button(_contentPageGroup, SWT.RADIO);
-        _contentPageYes.setText("included");
         _contentPageNo = new Button(_contentPageGroup, SWT.RADIO);
-        _contentPageNo.setText("not included");
         _contentPageIgnore = new Button(_contentPageGroup, SWT.RADIO);
-        _contentPageIgnore.setText("don't care");
         _contentPageIgnore.setSelection(true);
         
-        _contentAttachGroup = new Group(content, SWT.HORIZONTAL);
+        _contentAttachGroup = new Group(_content, SWT.HORIZONTAL);
         _contentAttachGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _contentAttachGroup.setText("Attachments:");
         _contentAttachYes = new Button(_contentAttachGroup, SWT.RADIO);
-        _contentAttachYes.setText("included");
         _contentAttachNo = new Button(_contentAttachGroup, SWT.RADIO);
-        _contentAttachNo.setText("not included");
         _contentAttachIgnore = new Button(_contentAttachGroup, SWT.RADIO);
-        _contentAttachIgnore.setText("don't care");
         _contentAttachIgnore.setSelection(true);
         
-        _contentRefGroup = new Group(content, SWT.HORIZONTAL);
+        _contentRefGroup = new Group(_content, SWT.HORIZONTAL);
         _contentRefGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _contentRefGroup.setText("References:");
         _contentRefYes = new Button(_contentRefGroup, SWT.RADIO);
-        _contentRefYes.setText("included");
         _contentRefNo = new Button(_contentRefGroup, SWT.RADIO);
-        _contentRefNo.setText("not included");
         _contentRefIgnore = new Button(_contentRefGroup, SWT.RADIO);
-        _contentRefIgnore.setText("don't care");
         _contentRefIgnore.setSelection(true);
         
-        _contentKeyGroup = new Group(content, SWT.HORIZONTAL);
+        _contentKeyGroup = new Group(_content, SWT.HORIZONTAL);
         _contentKeyGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _contentKeyGroup.setText("Forum keys:");
         _contentKeyYes = new Button(_contentKeyGroup, SWT.RADIO);
-        _contentKeyYes.setText("included");
         _contentKeyNo = new Button(_contentKeyGroup, SWT.RADIO);
-        _contentKeyNo.setText("not included");
         _contentKeyIgnore = new Button(_contentKeyGroup, SWT.RADIO);
-        _contentKeyIgnore.setText("don't care");
         _contentKeyIgnore.setSelection(true);
         
         _contentAttachIgnore.addSelectionListener(_modListener);
@@ -598,26 +591,22 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _contentRefNo.addSelectionListener(_modListener);
         _contentRefYes.addSelectionListener(_modListener);
         
-        _itemContent.setControl(content);
-        _itemContent.setHeight(content.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemContent.setControl(_content);
+        _itemContent.setHeight(_content.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     private void buildStatusFilter() {
         _itemStatus = new ExpandItem(_bar, SWT.NONE);
-        _itemStatus.setText("Filter status");
         
-        Composite status = new Composite(_bar, SWT.BORDER);
-        status.setLayout(new GridLayout(1, true));
+        _status = new Composite(_bar, SWT.BORDER);
+        _status.setLayout(new GridLayout(1, true));
         
-        _statusDecrypted = new Button(status, SWT.CHECK);
-        _statusDecrypted.setText("already decrypted");
+        _statusDecrypted = new Button(_status, SWT.CHECK);
         _statusDecrypted.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _statusPBE = new Button(status, SWT.CHECK);
-        _statusPBE.setText("encrypted with a passphrase");
+        _statusPBE = new Button(_status, SWT.CHECK);
         _statusPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _statusPrivate = new Button(status, SWT.CHECK);
-        _statusPrivate.setText("encrypted as a private message");
+        _statusPrivate = new Button(_status, SWT.CHECK);
         _statusPrivate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _statusDecrypted.setSelection(true);
@@ -626,18 +615,16 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _statusPBE.addSelectionListener(_modListener);
         _statusPrivate.addSelectionListener(_modListener);
         
-        _itemStatus.setControl(status);
-        _itemStatus.setHeight(status.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemStatus.setControl(_status);
+        _itemStatus.setHeight(_status.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     private void buildDisplayFilter() {
         _itemDisplay = new ExpandItem(_bar, SWT.NONE);
-        _itemDisplay.setText("Filter display options");
         
-        Composite display = new Composite(_bar, SWT.BORDER);
-        display.setLayout(new GridLayout(1, true));
+        _display = new Composite(_bar, SWT.BORDER);
+        _display.setLayout(new GridLayout(1, true));
         
-        _displayThreaded = new Button(display, SWT.CHECK);
-        _displayThreaded.setText("organize in threads");
+        _displayThreaded = new Button(_display, SWT.CHECK);
         _displayThreaded.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         /*
@@ -649,29 +636,37 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         
         _displayThreaded.addSelectionListener(_modListener);
         
-        _itemDisplay.setControl(display);
-        _itemDisplay.setHeight(display.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemDisplay.setControl(_display);
+        _itemDisplay.setHeight(_display.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
     
     private void pickScope() { _refChooser.show(); }
 
     public void referenceAccepted(SyndieURI uri) {
-        if ( (uri != null) && (uri.getScope() != null) ) {
-            _channels = new Hash[1];
-            _channels[0] = uri.getScope();
+        Hash scope = null;
+        if (uri != null) {
+            scope = uri.getScope();
+            if ( (scope == null) && (uri.isSearch()) )
+                scope = uri.getHash("scope");
+        }
+        if (scope != null) {
+            synchronized (this) {
+                _channels = new Hash[1];
+                _channels[0] = scope;
+            }
 
-            long id = _client.getChannelId(_channels[0]);
+            long id = _client.getChannelId(scope);
             if (id >= 0) {
                 ChannelInfo info = _client.getChannel(id);
                 if ( (info != null) && (info.getName() != null) ) {
                     _forumName.setText(CommandImpl.strip(info.getName(), "[]\r\n", ' '));
                 } else {
-                    _forumName.setText(_channels[0].toBase64().substring(0,6));
+                    _forumName.setText(scope.toBase64().substring(0,6));
                 }
             } else {
-                _forumName.setText(_channels[0].toBase64().substring(0,6));
+                _forumName.setText(scope.toBase64().substring(0,6));
             }
-                            
+            
             updateFilter();
         }
         _refChooser.hide();
@@ -685,5 +680,119 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         public void keyTraversed(TraverseEvent traverseEvent) { updateFilter(); }
         public void focusGained(FocusEvent focusEvent) {}
         public void focusLost(FocusEvent focusEvent) { updateFilter(); }
+    }
+    
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+        _refChooser.dispose();
+        //_tree.dispose(); // message tree disposes us
+    }
+    
+    private static final String T_OK = "syndie.gui.messagetreefilter.ok";
+    private static final String T_CANCEL = "syndie.gui.messagetreefilter.cancel";
+        
+    private static final String T_SCOPE = "syndie.gui.messagetreefilter.scope";
+    private static final String T_FORUMLABEL = "syndie.gui.messagetreefilter.forumlabel";
+    private static final String T_FORUMNAME = "syndie.gui.messagetreefilter.forumname";
+    private static final String T_FORUMSELECT = "syndie.gui.messagetreefilter.forumselect";
+    private static final String T_AUTHORLABEL = "syndie.gui.messagetreefilter.authorlabel";
+    private static final String T_AUTHORAUTHORIZED = "syndie.gui.messagetreefilter.authorauthorized";
+    private static final String T_AUTHORMANAGER = "syndie.gui.messagetreefilter.authormanager";
+    private static final String T_AUTHOROWNER = "syndie.gui.messagetreefilter.authorowner";
+    private static final String T_AUTHORANY = "syndie.gui.messagetreefilter.authorany";
+    private static final String T_AGE = "syndie.gui.messagetreefilter.age";
+    private static final String T_AGEDAY = "syndie.gui.messagetreefilter.ageday";
+    private static final String T_AGE2DAY = "syndie.gui.messagetreefilter.age2day";
+    private static final String T_AGEWEEK = "syndie.gui.messagetreefilter.ageweek";
+    private static final String T_AGE2WEEK = "syndie.gui.messagetreefilter.age2week";
+    private static final String T_AGEMONTH = "syndie.gui.messagetreefilter.agemonth";
+    private static final String T_AGE2MONTH = "syndie.gui.messagetreefilter.age2month";
+    private static final String T_AGECUSTOM = "syndie.gui.messagetreefilter.agecustom";
+    private static final String T_TAGS = "syndie.gui.messagetreefilter.tags";
+    private static final String T_TAGSINCLUDE = "syndie.gui.messagetreefilter.tagsinclude";
+    private static final String T_TAGSREQUIRE = "syndie.gui.messagetreefilter.tagsrequire";
+    private static final String T_TAGSEXCLUDE = "syndie.gui.messagetreefilter.tagsexclude";
+    private static final String T_APPLYTOMESSAGES = "syndie.gui.messagetreefilter.applytomessages";
+    private static final String T_CONTENT = "syndie.gui.messagetreefilter.content";
+    private static final String T_CONTENT_PAGES = "syndie.gui.messagetreefilter.content.pages";
+    private static final String T_CONTENT_PAGES_YES = "syndie.gui.messagetreefilter.content.pages.yes";
+    private static final String T_CONTENT_PAGES_NO = "syndie.gui.messagetreefilter.content.pages.no";
+    private static final String T_CONTENT_PAGES_DONTCARE = "syndie.gui.messagetreefilter.content.pages.dontcare";
+    private static final String T_CONTENT_ATTACH = "syndie.gui.messagetreefilter.content.attach";
+    private static final String T_CONTENT_ATTACH_YES = "syndie.gui.messagetreefilter.content.attach.yes";
+    private static final String T_CONTENT_ATTACH_NO = "syndie.gui.messagetreefilter.content.attach.no";
+    private static final String T_CONTENT_ATTACH_DONTCARE = "syndie.gui.messagetreefilter.content.attach.dontcare";
+    private static final String T_CONTENT_REFS = "syndie.gui.messagetreefilter.content.refs";
+    private static final String T_CONTENT_REFS_YES = "syndie.gui.messagetreefilter.content.refs.yes";
+    private static final String T_CONTENT_REFS_NO = "syndie.gui.messagetreefilter.content.refs.no";
+    private static final String T_CONTENT_REFS_DONTCARE = "syndie.gui.messagetreefilter.content.refs.dontcare";
+    private static final String T_CONTENT_KEYS = "syndie.gui.messagetreefilter.content.keys";
+    private static final String T_CONTENT_KEYS_YES = "syndie.gui.messagetreefilter.content.keys.yes";
+    private static final String T_CONTENT_KEYS_NO = "syndie.gui.messagetreefilter.content.keys.no";
+    private static final String T_CONTENT_KEYS_DONTCARE = "syndie.gui.messagetreefilter.content.keys.dontcare";
+    private static final String T_STATUS = "syndie.gui.messagetreefilter.status";
+    private static final String T_STATUS_DECRYPTED = "syndie.gui.messagetreefilter.status.decrypted";
+    private static final String T_STATUS_PBE = "syndie.gui.messagetreefilter.status.pbe";
+    private static final String T_STATUS_PRIV = "syndie.gui.messagetreefilter.status.priv";
+    private static final String T_DISPLAY = "syndie.gui.messagetreefilter.display";
+    private static final String T_DISPLAY_THREADED = "syndie.gui.messagetreefilter.display.threaded";
+        
+    public void translate(TranslationRegistry registry) {
+        _ok.setText(registry.getText(T_OK, "Apply"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        
+        _itemScope.setText(registry.getText(T_SCOPE, "Filter scope"));
+        _forumLabel.setText(registry.getText(T_FORUMLABEL, "Forum: "));
+        _forumSelect.setText(registry.getText(T_FORUMSELECT, "Select..."));
+        _authorLabel.setText(registry.getText(T_AUTHORLABEL, "Author: "));
+        _authorAuthorized.setText(registry.getText(T_AUTHORAUTHORIZED, "any authorized user"));
+        _authorManager.setText(registry.getText(T_AUTHORMANAGER, "forum managers only"));
+        _authorOwner.setText(registry.getText(T_AUTHOROWNER, "forum owner only"));
+        _authorAny.setText(registry.getText(T_AUTHORANY, "anyone, even unauthorized users"));
+        _itemAge.setText(registry.getText(T_AGE, "Filter age"));
+        _ageDay.setText(registry.getText(T_AGEDAY, "posted today"));
+        _age2Days.setText(registry.getText(T_AGE2DAY, "posted in the last 2 days"));
+        _ageWeek.setText(registry.getText(T_AGEWEEK, "posted in the last week"));
+        _age2Weeks.setText(registry.getText(T_AGE2WEEK, "posted in the last 2 weeks"));
+        _ageMonth.setText(registry.getText(T_AGEMONTH, "posted in the last month"));
+        _age2Months.setText(registry.getText(T_AGE2MONTH, "posted in the last 2 months"));
+        _ageCustom.setText(registry.getText(T_AGECUSTOM, "posted since: "));
+        _itemTags.setText(registry.getText(T_TAGS, "Filter tags"));
+        _tagsInclude.setText(registry.getText(T_TAGSINCLUDE, "include tags: "));
+        _tagsRequire.setText(registry.getText(T_TAGSREQUIRE, "require tags: "));
+        _tagsExclude.setText(registry.getText(T_TAGSEXCLUDE, "exclude tags: "));
+        _tagsApplyToMessages.setText(registry.getText(T_APPLYTOMESSAGES, "apply to messages individually, not just to threads"));
+        _itemContent.setText(registry.getText(T_CONTENT, "Filter content"));
+        _contentPageGroup.setText(registry.getText(T_CONTENT_PAGES, "Pages:"));
+        _contentPageYes.setText(registry.getText(T_CONTENT_PAGES_YES, "included"));
+        _contentPageNo.setText(registry.getText(T_CONTENT_PAGES_NO, "not included"));
+        _contentPageIgnore.setText(registry.getText(T_CONTENT_PAGES_DONTCARE, "don't care"));
+        _contentAttachGroup.setText(registry.getText(T_CONTENT_ATTACH, "Attachments:"));
+        _contentAttachYes.setText(registry.getText(T_CONTENT_ATTACH_YES, "included"));
+        _contentAttachNo.setText(registry.getText(T_CONTENT_ATTACH_NO, "not included"));
+        _contentAttachIgnore.setText(registry.getText(T_CONTENT_ATTACH_DONTCARE, "don't care"));
+        _contentRefGroup.setText(registry.getText(T_CONTENT_REFS, "References:"));
+        _contentRefYes.setText(registry.getText(T_CONTENT_REFS_YES, "included"));
+        _contentRefNo.setText(registry.getText(T_CONTENT_REFS_NO, "not included"));
+        _contentRefIgnore.setText(registry.getText(T_CONTENT_REFS_DONTCARE, "don't care"));
+        _contentKeyGroup.setText(registry.getText(T_CONTENT_KEYS, "Forum keys:"));
+        _contentKeyYes.setText(registry.getText(T_CONTENT_KEYS_YES, "included"));
+        _contentKeyNo.setText(registry.getText(T_CONTENT_KEYS_NO, "not included"));
+        _contentKeyIgnore.setText(registry.getText(T_CONTENT_KEYS_DONTCARE, "don't care"));
+        _itemStatus.setText(registry.getText(T_STATUS, "Filter status"));
+        _statusDecrypted.setText(registry.getText(T_STATUS_DECRYPTED, "already decrypted"));
+        _statusPBE.setText(registry.getText(T_STATUS_PBE, "encrypted with a passphrase"));
+        _statusPrivate.setText(registry.getText(T_STATUS_PRIV, "encrypted as a private message"));
+        _itemDisplay.setText(registry.getText(T_DISPLAY, "Filter display options"));
+        _displayThreaded.setText(registry.getText(T_DISPLAY_THREADED, "organize in threads"));
+        
+        _root.layout(true, true);
+        
+        _itemContent.setHeight(_content.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemAge.setHeight(_age.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemScope.setHeight(_scope.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemTags.setHeight(_tags.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemStatus.setHeight(_status.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+        _itemDisplay.setHeight(_display.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
     }
 }

@@ -35,7 +35,7 @@ import syndie.db.CommandImpl;
 /**
  *
  */
-class ManageForum implements ReferenceChooserTree.AcceptanceListener {
+class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatable {
     private Composite _parent;
     private Composite _root;
     private BrowserControl _browser;
@@ -56,11 +56,15 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
     
     private Group _managers;
     private List _managerList;
-    private Button _managerAdd;
+    private MenuItem _managerAdd;
+    private MenuItem _managerView;
+    private MenuItem _managerRemove;
     
     private Group _posters;
     private List _posterList;
-    private Button _posterAdd;
+    private MenuItem _posterAdd;
+    private MenuItem _posterView;
+    private MenuItem _posterRemove;
     
     private Group _archives;
     private Composite _archiveElements;
@@ -181,7 +185,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
             else
                 _name.setText("");
             if (info.getExpiration() <= 0)
-                _expire.setText("never");
+                _expire.setText(_browser.getTranslationRegistry().getText(T_EXPIRE_NEVER, "never"));
             else
                 _expire.setText(Constants.getDate(info.getExpiration()));
             StringBuffer tags = new StringBuffer();
@@ -256,7 +260,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
             _avatar.setImage(null);
             _desc.setText("");
             _name.setText("");
-            _expire.setText("never");
+            _expire.setText(_browser.getTranslationRegistry().getText(T_EXPIRE_NEVER, "never"));
             _tags.setText("");
         }
         
@@ -273,21 +277,18 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         _avatar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 1, 3));
         
         _nameLabel = new Label(_root, SWT.NONE);
-        _nameLabel.setText("Name:");
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _name = new Text(_root, SWT.BORDER | SWT.SINGLE);
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _tagsLabel = new Label(_root, SWT.NONE);
-        _tagsLabel.setText("Tags:");
         _tagsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _tags = new Text(_root, SWT.BORDER | SWT.SINGLE);
         _tags.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _expireLabel = new Label(_root, SWT.NONE);
-        _expireLabel.setText("Expiration:");
         _expireLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _expire = new Text(_root, SWT.BORDER | SWT.SINGLE);
@@ -296,21 +297,18 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         _expire.setLayoutData(gd);
         
         _descLabel = new Label(_root, SWT.NONE);
-        _descLabel.setText("Description:");
         _descLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _desc = new Text(_root, SWT.BORDER | SWT.SINGLE | SWT.WRAP);
         _desc.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         
         _privacyLabel = new Label(_root, SWT.NONE);
-        _privacyLabel.setText("Privacy:");
         _privacyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _privacy = new Combo(_root, SWT.DROP_DOWN);
         _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _authLabel = new Label(_root, SWT.NONE);
-        _authLabel.setText("Authorization:");
         _authLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _auth = new Combo(_root, SWT.DROP_DOWN);
@@ -321,7 +319,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         authRow.setLayout(new GridLayout(2, true));
         
         _managers = new Group(authRow, SWT.SHADOW_ETCHED_IN);
-        _managers.setText("Managers");
         _managers.setLayout(new GridLayout(1, true));
         _managers.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
@@ -333,30 +330,26 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         
         Menu menu = new Menu(_managerList);
         _managerList.setMenu(menu);
-        MenuItem view = new MenuItem(menu, SWT.PUSH);
-        view.setText("view");
-        view.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewManager(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewManager(); }
-        });
         
-        MenuItem remove = new MenuItem(menu, SWT.PUSH);
-        remove.setText("remove");
-        remove.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeManager(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { removeManager(); }
-        });
-        
-        _managerAdd = new Button(_managers, SWT.PUSH);
-        _managerAdd.setText("Add");
-        _managerAdd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _managerAdd = new MenuItem(menu, SWT.PUSH);
         _managerAdd.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addManager(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addManager(); }
         });
         
+        _managerView = new MenuItem(menu, SWT.PUSH);
+        _managerView.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewManager(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewManager(); }
+        });
+        
+        _managerRemove = new MenuItem(menu, SWT.PUSH);
+        _managerRemove.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeManager(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { removeManager(); }
+        });
+        
         _posters = new Group(authRow, SWT.SHADOW_ETCHED_IN);
-        _posters.setText("Posters");
         _posters.setLayout(new GridLayout(1, true));
         _posters.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
@@ -368,30 +361,26 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         
         menu = new Menu(_posterList);
         _posterList.setMenu(menu);
-        view = new MenuItem(menu, SWT.PUSH);
-        view.setText("view");
-        view.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewPoster(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewPoster(); }
-        });
         
-        remove = new MenuItem(menu, SWT.PUSH);
-        remove.setText("remove");
-        remove.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removePoster(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { removePoster(); }
-        });
-        
-        _posterAdd = new Button(_posters, SWT.PUSH);
-        _posterAdd.setText("Add");
-        _posterAdd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _posterAdd = new MenuItem(menu, SWT.PUSH);
         _posterAdd.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPoster(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addPoster(); }
         });
         
+        _posterView = new MenuItem(menu, SWT.PUSH);
+        _posterView.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewPoster(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewPoster(); }
+        });
+        
+        _posterRemove = new MenuItem(menu, SWT.PUSH);
+        _posterRemove.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removePoster(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { removePoster(); }
+        });
+        
         _archives = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _archives.setText("Archives");
         _archives.setLayout(new GridLayout(2, false));
         _archives.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1));
         
@@ -402,11 +391,9 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         _archiveElements.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _archiveAdd = new Button(_archives, SWT.PUSH);
-        _archiveAdd.setText("Add");
         _archiveAdd.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
         
         _references = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _references.setText("References");
         _references.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1));
         
         Composite actions = new Composite(_root, SWT.NONE);
@@ -416,19 +403,19 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         populateCombos();
         
         _save = new Button(actions, SWT.PUSH);
-        _save.setText("Save");
         _save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
             public void widgetSelected(SelectionEvent selectionEvent) { save(); }
         });
         _cancel = new Button(actions, SWT.PUSH);
-        _cancel.setText("Cancel");
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
         });
         
         _refChooser = new ReferenceChooserPopup(_parent.getShell(), _browser, this);
+        
+        _browser.getTranslationRegistry().register(this);
     }
     
     private static final int PRIV_PUBLIC = 0;
@@ -441,19 +428,26 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
     
     private void populateCombos() {
         _privacy.setRedraw(false);
+        int idx = PRIV_PUBLIC;
+        if (_privacy.getItemCount() != 0)
+            idx = _privacy.getSelectionIndex();
         _privacy.removeAll();
-        _privacy.add("Publicly readable");
-        _privacy.add("Authorized readers only");
-        _privacy.add("Passphrase protected...");
-        _privacy.select(PRIV_PUBLIC);
+        
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PUBLIC, "Publicly readable"));
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_AUTHORIZED, "Authorized readers only"));
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PASSPHRASE, "Passphrase protected..."));
+        _privacy.select(idx);
         _privacy.setRedraw(true);
         
         _auth.setRedraw(false);
+        idx = AUTH_AUTHORIZEDONLY;
+        if (_auth.getItemCount() != 0)
+            idx = _auth.getSelectionIndex();
         _auth.removeAll();
-        _auth.add("Only authorized users can post");
-        _auth.add("Anyone can reply to authorized posts");
-        _auth.add("Anyone can post");
-        _auth.select(AUTH_AUTHORIZEDONLY);
+        _auth.add(_browser.getTranslationRegistry().getText(T_AUTH_AUTHONLY, "Only authorized users can post"));
+        _auth.add(_browser.getTranslationRegistry().getText(T_AUTH_PUBREPLY, "Anyone can reply to authorized posts"));
+        _auth.add(_browser.getTranslationRegistry().getText(T_AUTH_PUBPOST, "Anyone can post"));
+        _auth.select(idx);
         _auth.setRedraw(true);
     }
     
@@ -573,8 +567,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
     
     public boolean confirmClose() {
         MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText("Confirm");
-        confirm.setMessage("Do you want to discard these changes to the forum?");
+        confirm.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
+        confirm.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             return true;
@@ -583,5 +577,63 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener {
         } else {
             return false;
         }
+    }
+    
+    public void dispose() { _browser.getTranslationRegistry().unregister(this); }
+
+    private static final String T_PRIV_PUBLIC = "syndie.gui.manageforum.priv.public";
+    private static final String T_PRIV_AUTHORIZED = "syndie.gui.manageforum.priv.authorized";
+    private static final String T_PRIV_PASSPHRASE = "syndie.gui.manageforum.priv.pbe";
+    
+    private static final String T_AUTH_AUTHONLY = "syndie.gui.manageforum.auth.authonly";
+    private static final String T_AUTH_PUBREPLY = "syndie.gui.manageforum.auth.pubreply";
+    private static final String T_AUTH_PUBPOST = "syndie.gui.manageforum.auth.pubpost";
+    
+    private static final String T_CONFIRM_CLOSE_TITLE = "syndie.gui.manageforum.close.title";
+    private static final String T_CONFIRM_CLOSE_MSG = "syndie.gui.manageforum.close.msg";
+    
+    private static final String T_EXPIRE_NEVER = "syndie.gui.manageforum.expire.never";
+    private static final String T_NAME = "syndie.gui.manageforum.name";
+    private static final String T_TAGS = "syndie.gui.manageforum.tags";
+    private static final String T_EXPIRATION = "syndie.gui.manageforum.expiration";
+    private static final String T_DESC = "syndie.gui.manageforum.desc";
+    private static final String T_PRIVACY = "syndie.gui.manageforum.privacy";
+    private static final String T_AUTHORIZATION = "syndie.gui.manageforum.authorization";
+    private static final String T_MANAGERS = "syndie.gui.manageforum.managers";
+    private static final String T_MANAGERS_ADD = "syndie.gui.manageforum.managers.add";
+    private static final String T_MANAGERS_VIEW = "syndie.gui.manageforum.managers.view";
+    private static final String T_MANAGERS_REMOVE = "syndie.gui.manageforum.managers.remove";
+    private static final String T_POSTERS = "syndie.gui.manageforum.posters";
+    private static final String T_POSTERS_ADD = "syndie.gui.manageforum.posters.add";
+    private static final String T_POSTERS_VIEW = "syndie.gui.manageforum.posters.view";
+    private static final String T_POSTERS_REMOVE = "syndie.gui.manageforum.posters.remove";
+    private static final String T_ARCHIVES = "syndie.gui.manageforum.archives";
+    private static final String T_ARCHIVES_ADD = "syndie.gui.manageforum.archives.add";
+    private static final String T_REFERENCES = "syndie.gui.manageforum.references";
+    private static final String T_SAVE = "syndie.gui.manageforum.save";
+    private static final String T_CANCEL = "syndie.gui.manageforum.cancel";
+    
+    public void translate(TranslationRegistry registry) {
+        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
+        _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
+        _expireLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
+        _descLabel.setText(registry.getText(T_DESC, "Description:"));
+        _privacyLabel.setText(registry.getText(T_PRIVACY, "Privacy:"));
+        _authLabel.setText(registry.getText(T_AUTHORIZATION, "Authorization:"));
+        _managers.setText(registry.getText(T_MANAGERS, "Managers"));
+        _managerAdd.setText(registry.getText(T_MANAGERS_ADD, "add"));
+        _managerView.setText(registry.getText(T_MANAGERS_VIEW, "view"));
+        _managerRemove.setText(registry.getText(T_MANAGERS_REMOVE, "remove"));
+        _posters.setText(registry.getText(T_POSTERS, "Posters"));
+        _posterAdd.setText(registry.getText(T_POSTERS_ADD, "add"));
+        _posterView.setText(registry.getText(T_POSTERS_VIEW, "view"));
+        _posterRemove.setText(registry.getText(T_POSTERS_REMOVE, "remove"));
+        _archives.setText(registry.getText(T_ARCHIVES, "Archives"));
+        _archiveAdd.setText(registry.getText(T_ARCHIVES_ADD, "Add"));
+        _references.setText(registry.getText(T_REFERENCES, "References"));
+        _save.setText(registry.getText(T_SAVE, "Save"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        
+        populateCombos();
     }
 }

@@ -257,7 +257,7 @@ public class ThreadAccumulator {
             } else {
                 for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
-                    //_ui.debugMessage("gather threads across " + chan.toBase64());
+                    _ui.debugMessage("gather threads across " + chan.toBase64());
                     long chanId = _client.getChannelId(chan);
                     stmt = _client.con().prepareStatement(SQL_LIST_THREADS_CHAN);
                     stmt.setLong(1, chanId);
@@ -286,7 +286,7 @@ public class ThreadAccumulator {
                     stmt.close();
                     stmt = null;
                     
-                    //_ui.debugMessage("Found root messageIds including those for channel " + chan.toBase64() + ": " + rootMsgIds);
+                    _ui.debugMessage("Found root messageIds including those for channel " + chan.toBase64() + ": " + rootMsgIds);
                 } // end iterating over channels
             } // if (all channels) {} else {}
             
@@ -300,7 +300,7 @@ public class ThreadAccumulator {
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
                 loadInfo(root);
-                //_ui.debugMessage("thread loaded for root msgId: " + msgId);
+                //_ui.debugMessage("thread loaded for root msgId: " + msgId);// + ": " + root);
             }
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);

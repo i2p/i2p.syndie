@@ -160,8 +160,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
     
     public void setParentMessage(SyndieURI uri) {
         _parents.clear();
-        if (uri != null)
+        if (uri != null) {
             _parents.add(uri);
+        }
     }
     
     public void setScope(Hash scope) {

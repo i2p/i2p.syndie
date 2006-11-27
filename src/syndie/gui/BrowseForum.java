@@ -10,6 +10,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -25,6 +27,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
+import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
@@ -33,7 +36,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class BrowseForum implements MessageTree.MessageTreeListener {
+public class BrowseForum implements MessageTree.MessageTreeListener, Translatable {
     private DBClient _client;
     private Composite _parent;
     private SashForm _root;
@@ -48,10 +51,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     private MenuItem _metaNameMenuCopyURI;
     private MenuItem _metaNameMenuDeleteAll;
     private MenuItem _metaNameMenuBan;
-    private Button _metaIconManageable;
-    private Button _metaIconPostable;
-    private Button _metaIconReferences;
-    private Button _metaIconAdmins;
+    private Label _metaIconManageable;
+    private Label _metaIconPostable;
+    private Label _metaIconReferences;
+    private Label _metaIconAdmins;
     private MessageTree _tree;
     private MessageTree.MessageTreeListener _listener;
     private MessagePreview _preview;
@@ -89,26 +92,22 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _metaName = new Link(_meta, SWT.NONE);
         _metaName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
         _metaName.setText("");
-        _metaIconManageable = new Button(_meta, SWT.PUSH);
-        _metaIconPostable = new Button(_meta, SWT.PUSH);
-        _metaIconReferences = new Button(_meta, SWT.PUSH);
-        _metaIconAdmins = new Button(_meta, SWT.PUSH);
+        _metaIconManageable = new Label(_meta, SWT.NONE);
+        _metaIconPostable = new Label(_meta, SWT.NONE);
+        _metaIconReferences = new Label(_meta, SWT.NONE);
+        _metaIconAdmins = new Label(_meta, SWT.NONE);
         _metaIconManageable.setLayoutData(new GridData(20, 20));
         _metaIconPostable.setLayoutData(new GridData(20, 20));
         _metaIconReferences.setLayoutData(new GridData(20, 20));
         _metaIconAdmins.setLayoutData(new GridData(20, 20));
-        _metaIconManageable.setText("m");
-        _metaIconPostable.setText("p");
-        _metaIconReferences.setText("r");
-        _metaIconAdmins.setText("a");
-        _metaIconManageable.setToolTipText("You can manage this forum");
-        _metaIconPostable.setToolTipText("You can post in this forum");
-        _metaIconReferences.setToolTipText("This forum has published references");
-        _metaIconAdmins.setToolTipText("This forum has specific admins");
-        _metaIconManageable.setEnabled(false);
-        _metaIconPostable.setEnabled(false);
-        _metaIconReferences.setEnabled(false);
-        _metaIconAdmins.setEnabled(false);
+        //_metaIconManageable.setEnabled(false);
+        //_metaIconPostable.setEnabled(false);
+        //_metaIconReferences.setEnabled(false);
+        //_metaIconAdmins.setEnabled(false);
+        _metaIconManageable.setImage(ImageUtil.ICON_BROWSE_MANAGEABLE);
+        _metaIconPostable.setImage(ImageUtil.ICON_BROWSE_POSTABLE);
+        _metaIconReferences.setImage(ImageUtil.ICON_BROWSE_REFS);
+        _metaIconAdmins.setImage(ImageUtil.ICON_BROWSE_ADMINS);
         
         _metaNameMenu = new Menu(_metaName);
         _metaNameMenuBookmark = new MenuItem(_metaNameMenu, SWT.PUSH);
@@ -117,13 +116,6 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _metaNameMenuCopyURI = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuBan = new MenuItem(_metaNameMenu, SWT.PUSH);
-        
-        _metaNameMenuBookmark.setText("Bookmark this forum");
-        _metaNameMenuMarkRead.setText("Mark all messages read");
-        _metaNameMenuDeleteRead.setText("Delete read messages");
-        _metaNameMenuCopyURI.setText("Copy forum URI");
-        _metaNameMenuDeleteAll.setText("Delete all messages");
-        _metaNameMenuBan.setText("Ban this forum");
         
         _metaNameMenuBookmark.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
@@ -136,9 +128,26 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             public void widgetSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
         });
         
-        _metaIconPostable.addSelectionListener(new SelectionListener() {
-            public void widgetSelected(SelectionEvent selectionEvent) { post(); }
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { post(); }
+        _metaIconManageable.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) { manage(); }
+            public void mouseUp(MouseEvent mouseEvent) {}
+        });
+        _metaIconManageable.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) manage();
+            }
+        });
+        
+        _metaIconPostable.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) { post(); }
+            public void mouseUp(MouseEvent mouseEvent) {}
+        });
+        _metaIconPostable.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) post();
+            }
         });
         
         _browser.getUI().debugMessage("browseForum.initialize: creating tree");
@@ -149,8 +158,16 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         _browser.getUI().debugMessage("browseForum.initialize: preview created");
         _root.setWeights(new int[] { 80, 20 });
         _root.setMaximizedControl(_top);
+        
+        _browser.getTranslationRegistry().register(this);
     }
 
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+        _preview.dispose();
+        _tree.dispose();
+    }
+    
     private void updateMetadata(SyndieURI uri) {
         // if the target channel has changed, update the metadata fields
         Hash scope = null;
@@ -166,6 +183,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
         if (scope != null) {
             long chanId = _client.getChannelId(scope);
             info = _client.getChannel(chanId);
+            
+            if ( (chanId >= 0) && (uri.getMessageId() != null) ) {
+                MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+                if (msg != null) {
+                    scope = msg.getTargetChannel();
+                    info = _client.getChannel(msg.getTargetChannelId());
+                }
+            }
         }
         
         if (info != null) {
@@ -180,31 +205,28 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             buf.append(desc);
             _metaName.setText(buf.toString());
             boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
-            _metaIconManageable.setEnabled(manage);
-            if (manage)
-                _metaIconPostable.setEnabled(true);
-            else
-                _metaIconPostable.setEnabled(_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);
+            _metaIconManageable.setVisible(manage);
+            boolean post = manage || info.getAllowPublicPosts() || (_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);
+            _metaIconPostable.setVisible(post);
             List refs = info.getReferences();
-            if ( (refs != null) && (refs.size() > 0) )
-                _metaIconReferences.setEnabled(true);
-            else
-                _metaIconReferences.setEnabled(false);
-            if ( (info.getAuthorizedManagers().size() > 0) || (info.getAuthorizedPosters().size() > 0) )
-                _metaIconAdmins.setEnabled(true);
-            else
-                _metaIconAdmins.setEnabled(false);
+            boolean inclRefs = (refs != null) && (refs.size() > 0);
+            _metaIconReferences.setVisible(inclRefs);
+            
+            boolean admins = (info.getAuthorizedManagers().size() > 0) || (info.getAuthorizedPosters().size() > 0);
+            _metaIconAdmins.setVisible(admins);
         } else {
-            _metaName.setText("multiple forums selected");
-            _metaIconManageable.setEnabled(false);
-            _metaIconPostable.setEnabled(false);
-            _metaIconReferences.setEnabled(false);
-            _metaIconAdmins.setEnabled(false);
+            _metaName.setText(_browser.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
+            _metaIconManageable.setVisible(false);
+            _metaIconPostable.setVisible(false);
+            _metaIconReferences.setVisible(false);
+            _metaIconAdmins.setVisible(false);
         }
         _scope = scope;
         _meta.layout(true, true);
     }
 
+    private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";
+    
     public void setFilter(SyndieURI filter) { 
         _ui.debugMessage("setting filter...");
         _tree.setFilter(filter);
@@ -232,8 +254,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
     void preview(SyndieURI uri) { 
         _tree.select(uri);
         _root.setMaximizedControl(null);
-        _ui.debugMessage("updating metadata in preview...");
-        updateMetadata(uri);
+        // dont update the metadata, since a message may be selected that isn't strictly
+        // in this forum (eg its in another forum, but uses something in the filtered messages
+        // as a parent).  when viewing a forum, the forum metadata at the top stays the same
+        // (unless you edit the filter to view another forum)
+        //_ui.debugMessage("updating metadata in preview...");
+        //updateMetadata(uri);
         _ui.debugMessage("previewing...");
         _preview.preview(uri);
         _ui.debugMessage("preview complete");
@@ -244,5 +270,37 @@ public class BrowseForum implements MessageTree.MessageTreeListener {
             _browser.getUI().debugMessage("posting...");
             _browser.view(_browser.createPostURI(_scope, null));
         }
+    }
+    
+    private void manage() {
+        if (_browser != null) {
+            _browser.view(_browser.createManageURI(_scope));
+        }
+    }
+
+    private static final String T_MANAGEABLE_TOOLTIP = "syndie.gui.browseforum.manageable";
+    private static final String T_POSTABLE_TOOLTIP = "syndie.gui.browseforum.postable";
+    private static final String T_REFS_TOOLTIP = "syndie.gui.browseforum.refs";
+    private static final String T_ADMINS_TOOLTIP = "syndie.gui.browseforum.admins";
+
+    private static final String T_BOOKMARK = "syndie.gui.browseforum.bookmark";
+    private static final String T_MARKALLREAD = "syndie.gui.browseforum.markallread";
+    private static final String T_DELETEREAD = "syndie.gui.browseforum.deleteread";
+    private static final String T_COPYURI = "syndie.gui.browseforum.copyuri";
+    private static final String T_DELETEALL = "syndie.gui.browseforum.deleteall";
+    private static final String T_BAN = "syndie.gui.browseforum.ban";
+    
+    public void translate(TranslationRegistry registry) {
+        _metaIconManageable.setToolTipText(registry.getText(T_MANAGEABLE_TOOLTIP, "You can manage this forum"));
+        _metaIconPostable.setToolTipText(registry.getText(T_POSTABLE_TOOLTIP, "You can post in this forum"));
+        _metaIconReferences.setToolTipText(registry.getText(T_REFS_TOOLTIP, "This forum has published references"));
+        _metaIconAdmins.setToolTipText(registry.getText(T_ADMINS_TOOLTIP, "This forum has specific admins"));
+
+        _metaNameMenuBookmark.setText(registry.getText(T_BOOKMARK, "Bookmark this forum"));
+        _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
+        _metaNameMenuDeleteRead.setText(registry.getText(T_DELETEREAD, "Delete read messages"));
+        _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));
+        _metaNameMenuDeleteAll.setText(registry.getText(T_DELETEALL, "Delete all messages"));
+        _metaNameMenuBan.setText(registry.getText(T_BAN, "Ban this forum"));
     }
 }

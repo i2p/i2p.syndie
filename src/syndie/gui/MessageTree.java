@@ -44,7 +44,7 @@ import syndie.db.ThreadAccumulator;
 /**
  * 
  */
-public class MessageTree {
+public class MessageTree implements Translatable {
     private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
@@ -57,7 +57,10 @@ public class MessageTree {
     private TreeColumn _colDate;
     private TreeColumn _colTags;
 
+    private Label _filterLabel;
     private Text _filter;
+    private Button _filterApply;
+    private Button _filterEdit;
     private SyndieURI _appliedFilter;
     private MessageTreeFilter _filterEditor;
     private Shell _filterEditorShell;
@@ -130,26 +133,22 @@ public class MessageTree {
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
-        _colSubject.setText("Subject");
         _colType = new TreeColumn(_tree, SWT.LEFT);
         _colAuthor = new TreeColumn(_tree, SWT.LEFT);
-        _colAuthor.setText("Author");
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
-        _colChannel.setText("Forum");
         _colDate = new TreeColumn(_tree, SWT.LEFT);
-        _colDate.setText("Date");
         _colTags = new TreeColumn(_tree, SWT.LEFT);
-        _colTags.setText("Tags");
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
         
+        createFilterEditor();
+        
         Composite filterRow = new Composite(_root, SWT.BORDER);
         filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         filterRow.setLayout(new GridLayout(4, false));
-        Label l = new Label(filterRow, SWT.NONE);
-        l.setText("Filters: ");
-        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _filterLabel = new Label(filterRow, SWT.NONE);
+        _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _filter = new Text(filterRow, SWT.SINGLE | SWT.BORDER);
         _filter.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _filter.addTraverseListener(new TraverseListener() {
@@ -157,17 +156,16 @@ public class MessageTree {
                 if (evt.detail == SWT.TRAVERSE_RETURN) applyFilter();
             }
         });
-        Button filter = new Button(filterRow, SWT.PUSH);
-        filter.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        filter.setText("Apply");
-        filter.addSelectionListener(new SelectionListener() {
+        
+        _filterApply = new Button(filterRow, SWT.PUSH);
+        _filterApply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _filterApply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
             public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
         });
-        Button edit = new Button(filterRow, SWT.PUSH);
-        edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        edit.setText("Edit...");
-        edit.addSelectionListener(new SelectionListener() {
+        _filterEdit = new Button(filterRow, SWT.PUSH);
+        _filterEdit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _filterEdit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { editFilter(); }
             public void widgetSelected(SelectionEvent selectionEvent) { editFilter(); }
         });
@@ -185,12 +183,11 @@ public class MessageTree {
         _tree.addKeyListener(lsnr);
         _tree.addMouseListener(lsnr);
         
-        createFilterEditor();
+        _browser.getTranslationRegistry().register(this);
     }
     
     private void createFilterEditor() {
         _filterEditorShell = new Shell(_parent.getShell(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
-        _filterEditorShell.setText("Message filter");
         _filterEditorShell.setLayout(new FillLayout());
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _filterEditorShell.addShellListener(new ShellListener() {
@@ -215,6 +212,11 @@ public class MessageTree {
     public void showDate(boolean show) { _showDate = show; }
     public void showAuthor(boolean show) { _showAuthor = show; }
     public void showTags(boolean show) { _showTags = show; }
+    
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+        _filterEditor.dispose();
+    }
     
     public void setFilter(SyndieURI searchURI) {
         if (searchURI != null)
@@ -343,7 +345,7 @@ public class MessageTree {
                     if (authInfo != null) {
                         auth = authInfo.getName() + " [" + authInfo.getChannelHash().toBase64().substring(0,6) + "]";
                     } else {
-                        auth = "[unknown]";
+                        auth = "";
                     }
                     //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
                 } else {
@@ -381,14 +383,14 @@ public class MessageTree {
                 item.setGrayed(false);
             } else {
                 // message is not locally known
-                subj = "[unknown]";
+                subj = "";
                 if (scopeInfo != null)
                     auth = scopeInfo.getName() + " [" + scopeInfo.getChannelHash().toBase64().substring(0,6) + "]";
                 else
                     auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
-                chan = "[unknown]";
+                chan = "";
                 date = Constants.getDate(uri.getMessageId().longValue());
-                tags = "[unknown]";
+                tags = "";
             }
             item.setText(0, subj);
             if (msg.getWasPrivate())
@@ -451,4 +453,28 @@ public class MessageTree {
         _filterEditorShell.open();
     }
     void hideFilterEditor() { _filterEditorShell.setVisible(false); }
+
+    private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
+    private static final String T_AUTHOR = "syndie.gui.messagetree.author";
+    private static final String T_FORUM = "syndie.gui.messagetree.forum";
+    private static final String T_DATE = "syndie.gui.messagetree.date";
+    private static final String T_TAGS = "syndie.gui.messagetree.tags";
+    private static final String T_FILTER_LABEL = "syndie.gui.messagetree.filter.label";
+    private static final String T_FILTER_APPLY = "syndie.gui.messagetree.filter.apply";
+    private static final String T_FILTER_EDIT = "syndie.gui.messagetree.filter.edit";
+    private static final String T_FILTER_EDIT_SHELL = "syndie.gui.messagetree.filter.edit.shell";
+    
+    public void translate(TranslationRegistry registry) {
+        _colSubject.setText(registry.getText(T_SUBJECT, "Subject"));
+        _colAuthor.setText(registry.getText(T_AUTHOR, "Author"));
+        _colChannel.setText(registry.getText(T_FORUM, "Forum"));
+        _colDate.setText(registry.getText(T_DATE, "Date"));
+        _colTags.setText(registry.getText(T_TAGS, "Tags"));
+        
+        _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filters: "));
+        
+        _filterApply.setText(registry.getText(T_FILTER_APPLY, "Apply"));
+        _filterEdit.setText(registry.getText(T_FILTER_EDIT, "Edit..."));
+        _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
+    }
 }

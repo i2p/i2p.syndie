@@ -59,6 +59,11 @@ public class ImageUtil {
     public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
     public static final Image ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
     
+    public static final Image ICON_BROWSE_ADMINS = createImageFromResource("iconBrowseAdmins.png");
+    public static final Image ICON_BROWSE_MANAGEABLE = createImageFromResource("iconBrowseManage.png");
+    public static final Image ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
+    public static final Image ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
+    
     public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
@@ -90,6 +95,11 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSG_TYPE_NORMAL);
         _indisposableImages.add(ICON_MSG_TYPE_META);
         _indisposableImages.add(ICON_MSG_TYPE_PRIVATE);
+    
+        _indisposableImages.add(ICON_BROWSE_ADMINS);
+        _indisposableImages.add(ICON_BROWSE_MANAGEABLE);
+        _indisposableImages.add(ICON_BROWSE_POSTABLE);
+        _indisposableImages.add(ICON_BROWSE_REFS);
         
         _indisposableImages.add(ICON_TAB_EDIT);
         _indisposableImages.add(ICON_TAB_TEXTUI);

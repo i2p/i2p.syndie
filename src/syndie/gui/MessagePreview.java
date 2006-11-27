@@ -65,11 +65,8 @@ public class MessagePreview {
     private Hash _target;
     
     public MessagePreview(BrowserControl browser, Composite parent) {
-        this(browser.getClient(), parent);
         _browser = browser;
-    }
-    public MessagePreview(DBClient client, Composite parent) {
-        _client = client;
+        _client = browser.getClient();
         _parent = parent;
         initComponents();
     }
@@ -85,6 +82,8 @@ public class MessagePreview {
     }
     
     public Control getControl() { return _root; }
+    
+    public void dispose() { _attachmentPopup.dispose(); }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )
@@ -312,7 +311,7 @@ public class MessagePreview {
             public void widgetSelected(SelectionEvent selectionEvent) { honorAction(); }
         });
     
-        _attachmentPopup = new AttachmentPreviewPopup(_client, _root.getShell());
+        _attachmentPopup = new AttachmentPreviewPopup(_browser, _root.getShell());
         
         _body = new PageRenderer(_root, true);
         _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -361,15 +360,15 @@ public class MessagePreview {
             case ACTION_VIEW:
                 if (_browser != null)
                     _browser.view(_uri);
-                return;
+                break;
             case ACTION_REPLY_TO_AUTHOR:
                 if (_browser != null)
                     _browser.view(_browser.createPostURI(_author, _uri, true));
-                return;
+                break;
             case ACTION_REPLY_TO_FORUM:
                 if (_browser != null)
                     _browser.view(_browser.createPostURI(_target, _uri));
-                return;
+                break;
         }
         _headerActions.select(0);
     }

@@ -26,7 +26,8 @@ import syndie.db.DBClient;
 /**
  *
  */
-class AttachmentPreviewPopup {
+class AttachmentPreviewPopup implements Translatable {
+    private BrowserControl _browser;
     private DBClient _client;
     private Shell _parent;
     private Shell _shell;
@@ -49,19 +50,18 @@ class AttachmentPreviewPopup {
 
     private byte _data[];
 
-    public AttachmentPreviewPopup(DBClient client, Shell parent) {
-        _client = client;
+    public AttachmentPreviewPopup(BrowserControl browser, Shell parent) {
+        _browser = browser;
+        _client = browser.getClient();
         _parent = parent;
         initComponents();
     }
     
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
-        _shell.setText("Preview attachment");
         _shell.setLayout(new GridLayout(4, false));
         
         _nameLabel = new Label(_shell, SWT.NONE);
-        _nameLabel.setText("Name:");
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _name = new Text(_shell, SWT.SINGLE | SWT.READ_ONLY | SWT.BORDER);
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -71,37 +71,31 @@ class AttachmentPreviewPopup {
         _preview.forceSize(64, 64);
         
         _descLabel = new Label(_shell, SWT.NONE);
-        _descLabel.setText("Description:");
         _descLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _desc = new Text(_shell, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP | SWT.BORDER);
         _desc.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _sizeLabel = new Label(_shell, SWT.NONE);
-        _sizeLabel.setText("Size:");
         _sizeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _size = new Text(_shell, SWT.SINGLE | SWT.READ_ONLY | SWT.BORDER);
         _size.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _typeLabel = new Label(_shell, SWT.NONE);
-        _typeLabel.setText("Type:");
         _typeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _type = new Text(_shell, SWT.SINGLE | SWT.READ_ONLY | SWT.BORDER);
         _type.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _saveAsLabel = new Label(_shell, SWT.NONE);
-        _saveAsLabel.setText("Save as:");
         _saveAsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _saveAs = new Text(_shell, SWT.SINGLE | SWT.BORDER);
         _saveAs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _saveAsBrowse = new Button(_shell, SWT.PUSH);
-        _saveAsBrowse.setText("Browse...");
         _saveAsBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _saveAsBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { browse(); }
             public void widgetSelected(SelectionEvent selectionEvent) { browse(); }
         });
         _saveAsOk = new Button(_shell, SWT.PUSH);
-        _saveAsOk.setText("Save");
         _saveAsOk.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _saveAsOk.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
@@ -109,7 +103,6 @@ class AttachmentPreviewPopup {
         });
         
         _cancel = new Button(_shell, SWT.PUSH);
-        _cancel.setText("Cancel");
         _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 4, 1));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
@@ -126,6 +119,7 @@ class AttachmentPreviewPopup {
         });
         
         _dialog = new FileDialog(_shell, SWT.SAVE);
+        _browser.getTranslationRegistry().register(this);
     }
     
     public void showURI(SyndieURI uri) {
@@ -149,7 +143,7 @@ class AttachmentPreviewPopup {
             type = "application/octet-stream";
         _type.setText(type);
         
-        _size.setText((bytes+1023)/1024 + " Kilobytes");
+        _size.setText((bytes+1023)/1024 + " KB");
         
         _data = _client.getMessageAttachmentData(msgId, internalAttachmentNum);
         showPreviewIfPossible(type, _data);
@@ -176,7 +170,7 @@ class AttachmentPreviewPopup {
         GridData gd = (GridData)_preview.getLayoutData();
         if (show) {
             _preview.setVisible(true);
-            System.out.println("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+            _browser.getUI().debugMessage("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
             //gd.exclude = false;
         } else {
             _preview.setImage(null);
@@ -204,16 +198,44 @@ class AttachmentPreviewPopup {
             fos.close();
             fos = null;
             MessageBox box = new MessageBox(_shell, SWT.OK | SWT.ICON_INFORMATION);
-            box.setText("Attachment saved");
-            box.setMessage("Attachment saved to " + out.getAbsolutePath());
+            box.setText(_browser.getTranslationRegistry().getText(T_SAVE_OK_TITLE, "Attachment saved"));
+            box.setMessage(_browser.getTranslationRegistry().getText(T_SAVE_OK_MSG, "Attachment saved to:") + out.getAbsolutePath());
             box.open();
             _shell.setVisible(false);
         } catch (IOException ioe) {
             // hrm
             MessageBox box = new MessageBox(_shell, SWT.OK | SWT.ICON_ERROR);
-            box.setText("Error saving attachment");
-            box.setMessage("Attachment could not be saved to " + out.getAbsolutePath() + ": " + ioe.getMessage());
+            box.setText(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_TITLE, "Error saving attachment"));
+            box.setMessage(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_MSG, "Attachment could not be saved: ") + ioe.getMessage());
             box.open();
         }
+    }
+    
+    public void dispose() { _browser.getTranslationRegistry().unregister(this); }
+    
+    private static final String T_SAVE_OK_TITLE = "syndie.gui.attachmentpreviewpopup.save.ok.title";
+    private static final String T_SAVE_OK_MSG = "syndie.gui.attachmentpreviewpopup.save.ok.msg";
+    private static final String T_SAVE_ERROR_TITLE = "syndie.gui.attachmentpreviewpopup.save.error.title";
+    private static final String T_SAVE_ERROR_MSG = "syndie.gui.attachmentpreviewpopup.save.error.msg";
+    private static final String T_TITLE = "syndie.gui.attachmentpreviewpopup.title";
+    private static final String T_NAME = "syndie.gui.attachmentpreviewpopup.name";
+    private static final String T_DESC = "syndie.gui.attachmentpreviewpopup.desc";
+    private static final String T_SIZE = "syndie.gui.attachmentpreviewpopup.size";
+    private static final String T_TYPE = "syndie.gui.attachmentpreviewpopup.type";
+    private static final String T_SAVEAS = "syndie.gui.attachmentpreviewpopup.saveas";
+    private static final String T_SAVEAS_BROWSE = "syndie.gui.attachmentpreviewpopup.saveas.browse";
+    private static final String T_SAVE = "syndie.gui.attachmentpreviewpopup.save";
+    private static final String T_CANCEL = "syndie.gui.attachmentpreviewpopup.cancel";
+    
+    public void translate(TranslationRegistry registry) {
+        _shell.setText(_browser.getTranslationRegistry().getText(T_TITLE, "Preview attachment"));
+        _nameLabel.setText(_browser.getTranslationRegistry().getText(T_NAME, "Name:"));
+        _descLabel.setText(_browser.getTranslationRegistry().getText(T_DESC, "Description:"));
+        _sizeLabel.setText(_browser.getTranslationRegistry().getText(T_SIZE, "Size:"));
+        _typeLabel.setText(_browser.getTranslationRegistry().getText(T_TYPE, "Type:"));
+        _saveAsLabel.setText(_browser.getTranslationRegistry().getText(T_SAVEAS, "Save as:"));
+        _saveAsBrowse.setText(_browser.getTranslationRegistry().getText(T_SAVEAS_BROWSE, "Browse..."));
+        _saveAsOk.setText(_browser.getTranslationRegistry().getText(T_SAVE, "Save"));
+        _cancel.setText(_browser.getTranslationRegistry().getText(T_CANCEL, "Cancel"));
     }
 }

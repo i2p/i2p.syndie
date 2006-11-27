@@ -300,27 +300,54 @@ public class Browser implements UI, BrowserControl, Translatable {
         if (uri == null) return;
         showWaitCursor(true);
         BrowserTab tab = null;
+        Hash scope = uri.getHash("scope");
+        Long msgId = uri.getMessageId();
+        SyndieURI browseURI = null;
+        if (uri.isSearch()) {
+            if ( (scope != null) && (msgId != null) )
+                browseURI = SyndieURI.createMessage(scope, msgId.longValue());
+            else if (scope != null)
+                browseURI = SyndieURI.createScope(scope);
+        }
         synchronized (_openTabs) {
             tab = (BrowserTab)_openTabs.get(uri);
+            if ( (tab == null) && (browseURI != null) )
+                tab = (BrowserTab)_openTabs.get(browseURI);
             if (tab == null) {
                 debugMessage("building tab");
-                tab = BrowserTab.build(this, uri);
-                debugMessage("tab built");
-                if (tab != null) {
-                    _openTabs.put(uri, tab);
+                if (browseURI == null) {
+                    debugMessage("building normal URI: " + uri);
+                    tab = BrowserTab.build(this, uri);
+                    if (tab != null)
+                        _openTabs.put(uri, tab);
+                } else {
+                    debugMessage("building browseURI: " + browseURI);
+                    tab = BrowserTab.build(this, browseURI);
+                    if (tab != null)
+                        _openTabs.put(browseURI, tab);
                 }
+                debugMessage("tab built: " + tab);
             }
         }
         if (tab != null) {
+            if ( (browseURI != null) && (tab instanceof BrowseForumTab) )
+                ((BrowseForumTab)tab).setFilter(uri);
             debugMessage("showing tab");
             _tabs.showItem(tab.getTabItem());
             debugMessage("tab shown");
             _tabs.setSelection(tab.getTabItem());
             debugMessage("tab selected");
             tab.tabShown();
-        }
+        } 
         showWaitCursor(false);
+        if (tab == null) {
+            MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
+            box.setText(getTranslationRegistry().getText(T_BADURI_TITLE, "Invalid URI"));
+            box.setMessage(getTranslationRegistry().getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri.toString());
+            box.open();
+        }
     }
+    
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;
         synchronized (_openTabs) {
@@ -416,7 +443,9 @@ public class Browser implements UI, BrowserControl, Translatable {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) {
         Map attributes = new HashMap();
         if (forum != null)
-            attributes.put("scope", forum.toBase64());
+            attributes.put("channel", forum.toBase64());
+        else if (parent != null)
+            attributes.put("channel", parent.getScope());
         if (parent != null)
             attributes.put("parent", parent.toString());
         attributes.put("reply", ""+asPrivateReply);
@@ -559,10 +588,12 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_COPY_TAB_LOC = "syndie.gui.browser.tabmenu.copylocation";
     private static final String T_BOOKMARK_TAB = "syndie.gui.browser.tabmenu.bookmark";
     private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
+    private static final String T_FILE_MENU_TITLE_ACCELERATOR = "syndie.gui.browser.filemenu.title.accelerator";
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
+    private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
@@ -588,6 +619,9 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_BOOKMARK_POST_DESC = "syndie.gui.browser.bookmarkpost.desc";
     private static final String T_BOOKMARK_TEXTUI_NAME = "syndie.gui.browser.bookmarktextui.name";
     private static final String T_BOOKMARK_TEXTUI_DESC = "syndie.gui.browser.bookmarktextui.desc";
+
+    private static final String T_BADURI_TITLE = "syndie.gui.browser.baduri.title";
+    private static final String T_BADURI_MSG = "syndie.gui.browser.baduri.msg";
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_SHELL_TITLE, "Syndie"));
@@ -595,10 +629,12 @@ public class Browser implements UI, BrowserControl, Translatable {
         _bookmarkTab.setText(registry.getText(T_BOOKMARK_TAB, "bookmark tab"));
         
         _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "File"));
+        _fileMenuRoot.setAccelerator(SWT.MOD1 | registry.getText(T_FILE_MENU_TITLE_ACCELERATOR, "f").charAt(0));
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "Open Syndie URI"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "Exit"));
+        _fileMenuExit.setAccelerator(SWT.MOD1 | registry.getText(T_FILE_MENU_EXIT_ACCELERATOR, "x").charAt(0));
     
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post new"));
