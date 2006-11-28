@@ -200,7 +200,7 @@ public class ManageForumArchiveChooser implements Translatable {
     private static final int TYPE_FILE = 2;
     private static final int TYPE_URL = 3;
     
-    private String getLocation(SyndieURI uri) {
+    public static final String getLocation(SyndieURI uri) {
         if (uri != null) {
             String url = uri.getURL();
             if (url == null) {

@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
@@ -80,8 +81,11 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private Button _linkTypeAttachment;
     private Combo _linkTypeAttachmentCombo;
     
+    private Button _linkTypeFreenet;
+    private Text _linkTypeFreenetText;
+    
     private Button _linkTypeArchive;
-    private Text _linkTypeArchiveText;
+    private Combo _linkTypeArchiveCombo;
     private Button _actionOk;
     private Button _actionCancel;
 
@@ -102,11 +106,18 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     /** list of NymKey instances shown in the syndieManageKeyCombo */
     private List _manageKeys;
     
+    /** archives (SyndieURI) populating the archiveCombo */
+    private List _archives;
+    
+    private String _text;
+    
     public LinkBuilderPopup(BrowserControl browser, Shell parent, PageEditor target) {
         _browser = browser;
         _client = browser.getClient();
         _parentShell = parent;
         _target = target;
+        _archives = new ArrayList();
+        _text = "LINK TEXT";
         initComponents();
     }
     private void initComponents() {
@@ -149,6 +160,13 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeAttachmentCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
         _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
+
+        if (_target == null) {
+            ((GridData)_linkTypePage.getLayoutData()).exclude = true;
+            ((GridData)_linkTypePageCombo.getLayoutData()).exclude = true;
+            ((GridData)_linkTypeAttachment.getLayoutData()).exclude = true;
+            ((GridData)_linkTypeAttachmentCombo.getLayoutData()).exclude = true;
+        }
         
         _linkTypeSyndie = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeSyndie.setText("Syndie:");
@@ -272,18 +290,33 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieManageKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieManageKeyCombo.addSelectionListener(new GroupPickListener(_syndieManageKey));
         
+        
+        _linkTypeFreenet = new Button(_linkTypeGroup, SWT.RADIO);
+        _linkTypeFreenet.setText("Freenet:");
+        gd = new GridData();
+        _linkTypeFreenet.setLayoutData(gd);
+        
+        _linkTypeFreenetText = new Text(_linkTypeGroup, SWT.SINGLE | SWT.BORDER);
+        _linkTypeFreenetText.setToolTipText("Freenet key (USK@key, SSK@key, CHK@key, etc)");
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeFreenetText.setLayoutData(gd);
+        _linkTypeFreenetText.addTraverseListener(new GroupPickListener(_linkTypeFreenet));
+        _linkTypeFreenetText.addSelectionListener(new GroupPickListener(_linkTypeFreenet));
+        
+        
         _linkTypeArchive = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeArchive.setText("Archive:");
         gd = new GridData();
         _linkTypeArchive.setLayoutData(gd);
         
-        _linkTypeArchiveText = new Text(_linkTypeGroup, SWT.SINGLE | SWT.BORDER);
-        _linkTypeArchiveText.setToolTipText("Full archive URL");
+        _linkTypeArchiveCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
+        _linkTypeArchiveCombo.setToolTipText("Full archive URL");
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
-        _linkTypeArchiveText.setLayoutData(gd);
-        _linkTypeArchiveText.addTraverseListener(new GroupPickListener(_linkTypeArchive));
-        _linkTypeArchiveText.addSelectionListener(new GroupPickListener(_linkTypeArchive));
+        _linkTypeArchiveCombo.setLayoutData(gd);
+        _linkTypeArchiveCombo.addTraverseListener(new GroupPickListener(_linkTypeArchive));
+        _linkTypeArchiveCombo.addSelectionListener(new GroupPickListener(_linkTypeArchive));
         
         Composite actionRow = new Composite(_shell, SWT.NONE);
         actionRow.setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -321,6 +354,50 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         //_shell.setSize(_shell.computeSize(400, SWT.DEFAULT));
         _shell.pack();
     }
+    
+    public void dispose() {}
+    
+    private void setURI(SyndieURI uri, String linkText) {
+        _browser.getUI().debugMessage("setURI(" + uri + ", " + linkText + ")");
+        blankSettings();
+        
+        if (uri != null) {
+            if (uri.isArchive()) {
+                _browser.getUI().debugMessage("uri is an archive: " + uri);
+                _linkTypeArchive.setSelection(true);
+                _linkTypeArchiveCombo.setText(uri.toString());
+            } else if (uri.isChannel()) {
+                _browser.getUI().debugMessage("uri is a channel: " + uri);
+                displaySyndieURI(uri);
+                //_linkTypeSyndie.setSelection(true);
+                //_linkTypeSyndieText.setText(uri.toString());
+            } else if (uri.isURL()) {
+                String url = uri.getURL();
+                _browser.getUI().debugMessage("uri is a url: " + url);
+                if (url == null) {
+                    _linkTypeWeb.setSelection(true);
+                    _linkTypeWebText.setText("");
+                } else {
+                    if (url.startsWith("SSK@") || (url.startsWith("USK@")) || (url.startsWith("CHK@"))) {
+                        _linkTypeFreenet.setSelection(true);
+                        _linkTypeFreenetText.setText(url);
+                    } else {
+                        _linkTypeWeb.setSelection(true);
+                        _linkTypeWebText.setText(url);
+                    }
+                }
+            } else {
+                _browser.getUI().debugMessage("uri is something else: " + uri);
+                displaySyndieURI(uri);
+                //_linkTypeSyndie.setSelection(true);
+                //_linkTypeSyndieText.setText(uri.toString());
+            }
+        } else {
+            _browser.getUI().debugMessage("uri is null: " + uri);
+        }
+        
+        _text = linkText;
+    }
 
     private class UpdateURIListener implements SelectionListener {
         public void widgetSelected(SelectionEvent selectionEvent) { updateSyndieURI(); }
@@ -349,11 +426,27 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             updateSyndieURI();
         }
 
-        public void keyTraversed(TraverseEvent evt) { 
-            if (evt.detail == SWT.TRAVERSE_RETURN) {
+        public void keyTraversed(TraverseEvent evt) {
+            if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) ) {
                 _selectOnAction.setSelection(true);
+                unselectOthers();
                 updateSyndieURI();
             }
+        }
+        
+        private void unselectOthers() {
+            if (_selectOnAction != _linkTypeWeb)
+                _linkTypeWeb.setSelection(false);
+            if (_selectOnAction != _linkTypeSyndie)
+                _linkTypeSyndie.setSelection(false);
+            if (_selectOnAction != _linkTypePage)
+                _linkTypePage.setSelection(false);
+            if (_selectOnAction != _linkTypeAttachment)
+                _linkTypeAttachment.setSelection(false);
+            if (_selectOnAction != _linkTypeFreenet)
+                _linkTypeFreenet.setSelection(false);
+            if (_selectOnAction != _linkTypeArchive)
+                _linkTypeArchive.setSelection(false);
         }
     }
     
@@ -376,22 +469,63 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                 _selectedURI = null;
             }
         } else if (_linkTypeArchive.getSelection()) {
-            _selectedURI = SyndieURI.createArchive(_linkTypeArchiveText.getText(), null);
+            int selected = _linkTypeArchiveCombo.getSelectionIndex();
+            SyndieURI archiveURI = null;
+            if (selected >= 0) {
+                archiveURI = (SyndieURI)_archives.get(selected);
+            } else {
+                String txt = _linkTypeArchiveCombo.getText();
+                try {
+                    archiveURI = new SyndieURI(txt);
+                } catch (URISyntaxException use) {
+                    if (txt.startsWith("http://"))
+                        archiveURI = SyndieURI.createURL(txt);
+                    if (txt.startsWith("https://"))
+                        archiveURI = SyndieURI.createURL(txt);
+                    else if (txt.startsWith("file://"))
+                        archiveURI = SyndieURI.createURL(txt);
+                    else if (txt.startsWith("SSK@") || txt.startsWith("CHK@") || txt.startsWith("USK@"))
+                        archiveURI = SyndieURI.createURL(txt);
+                    else
+                        archiveURI = null;
+                }
+                if (archiveURI == null) {
+                    MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
+                    box.setText("Error");
+                    box.setMessage("Location is not valid (use a Syndie URI, an http/https/file URL, or a freenet key)");
+                    box.open();
+                    return;
+                }
+            }
+            _selectedURI = SyndieURI.createArchive(archiveURI.getURL(), null);
         } else if (_linkTypePage.getSelection()) {
             int idx = _linkTypePageCombo.getSelectionIndex();
             if (idx >= 0)
                 _selectedURI = SyndieURI.createRelativePage(idx);
+        } else if (_linkTypeFreenet.getSelection()) {
+            _selectedURI = SyndieURI.createURL(_linkTypeFreenetText.getText().trim());
         } else if (_linkTypeAttachment.getSelection()) {
             int idx = _linkTypeAttachmentCombo.getSelectionIndex();
             if (idx >= 0)
                 _selectedURI = SyndieURI.createRelativeAttachment(idx);
+        } else {
+            MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
+            box.setText("Error");
+            box.setMessage("No link selected");
+            box.open();
+            return;
         }
         
-        if (_selectedURI != null)
-            _target.insertAtCaret("<a href=\"" + _selectedURI.toString() + "\">link target</a>");
+        uriBuilt(_selectedURI);
         _refChooser.hide();
         _shell.setVisible(false);
     }
+    
+    protected void uriBuilt(SyndieURI uri) {
+        if (_target != null)
+            _target.insertAtCaret("<a href=\"" + _selectedURI.toString() + "\">" + _text + "</a>");
+    }
+    
     private void onCancel() {
         _refChooser.hide();
         _shell.setVisible(false);
@@ -400,7 +534,49 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     public SyndieURI getURI() { return _selectedURI; }
 
-    public void showPopup() {
+    public void showPopup() { showPopup(null); }
+    public void showPopup(SyndieURI uri) {
+        if (uri != null) {
+            setURI(uri, _text);
+        } else {
+            blankSettings();
+            if (_target == null) {
+                _linkTypePage.setEnabled(false);
+                _linkTypePageCombo.setEnabled(false);
+                _linkTypeAttachment.setEnabled(false);
+                _linkTypeAttachmentCombo.setEnabled(false);
+            } else {
+                int pages = _target.getPageCount();
+                List attachments = _target.getAttachmentDescriptions();
+                if (pages <= 1) {
+                    _linkTypePage.setEnabled(false);
+                    _linkTypePageCombo.setEnabled(false);
+                    _linkTypePageCombo.removeAll();
+                } else {
+                    _linkTypePage.setEnabled(true);
+                    _linkTypePageCombo.setEnabled(true);
+                    _linkTypePageCombo.removeAll();
+                    for (int i = 1; i <= pages; i++)
+                        _linkTypePageCombo.add(i+"");
+                }
+                if ( (attachments == null) || (attachments.size() <= 0) ) {
+                    _linkTypeAttachment.setEnabled(false);
+                    _linkTypeAttachmentCombo.setEnabled(false);
+                    _linkTypeAttachmentCombo.removeAll();
+                } else {
+                    _linkTypeAttachment.setEnabled(true);
+                    _linkTypeAttachmentCombo.setEnabled(true);
+                    _linkTypeAttachmentCombo.removeAll();
+                    for (int i = 0; i < attachments.size(); i++)
+                        _linkTypeAttachmentCombo.add((String)attachments.get(i));
+                }
+            }
+        }
+
+        _shell.open();
+    }
+    
+    private void blankSettings() {        
         _selectedURI = null;
         _readKeys = null;
         _replyKeys = null;
@@ -409,12 +585,29 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         
         _linkTypeWeb.setSelection(false);
         _linkTypeWebText.setText("");
+        _linkTypeFreenet.setSelection(false);
+        _linkTypeFreenetText.setText("");
         _linkTypePage.setSelection(false);
         _linkTypeAttachment.setSelection(false);
         _linkTypeSyndie.setSelection(false);
         _linkTypeSyndieText.setText("");
         _linkTypeArchive.setSelection(false);
-        _linkTypeArchiveText.setText("");
+        
+        _linkTypeArchiveCombo.setRedraw(false);
+        _linkTypeArchiveCombo.setText("");
+        _linkTypeArchiveCombo.removeAll();
+        _archives.clear();
+        int archives = _browser.getSyndicationManager().getArchiveCount();
+        for (int i = 0; i < archives; i++) {
+            SyndieURI uri = _browser.getSyndicationManager().getArchiveURI(i);
+            String name = _browser.getSyndicationManager().getArchiveName(i);
+            if (name != null)
+                _linkTypeArchiveCombo.add(name + ": " + ManageForumArchiveChooser.getLocation(uri));
+            else
+                _linkTypeArchiveCombo.add(ManageForumArchiveChooser.getLocation(uri));
+            _archives.add(uri);
+        }
+        _linkTypeArchiveCombo.setRedraw(true);
         
         _syndieForum.setText("");
         _syndieMessageBrowse.setEnabled(false);
@@ -447,33 +640,6 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieManageKeyCombo.setEnabled(false);
         _syndieManageKeyCombo.removeAll();
         _syndieManageKey.setSelection(false);
-        
-        int pages = _target.getPageCount();
-        List attachments = _target.getAttachmentDescriptions();
-        if (pages <= 1) {
-            _linkTypePage.setEnabled(false);
-            _linkTypePageCombo.setEnabled(false);
-            _linkTypePageCombo.removeAll();
-        } else {
-            _linkTypePage.setEnabled(true);
-            _linkTypePageCombo.setEnabled(true);
-            _linkTypePageCombo.removeAll();
-            for (int i = 1; i <= pages; i++)
-                _linkTypePageCombo.add(i+"");
-        }
-        if ( (attachments == null) || (attachments.size() <= 0) ) {
-            _linkTypeAttachment.setEnabled(false);
-            _linkTypeAttachmentCombo.setEnabled(false);
-            _linkTypeAttachmentCombo.removeAll();
-        } else {
-            _linkTypeAttachment.setEnabled(true);
-            _linkTypeAttachmentCombo.setEnabled(true);
-            _linkTypeAttachmentCombo.removeAll();
-            for (int i = 0; i < attachments.size(); i++)
-                _linkTypeAttachmentCombo.add((String)attachments.get(i));
-        }
-
-        _shell.open();
     }
     
     /** attach any of the keys specified to the given uri, as well as update the page/attachment */
@@ -516,7 +682,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             attributes.remove("page");
         
         SyndieURI rv = new SyndieURI(orig.getType(), attributes);
-        System.out.println("rewritten uri attributes: " + attributes);
+        _browser.getUI().debugMessage("rewritten uri attributes: " + attributes);
         return rv;
     }
 
@@ -524,8 +690,10 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         displaySyndieURI(uri);
     }
     private void displaySyndieURI(SyndieURI uri) {
+        _browser.getUI().debugMessage("displaying syndieURI: " + uri);
         _linkTypeSyndie.setSelection(true);
         uri = updateURIWithOptions(uri);
+        _browser.getUI().debugMessage("displaying syndieURI, updated uri is: " + uri);
         _linkTypeSyndieText.setText(uri.toString());
         _forumId = _client.getChannelId(uri.getScope());
         _forum = null;

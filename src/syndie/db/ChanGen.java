@@ -26,7 +26,7 @@ import syndie.data.ReferenceNode;
  * [--privTag $tag]*
  * [--postKey $base64PubKey]*       // who is allowed to post to the channel
  * [--manageKey $base64PubKey]*     // who is allowed to manage the channel
- * [--refs $channelRefGroupFile]    // ([\t]*$name\t$uri\t$refType\t$description\n)* lines
+ * [--refs ($channelRefGroupFile|$channelRefGroupContent)]    // ([\t]*$name\t$uri\t$refType\t$description\n)* lines
  * [--pubArchive $archive]*
  * [--privArchive $archive]*
  * [--encryptContent $boolean]      // don't publicize the key encrypting the metadata, and include a session key in the encrypted metadata to read posts with
@@ -177,6 +177,8 @@ public class ChanGen extends CommandImpl {
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
+            } else {
+                refStr = filename;
             }
         }
         

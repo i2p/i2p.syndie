@@ -100,7 +100,7 @@ class ManageForumExecutor {
             }
         }
         
-        chanGenOpts.setOptValue("refs", "");//_refs);
+        chanGenOpts.setOptValue("refs", _state.getReferences());
         
         Set archives = _state.getPublicArchives();
         if (archives != null) {

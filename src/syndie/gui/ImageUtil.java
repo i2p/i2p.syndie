@@ -64,6 +64,13 @@ public class ImageUtil {
     public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
     public static final Image ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
     
+    public static final Image ICON_REF_MSG = createImageFromResource("iconRefMsg.png");
+    public static final Image ICON_REF_FORUM = createImageFromResource("iconRefForum.png");
+    public static final Image ICON_REF_ARCHIVE = createImageFromResource("iconRefArchive.png");
+    public static final Image ICON_REF_URL = createImageFromResource("iconRefURL.png");
+    public static final Image ICON_REF_SYNDIE = createImageFromResource("iconRefSyndie.png");
+    public static final Image ICON_REF_FREENET = createImageFromResource("iconRefFreenet.png");
+    
     public static final Image ICON_BROWSE_ADMINS = createImageFromResource("iconBrowseAdmins.png");
     public static final Image ICON_BROWSE_MANAGEABLE = createImageFromResource("iconBrowseManage.png");
     public static final Image ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
@@ -101,6 +108,13 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSG_TYPE_META);
         _indisposableImages.add(ICON_MSG_TYPE_PRIVATE);
     
+        _indisposableImages.add(ICON_REF_MSG);
+        _indisposableImages.add(ICON_REF_FORUM);
+        _indisposableImages.add(ICON_REF_ARCHIVE);
+        _indisposableImages.add(ICON_REF_URL);
+        _indisposableImages.add(ICON_REF_SYNDIE);
+        _indisposableImages.add(ICON_REF_FREENET);
+        
         _indisposableImages.add(ICON_BROWSE_ADMINS);
         _indisposableImages.add(ICON_BROWSE_MANAGEABLE);
         _indisposableImages.add(ICON_BROWSE_POSTABLE);
