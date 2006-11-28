@@ -54,7 +54,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private Combo _privacy;
     private Label _authLabel;
     private Combo _auth;
-    
+
+    private Label _chooserLabel;
     private Combo _chooserChoice;
     
     private Composite _managers;
@@ -284,8 +285,11 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _auth = new Combo(_root, SWT.DROP_DOWN);
         _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
+        _chooserLabel = new Label(_root, SWT.NONE);
+        _chooserLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false, 2, 1));
+        
         _chooserChoice = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _chooserChoice.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        _chooserChoice.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         _chooserChoice.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { choose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { choose(); }
@@ -624,6 +628,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final String T_DESC = "syndie.gui.manageforum.desc";
     private static final String T_PRIVACY = "syndie.gui.manageforum.privacy";
     private static final String T_AUTHORIZATION = "syndie.gui.manageforum.authorization";
+    private static final String T_CHOOSER = "syndie.gui.manageforum.chooserlabel";
     private static final String T_MANAGERS = "syndie.gui.manageforum.managers";
     private static final String T_MANAGERS_ADD = "syndie.gui.manageforum.managers.add";
     private static final String T_MANAGERS_VIEW = "syndie.gui.manageforum.managers.view";
@@ -644,6 +649,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _descLabel.setText(registry.getText(T_DESC, "Description:"));
         _privacyLabel.setText(registry.getText(T_PRIVACY, "Privacy:"));
         _authLabel.setText(registry.getText(T_AUTHORIZATION, "Authorization:"));
+        _chooserLabel.setText(registry.getText(T_CHOOSER, "Manage attributes:"));
         //_managers.setText(registry.getText(T_MANAGERS, "Managers"));
         _managerAdd.setText(registry.getText(T_MANAGERS_ADD, "add"));
         _managerView.setText(registry.getText(T_MANAGERS_VIEW, "view"));

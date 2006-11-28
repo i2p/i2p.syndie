@@ -36,8 +36,10 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     
     // remaining are the implementations of the listeners
     
-    public void widgetDefaultSelected(SelectionEvent selectionEvent) { selected(); }
-    public void widgetSelected(SelectionEvent selectionEvent) { selected(); }
+    protected void selected(SelectionEvent evt) { selected(); }
+    
+    public void widgetDefaultSelected(SelectionEvent evt) { selected(evt); }
+    public void widgetSelected(SelectionEvent evt) { selected(evt); }
     
     public void keyTraversed(TraverseEvent evt) {
         if (evt.detail == SWT.TRAVERSE_RETURN) {

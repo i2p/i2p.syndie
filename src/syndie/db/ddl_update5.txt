@@ -1,0 +1,8 @@
+-- update the database from schema version 4
+-- this version 5 fixes the ref types
+--
+
+UPDATE appVersion SET versionNum = 5, visibleVersion = 'DB reftype fix';
+
+ALTER TABLE channelReferenceGroup DROP COLUMN referenceType;
+ALTER TABLE channelReferenceGroup ADD COLUMN referenceType VARCHAR(64) DEFAULT NULL;

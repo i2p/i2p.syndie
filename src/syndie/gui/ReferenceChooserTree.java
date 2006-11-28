@@ -223,12 +223,14 @@ public class ReferenceChooserTree implements Translatable {
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             _manageChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
             _manageChannels.put(item, info);
         }
@@ -239,24 +241,28 @@ public class ReferenceChooserTree implements Translatable {
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
             _postChannels.put(item, info);
         }
@@ -282,6 +288,7 @@ public class ReferenceChooserTree implements Translatable {
             childItem.setText(child.getName() + "-" + child.getDescription());
         else
             childItem.setText(child.getName());
+        childItem.setImage(ImageUtil.getTypeIcon(child.getURI()));
         _bookmarkNodes.put(childItem, child);
         for (int i = 0; i < child.getChildCount(); i++) {
             NymReferenceNode sub = (NymReferenceNode)child.getChild(i);
@@ -303,6 +310,7 @@ public class ReferenceChooserTree implements Translatable {
             childItem.setText(child.getDescription());
         else 
             childItem.setText(child.getName());
+        childItem.setImage(ImageUtil.getTypeIcon(child.getURI()));
         _searchNodes.put(childItem, child);
         for (int i = 0; i < child.getChildCount(); i++)
             add(childItem, child.getChild(i));

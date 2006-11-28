@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
@@ -19,6 +20,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import syndie.data.SyndieURI;
 
 /**
  *
@@ -200,5 +202,74 @@ public class ImageUtil {
         gc.dispose();
         int rv = per * text.length();
         return rv;
+    }
+    
+    public static Image getTypeIcon(SyndieURI uri) {
+        int type = getType(uri);
+        if (type == TYPE_MSG) return ICON_REF_MSG;
+        else if (type == TYPE_FORUM) return ICON_REF_FORUM;
+        else if (type == TYPE_ARCHIVE) return ICON_REF_ARCHIVE;
+        else if (type == TYPE_URL) return ICON_REF_URL;
+        else if (type == TYPE_SYNDIE) {
+            String str = uri.getType();
+            if (str != null) {
+                if (BrowserTab.TYPE_LOGS.equals(str))
+                    return ICON_TAB_LOGS;
+                else if (BrowserTab.TYPE_SYNDICATE.equals(str))
+                    return ICON_TAB_SYNDICATE;
+                else if (BrowserTab.TYPE_POST.equals(str))
+                    return ICON_TAB_EDIT;
+            }
+            return ICON_REF_SYNDIE;
+        }
+        else if (type == TYPE_FREENET) return ICON_REF_FREENET;
+        return null;
+    }
+    
+    private static final int TYPE_MSG = 0;
+    private static final int TYPE_FORUM = 1;
+    private static final int TYPE_ARCHIVE = 2;
+    private static final int TYPE_URL = 3;
+    private static final int TYPE_SYNDIE = 4;
+    private static final int TYPE_FREENET = 5;
+    private static final int TYPE_OTHER = -1;
+    
+    private static int getType(SyndieURI uri) {
+        if (uri == null) {
+            return TYPE_OTHER;
+        } else if (uri.isChannel()) {
+            if (uri.getScope() != null) {
+                if (uri.getMessageId() != null) 
+                    return TYPE_MSG;
+                else
+                    return TYPE_FORUM;
+            } else {
+                return TYPE_SYNDIE;
+            }
+        } else if (uri.isArchive()) {
+            return TYPE_ARCHIVE;
+        } else if (uri.isURL()) {
+            String url = uri.getURL();
+            if ( (url != null) && (url.startsWith("SSK@") || url.startsWith("CHK@") || url.startsWith("USK@")) )
+                return TYPE_FREENET;
+            else
+                return TYPE_URL;
+        } else if (uri.isSearch()) {
+            Hash scope = uri.getHash("scope");
+            if (scope == null)
+                return TYPE_SYNDIE;
+            else if (uri.getMessageId() == null)
+                return TYPE_FORUM;
+            else
+                return TYPE_MSG;
+        } else if (BrowserTab.TYPE_SYNDICATE.equals(uri.getType())) {
+            return TYPE_ARCHIVE;
+        } else if (BrowserTab.TYPE_MANAGE.equals(uri.getType())) {
+            return TYPE_FORUM;
+        } else if (BrowserTab.TYPE_META.equals(uri.getType())) {
+            return TYPE_FORUM;
+        } else {
+            return TYPE_SYNDIE;
+        }
     }
 }

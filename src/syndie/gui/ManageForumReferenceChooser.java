@@ -9,16 +9,29 @@ import java.util.Map;
 import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.TreeEditor;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
@@ -38,10 +51,13 @@ public class ManageForumReferenceChooser implements Translatable {
     private TreeColumn _colTarget;
     private TreeColumn _colType;
     private TreeColumn _colDescription;
+    private TreeEditor _treeEditor;
     private MenuItem _add;
     private MenuItem _addChild;
     private MenuItem _edit;
     private MenuItem _view;
+    private MenuItem _remove;
+    private MenuItem _importBookmarks;
     private ArrayList _refs;
     private EditPopup _editPopup;
     
@@ -58,13 +74,86 @@ public class ManageForumReferenceChooser implements Translatable {
     }
     
     private void initComponents() {
-        _tree = new Tree(_parent, SWT.SINGLE | SWT.CHECK | SWT.BORDER);
+        _tree = new Tree(_parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION);
         _colName = new TreeColumn(_tree, SWT.LEFT);
         _colTarget = new TreeColumn(_tree, SWT.CENTER);
         _colType = new TreeColumn(_tree, SWT.LEFT);
         _colDescription = new TreeColumn(_tree, SWT.LEFT);
         _tree.setLinesVisible(true);
         _tree.setHeaderVisible(true);
+        /*
+        _tree.addPaintListener(new PaintListener() {
+            public void paintControl(PaintEvent evt) {
+                TreeItem item = _tree.getItem(new Point(evt.x, evt.y));
+                if (item != null) {
+                    ReferenceNode node = (ReferenceNode)_itemToRefNode.get(item);
+                    if (node != null) {
+                        switch (getColumn(evt.x)) {
+                            case 3: 
+                                if (node.getDescription() != null)
+                                    _tree.setToolTipText(node.getDescription());
+                                else
+                                    _tree.setToolTipText("");
+                                return;
+                            case 2:
+                                if (node.getReferenceType() != null)
+                                    _tree.setToolTipText(node.getReferenceType());
+                                else
+                                    _tree.setToolTipText("");
+                                return;
+                            case 1:
+                                if (node.getURI() != null)
+                                    _tree.setToolTipText(node.getURI().toString());
+                                else
+                                    _tree.setToolTipText("");
+                                return;
+                            case 0:
+                                if (node.getName() != null)
+                                    _tree.setToolTipText(node.getName());
+                                else
+                                    _tree.setToolTipText("");
+                                return;
+                            default:
+                                _tree.setToolTipText("");
+                        }
+                    }
+                }
+            }
+        });
+         */
+        
+        SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
+            public void mouseUp(MouseEvent evt) {
+                super.mouseUp(evt);
+                TreeItem items[] = _tree.getSelection();
+                if ( (items == null) || (items.length != 1) ) return;
+                
+                int col = getColumn(evt.x);
+                switch (col) {
+                    case 3: 
+                        editDescription();
+                        return;
+                    case 2:
+                        editType();
+                        return;
+                    case 1:
+                        edit();
+                        return;
+                    case 0:
+                        editName();
+                        return;
+                }
+            }
+        };
+        _tree.addSelectionListener(lsnr);
+        _tree.addTraverseListener(lsnr);
+        _tree.addKeyListener(lsnr);
+        _tree.addMouseListener(lsnr);
+        _tree.addControlListener(lsnr);
+        
+        _treeEditor = new TreeEditor(_tree);
+        _treeEditor.grabHorizontal = true;
+        _treeEditor.horizontalAlignment = SWT.LEFT;
         
         _colTarget.setWidth(20);
         
@@ -90,6 +179,16 @@ public class ManageForumReferenceChooser implements Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(); }
         });
+        _remove = new MenuItem(menu, SWT.PUSH);
+        _remove.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { remove(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { remove(); }
+        });
+        _importBookmarks = new MenuItem(menu, SWT.PUSH);
+        _importBookmarks.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarks(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importBookmarks(); }
+        });
         menu.addMenuListener(new MenuListener() {
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent evt) { configMenu(); }
@@ -99,6 +198,34 @@ public class ManageForumReferenceChooser implements Translatable {
         
         _browser.getTranslationRegistry().register(this);
     }
+    
+    private int getColumn(int x) {
+        int start = _tree.getClientArea().width - _colDescription.getWidth();
+        if (x >= start)
+            return 3;
+        start -= _colType.getWidth() + _tree.getGridLineWidth();
+        if (x >= start)
+            return 2;
+        start -= _colTarget.getWidth() + _tree.getGridLineWidth();
+        if (x >= start)
+            return 1;
+        
+        // column width of the first column includes the tree indentation and checkbox,
+        // while item bounds do not.  we don't want to edit the name if we click on the
+        // expand/collapse
+        TreeItem item = null;
+        if (_tree.getItemCount() > 0)
+            item = _tree.getItem(0);
+        if (item != null)
+            start -= item.getBounds(0).width;
+        else
+            start -= _colName.getWidth() + _tree.getGridLineWidth();
+        if (x >= start)
+            return 0;
+        else
+            return -1;
+    }
+    
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _editPopup.dispose();
@@ -125,6 +252,33 @@ public class ManageForumReferenceChooser implements Translatable {
         if (uri != null)
             _browser.view(uri);
     }
+    private void remove() {
+        _tree.setRedraw(false);
+        TreeItem items[] = _tree.getSelection();
+        if ( (items != null) && (items.length == 1) ) {
+            remove(items[0]);
+        }
+        _tree.setRedraw(true);
+    }
+    private void remove(TreeItem item) {
+        ReferenceNode node = (ReferenceNode)_itemToRefNode.remove(item);
+        if (node.getParent() != null)
+            node.getParent().removeChild(node);
+        while (item.getItemCount() > 0)
+            remove(item.getItem(0));
+        item.dispose();
+    }
+    private void importBookmarks() {
+        _tree.setRedraw(false);
+        List includedURIs = new ArrayList();
+        for (Iterator iter = _itemToRefNode.values().iterator(); iter.hasNext(); ) {
+            ReferenceNode node = (ReferenceNode)iter.next();
+            if (!includedURIs.contains(node.getURI()))
+                includedURIs.add(node.getURI());
+        }
+        add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
+        _tree.setRedraw(true);
+    }
     
     private SyndieURI getSelectedURI() {
         ReferenceNode node = getSelectedNode();
@@ -141,7 +295,143 @@ public class ManageForumReferenceChooser implements Translatable {
         }
         return null;
     }
-    
+
+    private void editName() {
+        Control old = _treeEditor.getEditor();
+        if (old != null) old.dispose();
+        
+        TreeItem items[] = _tree.getSelection();
+        if ( (items != null) && (items.length == 1) ) {
+            final TreeItem item = items[0];
+            final ReferenceNode node = (ReferenceNode)_itemToRefNode.get(item);
+            
+            final Text edit = new Text(_tree, SWT.NONE);
+            if (node.getName() != null)
+                edit.setText(node.getName());
+            else
+                edit.setText("");
+            
+            edit.addModifyListener(new ModifyListener() {
+                public void modifyText(ModifyEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(0, txt);
+                    node.setName(txt);
+                    setMinWidth(_colName, txt, _colName.getWidth()-item.getBounds(0).width);
+                }
+            });
+            edit.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(0, edit.getText());
+                    node.setName(edit.getText());
+                    setMinWidth(_colName, txt, _colName.getWidth()-item.getBounds(0).width);
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus(); } });
+                }
+            });
+            edit.addFocusListener(new FocusListener() {
+                public void focusGained(FocusEvent focusEvent) {}
+                public void focusLost(FocusEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(0, edit.getText());
+                    node.setName(edit.getText());
+                    setMinWidth(_colName, txt, _colName.getWidth()-item.getBounds(0).width);
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus(); } });
+                }
+            });
+            edit.selectAll();
+            edit.setFocus();
+            _treeEditor.setEditor(edit, item, 0);
+        }
+    }
+    private void editType() {
+        Control old = _treeEditor.getEditor();
+        if (old != null) old.dispose();
+        
+        TreeItem items[] = _tree.getSelection();
+        if ( (items != null) && (items.length == 1) ) {
+            final TreeItem item = items[0];
+            final ReferenceNode node = (ReferenceNode)_itemToRefNode.get(item);
+            
+            final Text edit = new Text(_tree, SWT.NONE);
+            if (node.getReferenceType() != null)
+                edit.setText(node.getReferenceType());
+            else
+                edit.setText("");
+            
+            edit.addModifyListener(new ModifyListener() {
+                public void modifyText(ModifyEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(2, edit.getText());
+                    node.setReferenceType(edit.getText());
+                    setMinWidth(_colType, txt);
+                }
+            });
+            edit.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(2, edit.getText());
+                    node.setReferenceType(edit.getText());
+                    setMinWidth(_colType, txt);
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus();} });
+                }
+            });
+            edit.addFocusListener(new FocusListener() {
+                public void focusGained(FocusEvent focusEvent) {}
+                public void focusLost(FocusEvent evt) {
+                    String txt = edit.getText();
+                    item.setText(2, edit.getText());
+                    node.setReferenceType(edit.getText());
+                    setMinWidth(_colType, txt);
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus();} });
+                }
+            });
+            edit.selectAll();
+            edit.setFocus();
+            _treeEditor.setEditor(edit, item, 2);
+        }
+    }
+    private void editDescription() {
+        Control old = _treeEditor.getEditor();
+        if (old != null) old.dispose();
+        
+        TreeItem items[] = _tree.getSelection();
+        if ( (items != null) && (items.length == 1) ) {
+            final TreeItem item = items[0];
+            final ReferenceNode node = (ReferenceNode)_itemToRefNode.get(item);
+            
+            final Text edit = new Text(_tree, SWT.NONE);
+            if (node.getDescription() != null)
+                edit.setText(node.getDescription());
+            else
+                edit.setText("");
+            
+            edit.addModifyListener(new ModifyListener() {
+                public void modifyText(ModifyEvent evt) {
+                    item.setText(3, edit.getText());
+                    node.setDescription(edit.getText());
+                }
+            });
+            edit.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) {
+                    item.setText(3, edit.getText());
+                    node.setDescription(edit.getText());
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus();} });
+                }
+            });
+            edit.addFocusListener(new FocusListener() {
+                public void focusGained(FocusEvent focusEvent) {}
+                public void focusLost(FocusEvent evt) {
+                    item.setText(3, edit.getText());
+                    node.setDescription(edit.getText());
+                    evt.display.asyncExec(new Runnable() { public void run() { _treeEditor.getEditor().dispose(); _tree.setFocus();} });
+                }
+            });
+            edit.selectAll();
+            edit.setFocus();
+            _treeEditor.setEditor(edit, item, 3);
+        }
+    }
+
     private void configMenu() {
         TreeItem items[] = _tree.getSelection();
         if ( (items != null) && (items.length == 1) ) {
@@ -177,7 +467,7 @@ public class ManageForumReferenceChooser implements Translatable {
         // removes the children only, but doesn't remove the kids' parent refs, so
         // the ancestor checking below will still work
         node.clearChildren();
-        if (item.getChecked()) {
+        if (true) { //item.getChecked()) {
             checkedNodes.add(node);
             // might need to reparent
             boolean checkedAncestor = false;
@@ -204,7 +494,6 @@ public class ManageForumReferenceChooser implements Translatable {
         _refs.clear();
         ArrayList includedURIs = new ArrayList();
         add(ReferenceNode.deepCopy(refs), true, includedURIs);
-        add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
         _tree.setRedraw(true);
     }
     
@@ -247,14 +536,7 @@ public class ManageForumReferenceChooser implements Translatable {
         else
             item.setText(0, "");
 
-        int type = getType(node.getURI());
-        if (type == TYPE_MSG) item.setImage(1, ImageUtil.ICON_REF_MSG);
-        else if (type == TYPE_FORUM) item.setImage(1, ImageUtil.ICON_REF_FORUM);
-        else if (type == TYPE_ARCHIVE) item.setImage(1, ImageUtil.ICON_REF_ARCHIVE);
-        else if (type == TYPE_URL) item.setImage(1, ImageUtil.ICON_REF_URL);
-        else if (type == TYPE_SYNDIE) item.setImage(1, ImageUtil.ICON_REF_SYNDIE);
-        else if (type == TYPE_FREENET) item.setImage(1, ImageUtil.ICON_REF_FREENET);
-        else item.setImage(1, null);
+        item.setImage(1, ImageUtil.getTypeIcon(node.getURI()));
 
         if (node.getReferenceType() != null)
             item.setText(2, node.getReferenceType());
@@ -306,47 +588,6 @@ public class ManageForumReferenceChooser implements Translatable {
         add(child, parentItem, true, null);
     }
     
-    private static final int TYPE_MSG = 0;
-    private static final int TYPE_FORUM = 1;
-    private static final int TYPE_ARCHIVE = 2;
-    private static final int TYPE_URL = 3;
-    private static final int TYPE_SYNDIE = 4;
-    private static final int TYPE_FREENET = 5;
-    private static final int TYPE_OTHER = -1;
-    
-    private int getType(SyndieURI uri) {
-        if (uri == null) {
-            return TYPE_OTHER;
-        } else if (uri.isChannel()) {
-            if (uri.getScope() != null) {
-                if (uri.getMessageId() != null) 
-                    return TYPE_MSG;
-                else
-                    return TYPE_FORUM;
-            } else {
-                return TYPE_SYNDIE;
-            }
-        } else if (uri.isArchive()) {
-            return TYPE_ARCHIVE;
-        } else if (uri.isURL()) {
-            String url = uri.getURL();
-            if ( (url != null) && (url.startsWith("SSK@") || url.startsWith("CHK@") || url.startsWith("USK@")) )
-                return TYPE_FREENET;
-            else
-                return TYPE_URL;
-        } else if (uri.isSearch()) {
-            Hash scope = uri.getHash("scope");
-            if (scope == null)
-                return TYPE_SYNDIE;
-            else if (uri.getMessageId() == null)
-                return TYPE_FORUM;
-            else
-                return TYPE_MSG;
-        } else {
-            return TYPE_SYNDIE;
-        }
-    }
-    
     private static final String T_COL_DESC = "syndie.gui.manageforumreferencechooser.desc";
     private static final String T_COL_TYPE = "syndie.gui.manageforumreferencechooser.type";
     private static final String T_COL_TARGET = "syndie.gui.manageforumreferencechooser.target";
@@ -355,6 +596,8 @@ public class ManageForumReferenceChooser implements Translatable {
     private static final String T_ADDCHILD = "syndie.gui.manageforumreferencechooser.add.child";
     private static final String T_EDIT = "syndie.gui.manageforumreferencechooser.edit";
     private static final String T_VIEW = "syndie.gui.manageforumreferencechooser.view";
+    private static final String T_REMOVE = "syndie.gui.manageforumreferencechooser.remove";
+    private static final String T_IMPORT = "syndie.gui.manageforumreferencechooser.import";
     
     public void translate(TranslationRegistry registry) {
         _colDescription.setText(registry.getText(T_COL_DESC, "Description"));
@@ -365,6 +608,8 @@ public class ManageForumReferenceChooser implements Translatable {
         _addChild.setText(registry.getText(T_ADDCHILD, "Add child"));
         _edit.setText(registry.getText(T_EDIT, "Edit"));
         _view.setText(registry.getText(T_VIEW, "View"));
+        _remove.setText(registry.getText(T_REMOVE, "Remove"));
+        _importBookmarks.setText(registry.getText(T_IMPORT, "Import bookmarks"));
         
         _colType.pack();
         _colDescription.pack();
