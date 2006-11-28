@@ -91,12 +91,18 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private ReferenceChooserPopup _refChooser;
     private boolean _addingPoster;
     
+    public boolean _editable;
+    
     public ManageForum(BrowserControl browser, Composite parent, ManageForumListener lsnr) {
+        this(browser, parent, lsnr, true);
+    }
+    public ManageForum(BrowserControl browser, Composite parent, ManageForumListener lsnr, boolean editable) {
         _parent = parent;
         _browser = browser;
         _listener = lsnr;
         _managerKeys = new ArrayList();
         _posterKeys = new ArrayList();
+        _editable = editable;
         initComponents();
     }
     
@@ -250,19 +256,19 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _name = new Text(_root, SWT.BORDER | SWT.SINGLE);
+        _name = new Text(_root, SWT.BORDER | SWT.SINGLE | (_editable ? 0 : SWT.READ_ONLY));
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _tagsLabel = new Label(_root, SWT.NONE);
         _tagsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _tags = new Text(_root, SWT.BORDER | SWT.SINGLE);
+        _tags = new Text(_root, SWT.BORDER | SWT.SINGLE | (_editable ? 0 : SWT.READ_ONLY));
         _tags.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _expireLabel = new Label(_root, SWT.NONE);
         _expireLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _expire = new Text(_root, SWT.BORDER | SWT.SINGLE);
+        _expire = new Text(_root, SWT.BORDER | SWT.SINGLE | (_editable ? 0 : SWT.READ_ONLY));
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 50;
         _expire.setLayoutData(gd);
@@ -270,19 +276,19 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _descLabel = new Label(_root, SWT.NONE);
         _descLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _desc = new Text(_root, SWT.BORDER | SWT.SINGLE | SWT.WRAP);
+        _desc = new Text(_root, SWT.BORDER | SWT.SINGLE | SWT.WRAP | (_editable ? 0 : SWT.READ_ONLY));
         _desc.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         
         _privacyLabel = new Label(_root, SWT.NONE);
         _privacyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _privacy = new Combo(_root, SWT.DROP_DOWN);
+        _privacy = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
         _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _authLabel = new Label(_root, SWT.NONE);
         _authLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _auth = new Combo(_root, SWT.DROP_DOWN);
+        _auth = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
         _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
         _chooserLabel = new Label(_root, SWT.NONE);
@@ -318,6 +324,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addManager(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addManager(); }
         });
+        _managerAdd.setEnabled(_editable);
         
         _managerView = new MenuItem(menu, SWT.PUSH);
         _managerView.addSelectionListener(new SelectionListener() {
@@ -330,6 +337,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeManager(); }
             public void widgetSelected(SelectionEvent selectionEvent) { removeManager(); }
         });
+        _managerRemove.setEnabled(_editable);
         
         _posters = new Composite(selected, SWT.NONE);
         _posters.setLayout(new GridLayout(1, true));
@@ -349,6 +357,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPoster(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addPoster(); }
         });
+        _posterAdd.setEnabled(_editable);
         
         _posterView = new MenuItem(menu, SWT.PUSH);
         _posterView.addSelectionListener(new SelectionListener() {
@@ -361,24 +370,28 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { removePoster(); }
             public void widgetSelected(SelectionEvent selectionEvent) { removePoster(); }
         });
+        _posterRemove.setEnabled(_editable);
         
         _archives = new Composite(selected, SWT.NONE);
         _archives.setLayout(new FillLayout());
         //_archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true, 7, 1));
         _archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        _archiveChooser = new ManageForumArchiveChooser(_archives, _browser, this);
+        _archiveChooser = new ManageForumArchiveChooser(_archives, _browser, this, _editable);
         
         _references = new Composite(selected, SWT.NONE);
         _references.setLayout(new FillLayout());
         //_references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true, 7, 1));
         _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        _referencesChooser = new ManageForumReferenceChooser(_references, _browser, this);
+        _referencesChooser = new ManageForumReferenceChooser(_references, _browser, this, _editable);
         
         Composite actions = new Composite(_root, SWT.NONE);
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1));
+        gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false, 7, 1);
+        if (!_editable)
+            gd.exclude = true;
+        actions.setLayoutData(gd);
 
         populateCombos();
         

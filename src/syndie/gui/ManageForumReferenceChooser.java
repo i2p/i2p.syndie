@@ -36,6 +36,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ArchiveInfo;
+import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
@@ -64,10 +65,13 @@ public class ManageForumReferenceChooser implements Translatable {
     /** TreeItem to ReferenceNode */
     private Map _itemToRefNode;
     
-    public ManageForumReferenceChooser(Composite parent, BrowserControl browser, ManageForum forum) {
+    private boolean _editable;
+    
+    public ManageForumReferenceChooser(Composite parent, BrowserControl browser, ManageForum forum, boolean editable) {
         _browser = browser;
         _forum = forum;
         _parent = parent;
+        _editable = editable;
         _refs = new ArrayList();
         _itemToRefNode = new HashMap();
         initComponents();
@@ -125,6 +129,7 @@ public class ManageForumReferenceChooser implements Translatable {
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void mouseUp(MouseEvent evt) {
                 super.mouseUp(evt);
+                if (!_editable) return;
                 TreeItem items[] = _tree.getSelection();
                 if ( (items == null) || (items.length != 1) ) return;
                 
@@ -164,16 +169,19 @@ public class ManageForumReferenceChooser implements Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
             public void widgetSelected(SelectionEvent selectionEvent) { add(); }
         });
+        _add.setEnabled(_editable);
         _addChild = new MenuItem(menu, SWT.PUSH);
         _addChild.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addChild(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addChild(); }
         });
+        _addChild.setEnabled(_editable);
         _edit = new MenuItem(menu, SWT.PUSH);
         _edit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { edit(); }
             public void widgetSelected(SelectionEvent selectionEvent) { edit(); }
         });
+        _edit.setEnabled(_editable);
         _view = new MenuItem(menu, SWT.PUSH);
         _view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(); }
@@ -184,6 +192,7 @@ public class ManageForumReferenceChooser implements Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { remove(); }
             public void widgetSelected(SelectionEvent selectionEvent) { remove(); }
         });
+        _remove.setEnabled(_editable);
         _importBookmarks = new MenuItem(menu, SWT.PUSH);
         _importBookmarks.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarks(); }
@@ -269,15 +278,22 @@ public class ManageForumReferenceChooser implements Translatable {
         item.dispose();
     }
     private void importBookmarks() {
-        _tree.setRedraw(false);
-        List includedURIs = new ArrayList();
-        for (Iterator iter = _itemToRefNode.values().iterator(); iter.hasNext(); ) {
-            ReferenceNode node = (ReferenceNode)iter.next();
-            if (!includedURIs.contains(node.getURI()))
-                includedURIs.add(node.getURI());
+        if (_editable) {
+            // import FROM our bookmarks TO the forum
+            _tree.setRedraw(false);
+            List includedURIs = new ArrayList();
+            for (Iterator iter = _itemToRefNode.values().iterator(); iter.hasNext(); ) {
+                ReferenceNode node = (ReferenceNode)iter.next();
+                if (!includedURIs.contains(node.getURI()))
+                    includedURIs.add(node.getURI());
+            }
+            add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
+            _tree.setRedraw(true);
+        } else {
+            // import FROM the forum TO our bookmarks
+            for (int i = 0; i < _refs.size(); i++)
+                _browser.bookmark(NymReferenceNode.deepCopyNym((ReferenceNode)_refs.get(i)));
         }
-        add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
-        _tree.setRedraw(true);
     }
     
     private SyndieURI getSelectedURI() {
