@@ -1,9 +1,15 @@
 package syndie.gui;
 
+import java.util.List;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import syndie.data.SyndieURI;
@@ -17,9 +23,10 @@ public class SyndicationView implements Translatable {
     private Composite _root;
     private Group _archiveGroup;
     private SyndicationArchiveView _archives;
-    private Group _pendingGroup;
-    private SyndicationPendingView _pending;
-    private Group _statusGroup;
+    private Button _syndicate;
+    private Combo _detailChooser;
+    private StackLayout _stack;
+    private SyndicationConfigView _config;
     private SyndicationStatusView _status;
     private SyndieURI _archive;
     
@@ -34,44 +41,108 @@ public class SyndicationView implements Translatable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _status.dispose();
+        _archives.dispose();
+        _config.dispose();
     }
     public void shown() { _archives.shown(); }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(1, true));
+        _root.setLayout(new GridLayout(2, false));
         
         _archiveGroup = new Group(_root, SWT.NONE);
         _archiveGroup.setLayout(new FillLayout());
-        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
         _archives = new SyndicationArchiveView(_browser, _archiveGroup);
         if (_archive != null)
             _archives.highlight(_archive);
         
-        _pendingGroup = new Group(_root, SWT.NONE);
-        _pendingGroup.setLayout(new FillLayout());
-        _pendingGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _syndicate = new Button(_root, SWT.PUSH);
+        _syndicate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _syndicate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { syndicate(); }
+        });
         
-        _pending = new SyndicationPendingView(_browser, _pendingGroup);
+        _detailChooser = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _detailChooser.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _detailChooser.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { choose(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { choose(); }
+        });
         
-        _statusGroup = new Group(_root, SWT.NONE);
-        _statusGroup.setLayout(new FillLayout());
-        _statusGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _stack = new StackLayout();
+        Composite stacked = new Composite(_root, SWT.NONE);
+        stacked.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        stacked.setLayout(_stack);
         
-        _status = new SyndicationStatusView(_browser, _statusGroup);
+        _config = new SyndicationConfigView(_browser, stacked);
         
+        _status = new SyndicationStatusView(_browser, stacked);
+
         _browser.getTranslationRegistry().register(this);
+        // register will populate the combo via translate
+        choose();
+    }
+    
+    private void syndicate() {
+        int proxyPort = _config.getProxyPort();
+        String proxyHost = _config.getProxyHost();
+        int fcpPort = _config.getFCPPort();
+        String fcpHost = _config.getFCPHost();
+        _browser.getSyndicationManager().setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
+        
+        int action = _config.getAction();
+        switch (action) {
+            case SyndicationConfigView.ACTION_INDEXES:
+                List names = _archives.getSelectedNames();
+                for (int i = 0; i < names.size(); i++)
+                    _browser.getSyndicationManager().fetchIndex((String)names.get(i));
+                break;
+            case SyndicationConfigView.ACTION_PULL_PUSH:
+                // schedule push elements
+                // fall through
+            case SyndicationConfigView.ACTION_PULL_ONLY:
+                // schedule pull elements
+                break;
+        }
+        int concurrency = _config.getConcurrency();
+        _browser.getSyndicationManager().startFetching(concurrency);
+    }
+    
+    private static final int CHOICE_CONFIG = 0;
+    private static final int CHOICE_STATUS = 1;
+    
+    private void choose() {
+        if (_detailChooser.getSelectionIndex() == CHOICE_CONFIG) {
+            _stack.topControl = _config.getControl();
+        } else {
+            _stack.topControl = _status.getControl();
+        }
+        _config.getControl().getParent().layout();
+    }
+    private void populateChooser() {
+        int idx = CHOICE_CONFIG;
+        _detailChooser.setRedraw(false);
+        if (_detailChooser.getItemCount() > 0)
+            idx = _detailChooser.getItemCount();
+        _detailChooser.removeAll();
+        _detailChooser.add(_browser.getTranslationRegistry().getText(T_CHOICE_CONFIG, "Syndication options"));
+        _detailChooser.add(_browser.getTranslationRegistry().getText(T_CHOICE_STATUS, "Syndication status"));
+        _detailChooser.select(idx);
+        _detailChooser.setRedraw(true);
     }
 
     private static final String T_ARCHIVE = "syndie.gui.syndicationview.archive";
-    private static final String T_PENDING = "syndie.gui.syndicationview.pending";
-    private static final String T_STATUS = "syndie.gui.syndicationview.status";
+    private static final String T_SYNDICATE = "syndie.gui.syndicationview.syndicate";
+    private static final String T_CHOICE_CONFIG = "syndie.gui.syndicationview.choice.config";
+    private static final String T_CHOICE_STATUS = "syndie.gui.syndicationview.choice.status";
     
     public void translate(TranslationRegistry registry) {
         _archiveGroup.setText(registry.getText(T_ARCHIVE, "Archives"));
-        _pendingGroup.setText(registry.getText(T_PENDING, "Pending"));
-        _statusGroup.setText(registry.getText(T_STATUS, "Status"));
+        _syndicate.setText(registry.getText(T_SYNDICATE, "Syndicate"));
+        populateChooser();
     }
-    
 }

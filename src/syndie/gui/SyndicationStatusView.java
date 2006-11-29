@@ -11,6 +11,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -63,6 +64,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
     }
+    public Control getControl() { return _root; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -103,8 +105,65 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         _browser.getSyndicationManager().addListener(this);
     }
     
-    private void add(SyndicationManager.FetchRecord record) {
+    private void add(SyndicationManager.StatusRecord record) {
         SyndieURI uri = record.getURI();
+        if (uri.isArchive())
+            addArchive(uri, record);
+        else
+            addMessage(uri, record);
+    }
+    private void addArchive(SyndieURI uri, SyndicationManager.StatusRecord record) {
+        String name = uri.getString("name");
+        if (name == null) name = "";
+        int insertIndex = 0;
+        boolean added = false;
+        synchronized (_sortedURIs) {
+            for (int i = 0; i < _sortedURIs.size(); i++) {
+                SyndieURI cur = (SyndieURI)_sortedURIs.get(i);
+                if (cur.equals(uri)) return; // nothing to add
+                
+                if (!cur.isArchive()) {
+                    // archives before messages
+                    insertIndex = i;
+                    _sortedURIs.add(insertIndex, uri);
+                    added = true;
+                    break;
+                } else {
+                    String curName = cur.getString("name");
+                    if (curName == null) curName = "";
+                    int compare = name.compareTo(curName);
+                    if (compare < 0) {
+                        // new record goes later
+                    } else if (compare == 0) {
+                        compare = uri.getURL().compareTo(cur.getURL());
+                        if (compare < 0) {
+                            // new record goes later
+                        } else if (compare == 0) {
+                            // ...
+                        } else {
+                            insertIndex = i;
+                            _sortedURIs.add(insertIndex, uri);
+                            added = true;
+                            break;
+                        }
+                    } else {
+                        insertIndex = i;
+                        _sortedURIs.add(insertIndex, uri);
+                        added = true;
+                        break;
+                    }
+                }
+            }
+            if (!added) {
+                insertIndex = _sortedURIs.size();
+                _sortedURIs.add(uri);
+            }
+        }
+        
+        add(record, insertIndex);   
+    }
+    private void addMessage(SyndieURI uri, SyndicationManager.StatusRecord record) {
+        _browser.getUI().debugMessage("add message: " + uri);
         byte scope[] = uri.getScope().getData();
         long msgId = (uri.getMessageId() != null ? uri.getMessageId().longValue() : -1);
         int insertIndex = 0;
@@ -145,14 +204,16 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         add(record, insertIndex);
     }
     
-    private void add(final SyndicationManager.FetchRecord record, final int insertIndex) {
+    private void add(final SyndicationManager.StatusRecord record, final int insertIndex) {
          // called from arbitrary thread, so be safe
         _root.getDisplay().syncExec(new Runnable() { public void run() { doAdd(record, insertIndex); } });
     }
-    private void doAdd(final SyndicationManager.FetchRecord record, final int insertIndex) {
+    private void doAdd(final SyndicationManager.StatusRecord record, final int insertIndex) {
         TableItem item = new TableItem(_table, SWT.NONE, insertIndex);
         _uriToTableItem.put(record.getURI(), item);
-        String prefix = record.getURI().getScope().toBase64().substring(0,6);
+        String prefix = "";
+        if (!record.getURI().isArchive())
+            prefix = record.getURI().getScope().toBase64().substring(0,6);
         update(item, record, false, "", prefix);
         setMinWidth(_colTarget, item.getText(1));
         setMinWidth(_colAuthor, item.getText(2));
@@ -169,7 +230,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
             _browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
         }
     }
-    private void update(final SyndicationManager.FetchRecord record) {
+    private void update(final SyndicationManager.StatusRecord record) {
         final TableItem item = (TableItem)_uriToTableItem.get(record.getURI());
         
         // this db access is done outside the display thread in most (all?) cases
@@ -212,16 +273,18 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
             }
         }
         final boolean isPrivate = priv;
-        final String target = (targetName == null ? record.getURI().getScope().toBase64().substring(0,6) : targetName);
+        final String target = (targetName == null ? (record.getURI().isArchive() ? "" : record.getURI().getScope().toBase64().substring(0,6)) : targetName);
         final String author = (authorName == null ? "" : authorName);
 
         // called from arbitrary thread, so be safe
         if (item != null)
             _root.getDisplay().syncExec(new Runnable() { public void run() { update(item, record, isPrivate, author, target); } });
     }
-    private void update(TableItem item, SyndicationManager.FetchRecord record, boolean isPrivate, String author, String target) {
+    private void update(TableItem item, SyndicationManager.StatusRecord record, boolean isPrivate, String author, String target) {
         SyndieURI uri = record.getURI();
-        if (record.getURI().getMessageId() == null) {
+        if (record.getURI().isArchive()) {
+            item.setImage(0, ImageUtil.ICON_REF_ARCHIVE);
+        } else if (record.getURI().getMessageId() == null) {
             item.setImage(0, ImageUtil.ICON_MSG_TYPE_META);
         } else if ( (record.getStatus() == SyndicationManager.FETCH_IMPORT_PBE) ||
                     (record.getStatus() == SyndicationManager.FETCH_IMPORT_OK) ) {
@@ -253,9 +316,12 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
                 //item.setText(5, "fetchComplete");
                 break;
             case SyndicationManager.FETCH_FAILED:
+            case SyndicationManager.FETCH_INDEX_LOAD_ERROR:
             case SyndicationManager.FETCH_IMPORT_CORRUPT:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 break;
+            case SyndicationManager.FETCH_INDEX_LOAD_OK:
+            case SyndicationManager.FETCH_INDEX_DIFF_OK:
             case SyndicationManager.FETCH_IMPORT_OK:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 //item.setText(5, "importOK");
@@ -380,8 +446,13 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
     public void archiveAdded(SyndicationManager mgr, String name) {}
     public void archiveRemoved(SyndicationManager mgr, String name) {}
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {}
-    public void archiveIndexStatus(SyndicationManager mgr, String archiveName, int status, String msg) {}
-    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.FetchRecord record) {
+    public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+        status(record);
+    }
+    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+        status(record);
+    }
+    private void status(SyndicationManager.StatusRecord record) {
         _browser.getUI().debugMessage("fetchStatus of " + record.getURI() + ": " + record.getStatus());
         if (!_uriToTableItem.containsKey(record.getURI())) //if (record.getStatus() == SyndicationManager.FETCH_SCHEDULED)
             add(record);

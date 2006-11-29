@@ -10,6 +10,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
@@ -19,7 +20,7 @@ import syndie.db.SyndicationManager;
 /**
  *
  */
-public class SyndicationPendingView implements Translatable, SyndicationManager.SyndicationListener {
+public class SyndicationConfigView implements Translatable, SyndicationManager.SyndicationListener {
     private BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
@@ -31,16 +32,31 @@ public class SyndicationPendingView implements Translatable, SyndicationManager.
     private Spinner _concurrency;
     private Button _execute;
     
-    public SyndicationPendingView(BrowserControl browser, Composite parent) {
+    public SyndicationConfigView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         initComponents();
         _browser.getSyndicationManager().addListener(this);
     }
     
+    public Control getControl() { return _root; }
+    
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
     }
+    
+    public int getProxyPort() { return -1; }
+    public String getProxyHost() { return null; }
+    
+    public int getFCPPort() { return -1; }
+    public String getFCPHost() { return null; }
+    
+    public static final int ACTION_INDEXES = 0;
+    public static final int ACTION_PULL_PUSH = 1;
+    public static final int ACTION_PULL_ONLY = 2;
+    
+    public int getAction() { return ACTION_INDEXES; }
+    public int getConcurrency() { return 1; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -134,11 +150,11 @@ public class SyndicationPendingView implements Translatable, SyndicationManager.
     public void archiveAdded(SyndicationManager mgr, String name) {}
     public void archiveRemoved(SyndicationManager mgr, String name) {}
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {}
-    public void archiveIndexStatus(SyndicationManager mgr, String archiveName, int status, String msg) {
-        if (status == SyndicationManager.INDEX_STATUS_DIFF_OK) {
+    public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+        if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK) {
             // update summary
         }
     }
 
-    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.FetchRecord record) {}
+    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
 }

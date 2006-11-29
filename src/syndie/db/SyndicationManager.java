@@ -31,14 +31,6 @@ public class SyndicationManager {
     private int _httpProxyPort;
     private String _fcpHost;
     private int _fcpPort;
-            
-    public static final int INDEX_STATUS_START = 0;
-    public static final int INDEX_STATUS_FETCHING = 1;
-    public static final int INDEX_STATUS_FETCH_COMPLETE = 2;
-    public static final int INDEX_STATUS_LOAD_OK = 3;
-    public static final int INDEX_STATUS_LOAD_ERROR = 4;
-    public static final int INDEX_STATUS_FETCH_ERROR = 5;
-    public static final int INDEX_STATUS_DIFF_OK = 6;
     
     public static final int FETCH_SCHEDULED = 0;
     public static final int FETCH_STARTED = 1;
@@ -48,7 +40,10 @@ public class SyndicationManager {
     public static final int FETCH_IMPORT_PBE = 5;
     public static final int FETCH_IMPORT_NOKEY = 6;
     public static final int FETCH_IMPORT_CORRUPT = 7;
-    public static final int FETCH_STOPPED = 8;
+    public static final int FETCH_INDEX_LOAD_OK = 8;
+    public static final int FETCH_INDEX_LOAD_ERROR = 9;
+    public static final int FETCH_INDEX_DIFF_OK = 10;
+    public static final int FETCH_STOPPED = 11;
     
     public static final int STRATEGY_DELTA = 0;
     public static final int STRATEGY_DELTAKNOWN = 1;
@@ -75,14 +70,14 @@ public class SyndicationManager {
         public void archiveUpdated(SyndicationManager mgr, String oldName, String newName);
 
         /**
-         * ideal status sequence: START, FETCHING, FETCH_COMPLETE, LOAD_OK, DIFF_OK
+         * ideal status sequence: SCHEDULED, STARTEd, COMPLETE, INDEX_LOAD_OK, INDEX_DIFF_OK
          */
-        public void archiveIndexStatus(SyndicationManager mgr, String archiveName, int status, String msg);
+        public void archiveIndexStatus(SyndicationManager mgr, StatusRecord record);
         
         /**
          * ideal status sequence: SCHEDULED, STARTED, COMPLETE, ( IMPORT_OK | IMPORT_PBE )
          */
-        public void fetchStatusUpdated(SyndicationManager mgr, FetchRecord record);
+        public void fetchStatusUpdated(SyndicationManager mgr, StatusRecord record);
     }
     
     public int getArchiveCount() { return _archives.size(); }
@@ -178,17 +173,39 @@ public class SyndicationManager {
         }
     }
     
-    public void fetchIndex(int idx) {
-        // port of syndicateMenu.getIndex
-        NymArchive archive = getArchive(idx);
+    /** schedule a fetch of the particular message/metadata from the given archive */
+    public void fetch(String archiveName, SyndieURI uri) {
+        StatusRecord rec = new StatusRecord(archiveName, uri);
+        fireFetchStatusUpdated(rec);
+        synchronized (_fetchRecords) {
+            _fetchRecords.add(rec);
+            _fetchRecords.notifyAll();
+        }
+    }
+    /** schedule a fetch of the archive's index */
+    public void fetchIndex(String archiveName) {
+        NymArchive archive = getArchive(archiveName);
+        if (archive != null) {
+            StatusRecord rec = new StatusRecord(archiveName, archive.getURI());
+            rec.setStatus(FETCH_SCHEDULED);
+            fireIndexStatus(rec);
+            synchronized (_fetchRecords) {
+                _fetchRecords.add(rec);
+                _fetchRecords.notifyAll();
+            }
+        }
+    }
+    
+    private void fetchIndex(StatusRecord record) {
+        NymArchive archive = record.getArchive();
         if (archive == null) return;
         
         String baseUrl = archive.getURI().getURL();
         if (baseUrl == null) return;
+        if (record.getStatus() == FETCH_STOPPED) return;
 
-        _ui.debugMessage("fetchIndex: " + idx + " started");
-        fireIndexStatus(archive.getName(), INDEX_STATUS_START, null);
-        
+        _ui.debugMessage("fetchIndex: started");
+
         String proxyHost = archive.getCustomProxyHost();
         int proxyPort = archive.getCustomProxyPort();
         if ( ( (proxyHost == null) || (proxyPort <= 0) ) &&
@@ -243,83 +260,109 @@ public class SyndicationManager {
         }
 	if (includeForceDownload) url = url + "?forcedownload";
 
-        _ui.debugMessage("fetchIndex: " + idx + " fetching: " + url);
-        fireIndexStatus(archive.getName(), INDEX_STATUS_FETCHING, null);
+        _ui.debugMessage("fetchIndex: fetching: " + url);
+        //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCHING, null);
+        
+        if (record.getStatus() == FETCH_STOPPED) return;
 
         boolean shouldProxy = (proxyHost != null) && (proxyPort > 0);
         boolean archiveWasRemote = true;
         File out = null;
         if (baseUrl.startsWith("/")) {
             out = new File(url);
-            _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
-            fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
+            _ui.debugMessage("fetchIndex: fetch complete: " + url);
+            //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
+            record.setStatus(FETCH_COMPLETE);
+            fireIndexStatus(record);
             archiveWasRemote = false;
         } else if (baseUrl.startsWith("file://")) {
             out = new File(baseUrl.substring("file://".length()));
-            _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
-            fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
+            _ui.debugMessage("fetchIndex: fetch complete: " + url);
+            //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
+            record.setStatus(FETCH_COMPLETE);
+            fireIndexStatus(record);
             archiveWasRemote = false;
         } else {
             try {
+                if (record.getStatus() == FETCH_STOPPED) {
+                    if (archiveWasRemote) out.delete(); 
+                    return;
+                }
                 out = File.createTempFile("syndicate", ".index", _client.getTempDir());
                 EepGet get = new EepGet(_client.ctx(), shouldProxy, proxyHost, (int)proxyPort, 0, out.getPath(), url, false, null, null);
                 get.addStatusListener(new UIStatusListener());
                 boolean fetched = get.fetch();
+                if (record.getStatus() == FETCH_STOPPED) {
+                    if (archiveWasRemote) out.delete(); 
+                    return;
+                }
                 if (!fetched) {
                     _ui.errorMessage("Fetch failed of " + url);
-                    _ui.debugMessage("fetchIndex: " + idx + " fetch error: " + url);
-                    fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
+                    _ui.debugMessage("fetchIndex: fetch error: " + url);
+                    //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
+                    record.setStatus(FETCH_FAILED);
+                    //record.setDetail("");
+                    fireIndexStatus(record);
                     if (archiveWasRemote)
                         out.delete();
                     return;
                 }
-                _ui.debugMessage("fetchIndex: " + idx + " fetch complete: " + url);
-                fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
+                _ui.debugMessage("fetchIndex: fetch complete: " + url);
+                record.setStatus(FETCH_COMPLETE);
+                fireIndexStatus(record);
+                //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             } catch (IOException ioe) {
                 _ui.errorMessage("Error pulling the index", ioe);
-                fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, ioe.getMessage());
+                record.setStatus(FETCH_FAILED);
+                record.setDetail(ioe.getMessage());
+                fireIndexStatus(record);
                 if (archiveWasRemote)
                     out.delete();
                 return;
             }
         }
         try {
+            if (record.getStatus() == FETCH_STOPPED) {
+                if (archiveWasRemote) out.delete(); 
+                return;
+            }
             ArchiveIndex index = ArchiveIndex.loadIndex(out, _ui, unauth);
             if (index != null) {
                 archive.setIndex(index);
                 HTTPSyndicator syndicator = new HTTPSyndicator(baseUrl, proxyHost, proxyPort, _client, _ui, index, false); //opts.getOptBoolean("reimport", false));
                 archive.setSyndicator(syndicator);
-                _ui.debugMessage("fetchIndex: " + idx + " index loaded");
-                fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
+                _ui.debugMessage("fetchIndex: index loaded");
+                record.setStatus(FETCH_INDEX_LOAD_OK);
+                fireIndexStatus(record);
+                //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
                 ArchiveDiff diff = index.diff(_client, _ui, new Opts());
                 archive.setDiff(diff);
-                _ui.debugMessage("fetchIndex: " + idx + " diff loaded");
-                fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
+                _ui.debugMessage("fetchIndex: diff loaded");
+                record.setStatus(FETCH_INDEX_DIFF_OK);
+                fireIndexStatus(record);
+                //fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
             } else {
-                _ui.debugMessage("fetchIndex: " + idx + " load error");
-                fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, "index was not valid");
+                _ui.debugMessage("fetchIndex: load error");
+                record.setStatus(FETCH_INDEX_LOAD_ERROR);
+                fireIndexStatus(record);
+                //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, "index was not valid");
             }
         } catch (IOException ioe) {
             _ui.errorMessage("Error loading the index", ioe);
-            fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, ioe.getMessage());
+            record.setStatus(FETCH_INDEX_LOAD_ERROR);
+            record.setDetail(ioe.getMessage());
+            fireIndexStatus(record);
+            //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, ioe.getMessage());
         }
         if (archiveWasRemote && out != null)
             out.delete();
     }
     
-    private void fireIndexStatus(String name, int status, String msg) {
+    //private void fireIndexStatus(String name, int status, String msg) {
+    private void fireIndexStatus(StatusRecord record) {
         for (int i = 0; i < _listeners.size(); i++) {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
-            lsnr.archiveIndexStatus(this, name, status, msg);
-        }
-    }
-    
-    public void fetch(String archiveName, SyndieURI uri) {
-        FetchRecord rec = new FetchRecord(archiveName, uri);
-        fireFetchStatusUpdated(rec);
-        synchronized (_fetchRecords) {
-            _fetchRecords.add(rec);
-            _fetchRecords.notifyAll();
+            lsnr.archiveIndexStatus(this, record);
         }
     }
     
@@ -396,7 +439,7 @@ public class SyndicationManager {
         synchronized (_fetchRecords) {
             ArrayList rv = new ArrayList();
             for (int i = 0; i < _fetchRecords.size(); i++) {
-                FetchRecord rec = (FetchRecord)_fetchRecords.get(i);
+                StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                 if (rec.getStatus() == status)
                     rv.add(rec);
             }
@@ -404,13 +447,13 @@ public class SyndicationManager {
         }
     }
     
-    public void removeFetchRecord(FetchRecord rec) {
+    public void removeFetchRecord(StatusRecord rec) {
         synchronized (_fetchRecords) {
             _fetchRecords.remove(rec);
         }
     }
     
-    private void fireFetchStatusUpdated(FetchRecord record) {
+    private void fireFetchStatusUpdated(StatusRecord record) {
         for (int i = 0; i < _listeners.size(); i++) {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
             lsnr.fetchStatusUpdated(this, record);
@@ -683,7 +726,7 @@ public class SyndicationManager {
     public void stopFetching(SyndieURI uri) {
         synchronized (_fetchRecords) {
             for (int i = 0; i < _fetchRecords.size(); i++) {
-                FetchRecord record = (FetchRecord)_fetchRecords.get(i);
+                StatusRecord record = (StatusRecord)_fetchRecords.get(i);
                 if (record.getURI().equals(uri)) {
                     record.stop();
                     break;
@@ -813,13 +856,13 @@ public class SyndicationManager {
         public void setSyndicator(HTTPSyndicator syndicator) { _syndicator = syndicator; }
     }
 
-    public class FetchRecord {
+    public class StatusRecord {
         private String _archiveName;
         private SyndieURI _uri;
         private int _status;
         private String _detail;
         
-        public FetchRecord(String name, SyndieURI uri) {
+        public StatusRecord(String name, SyndieURI uri) {
             _archiveName = name;
             _uri = uri;
             _status = FETCH_SCHEDULED;
@@ -836,6 +879,9 @@ public class SyndicationManager {
                 case FETCH_IMPORT_PBE:
                 case FETCH_IMPORT_NOKEY:
                 case FETCH_IMPORT_CORRUPT:
+                case FETCH_INDEX_DIFF_OK:
+                case FETCH_INDEX_LOAD_ERROR:
+                case FETCH_INDEX_LOAD_OK:
                 case FETCH_STOPPED:
                     return; // already done
                 case FETCH_COMPLETE:
@@ -848,30 +894,16 @@ public class SyndicationManager {
         /** status message detail */
         public String getDetail() { return _detail; }
         void setDetail(String detail) { _detail = detail; }
-        void stop() { 
-            switch (_status) {
-                case FETCH_FAILED:
-                case FETCH_IMPORT_OK:
-                case FETCH_IMPORT_PBE:
-                case FETCH_IMPORT_NOKEY:
-                case FETCH_IMPORT_CORRUPT:
-                    return; // already done
-                case FETCH_COMPLETE:
-                case FETCH_SCHEDULED:
-                case FETCH_STARTED:
-                default:
-                    _status = FETCH_STOPPED;
-            }
-        }
+        void stop() { setStatus(FETCH_STOPPED); }
     }
     
     private class Fetcher implements Runnable {
         public void run() {
-            FetchRecord cur = null;
+            StatusRecord cur = null;
             for (;;) {
                 synchronized (_fetchRecords) {
                     for (int i = 0; i < _fetchRecords.size(); i++) {
-                        FetchRecord rec = (FetchRecord)_fetchRecords.get(i);
+                        StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                         if (rec.getStatus() == FETCH_SCHEDULED) {
                             rec.setStatus(FETCH_STARTED);
                             cur = rec;
@@ -890,9 +922,18 @@ public class SyndicationManager {
                 cur = null;
             }
         }
-        private void fetch(FetchRecord rec) {
+        private void fetch(StatusRecord rec) {
             fireFetchStatusUpdated(rec); // scheduled-->start
             if (rec.getStatus() == FETCH_STOPPED) return;
+            if (rec.getURI().isArchive()) {
+                // fetching an archive's index itself
+                fetchIndex(rec);
+            } else {
+                fetchData(rec);
+            }
+        }
+        private void fetchData(StatusRecord rec) {
+            // fetching *FROM* an archive
             NymArchive archive = rec.getArchive();
             HTTPSyndicator template = archive.getSyndicator();
             // the syndicator was built with sequential operation in mind, not multithreaded/reused,
@@ -908,10 +949,10 @@ public class SyndicationManager {
             else
                 rec.setStatus(FETCH_FAILED);
             fireFetchStatusUpdated(rec);
-            
+
             if (!fetchComplete)
                 return;
-            
+
             if (rec.getStatus() == FETCH_STOPPED) return;
             int importCount = syndicator.importFetched();
             if (importCount == 1) {

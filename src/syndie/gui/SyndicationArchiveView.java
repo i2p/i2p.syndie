@@ -12,6 +12,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
@@ -33,7 +34,6 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private BrowserControl _browser;
     private SyndicationManager _manager;
     private Composite _parent;
-    private Composite _root;
     private Table _table;
     private TableColumn _colType;
     private TableColumn _colName;
@@ -46,6 +46,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private TableColumn _colError;
     private ArrayList _names;
     private Map _errors;
+    /*
     private Button _fetch;
     private Label _proxyHostLabel;
     private Text _proxyHost;
@@ -55,6 +56,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private Text _fcpHost;
     private Label _fcpPortLabel;
     private Text _fcpPort;
+     */
     
     private Menu _menu;
     private MenuItem _menuAdd;
@@ -78,6 +80,8 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _browser.getTranslationRegistry().unregister(this);
         _editPopup.dispose();
     }
+    
+    public Control getControl() { return _table; }
     public void shown() { redrawArchives(); }
     
     public void highlight(SyndieURI uri) {
@@ -176,10 +180,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
     
     private void initComponents() {
-        _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(9, false));
-    
-        _table = new Table(_root, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
+        _table = new Table(_parent, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
         _colType = new TableColumn(_table, SWT.RIGHT);
         _colName = new TableColumn(_table, SWT.LEFT);
         _colNumForums = new TableColumn(_table, SWT.LEFT);
@@ -192,9 +193,8 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colName.setResizable(true);
         _table.setLinesVisible(true);
         _table.setHeaderVisible(true);
-        
-        _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
-        
+
+        /*
         _fetch = new Button(_root, SWT.PUSH);
         _fetch.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _fetch.addSelectionListener(new SelectionListener() {
@@ -221,6 +221,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _fcpPort = new Text(_root, SWT.BORDER);
         _fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+         */
     
         _menu = new Menu(_table);
         _table.setMenu(_menu);
@@ -240,7 +241,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
         });
         
-        _editPopup = new SyndicationArchivePopup(_browser, _root.getShell());
+        _editPopup = new SyndicationArchivePopup(_browser, _table.getShell());
         
         _browser.getTranslationRegistry().register(this);
         
@@ -248,6 +249,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
     
     private void loadProxyDefaults() {
+        /*
         String host = _browser.getClient().getDefaultHTTPProxyHost();
         if (host == null) host = "";
         _proxyHost.setText(host);
@@ -261,6 +263,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         port = _browser.getClient().getDefaultFreenetPort();
         if ( (port > 0) && (host.length() > 0) )
             _fcpPort.setText(Integer.toString(port));
+         */
     }
     
     private void add() { _editPopup.open(); }
@@ -279,7 +282,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private void delete() {
         ArrayList names = getSelectedNames();
         if (names.size() > 0) {
-            MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            MessageBox confirm = new MessageBox(_table.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             confirm.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_TITLE, "Delete archive?"));
             confirm.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Remove the archive from the monitored list?"));
             int rc = confirm.open();
@@ -295,6 +298,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         }
     }
     
+    /*
     private void fetchSelected() {
         int proxyPort = -1;
         String proxyHost = _proxyHost.getText().trim();
@@ -312,13 +316,16 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             _manager.fetchIndex(archive);
         }
     }
+     */
     
-    private ArrayList getSelectedNames() {
+    public ArrayList getSelectedNames() {
         ArrayList rv = new ArrayList();
         int indexes[] = _table.getSelectionIndices();
-        if (indexes != null) {
+        if ( (indexes != null) && (indexes.length != 0) ) {
             for (int i = 0; i < indexes.length; i++)
                 rv.add(_names.get(indexes[i]));
+        } else {
+            rv.addAll(_names);
         }
         return rv;
     }
@@ -342,12 +349,14 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private static final String T_ERROR = "syndie.gui.syndicationarchiveview.error";
     private static final String T_ERROR_TOOLTIP = "syndie.gui.syndicationarchiveview.error_tooltip";
     
+    /*
     private static final String T_SYNC = "syndie.gui.syndicationarchiveview.sync";
     private static final String T_SYNC_TOOLTIP = "syndie.gui.syndicationarchiveview.sync_tooltip";
     private static final String T_PROXYHOST = "syndie.gui.syndicationarchiveview.proxyhost";
     private static final String T_PROXYPORT = "syndie.gui.syndicationarchiveview.proxyport";
     private static final String T_FCPHOST = "syndie.gui.syndicationarchiveview.fcphost";
     private static final String T_FCPPORT = "syndie.gui.syndicationarchiveview.fcpport";
+     */
     
     private static final String T_MENU_ADD = "syndie.gui.syndicationarchiveview.menuadd";
     private static final String T_MENU_EDIT = "syndie.gui.syndicationarchiveview.menuedit";
@@ -376,6 +385,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colError.setText(registry.getText(T_ERROR, ""));
         _colError.setToolTipText(registry.getText(T_ERROR_TOOLTIP, "Any error from the last index sync"));
         
+        /*
         _fetch.setText(registry.getText(T_SYNC, "sync"));
         _fetch.setToolTipText(registry.getText(T_SYNC_TOOLTIP, "Fetch the selected archive indexes"));
         
@@ -383,6 +393,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "port:"));
         _fcpHostLabel.setText(registry.getText(T_FCPHOST, "FCP host:"));
         _fcpPortLabel.setText(registry.getText(T_FCPPORT, "port:"));
+         */
         
         _menuAdd.setText(registry.getText(T_MENU_ADD, "Add"));
         _menuEdit.setText(registry.getText(T_MENU_EDIT, "Edit"));
@@ -395,16 +406,20 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         redrawArchives();
     }
     public void archiveUpdated(SyndicationManager mgr, String oldName, final String newName) {
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(newName); } });
+        _table.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(newName); } });
     }
-    public void archiveIndexStatus(SyndicationManager mgr, final String archiveName, int status, String msg) {
-        if (msg != null) {
+    
+    public void archiveIndexStatus(SyndicationManager mgr, final SyndicationManager.StatusRecord record) {
+        final String archiveName = record.getSource();
+        String msg = record.getDetail();
+        if (msg != null)
             _errors.put(archiveName, msg);
-        } else {
+        else
             _errors.put(archiveName, "");
-        }
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(archiveName); } });
+        _table.getDisplay().asyncExec(new Runnable() {
+            public void run() { redrawArchives(archiveName); }
+        });
     }
 
-    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.FetchRecord record) {}
+    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
 }
