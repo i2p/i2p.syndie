@@ -2573,9 +2573,18 @@ public class DBClient {
     }
     
     private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    /** add a new reference, then updating the groupId, uriId, and siblingOrder fields in newValue */
+    /** add a new reference recursively, then updating the groupId, uriId, and siblingOrder fields in newValue */
     public void addNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
+        addNymReferenceDetail(nymId, newValue);
+        for (int i = 0; i < newValue.getChildCount(); i++) {
+            NymReferenceNode child = (NymReferenceNode)newValue.getChild(i);
+            child.setParentGroupId(newValue.getGroupId());
+            child.setSiblingOrder(i);
+            addNymReference(nymId, child);
+        }
+    }
+    private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
         createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
         long groupId = nextId("resourceGroupIdSequence");

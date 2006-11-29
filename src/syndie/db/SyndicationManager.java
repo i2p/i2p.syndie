@@ -421,6 +421,9 @@ public class SyndicationManager {
     public void removeListener(SyndicationListener lsnr) { _listeners.remove(lsnr); }
     
     private static final String SQL_ADD_NYM_ARCHIVE = "INSERT INTO nymArchive (name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean add(SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey readKey, SessionKey postKey) {
+        return add(uri.getString("name"), uri, customProxyHost, customProxyPort, readKey, postKey);
+    }
     public boolean add(String name, SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey readKey, SessionKey postKey) {
         if ( (name == null) || (name.trim().length() <= 0) ) {
             _ui.errorMessage("Name has to be specified");
@@ -517,6 +520,9 @@ public class SyndicationManager {
     
     private static final String SQL_DELETE_OLD_NYM_ARCHIVE_URI = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM nymArchive WHERE nymId = ? AND name = ?)";
     private static final String SQL_UPDATE_NYM_ARCHIVE = "UPDATE nymArchive SET name = ?, uriId = ?, customProxyHost = ?, customProxyPort = ?, postKey = ?, postKeySalt = ?, readKey = ?, readKeySalt = ? WHERE name = ? AND nymId = ?";
+    public boolean update(String oldName, SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey readKey, SessionKey postKey) {
+        return update(oldName, uri.getString("name"), uri, customProxyHost, customProxyPort, readKey, postKey);
+    }
     public boolean update(String oldName, String newName, SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey readKey, SessionKey postKey) {
         if ( (oldName == null) || (oldName.trim().length() <= 0) || (newName == null) || (newName.trim().length() <= 0) ) {
             _ui.errorMessage("Name has to be specified");

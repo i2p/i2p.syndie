@@ -46,6 +46,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private Shell _parentShell;
     private Shell _shell;
     private PageEditor _target;
+    private MessageEditor _msgTarget;
     
     private Group _linkTypeGroup;
     private Button _linkTypeWeb;
@@ -120,6 +121,16 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _text = "LINK TEXT";
         initComponents();
     }
+    public LinkBuilderPopup(BrowserControl browser, Shell parent, MessageEditor target) {
+        _browser = browser;
+        _client = browser.getClient();
+        _parentShell = parent;
+        _target = null;
+        _msgTarget = target;
+        _archives = new ArrayList();
+        _text = "LINK TEXT";
+        initComponents();
+    }
     private void initComponents() {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setText("Link to...");
@@ -161,7 +172,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
         _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
 
-        if (_target == null) {
+        if ( (_target == null) && (_msgTarget == null) ) {
             ((GridData)_linkTypePage.getLayoutData()).exclude = true;
             ((GridData)_linkTypePageCombo.getLayoutData()).exclude = true;
             ((GridData)_linkTypeAttachment.getLayoutData()).exclude = true;
@@ -540,14 +551,21 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             setURI(uri, _text);
         } else {
             blankSettings();
-            if (_target == null) {
+            if ( (_msgTarget == null) && (_target == null) ) {
                 _linkTypePage.setEnabled(false);
                 _linkTypePageCombo.setEnabled(false);
                 _linkTypeAttachment.setEnabled(false);
                 _linkTypeAttachmentCombo.setEnabled(false);
             } else {
-                int pages = _target.getPageCount();
-                List attachments = _target.getAttachmentDescriptions();
+                int pages = 0;
+                List attachments = null;
+                if (_msgTarget != null) {
+                    pages = _msgTarget.getPageCount();
+                    attachments = _msgTarget.getAttachmentDescriptions();
+                } else {
+                    pages = _target.getPageCount();
+                    attachments = _target.getAttachmentDescriptions();
+                }
                 if (pages <= 1) {
                     _linkTypePage.setEnabled(false);
                     _linkTypePageCombo.setEnabled(false);

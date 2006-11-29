@@ -15,19 +15,28 @@ public class ManageForumTab extends BrowserTab implements Translatable {
     private String _name;
     private String _description;
     private Image _icon;
+    private boolean _editable;
     
-    public ManageForumTab(BrowserControl browser, SyndieURI uri) {
+    public ManageForumTab(BrowserControl browser, SyndieURI uri) { this(browser, uri, true); }
+    public ManageForumTab(BrowserControl browser, SyndieURI uri, boolean editable) {
         super(browser, uri); 
+        _editable = editable;
+        deferredInit();
     }
     
-    protected void initComponents() {
+    protected void initComponents() {}
+    protected void deferredInit() {
         debug("manageforumtab.initComponents");
-        _manage = new ManageForum(getBrowser(), getRoot(), new ManageListener());
+        _manage = new ManageForum(getBrowser(), getRoot(), new ManageListener(), _editable);
         debug("manageforumtab.initComponents: browseforum constructed");
         _manage.setForum(getURI());
+        String detail = getURI().getString(ManageForum.DETAIL);
+        if (detail != null)
+            _manage.pickDetail(detail);
         getRoot().setLayout(new FillLayout());
         debug("manageforumtab.initComponents: complete");
         getBrowser().getTranslationRegistry().register(this);
+        reconfigItem();
     }
     
     private class ManageListener implements ManageForum.ManageForumListener {

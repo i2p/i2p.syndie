@@ -52,7 +52,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, Translatable {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  Translatable {
     private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
@@ -78,6 +78,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
     private DBClient.ChannelCollector _nymChannels;
 
     private ReferenceChooserPopup _refChooser;
+    
+    private MessageReferenceEditorPopup _referencesEditor;
     
     private Composite _parent;
     private Composite _root;
@@ -116,7 +118,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
     private Combo _controlAttachmentCombo;
     private Menu _controlAttachmentMenu;
     private Button _controlAttachmentAction;
-    private Label _controlRef;
     private Button _controlRefAction;
     private Label _controlExpiration;
     private Text _controlExpirationText;
@@ -356,11 +357,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
             public void widgetSelected(SelectionEvent selectionEvent) { removeAttachment(); }
         });
         
-        _controlRef = new Label(line3, SWT.NONE);
-        _controlRef.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        
         _controlRefAction = new Button(line3, SWT.PUSH);
-        _controlRefAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _controlRefAction.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1));
+        _controlRefAction.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _referencesEditor.open(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _referencesEditor.open(); }
+        });
         
         _controlExpiration = new Label(line3, SWT.NONE);
         _controlExpiration.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -369,6 +371,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 50;
         _controlExpirationText.setLayoutData(gd);
+        
+        _referencesEditor = new MessageReferenceEditorPopup(_browser, _root.getShell(), this, this);
         
         updateAuthor();
     }
@@ -865,6 +869,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
     public String[] getPrivateTags() { return new String[0]; }
     public List getReferenceNodes() { return _referenceNodes; }
     
+    // callback from MessageReferenceEditorPopup
+    public void referencesSelected(List referenceNodes) { _referenceNodes = referenceNodes; }
+    
     private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
     public String getExpiration() {
         try {
@@ -903,7 +910,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
     private static final String T_ATTACHMENT_ADD = "syndie.gui.messageeditor.attachments.add";
     private static final String T_ATTACHMENT_REMOVE = "syndie.gui.messageeditor.attachments.remove";
     private static final String T_REFERENCES = "syndie.gui.messageeditor.references";
-    private static final String T_REFERENCES_NONE = "syndie.gui.messageeditor.references.none";
     private static final String T_EXPIRATION = "syndie.gui.messageeditor.expiration";
     private static final String T_EXPIRATION_NONE = "syndie.gui.messageeditor.expiration.none";
     private static final String T_AUTHOR_UNKNOWN = "syndie.gui.messageeditor.author";
@@ -956,8 +962,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, T
         _controlAttachmentAction.setText(registry.getText(T_ATTACHMENT_ACTION, "+/-"));
         _attachmentAdd.setText(registry.getText(T_ATTACHMENT_ADD, "Add new file..."));
         _attachmentRemove.setText(registry.getText(T_ATTACHMENT_REMOVE, "Remove current attachment"));
-        _controlRef.setText(registry.getText(T_REFERENCES, "References:"));
-        _controlRefAction.setText(registry.getText(T_REFERENCES_NONE, "none")); //todo: fix when supported
+        _controlRefAction.setText(registry.getText(T_REFERENCES, "References"));
         _controlExpiration.setText(registry.getText(T_EXPIRATION, "Expiration:"));
         
         if (getExpiration() == null)

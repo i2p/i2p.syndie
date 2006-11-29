@@ -31,6 +31,8 @@ class SyndicationArchivePopup implements Translatable {
     private Shell _shell;
     private Label _nameLabel;
     private Text _name;
+    private Label _descLabel;
+    private Text _desc;
     private Button _urlRadio;
     private Text _url;
     private Button _freenetRadio;
@@ -70,6 +72,12 @@ class SyndicationArchivePopup implements Translatable {
         initComponents();
     }
     
+    public void config(SyndieURI uri, String proxy, int port) {
+        String name = "";
+        if ( (uri != null) && (uri.getString("name") != null) )
+            name = uri.getString("name");
+        config(name, uri, proxy, port);
+    }
     public void config(String name, SyndieURI uri, String proxy, int port) {
         _name.setText(name);
         _uri = uri;
@@ -144,6 +152,11 @@ class SyndicationArchivePopup implements Translatable {
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _name = new Text(_shell, SWT.SINGLE | SWT.BORDER);
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        _descLabel = new Label(_shell, SWT.NONE);
+        _descLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _desc = new Text(_shell, SWT.SINGLE | SWT.BORDER);
+        _desc.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         Composite target = new Composite(_shell, SWT.NONE);
         target.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
@@ -236,6 +249,7 @@ class SyndicationArchivePopup implements Translatable {
     private void ok() {
         // actually save the val
         SyndieURI uri = _uri;
+        String url = null;
         if (_name.getText().trim().length() <= 0) {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(_browser.getTranslationRegistry().getText(T_ERROR, "Error"));
@@ -251,7 +265,7 @@ class SyndicationArchivePopup implements Translatable {
                 box.open();
                 return;
             } else {
-                uri = SyndieURI.createURL(_url.getText().trim());
+                url = _url.getText().trim();
             }
         } else if (_freenetRadio.getSelection()) {
             if (_freenetKey.getText().trim().length() <= 0) {
@@ -261,7 +275,7 @@ class SyndicationArchivePopup implements Translatable {
                 box.open();
                 return;
             } else {
-                uri = SyndieURI.createURL(_freenetKey.getText().trim());
+                url = _freenetKey.getText().trim();
             }
         } else if (_syndieRadio.getSelection()) {
             if (_syndie.getText().trim().length() <= 0) {
@@ -293,7 +307,8 @@ class SyndicationArchivePopup implements Translatable {
                 box.open();
                 return;
             } else {
-                uri = SyndieURI.createURL(f.getAbsolutePath());            }
+                url = f.getAbsolutePath();
+            }
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(_browser.getTranslationRegistry().getText(T_ERROR, "Error"));
@@ -303,6 +318,7 @@ class SyndicationArchivePopup implements Translatable {
         }
         
         String name = _name.getText().trim();
+        String desc = _desc.getText().trim();
         String proxy = null;
         int port = -1;
         
@@ -325,15 +341,17 @@ class SyndicationArchivePopup implements Translatable {
         }
         
         _shell.setVisible(false);
-        fireAccept(_oldName, name, uri, proxy, port);
+        
+        uri = SyndieURI.createArchive(url, name, desc);
+        fireAccept(_oldName, uri, proxy, port);
         config("", null, null, -1);
     }
     
-    protected void fireAccept(String oldName, String name, SyndieURI uri, String proxy, int port) {
+    protected void fireAccept(String oldName, SyndieURI uri, String proxy, int port) {
         if (oldName != null)
-            _browser.getSyndicationManager().update(oldName, name, uri, proxy, port, null, null);
+            _browser.getSyndicationManager().update(oldName, uri, proxy, port, null, null);
         else
-            _browser.getSyndicationManager().add(name, uri, proxy, port, null, null);
+            _browser.getSyndicationManager().add(uri, proxy, port, null, null);
     }
     
     private void cancel() {
@@ -364,6 +382,7 @@ class SyndicationArchivePopup implements Translatable {
     
     private static final String T_TITLE = "syndie.gui.syndicationarchivepopup.title";
     private static final String T_NAME = "syndie.gui.syndicationarchivepopup.name";
+    private static final String T_DESC = "syndie.gui.syndicationarchivepopup.desc";
     private static final String T_URL = "syndie.gui.syndicationarchivepopup.url";
     private static final String T_FREENET = "syndie.gui.syndicationarchivepopup.freenet";
     private static final String T_FILE = "syndie.gui.syndicationarchivepopup.file";
@@ -383,6 +402,7 @@ class SyndicationArchivePopup implements Translatable {
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_TITLE, "Archive"));
         _nameLabel.setText(registry.getText(T_NAME, "Name: "));
+        _descLabel.setText(registry.getText(T_DESC, "Description: "));
         _urlRadio.setText(registry.getText(T_URL, "HTTP archive URL: "));
         _freenetRadio.setText(registry.getText(T_FREENET, "Freenet archive URL: "));
         _syndieRadio.setText(registry.getText(T_OTHER, "Other archive URL: "));

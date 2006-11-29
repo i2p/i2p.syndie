@@ -163,6 +163,24 @@ public class SyndieURI {
             return null;
         }
     }
+    public static SyndieURI createArchive(String url, String name, String description) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("urn:syndie:archive:d");
+        if (url != null)
+            buf.append("3:url").append(url.length()).append(':').append(url);
+        if (name != null)
+            buf.append("4:name").append(name.length()).append(':').append(name);
+        if (description != null)
+            buf.append("4:desc").append(description.length()).append(':').append(description);
+        buf.append("e");
+        try {
+            return new SyndieURI(buf.toString());
+        } catch (URISyntaxException use) {
+            System.err.println("attempted: " + buf.toString());
+            use.printStackTrace();
+            return null;
+        }
+    }
     public static SyndieURI createScope(Hash scope) { return createMessage(scope, -1, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId) { return createMessage(scope, msgId, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId, int pageNum) {

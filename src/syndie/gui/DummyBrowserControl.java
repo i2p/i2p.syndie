@@ -44,4 +44,10 @@ public class DummyBrowserControl implements BrowserControl {
 
     public SyndieURI createSyndicationURI() { return null; }
     public SyndicationManager getSyndicationManager() { return null; }
+
+    public SyndieURI createMetaURI(Hash forum) { return null; }
+    public SyndieURI createMetaRefsURI(Hash forum) { return createMetaURI(forum); }
+    public SyndieURI createMetaArchivesURI(Hash forum) { return createMetaURI(forum); }
+    public SyndieURI createMetaPostersURI(Hash forum) { return createMetaURI(forum); }
+    public SyndieURI createMetaManagersURI(Hash forum) { return createMetaURI(forum); }
 }

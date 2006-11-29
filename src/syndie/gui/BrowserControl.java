@@ -23,7 +23,19 @@ public interface BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
+    /** manage the forum */
     public SyndieURI createManageURI(Hash forum);
+    /** view the details of the forum, not the messages */
+    public SyndieURI createMetaURI(Hash forum);
+    /** view the details, but zoom in on the published references */
+    public SyndieURI createMetaRefsURI(Hash forum);
+    /** view the details, but zoom in on the published archives */
+    public SyndieURI createMetaArchivesURI(Hash forum);
+    /** view the details, but zoom in on the published authorized posters */
+    public SyndieURI createMetaPostersURI(Hash forum);
+    /** view the details, but zoom in on the published authorized managers */
+    public SyndieURI createMetaManagersURI(Hash forum);
+
     public SyndieURI createSyndicationURI();
 
     public void showWaitCursor(boolean wait);

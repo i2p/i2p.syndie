@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -15,6 +16,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
+import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
@@ -62,10 +64,23 @@ abstract class BrowserTab {
             }
         } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
             return new ManageForumTab(browser, uri);
+        } else if (TYPE_META.equalsIgnoreCase(uri.getType())) {
+            Hash forum = uri.getHash("channel");
+            if (forum == null)
+                forum = uri.getScope();
+            // if we can manage this, do so
+            if (forum != null) {
+                List keys = browser.getClient().getNymKeys(forum, Constants.KEY_FUNCTION_MANAGE);
+                if ( (keys != null) && (keys.size() > 0) )
+                    return new ManageForumTab(browser, uri, true);
+            }
+            return new ManageForumTab(browser, uri, false);
         } else if (TYPE_TEXTUI.equals(uri.getType())) {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {
             return new LogTab(browser, uri);
+        } else if (uri.isArchive()) {
+            return new SyndicationTab(browser, uri);
         } else if (TYPE_SYNDICATE.equals(uri.getType())) {
             return new SyndicationTab(browser, uri);
         }

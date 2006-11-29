@@ -23,7 +23,7 @@ public class SyndicationTab extends BrowserTab implements Translatable {
     }
     
     protected void initComponents() {
-        _view = new SyndicationView(getBrowser(), getRoot());
+        _view = new SyndicationView(getBrowser(), getRoot(), getURI());
         getRoot().setLayout(new FillLayout());
     }
     

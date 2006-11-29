@@ -463,6 +463,45 @@ public class Browser implements UI, BrowserControl, Translatable {
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_MANAGE, attributes);
         return uri;
     }
+    public SyndieURI createMetaURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+        return uri;
+    }
+    public SyndieURI createMetaRefsURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_REFS);
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+        return uri;
+    }
+    public SyndieURI createMetaArchivesURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_ARCHIVES);
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+        return uri;
+    }
+    public SyndieURI createMetaPostersURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_POSTERS);
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+        return uri;
+    }
+    public SyndieURI createMetaManagersURI(Hash forum) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_MANAGER);
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
+        return uri;
+    }
     
     public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }

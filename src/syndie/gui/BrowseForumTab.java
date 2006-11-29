@@ -47,17 +47,25 @@ public class BrowseForumTab extends BrowserTab {
     public void setFilter(SyndieURI uri) { _browse.setFilter(uri); }
     
     protected void initComponents() {
-        debug("browseforumtab.initComponents");
-        _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener());
-        debug("browseforumtab.initComponents: browseforum constructed");
         SyndieURI uri = getURI();
         if (uri.isChannel()) {
-            _browse.setFilter(uri.createSearch());
-            if (uri.getMessageId() != null)
-                _browse.preview(uri);
+            if (uri.getMessageId() != null) {
+                getBrowser().getUI().debugMessage("browse forum w/ channel & msgId");
+                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), true);
+                _browse.setFilter(uri.createSearch());
+                _browse.preview(uri, true);
+            } else {
+                getBrowser().getUI().debugMessage("browse forum w/out channel & msgId");
+                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
+                _browse.setFilter(uri.createSearch());
+            }
         } else if (uri.isSearch()) {
+            getBrowser().getUI().debugMessage("browse forum w/ search");
+            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
             _browse.setFilter(uri);
         } else {
+            getBrowser().getUI().debugMessage("browse forum w/ other");
+            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
             _browse.setFilter(SyndieURI.DEFAULT_SEARCH_URI);
         }
         getRoot().setLayout(new FillLayout());

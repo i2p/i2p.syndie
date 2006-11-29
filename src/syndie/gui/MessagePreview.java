@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -8,6 +9,7 @@ import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -58,7 +60,9 @@ public class MessagePreview {
     
     private AttachmentPreviewPopup _attachmentPopup;
     
+    private StackLayout _bodyStack;
     private PageRenderer _body;
+    private ManageReferenceChooser _refs;
     private SyndieURI _uri;
     private int _page;
     private Hash _author;
@@ -98,6 +102,8 @@ public class MessagePreview {
     }
     
     private void updatePreview() {
+        int pageCount = 0;
+        List refs = null;
         MessageInfo msg = getMessage();
         if (msg == null) {
             _headerSubject.setText("");
@@ -133,8 +139,14 @@ public class MessagePreview {
                 author = _uri.getScope().toBase64().substring(0,6);
             _headerAuthor.setText(author);
             _headerPages.removeAll();
-            for (int i = 0; i < msg.getPageCount(); i++)
+            pageCount = msg.getPageCount();
+            for (int i = 0; i < pageCount; i++)
                 _headerPages.add("Page " + (i+1));
+            
+            refs = msg.getReferences();
+            boolean includesRefs = (refs != null) && (refs.size() > 0);
+            if (includesRefs)
+                _headerPages.add("References");
             
             // msg.getAvatar()
             
@@ -144,7 +156,7 @@ public class MessagePreview {
             _headerStatus.setEnabled(true);
             _headerPrivacy.setEnabled(true);
             _headerInfo.setEnabled(true);
-            if (msg.getPageCount() > 1)
+            if (msg.getPageCount() > 1 || includesRefs)
                 _headerPages.setEnabled(true);
             else
                 _headerPages.setEnabled(false);
@@ -163,9 +175,22 @@ public class MessagePreview {
         _header.pack();
         
         SyndieURI uri = _uri;
-        if (_page != 1)
-            uri = SyndieURI.createMessage(uri.getScope(), uri.getMessageId().longValue(), _page);
-        _body.renderPage(new PageRendererSource(_client), uri);
+        if (_page > pageCount) {
+            // view references
+            _browser.getUI().debugMessage("view references (page=" + _page + "/" + pageCount + ")");
+            if (refs != null)
+                _refs.setReferences(refs);
+            else
+                _refs.setReferences(new ArrayList());
+            _bodyStack.topControl = _refs.getControl();
+            _root.layout(true, true);
+        } else {
+            if (_page != 1)
+                uri = SyndieURI.createMessage(uri.getScope(), uri.getMessageId().longValue(), _page);
+            _body.renderPage(new PageRendererSource(_client), uri);
+            _bodyStack.topControl = _body.getComposite();
+            _root.layout(true, true);
+        }
         _root.layout(true);
     }
     
@@ -313,8 +338,14 @@ public class MessagePreview {
     
         _attachmentPopup = new AttachmentPreviewPopup(_browser, _root.getShell());
         
-        _body = new PageRenderer(_root, true);
-        _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _bodyStack = new StackLayout();
+        Composite pane = new Composite(_root, SWT.NONE);
+        pane.setLayout(_bodyStack);
+        pane.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        
+        //_body = new PageRenderer(_root, true);
+        _body = new PageRenderer(pane, true);
+        //_body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) {
                 if (_browser != null)
@@ -348,6 +379,9 @@ public class MessagePreview {
                     _browser.view(_browser.createPostURI(forum, msg));
             }
         });
+        
+        _refs = new ManageReferenceChooser(pane, _browser, false);
+        _bodyStack.topControl = _body.getComposite();
     }
     
     // indexes into the _headerAction

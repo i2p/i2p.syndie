@@ -36,6 +36,11 @@ public class NymReferenceNode extends ReferenceNode {
     public boolean getLoadOnStart() { return _loadOnStart; }
     public void setLoadOnStart(boolean load) { _loadOnStart = load; }
     
+    public void setURIId(long id) { _uriId = id; }
+    public void setGroupId(long id) { _groupId = id; }
+    public void setParentGroupId(long id) { _parentGroupId = id; }
+    public void setSiblingOrder(int order) { _siblingOrder = order; }
+    
     public void updateData(long groupId, int siblingOrder, long uriId) {
         _groupId = groupId;
         _siblingOrder = siblingOrder;

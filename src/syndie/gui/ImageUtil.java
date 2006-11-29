@@ -76,6 +76,7 @@ public class ImageUtil {
     public static final Image ICON_BROWSE_ADMINS = createImageFromResource("iconBrowseAdmins.png");
     public static final Image ICON_BROWSE_MANAGEABLE = createImageFromResource("iconBrowseManage.png");
     public static final Image ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
+    public static final Image ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
     public static final Image ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
     
     public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
@@ -119,6 +120,7 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_BROWSE_ADMINS);
         _indisposableImages.add(ICON_BROWSE_MANAGEABLE);
+        _indisposableImages.add(ICON_BROWSE_ARCHIVES);
         _indisposableImages.add(ICON_BROWSE_POSTABLE);
         _indisposableImages.add(ICON_BROWSE_REFS);
         

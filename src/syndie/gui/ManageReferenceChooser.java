@@ -43,9 +43,8 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class ManageForumReferenceChooser implements Translatable {
+public class ManageReferenceChooser implements Translatable {
     private BrowserControl _browser;
-    private ManageForum _forum;
     private Composite _parent;
     private Tree _tree;
     private TreeColumn _colName;
@@ -58,24 +57,35 @@ public class ManageForumReferenceChooser implements Translatable {
     private MenuItem _edit;
     private MenuItem _view;
     private MenuItem _remove;
-    private MenuItem _importBookmarks;
+    private MenuItem _importToForum;
+    private MenuItem _importToLocal;
+    private MenuItem _importAllToLocal;
     private ArrayList _refs;
     private EditPopup _editPopup;
+    private MessageEditor _editor;
     
     /** TreeItem to ReferenceNode */
     private Map _itemToRefNode;
     
     private boolean _editable;
     
-    public ManageForumReferenceChooser(Composite parent, BrowserControl browser, ManageForum forum, boolean editable) {
+    public ManageReferenceChooser(Composite parent, BrowserControl browser, boolean editable) {
+        this(parent, browser, editable, null);
+    }
+    public ManageReferenceChooser(Composite parent, BrowserControl browser, MessageEditor editor) {
+        this(parent, browser, true, editor);
+    }
+    public ManageReferenceChooser(Composite parent, BrowserControl browser, boolean editable, MessageEditor editor) {
         _browser = browser;
-        _forum = forum;
         _parent = parent;
         _editable = editable;
+        _editor = editor;
         _refs = new ArrayList();
         _itemToRefNode = new HashMap();
         initComponents();
     }
+    
+    public Control getControl() { return _tree; }
     
     private void initComponents() {
         _tree = new Tree(_parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION);
@@ -85,46 +95,6 @@ public class ManageForumReferenceChooser implements Translatable {
         _colDescription = new TreeColumn(_tree, SWT.LEFT);
         _tree.setLinesVisible(true);
         _tree.setHeaderVisible(true);
-        /*
-        _tree.addPaintListener(new PaintListener() {
-            public void paintControl(PaintEvent evt) {
-                TreeItem item = _tree.getItem(new Point(evt.x, evt.y));
-                if (item != null) {
-                    ReferenceNode node = (ReferenceNode)_itemToRefNode.get(item);
-                    if (node != null) {
-                        switch (getColumn(evt.x)) {
-                            case 3: 
-                                if (node.getDescription() != null)
-                                    _tree.setToolTipText(node.getDescription());
-                                else
-                                    _tree.setToolTipText("");
-                                return;
-                            case 2:
-                                if (node.getReferenceType() != null)
-                                    _tree.setToolTipText(node.getReferenceType());
-                                else
-                                    _tree.setToolTipText("");
-                                return;
-                            case 1:
-                                if (node.getURI() != null)
-                                    _tree.setToolTipText(node.getURI().toString());
-                                else
-                                    _tree.setToolTipText("");
-                                return;
-                            case 0:
-                                if (node.getName() != null)
-                                    _tree.setToolTipText(node.getName());
-                                else
-                                    _tree.setToolTipText("");
-                                return;
-                            default:
-                                _tree.setToolTipText("");
-                        }
-                    }
-                }
-            }
-        });
-         */
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void mouseUp(MouseEvent evt) {
@@ -193,10 +163,21 @@ public class ManageForumReferenceChooser implements Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { remove(); }
         });
         _remove.setEnabled(_editable);
-        _importBookmarks = new MenuItem(menu, SWT.PUSH);
-        _importBookmarks.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarks(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { importBookmarks(); }
+        _importToForum = new MenuItem(menu, SWT.PUSH);
+        _importToForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarksToForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importBookmarksToForum(); }
+        });
+        _importToForum.setEnabled(_editable);
+        _importToLocal = new MenuItem(menu, SWT.PUSH);
+        _importToLocal.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarksToLocal(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importBookmarksToLocal(false); }
+        });
+        _importAllToLocal = new MenuItem(menu, SWT.PUSH);
+        _importAllToLocal.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBookmarksToLocal(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importBookmarksToLocal(true); }
         });
         menu.addMenuListener(new MenuListener() {
             public void menuHidden(MenuEvent menuEvent) {}
@@ -277,22 +258,27 @@ public class ManageForumReferenceChooser implements Translatable {
             remove(item.getItem(0));
         item.dispose();
     }
-    private void importBookmarks() {
-        if (_editable) {
-            // import FROM our bookmarks TO the forum
-            _tree.setRedraw(false);
-            List includedURIs = new ArrayList();
-            for (Iterator iter = _itemToRefNode.values().iterator(); iter.hasNext(); ) {
-                ReferenceNode node = (ReferenceNode)iter.next();
-                if (!includedURIs.contains(node.getURI()))
-                    includedURIs.add(node.getURI());
-            }
-            add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
-            _tree.setRedraw(true);
-        } else {
-            // import FROM the forum TO our bookmarks
+    private void importBookmarksToForum() {
+        // import FROM our bookmarks TO the forum
+        _tree.setRedraw(false);
+        List includedURIs = new ArrayList();
+        for (Iterator iter = _itemToRefNode.values().iterator(); iter.hasNext(); ) {
+            ReferenceNode node = (ReferenceNode)iter.next();
+            if (!includedURIs.contains(node.getURI()))
+                includedURIs.add(node.getURI());
+        }
+        add(ReferenceNode.deepCopy(_browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId())), false, includedURIs);
+        _tree.setRedraw(true);
+    }
+    private void importBookmarksToLocal(boolean all) {
+        // import FROM the forum TO our bookmarks
+        if (all) {
             for (int i = 0; i < _refs.size(); i++)
                 _browser.bookmark(NymReferenceNode.deepCopyNym((ReferenceNode)_refs.get(i)));
+        } else {
+            ReferenceNode node = getSelectedNode();
+            if (node != null)
+                _browser.bookmark(NymReferenceNode.deepCopyNym(node));
         }
     }
     
@@ -451,25 +437,21 @@ public class ManageForumReferenceChooser implements Translatable {
     private void configMenu() {
         TreeItem items[] = _tree.getSelection();
         if ( (items != null) && (items.length == 1) ) {
-            if (items[0].getItemCount() > 0)
-                _view.setEnabled(false);
-            else
-                _view.setEnabled(true);
-            _addChild.setEnabled(true);
+            _view.setEnabled(true);
+            _addChild.setEnabled(_editable);
         } else {
             _view.setEnabled(false);
             _edit.setEnabled(false);
-            _addChild.setEnabled(false);
+            _addChild.setEnabled(_editable);
         }
     }
     
     public String getReferences() { 
-        String refs = ReferenceNode.walk(getChecked());
-        _browser.getUI().debugMessage("refs: \n" + refs + "\n");
+        String refs = ReferenceNode.walk(getReferenceNodes());
+        //_browser.getUI().debugMessage("refs: \n" + refs + "\n");
         return refs;
     }
-    
-    private ArrayList getChecked() { 
+    public List getReferenceNodes() { 
         ArrayList rv = new ArrayList();
         int items = _tree.getItemCount();
         for (int i = 0; i < items; i++) {
@@ -507,6 +489,7 @@ public class ManageForumReferenceChooser implements Translatable {
     public void setReferences(List refs) {
         _browser.getUI().debugMessage("setting refs:\n\n\n" + refs + "\n\n\n");
         _tree.setRedraw(false);
+        _tree.removeAll();
         _refs.clear();
         ArrayList includedURIs = new ArrayList();
         add(ReferenceNode.deepCopy(refs), true, includedURIs);
@@ -569,6 +552,7 @@ public class ManageForumReferenceChooser implements Translatable {
         //setMinWidth(_colDescription, item.getText(3));
 
         item.setExpanded(true);
+        _tree.showItem(item);
     }
     
     private void setMinWidth(TreeColumn col, String text) { setMinWidth(col, text, 0); }
@@ -613,7 +597,9 @@ public class ManageForumReferenceChooser implements Translatable {
     private static final String T_EDIT = "syndie.gui.manageforumreferencechooser.edit";
     private static final String T_VIEW = "syndie.gui.manageforumreferencechooser.view";
     private static final String T_REMOVE = "syndie.gui.manageforumreferencechooser.remove";
-    private static final String T_IMPORT = "syndie.gui.manageforumreferencechooser.import";
+    private static final String T_IMPORT_FORUM = "syndie.gui.manageforumreferencechooser.importforum";
+    private static final String T_IMPORT_LOCAL = "syndie.gui.manageforumreferencechooser.importlocal";
+    private static final String T_IMPORTALL_LOCAL = "syndie.gui.manageforumreferencechooser.importalllocal";
     
     public void translate(TranslationRegistry registry) {
         _colDescription.setText(registry.getText(T_COL_DESC, "Description"));
@@ -625,18 +611,20 @@ public class ManageForumReferenceChooser implements Translatable {
         _edit.setText(registry.getText(T_EDIT, "Edit"));
         _view.setText(registry.getText(T_VIEW, "View"));
         _remove.setText(registry.getText(T_REMOVE, "Remove"));
-        _importBookmarks.setText(registry.getText(T_IMPORT, "Import bookmarks"));
+        _importToForum.setText(registry.getText(T_IMPORT_FORUM, "Add local bookmarks"));
+        _importToLocal.setText(registry.getText(T_IMPORT_LOCAL, "Import to local bookmarks"));
+        _importAllToLocal.setText(registry.getText(T_IMPORTALL_LOCAL, "Import all to local bookmarks"));
         
         _colType.pack();
         _colDescription.pack();
         //_colName.setWidth(_tree.getClientArea().width - _colTarget.getWidth() - _colType.getWidth() - _colDescription.getWidth());
         _colName.pack();
     }
-    
+
     private class EditPopup extends LinkBuilderPopup {
         private ReferenceNode _parentNode;
         private ReferenceNode _currentNode;
-        public EditPopup() { super(_browser, _parent.getShell(), null); }
+        public EditPopup() { super(_browser, _parent.getShell(), _editor); }
         protected void uriBuilt(SyndieURI uri) {
             if (_currentNode == null) {
                 add(uri, _parentNode);

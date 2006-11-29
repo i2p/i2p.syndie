@@ -39,7 +39,8 @@ public class TextEngine {
     public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
     public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
-        _scriptListeners.add(lsnr);
+        if (lsnr != null)
+            _scriptListeners.add(lsnr);
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
@@ -54,7 +55,8 @@ public class TextEngine {
     public TextEngine(DBClient client, UI ui) { this(client, ui, null); }
     public TextEngine(DBClient client, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
-        _scriptListeners.add(lsnr);
+        if (lsnr != null)
+            _scriptListeners.add(lsnr);
         _client = client;
         _realUI = new MenuUI(ui);
         _ui = _realUI;

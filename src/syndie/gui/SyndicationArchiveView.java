@@ -80,6 +80,20 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
     public void shown() { redrawArchives(); }
     
+    public void highlight(SyndieURI uri) {
+        if (uri == null) return;
+        String url = uri.getURL();
+        
+        // this could be an already listed one, or a brand new one
+        for (int i = 0; i < _manager.getArchiveCount(); i++) {
+            SyndieURI cur = _manager.getArchiveURI(i);
+            if ((cur.getURL() != null) && (cur.getURL().equals(url))) {
+                redrawArchives(_manager.getArchiveName(i));
+                return;
+            }
+        }
+    }
+    
     private void redrawArchives() { redrawArchives(null); }
     private void redrawArchives(String highlightName) {
         _table.setRedraw(false);

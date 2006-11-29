@@ -6,6 +6,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import syndie.data.SyndieURI;
 
 /**
  *
@@ -20,10 +21,13 @@ public class SyndicationView implements Translatable {
     private SyndicationPendingView _pending;
     private Group _statusGroup;
     private SyndicationStatusView _status;
+    private SyndieURI _archive;
     
-    public SyndicationView(BrowserControl browser, Composite parent) {
+    public SyndicationView(BrowserControl browser, Composite parent) { this(browser, parent, null); }
+    public SyndicationView(BrowserControl browser, Composite parent, SyndieURI archive) {
         _browser = browser;
         _parent = parent;
+        _archive = archive;
         browser.getSyndicationManager().loadArchives();
         initComponents();
     }
@@ -42,6 +46,8 @@ public class SyndicationView implements Translatable {
         _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _archives = new SyndicationArchiveView(_browser, _archiveGroup);
+        if (_archive != null)
+            _archives.highlight(_archive);
         
         _pendingGroup = new Group(_root, SWT.NONE);
         _pendingGroup.setLayout(new FillLayout());

@@ -30,53 +30,83 @@ public class ManageForumArchiveChooser implements Translatable {
     private TableColumn _colType;
     private TableColumn _colPublic;
     private TableColumn _colLocation;
+    private TableColumn _colDesc;
+    private MenuItem _view;
     private MenuItem _add;
+    private MenuItem _edit;
+    private MenuItem _remove;
     private MenuItem _setPublic;
     private ArrayList _uris;
     
-    private AddPopup _addPopup;
+    private AddToForumPopup _addPopup;
+    private AddToLocalPopup _addToLocalArchive;
     
-    public ManageForumArchiveChooser(Composite parent, BrowserControl browser, ManageForum forum) {
+    private boolean _editable;
+    
+    public ManageForumArchiveChooser(Composite parent, BrowserControl browser, ManageForum forum, boolean editable) {
         _browser = browser;
         _forum = forum;
         _parent = parent;
+        _editable = editable;
         _uris = new ArrayList();
         initComponents();
     }
     
     private void initComponents() {
-        _table = new Table(_parent, SWT.MULTI | SWT.CHECK | SWT.FULL_SELECTION | SWT.BORDER);
+        _table = new Table(_parent, SWT.MULTI | SWT.FULL_SELECTION | SWT.BORDER);
         _colName = new TableColumn(_table, SWT.LEFT);
         _colType = new TableColumn(_table, SWT.CENTER);
         _colPublic = new TableColumn(_table, SWT.CENTER);
         _colLocation = new TableColumn(_table, SWT.LEFT);
+        _colDesc = new TableColumn(_table, SWT.LEFT);
         _table.setLinesVisible(true);
         _table.setHeaderVisible(true);
         
         Menu menu = new Menu(_table);
         _table.setMenu(menu);
+        _view = new MenuItem(menu, SWT.PUSH);
+        _view.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(); }
+        });
         _add = new MenuItem(menu, SWT.PUSH);
         _add.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
             public void widgetSelected(SelectionEvent selectionEvent) { add(); }
         });
+        _add.setEnabled(_editable);
+        _edit = new MenuItem(menu, SWT.PUSH);
+        _edit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { edit(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { edit(); }
+        });
+        _edit.setEnabled(_editable);
+        _remove = new MenuItem(menu, SWT.PUSH);
+        _remove.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { remove(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { remove(); }
+        });
+        _remove.setEnabled(_editable);
         _setPublic = new MenuItem(menu, SWT.CHECK);
         _setPublic.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setPublic(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setPublic(); }
         });
+        _setPublic.setEnabled(_editable);
         menu.addMenuListener(new MenuListener() {
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent evt) { configMenu(); }
         });
         
-        _addPopup = new AddPopup();
+        _addPopup = new AddToForumPopup();
+        _addToLocalArchive = new AddToLocalPopup();
         
         _browser.getTranslationRegistry().register(this);
     }
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _addPopup.dispose();
+        _addToLocalArchive.dispose();
     }
     
     private void configMenu() {
@@ -84,7 +114,7 @@ public class ManageForumArchiveChooser implements Translatable {
         if ( (indexes != null) && (indexes.length == 1) ) {
             _setPublic.setEnabled(true);
             TableItem item = _table.getItem(indexes[0]);
-            _setPublic.setSelection("x".equals(item.getText(2)));
+            _setPublic.setSelection("X".equals(item.getText(2)));
         } else {
             _setPublic.setEnabled(false);
         }
@@ -95,10 +125,35 @@ public class ManageForumArchiveChooser implements Translatable {
             if (_setPublic.getEnabled()) {
                 TableItem item = _table.getItem(indexes[0]);
                 if (_setPublic.getSelection())
-                    item.setText(2, "x");
+                    item.setText(2, "X");
                 else
                     item.setText(2, "");
             }
+        }
+    }
+    private void view() {
+        int indexes[] = _table.getSelectionIndices();
+        if ( (indexes != null) && (indexes.length == 1) ) {
+            TableItem item = _table.getItem(indexes[0]);
+            SyndieURI uri = (SyndieURI)_uris.get(indexes[0]);
+            _addToLocalArchive.config(uri, null, -1);
+            _addToLocalArchive.open();
+        }
+    }
+    private void remove() {
+        int indexes[] = _table.getSelectionIndices();
+        if ( (indexes != null) && (indexes.length == 1) ) {
+            TableItem item = _table.getItem(indexes[0]);
+            SyndieURI uri = (SyndieURI)_uris.get(indexes[0]);
+            item.dispose();
+        }
+    }
+    private void edit() {
+        int indexes[] = _table.getSelectionIndices();
+        if ( (indexes != null) && (indexes.length == 1) ) {
+            TableItem item = _table.getItem(indexes[0]);
+            SyndieURI uri = (SyndieURI)_uris.get(indexes[0]);
+            _addPopup.edit(item, uri, "X".equals(item.getText(2)));
         }
     }
     
@@ -110,9 +165,8 @@ public class ManageForumArchiveChooser implements Translatable {
         for (int i = 0; i < _uris.size(); i++) {
             SyndieURI uri = (SyndieURI)_uris.get(i);
             TableItem item = _table.getItem(i);
-            if (item.getChecked() && ("x".equals(item.getText(2)))) {
+            if ("X".equals(item.getText(2)))
                 rv.add(new ArchiveInfo(uri));
-            }
         }
         return rv;
     }
@@ -123,7 +177,7 @@ public class ManageForumArchiveChooser implements Translatable {
         for (int i = 0; i < _uris.size(); i++) {
             SyndieURI uri = (SyndieURI)_uris.get(i);
             TableItem item = _table.getItem(i);
-            if (item.getChecked() && (!"x".equals(item.getText(2))))
+            if (!"X".equals(item.getText(2)))
                 rv.add(new ArchiveInfo(uri));
         }
         return rv;
@@ -133,36 +187,20 @@ public class ManageForumArchiveChooser implements Translatable {
         _table.setRedraw(false);
         _uris.clear();
         
-        Set selectedURIs = new HashSet();
-        Set pubURIs = new HashSet();
-        for (Iterator iter = publicArchives.iterator(); iter.hasNext(); ) {
-            ArchiveInfo info = (ArchiveInfo)iter.next();
-            selectedURIs.add(info.getURI());
-            pubURIs.add(info.getURI());
+        if (publicArchives != null) {
+            for (Iterator iter = publicArchives.iterator(); iter.hasNext(); ) {
+                ArchiveInfo info = (ArchiveInfo)iter.next();
+                add(info.getURI(), true, null, null);
+            }
         }
-        for (Iterator iter = privateArchives.iterator(); iter.hasNext(); ) {
-            ArchiveInfo info = (ArchiveInfo)iter.next();
-            selectedURIs.add(info.getURI());
+        if (privateArchives != null) {
+            for (Iterator iter = privateArchives.iterator(); iter.hasNext(); ) {
+                ArchiveInfo info = (ArchiveInfo)iter.next();
+                add(info.getURI(), false, null, null);
+            }
         }
-        int known = _browser.getSyndicationManager().getArchiveCount();
-        for (int i = 0; i < known; i++) {
-            SyndieURI uri = _browser.getSyndicationManager().getArchiveURI(i);
-            String name = _browser.getSyndicationManager().getArchiveName(i);
-            
-            boolean selected = selectedURIs.contains(uri);
-            boolean pub = selected && pubURIs.contains(uri);
-            add(name, uri, selected, pub);
-        }
-        for (Iterator iter = publicArchives.iterator(); iter.hasNext(); ) {
-            ArchiveInfo info = (ArchiveInfo)iter.next();
-            if (!_uris.contains(info.getURI()))
-                add(null, info.getURI(), true, true);
-        }
-        for (Iterator iter = privateArchives.iterator(); iter.hasNext(); ) {
-            ArchiveInfo info = (ArchiveInfo)iter.next();
-            if (!_uris.contains(info.getURI()))
-                add(null, info.getURI(), true, false);
-        }
+        
+        _colDesc.pack();
         _colLocation.pack();
         _colName.pack();
         _colPublic.pack();
@@ -170,9 +208,14 @@ public class ManageForumArchiveChooser implements Translatable {
         _table.setRedraw(true);
     }
     
-    private void add(String name, SyndieURI uri, boolean selected, boolean asPublic) {
-        TableItem item = new TableItem(_table, SWT.NONE);
-        item.setChecked(selected);
+    //private void add(String name, SyndieURI uri, boolean selected, boolean asPublic) {
+    private void add(SyndieURI uri, boolean asPublic, TableItem item, SyndieURI oldURI) {
+        String name = uri.getString("name");
+        String desc = uri.getString("desc");
+        String tags[] = uri.getStringArray("tag");
+        
+        if (item == null)
+            item = new TableItem(_table, SWT.NONE);
         if (name != null)
             item.setText(0, name);
         else
@@ -189,10 +232,19 @@ public class ManageForumArchiveChooser implements Translatable {
             item.setImage(1, ImageUtil.ICON_ARCHIVE_TYPE_FILE);
         else
             item.setImage(1, null);
-        item.setText(2, asPublic ? "x" : "");
+        item.setText(2, asPublic ? "X" : "");
         item.setText(3, getLocation(uri));
+        if (desc != null)
+            item.setText(4, desc);
+        else
+            item.setText(4, "");
         
-        _uris.add(uri);
+        if (oldURI == null) {
+            _uris.add(uri);
+        } else {
+            int idx = _uris.indexOf(oldURI);
+            _uris.set(idx, uri);
+        }
     }
     
     private static final int TYPE_SYNDIE = 0;
@@ -252,8 +304,12 @@ public class ManageForumArchiveChooser implements Translatable {
     private static final String T_PUBLIC = "syndie.gui.manageforumarchivechooser.public";
     private static final String T_PUBLIC_TOOLTIP = "syndie.gui.manageforumarchivechooser.public_tooltip";
     private static final String T_LOCATION = "syndie.gui.manageforumarchivechooser.location";
+    private static final String T_DESC = "syndie.gui.manageforumarchivechooser.desc";
     private static final String T_SETPUBLIC = "syndie.gui.manageforumarchivechooser.setpublic";
     private static final String T_ADD = "syndie.gui.manageforumarchivechooser.add";
+    private static final String T_EDIT = "syndie.gui.manageforumarchivechooser.edit";
+    private static final String T_REMOVE = "syndie.gui.manageforumarchivechooser.remove";
+    private static final String T_VIEW = "syndie.gui.manageforumarchivechooser.view";
     
     public void translate(TranslationRegistry registry) {
         _colName.setText(registry.getText(T_NAME, "Name"));
@@ -261,17 +317,44 @@ public class ManageForumArchiveChooser implements Translatable {
         _colPublic.setText(registry.getText(T_PUBLIC, "Public?"));
         _colPublic.setToolTipText(registry.getText(T_PUBLIC_TOOLTIP, "Can anyone see this archive, or only those who can read the post?"));
         _colLocation.setText(registry.getText(T_LOCATION, "Location"));
+        _colDesc.setText(registry.getText(T_DESC, "Description"));
         
+        _view.setText(registry.getText(T_VIEW, "View"));
         _add.setText(registry.getText(T_ADD, "Add"));
+        _edit.setText(registry.getText(T_ADD, "Edit"));
+        _remove.setText(registry.getText(T_ADD, "Remove"));
         _setPublic.setText(registry.getText(T_SETPUBLIC, "Public?"));
     }
     
-    private class AddPopup extends SyndicationArchivePopup {
-        public AddPopup() {
+    private class AddToForumPopup extends SyndicationArchivePopup {
+        private TableItem _curItem;
+        private SyndieURI _curURI;
+        private boolean _asPublic;
+        public AddToForumPopup() {
             super(_browser, _parent.getShell(), false);
         }
-        protected void fireAccept(String oldName, String name, SyndieURI uri, String proxy, int port) {
-            add(name, uri, true, false);
+        protected void fireAccept(String oldName, SyndieURI uri, String proxy, int port) {
+            add(uri, _asPublic, _curItem, _curURI);
+            _curItem = null;
+            _curURI = null;
+            _asPublic = false;
+        }
+        public void edit(TableItem item, SyndieURI uri, boolean asPublic) {
+            config(uri, null, -1);
+            _curItem = item;
+            _curURI = uri;
+            _asPublic = asPublic;
+            _addPopup.open();
+        }
+        
+    }
+    private class AddToLocalPopup extends SyndicationArchivePopup {
+        public AddToLocalPopup() {
+            super(_browser, _parent.getShell(), false);
+        }
+        protected void fireAccept(String oldName, SyndieURI uri, String proxy, int port) {
+            super.fireAccept(oldName, uri, proxy, port);
+            _browser.view(uri);
         }    
     }
 }

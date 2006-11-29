@@ -74,7 +74,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private ManageForumArchiveChooser _archiveChooser;
     
     private Composite _references;
-    private ManageForumReferenceChooser _referencesChooser;
+    private ManageReferenceChooser _referencesChooser;
 
     private Button _save;
     private Button _cancel;
@@ -108,6 +108,32 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     
     public interface ManageForumListener {
         public void manageComplete(ManageForum manage);
+    }
+    
+    public static final String DETAIL = "detail";
+    public static final String DETAIL_ARCHIVES = "archives";
+    public static final String DETAIL_POSTERS = "posters";
+    public static final String DETAIL_REFS = "refs";
+    public static final String DETAIL_MANAGER = "manager";
+    
+    public void pickDetail(String detail) {
+        if (DETAIL_ARCHIVES.equals(detail)) {
+            _chooserChoice.select(CHOICE_ARCHIVES);
+            _stack.topControl = _archives;
+        } else if (DETAIL_POSTERS.equals(detail)) {
+            _chooserChoice.select(CHOICE_POSTER);
+            _stack.topControl = _posters;
+        } else if (DETAIL_REFS.equals(detail)) {
+            _chooserChoice.select(CHOICE_REFS);
+            _stack.topControl = _references;
+        } else if (DETAIL_MANAGER.equals(detail)) {
+            _chooserChoice.select(CHOICE_MANAGER);
+            _stack.topControl = _managers;
+        } else {
+            _chooserChoice.select(CHOICE_REFS);
+            _stack.topControl = _references;
+        }
+        _archives.getParent().layout();
     }
     
     public void setForum(SyndieURI uri) {
@@ -153,8 +179,9 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 }
             }
             if (!found) {
-                _browser.getUI().errorMessage("You are not authorized to manage this channel");
-                info = null;
+                _editable = false;
+                //_browser.getUI().errorMessage("You are not authorized to manage this channel");
+                //info = null;
             } else {
                 _browser.getUI().debugMessage("explicit forum key found");
             }
@@ -384,7 +411,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         //_references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true, 7, 1));
         _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        _referencesChooser = new ManageForumReferenceChooser(_references, _browser, this, _editable);
+        _referencesChooser = new ManageReferenceChooser(_references, _browser, _editable);
         
         Composite actions = new Composite(_root, SWT.NONE);
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -452,6 +479,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_AUTHORIZED, "Authorized readers only"));
         _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PASSPHRASE, "Passphrase protected..."));
         _privacy.select(idx);
+        _privacy.setEnabled(_editable);
         _privacy.setRedraw(true);
         
         _auth.setRedraw(false);
@@ -463,6 +491,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _auth.add(_browser.getTranslationRegistry().getText(T_AUTH_PUBREPLY, "Anyone can reply to authorized posts"));
         _auth.add(_browser.getTranslationRegistry().getText(T_AUTH_PUBPOST, "Anyone can post"));
         _auth.select(idx);
+        _auth.setEnabled(_editable);
         _auth.setRedraw(true);
         
         _chooserChoice.setRedraw(false);
@@ -604,6 +633,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     public void referenceChoiceAborted() { _refChooser.hide(); }
     
     public boolean confirmClose() {
+        if (!_editable) return true;
         MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         confirm.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
         confirm.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
