@@ -41,6 +41,7 @@ public class SyndicationTab extends BrowserTab implements Translatable {
         _description = registry.getText(T_DESC, "Syndicate messages between archives");
         
         _icon = ImageUtil.ICON_TAB_SYNDICATE;
+        reconfigItem();
     }
     
     

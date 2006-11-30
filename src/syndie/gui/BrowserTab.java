@@ -39,6 +39,7 @@ abstract class BrowserTab {
     static final String TYPE_MANAGE = "manage";
     static final String TYPE_SYNDICATE = "syndicate";
     static final String TYPE_SQL = "sql";
+    static final String TYPE_TRANSLATE = "translate";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to

@@ -76,6 +76,10 @@ public class Browser implements UI, BrowserControl, Translatable {
     private MenuItem _postMenuResume;
     private MenuItem _syndicateMenuRoot;
     private MenuItem _syndicateMenuItem;
+    private Menu _languageMenu;
+    private MenuItem _languageMenuRoot;
+    private MenuItem _languageMenuEdit;
+    private MenuItem _languageMenuRefresh;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
     private MenuItem _advancedMenuSQL;
@@ -102,7 +106,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _uiListeners = new ArrayList();
         _commands = new ArrayList();
         _initialized = false;
-        _translation = new TranslationRegistry();
+        _translation = new TranslationRegistry(this);
         _syndicationManager = new SyndicationManager(_client, this);
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
@@ -236,6 +240,23 @@ public class Browser implements UI, BrowserControl, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { showSyndicate(); }
         });
         
+        _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        _languageMenu = new Menu(_languageMenuRoot);
+        _languageMenuRoot.setMenu(_languageMenu);
+        _languageMenuEdit = new MenuItem(_languageMenu, SWT.PUSH);
+        _languageMenuEdit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
+        });
+        _languageMenuEdit.setEnabled(false);
+        _languageMenuRefresh = new MenuItem(_languageMenu, SWT.PUSH);
+        _languageMenuRefresh.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { populateTranslations(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { populateTranslations(); }
+        });
+        
+        populateTranslations();
+        
         _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu advancedMenu = new Menu(_advancedMenuRoot);
         _advancedMenuRoot.setMenu(advancedMenu);
@@ -294,6 +315,45 @@ public class Browser implements UI, BrowserControl, Translatable {
             _shell.setVisible(false);
             JobRunner.instance().stop();
             System.exit(0);
+        }
+    }
+    
+    private void populateTranslations() {
+        int trans = _languageMenu.getItemCount();
+        String selected = null;
+        // remove the old translations, if any
+        int items = _languageMenu.getItemCount();
+        for (int i = 0; i < items; i++) {
+            MenuItem item = _languageMenu.getItem(i);
+            if (item == _languageMenuEdit) {
+                continue;
+            } else if (item == _languageMenuRefresh) {
+                continue;
+            } else {
+                if (item.getSelection())
+                    selected = item.getText();
+                item.dispose();
+                i--;
+                items--;
+            }
+        }
+        // now rebuild given what we know
+        List translations = _translation.getTranslations();
+        if (selected == null)
+            selected = _translation.getTranslation();
+        for (int i = 0; i < translations.size(); i++) {
+            final String translation = (String)translations.get(i);
+            MenuItem item = new MenuItem(_languageMenu, SWT.RADIO);
+            item.setText(translation);
+            item.setSelection(translation.equals(selected));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    _translation.switchTranslation(translation);
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    _translation.switchTranslation(translation);
+                }
+            });
         }
     }
     
@@ -512,6 +572,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
     public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
+    public SyndieURI createTranslateURI() { return new SyndieURI(BrowserTab.TYPE_TRANSLATE, new HashMap()); }
     public SyndieURI createSyndicationURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
@@ -648,6 +709,9 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
     private static final String T_SYNDICATE_MENU_ITEM = "syndie.gui.browser.syndicatemenu.item";
+    private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
+    private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
+    private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
     private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
     private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
@@ -678,31 +742,33 @@ public class Browser implements UI, BrowserControl, Translatable {
         _copyTabLocation.setText(registry.getText(T_COPY_TAB_LOC, "copy tab location"));
         _bookmarkTab.setText(registry.getText(T_BOOKMARK_TAB, "bookmark tab"));
         
-        _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "File"));
-        _fileMenuRoot.setAccelerator(SWT.MOD1 | registry.getText(T_FILE_MENU_TITLE_ACCELERATOR, "f").charAt(0));
-        _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "Open Syndie URI"));
-        _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "Import"));
-        _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "Export"));
-        _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "Exit"));
-        _fileMenuExit.setAccelerator(SWT.MOD1 | registry.getText(T_FILE_MENU_EXIT_ACCELERATOR, "x").charAt(0));
+        _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "&File"));
+        _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
+        _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
+        _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
+        _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
     
-        _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "Post"));
-        _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post new"));
-        _postMenuResume.setText(registry.getText(T_POST_MENU_RESUME, "Resume existing"));
+        _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
+        _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
+        _postMenuResume.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
         
-        _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "Syndicate"));
-        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "Now"));
+        _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
+        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "&Now"));
 
-        _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "Advanced"));
-        _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "Logs"));
-        _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "Text interface"));
-        _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "SQL interface"));
+        _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
+        _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
+        _languageMenuRefresh.setText(registry.getText(T_LANGUAGE_MENU_REFRESH, "&Refresh translations"));
+        
+        _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "&Advanced"));
+        _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "&Logs"));
+        _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "&Text interface"));
+        _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "&SQL interface"));
 
-        _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "Help"));
-        _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "About"));
-        _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "FAQ"));
-        _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "GUI manual"));
-        _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "Text interface manual"));
+        _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "&Help"));
+        _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "&About"));
+        _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "&FAQ"));
+        _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "&GUI manual"));
+        _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "&Text interface manual"));
         
         _systrayTip.setText(registry.getText(T_SYSTRAY_TOOLTIP_TITLE, "Syndie"));
         _systrayTip.setMessage(registry.getText(T_SYSTRAY_TOOLTIP_TEXT, "Syndie is running"));
