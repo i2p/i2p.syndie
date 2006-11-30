@@ -78,6 +78,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private MenuItem _syndicateMenuItem;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
+    private MenuItem _advancedMenuSQL;
     private MenuItem _advancedMenuLogs;
     private MenuItem _helpMenuRoot;
     private MenuItem _helpMenuAbout;
@@ -247,6 +248,11 @@ public class Browser implements UI, BrowserControl, Translatable {
         _advancedMenuLogs.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLogs(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showLogs(); }
+        });
+        _advancedMenuSQL = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuSQL.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
         });
         
         new MenuItem(_mainMenu, SWT.SEPARATOR);
@@ -505,6 +511,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     
     public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
+    public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
     public SyndieURI createSyndicationURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
@@ -644,6 +651,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
     private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
+    private static final String T_ADVANCED_MENU_SQL = "syndie.gui.browser.advancedmenu.sql";
     private static final String T_HELP_MENU_TITLE = "syndie.gui.browser.helpmenu.title";
     private static final String T_HELP_MENU_ABOUT = "syndie.gui.browser.helpmenu.about";
     private static final String T_HELP_MENU_FAQ = "syndie.gui.browser.helpmenu.faq";
@@ -688,6 +696,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "Advanced"));
         _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "Logs"));
         _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "Text interface"));
+        _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "SQL interface"));
 
         _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "Help"));
         _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "About"));

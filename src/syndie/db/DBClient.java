@@ -90,7 +90,7 @@ public class DBClient {
         return getNymId(login, passphrase);
     }
     I2PAppContext ctx() { return _context; }
-    Connection con() { return _con; }
+    public Connection con() { return _con; }
     public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
     public void setDefaultUI(UI ui) { _ui = ui; }
     

@@ -38,6 +38,7 @@ abstract class BrowserTab {
     static final String TYPE_META = "meta";
     static final String TYPE_MANAGE = "manage";
     static final String TYPE_SYNDICATE = "syndicate";
+    static final String TYPE_SQL = "sql";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -83,6 +84,8 @@ abstract class BrowserTab {
             return new SyndicationTab(browser, uri);
         } else if (TYPE_SYNDICATE.equals(uri.getType())) {
             return new SyndicationTab(browser, uri);
+        } else if (TYPE_SQL.equals(uri.getType())) {
+            return new SQLTab(browser, uri);
         }
         
         return null;

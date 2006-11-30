@@ -23,6 +23,7 @@ public interface BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
+    public SyndieURI createSQLURI();
     /** manage the forum */
     public SyndieURI createManageURI(Hash forum);
     /** view the details of the forum, not the messages */
