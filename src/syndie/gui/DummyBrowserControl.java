@@ -52,4 +52,5 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createMetaManagersURI(Hash forum) { return createMetaURI(forum); }
 
     public SyndieURI createSQLURI() { return null; }
+    public ThemeRegistry getThemeRegistry() { return null; } 
 }

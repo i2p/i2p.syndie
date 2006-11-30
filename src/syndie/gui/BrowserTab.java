@@ -24,7 +24,7 @@ import syndie.db.DBClient;
 /**
  *
  */
-abstract class BrowserTab {
+abstract class BrowserTab implements Themeable {
     private BrowserControl _browser;
     private CTabItem _item;
     private SyndieURI _uri;
@@ -163,6 +163,7 @@ abstract class BrowserTab {
     public String getName() { return "tab"; }
     public Image getIcon() { return null; }
     public void dispose() {
+        _browser.getThemeRegistry().unregister(this);
         _item.dispose();
         ImageUtil.dispose(getIcon());
         disposeDetails();
@@ -177,5 +178,9 @@ abstract class BrowserTab {
     
     protected Image createAvatar(ChannelInfo chan) {
         return ImageUtil.resize(ImageUtil.ICON_QUESTION, 16, 16, false);
+    }
+    
+    public void applyTheme(Theme theme) { 
+        //_item.setFont(theme.TAB_FONT); 
     }
 }

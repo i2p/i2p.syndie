@@ -43,6 +43,7 @@ public interface BrowserControl {
     
     public UI getUI();
     public TranslationRegistry getTranslationRegistry();
+    public ThemeRegistry getThemeRegistry();
     public DBClient getClient();
 
     public CTabFolder getTabFolder();

@@ -45,7 +45,7 @@ import syndie.db.ThreadAccumulator;
 /**
  * 
  */
-public class MessageTree implements Translatable {
+public class MessageTree implements Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
@@ -185,6 +185,7 @@ public class MessageTree implements Translatable {
         _tree.addMouseListener(lsnr);
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     private void createFilterEditor() {
@@ -216,6 +217,7 @@ public class MessageTree implements Translatable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
         _filterEditor.dispose();
     }
     
@@ -474,5 +476,16 @@ public class MessageTree implements Translatable {
         _filterApply.setText(registry.getText(T_FILTER_APPLY, "Apply"));
         _filterEdit.setText(registry.getText(T_FILTER_EDIT, "Edit..."));
         _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
+    }
+    public void applyTheme(Theme theme) {
+        _tree.setFont(theme.TREE_FONT);
+        _filter.setFont(theme.DEFAULT_FONT);
+        _filterLabel.setFont(theme.DEFAULT_FONT);
+        _filterEdit.setFont(theme.BUTTON_FONT);
+        _filterEditorShell.setFont(theme.SHELL_FONT);
+        _filterApply.setFont(theme.BUTTON_FONT);
+        _root.layout(true, true);
+        _filterLabel.getParent().layout(true);
+        _filterEditorShell.layout(true, true);
     }
 }

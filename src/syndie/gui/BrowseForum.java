@@ -36,7 +36,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class BrowseForum implements MessageTree.MessageTreeListener, Translatable {
+public class BrowseForum implements MessageTree.MessageTreeListener, Translatable, Themeable {
     private DBClient _client;
     private Composite _parent;
     private SashForm _root;
@@ -213,10 +213,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             _root.setMaximizedControl(_top);
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
 
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
         _preview.dispose();
         _tree.dispose();
     }
@@ -383,5 +385,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));
         _metaNameMenuDeleteAll.setText(registry.getText(T_DELETEALL, "Delete all messages"));
         _metaNameMenuBan.setText(registry.getText(T_BAN, "Ban this forum"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _metaName.setFont(theme.DEFAULT_FONT);
+        _meta.layout(true, true);
+        _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
+        _root.layout(true, true);
     }
 }

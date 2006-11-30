@@ -53,10 +53,11 @@ import syndie.db.UI;
 /**
  * main gui wrapper
  */
-public class Browser implements UI, BrowserControl, Translatable {
+public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private DBClient _client;
     private TextEngine _engine;
     private TranslationRegistry _translation;
+    private ThemeRegistry _themes;
     private SyndicationManager _syndicationManager;
     private Shell _shell;
     private Menu _mainMenu;
@@ -80,6 +81,11 @@ public class Browser implements UI, BrowserControl, Translatable {
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
     private MenuItem _languageMenuRefresh;
+    private Menu _styleMenu;
+    private MenuItem _styleMenuRoot;
+    private MenuItem _styleMenuIncreaseFont;
+    private MenuItem _styleMenuDecreaseFont;
+    private MenuItem _styleMenuEdit;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
     private MenuItem _advancedMenuSQL;
@@ -107,6 +113,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         _commands = new ArrayList();
         _initialized = false;
         _translation = new TranslationRegistry(this);
+        _themes = new ThemeRegistry(this);
         _syndicationManager = new SyndicationManager(_client, this);
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
@@ -166,6 +173,7 @@ public class Browser implements UI, BrowserControl, Translatable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         _translation.register(this);
+        _themes.register(this);
         
         debugMessage("=tabs: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         _sash.setWeights(new int[] { 20, 80 });
@@ -257,6 +265,27 @@ public class Browser implements UI, BrowserControl, Translatable {
         
         populateTranslations();
         
+        _styleMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        _styleMenu = new Menu(_styleMenuRoot);
+        _styleMenuRoot.setMenu(_styleMenu);
+        _styleMenuIncreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuIncreaseFont.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { increaseFont(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { increaseFont(); }
+        });
+        _styleMenuIncreaseFont.setAccelerator(SWT.MOD1 + '=');
+        _styleMenuDecreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuDecreaseFont.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { decreaseFont(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { decreaseFont(); }
+        });
+        _styleMenuDecreaseFont.setAccelerator(SWT.MOD1 + '-');
+        _styleMenuEdit = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuEdit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { }
+            public void widgetSelected(SelectionEvent selectionEvent) { }
+        });
+        
         _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu advancedMenu = new Menu(_advancedMenuRoot);
         _advancedMenuRoot.setMenu(advancedMenu);
@@ -312,6 +341,7 @@ public class Browser implements UI, BrowserControl, Translatable {
         confirm.setMessage(_translation.getText(T_CONFIRM_EXIT_MESSAGE, "Are you sure you want to exit Syndie?"));
         int rv = confirm.open();
         if (rv == SWT.YES) {
+            Display.getDefault().getSystemTray().dispose();
             _shell.setVisible(false);
             JobRunner.instance().stop();
             System.exit(0);
@@ -506,6 +536,9 @@ public class Browser implements UI, BrowserControl, Translatable {
     private void showLogs() { view(createLogsURI()); }
     private void showSyndicate() { view(createSyndicationURI()); }
     
+    private void increaseFont() { _themes.increaseFont(); }
+    private void decreaseFont() { _themes.decreaseFont(); }
+    
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
     }
@@ -578,6 +611,7 @@ public class Browser implements UI, BrowserControl, Translatable {
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
     public SyndicationManager getSyndicationManager() { return _syndicationManager; }
+    public ThemeRegistry getThemeRegistry() { return _themes;} 
 
     private void bookmarkTab() {
         CTabItem item = _tabs.getSelection();
@@ -712,6 +746,10 @@ public class Browser implements UI, BrowserControl, Translatable {
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
     private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
     private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
+    private static final String T_STYLE_MENU_TITLE = "syndie.gui.browser.style.title";
+    private static final String T_STYLE_MENU_INCREASE = "syndie.gui.browser.style.increase";
+    private static final String T_STYLE_MENU_DECREASE = "syndie.gui.browser.style.decrease";
+    private static final String T_STYLE_MENU_EDIT = "syndie.gui.browser.style.edit";
     private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
     private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
@@ -758,6 +796,11 @@ public class Browser implements UI, BrowserControl, Translatable {
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
         _languageMenuRefresh.setText(registry.getText(T_LANGUAGE_MENU_REFRESH, "&Refresh translations"));
+
+        _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "S&tyle"));
+        _styleMenuIncreaseFont.setText(registry.getText(T_STYLE_MENU_INCREASE, "&Increase font"));
+        _styleMenuDecreaseFont.setText(registry.getText(T_STYLE_MENU_DECREASE, "&Decrease font"));
+        _styleMenuEdit.setText(registry.getText(T_STYLE_MENU_EDIT, "&Configure"));
         
         _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "&Advanced"));
         _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "&Logs"));
@@ -772,5 +815,12 @@ public class Browser implements UI, BrowserControl, Translatable {
         
         _systrayTip.setText(registry.getText(T_SYSTRAY_TOOLTIP_TITLE, "Syndie"));
         _systrayTip.setMessage(registry.getText(T_SYSTRAY_TOOLTIP_TEXT, "Syndie is running"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _shell.setFont(theme.SHELL_FONT);
+        _tabs.setFont(theme.TAB_FONT);
+        _statusRow.setFont(theme.DEFAULT_FONT);
+        _shell.layout(true, true);
     }
 }

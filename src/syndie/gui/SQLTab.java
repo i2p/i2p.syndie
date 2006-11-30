@@ -180,10 +180,7 @@ class SQLTab extends BrowserTab implements Translatable {
                                     break;
                                 }
                                 case Types.CHAR:
-                                case Types.LONGNVARCHAR:
                                 case Types.LONGVARCHAR:
-                                case Types.NCHAR:
-                                case Types.NVARCHAR:
                                 case Types.VARCHAR: {
                                     String val = rs.getString(i);
                                     if (rs.wasNull())
@@ -220,7 +217,6 @@ class SQLTab extends BrowserTab implements Translatable {
                                 case Types.BLOB:
                                 case Types.CLOB:
                                 case Types.LONGVARBINARY:
-                                case Types.NCLOB:
                                 case Types.VARBINARY: {
                                     byte val[] = rs.getBytes(i);
                                     if (val != null)
@@ -233,7 +229,6 @@ class SQLTab extends BrowserTab implements Translatable {
                                 case Types.OTHER:
                                 case Types.REAL:
                                 case Types.REF:
-                                case Types.ROWID:
                                 case Types.STRUCT:
                                 default:
                                     break;

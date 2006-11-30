@@ -69,6 +69,7 @@ public class BrowseForumTab extends BrowserTab {
             _browse.setFilter(SyndieURI.DEFAULT_SEARCH_URI);
         }
         getRoot().setLayout(new FillLayout());
+        getBrowser().getThemeRegistry().register(this);
         debug("browseforumtab.initComponents: complete");
     }
     

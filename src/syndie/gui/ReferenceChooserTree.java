@@ -35,7 +35,7 @@ import syndie.db.UI;
  *  - the channels the nym can manage
  *  - search results
  */
-public class ReferenceChooserTree implements Translatable {
+public class ReferenceChooserTree implements Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
@@ -182,10 +182,12 @@ public class ReferenceChooserTree implements Translatable {
         
         _chooseAllStartupItems = false;
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     protected void configTreeListeners(final Tree tree) {
@@ -372,5 +374,10 @@ public class ReferenceChooserTree implements Translatable {
         redrawPostable();
         redrawManageable();
         redrawSearchResults();
+    }
+
+    public void applyTheme(Theme theme) {
+        // applies to items and columns
+        _tree.setFont(theme.TREE_FONT);
     }
 }
