@@ -108,6 +108,8 @@ public class SyndieURIDAO {
             for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
                 String key = (String)iter.next();
                 Object val = attributes.get(key);
+                if (val == null)
+                    continue;
                 if (val.getClass().isArray()) {
                     String vals[] = (String[])val;
                     insertAttrib(stmt, key, null, null, null, vals, id, false);

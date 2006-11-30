@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -101,6 +102,10 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private void redrawArchives() { redrawArchives(null); }
     private void redrawArchives(String highlightName) {
         _table.setRedraw(false);
+        int selected[] = _table.getSelectionIndices();
+        List selectedNames = new ArrayList(selected.length);
+        for (int i = 0; i < selected.length; i++)
+            selectedNames.add(_names.get(selected[i]));
         int top = _table.getTopIndex();
         if (top < 0) top = 0;
         
@@ -163,8 +168,14 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _browser.getUI().debugMessage("archive rows: " + _names.size());
         
         _table.setTopIndex(top);
-        if (highlightName != null)
+        if (highlightName != null) {
             _table.setSelection(top);
+        } else if (selectedNames.size() > 0) {
+            int indexes[] = new int[selectedNames.size()];
+            for (int i = 0; i < selectedNames.size(); i++)
+                indexes[i] = _names.indexOf(selectedNames.get(i));
+            _table.setSelection(indexes);
+        }
         
         _colType.pack();
         _colNumForums.pack();
@@ -318,6 +329,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
      */
     
+    /** selected archive names, or if none are selected explicitly, all names */
     public ArrayList getSelectedNames() {
         ArrayList rv = new ArrayList();
         int indexes[] = _table.getSelectionIndices();
@@ -417,7 +429,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         else
             _errors.put(archiveName, "");
         _table.getDisplay().asyncExec(new Runnable() {
-            public void run() { redrawArchives(archiveName); }
+            public void run() { redrawArchives(); }
         });
     }
 

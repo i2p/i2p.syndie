@@ -574,55 +574,9 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processBuildIndex(DBClient client, UI ui, Opts opts) {
-        File archiveDir = client.getArchiveDir();
-        ArchiveIndex index;
-        try {
-            // load the whole index into memory
-            index = ArchiveIndex.buildIndex(client, ui, archiveDir, opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE));
-            // iterate across each channel, building their index-all and index-new files
-            // as well as pushing data into the overall index-all, index-new, and index-meta files
-            FileOutputStream outFullAll = new FileOutputStream(new File(archiveDir, "index-all.dat"));
-            FileOutputStream outFullNew = new FileOutputStream(new File(archiveDir, "index-new.dat"));
-            FileOutputStream outFullMeta = new FileOutputStream(new File(archiveDir, "index-meta.dat"));
-            FileOutputStream outFullUnauth = new FileOutputStream(new File(archiveDir, "index-unauthorized.dat"));
-            for (int i = 0; i < index.getChannelCount(); i++) {
-                ArchiveChannel chan = index.getChannel(i);
-                File chanDir = new File(archiveDir, Base64.encode(chan.getScope()));
-                FileOutputStream outAll = new FileOutputStream(new File(chanDir, "index-all.dat"));
-                FileOutputStream outNew = new FileOutputStream(new File(chanDir, "index-new.dat"));
-                FileOutputStream outUnauth = new FileOutputStream(new File(chanDir, "index-unauthorized.dat"));
-                write(outAll, chan, false);
-                write(outNew, chan, true);
-                write(outFullAll, chan, false);
-                write(outFullNew, chan, true);
-                write(outFullMeta, chan);
-                writeUnauth(outUnauth, chan);
-                writeUnauth(outFullUnauth, chan);
-                outAll.close();
-                outNew.close();
-            }
-            outFullMeta.close();
-            outFullNew.close();
-            outFullAll.close();
-            outFullUnauth.close();
-            ui.statusMessage("Index rebuilt");
-        } catch (IOException ioe) {
-            ui.errorMessage("Error building the index", ioe);
-        }
+        long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
+        SyndicationManager.buildIndex(client, ui, maxSize);
         ui.commandComplete(0, null);
-    }
-    
-    private void write(OutputStream out, ArchiveChannel chan) throws IOException {
-        write(out, chan, false, true);
-    }
-    private void write(OutputStream out, ArchiveChannel chan, boolean newOnly) throws IOException {
-        write(out, chan, newOnly, false);
-    }
-    private void write(OutputStream out, ArchiveChannel chan, boolean newOnly, boolean chanOnly) throws IOException {
-        chan.write(out, newOnly, chanOnly, false);
-    }
-    private void writeUnauth(OutputStream out, ArchiveChannel chan) throws IOException {
-        chan.write(out, true, false, true);
     }
     
     private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);

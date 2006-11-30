@@ -85,6 +85,8 @@ public class Constants {
     public static final String KEY_FUNCTION_REPLY = "reply";
     /** key can be used to authorize normal posts without the poster necessarily authenticating themselves */
     public static final String KEY_FUNCTION_POST = "post";
+    /** key can be used to insert under a freenet SSK keyspace.  the scope of the associated nymkeys is the hash of the SSK pubkey */
+    public static final String KEY_FUNCTION_SSKPRIV = "sskpriv";
     public static final String KEY_TYPE_AES256 = "AES256";
     public static final String KEY_TYPE_DSA = "DSA";
     public static final String KEY_TYPE_ELGAMAL2048 = "ELGAMAL2048";

@@ -1,18 +1,27 @@
 package syndie.db;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.util.EepGet;
+import syndie.Constants;
+import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 
 /**
@@ -45,12 +54,16 @@ public class SyndicationManager {
     public static final int FETCH_INDEX_DIFF_OK = 10;
     public static final int FETCH_STOPPED = 11;
     
+    public static final int PUSH_SCHEDULED = 12;
+    public static final int PUSH_STARTED = 13;
+    public static final int PUSH_SENT = 14;
+    public static final int PUSH_ERROR = 15;
+    
     public static final int STRATEGY_DELTA = 0;
     public static final int STRATEGY_DELTAKNOWN = 1;
     public static final int STRATEGY_PIR = 2;
     public static final int STRATEGY_DEFAULT = STRATEGY_DELTA;
     
-
     public SyndicationManager(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
@@ -167,7 +180,8 @@ public class SyndicationManager {
     public void startFetching(int concurrentFetches) {
         for (int i = _concurrent; i < concurrentFetches; i++) {
             _concurrent++;
-            Thread t = new Thread(new Fetcher(), "Fetcher" + i);
+            // the first fetcher will (re)build the archive index
+            Thread t = new Thread(new Fetcher(i), "Fetcher" + i);
             t.setDaemon(true);
             t.start();
         }
@@ -290,7 +304,8 @@ public class SyndicationManager {
                 }
                 out = File.createTempFile("syndicate", ".index", _client.getTempDir());
                 EepGet get = new EepGet(_client.ctx(), shouldProxy, proxyHost, (int)proxyPort, 0, out.getPath(), url, false, null, null);
-                get.addStatusListener(new UIStatusListener());
+                UIStatusListener lsnr = new UIStatusListener();
+                get.addStatusListener(lsnr);
                 boolean fetched = get.fetch();
                 if (record.getStatus() == FETCH_STOPPED) {
                     if (archiveWasRemote) out.delete(); 
@@ -301,6 +316,7 @@ public class SyndicationManager {
                     _ui.debugMessage("fetchIndex: fetch error: " + url);
                     //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
                     record.setStatus(FETCH_FAILED);
+                    record.setDetail(lsnr.getError());
                     //record.setDetail("");
                     fireIndexStatus(record);
                     if (archiveWasRemote)
@@ -369,15 +385,22 @@ public class SyndicationManager {
     /** 
      * queue up the fetch for entries matching the given strategy, as well as pushes
      * @param maxkb don't pull posts larger than this size
-     * @param strategy STRATEGY_* to determine which entries to pull
-     * @param push should we push too
+     * @param pullStrategy STRATEGY_* to determine which entries to pull
+     * @param pushStrategy STRATEGY_* to determine which entries to push
+     * @param archiveNames set of archive names to sync with
      */
-    public void sync(int maxkb, int strategy, boolean push) {
+    public void sync(int maxkb, int pullStrategy, int pushStrategy, Set archiveNames) {
+        pull(maxkb, pullStrategy, archiveNames);
+        push(maxkb, pushStrategy, archiveNames);
+    }
+    private void pull(int maxkb, int pullStrategy, Set archiveNames) {
         HashSet uris = new HashSet();
-        switch (strategy) {
+        switch (pullStrategy) {
             case STRATEGY_DELTAKNOWN:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
+                    if (!archiveNames.contains(archive.getName()))
+                        continue;
                     ArchiveDiff diff = archive.getDiff();
                     if (diff != null) {
                         List toFetch = diff.getFetchKnownURIs(true);
@@ -387,12 +410,16 @@ public class SyndicationManager {
                                 fetch(archive.getName(), uri);
                             }
                         }
+                    } else {
+                        // need to fetch the index first
                     }
                 }
                 break;
             case STRATEGY_PIR:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
+                    if (!archiveNames.contains(archive.getName()))
+                        continue;
                     ArchiveDiff diff = archive.getDiff();
                     if (diff != null) {
                         List toFetch = diff.getFetchPIRURIs();
@@ -406,9 +433,10 @@ public class SyndicationManager {
                 }
                 break;
             case STRATEGY_DELTA:
-            default:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
+                    if (!archiveNames.contains(archive.getName()))
+                        continue;
                     ArchiveDiff diff = archive.getDiff();
                     if (diff != null) {
                         List toFetch = diff.getFetchNewURIs(true);
@@ -422,10 +450,217 @@ public class SyndicationManager {
                 }
                 break;
         }
-        
-        if (push) {
-            // ...
+    }
+    private void push(int maxkb, int pushStrategy, Set archiveNames) {
+        for (int i = 0; i < _archives.size(); i++) {
+            NymArchive archive = (NymArchive)_archives.get(i);
+            if (!archiveNames.contains(archive.getName()))
+                continue;
+            String url = archive.getURI().getURL();
+            
+            int keyStart = -1;
+            keyStart = url.indexOf("CHK@");
+            if (keyStart == -1)
+                keyStart = url.indexOf("SSK@");
+            if (keyStart == -1)
+                keyStart = url.indexOf("USK@");
+
+            if (keyStart != -1) {
+                String fcpHost = archive.getCustomProxyHost();
+                int fcpPort = archive.getCustomProxyPort();
+                if ( (fcpHost == null) || (fcpHost.length() <= 0) || (fcpPort <= 0) ) {
+                    fcpHost = _fcpHost;
+                    fcpPort = _fcpPort;
+                }
+                FreenetArchivePusher pusher = new FreenetArchivePusher(_ui, fcpHost, fcpPort);
+
+                String pubSSK = getPublicSSK(archive.getURI(), url, keyStart);
+                String privSSK = getPrivateSSK(archive, pubSSK);
+                if (privSSK == null) {
+                    // we don't have the private key
+                    if ("CHK@".equals(pubSSK)) {
+                        // post it under a CHK
+                        // todo: eventually support this
+                        _ui.debugMessage("post under a CHK isn't yet implemented");
+                        continue;
+                    } else if ("USK@".equals(pubSSK) || "SSK@".equals(pubSSK)) {
+                        // create a new SSK keypair, save our privkey, update the archive, and post it
+                        pusher.generateSSK();
+                        String error = pusher.getError();
+                        if ( (error != null) && (error.length() > 0) ) {
+                            _ui.errorMessage("Cannot create a new SSK: "+ error);
+                            continue;
+                        }
+                        pubSSK = pusher.getPublicSSK();
+                        privSSK = pusher.getPrivateSSK();
+                        if ( (pubSSK == null) || (privSSK == null) ) {
+                            _ui.errorMessage("Error creating a new SSK");
+                            continue;
+                        }
+                        String type = "USK@".equals(pubSSK) ? "USK@" : "SSK@";
+                        _ui.debugMessage("new SSK keypair created w/ pub=" + pubSSK);
+                        savePrivateSSK(archive, pubSSK, privSSK, type);
+                    } else {
+                        // cannot post
+                        _ui.debugMessage("cannot post to the SSK, as no private key is known for " + pubSSK);
+                        continue;
+                    }
+                }
+
+                _ui.debugMessage("scheduling fcp post under " + pubSSK);
+                
+                pusher.setPrivateSSK(privSSK);
+                pusher.setPublicSSK(pubSSK);
+                
+                // add a record so the putArchive can occur in one of the worker threads,
+                // even though it just contacts the fcp host & sends them the data without
+                // waiting for the data to be fully inserted into the network
+                //pusher.putArchive(_client.getArchiveDir());
+                StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), pusher);
+                synchronized (_fetchRecords) {
+                    _fetchRecords.add(rec);
+                    _fetchRecords.notifyAll();
+                }
+            } else {
+                HTTPSyndicator template = archive.getSyndicator();
+                // the syndicator was built with sequential operation in mind, not multithreaded/reused,
+                // so just make another copy for our current sequence
+                if (template == null) {
+                    // no index fetched yet. noop
+                    return;
+                }
+                HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
+                syndicator.setDeleteOutboundAfterSend(false);
+                //syndicator.setPostPassphrase(archive.getURI().getString(""))
+
+                switch (pushStrategy) {
+                    case STRATEGY_DELTAKNOWN:
+                        syndicator.schedulePut("archive", true);
+                        break;
+                    case STRATEGY_PIR:
+                        // fallthrough - pir for post?    
+                    case STRATEGY_DELTA:
+                        syndicator.schedulePut("archive", false);
+                        break;
+                }
+                // add a record so the post() can occur in one of the worker threads
+                StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), syndicator);
+                synchronized (_fetchRecords) {
+                    _fetchRecords.add(rec);
+                    _fetchRecords.notifyAll();
+                }
+            } // end if(freenet) { } else (http) {}
+        } // end looping over archives
+    }
+    
+    private String getPublicSSK(SyndieURI uri, String url, int keyStart) {
+        String readKeyB64 = uri.getString("readKeyData");
+        if (readKeyB64 != null) {
+            byte[] readKeyData = Base64.decode(readKeyB64);
+            if (readKeyData != null) {
+                String key = DataHelper.getUTF8(readKeyData);
+                if (key != null)
+                    return key;
+            }
         }
+        return url.substring(keyStart);
+    }
+    private String getPrivateSSK(NymArchive archive, String pubSSK) {
+        String postKeyB64 = archive.getURI().getString("postKeyData");
+        if (postKeyB64 != null) {
+            byte[] postKeyData = Base64.decode(postKeyB64);
+            if (postKeyData != null) {
+                String key = DataHelper.getUTF8(postKeyData);
+                if (key != null)
+                    return key;
+            }
+        }
+        Hash pubSSKHash = _client.sha256(DataHelper.getUTF8(pubSSK));
+        List keys = _client.getNymKeys(pubSSKHash, Constants.KEY_FUNCTION_SSKPRIV);
+        for (int i = 0; i < keys.size(); i++) {
+            NymKey key = (NymKey)keys.get(i);
+            byte priv[] = key.getData();
+            if (priv != null) {
+                int end = 0;
+                for (int j = 0; j < priv.length; j++) {
+                    if (priv[j] == (byte)0xFF) {
+                        end = j;
+                        break;
+                    }
+                }
+                return DataHelper.getUTF8(priv, 0, end);
+            }
+        }
+        return null;
+    }
+    private void savePrivateSSK(NymArchive archive, String pubSSK, String privSSK, String type) {
+        SyndieURI uri = archive.getURI();
+        Map attr = uri.getAttributes();
+        attr.put("url", pubSSK);
+        archive.update(uri);
+        update(archive.getName(), uri, archive.getCustomProxyHost(), archive.getCustomProxyPort(), null, null);
+        
+        Hash pubSSKHash = _client.sha256(DataHelper.getUTF8(pubSSK));
+        byte padded[] = new byte[128];
+        byte key[] = DataHelper.getUTF8(privSSK);
+        // the ssk is plain ascii (largely base64 encoded ascii, even), so pad it with a nonascii so we
+        // can strip the padding afterwards (in getPrivateSSK above).  necessary since KeyImport
+        // transparently AES256 encrypts the key against the current nym's passphrase
+        Arrays.fill(key, (byte)0xFF);
+        System.arraycopy(key, 0, padded, 0, key.length);
+        KeyImport.importKey(_ui, _client, Constants.KEY_FUNCTION_SSKPRIV, pubSSKHash, padded, true);
+    }
+    
+    public void buildIndex(long maxSize) { buildIndex(_client, _ui, maxSize); }
+    public static void buildIndex(DBClient client, UI ui, long maxSize) {
+        File archiveDir = client.getArchiveDir();
+        ArchiveIndex index;
+        try {
+            // load the whole index into memory
+            index = ArchiveIndex.buildIndex(client, ui, archiveDir, maxSize);
+            // iterate across each channel, building their index-all and index-new files
+            // as well as pushing data into the overall index-all, index-new, and index-meta files
+            FileOutputStream outFullAll = new FileOutputStream(new File(archiveDir, "index-all.dat"));
+            FileOutputStream outFullNew = new FileOutputStream(new File(archiveDir, "index-new.dat"));
+            FileOutputStream outFullMeta = new FileOutputStream(new File(archiveDir, "index-meta.dat"));
+            FileOutputStream outFullUnauth = new FileOutputStream(new File(archiveDir, "index-unauthorized.dat"));
+            for (int i = 0; i < index.getChannelCount(); i++) {
+                ArchiveChannel chan = index.getChannel(i);
+                File chanDir = new File(archiveDir, Base64.encode(chan.getScope()));
+                FileOutputStream outAll = new FileOutputStream(new File(chanDir, "index-all.dat"));
+                FileOutputStream outNew = new FileOutputStream(new File(chanDir, "index-new.dat"));
+                FileOutputStream outUnauth = new FileOutputStream(new File(chanDir, "index-unauthorized.dat"));
+                write(outAll, chan, false);
+                write(outNew, chan, true);
+                write(outFullAll, chan, false);
+                write(outFullNew, chan, true);
+                write(outFullMeta, chan);
+                writeUnauth(outUnauth, chan);
+                writeUnauth(outFullUnauth, chan);
+                outAll.close();
+                outNew.close();
+            }
+            outFullMeta.close();
+            outFullNew.close();
+            outFullAll.close();
+            outFullUnauth.close();
+            ui.statusMessage("Index rebuilt");
+        } catch (IOException ioe) {
+            ui.errorMessage("Error building the index", ioe);
+        }
+    }
+    
+    private static void write(OutputStream out, ArchiveChannel chan) throws IOException {
+        write(out, chan, false, true);
+    }
+    private static void write(OutputStream out, ArchiveChannel chan, boolean newOnly) throws IOException {
+        write(out, chan, newOnly, false);
+    }
+    private static void write(OutputStream out, ArchiveChannel chan, boolean newOnly, boolean chanOnly) throws IOException {
+        chan.write(out, newOnly, chanOnly, false);
+    }
+    private static void writeUnauth(OutputStream out, ArchiveChannel chan) throws IOException {
+        chan.write(out, true, false, true);
     }
     
     /** returns a new list containing the actual fetch records (which can be updated asynchronously) */
@@ -840,6 +1075,7 @@ public class SyndicationManager {
             _postKey = postKey;
             _readKey = readKey;
         }
+        public void update(SyndieURI uri) { _uri = uri; }
         
         public String getName() { return _name; }
         public SyndieURI getURI() { return _uri; }
@@ -861,18 +1097,35 @@ public class SyndicationManager {
         private SyndieURI _uri;
         private int _status;
         private String _detail;
+        private FreenetArchivePusher _freenetPusher;
+        private HTTPSyndicator _httpSyndicator;
         
         public StatusRecord(String name, SyndieURI uri) {
             _archiveName = name;
             _uri = uri;
             _status = FETCH_SCHEDULED;
         }
+        public StatusRecord(String name, SyndieURI uri, FreenetArchivePusher pusher) {
+            _archiveName = name;
+            _uri = uri;
+            _freenetPusher = pusher;
+            _status = PUSH_SCHEDULED;
+        }
+        public StatusRecord(String name, SyndieURI uri, HTTPSyndicator syndicator) {
+            _archiveName = name;
+            _uri = uri;
+            _freenetPusher = null;
+            _httpSyndicator = syndicator;
+            _status = PUSH_SCHEDULED;
+        }
         
         NymArchive getArchive() { return SyndicationManager.this.getArchive(_archiveName); }
+        FreenetArchivePusher getFreenetPusher() { return _freenetPusher; }
+        HTTPSyndicator getHTTPSyndicator() { return _httpSyndicator; }
         public SyndieURI getURI() { return _uri; }
         public int getStatus() { return _status; }
         public String getSource() { return _archiveName; }
-        void setStatus(int status) { 
+        public boolean isTerminal() {
             switch (_status) {
                 case FETCH_FAILED:
                 case FETCH_IMPORT_OK:
@@ -883,24 +1136,33 @@ public class SyndicationManager {
                 case FETCH_INDEX_LOAD_ERROR:
                 case FETCH_INDEX_LOAD_OK:
                 case FETCH_STOPPED:
-                    return; // already done
+                    return true;
                 case FETCH_COMPLETE:
                 case FETCH_SCHEDULED:
                 case FETCH_STARTED:
                 default:
-                    _status = status;
+                    return false;
             }
+        }
+        public void setStatus(int status) {
+            if (!isTerminal())
+                _status = status;
         }
         /** status message detail */
         public String getDetail() { return _detail; }
-        void setDetail(String detail) { _detail = detail; }
+        public void setDetail(String detail) { _detail = detail; }
         void stop() { setStatus(FETCH_STOPPED); }
     }
     
     private class Fetcher implements Runnable {
+        private int _id;
+        public Fetcher(int id) { _id = id; }
         public void run() {
+            if (_id == 0)
+                buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
             StatusRecord cur = null;
             for (;;) {
+                int nonterminalRemaining = 0;
                 synchronized (_fetchRecords) {
                     for (int i = 0; i < _fetchRecords.size(); i++) {
                         StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
@@ -909,6 +1171,8 @@ public class SyndicationManager {
                             cur = rec;
                             break;
                         }
+                        if (!rec.isTerminal())
+                            nonterminalRemaining++;
                     }
                     if (cur == null) {
                         try {
@@ -919,23 +1183,72 @@ public class SyndicationManager {
                 if (cur != null) {
                     fetch(cur);
                 }
+                if (nonterminalRemaining == 0) {
+                    _ui.debugMessage("All of the records are terminal, rebuilding our local archive index");
+                    buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
+                }
                 cur = null;
             }
         }
         private void fetch(StatusRecord rec) {
             fireFetchStatusUpdated(rec); // scheduled-->start
             if (rec.getStatus() == FETCH_STOPPED) return;
-            if (rec.getURI().isArchive()) {
-                // fetching an archive's index itself
-                fetchIndex(rec);
+            if (rec.getFreenetPusher() != null) {
+                pushFreenet(rec);
+            } else if (rec.getHTTPSyndicator() != null) {
+                pushHTTP(rec);
             } else {
-                fetchData(rec);
+                if (rec.getURI().isArchive()) {
+                    // fetching an archive's index itself
+                    fetchIndex(rec);
+                } else {
+                    fetchData(rec);
+                }
             }
+        }
+        private void pushFreenet(StatusRecord rec) {
+            FreenetArchivePusher pusher = rec.getFreenetPusher();
+            rec.setStatus(PUSH_STARTED);
+            rec.setDetail(pusher.getPublicTarget());
+            fireFetchStatusUpdated(rec);
+            // this just contacts the fcp host & sends them the data without
+            // waiting for the data to be fully inserted into the network
+            pusher.putArchive(_client.getArchiveDir());
+            String error = pusher.getError();
+            if ( (error != null) && (error.length() > 0) ) {
+                rec.setStatus(PUSH_ERROR);
+                rec.setDetail(error);
+            } else {
+                rec.setStatus(PUSH_SENT);
+                rec.setDetail(pusher.getPublicTarget());
+            }
+            fireFetchStatusUpdated(rec);
+        }
+        private void pushHTTP(StatusRecord rec) {
+            rec.setStatus(PUSH_STARTED);
+            fireFetchStatusUpdated(rec);
+            HTTPSyndicator syndicator = rec.getHTTPSyndicator();
+            syndicator.post();
+            String error = syndicator.getError();
+            if ( (error != null) && (error.length() > 0) ) {
+                rec.setStatus(PUSH_ERROR);
+                rec.setDetail(error);
+            } else {
+                rec.setStatus(PUSH_SENT);
+                rec.setDetail("");
+            }
+            fireFetchStatusUpdated(rec);
         }
         private void fetchData(StatusRecord rec) {
             // fetching *FROM* an archive
             NymArchive archive = rec.getArchive();
             HTTPSyndicator template = archive.getSyndicator();
+            if (template == null) {
+                rec.setStatus(FETCH_FAILED);
+                rec.setDetail("fetch index first");
+                fireFetchStatusUpdated(rec);
+                return;
+            }
             // the syndicator was built with sequential operation in mind, not multithreaded/reused,
             // so just make another copy for our current sequence
             HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
@@ -944,10 +1257,12 @@ public class SyndicationManager {
             if (rec.getStatus() == FETCH_STOPPED) return;
             boolean fetchComplete = syndicator.fetch(uris);
             if (rec.getStatus() == FETCH_STOPPED) return;
-            if (fetchComplete)
+            if (fetchComplete) {
                 rec.setStatus(FETCH_COMPLETE);
-            else
+            } else {
                 rec.setStatus(FETCH_FAILED);
+                rec.setDetail(syndicator.getError());
+            }
             fireFetchStatusUpdated(rec);
 
             if (!fetchComplete)
@@ -974,6 +1289,9 @@ public class SyndicationManager {
     }
     
     private class UIStatusListener implements EepGet.StatusListener {
+        private String _error;
+        
+        public String getError() { return _error; }
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {
             _ui.debugMessage("Transferred: " + bytesTransferred);
         }
@@ -982,6 +1300,8 @@ public class SyndicationManager {
         }
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
             _ui.debugMessage("Transfer attempt failed: " + bytesTransferred, cause);
+            if (cause != null)
+                _error = cause.getMessage();
         }
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt)  {
             _ui.debugMessage("Transfer totally failed of " + url);

@@ -1,6 +1,9 @@
 package syndie.gui;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.SelectionEvent;
@@ -75,7 +78,8 @@ public class SyndicationView implements Translatable {
         
         _stack = new StackLayout();
         Composite stacked = new Composite(_root, SWT.NONE);
-        stacked.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
+        stacked.setLayoutData(gd);
         stacked.setLayout(_stack);
         
         _config = new SyndicationConfigView(_browser, stacked);
@@ -93,23 +97,32 @@ public class SyndicationView implements Translatable {
         int fcpPort = _config.getFCPPort();
         String fcpHost = _config.getFCPHost();
         _browser.getSyndicationManager().setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
+        Set names = new HashSet(_archives.getSelectedNames());
         
         int action = _config.getAction();
         switch (action) {
             case SyndicationConfigView.ACTION_INDEXES:
-                List names = _archives.getSelectedNames();
-                for (int i = 0; i < names.size(); i++)
-                    _browser.getSyndicationManager().fetchIndex((String)names.get(i));
+                for (Iterator iter = names.iterator(); iter.hasNext(); )
+                    _browser.getSyndicationManager().fetchIndex((String)iter.next());
+                break;
+            case SyndicationConfigView.ACTION_PUSH_ONLY:
+                _browser.getSyndicationManager().sync(_config.getMaxKB(), -1, _config.getPushStrategy(), names);
                 break;
             case SyndicationConfigView.ACTION_PULL_PUSH:
-                // schedule push elements
-                // fall through
+                _browser.getSyndicationManager().sync(_config.getMaxKB(), _config.getPullStrategy(), _config.getPushStrategy(), names);
+                break;
             case SyndicationConfigView.ACTION_PULL_ONLY:
-                // schedule pull elements
+                _browser.getSyndicationManager().sync(_config.getMaxKB(), _config.getPullStrategy(), -1, names);
                 break;
         }
         int concurrency = _config.getConcurrency();
+        // if enough runners are already started, no new ones are started
         _browser.getSyndicationManager().startFetching(concurrency);
+
+        if (_detailChooser.getSelectionIndex() != CHOICE_STATUS) {
+            _detailChooser.select(CHOICE_STATUS);
+            choose();
+        }
     }
     
     private static final int CHOICE_CONFIG = 0;

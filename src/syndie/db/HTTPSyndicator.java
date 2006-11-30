@@ -54,6 +54,7 @@ public class HTTPSyndicator implements Cloneable {
     private int _missingKeys;
     
     private boolean _forceReimport;
+    private String _error;
     
     public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, ArchiveIndex index, boolean forceReimport) {
         _archiveURL = archiveURL;
@@ -141,14 +142,17 @@ public class HTTPSyndicator implements Cloneable {
         EepGetScheduler sched = new EepGetScheduler(_client.ctx(), urls, files, _proxyHost, _proxyPort, lsnr);
         sched.fetch(true); // blocks until complete
         _ui.statusMessage("Fetch of selected URIs complete");
+        _error = lsnr.getError();
         //while (lsnr.transfersPending()) {
         //    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
         //}
         return (_syndieURIs.size() == files.size());
     }
+    public String getError() { return _error; }
     
     private class HTTPStatusListener implements EepGet.StatusListener {
         private Map _httpURLToSyndieURI;
+        private String _error;
         public HTTPStatusListener(Map httpURLToSyndieURI) {
             _httpURLToSyndieURI = httpURLToSyndieURI;
         }
@@ -162,6 +166,8 @@ public class HTTPSyndicator implements Cloneable {
         }
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
             _ui.debugMessage("Transfer attempt failed: " + bytesTransferred + " from " + url, cause);
+            if (cause != null)
+                _error = cause.getMessage();
         }
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt)  {
             _ui.statusMessage("Transfer totally failed of " + url);
@@ -174,6 +180,7 @@ public class HTTPSyndicator implements Cloneable {
             _ui.statusMessage("Fetching " + url + "...");
         }
         public boolean transfersPending() { return _httpURLToSyndieURI.size() > 0; }
+        public String getError() { return _error; }
     }
     
     private void fetchFiles() {
