@@ -87,7 +87,10 @@ public class MessagePreview {
     
     public Control getControl() { return _root; }
     
-    public void dispose() { _attachmentPopup.dispose(); }
+    public void dispose() { 
+        _attachmentPopup.dispose(); 
+        _body.dispose();
+    }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )

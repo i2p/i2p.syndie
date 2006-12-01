@@ -187,7 +187,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().register(this);
+        _browser.getThemeRegistry().unregister(this);
     }
     
     protected void configTreeListeners(final Tree tree) {

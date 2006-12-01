@@ -30,12 +30,27 @@ public class ThemeRegistry {
         });
     }
     
-    public void register(Themeable lsnr) { _listeners.add(lsnr); lsnr.applyTheme(_cur); }
-    public void unregister(Themeable lsnr) { _listeners.remove(lsnr); }
+    public void register(Themeable lsnr) { 
+        _browser.getUI().debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        _listeners.add(lsnr);
+        lsnr.applyTheme(_cur); 
+    }
+    public void unregister(Themeable lsnr) { 
+        _browser.getUI().debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        _listeners.remove(lsnr); 
+    }
     
     private void notifyAll(Theme theme) {
-        for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
-            ((Themeable)iter.next()).applyTheme(theme);
+        for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) {
+            Themeable cur = (Themeable)iter.next();
+            String err = theme.validate();
+            if (err == null) {
+                _browser.getUI().debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
+                cur.applyTheme(theme);
+            } else {
+                _browser.getUI().errorMessage("cannot apply theme: " + err);
+            }
+        }
     }
     
     public void increaseFont() {

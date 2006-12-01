@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import net.i2p.I2PAppContext;
+import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.widgets.Display;
 import syndie.db.DBClient;
 import syndie.db.TextEngine;
@@ -11,11 +12,30 @@ import syndie.db.TextUI;
 
 /** swt's readAndDispatch needs to be in the main thread */
 public class SWTUI {
+    private static final boolean trackResources(String args[]) {
+        // see browser.dumpResources
+        if (true) return true;
+        if (args != null)
+            for (int i = 0; i < args.length; i++)
+                if ("--trackresources".equalsIgnoreCase(args[i]))
+                    return true;
+        return false;
+    }
+    
     public static void main(final String args[]) {
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
+        boolean trackResources = trackResources(args);
+   
+        Display d = null;
+        if (trackResources) {
+            DeviceData data = new DeviceData();
+            data.tracking = trackResources;
+            d = new Display(data);
+        } else {
+            d = new Display();
+        }
         
-        Display d = Display.getDefault();
         ColorUtil.init();
         ImageUtil.init();
         SpellUtil.init();

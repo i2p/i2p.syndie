@@ -350,6 +350,7 @@ public class PageRenderer {
                     GC gc = new GC(_text);
                     FontMetrics metrics = gc.getFontMetrics();
                     int charWidth = metrics.getAverageCharWidth();
+                    gc.dispose();
                     int paneWidth = _text.getBounds().width;
                     int w = _text.getClientArea().width;
                     int ww = _parent.getClientArea().width;
@@ -539,6 +540,7 @@ public class PageRenderer {
                 GC gc = new GC(_text);
                 FontMetrics metrics = gc.getFontMetrics();
                 charWidth = metrics.getAverageCharWidth();
+                gc.dispose();
             }
             
             _text.setLineAlignment(line, 1, alignment);
@@ -563,6 +565,13 @@ public class PageRenderer {
                 rv.add(tag);
         }
         return rv;
+    }
+    
+    public void dispose() {
+        disposeFonts();
+        disposeColors();
+        disposeImages();
+        _text.dispose(); // should be unnecessary...
     }
     
     private void disposeFonts() {

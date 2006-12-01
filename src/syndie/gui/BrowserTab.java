@@ -15,6 +15,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -97,6 +98,7 @@ abstract class BrowserTab implements Themeable {
         debug("constructing base browser tab");
         _item = new CTabItem(browser.getTabFolder(), SWT.CLOSE | SWT.BORDER);
         _uri = uri;
+        /*
         _scroll = new ScrolledComposite(browser.getTabFolder(), SWT.H_SCROLL | SWT.V_SCROLL);
         _root = new Composite(_scroll, SWT.NONE);
         _scroll.setContent(_root);
@@ -108,6 +110,17 @@ abstract class BrowserTab implements Themeable {
         Point sz1 = _root.computeSize(sz2.width, sz2.height);
         _scroll.setMinSize(sz1);
         debug("**constructing base browser tab: configuring the item: " + sz1 +" / " + sz2 + " - " + getClass().getName());
+         */
+
+        debug("constructing base browser tab: initializing components");
+        _root = new Composite(browser.getTabFolder(), SWT.NONE);
+        _item.setControl(_root);
+        initComponents();
+        //Point sz = _root.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        //debug("** constructing unpacked size: " + sz);
+        //_root.pack(true);
+        //sz = _root.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        //debug("** constructing packed size: " + sz);
         configItem();
     }
     
@@ -116,7 +129,7 @@ abstract class BrowserTab implements Themeable {
     protected void tabShown() {}
     protected void configItem() {
         reconfigItem();
-        _item.setControl(_scroll);
+        //_item.setControl(_scroll);
         _item.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent evt) { _browser.unview(_uri); }
         });

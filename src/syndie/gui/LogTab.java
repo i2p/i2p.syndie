@@ -38,8 +38,8 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class LogTab extends BrowserTab implements Browser.UIListener {
-    private StyledText _out;
+class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
+    private Text _out;
     private Text _in;
     private Button _levelError;
     private Button _levelStatus;
@@ -53,8 +53,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
     
     private List _pendingMessages;
     
-    private static int MAX_LINES = 300;
-    private static final boolean STYLE_LOGS = false; // doesn't work with font resizing
+    private static int MAX_CHARS = 300*120;
     
     public LogTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
@@ -92,31 +91,8 @@ class LogTab extends BrowserTab implements Browser.UIListener {
         _pendingMessages = new ArrayList();
         getRoot().setLayout(new GridLayout(1, true));
         
-        _out = new StyledText(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
+        _out = new Text(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
         _out.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _out.setFont(new Font(_out.getDisplay(), "Courier", 12, SWT.NONE));
-        
-        _out.addKeyListener(new KeyListener() {
-            public void keyReleased(KeyEvent evt) { }
-            public void keyPressed(KeyEvent evt) {
-                switch (evt.character) {
-                    case '=': // ^=
-                    case '+': // ^+
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            _sizeModifier += 2;
-                            rerender();
-                        }
-                        break;
-                    case '_': // ^_
-                    case '-': // ^-
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            _sizeModifier -= 2;
-                            rerender();
-                        }
-                        break;
-                }
-            }
-        });
         
         Group levels = new Group(getRoot(), SWT.NONE);
         levels.setText("Log levels");
@@ -149,6 +125,8 @@ class LogTab extends BrowserTab implements Browser.UIListener {
         _levelStatus.setSelection(_status);
         _levelDebug.setSelection(_debug);
         
+        getBrowser().getThemeRegistry().register(this);
+        
         getBrowser().addUIListener(this);
     }
     
@@ -163,6 +141,7 @@ class LogTab extends BrowserTab implements Browser.UIListener {
 
     protected void disposeDetails() { 
         getBrowser().removeUIListener(this);
+        getBrowser().getThemeRegistry().unregister(this);
         _closed = true; 
         synchronized (_pendingMessages) { 
             _pendingMessages.notify(); 
@@ -174,33 +153,6 @@ class LogTab extends BrowserTab implements Browser.UIListener {
         synchronized (_fmt) {
             return _fmt.format(new Date(when));
         }
-    }
-    
-    private void rerender() {
-        _out.setRedraw(false);
-        Font f = _out.getFont();
-        FontData fd[] = f.getFontData();
-        FontData nfd[] = new FontData[fd.length];
-        for (int j = 0; j < fd.length; j++) {
-            nfd[j] = new FontData(fd[j].name, Math.max(6, fd[j].height+_sizeModifier), fd[j].style);
-        }
-        Font old = f;
-        f = new Font(_out.getDisplay(), nfd);
-        StyleRange ranges[] = _out.getStyleRanges();
-        StyleRange nrange[] = new StyleRange[ranges.length];
-        for (int i = 0; i < ranges.length; i++) {
-            StyleRange r = (StyleRange)ranges[i].clone();
-            r.font = f;
-        }
-        _out.setStyleRanges(nrange);
-        //System.out.println("new font: " + f + " valid? " + !f.isDisposed());
-        // todo: problem with disposing wrt styledtext's ranges
-        //old.dispose();
-        _out.setFont(f);
-        
-        _sizeModifier = 0;
-        _out.setRedraw(true);
-        _out.redraw();
     }
     
     private Color _tsBGColor = ColorUtil.getColor("gray", null);
@@ -227,59 +179,37 @@ class LogTab extends BrowserTab implements Browser.UIListener {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
                 _out.setRedraw(false);
-                int overallStart = _out.getCharCount();
                 
                 while (records.size() > 0) {
                     Record r = (Record)records.remove(0);
-                    int start = _out.getCharCount();
-                    int end = -1;
                     if (r.msg != null) {
                         _out.append(ts(r.when) + ":");
-                        if (STYLE_LOGS) {
-                            end = _out.getCharCount();
-                            StyleRange range = new StyleRange(start, end-start, _tsFGColor, _tsBGColor);
-                            _out.setStyleRange(range);
-                            start = end;
-                        }
                         _out.append(" " + r.msg + "\n");
-                        end = _out.getCharCount();
                     }
                     if (r.e != null) {
                         StringWriter out = new StringWriter();
                         r.e.printStackTrace(new PrintWriter(out));
-                        start = _out.getCharCount();
                         _out.append(ts(r.when));
-                        if (STYLE_LOGS) {
-                            end = _out.getCharCount();
-                            _out.setStyleRange(new StyleRange(start, end-start, _tsFGColor, _tsBGColor));
-                            start = end;
-                        }
                         _out.append("\n" + out.getBuffer().toString() + "\n");
                     }
-                    end = _out.getCharCount();
-                    if (end > overallStart) {
-                        if (STYLE_LOGS) {
-                            int startLine = _out.getLineAtOffset(overallStart);
-                            int curLine = _out.getLineCount()-1;
-                            if (r.type == STATUS)
-                                _out.setLineBackground(startLine, curLine-startLine, _statusColor);
-                            else if (r.type == DEBUG)
-                                _out.setLineBackground(startLine, curLine-startLine, _debugColor);
-                            else
-                                _out.setLineBackground(startLine, curLine-startLine, _errorColor);                    
-                        }
-                    }
                 }
 
-                int lines = _out.getLineCount();
-                if (lines > MAX_LINES) {
-                    int off = _out.getOffsetAtLine(lines-MAX_LINES);
-                    _out.replaceTextRange(0, off, "");
+                int chars = _out.getCharCount();
+                if (chars > MAX_CHARS) {
+                    String str = _out.getText(chars-MAX_CHARS, chars);
+                    _out.setText(""); // blank then append to use the caret
+                    _out.append(str);
                 }
 
+                // unnnecessary - append scrolls for us
+                /*
                 // scroll to the end
-                if (_out.getLineCount() > 0)
-                    _out.setTopIndex(_out.getLineCount()-1);
+                int lines = _out.getLineCount();
+                if (lines > 0) {
+                    System.out.println("Scroll to line " + lines);
+                    _out.setTopIndex(lines-1);
+                }
+                */
                 
                 _out.setRedraw(true);
             }
@@ -308,5 +238,9 @@ class LogTab extends BrowserTab implements Browser.UIListener {
         Exception e;
         public Record(int stat, String newMsg) { this(stat, newMsg, null); }
         public Record(int stat, String newMsg, Exception cause) { when = System.currentTimeMillis(); type = stat; msg = newMsg; e = cause; }
+    }
+    
+    public void applyTheme(Theme theme) {
+        _out.setFont(theme.LOG_FONT);
     }
 }

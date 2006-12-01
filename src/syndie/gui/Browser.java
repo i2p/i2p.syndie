@@ -1,6 +1,9 @@
 package syndie.gui;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -19,6 +22,10 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.DeviceData;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -90,11 +97,15 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _advancedMenuTextUI;
     private MenuItem _advancedMenuSQL;
     private MenuItem _advancedMenuLogs;
+    private MenuItem _advancedMenuDumpResources;
+    private MenuItem _advancedMenuDumpResourcesDiff;
     private MenuItem _helpMenuRoot;
     private MenuItem _helpMenuAbout;
     private MenuItem _helpMenuFAQ;
     private MenuItem _helpMenuGUIManual;
     private MenuItem _helpMenuTextManual;
+    private Tray _systray;
+    private TrayItem _systrayRoot;
     private ToolTip _systrayTip;
     
     private Composite _statusRow;
@@ -133,14 +144,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         initSystray();
         
         _sash = new SashForm(_shell, SWT.HORIZONTAL);
-        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
         _tabs.setSimple(false);
         _tabs.setMinimizeVisible(false);
-        _tabs.setMinimumCharacters(8);
+        _tabs.setMinimumCharacters(20);
         _tabs.setUnselectedImageVisible(true);
         _tabs.setBorderVisible(true);
         
@@ -175,14 +186,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _translation.register(this);
         _themes.register(this);
         
-        debugMessage("=tabs: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         _sash.setWeights(new int[] { 20, 80 });
-        
-        debugMessage("=tabs weghted: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        _shell.pack();
-        debugMessage("=tabs packed: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        final Point min = _shell.computeSize(SWT.DEFAULT, 500);
-        _shell.setSize(min);//800, 500));
+        _shell.setMinimumSize(_shell.computeSize(600, 300));
         
         debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         _bookmarks.viewStartupItems();
@@ -273,7 +278,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { increaseFont(); }
             public void widgetSelected(SelectionEvent selectionEvent) { increaseFont(); }
         });
-        _styleMenuIncreaseFont.setAccelerator(SWT.MOD1 + '=');
+        _styleMenuIncreaseFont.setAccelerator(SWT.MOD1 + '='); // '=' is an unshifted +
         _styleMenuDecreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
         _styleMenuDecreaseFont.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { decreaseFont(); }
@@ -304,6 +309,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
         });
+        _advancedMenuDumpResources = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuDumpResources.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { dumpResources(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { dumpResources(true); }
+        });
+        _advancedMenuDumpResourcesDiff = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuDumpResourcesDiff.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { dumpResources(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { dumpResources(false); }
+        });
         
         new MenuItem(_mainMenu, SWT.SEPARATOR);
         
@@ -319,13 +334,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private void initSystray() {
-        Tray tray = _shell.getDisplay().getSystemTray();
-        TrayItem root = new TrayItem(tray, SWT.NONE);
+        _systray = _shell.getDisplay().getSystemTray();
+        _systrayRoot = new TrayItem(_systray, SWT.NONE);
         _systrayTip = new ToolTip(_shell, SWT.BALLOON);
         _systrayTip.setAutoHide(true);
-        root.setToolTip(_systrayTip);
-        root.setImage(createSystrayIcon());
-        root.addSelectionListener(new SelectionListener() {
+        _systrayRoot.setToolTip(_systrayTip);
+        _systrayRoot.setImage(createSystrayIcon());
+        _systrayRoot.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _shell.setVisible(!_shell.isVisible());
             }
@@ -341,7 +356,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         confirm.setMessage(_translation.getText(T_CONFIRM_EXIT_MESSAGE, "Are you sure you want to exit Syndie?"));
         int rv = confirm.open();
         if (rv == SWT.YES) {
-            Display.getDefault().getSystemTray().dispose();
+            // windows doesn't clean up the systray icon so quickly on exit, so
+            // lets force it to show nothing explicitly
+            _systrayRoot.setImage(null);
+            _systrayRoot.setVisible(false);
+            _systrayRoot.dispose();
+            _systray.dispose();
             _shell.setVisible(false);
             JobRunner.instance().stop();
             System.exit(0);
@@ -538,6 +558,155 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private void increaseFont() { _themes.increaseFont(); }
     private void decreaseFont() { _themes.decreaseFont(); }
+    
+    private List _lastDumpedObj;
+    private List _lastDumpedSrc;
+    private void dumpResources(boolean full) {
+        ArrayList dumpedObj = new ArrayList();
+        ArrayList dumpedSrc = new ArrayList();
+        DeviceData data = _shell.getDisplay().getDeviceData();
+        if (data.tracking) {
+            Object objs[] = data.objects;
+            for (int i = 0; i < objs.length; i++)
+                dumpedObj.add(objs[i]);
+            Error srcs[] = data.errors;
+            for (int i = 0; i < srcs.length; i++)
+                dumpedSrc.add(srcs[i]);
+            
+            List lost = new ArrayList();
+            List added = new ArrayList();
+            int addedImages = 0;
+            int addedFonts = 0;
+            int addedColors = 0;
+            int addedGC = 0;
+            lost = new ArrayList();
+            added = new ArrayList();
+            for (int i = 0; i < dumpedObj.size(); i++) {
+                Object cur = dumpedObj.get(i);
+                if ( (_lastDumpedObj == null) || (!_lastDumpedObj.contains(cur)) ) {
+                    if (cur instanceof Image) {
+                        addedImages++;
+                    } else if (cur instanceof Font) {
+                        addedFonts++;
+                    } else if (cur instanceof Color) {
+                        addedColors++;
+                    } else if (cur instanceof GC) {
+                        addedGC++;
+                    }
+                    added.add(cur);
+                }
+            }
+            if (full) {
+                for (int i = 0; i < dumpedObj.size(); i++) {
+                    Object cur = dumpedObj.get(i);
+                    Error e = (Error)dumpedSrc.get(i);
+                    if (cur instanceof Image)
+                        display("", (Image)cur, e);
+                    else if (cur instanceof Font)
+                        display("", (Font)cur, e);
+                    else if (cur instanceof Color)
+                        display("", (Color)cur, e);
+                    else if (cur instanceof GC)
+                        display("", (GC)cur, e);
+                }
+            }
+            if (_lastDumpedObj != null) {
+                for (int i = 0; i < _lastDumpedObj.size(); i++) {
+                    Object cur = (Object)_lastDumpedObj.get(i);
+                    if (!dumpedObj.contains(cur))
+                        lost.add(cur);
+                }
+            }
+            debugMessage("**DUMP: " + dumpedObj.size() + " total resources, " + added.size() + " new, " + lost.size() + " removed");
+            StringBuffer buf = new StringBuffer();
+            buf.append("**DUMP: added: ");
+            for (int i = 0; i < added.size(); i++)
+                buf.append(added.get(i)).append("/").append(System.identityHashCode(added.get(i))).append(" ");
+            debugMessage(buf.toString());
+            buf.setLength(0);
+            buf.append("**DUMP: lost: ");
+            for (int i = 0; i < lost.size(); i++)
+                buf.append(lost.get(i)).append("/").append(System.identityHashCode(lost.get(i))).append(" ");
+            debugMessage(buf.toString());
+            if (addedImages > 0) {
+                for (int i = 0; i < added.size(); i++) {
+                    Object cur = added.get(i);
+                    Error src = (Error)dumpedSrc.get(dumpedObj.indexOf(cur));
+                    if (cur instanceof Image)
+                        display("added", (Image)cur, src);
+                }
+            }
+            if (addedColors > 0) {
+                for (int i = 0; i < added.size(); i++) {
+                    Object cur = added.get(i);
+                    Error src = (Error)dumpedSrc.get(dumpedObj.indexOf(cur));
+                    if (cur instanceof Color)
+                        display("added", (Color)cur, src);
+                }
+            }
+            if (addedFonts > 0) {
+                for (int i = 0; i < added.size(); i++) {
+                    Object cur = added.get(i);
+                    Error src = (Error)dumpedSrc.get(dumpedObj.indexOf(cur));
+                    if (cur instanceof Font)
+                        display("added", (Font)cur, src);
+                }
+            }
+            if (addedGC > 0) {
+                for (int i = 0; i < added.size(); i++) {
+                    Object cur = added.get(i);
+                    Error src = (Error)dumpedSrc.get(dumpedObj.indexOf(cur));
+                    if (cur instanceof GC)
+                        display("added", (GC)cur, src);
+                }
+            }
+            _lastDumpedObj = dumpedObj;
+            _lastDumpedSrc = dumpedSrc;
+        }
+    }
+    private static final String hex(int val) {
+        if (val <= 0x0f)
+            return "0" + Integer.toHexString(val);
+        else
+            return Integer.toHexString(val);
+    }
+    private void display(String prefix, Image img, Error src) {
+        Rectangle rect = img.getBounds();
+        debugMessage("**DUMP: " + prefix + " image: " + img.toString() + " is " + rect.width +"x" + rect.height + " [" + System.identityHashCode(img) + "]");
+        if (src == null) return;
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        src.printStackTrace(pw);
+        debugMessage(sw.toString());
+    }
+    private void display(String prefix, Color c, Error src) {
+        debugMessage("**DUMP: " + prefix + " color: " + hex(c.getRed()) + hex(c.getGreen()) + hex(c.getBlue()) + " [" + System.identityHashCode(c) + "]");
+        if (src == null) return;
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        src.printStackTrace(pw);
+        debugMessage(sw.toString());
+    }
+    private void display(String prefix, Font f, Error src) {
+        FontData fd[] = f.getFontData();
+        debugMessage("**DUMP: " + prefix + " font: " + fd[0].getName()+ "/" + fd[0].getHeight() + "/" +
+                     ((fd[0].getStyle() & SWT.BOLD) != 0 ? "bold" : "") + "/" +
+                     ((fd[0].getStyle() & SWT.ITALIC) != 0 ? "italic" : "") +
+                     " [" + System.identityHashCode(f) + "]");
+        if (src == null) return;
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        src.printStackTrace(pw);
+        debugMessage(sw.toString());
+    }
+    private void display(String prefix, GC gc, Error src) {
+        debugMessage("**DUMP: " + prefix + " GC: " + gc + " [" + System.identityHashCode(gc) + "]");
+        if (src == null) return;
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        src.printStackTrace(pw);
+        debugMessage(sw.toString());
+    }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
@@ -754,6 +923,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
     private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
     private static final String T_ADVANCED_MENU_SQL = "syndie.gui.browser.advancedmenu.sql";
+    private static final String T_ADVANCED_MENU_DUMPRESOURCES = "syndie.gui.browser.advancedmenu.dumpresources";
+    private static final String T_ADVANCED_MENU_DUMPRESOURCESDIFF = "syndie.gui.browser.advancedmenu.dumpresourcesdiff";
     private static final String T_HELP_MENU_TITLE = "syndie.gui.browser.helpmenu.title";
     private static final String T_HELP_MENU_ABOUT = "syndie.gui.browser.helpmenu.about";
     private static final String T_HELP_MENU_FAQ = "syndie.gui.browser.helpmenu.faq";
@@ -806,6 +977,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "&Logs"));
         _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "&Text interface"));
         _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "&SQL interface"));
+        _advancedMenuDumpResources.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCES, "Dump resources"));
+        _advancedMenuDumpResourcesDiff.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCESDIFF, "Dump resource differences"));
 
         _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "&Help"));
         _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "&About"));

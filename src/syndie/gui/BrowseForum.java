@@ -4,6 +4,8 @@ import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,8 +45,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private Composite _top;
     private Composite _meta;
     private ImageCanvas _metaAvatar;
-    private Link _metaName;
+    private Label _metaName;
     private Menu _metaNameMenu;
+    private Label _metaDesc;
     private MenuItem _metaNameMenuView;
     private MenuItem _metaNameMenuBookmark;
     private MenuItem _metaNameMenuMarkRead;
@@ -91,14 +94,17 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _top.setLayout(new GridLayout(1, true));
         _meta = new Composite(_top, SWT.NONE);
         _meta.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _meta.setLayout(new GridLayout(7, false));
+        _meta.setLayout(new GridLayout(8, false));
 
         _metaAvatar = new ImageCanvas(_meta, false);
         _metaAvatar.forceSize(20, 20);
         _metaAvatar.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _metaName = new Link(_meta, SWT.NONE);
-        _metaName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
+        _metaName = new Label(_meta, SWT.WRAP);
+        _metaName.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         _metaName.setText("");
+        _metaDesc = new Label(_meta, SWT.WRAP);
+        _metaDesc.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
+        _metaDesc.setText("");
         _metaIconManageable = new Label(_meta, SWT.NONE);
         _metaIconPostable = new Label(_meta, SWT.NONE);
         _metaIconArchives = new Label(_meta, SWT.NONE);
@@ -139,9 +145,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         });
         
         _metaName.setMenu(_metaNameMenu);
-        _metaName.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
+        _metaName.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) { _metaNameMenu.setVisible(true); }
+            public void mouseUp(MouseEvent mouseEvent) {}
+        });
+        _metaName.addKeyListener(new KeyListener() {
+            public void keyPressed(KeyEvent keyEvent) {}
+            public void keyReleased(KeyEvent keyEvent) { _metaNameMenu.setVisible(true); }
         });
         
         _metaIconManageable.addMouseListener(new MouseListener() {
@@ -205,7 +216,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _browser.getUI().debugMessage("browseForum.initialize: creating preview");
         _preview = new MessagePreview(_browser, _root);
         _browser.getUI().debugMessage("browseForum.initialize: preview created");
-        _root.setWeights(new int[] { 80, 20 });
+        _root.setWeights(new int[] { 50, 50 });
         
         if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
             _root.setMaximizedControl(_preview.getControl());
@@ -252,13 +263,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             String name = info.getName();
             if (name == null) name = scope.toBase64().substring(0,6);
             StringBuffer buf = new StringBuffer();
-            buf.append("<a>");
-            buf.append(CommandImpl.strip(name, "\n\r\t<>", ' '));
-            buf.append("</a>: ");
+            _metaName.setText(name);
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
-            buf.append(desc);
-            _metaName.setText(buf.toString());
+            _metaDesc.setText(desc);
             boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
             _metaIconManageable.setVisible(manage);
             boolean post = manage || info.getAllowPublicPosts() || (_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);
@@ -274,7 +282,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             boolean admins = (info.getAuthorizedManagers().size() > 0) || (info.getAuthorizedPosters().size() > 0);
             _metaIconAdmins.setVisible(admins);
         } else {
-            _metaName.setText(_browser.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
+            _metaName.setText("");
+            _metaDesc.setText(_browser.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
             _metaIconManageable.setVisible(false);
             _metaIconPostable.setVisible(false);
             _metaIconArchives.setVisible(false);
@@ -388,8 +397,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     }
     
     public void applyTheme(Theme theme) {
-        _metaName.setFont(theme.DEFAULT_FONT);
-        _meta.layout(true, true);
+        _metaName.setFont(theme.LINK_FONT);
+        _metaDesc.setFont(theme.DEFAULT_FONT);
         _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
         _root.layout(true, true);
     }
