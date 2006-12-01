@@ -115,7 +115,10 @@ public class ReferenceChooserSearch implements Translatable {
         _browser.getTranslationRegistry().unregister(this);
     }
     
-    private void search() {
+    public void setName(String name) { _name.setText(name); }
+    public void setTags(String tags) { _tags.setText(tags); }
+    
+    public void search() {
         String name = _name.getText().trim();
         String tags = _tags.getText().trim();
         String hash = _hash.getText().trim();

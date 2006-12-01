@@ -1,16 +1,27 @@
 package syndie.gui;
 
+import java.util.Collection;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ChannelInfo;
@@ -22,14 +33,18 @@ import syndie.db.DBClient;
 /**
  *
  */
-class BrowserTree extends ReferenceChooserTree implements Translatable {
-    private BrowserControl _browser;
+class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
     private Menu _bookmarkMenu;
     private Menu _postMenu;
     private Menu _manageMenu;
     private Menu _searchMenu;
     
+    private Text _search;
+    private Button _searchAdvanced;
+    
     private BookmarkEditorPopup _bookmarkEditor;
+    private ReferenceChooserSearch _searchDetail;
+    private Shell _searchDetailPopup;
 
     private MenuItem _bookmarkMenuView;
     private MenuItem _bookmarkMenuEdit;
@@ -41,9 +56,70 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
     
     public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         super(browser, parent, lsnr, accept, false);
-        _browser = browser;
         _bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
-        browser.getTranslationRegistry().register(this);
+    }
+    
+    protected void initComponents(boolean register) {
+        super.initComponents(false);
+        
+        Composite searchRow = new Composite((Composite)getControl(), SWT.NONE);
+        searchRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        searchRow.setLayout(new GridLayout(2, false));
+        
+        _search = new Text(searchRow, SWT.BORDER | SWT.SINGLE);
+        _search.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _search.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN)
+                    search();
+            }
+        });
+        
+        _searchAdvanced = new Button(searchRow, SWT.PUSH);
+        _searchAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        _searchAdvanced.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { searchAdvanced(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { searchAdvanced(); }
+        });
+        
+        createSearchDetailPopup();
+        
+        getBrowser().getTranslationRegistry().register(this);
+        getBrowser().getThemeRegistry().register(this);
+    }
+    
+    private void search() {
+        String txt = _search.getText();
+        _searchDetail.setTags(txt);
+        _searchDetail.search();
+        _searchDetailPopup.setVisible(false);
+    }
+    private void searchAdvanced() { 
+        String txt = _search.getText();
+        _searchDetail.setTags(txt);
+        _searchDetailPopup.open(); 
+    }
+    
+    public void setSearchResults(Collection resultNodes) {
+        super.setSearchResults(resultNodes);
+        _searchDetailPopup.setVisible(false);
+    }
+    
+    private void createSearchDetailPopup() {
+        _searchDetailPopup = new Shell(_search.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _searchDetailPopup.setLayout(new FillLayout());
+        _searchDetail = new ReferenceChooserSearch(_searchDetailPopup, this, getBrowser());
+        _searchDetailPopup.setSize(_searchDetailPopup.computeSize(300, SWT.DEFAULT));
+        
+        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
+        _searchDetailPopup.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; _searchDetailPopup.setVisible(false); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+
     }
     
     public void viewStartupItems() { viewStartupItems(getBookmarkRoot()); }
@@ -52,7 +128,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         if (item == null) return;
         NymReferenceNode node = getBookmark(item);
         if ( (node != null) && node.getLoadOnStart())
-            _browser.view(node.getURI());
+            getBrowser().view(node.getURI());
         for (int i = 0; i < item.getItemCount(); i++)
             viewStartupItems(item.getItem(i));
     }
@@ -68,8 +144,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         _bookmarkMenu = new Menu(tree);
         _bookmarkMenuView = new MenuItem(_bookmarkMenu, SWT.PUSH);
         _bookmarkMenuView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(getBookmarkURI(getSelectedItem())); }
-            public void widgetSelected(SelectionEvent evt) { _browser.view(getBookmarkURI(getSelectedItem())); }
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBookmarkURI(getSelectedItem())); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBookmarkURI(getSelectedItem())); }
         });
         _bookmarkMenuEdit = new MenuItem(_bookmarkMenu, SWT.PUSH);
         _bookmarkMenuEdit.addSelectionListener(new SelectionListener() {
@@ -90,22 +166,22 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         _postMenu = new Menu(tree);
         _postMenuItem = new MenuItem(_postMenu, SWT.PUSH);
         _postMenuItem.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createPostURI(getPostScope(getSelectedItem()), null, false)); }
-            public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createPostURI(getPostScope(getSelectedItem()), null, false)); }
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(getPostScope(getSelectedItem()), null, false)); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(getPostScope(getSelectedItem()), null, false)); }
         });
         
         _manageMenu = new Menu(tree);
         _manageMenuItem = new MenuItem(_manageMenu, SWT.PUSH);
         _manageMenuItem.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
-            public void widgetSelected(SelectionEvent evt) { _browser.view(_browser.createManageURI(getManageScope(getSelectedItem()))); }
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(getManageScope(getSelectedItem()))); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(getManageScope(getSelectedItem()))); }
         });
         
         _searchMenu = new Menu(tree);
         _searchMenuView = new MenuItem(_searchMenu, SWT.PUSH);
         _searchMenuView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _browser.view(getSearchResultURI(getSelectedItem())); }
-            public void widgetSelected(SelectionEvent evt) { _browser.view(getSearchResultURI(getSelectedItem())); }
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
         });
         
         tree.setMenu(null);
@@ -136,11 +212,11 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         NymReferenceNode node = getBookmark(item);
         if (node != null) {
             MessageBox box = new MessageBox(getControl().getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Are you sure you want to delete this bookmark?"));
-            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_DELETE_TITLE, "Confirm"));
+            box.setMessage(getBrowser().getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Are you sure you want to delete this bookmark?"));
+            box.setText(getBrowser().getTranslationRegistry().getText(T_CONFIRM_DELETE_TITLE, "Confirm"));
             int rc = box.open();
             if (rc == SWT.YES)
-                _browser.deleteBookmark(node.getGroupId());
+                getBrowser().deleteBookmark(node.getGroupId());
         }
     }
     
@@ -216,7 +292,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         /** the user doubleclicked on the selected row */
         public void doubleclick() {
             TreeItem item = getSelected();
-            _browser.getUI().debugMessage("browserTree doubleclick on " + item);
+            getBrowser().getUI().debugMessage("browserTree doubleclick on " + item);
             if (item != null)
                 fireDefaultAction(item);
         }
@@ -239,22 +315,22 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
     private void fireDefaultAction(TreeItem item) {
         NymReferenceNode bookmark = getBookmark(item);
         if (bookmark != null) {
-            _browser.view(bookmark.getURI());
+            getBrowser().view(bookmark.getURI());
             return;
         }
         ChannelInfo chan = getPostChannel(item);
         if (chan != null) {
-            _browser.view(SyndieURI.createScope(chan.getChannelHash()));
+            getBrowser().view(SyndieURI.createScope(chan.getChannelHash()));
             return;
         }
         chan = getManageChannel(item);
         if (chan != null) {
-            _browser.view(SyndieURI.createScope(chan.getChannelHash()));
+            getBrowser().view(SyndieURI.createScope(chan.getChannelHash()));
             return;
         }
         ReferenceNode search = getSearchResult(item);
         if (search != null) {
-            _browser.view(search.getURI());
+            getBrowser().view(search.getURI());
             return;
         }
     }
@@ -266,6 +342,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
     private static final String T_POST_TITLE = "syndie.gui.browsertree.post.title";
     private static final String T_MANAGE_TITLE = "syndie.gui.browsertree.manage.title";
     private static final String T_SEARCH_VIEW = "syndie.gui.browsertree.search.view";
+    private static final String T_SEARCH_ADVANCED = "syndie.gui.browsertree.searchadvanced";
+    private static final String T_SEARCH_DETAIL_POPUP = "syndie.gui.browsertree.searchdetailpopup";
     // confirm delete is created on demand, and translated on creation
     private static final String T_CONFIRM_DELETE_TITLE = "syndie.gui.confirmdelete.title";
     private static final String T_CONFIRM_DELETE_MESSAGE = "syndie.gui.confirmdelete.message";
@@ -279,5 +357,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable {
         _postMenuItem.setText(registry.getText(T_POST_TITLE, "Post"));
         _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
         _searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
+        _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Advanced..."));
+        _searchDetailPopup.setText(registry.getText(T_SEARCH_DETAIL_POPUP, "Search"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        super.applyTheme(theme);
+        _searchDetailPopup.setFont(theme.SHELL_FONT);
+        _search.setFont(theme.DEFAULT_FONT);
+        _searchAdvanced.setFont(theme.BUTTON_FONT);
     }
 }

@@ -88,6 +88,8 @@ abstract class BrowserTab implements Themeable {
             return new SyndicationTab(browser, uri);
         } else if (TYPE_SQL.equals(uri.getType())) {
             return new SQLTab(browser, uri);
+        } else if (uri.isText()) {
+            return new PageRendererTab(browser, uri);
         }
         
         return null;

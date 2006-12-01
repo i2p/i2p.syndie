@@ -15,6 +15,8 @@ import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -46,6 +48,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     /** list of ReferenceNode instances matching the search criteria */
     private ArrayList _searchResults;
     
+    private Composite _root;
     private Tree _tree;
     private TreeItem _bookmarkRoot;
     /** map of TreeItem to NymReferenceNode */
@@ -82,11 +85,11 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _manageChannels = new HashMap();
         _searchNodes = new HashMap();
         _searchResults = new ArrayList();
-        initComponents();
+        initComponents(true);
     }
 
     DBClient getClient() { return _client; }
-    public Control getControl() { return _tree; }
+    public Control getControl() { return _root; }
     /**
      * update the search results to display.  this then redraws the seach result entry in the
      * swt display thread.
@@ -106,6 +109,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected ChoiceListener getChoiceListener() { return _choiceListener; }
     protected AcceptanceListener getAcceptanceListener() { return _acceptanceListener; }
     protected Tree getTree() { return _tree; }
+    protected BrowserControl getBrowser() { return _browser; }
     
     public interface ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node);
@@ -165,8 +169,11 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         }
     }
     
-    private void initComponents() {
-        _tree = new Tree(_parent, SWT.BORDER | SWT.SINGLE);
+    protected void initComponents(boolean register) {
+        _root = new Composite(_parent, SWT.NONE);
+        _root.setLayout(new GridLayout(1, true));
+        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
+        _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _bookmarkRoot = new TreeItem(_tree, SWT.NONE);
         _postRoot = new TreeItem(_tree, SWT.NONE);
         _manageRoot = new TreeItem(_tree, SWT.NONE);
@@ -181,8 +188,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         redrawSearchResults();
         
         _chooseAllStartupItems = false;
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        if (register) {
+            _browser.getTranslationRegistry().register(this);
+            _browser.getThemeRegistry().register(this);
+        }
     }
     
     public void dispose() {
