@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -20,6 +21,7 @@ public class ThemeRegistry {
     public ThemeRegistry(BrowserControl browser) {
         _browser = browser;
         _cur = Theme.getDefault();
+        //loadTheme();
         // the SWT.Settings event is fired when the user adjust their OSes system
         // theme (adjusting fonts, colors, etc).  we may want to revamp our fonts
         // based on that
@@ -40,6 +42,8 @@ public class ThemeRegistry {
         _listeners.remove(lsnr); 
     }
     
+    public Theme getTheme() { return _cur; }
+    
     private void notifyAll(Theme theme) {
         for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) {
             Themeable cur = (Themeable)iter.next();
@@ -52,15 +56,28 @@ public class ThemeRegistry {
             }
         }
     }
-    
+
     public void increaseFont() {
         _browser.getUI().debugMessage("increasing font size");
         _cur.increaseFont();
         notifyAll(_cur);
+        saveTheme();
     }
     public void decreaseFont() {
         _browser.getUI().debugMessage("decreasing font size");
         _cur.decreaseFont();
+        notifyAll(_cur);
+        saveTheme();
+    }
+    
+    private void saveTheme() {
+        Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+        _cur.store(prefs);
+        _browser.getClient().setNymPrefs(_browser.getClient().getLoggedInNymId(), prefs);
+    }
+    public void loadTheme() {
+        Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+        _cur = Theme.getTheme(prefs);
         notifyAll(_cur);
     }
 }

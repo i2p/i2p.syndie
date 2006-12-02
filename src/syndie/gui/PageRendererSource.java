@@ -13,8 +13,14 @@ import syndie.db.DBClient;
  */
 public class PageRendererSource {
     private DBClient _client;
-    protected PageRendererSource() {}
-    public PageRendererSource(DBClient client) { _client = client; }
+    private BrowserControl _browser;
+    private PageRendererSource() {}
+    public PageRendererSource(BrowserControl browser) { this(browser, browser.getClient()); }
+    /** two separate parameters to allow client to be null while browser has useful components (like theme/translation registries) */
+    public PageRendererSource(BrowserControl browser, DBClient client) { 
+        _browser = browser;
+        _client = client;
+    }
     
     public MessageInfo getMessage(long chanId, Long msgId) { return _client.getMessage(chanId, msgId); }
     public Hash getChannelHash(long authorId) { return _client.getChannelHash(authorId); }
@@ -36,4 +42,6 @@ public class PageRendererSource {
     public byte[] getMessageAttachmentData(long internalMsgId, int attachmentId) {
         return _client.getMessageAttachmentData(internalMsgId, attachmentId-1);
     }
+
+    public Theme getTheme() { return _browser.getThemeRegistry().getTheme(); }
 }

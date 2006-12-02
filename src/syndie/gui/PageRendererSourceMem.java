@@ -22,8 +22,8 @@ public class PageRendererSourceMem extends PageRendererSource {
     /** contains the message's general config data */
     private MessageInfo _msg;
     
-    public PageRendererSourceMem(DBClient client, MessageInfo msg, List pageData, List attachments, List attachmentOrder) {
-        super(client);
+    public PageRendererSourceMem(BrowserControl browser, DBClient client, MessageInfo msg, List pageData, List attachments, List attachmentOrder) {
+        super(browser, client);
         _msg = msg;
         _pageData = pageData;
         _attachments = attachments;

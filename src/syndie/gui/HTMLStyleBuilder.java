@@ -611,22 +611,33 @@ class HTMLStyleBuilder {
         rv.putAll(defaultCfg);
         // now override it with the nym's preferences
         // (aka create a table to store the gui prefs in, and pull 'em out)
+        // ((or not, and just use syndie's theming))
         return rv;
     }
     
     private Properties getDefaultConfig() {
         Properties rv = new Properties();
-        rv.setProperty("default", "Times;12;NORMAL");
-        rv.setProperty("p", "Times;12;NORMAL");
-        rv.setProperty("li", "Times;12;NORMAL");
-        rv.setProperty("h1", "Times;24;BOLD");
-        rv.setProperty("h2", "Times;18;BOLD");
-        rv.setProperty("h3", "Times;12;BOLD");
-        rv.setProperty("h4", "Times;8;BOLD");
-        rv.setProperty("h5", "Times;6;BOLD");
-        rv.setProperty("pre", "Courier;12;NORMAL");
-        rv.setProperty("code", "Courier;12;NORMAL");
-        rv.setProperty("a", "Times;12;NORMAL");
+        Theme theme = _source.getTheme();
+        
+        String face = Theme.getFace(theme.CONTENT_FONT);
+        int size = Theme.getSize(theme.CONTENT_FONT);
+        
+        rv.setProperty("default", face + ';' + size + ";NORMAL");
+        rv.setProperty("p", face + ';' + size + ";NORMAL");
+        rv.setProperty("li", face + ';' + size + ";NORMAL");
+        
+        rv.setProperty("h1", face + ';' + (size+16) + ";BOLD");
+        rv.setProperty("h2", face + ';' + (size+8) + ";BOLD");
+        rv.setProperty("h3", face + ';' + size + ";BOLD");
+        rv.setProperty("h4", face + ';' + Math.max(size-4, 6) + ";BOLD");
+        rv.setProperty("h5", face + ';' + Math.max(size-8, 6) + ";BOLD");
+        rv.setProperty("pre", "Courier;" + size + ";NORMAL");
+        rv.setProperty("code", "Courier;" + size + ";NORMAL");
+        
+        face = Theme.getFace(theme.LINK_FONT);
+        size = Theme.getSize(theme.LINK_FONT);
+        rv.setProperty("a", face + ';' + size + ";NORMAL");
+        
         return rv;
     }
     

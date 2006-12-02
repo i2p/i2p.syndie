@@ -190,7 +190,7 @@ public class MessagePreview {
         } else {
             if (_page != 1)
                 uri = SyndieURI.createMessage(uri.getScope(), uri.getMessageId().longValue(), _page);
-            _body.renderPage(new PageRendererSource(_client), uri);
+            _body.renderPage(new PageRendererSource(_browser), uri);
             _bodyStack.topControl = _body.getComposite();
             _root.layout(true, true);
         }
@@ -347,7 +347,7 @@ public class MessagePreview {
         pane.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         //_body = new PageRenderer(_root, true);
-        _body = new PageRenderer(pane, true);
+        _body = new PageRenderer(pane, true, _browser);
         //_body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) {

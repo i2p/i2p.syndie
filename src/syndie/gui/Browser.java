@@ -213,6 +213,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             prompt.login();
         } else {
             //_syndicationManager.loadArchives();
+            _themes.loadTheme();
             if (!_shell.isVisible())
                 _shell.open();
         }
@@ -226,8 +227,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Menu fileMenu = new Menu(_fileMenuRoot);
         _fileMenuRoot.setMenu(fileMenu);
         _fileMenuOpen = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuOpen.setEnabled(false);
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuImport.setEnabled(false);
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuExport.setEnabled(false);
         _fileMenuExit = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { exit(); }
@@ -243,6 +247,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { postNew(); }
         });
         _postMenuResume = new MenuItem(postMenu, SWT.PUSH);
+        _postMenuResume.setEnabled(false);
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu syndicateMenu = new Menu(_syndicateMenuRoot);
@@ -290,6 +295,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { }
             public void widgetSelected(SelectionEvent selectionEvent) { }
         });
+        _styleMenuEdit.setEnabled(false);
         
         _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu advancedMenu = new Menu(_advancedMenuRoot);
@@ -326,9 +332,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Menu helpMenu = new Menu(_helpMenuRoot);
         _helpMenuRoot.setMenu(helpMenu);
         _helpMenuAbout = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuAbout.setEnabled(false);
         _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuFAQ.setEnabled(false);
         _helpMenuGUIManual = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuGUIManual.setEnabled(false);
         _helpMenuTextManual = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuTextManual.setEnabled(false);
         
         _shell.setMenuBar(_mainMenu);
     }

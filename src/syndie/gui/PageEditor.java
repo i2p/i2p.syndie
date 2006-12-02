@@ -243,7 +243,7 @@ public class PageEditor implements Translatable {
         addEditListeners();
         
         getUI().debugMessage("pageEditor.buildControls building page renderer");
-        _preview = new PageRenderer(_sash, true);
+        _preview = new PageRenderer(_sash, true, _browser);
         getUI().debugMessage("pageEditor.buildControls page renderer built");
         if (html) {
             _sash.setMaximizedControl(null);
@@ -845,7 +845,7 @@ public class PageEditor implements Translatable {
             attachmentOrder.add(name);
             attachments.add(data);
         }
-        PageRendererSourceMem src = new PageRendererSourceMem(null, msgInfo, pageData, attachments, attachmentOrder);
+        PageRendererSourceMem src = new PageRendererSourceMem(_browser, null, msgInfo, pageData, attachments, attachmentOrder);
         _preview.setRender(true);
         long before = System.currentTimeMillis();
         _preview.renderPage(src, _dummyURI);

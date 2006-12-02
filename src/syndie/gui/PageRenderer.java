@@ -45,7 +45,8 @@ import syndie.db.DBClient;
  * hover/menu/selection events for html elements
  *
  */
-public class PageRenderer {
+public class PageRenderer implements Themeable {
+    private BrowserControl _browser;
     private Composite _parent;
     private StyledText _text;
     private PageRendererSource _source;
@@ -124,9 +125,10 @@ public class PageRenderer {
     private int _viewSizeModifier;
     private int _charsPerLine;
     
-    public PageRenderer(Composite parent) { this(parent, false); }
-    public PageRenderer(Composite parent, boolean scrollbars) {
+    public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
+    public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
         _parent = parent;
+        _browser = browser;
         if (scrollbars)
             _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         else
@@ -247,7 +249,7 @@ public class PageRenderer {
                 }
             }
         });
-        
+        _browser.getThemeRegistry().register(this);
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
@@ -293,7 +295,7 @@ public class PageRenderer {
         //System.out.println("rendering "+ msg + ": " + pageNum);
         Cursor cursor = _parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
         _parent.setCursor(cursor);
-        _text.setVisible(false);
+        //_text.setRedraw(false);
         PageRendererThread.enqueue(this);
     }
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
@@ -321,6 +323,7 @@ public class PageRenderer {
     private void renderText(final String body) {
         _text.getDisplay().asyncExec(new Runnable() {
             public void run() {
+                _text.setRedraw(false);
                 disposeFonts();
                 disposeColors();
                 disposeImages();
@@ -331,6 +334,7 @@ public class PageRenderer {
                 }
                 _text.setStyleRanges(null, null);
                 _text.setVisible(true);
+                _text.setRedraw(true);
                 _parent.setCursor(null);
                 if (body == null)
                     _text.setEnabled(false);
@@ -398,12 +402,17 @@ public class PageRenderer {
         _linkTags = sbuilder.getLinkTags();
         _imageTags = sbuilder.getImageTags();
         
+        _browser.getUI().debugMessage("before syncExec to write on the styledText");
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
+                _text.setRedraw(false);
                 _text.setEnabled(true);
                 _text.setText(text);
+                _browser.getUI().debugMessage("syncExec to write on the styledText: text written");
                 _text.setStyleRanges(sbuilder.getStyleRanges());
+                _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set");
                 setLineProperties(builder, sbuilder);
+                _browser.getUI().debugMessage("syncExec to write on the styledText: line props set");
 
                 _bgImage = sbuilder.getBackgroundImage();
                 if (_bgImage != null) {
@@ -417,7 +426,9 @@ public class PageRenderer {
                 if (_bgColor != null)
                     _text.setBackground(_bgColor);
                 _text.setVisible(true);
+                _text.setRedraw(true);
                 _parent.setCursor(null);
+                _browser.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured");
             }
         });
     }
@@ -571,6 +582,7 @@ public class PageRenderer {
         disposeFonts();
         disposeColors();
         disposeImages();
+        _browser.getThemeRegistry().unregister(this);
         _text.dispose(); // should be unnecessary...
     }
     
@@ -1221,7 +1233,7 @@ public class PageRenderer {
     
     private void rerender() {
         // reparse/render/layout the text area, since the image/ban/etc changed
-        System.out.println("rerender");
+        //System.out.println("rerender");
         renderPage(_source, _msg, _page);
     }
     
@@ -1500,5 +1512,10 @@ public class PageRenderer {
          * The user wants to post up a reply to the given forum
          */
         public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg);
+    }
+    
+    public void applyTheme(Theme theme) {
+        // old fonts are disposed and new ones created in the HTMLStyleBuilder
+        rerender();
     }
 }

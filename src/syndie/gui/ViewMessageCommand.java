@@ -47,7 +47,7 @@ public class ViewMessageCommand implements CLI.Command {
                 ScrolledComposite scroll = new ScrolledComposite(shell, SWT.H_SCROLL | SWT.V_SCROLL);
                 scroll.setExpandHorizontal(true);
                 scroll.setExpandVertical(true);
-                PageRenderer renderer = new PageRenderer(scroll);
+                PageRenderer renderer = new PageRenderer(scroll, new DummyBrowserControl(client, new NullUI()));
                 renderer.setListener(new DummyPageActionListener(ui));
                 scroll.setContent(renderer.getComposite());
                 shell.setLayout(new FillLayout());
@@ -55,7 +55,7 @@ public class ViewMessageCommand implements CLI.Command {
 
                 // we need to set a default size before rendering so we can do fake word wrapping
                 renderer.getComposite().setSize(renderer.getComposite().computeSize(800, 800));
-                renderer.renderPage(new PageRendererSource(client), msg);
+                renderer.renderPage(new PageRendererSource(new DummyBrowserControl(client, new NullUI())), msg);
                 Point setSize = renderer.getComposite().getSize();
                 Point preferredSize = renderer.getComposite().computeSize(SWT.DEFAULT, SWT.DEFAULT);
                 Point minSize = new Point(Math.min(setSize.x, preferredSize.x),
