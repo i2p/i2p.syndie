@@ -53,4 +53,6 @@ public class DummyBrowserControl implements BrowserControl {
 
     public SyndieURI createSQLURI() { return null; }
     public ThemeRegistry getThemeRegistry() { return null; } 
+
+    public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
 }

@@ -719,22 +719,22 @@ public class SyndicationManager {
             byte postKeySalt[] = null;
 
             if (postKey != null) {
-                postKeyEncr = new byte[32];
                 postKeySalt = new byte[32];
-                _client.ctx().random().nextBytes(postKeySalt);
-                SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
-                _client.ctx().aes().encrypt(postKey.getData(), 0, postKeyEncr, 0, key, postKeySalt, SessionKey.KEYSIZE_BYTES);
+                postKeyEncr = _client.pbeEncrypt(postKey.getData(), postKeySalt);
+                //_client.ctx().random().nextBytes(postKeySalt);
+                //SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
+                //_client.ctx().aes().encrypt(postKey.getData(), 0, postKeyEncr, 0, key, postKeySalt, SessionKey.KEYSIZE_BYTES);
             }
 
             byte readKeyEncr[] = null;
             byte readKeySalt[] = null;
 
             if (readKey != null) {
-                readKeyEncr = new byte[32];
                 readKeySalt = new byte[32];
-                _client.ctx().random().nextBytes(readKeySalt);
-                SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
-                _client.ctx().aes().encrypt(readKey.getData(), 0, readKeyEncr, 0, key, readKeySalt, SessionKey.KEYSIZE_BYTES);
+                postKeyEncr = _client.pbeEncrypt(readKey.getData(), readKeySalt);
+                //_client.ctx().random().nextBytes(readKeySalt);
+                //SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
+                //_client.ctx().aes().encrypt(readKey.getData(), 0, readKeyEncr, 0, key, readKeySalt, SessionKey.KEYSIZE_BYTES);
             }
             
             PreparedStatement stmt = null;
@@ -837,22 +837,22 @@ public class SyndicationManager {
         byte postKeySalt[] = null;
 
         if (postKey != null) {
-            postKeyEncr = new byte[32];
             postKeySalt = new byte[32];
-            _client.ctx().random().nextBytes(postKeySalt);
-            SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
-            _client.ctx().aes().encrypt(postKey.getData(), 0, postKeyEncr, 0, key, postKeySalt, SessionKey.KEYSIZE_BYTES);
+            postKeyEncr = _client.pbeEncrypt(postKey.getData(), postKeySalt);
+            //_client.ctx().random().nextBytes(postKeySalt);
+            //SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
+            //_client.ctx().aes().encrypt(postKey.getData(), 0, postKeyEncr, 0, key, postKeySalt, SessionKey.KEYSIZE_BYTES);
         }
 
         byte readKeyEncr[] = null;
         byte readKeySalt[] = null;
 
         if (readKey != null) {
-            readKeyEncr = new byte[32];
             readKeySalt = new byte[32];
-            _client.ctx().random().nextBytes(readKeySalt);
-            SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
-            _client.ctx().aes().encrypt(readKey.getData(), 0, readKeyEncr, 0, key, readKeySalt, SessionKey.KEYSIZE_BYTES);
+            readKeyEncr = _client.pbeEncrypt(readKey.getData(), readKeySalt);
+            //_client.ctx().random().nextBytes(readKeySalt);
+            //SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
+            //_client.ctx().aes().encrypt(readKey.getData(), 0, readKeyEncr, 0, key, readKeySalt, SessionKey.KEYSIZE_BYTES);
         }
 
         try {

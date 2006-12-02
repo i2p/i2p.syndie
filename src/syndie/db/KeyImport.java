@@ -130,17 +130,8 @@ public class KeyImport extends CommandImpl {
                 }
             }
             
-            byte salt[] = new byte[16];
-            client.ctx().random().nextBytes(salt);
-            SessionKey saltedKey = client.ctx().keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(pass));
-            int pad = 16-(raw.length%16);
-            if (pad == 0) pad = 16;
-            byte pre[] = new byte[raw.length+pad];
-            System.arraycopy(raw, 0, pre, 0, raw.length);
-            for (int i = 0; i < pad; i++)
-                pre[pre.length-1-i] = (byte)(pad&0xff);
-            byte encrypted[] = new byte[pre.length];
-            client.ctx().aes().encrypt(pre, 0, encrypted, 0, saltedKey, salt, pre.length);
+            byte salt[] = new byte[16]; // overwritten by pbeEncrypt
+            byte encrypted[] = client.pbeEncrypt(raw, salt);
             
             Connection con = client.con();
             PreparedStatement stmt = con.prepareStatement(SQL_INSERT_KEY);

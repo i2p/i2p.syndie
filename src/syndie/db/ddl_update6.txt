@@ -1,0 +1,16 @@
+-- update the database from schema version 6
+-- this version 7 adds a message postponement buffer
+--
+
+UPDATE appVersion SET versionNum = 7, visibleVersion = 'Message postponement support';
+
+CREATE CACHED TABLE nymMsgPostpone (
+	nymId			INTEGER
+	, postponeId		BIGINT
+	, postponeVersion	INTEGER
+	-- encrypted is PBE encrypted against the nym's passphrase, with the
+	-- 16 byte salt prepended, and then base64 encoded (since hsqldb
+	-- stores binary data in hex)
+	, encryptedData		LONGVARCHAR
+	, PRIMARY KEY (postponeId, postponeVersion)
+);

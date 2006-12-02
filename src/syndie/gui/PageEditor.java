@@ -104,6 +104,7 @@ public class PageEditor implements Translatable {
     private Button _metaCut;
     private Button _metaSpell;
     private Button _metaFind;
+    private Button _metaSave;
     private Button _metaPreview;
     
     // text style chooser dialog
@@ -357,6 +358,11 @@ public class PageEditor implements Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { find(); }
             public void widgetSelected(SelectionEvent selectionEvent) { find(); }
         });
+        _metaSave = new Button(_grpMeta, SWT.PUSH);
+        _metaSave.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { save(); }
+        });
         _metaPreview = new Button(_grpMeta, SWT.CHECK);
         _metaPreview.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { togglePreview(); }
@@ -400,6 +406,7 @@ public class PageEditor implements Translatable {
         _metaFind.setEnabled(enable);
         _metaPaste.setEnabled(enable);
         _metaPreview.setEnabled(enable);
+        _metaSave.setEnabled(enable);
         _metaSpell.setEnabled(enable);
         
         _pageBGColor.setEnabled(enable);
@@ -709,6 +716,7 @@ public class PageEditor implements Translatable {
     
     void insertAtCaret(String text) {
         if (text != null) {
+            _messageEditor.modified();
             // rather than replacing everything selected, just insert at the caret
             _text.replaceTextRange(_text.getCaretOffset(), 0, text);
             //_text.insert(buf.toString());
@@ -818,6 +826,7 @@ public class PageEditor implements Translatable {
                 else
                     _button.setForeground(ColorUtil.getColor("black", null));
             }
+            _messageEditor.modified();
             if (_onSelect != null) _onSelect.run();
         }
     }
@@ -860,6 +869,7 @@ public class PageEditor implements Translatable {
         _text.addExtendedModifyListener(new ExtendedModifyListener() {
             public void modifyText(ExtendedModifyEvent evt) {
                 _lastModified = System.currentTimeMillis();
+                _messageEditor.modified();
                 SimpleTimer.getInstance().addEvent(_timedPreview, 500);
             }
         });
@@ -900,6 +910,7 @@ public class PageEditor implements Translatable {
                             int newOffset = _text.getCaretOffset();
                             newOffset -= "</i>".length();
                             _text.setCaretOffset(newOffset);
+                            _messageEditor.modified();
                             evt.doit = false;
                         }
                         break;
@@ -909,6 +920,11 @@ public class PageEditor implements Translatable {
                                 findReplace();
                             else
                                 find();
+                        }
+                        break;
+                    case 0x13: // ^S
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            save();
                         }
                         break;
                     case 0x15: // ^U
@@ -936,6 +952,7 @@ public class PageEditor implements Translatable {
                     case 0x18: // ^X
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             _text.cut();
+                            _messageEditor.modified();
                             evt.doit = false;
                         }
                         break;
@@ -978,6 +995,8 @@ public class PageEditor implements Translatable {
             }
         }
     };
+    
+    private void save() { _messageEditor.saveState(); }
     
     private void createSpellchecker() {
         _spellShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
@@ -1056,6 +1075,7 @@ public class PageEditor implements Translatable {
         String oldFound = _text.getTextRange(_spellWordStart, len);
         _browser.getUI().debugMessage("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
         _text.replaceTextRange(_spellWordStart, len, newText);
+        _messageEditor.modified();
         _spellWordIndex++;
         if (replaceAll) {
             int line = _spellLine;
@@ -1367,6 +1387,7 @@ public class PageEditor implements Translatable {
             _text.setCaretOffset(_findHighlight.start + replaceWith.length());
             _findHighlight.length = 0;
             _text.setStyleRanges(null, null);
+            _messageEditor.modified();
             findNext();
         }
     }
@@ -1381,6 +1402,7 @@ public class PageEditor implements Translatable {
             _text.setStyleRanges(null, null);
             findNext(false);
         }
+        _messageEditor.modified();
     }
     private void findNext() { findNext(true); }
     private void findNext(boolean wrapForever) {
@@ -1468,6 +1490,7 @@ public class PageEditor implements Translatable {
     }
     
     String getContent() { return _text.getText(); }
+    void setContent(String body) { _text.setText(body); }
     String getContentType() { return _contentType; }
 
     private static final String T_STYLE_BUTTON = "syndie.gui.pageeditor.stylebutton";
@@ -1503,6 +1526,8 @@ public class PageEditor implements Translatable {
     private static final String T_SPELL_TOOLTIP = "syndie.gui.pageeditor.spelltooltip";
     private static final String T_FIND = "syndie.gui.pageeditor.find";
     private static final String T_FIND_TOOLTIP = "syndie.gui.pageeditor.findtooltip";
+    private static final String T_SAVE = "syndie.gui.pageeditor.save";
+    private static final String T_SAVE_TOOLTIP = "syndie.gui.pageeditor.savetooltip";
     private static final String T_PREVIEW = "syndie.gui.pageeditor.preview";
     private static final String T_PREVIEW_TOOLTIP = "syndie.gui.pageeditor.previewtooltip";
     private static final String T_HEADER = "syndie.gui.pageeditor.header";
@@ -1591,6 +1616,8 @@ public class PageEditor implements Translatable {
         _metaSpell.setToolTipText(registry.getText(T_SPELL_TOOLTIP, "spellcheck"));
         _metaFind.setText(registry.getText(T_FIND, "^F"));
         _metaFind.setToolTipText(registry.getText(T_FIND_TOOLTIP, "find"));
+        _metaSave.setText(registry.getText(T_SAVE, "^S"));
+        _metaSave.setToolTipText(registry.getText(T_SAVE_TOOLTIP, "save the current state"));
         _metaPreview.setText(registry.getText(T_PREVIEW, "preview"));
         _metaPreview.setToolTipText(registry.getText(T_PREVIEW_TOOLTIP, "Show the preview pane"));
         _htmlHeader.setText(registry.getText(T_HEADER, "H*"));

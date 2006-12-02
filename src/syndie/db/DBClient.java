@@ -509,13 +509,15 @@ public class DBClient {
                 
                 if (Constants.KEY_TYPE_AES256.equals(type)) {
                     if (salt != null) {
-                        byte readKey[] = new byte[SessionKey.KEYSIZE_BYTES];
-                        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
-                        _context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
-                        int pad = (int)readKey[readKey.length-1];
-                        byte key[] = new byte[readKey.length-pad];
-                        System.arraycopy(readKey, 0, key, 0, key.length);
-                        rv.add(new SessionKey(key));
+                        byte decr[] = pbeDecrypt(data, salt);
+                        rv.add(new SessionKey(decr));
+                        //byte readKey[] = new byte[SessionKey.KEYSIZE_BYTES];
+                        //SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
+                        //_context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
+                        //int pad = (int)readKey[readKey.length-1];
+                        //byte key[] = new byte[readKey.length-pad];
+                        //System.arraycopy(readKey, 0, key, 0, key.length);
+                        //rv.add(new SessionKey(key));
                     } else {
                         rv.add(new SessionKey(data));
                     }
@@ -700,13 +702,15 @@ public class DBClient {
                 
                 if (Constants.KEY_TYPE_DSA.equals(type)) {
                     if (salt != null) {
-                        byte readKey[] = new byte[data.length];
-                        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
-                        _context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
-                        int pad = (int)readKey[readKey.length-1];
-                        byte key[] = new byte[readKey.length-pad];
-                        System.arraycopy(readKey, 0, key, 0, key.length);
-                        rv.add(new SigningPrivateKey(key));
+                        byte decr[] = pbeDecrypt(data, salt);
+                        rv.add(new SigningPrivateKey(decr));
+                        //byte readKey[] = new byte[data.length];
+                        //SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
+                        //_context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
+                        //int pad = (int)readKey[readKey.length-1];
+                        //byte key[] = new byte[readKey.length-pad];
+                        //System.arraycopy(readKey, 0, key, 0, key.length);
+                        //rv.add(new SigningPrivateKey(key));
                     } else {
                         rv.add(new SigningPrivateKey(data));
                     }
@@ -791,6 +795,9 @@ public class DBClient {
                 byte chan[] = rs.getBytes(8);
                 
                 if (salt != null) {
+                    byte key[] = pbeDecrypt(data, salt);
+                    data = key;
+                    /*
                     SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, passB);
                     //_log.debug("salt: " + Base64.encode(salt));
                     //_log.debug("passB: " + Base64.encode(passB));
@@ -803,6 +810,7 @@ public class DBClient {
                     System.arraycopy(decr, 0, key, 0, key.length);
                     //_log.debug("key: " + Base64.encode(key));
                     data = key;
+                     */
                 }
                 
                 rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
@@ -3058,5 +3066,34 @@ public class DBClient {
     public void logDebug(String msg, Exception cause) { 
         if (_log.shouldLog(Log.DEBUG)) 
             _log.debug(msg, cause); 
+    }
+    
+    /** 
+     * encrypt the orig data w/ the current passphrase, generating a new salt and
+     * saving it in saltTarget.  The result is the padded encrypted data
+     */
+    public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
+        _context.random().nextBytes(saltTarget);
+        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(_pass));
+        int pad = 16-(orig.length%16);
+        if (pad == 0) pad = 16;
+        byte pre[] = new byte[orig.length+pad];
+        System.arraycopy(orig, 0, pre, 0, orig.length);
+        for (int i = 0; i < pad; i++)
+            pre[pre.length-1-i] = (byte)(pad&0xff);
+        byte encrypted[] = new byte[pre.length];
+        _context.aes().encrypt(pre, 0, encrypted, 0, saltedKey, saltTarget, pre.length);
+        return encrypted;
+    }
+    
+    /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
+    public byte[] pbeDecrypt(byte orig[], byte salt[]) {
+        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(_pass));
+        byte decr[] = new byte[orig.length];
+        _context.aes().decrypt(orig, 0, decr, 0, saltedKey, salt, orig.length);
+        int pad = (int)decr[decr.length-1];
+        byte rv[] = new byte[decr.length-pad];
+        System.arraycopy(decr, 0, rv, 0, rv.length);
+        return rv;
     }
 }

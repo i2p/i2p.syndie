@@ -30,13 +30,33 @@ public class EditMessageTab extends BrowserTab implements Translatable {
             _editor.setAsReply(true);
         updateTabInfo(scope, null);
     }
+    public EditMessageTab(BrowserControl browser, SyndieURI uri) { 
+        super(browser, uri);
+        updateTabInfo(_scope, null);
+    }
     
     protected void initComponents() {
         getBrowser().getUI().debugMessage("Initializing message editor");
-        _editor = new MessageEditor(getBrowser(), getRoot(), new EditorListener());
-        getBrowser().getUI().debugMessage("message editor initialized.  adding page");
-        _editor.addPage();
-        getBrowser().getUI().debugMessage("page added");
+        SyndieURI uri = getURI();
+        Long postponeId = uri.getLong("postponeid");
+        Long postponeVer = uri.getLong("postponever");
+        if ( (postponeId != null) && (postponeVer != null) ) {
+            _editor = new MessageEditor(getBrowser(), getRoot(), new EditorListener());
+            _editor.addListener(getBrowser().getMessageEditorListener());
+            _editor.loadState(postponeId.longValue(), postponeVer.intValue());
+            _scope = _editor.getTarget();
+            if (_editor.getParentCount() > 0)
+                _parent = _editor.getParent(0);
+            else
+                _parent = null;
+            _asReply = _editor.getPrivacyReply();
+        } else {
+            _editor = new MessageEditor(getBrowser(), getRoot(), new EditorListener());
+            _editor.addListener(getBrowser().getMessageEditorListener());
+            getBrowser().getUI().debugMessage("message editor initialized.  adding page");
+            _editor.addPage();
+            getBrowser().getUI().debugMessage("page added");
+        }
         getRoot().setLayout(new FillLayout());
         getBrowser().getTranslationRegistry().register(this);
     }
@@ -65,6 +85,7 @@ public class EditMessageTab extends BrowserTab implements Translatable {
         } else if (rc == SWT.CANCEL) {
             return false;
         } else if (rc == SWT.NO) {
+            _editor.cancelMessage(false);
             return true;
         } else {
             return false;

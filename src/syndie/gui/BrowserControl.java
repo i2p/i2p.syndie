@@ -52,4 +52,6 @@ public interface BrowserControl {
 
     public void addUIListener(Browser.UIListener lsnr);
     public void removeUIListener(Browser.UIListener lsnr);
+    
+    public MessageEditor.MessageEditorListener getMessageEditorListener();
 }

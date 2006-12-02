@@ -45,15 +45,21 @@ abstract class BrowserTab implements Themeable {
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
         if (TYPE_POST.equalsIgnoreCase(uri.getType())) {
-            Hash scope = uri.getScope();
-            String parentURI = uri.getString("parent");
-            SyndieURI parent = null;
-            if (parentURI != null) {
-                try { parent = new SyndieURI(parentURI); } catch (URISyntaxException use) {}
+            Long postponeId = uri.getLong("postponeid");
+            Long postponeVer = uri.getLong("postponever");
+            if ( (postponeId != null) && (postponeVer != null) ) {
+                return new EditMessageTab(browser, uri);
+            } else {
+                Hash scope = uri.getScope();
+                String parentURI = uri.getString("parent");
+                SyndieURI parent = null;
+                if (parentURI != null) {
+                    try { parent = new SyndieURI(parentURI); } catch (URISyntaxException use) {}
+                }
+                boolean asReply = uri.getBoolean("reply", false);
+                // create a new editor tab
+                return new EditMessageTab(browser, uri, scope, parent, asReply);
             }
-            boolean asReply = uri.getBoolean("reply", false);
-            // create a new editor tab
-            return new EditMessageTab(browser, uri, scope, parent, asReply);
         } else if ("channel".equalsIgnoreCase(uri.getType())) {
             if (uri.getScope() != null) {
                 if (uri.getMessageId() == null) {

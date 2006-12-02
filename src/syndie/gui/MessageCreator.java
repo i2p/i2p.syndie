@@ -362,10 +362,4 @@ class MessageCreator {
         if (refFile != null)
             refFile.delete();
     }
-    
-    /**
-     * save the state so we can resume & execute or edit later
-     */
-    public long postpone() { return -1; }
-    public boolean resume(long postponementId) { return false; }
 }

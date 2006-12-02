@@ -2,13 +2,19 @@ package syndie.gui;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -66,6 +72,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TranslationRegistry _translation;
     private ThemeRegistry _themes;
     private SyndicationManager _syndicationManager;
+    private MessageEditor.MessageEditorListener _editorListener;
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
@@ -81,7 +88,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuExit;
     private MenuItem _postMenuRoot;
     private MenuItem _postMenuNew;
-    private MenuItem _postMenuResume;
+    private MenuItem _postMenuResumeRoot;
+    private Menu _postMenuResumeMenu;
     private MenuItem _syndicateMenuRoot;
     private MenuItem _syndicateMenuItem;
     private Menu _languageMenu;
@@ -126,6 +134,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
         _syndicationManager = new SyndicationManager(_client, this);
+        _editorListener = new MsgEditorListener();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
@@ -246,8 +255,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postNew(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postNew(); }
         });
-        _postMenuResume = new MenuItem(postMenu, SWT.PUSH);
-        _postMenuResume.setEnabled(false);
+        _postMenuResumeRoot = new MenuItem(postMenu, SWT.CASCADE);
+        _postMenuResumeMenu = new Menu(_postMenuResumeRoot);
+        _postMenuResumeRoot.setMenu(_postMenuResumeMenu);
+        
+        populateResumeable();
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu syndicateMenu = new Menu(_syndicateMenuRoot);
@@ -415,6 +427,66 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 }
             });
         }
+    }
+
+    public MessageEditor.MessageEditorListener getMessageEditorListener() { return _editorListener; }
+    
+    private class MsgEditorListener implements MessageEditor.MessageEditorListener {
+        public void messageCreated(MessageEditor editor, SyndieURI postedURI) { Browser.this.populateResumeable(); }
+        public void messagePostponed(MessageEditor editor, long postponementId) { Browser.this.populateResumeable(); }
+        public void messageCancelled(MessageEditor editor) { Browser.this.populateResumeable(); }
+    }
+
+    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId ORDER BY postponeId DESC";
+    private void populateResumeable() {
+        while (_postMenuResumeMenu.getItemCount() > 0)
+            _postMenuResumeMenu.getItem(0).dispose();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List ids = new ArrayList();
+        List versions = new ArrayList();
+        try {
+            stmt = _client.con().prepareStatement(SQL_LIST_RESUMEABLE);
+            stmt.setLong(1, _client.getLoggedInNymId());
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                int ver = rs.getInt(2);
+                ids.add(new Long(id));
+                versions.add(new Integer(ver));
+            }
+        } catch (SQLException se) {
+            errorMessage("Internal eror populating resumeable list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if (ids.size() == 0) {
+            _postMenuResumeRoot.setEnabled(false);
+        } else {
+            _postMenuResumeRoot.setEnabled(true);
+            for (int i = 0; i < ids.size(); i++) {
+                final long id = ((Long)ids.get(i)).longValue();
+                final int ver = ((Integer)versions.get(i)).intValue();
+                String when = getVersionTime(id);
+                MenuItem item = new MenuItem(_postMenuResumeMenu, SWT.PUSH);
+                item.setText(when);
+                item.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { resume(id, ver); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { resume(id, ver); }
+                });
+            }
+        }
+    }
+    
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+    private static final String getVersionTime(long ts) {
+        synchronized (_fmt) { return _fmt.format(new Date(ts)); }
+    }
+    
+    private void resume(long postponeId, int postponeVersion) {
+        view(createPostURI(postponeId, postponeVersion));
     }
     
     public void showWaitCursor(boolean show) {
@@ -734,6 +806,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
+    public SyndieURI createPostURI(long postponeId, int postponeVersion) {
+        Map attributes = new HashMap();
+        attributes.put("postponeid", new Long(postponeId));
+        attributes.put("postponever", new Long(postponeVersion));
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
+        return uri;
+    }
     public SyndieURI createManageURI(Hash forum) {
         Map attributes = new HashMap();
         if (forum != null)
@@ -969,7 +1048,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
-        _postMenuResume.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
+        _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
         _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "&Now"));

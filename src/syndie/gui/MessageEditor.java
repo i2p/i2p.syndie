@@ -1,18 +1,35 @@
 package syndie.gui;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -44,6 +61,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.Enclosure;
 import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
@@ -122,7 +140,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private Label _controlExpiration;
     private Text _controlExpirationText;
     
-    private MessageEditorListener _listener;
+    private Set _listeners;
     private UI _ui;
 
     private MenuItem _pageAddHTML;
@@ -131,12 +149,20 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private MenuItem _attachmentAdd;
     private MenuItem _attachmentRemove;
     
+    /** postponeId is -1 if not yet saved, otherwise its the entry in nymMsgPostpone */
+    private long _postponeId;
+    /** version is incremented each time the state is saved */
+    private int _postponeVersion;
+    private boolean _modifiedSinceSave;
+    
     /** Creates a new instance of MessageEditor */
     public MessageEditor(BrowserControl browser, Composite parent, MessageEditorListener lsnr) {
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
-        _listener = lsnr;
+        _listeners = new HashSet();
+        if (lsnr != null)
+            _listeners.add(lsnr);
         _ui = browser.getUI();
         _pages = new ArrayList();
         _attachments = new ArrayList();
@@ -144,6 +170,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _targetList = new ArrayList();
         _parents = new ArrayList();
         _referenceNodes = new ArrayList();
+        _postponeId = -1;
+        _postponeVersion = -1;
+        modified();
     
         _browser.getUI().debugMessage("editor: fetching channels");
         _nymChannels = _client.getChannels(true, true, true, true);
@@ -152,6 +181,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _browser.getUI().debugMessage("editor: components initialized");
         _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, this);
     }
+    
+    public void addListener(MessageEditorListener lsnr) { _listeners.add(lsnr); }
     
     public interface MessageEditorListener {
         public void messageCreated(MessageEditor editor, SyndieURI postedURI);
@@ -163,11 +194,13 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _parents.clear();
         if (uri != null) {
             _parents.add(uri);
+            modified();
         }
     }
     
     public void setScope(Hash scope) {
         _target = scope;
+        modified();
         updateAuthor();
     }
     
@@ -209,6 +242,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     public void setAsReply(boolean asReply) {
         if (asReply)
             _controlPrivacyCombo.select(PRIVACY_REPLY);
+        modified();
     }
 
     private static final int PRIVACY_PUBLIC = 0;
@@ -391,6 +425,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     }
     public void addPage() { addPage("text/html"); }
     public void addPage(String type) {
+        saveState();
+        _modifiedSinceSave = true;
         _browser.getUI().debugMessage("addPage: creating editor");
         PageEditor page = new PageEditor(_client, _pageRoot, this, type, _browser);
         _browser.getUI().debugMessage("addPage: editor created");
@@ -400,6 +436,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         rebuildPagesCombo();
     }
     public void removePage() {
+        saveState();
+        _modifiedSinceSave = true;
         if (_pages.size() > 0) {
             int idx = _controlPageCombo.getSelectionIndex();
             PageEditor editor = (PageEditor)_pages.remove(idx);
@@ -431,6 +469,10 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
          
         _controlPageCombo.setRedraw(true);
+    }
+    
+    public void modified() { 
+        _modifiedSinceSave = true; 
     }
     
     private void addAttachment() {
@@ -477,6 +519,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     } 
     
     private void addAttachment(File file) {
+        saveState();
+        modified();
         String fname = file.getName();
         String name = Constants.stripFilename(fname, false);
         String type = guessContentType(fname);
@@ -500,6 +544,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         rebuildAttachmentsCombo();
     }
     int addAttachment(String contentType, String name, byte[] data) {
+        saveState();
+        modified();
         int rv = -1;
         Properties cfg = new Properties();
         cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
@@ -511,6 +557,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         return rv;
     }
     private void removeAttachment() {
+        saveState();
+        modified();
         if (_attachments.size() > 0) {
             // should this check to make sure there aren't any pages referencing
             // this attachment first?
@@ -624,6 +672,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         return -1;
     }
     void updateImageAttachment(int imageNum, String contentType, byte data[]) { 
+        modified();
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             Properties cfg = (Properties)_attachmentConfig.get(i);
@@ -650,6 +699,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             return;
         }
         _target = (Hash)_targetList.get(idx);
+        modified();
         getBrowser().getUI().debugMessage("forum selected, setting target to " + _target + " / " + idx);
         updateAuthor();
     }
@@ -743,6 +793,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _refChooser.hide();
         if (uri == null) return;
         _target = uri.getScope();
+        modified();
         getBrowser().getUI().debugMessage("reference accepted, setting target to " + _target);
         updateAuthor();
     }
@@ -772,6 +823,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
                 ImageUtil.dispose(_controlAvatarImage);
                 _controlAvatarImage = img;
                 _controlAvatar.setImage(img);
+                modified();
             } catch (IllegalArgumentException iae) {
                 // deal with invalid image
             }
@@ -787,12 +839,13 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         MessageCreator creator = new MessageCreator(this);
         boolean ok = creator.execute();
         if (ok) {
+            dropSavedState();
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
             box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
             box.open();
-            if (_listener != null)
-                _listener.messageCreated(this, creator.getCreatedURI());
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditorListener)iter.next()).messageCreated(this, creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
@@ -800,21 +853,110 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             box.open();
         }
     }
-    void postponeMessage() {
-        MessageCreator creator = new MessageCreator(this);
-        long postponementId = creator.postpone();
-        if (_listener != null)
-            _listener.messagePostponed(this, postponementId);
+    
+    private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
+    void saveState() {
+        if (!_modifiedSinceSave) return;
+        long stateId = _postponeId;
+        if (stateId < 0)
+            stateId = System.currentTimeMillis();
+        String state = serializeStateToB64(stateId); // increments the version too
+        if (state == null) {
+            _browser.getUI().errorMessage("Internal error serializing message state");
+            return;
+        }
+        int version = _postponeVersion;
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        try {
+            stmt = con.prepareStatement(SQL_POSTPONE);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, stateId);
+            stmt.setInt(3, version);
+            stmt.setString(4, state);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error postponing", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        _modifiedSinceSave = false;
     }
-    private void cancelMessage() {
-        // confirm
-        MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-        dialog.setMessage(getBrowser().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
-        dialog.setText(getBrowser().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
-        int rv = dialog.open();
-        if (rv == SWT.YES) {
-            if (_listener != null)
-                _listener.messageCancelled(this);
+
+    private static final String SQL_RESUME = "SELECT encryptedData FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion = ?";
+    public boolean loadState(long postponeId, int version) {
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        String state = null;
+        try {
+            stmt = con.prepareStatement(SQL_RESUME);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, postponeId);
+            stmt.setInt(3, version);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                state = rs.getString(1);
+            } else {
+                return false;
+            }
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error resuming", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if (state != null) {
+            deserializeStateFromB64(state, postponeId, version);
+            _modifiedSinceSave = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    private static final String SQL_DROP = "DELETE FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ?";
+    void dropSavedState() {
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        try {
+            stmt = con.prepareStatement(SQL_DROP);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, _postponeId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error dropping saved state", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    public void postponeMessage() {
+        saveState();
+        for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditorListener)iter.next()).messagePostponed(this, _postponeId);
+    }
+    public void cancelMessage() { cancelMessage(true); }
+    public void cancelMessage(boolean requireConfirm) {
+        if (requireConfirm) {
+            // confirm
+            MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+            dialog.setMessage(getBrowser().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
+            dialog.setText(getBrowser().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
+            int rv = dialog.open();
+            if (rv == SWT.YES) {
+                cancelMessage(false);
+            }
+        } else {
+            dropSavedState();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditorListener)iter.next()).messageCancelled(this);
         }
     }
 
@@ -861,6 +1003,37 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             }
         }
         return null;
+    }
+    private byte[] getAvatarUnmodifiedData() {
+        if (_controlAvatarImageSource == null) return null;
+        File f = new File(_controlAvatarImageSource);
+        if (!f.exists()) return null;
+        if (f.length() > Constants.MAX_AVATAR_SIZE) return null;
+        byte src[] = null;
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(f);
+            src = new byte[(int)f.length()];
+            int read = DataHelper.read(fis, src);
+            if (read != src.length)
+                throw new IOException("Not enough data");
+            fis.close();
+            fis = null;
+        } catch (IOException ioe) {
+            _browser.getUI().errorMessage("error getting avatar data", ioe);
+            src = null;
+        } finally {
+            if (fis != null)
+                try { fis.close(); } catch (IOException ioe) {}
+        }
+        
+        // load to verify format
+        Image img = ImageUtil.createImage(src);
+        if (img == null) 
+            src = null;
+        // maybe check bounds?
+        ImageUtil.dispose(img);
+        return src;
     }
     public String[] getPublicTags() { 
         String src = _controlTagsText.getText().trim();
@@ -972,5 +1145,339 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             _controlAuthor.setText(registry.getText(T_AUTHOR_UNKNOWN, "author..."));
         
         _root.pack(true);
+    }
+    
+    /**
+     * serialize a deep copy of the editor state (including pages, attachments, config),
+     * PBE encrypted with the currently logged in nym's passphrase, and return that after
+     * base64 encoding.  the first 16 bytes (24 characters) make up the salt for PBE decryption,
+     * and there is no substantial padding on the body (only up to the next 16 byte boundary)
+     */
+    public String serializeStateToB64(long postponementId) {
+        byte data[] = null;
+        try {
+            data = serializeState();
+        } catch (IOException ioe) {
+            // this is writing to memory...
+            _browser.getUI().errorMessage("Internal error serializing message state", ioe);
+            return null;
+        }
+        byte salt[] = new byte[16];
+        byte encr[] = _browser.getClient().pbeEncrypt(data, salt);
+        String rv = Base64.encode(salt) + Base64.encode(encr);
+        _postponeId = postponementId;
+        _postponeVersion++;
+        return rv;
+    }
+    
+    public long getPostponementId() { return _postponeId; }
+    public int getPostponementVersion() { return _postponeVersion; }
+    
+    public void deserializeStateFromB64(String state, long postponeId, int version) {
+        String salt = state.substring(0, 24);
+        String body = state.substring(24);
+        state = null;
+        byte decr[] = _browser.getClient().pbeDecrypt(Base64.decode(body), Base64.decode(salt));
+        ZipInputStream zin = null;
+        try {
+            zin = new ZipInputStream(new ByteArrayInputStream(decr));
+            deserializeState(zin);
+        } catch (IOException ioe) {
+            _browser.getUI().errorMessage("Internal error deserializing message state", ioe);
+            return;
+        } finally {
+            if (zin != null) try { zin.close(); } catch (IOException ioe) {}
+        }
+        _postponeId = postponeId;
+        _postponeVersion = version;
+    }
+    
+    private static final String SER_ENTRY_CONFIG = "config.txt";
+    private static final String SER_ENTRY_PAGE_PREFIX = "page";
+    private static final String SER_ENTRY_PAGE_CFG_PREFIX = "pageCfg";
+    private static final String SER_ENTRY_ATTACH_PREFIX = "attach";
+    private static final String SER_ENTRY_ATTACH_CFG_PREFIX = "attachCfg";
+    private static final String SER_ENTRY_REFS = "refs.txt";
+    private static final String SER_ENTRY_AVATAR = "avatar.png";
+    
+    private byte[] serializeState() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+        
+        Properties cfg = serializeConfig();
+        zos.putNextEntry(new ZipEntry(SER_ENTRY_CONFIG));
+        for (Iterator iter = cfg.keySet().iterator(); iter.hasNext(); ) {
+            String key = (String)iter.next();
+            String val = cfg.getProperty(key);
+            String line = CommandImpl.strip(key, "=:\r\t\n", '_') + "=" + CommandImpl.strip(val, "\r\t\n", '_') + "\n";
+            zos.write(DataHelper.getUTF8(line));
+        }
+        zos.closeEntry();
+        
+        if ( (_referenceNodes != null) && (_referenceNodes.size() > 0) ) {
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_REFS));
+            String str = ReferenceNode.walk(_referenceNodes);
+            zos.write(DataHelper.getUTF8(str));
+            zos.closeEntry();
+        }
+        
+        for (int i = 0; i < _pages.size(); i++) {
+            PageEditor editor = (PageEditor)_pages.get(i);
+            String type = editor.getContentType();
+            String data = editor.getContent();
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_PREFIX + i));
+            zos.write(DataHelper.getUTF8(data));
+            zos.closeEntry();
+            
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_CFG_PREFIX + i));
+            zos.write(DataHelper.getUTF8(type));
+            zos.closeEntry();
+        }
+        
+        for (int i = 0; i < _attachments.size(); i++) {
+            byte data[] = (byte[])_attachments.get(i);
+            Properties attCfg = (Properties)_attachmentConfig.get(i);
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_ATTACH_PREFIX + i));
+            zos.write(data);
+            zos.closeEntry();
+            
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_ATTACH_CFG_PREFIX + i));
+            for (Iterator iter = attCfg.keySet().iterator(); iter.hasNext(); ) {
+                String key = (String)iter.next();
+                String val = attCfg.getProperty(key);
+                String line = CommandImpl.strip(key, "=:\r\t\n", '_') + "=" + CommandImpl.strip(val, "\r\t\n", '_') + "\n";
+                zos.write(DataHelper.getUTF8(line));
+            }
+            zos.closeEntry();
+        }
+        
+        byte avatar[] = null;
+        if (_controlAvatarImageSource == null)
+            avatar = getAvatarModifiedData();
+        else
+            avatar = getAvatarUnmodifiedData();
+        if (avatar != null) {
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_AVATAR));
+            zos.write(avatar);
+            zos.closeEntry();        
+        }
+        
+        zos.finish();
+        return baos.toByteArray();
+    }
+    
+    private void deserializeState(ZipInputStream zin) throws IOException {
+        ZipEntry entry = null;
+        Map pages = new TreeMap();
+        Map pageCfgs = new TreeMap();
+        Map attachments = new TreeMap();
+        Map attachmentCfgs = new TreeMap();
+        byte avatar[] = null;
+        while ( (entry = zin.getNextEntry()) != null) {
+            String name = entry.getName();
+            _browser.getUI().debugMessage("Deserializing state: entry = " + name);
+            if (name.equals(SER_ENTRY_CONFIG)) {
+                deserializeConfig(readCfg(read(zin)));
+            } else if (name.equals(SER_ENTRY_REFS)) {
+                _referenceNodes = ReferenceNode.buildTree(zin);
+            } else if (name.startsWith(SER_ENTRY_PAGE_CFG_PREFIX)) {
+                pageCfgs.put(name, read(zin));
+            } else if (name.startsWith(SER_ENTRY_PAGE_PREFIX)) {
+                pages.put(name, read(zin));
+            } else if (name.startsWith(SER_ENTRY_ATTACH_CFG_PREFIX)) {
+                attachmentCfgs.put(name, readCfg(read(zin)));
+            } else if (name.startsWith(SER_ENTRY_ATTACH_PREFIX)) {
+                attachments.put(name, readBytes(zin));
+            } else if (name.startsWith(SER_ENTRY_AVATAR)) {
+                avatar = readBytes(zin);
+            }
+            zin.closeEntry();
+        }
+
+        while (_pages.size() > 0) {
+            PageEditor editor = (PageEditor)_pages.remove(0);
+            editor.dispose();
+        }
+        int pageCount = pages.size();
+        for (int i = 0; i < pageCount; i++) {
+            String body = (String)pages.get(SER_ENTRY_PAGE_PREFIX + i);
+            String type = (String)pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
+            
+            _browser.getUI().debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
+            PageEditor editor = new PageEditor(_client, _pageRoot, this, type, _browser);
+            _pages.add(editor);
+            editor.setContent(body);
+        }
+        
+        _attachments.clear();
+        _attachmentConfig.clear();
+        int attachmentCount = attachments.size();
+        for (int i = 0; i < attachmentCount; i++) {
+            byte data[] = (byte[])attachments.get(SER_ENTRY_ATTACH_PREFIX + i);
+            Properties cfg = (Properties)attachmentCfgs.get(SER_ENTRY_ATTACH_CFG_PREFIX + i);
+            if ( (cfg == null) || (data == null) ) 
+                break;
+            _browser.getUI().debugMessage("Deserializing state: adding attachment: " + i);
+            _attachments.add(data);
+            _attachmentConfig.add(cfg);
+        }
+        
+        ImageUtil.dispose(_controlAvatarImage);
+        _controlAvatarImageSource = null;
+        Image img = null;
+        if (avatar != null) {
+            img = ImageUtil.createImage(avatar);
+            Rectangle bounds = img.getBounds();
+            if ( (bounds.width != Constants.MAX_AVATAR_WIDTH) || (bounds.height != Constants.MAX_AVATAR_HEIGHT) ) {
+                img = ImageUtil.resize(img, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
+            }
+        }
+        _controlAvatarImageSource = null;
+        if (img == null)
+            _controlAvatarImage = ImageUtil.ICON_QUESTION;
+        else
+            _controlAvatarImage = img;
+        _controlAvatar.setImage(_controlAvatarImage);
+        
+        rebuildAttachmentsCombo();
+        rebuildPagesCombo();
+        if (_pages.size() > 0)
+            showPage(0);
+        updateAuthor();
+    }
+    
+    private static final String SER_AUTHOR = "author";
+    private static final String SER_TARGET = "target";
+    private static final String SER_PARENTS = "parents";
+    private static final String SER_PARENTS_PREFIX = "parents_";
+    private static final String SER_PASS = "passphrase";
+    private static final String SER_PASSPROMPT = "passphraseprompt";
+    private static final String SER_SUBJECT = "subject";
+    private static final String SER_TAGS = "tags";
+    private static final String SER_PRIV = "privacy";
+    private static final String SER_EXPIRATION = "expiration";
+    private Properties serializeConfig() {
+        Properties rv = new Properties();
+        if (_author == null)
+            rv.setProperty(SER_AUTHOR, "");
+        else
+            rv.setProperty(SER_AUTHOR, _author.toBase64());
+        
+        if (_target == null)
+            rv.setProperty(SER_TARGET, "");
+        else
+            rv.setProperty(SER_TARGET, _target.toBase64());
+        
+        if (_parents == null) {
+            rv.setProperty(SER_PARENTS, "0");
+        } else {
+            rv.setProperty(SER_PARENTS, _parents.size() + "");
+            for (int i = 0; i < _parents.size(); i++)
+                rv.setProperty(SER_PARENTS_PREFIX + i, ((SyndieURI)_parents.get(i)).toString());
+        }
+        
+        if (_passphrase != null)
+            rv.setProperty(SER_PASS, _passphrase);
+        if (_passphrasePrompt != null)
+            rv.setProperty(SER_PASSPROMPT, _passphrasePrompt);
+        
+        rv.setProperty(SER_SUBJECT, _controlSubjectText.getText());
+        rv.setProperty(SER_TAGS, _controlTagsText.getText());
+        rv.setProperty(SER_PRIV, _controlPrivacyCombo.getSelectionIndex() + "");
+        String exp = getExpiration();
+        if (exp != null)
+            rv.setProperty(SER_EXPIRATION, exp);
+        
+        return rv;
+    }
+    
+    private Hash getHash(Properties cfg, String prop) {
+        String t = cfg.getProperty(prop);
+        if (t == null) return null;
+        byte d[] = Base64.decode(t);
+        if (d == null) {
+            _browser.getUI().errorMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
+            return null;
+        } else {
+            return new Hash(d);
+        }
+    }
+    
+    private void deserializeConfig(Properties cfg) {
+        _browser.getUI().debugMessage("deserializing config: \n" + cfg.toString());
+        _author = getHash(cfg, SER_AUTHOR);
+        _target = getHash(cfg, SER_TARGET);
+        
+        int parents = 0;
+        if ( (cfg.getProperty(SER_PARENTS) != null) && (cfg.getProperty(SER_PARENTS).length() > 0) )
+            try { parents = Integer.parseInt(cfg.getProperty(SER_PARENTS)); } catch (NumberFormatException nfe) {}
+
+        if (parents <= 0)
+            _parents = new ArrayList();
+        else
+            _parents = new ArrayList(parents);
+        for (int i = 0; i < parents; i++) {
+            String uriStr = cfg.getProperty(SER_PARENTS_PREFIX + i);
+            try {
+                SyndieURI uri = new SyndieURI(uriStr);
+                _parents.add(uri);
+            } catch (URISyntaxException use) {
+                //
+            }
+        }
+        
+        _passphrase = cfg.getProperty(SER_PASS);
+        _passphrasePrompt = cfg.getProperty(SER_PASSPROMPT);
+        if (cfg.containsKey(SER_SUBJECT))
+            _controlSubjectText.setText(cfg.getProperty(SER_SUBJECT));
+        else
+            _controlSubjectText.setText("");
+        if (cfg.containsKey(SER_TAGS))
+            _controlTagsText.setText(cfg.getProperty(SER_TAGS));
+        else
+            _controlTagsText.setText("");
+        
+        if (cfg.containsKey(SER_PRIV)) {
+            try {
+                int priv = Integer.parseInt(cfg.getProperty(SER_PRIV));
+                _controlPrivacyCombo.select(priv);
+            } catch (NumberFormatException nfe) {}
+        }
+        if (cfg.containsKey(SER_EXPIRATION))
+            _controlExpirationText.setText(cfg.getProperty(SER_EXPIRATION));
+        else
+            _controlExpirationText.setText(_browser.getTranslationRegistry().getText(T_EXPIRATION_NONE, "none"));
+    }
+    
+    
+    private byte[] readBytes(InputStream in) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte buf[] = new byte[4096];
+        int read = -1;
+        while ( (read = in.read(buf)) != -1)
+            baos.write(buf, 0, read);
+        return baos.toByteArray();
+    }
+    private String read(InputStream in) throws IOException {
+        return DataHelper.getUTF8(readBytes(in));
+    }
+    private Properties readCfg(String str) throws IOException {
+        Properties cfg = new Properties();
+        
+        BufferedReader in = new BufferedReader(new StringReader(str));
+        String line = null;
+        while ( (line = in.readLine()) != null) {
+            int split = line.indexOf('=');
+            if (split > 0) {
+                String key = line.substring(0, split);
+                String val = null;
+                if (split >= line.length())
+                    val = "";
+                else
+                    val = line.substring(split+1);
+                cfg.setProperty(key, val);
+            }
+        }
+        return cfg;
     }
 }
