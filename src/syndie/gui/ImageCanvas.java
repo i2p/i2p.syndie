@@ -57,6 +57,10 @@ public class ImageCanvas extends Canvas {
         _forcedWidth = width;
         _forcedHeight = height;
     }
+    public void unforceSize() {
+        _forcedWidth = 0;
+        _forcedHeight = 0;
+    }
     public Point computeSize(int wHint, int hHint) {
         if ( (_forcedWidth > 0) && (_forcedHeight > 0) )
             return new Point(_forcedWidth, _forcedHeight);

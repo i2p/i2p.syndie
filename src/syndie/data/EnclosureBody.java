@@ -177,6 +177,12 @@ public class EnclosureBody {
         else
             return null;
     }
+    public byte[] getAvatarData() {
+        if (_entries.containsKey(ENTRY_AVATAR))
+            return (byte[])_entries.get(ENTRY_AVATAR);
+        else
+            return null;
+    }
     public Set getPageConfigKeys(int pageNum) { return ((Properties)_pageConfig.get(pageNum)).keySet(); }
     public Set getAttachmentConfigKeys(int attachNum) { return ((Properties)_attachConfig.get(attachNum)).keySet(); }
     public Set getHeaderKeys() { return _headers.keySet(); }

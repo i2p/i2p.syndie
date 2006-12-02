@@ -159,6 +159,7 @@ class ImportMeta {
             // insert into channelReferenceGroup
             setChannelReferences(client, channelId, body);
             // (plus lots of 'insert into uriAttribute' interspersed)
+            setChannelAvatar(client, channelId, body);
             con.commit();
             ui.statusMessage("committed as channel " + channelId);
             
@@ -751,6 +752,24 @@ class ImportMeta {
             _stmt.setBoolean(9, true);
             if (_stmt.executeUpdate() != 1)
                 throw new SQLException("Adding a channel reference did not go through");
+        }
+    }
+    
+    static final String SQL_DELETE_CHANNEL_AVATAR = "DELETE FROM channelAvatar WHERE channelId = ?";
+    static final String SQL_SET_AVATAR = "INSERT INTO channelAvatar (channelId, avatarData) VALUES (?, ?)";
+    private static void setChannelAvatar(DBClient client, long channelId, EnclosureBody body) throws SQLException {
+        client.exec(SQL_DELETE_CHANNEL_AVATAR, channelId);
+        byte avatar[] = body.getAvatarData();
+        if (avatar != null) {
+            PreparedStatement stmt = null;
+            try {
+                stmt = client.con().prepareStatement(SQL_SET_AVATAR);
+                stmt.setLong(1, channelId);
+                stmt.setBytes(2, avatar);
+                stmt.executeUpdate();
+            } finally {
+                stmt.close();
+            }
         }
     }
     

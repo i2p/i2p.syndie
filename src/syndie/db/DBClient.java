@@ -1584,6 +1584,30 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_AVATAR = "SELECT avatarData FROM channelAvatar WHERE channelId = ?";
+    public byte[] getChannelAvatar(long channelId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_AVATAR);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                return data;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the avatar", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
+    }
+    
     private static final String SQL_GET_ARCHIVE = "SELECT postAllowed, readAllowed, uriId FROM archive WHERE archiveId = ?";
     private ArchiveInfo getArchive(long archiveId) { 
         ensureLoggedIn();

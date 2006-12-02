@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,9 +9,16 @@ import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -19,6 +27,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
@@ -41,6 +50,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private Composite _root;
     private BrowserControl _browser;
     
+    private Image _avatarImage;
     private ImageCanvas _avatar;
     private Label _nameLabel;
     private Text _name;
@@ -90,6 +100,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     
     private ReferenceChooserPopup _refChooser;
     private boolean _addingPoster;
+    
+    private FileDialog _avatarDialog;
     
     public boolean _editable;
     
@@ -201,7 +213,12 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             }
             _browser.getUI().debugMessage("auth index: " + _auth.getSelectionIndex() + " out of " + _auth.getItemCount());
             _privacy.select(PRIV_PUBLIC);
-            _avatar.setImage(null);
+            byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());
+            if (avatar != null)
+                _avatarImage = ImageUtil.createImage(avatar);
+            else
+                _avatarImage = ImageUtil.ICON_QUESTION;
+            _avatar.setImage(_avatarImage);
             if (info.getDescription() != null)
                 _desc.setText(info.getDescription());
             else
@@ -279,6 +296,17 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     
         _avatar = new ImageCanvas(_root, false);
         _avatar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 1, 3));
+        _avatar.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) { pickAvatar(); }
+        });
+        _avatar.addKeyListener(new KeyListener() {
+            public void keyPressed(KeyEvent keyEvent) {}
+            public void keyReleased(KeyEvent keyEvent) { pickAvatar(); }
+        });
+        
+        _avatarDialog = new FileDialog(_root.getShell(), SWT.OPEN);
         
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -541,6 +569,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     String getPassphrase() { return _passphrase; }
     String getPassphrasePrompt() { return _passphrasePrompt; }
     long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
+    Image getAvatar() { return _avatarImage; }
     
     private void save() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), this);
@@ -559,6 +588,36 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 _listener.manageComplete(this);
         }
     }
+    
+    private void pickAvatar() {
+        if (!_editable) return;
+        
+        String file = _avatarDialog.open();
+        if (file != null) {
+            File f = new File(file);
+            //ignoring it here, since we scale it down later
+            //if (f.length() > Constants.MAX_AVATAR_SIZE)
+            //    return;
+            _avatar.setRedraw(false);
+            try {
+                Image img = ImageUtil.createImageFromFile(file);
+                Rectangle bounds = img.getBounds();
+                if ( (bounds.width != Constants.MAX_AVATAR_WIDTH) || (bounds.height != Constants.MAX_AVATAR_HEIGHT) ) {
+                    img = ImageUtil.resize(img, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
+                }
+                // we could verify the size is < MAX_AVATAR_SIZE here, but no 64x64 pixel PNG should exceed it
+                ImageUtil.dispose(_avatarImage);
+                _avatarImage = img;
+                _avatar.setImage(_avatarImage);
+            } catch (IllegalArgumentException iae) {
+                // invalid.  so don't touch the current avatar
+            } catch (SWTException se) {
+                // again, invalid.  so don't touch the current avatar
+            }
+            _avatar.setRedraw(true);
+        }
+    }
+
     
     private void addManager() {
         _addingPoster = false;
@@ -651,6 +710,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _browser.getTranslationRegistry().unregister(this);
         _archiveChooser.dispose();
         _referencesChooser.dispose();
+        ImageUtil.dispose(_avatarImage);
     }
 
     private static final String T_PRIV_PUBLIC = "syndie.gui.manageforum.priv.public";

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Drawable;
@@ -151,6 +152,8 @@ public class ImageUtil {
             return new Image(Display.getDefault(), new ByteArrayInputStream(data));
         } catch (IllegalArgumentException iae) {
             return null;
+        } catch (SWTException se) {
+            return null;
         }
     }
     
@@ -187,17 +190,17 @@ public class ImageUtil {
         }
     }
     
-    public static Image createImageFromFile(String filename) {
+    public static Image createImageFromFile(String filename) throws SWTException {
         return new Image(Display.getDefault(), filename);
     }
     
-    public static byte[] serializeImage(Image img) {
+    public static byte[] serializeImage(Image img) throws SWTException {
         ImageLoader loader = new ImageLoader();
         ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
         loader.data = new ImageData[] { img.getImageData() };
         // foo. png not supported on early SWT (though newer swt revs do)
-        loader.save(outBuf, SWT.IMAGE_PNG);
-        //loader.save(outBuf, SWT.IMAGE_JPEG);
+        //loader.save(outBuf, SWT.IMAGE_PNG);
+        loader.save(outBuf, SWT.IMAGE_JPEG);
         return outBuf.toByteArray();
     }
     

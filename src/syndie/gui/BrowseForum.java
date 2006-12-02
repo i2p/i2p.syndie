@@ -14,7 +14,9 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -97,8 +99,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _meta.setLayout(new GridLayout(8, false));
 
         _metaAvatar = new ImageCanvas(_meta, false);
-        _metaAvatar.forceSize(20, 20);
-        _metaAvatar.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _metaAvatar.forceSize(1, 1);
+        GridData gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
+        gd.exclude = true;
+        _metaAvatar.setLayoutData(gd);
         _metaName = new Label(_meta, SWT.WRAP);
         _metaName.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         _metaName.setText("");
@@ -232,6 +236,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _browser.getThemeRegistry().unregister(this);
         _preview.dispose();
         _tree.dispose();
+        ImageUtil.dispose(_metaAvatar.getImage());
     }
     
     private void updateMetadata(SyndieURI uri) {
@@ -264,6 +269,31 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             if (name == null) name = scope.toBase64().substring(0,6);
             StringBuffer buf = new StringBuffer();
             _metaName.setText(name);
+            
+            byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());
+            Image img = null;
+            if (avatar != null) {
+                _browser.getUI().debugMessage("avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
+                img = ImageUtil.createImage(avatar);
+                if (img != null) {
+                    Rectangle bounds = img.getBounds();
+                    int width = bounds.width;
+                    int height = bounds.height;
+                    if ((width > Constants.MAX_AVATAR_WIDTH) || (height > Constants.MAX_AVATAR_HEIGHT))
+                        img = ImageUtil.resize(img, Math.min(width, Constants.MAX_AVATAR_WIDTH), Math.min(height, Constants.MAX_AVATAR_HEIGHT), true);
+                }
+            } else {
+                _browser.getUI().debugMessage("no avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
+            }
+            _metaAvatar.setImage(img);
+            GridData gd = (GridData)_metaAvatar.getLayoutData();
+            gd.exclude = (img == null);
+            _metaAvatar.setVisible(img != null);
+            if (img == null)
+                _metaAvatar.forceSize(1, 1);
+            else
+                _metaAvatar.unforceSize();
+            
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
             _metaDesc.setText(desc);
@@ -289,9 +319,17 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             _metaIconArchives.setVisible(false);
             _metaIconReferences.setVisible(false);
             _metaIconAdmins.setVisible(false);
+            _browser.getUI().debugMessage("no avatar found for no channel: " + uri);
+            GridData gd = (GridData)_metaAvatar.getLayoutData();
+            gd.exclude = true;
+            _metaAvatar.setVisible(false);
+            _metaAvatar.forceSize(1, 1);
         }
         _scope = scope;
-        _meta.layout(true, true);
+        // need to layout the root, since the image size can change, thereby adjusting the meta hight
+        // and thereby the message table height
+        //_meta.layout(true, true);
+        _root.layout(true, true);
     }
 
     private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";

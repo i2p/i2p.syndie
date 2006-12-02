@@ -6,8 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPublicKey;
+import org.eclipse.swt.SWTException;
+import org.eclipse.swt.graphics.Image;
 import syndie.data.ArchiveInfo;
 import syndie.data.Enclosure;
 import syndie.data.SyndieURI;
@@ -70,11 +73,24 @@ class ManageForumExecutor {
             return;
         }
         
+        Image avatar = _state.getAvatar();
+        byte avatarData[] = null;
+        if (avatar != null) {
+            try {
+                avatarData = ImageUtil.serializeImage(avatar);
+            } catch (SWTException se) {
+                _errors.append("Internal error serializing image: " + se.getMessage());
+                _ui.errorMessage(null, se);
+                avatarData = null;
+                return;
+            }
+        }
+        
         Opts chanGenOpts = new Opts();
         chanGenOpts.setCommand("changen");
         chanGenOpts.setOptValue("name", _state.getName());
         chanGenOpts.setOptValue("description", _state.getDescription());
-        chanGenOpts.setOptValue("avatar", ""); //_avatar);
+        chanGenOpts.setOptValue("avatar", (avatarData != null ? Base64.encode(avatarData) : ""));
         chanGenOpts.setOptValue("edition", Long.toString(_client.createEdition(_state.getLastEdition())));
         chanGenOpts.setOptValue("publicPosting", (_state.getAllowPublicPosts() ? Boolean.TRUE.toString() : Boolean.FALSE.toString()));
         chanGenOpts.setOptValue("publicReplies", (_state.getAllowPublicReplies() ? Boolean.TRUE.toString() : Boolean.FALSE.toString()));
