@@ -108,7 +108,7 @@ public class ThreadAccumulator {
         _earliestPostDate = getStartDate(criteria.getLong("age"));
         _earliestReceiveDate = getStartDate(criteria.getLong("agelocal"));
         
-        _requiredTags = getTags(criteria.getStringArray("tagrequired"));
+        _requiredTags = getTags(criteria.getStringArray("tagrequire"));
         _rejectedTags = getTags(criteria.getStringArray("tagexclude"));
         _wantedTags = getTags(criteria.getStringArray("taginclude"));
         _applyTagFilterToMessages = criteria.getBoolean("tagmessages", false);

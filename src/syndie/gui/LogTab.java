@@ -79,6 +79,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
                     }
                     if (records.size() > 0) {
                         append(records);
+                        try { Thread.sleep(500); } catch (InterruptedException ie) {}
                     }
                 }
             }
