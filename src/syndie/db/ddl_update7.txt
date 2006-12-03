@@ -1,0 +1,25 @@
+-- update the database from schema version 7
+-- this version 8 adds a message read status support
+--
+
+UPDATE appVersion SET versionNum = 8, visibleVersion = 'Message read status support';
+
+CREATE CACHED TABLE nymChannelReadThrough (
+	nymId		INTEGER
+	, scope		BIGINT
+	-- refers to channelMessage.importDate - mark all messages <=
+	-- readThrough as 'old' (already read)
+	, readThrough	DATE
+	, PRIMARY KEY (nymId, scope, readThrough)
+);
+
+-- contains references for messages whose importDate > nymChannelReadThrough.readThrough
+-- that the nym has already read (so if the importDate > readThrough but its
+-- not in this table, its new & unread, but if it is in this table, its new
+-- but read).  Entries in this table should be removed as necessary when the
+-- nymChannelReadThrough is updated
+CREATE CACHED TABLE nymChannelReadMsg (
+	nymId		INTEGER
+	, msgId		BIGINT
+);
+

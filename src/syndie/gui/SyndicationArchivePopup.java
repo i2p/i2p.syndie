@@ -287,6 +287,8 @@ class SyndicationArchivePopup implements Translatable {
             } else {
                 try {
                     uri = new SyndieURI(_syndie.getText());
+                    //
+                    url = uri.toString();
                 } catch (URISyntaxException use) {
                     MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
                     box.setText(_browser.getTranslationRegistry().getText(T_ERROR, "Error"));

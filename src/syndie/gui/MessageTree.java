@@ -29,6 +29,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
@@ -72,6 +74,11 @@ public class MessageTree implements Translatable, Themeable {
     private MessageTreeFilter _filterEditor;
     private Shell _filterEditorShell;
     
+    private Menu _menu;
+    private MenuItem _view;
+    private MenuItem _markRead;
+    private MenuItem _markAllRead;
+    
     private boolean _showAuthor;
     private boolean _showChannel;
     private boolean _showDate;
@@ -84,6 +91,14 @@ public class MessageTree implements Translatable, Themeable {
 
     private MessageTreeListener _listener;
     private Map _itemToURI;
+    /** items for messages that are old */
+    private Set _itemsOld;
+    /** items for messages that are new but read */
+    private Set _itemsNewRead;
+    /** items for messages that are new and unread */
+    private Set _itemsNewUnread;
+    /** item to MessageInfo */
+    private Map _itemToMsg;
     
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, true, true, true, true); }        
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags) {
@@ -96,6 +111,10 @@ public class MessageTree implements Translatable, Themeable {
         _showDate = showDate;
         _showTags = showTags;
         _itemToURI = new HashMap();
+        _itemsOld = new HashSet();
+        _itemsNewRead = new HashSet();
+        _itemsNewUnread = new HashSet();
+        _itemToMsg = new HashMap();
         _tags = new HashSet();
         _customDate = -1;
         initComponents();
@@ -155,6 +174,24 @@ public class MessageTree implements Translatable, Themeable {
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
+    
+        _menu = new Menu(_tree);
+        _tree.setMenu(_menu);
+        _view = new MenuItem(_menu, SWT.PUSH);
+        _view.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelected(); }
+        });
+        _markRead = new MenuItem(_menu, SWT.PUSH);
+        _markRead.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { markRead(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { markRead(); }
+        });
+        _markAllRead = new MenuItem(_menu, SWT.PUSH);
+        _markAllRead.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
+        });
         
         createFilterEditor();
         
@@ -209,7 +246,7 @@ public class MessageTree implements Translatable, Themeable {
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void resized() { resizeCols(); }
-            public void selected() { fireSelected(false); }
+            public void selected(boolean rightClick) { /*fireSelected(false);*/ }
             public void returnHit() { fireSelected(true); }
             public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
@@ -516,6 +553,10 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
+        _itemToMsg.clear();
+        _itemsOld.clear();
+        _itemsNewRead.clear();
+        _itemsNewUnread.clear();
         _tags.clear();
         for (int i = 0; i < referenceNodes.size(); i++) {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
@@ -550,11 +591,13 @@ public class MessageTree implements Translatable, Themeable {
             String chan = "";
             String date = "";
             String tags = "";
-
+            int status = DBClient.MSG_STATUS_NEW_UNREAD;
+            
             long chanId = _client.getChannelId(uri.getScope());
             ChannelInfo scopeInfo = _client.getChannel(chanId);
             MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
             if (msg != null) {
+                _itemToMsg.put(item, msg);
                 if (msg.getSubject() != null)
                     subj = msg.getSubject();
                 long authorId = msg.getAuthorChannelId();
@@ -602,6 +645,8 @@ public class MessageTree implements Translatable, Themeable {
                 tags = buf.toString().trim();
                 date = Constants.getDate(msg.getMessageId());
                 item.setGrayed(false);
+                
+                status = _client.getMessageStatus(_client.getLoggedInNymId(), msg.getInternalId(), msg.getTargetChannelId());
             } else {
                 // message is not locally known
                 subj = "";
@@ -622,6 +667,17 @@ public class MessageTree implements Translatable, Themeable {
             item.setText(3, chan);
             item.setText(4, date);
             item.setText(5, tags);
+            if (status == DBClient.MSG_STATUS_OLD) {
+                _itemsOld.add(item);
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            } else if (status == DBClient.MSG_STATUS_NEW_READ) {
+                _itemsNewRead.add(item);
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+            } else {
+                _itemsNewUnread.add(item);
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+            }
+            _browser.getUI().debugMessage("message status: " + status);
         } else {
             // reference node does not point to a uri, so don't build a row
             item = parent;
@@ -666,6 +722,53 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    private void viewSelected() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                _browser.view(uri);
+            }
+        }
+    }
+    
+    private void markRead() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
+                if (msg != null) {
+                    if (_itemsOld.contains(selected[i])) {
+                        // noop
+                    } else {
+                        _browser.getClient().markMessageRead(msg.getInternalId());
+                        selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+                        _itemsNewUnread.remove(selected[i]);
+                        _itemsOld.remove(selected[i]);
+                        _itemsNewRead.add(selected[i]);
+                    }
+                }
+            }
+        }
+    }
+    private void markAllRead() {
+        TreeItem selected[] = _tree.getSelection();
+        if ( (selected != null) && (selected.length > 0) ) {
+            for (int i = 0; i < selected.length; i++) {
+                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
+                if (msg != null) {
+                    _browser.getClient().markChannelRead(msg.getTargetChannelId());
+                }
+            }
+            _itemsNewRead.clear();
+            _itemsNewUnread.clear();
+            for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
+                TreeItem item = (TreeItem)iter.next();
+                _itemsOld.add(item);
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            }
+        }
+    }
 
     private void editFilter() { 
         String txt = _filter;
@@ -685,6 +788,10 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_FILTER_EDIT_SHELL = "syndie.gui.messagetree.filter.edit.shell";
     private static final String T_FILTER_TAG = "syndie.gui.messagetree.filter.tag";
     
+    private static final String T_VIEW = "syndie.gui.messagetree.view";
+    private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
+    private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
+    
     public void translate(TranslationRegistry registry) {
         _colSubject.setText(registry.getText(T_SUBJECT, "Subject"));
         _colAuthor.setText(registry.getText(T_AUTHOR, "Author"));
@@ -697,7 +804,11 @@ public class MessageTree implements Translatable, Themeable {
         _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
         _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
         _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
-        
+
+        _view.setText(registry.getText(T_VIEW, "View the messages"));
+        _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
+        _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
+
         populateAgeCombo();
         populateTagCombo();
     }
@@ -713,5 +824,17 @@ public class MessageTree implements Translatable, Themeable {
         _root.layout(true, true);
         _filterLabel.getParent().layout(true);
         _filterEditorShell.layout(true, true);
+        for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
+            TreeItem item = (TreeItem)iter.next();
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+        }
+        for (Iterator iter = _itemsNewRead.iterator(); iter.hasNext(); ) {
+            TreeItem item = (TreeItem)iter.next();
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+        }
+        for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
+            TreeItem item = (TreeItem)iter.next();
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+        }
     }
 }

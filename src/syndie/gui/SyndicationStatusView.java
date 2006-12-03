@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.HashMap;
 import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -164,7 +165,20 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
     }
     private void addMessage(SyndieURI uri, SyndicationManager.StatusRecord record) {
         _browser.getUI().debugMessage("add message: " + uri);
-        byte scope[] = uri.getScope().getData();
+        if (uri == null) {
+            _browser.getUI().debugMessage("add null message");
+            return;
+        }
+        Hash scopeHash = uri.getScope();
+        if (scopeHash == null) {
+            _browser.getUI().debugMessage("add a message without a scope? " + uri);
+            return;
+        }
+        byte scope[] = scopeHash.getData();
+        if (scope == null) {
+            _browser.getUI().debugMessage("add a message with an empty scope? " + uri);
+            return;
+        }
         long msgId = (uri.getMessageId() != null ? uri.getMessageId().longValue() : -1);
         int insertIndex = 0;
         boolean added = false;
@@ -172,27 +186,31 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
             for (int i = 0; i < _sortedURIs.size(); i++) {
                 SyndieURI cur = (SyndieURI)_sortedURIs.get(i);
                 if (cur.equals(uri)) return; // nothing to add
-                int compare = DataHelper.compareTo(scope, cur.getScope().getData());
-                if (compare < 0) {
-                    // new record goes later
-                } else if (compare == 0) {
-                    if (cur.getMessageId() != null) {
-                        if (msgId < cur.getMessageId().longValue()) {
-                            insertIndex = i;
-                            _sortedURIs.add(insertIndex, uri);
-                            added = true;
-                            break;
+                if (cur.isArchive()) {
+                    // messages go after archives
+                } else {
+                    int compare = DataHelper.compareTo(scope, cur.getScope().getData());
+                    if (compare < 0) {
+                        // new record goes later
+                    } else if (compare == 0) {
+                        if (cur.getMessageId() != null) {
+                            if (msgId < cur.getMessageId().longValue()) {
+                                insertIndex = i;
+                                _sortedURIs.add(insertIndex, uri);
+                                added = true;
+                                break;
+                            } else {
+                                // later in the forum
+                            }
                         } else {
-                            // later in the forum
+                            // metadata always comes first
                         }
                     } else {
-                        // metadata always comes first
+                        insertIndex = i;
+                        _sortedURIs.add(insertIndex, uri);
+                        added = true;
+                        break;
                     }
-                } else {
-                    insertIndex = i;
-                    _sortedURIs.add(insertIndex, uri);
-                    added = true;
-                    break;
                 }
             }
             if (!added) {

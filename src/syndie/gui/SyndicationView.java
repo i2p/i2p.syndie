@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -23,8 +25,9 @@ import syndie.data.SyndieURI;
 public class SyndicationView implements Translatable {
     private BrowserControl _browser;
     private Composite _parent;
-    private Composite _root;
+    //private Composite _root;
     private Group _archiveGroup;
+    private SashForm _sash;
     private SyndicationArchiveView _archives;
     private Button _syndicate;
     private Combo _detailChooser;
@@ -51,33 +54,40 @@ public class SyndicationView implements Translatable {
     public void shown() { _archives.shown(); }
     
     private void initComponents() {
-        _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(2, false));
+        _sash = new SashForm(_parent, SWT.VERTICAL);
         
-        _archiveGroup = new Group(_root, SWT.NONE);
+        Composite top = new Composite(_sash, SWT.NONE);
+        top.setLayout(new GridLayout(2, false));
+        _archiveGroup = new Group(top, SWT.NONE);
         _archiveGroup.setLayout(new FillLayout());
-        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         
         _archives = new SyndicationArchiveView(_browser, _archiveGroup);
         if (_archive != null)
             _archives.highlight(_archive);
         
-        _syndicate = new Button(_root, SWT.PUSH);
+        
+        _syndicate = new Button(top, SWT.PUSH);
         _syndicate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndicate.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(); }
             public void widgetSelected(SelectionEvent selectionEvent) { syndicate(); }
         });
         
-        _detailChooser = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _detailChooser = new Combo(top, SWT.DROP_DOWN | SWT.READ_ONLY);
         _detailChooser.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _detailChooser.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { choose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { choose(); }
         });
         
+        
+        ScrolledComposite detailScroll = new ScrolledComposite(_sash, SWT.H_SCROLL | SWT.V_SCROLL);
+        detailScroll.setExpandHorizontal(true);
+        detailScroll.setExpandVertical(true);
+        
         _stack = new StackLayout();
-        Composite stacked = new Composite(_root, SWT.NONE);
+        Composite stacked = new Composite(detailScroll, SWT.NONE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
         stacked.setLayoutData(gd);
         stacked.setLayout(_stack);
@@ -89,6 +99,10 @@ public class SyndicationView implements Translatable {
         _browser.getTranslationRegistry().register(this);
         // register will populate the combo via translate
         choose();
+        
+        detailScroll.setContent(stacked);
+        detailScroll.setMinSize(stacked.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        _sash.setWeights(new int[] { 50, 50 });
     }
     
     private void syndicate() {

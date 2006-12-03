@@ -11,16 +11,19 @@ import org.eclipse.swt.SWT;
  */
 public class Theme {
     private Theme() {
-        TAB_FONT = adjustHeight(SYSFONT, 0);
-        MENU_FONT = adjustHeight(SYSFONT, 0);
-        SHELL_FONT = adjustHeight(SYSFONT, 0);
-        TREE_FONT = adjustHeight(SYSFONT, 0);
-        TABLE_FONT = adjustHeight(SYSFONT, 0);
-        BUTTON_FONT = adjustHeight(SYSFONT, 0);
-        CONTENT_FONT = adjustHeight(SYSFONT, 0);
-        LINK_FONT = adjustHeight(SYSFONT, 0, Boolean.TRUE, null);
-        LOG_FONT = adjustHeight(SYSFONT, 0, null, null, "Courier");
-        DEFAULT_FONT = adjustHeight(SYSFONT, 0);
+        TAB_FONT = adjustHeight("inittab", SYSFONT, 0);
+        MENU_FONT = adjustHeight("initmenu", SYSFONT, 0);
+        SHELL_FONT = adjustHeight("initshell", SYSFONT, 0);
+        TREE_FONT = adjustHeight("inittree", SYSFONT, 0);
+        TABLE_FONT = adjustHeight("inittable", SYSFONT, 0);
+        BUTTON_FONT = adjustHeight("initbutton", SYSFONT, 0);
+        CONTENT_FONT = adjustHeight("initcontent", SYSFONT, 0);
+        LINK_FONT = adjustHeight("initlink", SYSFONT, 0, Boolean.TRUE, null);
+        LOG_FONT = adjustHeight("initlog", SYSFONT, 0, null, null, "Courier");
+        MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, 0, null, Boolean.TRUE);
+        MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, 0, null, null);
+        MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, 0, Boolean.TRUE, null);
+        DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, 0);
     }
     
     private static final Font SYSFONT = Display.getDefault().getSystemFont();
@@ -44,6 +47,12 @@ public class Theme {
     public Font CONTENT_FONT;
     /** used for log messages */
     public Font LOG_FONT;
+    /** messages in a message tree that were marked read in bulk */
+    public Font MSG_OLD_FONT;
+    /** messages in a message tree that were read after the last mark read in bulk */
+    public Font MSG_NEW_READ_FONT;
+    /** messages in a message tree that have not yet been read */
+    public Font MSG_NEW_UNREAD_FONT;
     /** used for anything else */
     public Font DEFAULT_FONT;
     
@@ -106,28 +115,34 @@ public class Theme {
     }
     
     public void increaseFont() {
-        TAB_FONT = increaseFont(TAB_FONT);
-        MENU_FONT = increaseFont(MENU_FONT);
-        SHELL_FONT = increaseFont(SHELL_FONT);
-        TREE_FONT = increaseFont(TREE_FONT);
-        TABLE_FONT = increaseFont(TABLE_FONT);
-        BUTTON_FONT = increaseFont(BUTTON_FONT);
-        CONTENT_FONT = increaseFont(CONTENT_FONT);
-        LOG_FONT = increaseFont(LOG_FONT);
-        LINK_FONT = increaseFont(LINK_FONT);
-        DEFAULT_FONT = increaseFont(DEFAULT_FONT);
+        TAB_FONT = increaseFont("tab", TAB_FONT);
+        MENU_FONT = increaseFont("menu", MENU_FONT);
+        SHELL_FONT = increaseFont("shell", SHELL_FONT);
+        TREE_FONT = increaseFont("tree", TREE_FONT);
+        TABLE_FONT = increaseFont("table", TABLE_FONT);
+        BUTTON_FONT = increaseFont("button", BUTTON_FONT);
+        CONTENT_FONT = increaseFont("content", CONTENT_FONT);
+        LOG_FONT = increaseFont("log", LOG_FONT);
+        LINK_FONT = increaseFont("link", LINK_FONT);
+        DEFAULT_FONT = increaseFont("default", DEFAULT_FONT);
+        MSG_OLD_FONT = increaseFont("msgold", MSG_OLD_FONT);
+        MSG_NEW_READ_FONT = increaseFont("msgnewread", MSG_NEW_READ_FONT);
+        MSG_NEW_UNREAD_FONT = increaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
     }
     public void decreaseFont() {
-        TAB_FONT = decreaseFont(TAB_FONT);
-        MENU_FONT = decreaseFont(MENU_FONT);
-        SHELL_FONT = decreaseFont(SHELL_FONT);
-        TREE_FONT = decreaseFont(TREE_FONT);
-        TABLE_FONT = decreaseFont(TABLE_FONT);
-        BUTTON_FONT = decreaseFont(BUTTON_FONT);
-        CONTENT_FONT = decreaseFont(CONTENT_FONT);
-        LOG_FONT = decreaseFont(LOG_FONT);
-        LINK_FONT = decreaseFont(LINK_FONT);
-        DEFAULT_FONT = decreaseFont(DEFAULT_FONT);
+        TAB_FONT = decreaseFont("tab", TAB_FONT);
+        MENU_FONT = decreaseFont("menu", MENU_FONT);
+        SHELL_FONT = decreaseFont("shell", SHELL_FONT);
+        TREE_FONT = decreaseFont("tree", TREE_FONT);
+        TABLE_FONT = decreaseFont("table", TABLE_FONT);
+        BUTTON_FONT = decreaseFont("button", BUTTON_FONT);
+        CONTENT_FONT = decreaseFont("content", CONTENT_FONT);
+        LOG_FONT = decreaseFont("log", LOG_FONT);
+        LINK_FONT = decreaseFont("link", LINK_FONT);
+        DEFAULT_FONT = decreaseFont("default", DEFAULT_FONT);
+        MSG_OLD_FONT = decreaseFont("msgold", MSG_OLD_FONT);
+        MSG_NEW_READ_FONT = decreaseFont("msgnewread", MSG_NEW_READ_FONT);
+        MSG_NEW_UNREAD_FONT = decreaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
     }
     
     public void store(Properties props) {
@@ -143,6 +158,9 @@ public class Theme {
         store(props, CONTENT_FONT, face, size, "theme.contentfont");
         store(props, LOG_FONT, face, size, "theme.logfont");
         store(props, LINK_FONT, face, size, "theme.linkfont");
+        store(props, MSG_OLD_FONT, face, size, "theme.msgoldfont");
+        store(props, MSG_NEW_READ_FONT, face, size, "theme.msgnewreadfont");
+        store(props, MSG_NEW_UNREAD_FONT, face, size, "theme.msgnewunreadfont");
         store(props, DEFAULT_FONT, face, size, "theme.defaultfont");
     }
     private void store(Properties props, Font font, String defaultFace, int baselineSize, String prefPrefix) {
@@ -173,6 +191,9 @@ public class Theme {
         CONTENT_FONT = load(props, CONTENT_FONT, "theme.contentfont");
         LOG_FONT = load(props, LOG_FONT, "theme.logfont");
         LINK_FONT = load(props, LINK_FONT, "theme.linkfont");
+        MSG_OLD_FONT = load(props, MSG_OLD_FONT, "theme.msgoldfont");
+        MSG_NEW_READ_FONT = load(props, MSG_NEW_READ_FONT, "theme.msgnewreadfont");
+        MSG_NEW_UNREAD_FONT = load(props, MSG_NEW_UNREAD_FONT, "theme.msgnewunreadfont");
         DEFAULT_FONT = load(props, DEFAULT_FONT, "theme.defaultfont");
     }
     private Font load(Properties props, Font old, String prefPrefix) {
@@ -191,10 +212,12 @@ public class Theme {
                 } catch (NumberFormatException nfe) {}
             }
 
-            Boolean bold = new Boolean(props.getProperty(prefPrefix + ".bold"));
-            Boolean italic = new Boolean(props.getProperty(prefPrefix + ".italic"));
+            String str = props.getProperty(prefPrefix + ".bold");
+            Boolean bold = str != null ? new Boolean(str) : null;
+            str = props.getProperty(prefPrefix + ".italic");
+            Boolean italic = str != null ? new Boolean(str) : null;
 
-            return adjustHeight(old, szMod, bold, italic, face);
+            return adjustHeight(prefPrefix, old, szMod, bold, italic, face);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error loading " + prefPrefix + ", props: " + props);
@@ -202,13 +225,13 @@ public class Theme {
         }
     }
     
-    private Font increaseFont(Font old) { return adjustHeight(old, 2); }
-    private Font decreaseFont(Font old) { return adjustHeight(old, -2); }
-    private Font adjustHeight(Font old, int mod) { return adjustHeight(old, mod, null, null); }
-    private Font adjustHeight(Font old, int mod, Boolean bold, Boolean italic) {
-        return adjustHeight(old, mod, bold, italic, null);
+    private Font increaseFont(String src, Font old) { return adjustHeight(src, old, 2); }
+    private Font decreaseFont(String src, Font old) { return adjustHeight(src, old, -2); }
+    private Font adjustHeight(String src, Font old, int mod) { return adjustHeight(src, old, mod, null, null); }
+    private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic) {
+        return adjustHeight(src, old, mod, bold, italic, null);
     }
-    private Font adjustHeight(Font old, int mod, Boolean bold, Boolean italic, String newFace) {
+    private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace) {
         FontData oldData[] = old.getFontData();
         if ( (old != SYSFONT) && (!old.equals(SYSFONT)) ) {
             //System.out.println("disposing: " + old);
@@ -217,11 +240,11 @@ public class Theme {
         FontData newData[] = new FontData[oldData.length];
         for (int i = 0; i < newData.length; i++) {
             newData[i] = new FontData(oldData[i].toString());
-            int height = newData[i].getHeight() + mod;
+            int height = oldData[i].getHeight() + mod;
             if (height < 6)
                 height = 6;
             newData[i].setHeight(height);
-            int style = newData[i].getStyle();
+            int style = oldData[i].getStyle();
             if (bold != null)
                 if (bold.booleanValue())
                     style |= SWT.BOLD;
@@ -238,7 +261,7 @@ public class Theme {
                 newData[i].setName(newFace);
         }
         Font rv = new Font(Display.getDefault(), newData);
-        //System.out.println("creating: " + rv);
+        //System.out.println("creating [" + src + "]: " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
     }
     

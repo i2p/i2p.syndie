@@ -3037,6 +3037,119 @@ public class DBClient {
         }
         return rv;
     }
+
+    /** the nym has previously marked all messages through this one as being read */
+    public static final int MSG_STATUS_OLD = 1;
+    /** the message hasn't previously been marked in bulk as read, but has been read since then */
+    public static final int MSG_STATUS_NEW_READ = 2;
+    /** the message hasn't previously been marked in bulk as read, and has not been read since then */
+    public static final int MSG_STATUS_NEW_UNREAD = 3;
+
+    private static final String SQL_GET_MSG_STATUS = "SELECT importDate, readThrough, ncrm.msgId FROM channelMessage cm, nymChannelReadThrough ncrt  JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? WHERE cm.msgId = ? AND ncrt.nymId = ?";
+    public int getMessageStatus(long nymId, long msgId, long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MSG_STATUS);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.setLong(3, nymId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                Date importDate = rs.getDate(1);
+                Date readThrough = rs.getDate(2);
+                long curMsgId = rs.getLong(3);
+                if (rs.wasNull())
+                    curMsgId = -1;
+                if (readThrough.getTime() >= importDate.getTime())
+                    return MSG_STATUS_OLD;
+                else if (curMsgId == msgId)
+                    return MSG_STATUS_NEW_READ;
+                else
+                    return MSG_STATUS_NEW_UNREAD;
+            } else {
+                // there weren't any nymChannelReadThrough records at all, so we want to consider
+                // this new & unread
+                
+                // insert a nymChannelReadThrough record for a really old date
+                markChannelReadThrough(nymId, chanId, 0);
+                return MSG_STATUS_NEW_UNREAD;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting message status", se);
+            return MSG_STATUS_NEW_UNREAD;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_UNMARK_MESSAGE_READ = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId = ?";
+    private static final String SQL_MARK_MESSAGE_READ = "INSERT INTO nymChannelReadMsg (nymId, msgId) VALUES (?, ?)";
+    public void markMessageRead(long msgId) { markMessageRead(_nymId, msgId); }
+    public void markMessageRead(long nymId, long msgId) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+
+            stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error marking message read", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_DELETE_CHANNEL_READ_THROUGH = "DELETE FROM nymChannelReadThrough WHERE scope = ? AND nymId = ?";
+    private static final String SQL_INSERT_CHANNEL_READ_THROUGH = "INSERT INTO nymChannelReadThrough (scope, nymId, readThrough) VALUES (?, ?, ?)";
+    private static final String SQL_DELETE_CHANNEL_READ_MSG = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ? AND importDate <= ?)";
+    public void markChannelRead(long chanId) { markChannelReadThrough(_nymId, chanId, System.currentTimeMillis()); }
+    public void markChannelReadThrough(long chanId, long importDate) { markChannelReadThrough(_nymId, chanId, importDate); }
+    public void markChannelReadThrough(long nymId, long chanId, long importDate) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_THROUGH);
+            stmt.setLong(1, chanId);
+            stmt.setLong(2, nymId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_INSERT_CHANNEL_READ_THROUGH);
+            stmt.setLong(1, chanId);
+            stmt.setLong(2, nymId);
+            stmt.setDate(3, new Date(importDate));
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_MSG);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, chanId);
+            stmt.setDate(3, new Date(importDate));
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error setting channel readThrough", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
     
     /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */
     public void runScript(UI ui, String scriptName) {
