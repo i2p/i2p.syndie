@@ -19,6 +19,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Tree;
@@ -28,6 +29,7 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.JobRunner;
 import syndie.db.UI;
 
 /**
@@ -43,6 +45,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     private Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */
     private ArrayList _nymRefs;
+    /** true during nymRef rebuild */
+    private volatile boolean _rebuilding;
+    /** true if viewOnStartup was called before rebuilding was complete */
+    private volatile boolean _viewOnStartup;
     /** organizes the channels the nym can post to or manage */
     private DBClient.ChannelCollector _nymChannels;
     /** list of ReferenceNode instances matching the search criteria */
@@ -170,6 +176,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     }
     
     protected void initComponents(boolean register) {
+        long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
         _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
@@ -179,19 +186,33 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _manageRoot = new TreeItem(_tree, SWT.NONE);
         _searchRoot = new TreeItem(_tree, SWT.NONE);
         
+        long t2 = System.currentTimeMillis();
         configTreeListeners(_tree);
+        long t3 = System.currentTimeMillis();
         
         rebuildBookmarks();
-        refetchNymChannels();
-        redrawPostable();
-        redrawManageable();
-        redrawSearchResults();
+        long t4 = System.currentTimeMillis();
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                refetchNymChannels();
+                Display.getDefault().asyncExec(new Runnable() {
+                   public void run() {
+                       redrawPostable();
+                       redrawManageable();
+                       redrawSearchResults();
+                   } 
+                });
+            }
+        });
+        long t8 = System.currentTimeMillis();
         
         _chooseAllStartupItems = false;
         if (register) {
             _browser.getTranslationRegistry().register(this);
             _browser.getThemeRegistry().register(this);
         }
+        long t9 = System.currentTimeMillis();
+        System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
     
     public void dispose() {
@@ -220,11 +241,72 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
     
     private void rebuildBookmarks() {
-        _nymRefs.clear();
-        List refs = _client.getNymReferences(_client.getLoggedInNymId());
-        _nymRefs.addAll(refs);
-        redrawBookmarks();
+        JobRunner.instance().enqueue(new Rebuilder());
     }
+    private class Rebuilder implements Runnable {
+        public void run() {
+            final long t1 = System.currentTimeMillis();
+            System.out.println("rebuilder started");
+            synchronized (_nymRefs) {
+                _rebuilding = true;
+            }
+            List refs = _client.getNymReferences(_client.getLoggedInNymId());
+            final long t2 = System.currentTimeMillis();
+            synchronized (_nymRefs) {
+                _nymRefs.clear();
+                _nymRefs.addAll(refs);
+            }
+            final long t3 = System.currentTimeMillis();
+            Display.getDefault().asyncExec(new Runnable() {
+                public void run() { 
+                    long t4 = System.currentTimeMillis();
+                    _tree.setVisible(false);
+                    redrawBookmarks();
+                    long t5 = System.currentTimeMillis();
+                    boolean view = false;
+                    synchronized (_nymRefs) {
+                        _rebuilding = false;
+                        view = _viewOnStartup;
+                        _viewOnStartup = false;
+                        _nymRefs.notifyAll();
+                    }
+                    if (view)
+                        viewStartupItems(getBookmarkRoot());
+                    _tree.setVisible(true);
+                    long t6 = System.currentTimeMillis();
+                    System.out.println("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
+                }
+            });
+        }
+    }
+    
+    /** run from any thread */
+    public void viewStartupItems() { 
+        boolean scheduled = false;
+        synchronized (_nymRefs) {
+            if (_rebuilding) {
+                _viewOnStartup = true;
+                scheduled = true;
+            }
+        }
+        System.out.println("view startup items - scheduled? " + scheduled);
+        if (!scheduled) { // already built
+            Display.getDefault().asyncExec(new Runnable() { 
+                public void run() { viewStartupItems(getBookmarkRoot()); }
+            });
+        }
+        //viewStartupItems(getBookmarkRoot()); 
+    }
+    // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
+    private void viewStartupItems(TreeItem item) {
+        if (item == null) return;
+        NymReferenceNode node = getBookmark(item);
+        if ( (node != null) && node.getLoadOnStart())
+            getBrowser().view(node.getURI());
+        for (int i = 0; i < item.getItemCount(); i++)
+            viewStartupItems(item.getItem(i));
+    }
+    
     private void refetchNymChannels() {
         _nymChannels = _client.getChannels(true, true, true, true);
     }
@@ -235,14 +317,16 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            item.setText(info.getName());
             _manageChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
+            item.setText(info.getName());
             _manageChannels.put(item, info);
         }
     }
@@ -253,28 +337,32 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
+            item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
+            item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
+            item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
+            item.setText(info.getName());
             _postChannels.put(item, info);
         }
     }
@@ -379,10 +467,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
         _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
         _searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
-        refreshBookmarks();
-        redrawPostable();
-        redrawManageable();
-        redrawSearchResults();
+        //refreshBookmarks();
+        //redrawPostable();
+        //redrawManageable();
+        //redrawSearchResults();
     }
 
     public void applyTheme(Theme theme) {

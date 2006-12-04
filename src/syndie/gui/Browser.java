@@ -142,20 +142,35 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
 
     private void initComponents() {
+        debugMessage("browser init statics");
+        long beforeColor = System.currentTimeMillis();
+        ColorUtil.init();
+        long beforeImage = System.currentTimeMillis();
+        ImageUtil.init();
+        long beforeSpell = System.currentTimeMillis();
+        SpellUtil.init();
+        long afterSpell = System.currentTimeMillis();
+        System.out.println("color init took " + (beforeImage-beforeColor) + " image: " + (beforeSpell-beforeImage) + " spell: " + (afterSpell-beforeSpell));
         debugMessage("browser initComponents");
         _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
         _shell.setLayout(new GridLayout(1, true));
         
+        long t1 = System.currentTimeMillis();
+        
         debugMessage("before creating the menu");
         initMenu();
+        long t2 = System.currentTimeMillis();
         debugMessage("before creating the systray");
         initSystray();
+        long t3 = System.currentTimeMillis();
         
         _sash = new SashForm(_shell, SWT.HORIZONTAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
+        long t4 = System.currentTimeMillis();
         _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
+        long t5 = System.currentTimeMillis();
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
         _tabs.setSimple(false);
@@ -178,12 +193,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
         });
         
+        long t6 = System.currentTimeMillis();
+        
         _statusRow = new Composite(_shell, SWT.BORDER);
         _statusRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _statusRow.setLayout(new FillLayout(SWT.HORIZONTAL));
         new Text(_statusRow, SWT.SINGLE|SWT.READ_ONLY|SWT.BORDER).setText("this is the status bar");
         
-        _bookmarkEditor = new BookmarkEditorPopup(this, _shell);
+        long t7 = System.currentTimeMillis();
+        
+        long t8 = System.currentTimeMillis();
         
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -192,27 +211,47 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        
+        long t9 = System.currentTimeMillis();
         _translation.register(this);
+        long t10 = System.currentTimeMillis();
         _themes.register(this);
+        long t11 = System.currentTimeMillis();
         
         _sash.setWeights(new int[] { 20, 80 });
         _shell.setMinimumSize(_shell.computeSize(600, 300));
         
         debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        _bookmarks.viewStartupItems();
+        
+        long t12 = System.currentTimeMillis();
+        //JobRunner.instance().enqueue(new Runnable() {
+        //    public void run() { _bookmarks.viewStartupItems(); }
+        //});
+        _bookmarks.viewStartupItems(); // ocurrs async
+        long t13 = System.currentTimeMillis();
         debugMessage("=tabs w items: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         
+        System.out.println("startup total: " + (t13-t1) + ", details: " +(t2-t1)+"/"+(t3-t2)+"/"+
+                           (t4-t3)+"/"+(t5-t4)+"/"+(t6-t5)+"/"+(t7-t6)+"/"+(t8-t7)+"/"+(t9-t8)+"/"+
+                           (t10-t9)+"/"+(t11-t10)+"/"+(t12-t11)+"/"+(t13-t12));
         _shell.setVisible(false);
     }
     
     public void setEngine(TextEngine engine) { _engine = engine; }
     public void startup() {
         debugMessage("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
+        long beforeInit = System.currentTimeMillis();
         if (_client.isLoggedIn() && !_initialized) {
             _initialized = true;
-            Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); } });
+            Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(); doStartup(); } });
+            long afterInit = System.currentTimeMillis();
+            System.out.println("browser startup: " + (afterInit-beforeInit) + " for init and start");
+            return;
         }
+        long afterInit = System.currentTimeMillis();
         Display.getDefault().syncExec(new Runnable() { public void run() { doStartup(); } });
+        long afterStart = System.currentTimeMillis();
+        System.out.println("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
     }
     private void doStartup() {
         debugMessage("doStartup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized + " nymId? " + _client.getLoggedInNymId());
@@ -222,9 +261,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             prompt.login();
         } else {
             //_syndicationManager.loadArchives();
+            long t1 = System.currentTimeMillis();
             _themes.loadTheme();
+            long t2 = System.currentTimeMillis();
             if (!_shell.isVisible())
                 _shell.open();
+            long t3 = System.currentTimeMillis();
+            System.out.println("start: theme: " + (t2-t1) + " open: " +(t3-t2));
         }
     }
     
@@ -258,8 +301,15 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuResumeRoot = new MenuItem(postMenu, SWT.CASCADE);
         _postMenuResumeMenu = new Menu(_postMenuResumeRoot);
         _postMenuResumeRoot.setMenu(_postMenuResumeMenu);
-        
-        populateResumeable();
+    
+        // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() { populateResumeable(); }
+                });
+            }
+        });
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu syndicateMenu = new Menu(_syndicateMenuRoot);
@@ -285,7 +335,15 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { populateTranslations(); }
         });
         
-        populateTranslations();
+        // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() { populateTranslations(); }
+                });
+            }
+        });
+        //populateTranslations();
         
         _styleMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _styleMenu = new Menu(_styleMenuRoot);
@@ -359,7 +417,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _systray = _shell.getDisplay().getSystemTray();
         _systrayRoot = new TrayItem(_systray, SWT.NONE);
         _systrayTip = new ToolTip(_shell, SWT.BALLOON);
-        _systrayTip.setAutoHide(true);
+        //_systrayTip.setAutoHide(false);
         _systrayRoot.setToolTip(_systrayTip);
         _systrayRoot.setImage(createSystrayIcon());
         _systrayRoot.addSelectionListener(new SelectionListener() {
@@ -561,6 +619,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             tab.dispose();
         }
     }
+    private BookmarkEditorPopup getBookmarkEditor() {
+        if (_bookmarkEditor == null)
+            _bookmarkEditor = new BookmarkEditorPopup(this, _shell);
+        return _bookmarkEditor;
+    }
+    
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */
     public void bookmark(SyndieURI uri) {
         debugMessage("bookmarking "+uri);
@@ -611,9 +675,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         long groupId = -1;
         
         NymReferenceNode node = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, siblingOrder, ignored, banned, loadOnStart);
-        
-        _bookmarkEditor.setBookmark(node);
-        _bookmarkEditor.open();
+    
+        BookmarkEditorPopup editor = getBookmarkEditor();
+        editor.setBookmark(node);
+        editor.open();
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
     public void bookmark(NymReferenceNode node) {

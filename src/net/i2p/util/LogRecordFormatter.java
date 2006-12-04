@@ -27,7 +27,10 @@ class LogRecordFormatter {
     private final static int MAX_PRIORITY_LENGTH = 5;
 
     public static String formatRecord(LogManager manager, LogRecord rec) {
-        int size = 128 + rec.getMessage().length();
+        String msg = "";
+        if (rec.getMessage() != null)
+            msg = rec.getMessage();
+        int size = 128 + msg.length();
         if (rec.getThrowable() != null)
             size += 512;
         StringBuffer buf = new StringBuffer(size);
@@ -47,7 +50,7 @@ class LogRecordFormatter {
                 buf.append(getPriority(rec));
                 break;
             case LogManager.MESSAGE:
-                buf.append(getWhat(rec));
+                buf.append(msg); //getWhat(rec));
                 break;
             default:
                 buf.append(format[i]);

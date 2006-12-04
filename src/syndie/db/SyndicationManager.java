@@ -59,10 +59,16 @@ public class SyndicationManager {
     public static final int PUSH_SENT = 14;
     public static final int PUSH_ERROR = 15;
     
-    public static final int STRATEGY_DELTA = 0;
-    public static final int STRATEGY_DELTAKNOWN = 1;
-    public static final int STRATEGY_PIR = 2;
-    public static final int STRATEGY_DEFAULT = STRATEGY_DELTA;
+    public static final int PULL_STRATEGY_DELTA = 0;
+    public static final int PULL_STRATEGY_DELTABOOKMARKED = 1;
+    public static final int PULL_STRATEGY_DELTAKNOWN = 2;
+    public static final int PULL_STRATEGY_EXPLICIT = 2;
+    public static final int PULL_STRATEGY_PIR = 4;
+    public static final int PULL_STRATEGY_DEFAULT = PULL_STRATEGY_DELTA;
+    
+    public static final int PUSH_STRATEGY_DELTA = 0;
+    public static final int PUSH_STRATEGY_DELTAKNOWN = 1;
+    public static final int PUSH_STRATEGY_DEFAULT = PUSH_STRATEGY_DELTA;
     
     public SyndicationManager(DBClient client, UI ui) {
         _client = client;
@@ -383,8 +389,8 @@ public class SyndicationManager {
     /** 
      * queue up the fetch for entries matching the given strategy, as well as pushes
      * @param maxkb don't pull posts larger than this size
-     * @param pullStrategy STRATEGY_* to determine which entries to pull
-     * @param pushStrategy STRATEGY_* to determine which entries to push
+     * @param pullStrategy PULL_STRATEGY_* to determine which entries to pull
+     * @param pushStrategy PUSH_STRATEGY_* to determine which entries to push
      * @param archiveNames set of archive names to sync with
      */
     public void sync(int maxkb, int pullStrategy, int pushStrategy, Set archiveNames) {
@@ -394,7 +400,7 @@ public class SyndicationManager {
     private void pull(int maxkb, int pullStrategy, Set archiveNames) {
         HashSet uris = new HashSet();
         switch (pullStrategy) {
-            case STRATEGY_DELTAKNOWN:
+            case PULL_STRATEGY_DELTAKNOWN:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
@@ -413,7 +419,7 @@ public class SyndicationManager {
                     }
                 }
                 break;
-            case STRATEGY_PIR:
+            case PULL_STRATEGY_PIR:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
@@ -430,7 +436,7 @@ public class SyndicationManager {
                     }
                 }
                 break;
-            case STRATEGY_DELTA:
+            case PULL_STRATEGY_DELTA:
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
@@ -532,12 +538,10 @@ public class SyndicationManager {
                 //syndicator.setPostPassphrase(archive.getURI().getString(""))
 
                 switch (pushStrategy) {
-                    case STRATEGY_DELTAKNOWN:
+                    case PUSH_STRATEGY_DELTAKNOWN:
                         syndicator.schedulePut("archive", true);
                         break;
-                    case STRATEGY_PIR:
-                        // fallthrough - pir for post?    
-                    case STRATEGY_DELTA:
+                    case PUSH_STRATEGY_DELTA:
                         syndicator.schedulePut("archive", false);
                         break;
                 }

@@ -56,7 +56,8 @@ public class ColorUtil {
     }
     public static void init() {
         buildColorNameToSystemColor();
-        buildSystemColorSwatches();
+        // lazyload 'em
+        //buildSystemColorSwatches();
     }
     
     /** alphabetically ordered list of system colors */
@@ -117,8 +118,13 @@ public class ColorUtil {
     /**
      * 16x16 pixel image of the given system color (do not dispose!)
      */
-    public static Image getSystemColorSwatch(Color color) { return (Image)_systemColorSwatches.get(color); }
-    public static boolean isSystemColorSwatch(Image img) { return _systemColorSwatches.containsValue(img); }
+    public static Image getSystemColorSwatch(Color color) { 
+        synchronized (_systemColorSwatches) {
+            if (_systemColorSwatches.size() == 0)
+                buildSystemColorSwatches();
+            return (Image)_systemColorSwatches.get(color);
+        }
+    }
 
     static String getSystemColorName(Color color) {
         for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {

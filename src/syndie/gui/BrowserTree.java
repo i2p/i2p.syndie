@@ -53,14 +53,27 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private MenuItem _postMenuItem;
     private MenuItem _manageMenuItem;
     private MenuItem _searchMenuView;
+    private long _startInit;
+    private long _superInit;
     
     public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         super(browser, parent, lsnr, accept, false);
-        _bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
+        long t1 = System.currentTimeMillis();
+        //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
+        long t2 = System.currentTimeMillis();
+        System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
+    }
+    private BookmarkEditorPopup getBookmarkEditor() {
+        // only called by the swt thread, so no need to sync
+        if (_bookmarkEditor == null)
+            _bookmarkEditor = new BookmarkEditorPopup(getBrowser(), getControl().getShell());
+        return _bookmarkEditor;
     }
     
     protected void initComponents(boolean register) {
+        _startInit = System.currentTimeMillis();
         super.initComponents(false);
+        _superInit = System.currentTimeMillis();
         
         Composite searchRow = new Composite((Composite)getControl(), SWT.NONE);
         searchRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -82,7 +95,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent selectionEvent) { searchAdvanced(); }
         });
         
-        createSearchDetailPopup();
+        //createSearchDetailPopup();
         
         getBrowser().getTranslationRegistry().register(this);
         getBrowser().getThemeRegistry().register(this);
@@ -90,19 +103,24 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private void search() {
         String txt = _search.getText();
+        if (_searchDetail == null)
+            createSearchDetailPopup();
         _searchDetail.setTags(txt);
         _searchDetail.search();
         _searchDetailPopup.setVisible(false);
     }
     private void searchAdvanced() { 
         String txt = _search.getText();
+        if (_searchDetail == null)
+            createSearchDetailPopup();
         _searchDetail.setTags(txt);
         _searchDetailPopup.open(); 
     }
     
     public void setSearchResults(Collection resultNodes) {
         super.setSearchResults(resultNodes);
-        _searchDetailPopup.setVisible(false);
+        if (_searchDetail != null)
+            _searchDetailPopup.setVisible(false);
     }
     
     private void createSearchDetailPopup() {
@@ -110,6 +128,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _searchDetailPopup.setLayout(new FillLayout());
         _searchDetail = new ReferenceChooserSearch(_searchDetailPopup, this, getBrowser());
         _searchDetailPopup.setSize(_searchDetailPopup.computeSize(300, SWT.DEFAULT));
+        _searchDetailPopup.setText(getBrowser().getTranslationRegistry().getText(T_SEARCH_DETAIL_POPUP, "Search"));
+        _searchDetailPopup.setFont(getBrowser().getThemeRegistry().getTheme().SHELL_FONT);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _searchDetailPopup.addShellListener(new ShellListener() {
@@ -120,17 +140,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void shellIconified(ShellEvent shellEvent) {}
         });
 
-    }
-    
-    public void viewStartupItems() { viewStartupItems(getBookmarkRoot()); }
-    // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
-    private void viewStartupItems(TreeItem item) {
-        if (item == null) return;
-        NymReferenceNode node = getBookmark(item);
-        if ( (node != null) && node.getLoadOnStart())
-            getBrowser().view(node.getURI());
-        for (int i = 0; i < item.getItemCount(); i++)
-            viewStartupItems(item.getItem(i));
     }
     
     protected void configTreeListeners(final Tree tree) {
@@ -198,14 +207,16 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private void editBookmark(TreeItem item) {
         NymReferenceNode node = getBookmark(item);
         if (node != null) {
-            _bookmarkEditor.setBookmark(node);
-            _bookmarkEditor.open();
+            BookmarkEditorPopup popup = getBookmarkEditor();
+            popup.setBookmark(node);
+            popup.open();
         }
     }
     
     private void addBookmark() {
-        _bookmarkEditor.setBookmark(null);
-        _bookmarkEditor.open();
+        BookmarkEditorPopup popup = getBookmarkEditor();
+        popup.setBookmark(null);
+        popup.open();
     }
     
     private void deleteBookmark(TreeItem item) {
@@ -351,12 +362,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
         _searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
         _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Advanced..."));
-        _searchDetailPopup.setText(registry.getText(T_SEARCH_DETAIL_POPUP, "Search"));
+        if (_searchDetailPopup != null)
+            _searchDetailPopup.setText(registry.getText(T_SEARCH_DETAIL_POPUP, "Search"));
     }
     
     public void applyTheme(Theme theme) {
         super.applyTheme(theme);
-        _searchDetailPopup.setFont(theme.SHELL_FONT);
+        if (_searchDetailPopup != null)
+            _searchDetailPopup.setFont(theme.SHELL_FONT);
         _search.setFont(theme.DEFAULT_FONT);
         _searchAdvanced.setFont(theme.BUTTON_FONT);
     }

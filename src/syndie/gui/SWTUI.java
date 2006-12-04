@@ -25,6 +25,7 @@ public class SWTUI {
     public static void main(final String args[]) {
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
+        long start = System.currentTimeMillis();
         boolean trackResources = trackResources(args);
    
         Display d = null;
@@ -36,18 +37,28 @@ public class SWTUI {
             d = new Display();
         }
         
+        long t1 = System.currentTimeMillis();
+        
+        /*
         ColorUtil.init();
         ImageUtil.init();
         SpellUtil.init();
+         */
+        
+        long t2 = System.currentTimeMillis();
         
         String root = TextEngine.getRootPath();
         if (args.length > 0)
             root = args[0];
         StartupListener lsnr = new StartupListener();
+        long t3 = System.currentTimeMillis();
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
+        long t4 = System.currentTimeMillis();
         final Browser browser = new Browser(client);
+        long t5 = System.currentTimeMillis();
         browser.debugMessage("constructing engine");
         final TextEngine engine = new TextEngine(client, browser, lsnr);
+        long t6 = System.currentTimeMillis();
         browser.debugMessage("engine constructed");
         browser.setEngine(engine);
         client.setDefaultUI(browser.getUI());
@@ -65,16 +76,23 @@ public class SWTUI {
         }, "text ui");
         t.setPriority(Thread.MIN_PRIORITY);
         t.start();
+        long t7 = System.currentTimeMillis();
         
         browser.debugMessage("waiting for login completion...");
         
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
         lsnr.waitFor("login");
+        long t8 = System.currentTimeMillis();
         browser.debugMessage("db login complete, starting browser...");
         browser.startup();
         browser.debugMessage("browser started");
+        long t9 = System.currentTimeMillis();
         
+        System.out.println("Startup times: total=" + (t9-start) + ", " + 
+                           (t1-start) + "/" + (t2-t1) + "/" + (t3-t2) + "/" + (t4-t3) + "/" +
+                           (t5-t4) + "/" + (t6-t5) + "/"+ (t7-t6) + "/" + (t8-t7) + "/" +
+                           (t9-t8));
         while (!d.isDisposed()) {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
