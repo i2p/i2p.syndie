@@ -327,12 +327,16 @@ public class PageRenderer implements Themeable {
                 disposeFonts();
                 disposeColors();
                 disposeImages();
+        
+                _text.setStyleRanges(null, null);
                 if (body != null) {
                     _text.setText(body);
+                    StyleRange range = new StyleRange(0, body.length(), null, null);
+                    range.font = _browser.getThemeRegistry().getTheme().CONTENT_FONT;
+                    _text.setStyleRange(range);
                 } else {
                     _text.setText("");
                 }
-                _text.setStyleRanges(null, null);
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _parent.setCursor(null);
