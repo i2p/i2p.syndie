@@ -134,7 +134,6 @@ public class ManageForumArchiveChooser implements Translatable {
     private void view() {
         int indexes[] = _table.getSelectionIndices();
         if ( (indexes != null) && (indexes.length == 1) ) {
-            TableItem item = _table.getItem(indexes[0]);
             SyndieURI uri = (SyndieURI)_uris.get(indexes[0]);
             _addToLocalArchive.config(uri, null, -1);
             _addToLocalArchive.open();
@@ -144,7 +143,6 @@ public class ManageForumArchiveChooser implements Translatable {
         int indexes[] = _table.getSelectionIndices();
         if ( (indexes != null) && (indexes.length == 1) ) {
             TableItem item = _table.getItem(indexes[0]);
-            SyndieURI uri = (SyndieURI)_uris.get(indexes[0]);
             item.dispose();
         }
     }
@@ -212,7 +210,7 @@ public class ManageForumArchiveChooser implements Translatable {
     private void add(SyndieURI uri, boolean asPublic, TableItem item, SyndieURI oldURI) {
         String name = uri.getString("name");
         String desc = uri.getString("desc");
-        String tags[] = uri.getStringArray("tag");
+        //String tags[] = uri.getStringArray("tag");
         
         if (item == null)
             item = new TableItem(_table, SWT.NONE);

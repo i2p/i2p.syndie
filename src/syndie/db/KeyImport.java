@@ -88,6 +88,7 @@ public class KeyImport extends CommandImpl {
         return importKey(ui, client, null, null, null, type, scope, raw, authenticated);
     }
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated) {
+        PreparedStatement stmt = null;
         try {
             long nymId = -1;
             if ( (db != null) && (login != null) && (pass != null) ) {
@@ -99,7 +100,6 @@ public class KeyImport extends CommandImpl {
                 nymId = client.getNymId(login, pass);
             } else if (client != null) {
                 nymId = client.getLoggedInNymId();
-                login = client.getLogin();
                 pass = client.getPass();
             }
             if (nymId == -1)
@@ -134,7 +134,7 @@ public class KeyImport extends CommandImpl {
             byte encrypted[] = client.pbeEncrypt(raw, salt);
             
             Connection con = client.con();
-            PreparedStatement stmt = con.prepareStatement(SQL_INSERT_KEY);
+            stmt = con.prepareStatement(SQL_INSERT_KEY);
             stmt.setLong(1, nymId);
             stmt.setBytes(2, scope.getData());
             stmt.setString(3, type);
@@ -157,11 +157,15 @@ public class KeyImport extends CommandImpl {
                 throw new SQLException("Error importing keys: row count of " + rows);
             }
             con.commit();
+            stmt.close();
+            stmt = null;
             
             ui.commandComplete(0, null);
         } catch (SQLException se) {
             ui.errorMessage("Error importing the key", se);
             ui.commandComplete(-1, null);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
         return client;

@@ -329,13 +329,10 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         item.setText(4, record.getSource());
         
         switch (record.getStatus()) {
-            case SyndicationManager.FETCH_COMPLETE:
-                item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-                //item.setText(5, "fetchComplete");
-                break;
             case SyndicationManager.FETCH_FAILED:
             case SyndicationManager.FETCH_INDEX_LOAD_ERROR:
             case SyndicationManager.FETCH_IMPORT_CORRUPT:
+            case SyndicationManager.FETCH_STOPPED:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 break;
             case SyndicationManager.FETCH_INDEX_LOAD_OK:
@@ -355,12 +352,9 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 //item.setText(5, "scheduled");
                 break;
+            case SyndicationManager.FETCH_COMPLETE:
             case SyndicationManager.FETCH_STARTED:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-                //item.setText(5, "started");
-                break;
-            case SyndicationManager.FETCH_STOPPED:
-                item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 //item.setText(5, "started");
                 break;
         }

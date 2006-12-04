@@ -767,8 +767,10 @@ class ImportMeta {
                 stmt.setLong(1, channelId);
                 stmt.setBytes(2, avatar);
                 stmt.executeUpdate();
-            } finally {
                 stmt.close();
+                stmt = null;
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
         }
     }

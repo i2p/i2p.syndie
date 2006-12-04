@@ -265,7 +265,7 @@ class MessageThreadBuilder {
         ReferenceNode.walk(roots, walker);
     }
     
-    private class ThreadWalker implements ReferenceNode.Visitor {
+    private static class ThreadWalker implements ReferenceNode.Visitor {
         private UI _ui;
         public ThreadWalker(UI ui) { _ui = ui; }
         public void visit(ReferenceNode node, int indent, int siblingOrder) {
@@ -286,7 +286,7 @@ class MessageThreadBuilder {
         }
     }
     
-    private class ThreadedReferenceNode extends ReferenceNode {
+    private static class ThreadedReferenceNode extends ReferenceNode {
         private List _parentURIs;
         private List _childURIs;
         public ThreadedReferenceNode(String name, SyndieURI uri, String description) {

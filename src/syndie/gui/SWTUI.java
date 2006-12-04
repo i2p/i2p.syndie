@@ -66,6 +66,8 @@ public class SWTUI {
         t.setPriority(Thread.MIN_PRIORITY);
         t.start();
         
+        browser.debugMessage("waiting for login completion...");
+        
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
         lsnr.waitFor("login");

@@ -208,15 +208,20 @@ public class TextUI implements UI {
                 rootDir = args[i];
         }
         if (script != null) {
+            BufferedReader in = null;
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null)
                     insertCommand(line);
+                in.close();
+                in = null;
             } catch (UnsupportedEncodingException uee) {
                 errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 errorMessage("Error running the script " + script, ioe);
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         }
         _engine = new TextEngine(rootDir, this);

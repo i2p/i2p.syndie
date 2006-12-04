@@ -413,7 +413,7 @@ public class HTTPSyndicator implements Cloneable {
         }
         _ui.commandComplete(0, null);
     }
-    private class Blocker implements Runnable {
+    private static class Blocker implements Runnable {
         private boolean _complete;
         public Blocker() { _complete = false; }
         public void run() {

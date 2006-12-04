@@ -481,7 +481,6 @@ public class MessageGen extends CommandImpl {
         //args.getOptBytes("author");
         
         if ( (args.getOptValue("bodyPassphrase") != null) && (args.getOptValue("bodyPassphrasePrompt") != null) ) {
-            String passphrase = strip(args.getOptValue("bodyPassphrase"));
             String prompt = strip(args.getOptValue("bodyPassphrasePrompt"));
             rv.put(Constants.MSG_HEADER_PBE_PROMPT, prompt);
             rv.put(Constants.MSG_HEADER_PBE_PROMPT_SALT, Base64.encode(salt));

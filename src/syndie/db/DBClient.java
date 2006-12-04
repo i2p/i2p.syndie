@@ -134,18 +134,22 @@ public class DBClient {
         _fcpPort = -1;
         _freenetPrivateKey = null;
         _freenetPublicKey = null;
+        PreparedStatement stmt = null;
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            PreparedStatement stmt = _con.prepareStatement("SHUTDOWN");
+            stmt = _con.prepareStatement("SHUTDOWN");
             stmt.execute();
             if (_log.shouldLog(Log.INFO))
                 _log.info("Database shutdown");
             stmt.close();
+            stmt = null;
             _con.close();
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error closing the connection and shutting down the database", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         if (!_shutdownInProgress)
             Runtime.getRuntime().removeShutdownHook(_shutdownHook);
@@ -338,10 +342,11 @@ public class DBClient {
     private void buildDB() {
         if (_log.shouldLog(Log.INFO))
             _log.info("Building the database...");
+        BufferedReader r = null;
         try {
-            InputStream in = getClass().getResourceAsStream("ddl.txt");
+            InputStream in = DBClient.class.getResourceAsStream("ddl.txt");
             if (in != null) {
-                BufferedReader r = new BufferedReader(new InputStreamReader(in));
+                r = new BufferedReader(new InputStreamReader(in));
                 StringBuffer cmdBuf = new StringBuffer();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
@@ -354,6 +359,8 @@ public class DBClient {
                         cmdBuf.setLength(0);
                     }
                 }
+                r.close();
+                r = null;
             }
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
@@ -361,32 +368,30 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error building the db", se);
+        } finally {
+            if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
     private int getDBUpdateCount() {
         int updates = 0;
         while (true) {
-            try {
-                InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
-                if (in != null) {
-                    in.close();
-                    updates++;
-                } else {
-                    if (_log.shouldLog(Log.DEBUG))
-                        _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
-                    return updates;
-                }
-            } catch (IOException ioe) {
-                if (_log.shouldLog(Log.WARN))
-                    _log.warn("problem listing the updates", ioe);
+            InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
+            if (in != null) {
+                updates++;
+                try { in.close(); } catch (IOException ioe) {}
+            } else {
+                if (_log.shouldLog(Log.DEBUG))
+                    _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
+                return updates;
             }
         }
     }
     private void updateDB(int oldVersion) {
+        BufferedReader r = null;
         try {
             InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
             if (in != null) {
-                BufferedReader r = new BufferedReader(new InputStreamReader(in));
+                r = new BufferedReader(new InputStreamReader(in));
                 StringBuffer cmdBuf = new StringBuffer();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
@@ -399,6 +404,8 @@ public class DBClient {
                         cmdBuf.setLength(0);
                     }
                 }
+                r.close();
+                r = null;
             }
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
@@ -406,6 +413,8 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error building the db", se);
+        } finally {
+            if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
     private void exec(String cmd) throws SQLException {
@@ -437,8 +446,8 @@ public class DBClient {
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(query);
-            String up = query.toUpperCase();
-            if (!up.startsWith("SELECT") && !up.startsWith("CALL")) {
+            String lc = Constants.lowercase(query);
+            if (!lc.startsWith("select") && !lc.startsWith("call")) {
                 int rows = stmt.executeUpdate();
                 ui.statusMessage("Command completed, updating " + rows + " rows");
                 ui.commandComplete(rows, null);
@@ -491,7 +500,6 @@ public class DBClient {
      */
     public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
         List rv = new ArrayList(1);
-        byte pass[] = DataHelper.getUTF8(nymPassphrase);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -504,8 +512,8 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 
                 if (Constants.KEY_TYPE_AES256.equals(type)) {
                     if (salt != null) {
@@ -684,7 +692,6 @@ public class DBClient {
         ensureLoggedIn();
         if (identHash == null) throw new IllegalArgumentException("you need an identHash (or you should use getNymKeys())");
         List rv = new ArrayList(1);
-        byte pass[] = DataHelper.getUTF8(nymPassphrase);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -697,8 +704,8 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 
                 if (Constants.KEY_TYPE_DSA.equals(type)) {
                     if (salt != null) {
@@ -764,7 +771,6 @@ public class DBClient {
     public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
         ensureLoggedIn();
         List rv = new ArrayList(1);
-        byte passB[] = DataHelper.getUTF8(pass);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -789,8 +795,8 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 String function = rs.getString(7);
                 byte chan[] = rs.getBytes(8);
                 
@@ -947,7 +953,7 @@ public class DBClient {
 
 
     /** gather a bunch of nym-scoped channel details */
-    public class ChannelCollector {
+    public static class ChannelCollector {
         /** list of ChannelInfo for matching channels */
         List _identityChannels;
         List _managedChannels;
@@ -1163,9 +1169,10 @@ public class DBClient {
         // instead of all these getChannel calls.  but this'll do the trick for now
         List rv = new ArrayList();
         Map allIds = getChannelIds();
-        for (Iterator iter = allIds.keySet().iterator(); iter.hasNext(); ) {
-            Long chanId = (Long)iter.next();
-            Hash chan = (Hash)allIds.get(chanId);
+        for (Iterator iter = allIds.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Long chanId = (Long)entry.getKey();
+            Hash chan = (Hash)entry.getValue();
             if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
                 continue;
             ChannelInfo info = getChannel(chanId.longValue());
@@ -1545,7 +1552,7 @@ public class DBClient {
         return info;
     }
     
-    private class DBReferenceNode extends ReferenceNode {
+    private static class DBReferenceNode extends ReferenceNode {
         private long _uriId;
         private long _groupId;
         private long _parentGroupId;
@@ -1618,8 +1625,6 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_GET_ARCHIVE);
             stmt.setLong(1, archiveId);
             rs = stmt.executeQuery();
-            Set encrypted = new HashSet();
-            Set unencrypted = new HashSet();
             while (rs.next()) {
                 // postAllowed, readAllowed, uriId
                 boolean post = rs.getBoolean(1);
@@ -2345,9 +2350,9 @@ public class DBClient {
                 stmt.setLong(3, scopeId);
                 rs = stmt.executeQuery();
                 while (rs.next()) {
-                    long msgId = rs.getLong(1);
-                    if (rs.wasNull())
-                        msgId = -1;
+                    //long msgId = rs.getLong(1);
+                    //if (rs.wasNull())
+                    //    msgId = -1;
                     long scopeChanId = rs.getLong(2);
                     if (rs.wasNull())
                         scopeChanId = -1;
@@ -2511,7 +2516,6 @@ public class DBClient {
      */
     private void createNymReferenceOrderHole(long nymId, long parentGroupId, int siblingOrder) {
         PreparedStatement stmt = null;
-        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_EXPAND_NYM_REFERENCE_ORDER);
             stmt.setLong(1, parentGroupId);
@@ -2527,7 +2531,6 @@ public class DBClient {
         } catch (SQLException se) {
             log(se);
         } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
@@ -2562,7 +2565,6 @@ public class DBClient {
         }
         
         PreparedStatement stmt = null;
-        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_UPDATE_NYM_REFERENCE);
             //"parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, 
@@ -2599,7 +2601,6 @@ public class DBClient {
         } catch (SQLException se) {
             log(se);
         } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
@@ -2629,7 +2630,6 @@ public class DBClient {
             _ui.debugMessage("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
         
         PreparedStatement stmt = null;
-        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_ADD_NYM_REFERENCE);
             // (groupId,parentGroupId,siblingOrder,name,description,uriId,isIgnored,isBanned,loadOnStartup,nymId)
@@ -2659,34 +2659,10 @@ public class DBClient {
         } catch (SQLException se) {
             log(se);
         } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
-    private static final String SQL_GET_NYM_REFERENCE_CHILD_COUNT = "SELECT COUNT(groupId) FROM resourceGroup WHERE parentGroupId = ? AND nymId = ?";
-    private int getNymReferenceChildCount(long nymId, long groupId) {
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCE_CHILD_COUNT);
-            stmt.setLong(1, groupId);
-            stmt.setLong(2, nymId);
-            rs = stmt.executeQuery();
-            if (rs.next()) {
-                long count = rs.getLong(1);
-                return (int)count;
-            } else {
-                return 0;
-            }
-        } catch (SQLException se) {
-            log(se);
-            return 0;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
-    }
-
+    
     private static final String SQL_DELETE_NYM_REFERENCE = "DELETE FROM resourceGroup WHERE groupId = ?";
     private static final String SQL_DELETE_NYM_REFERENCE_URI = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE groupId = ?)";
     /** recursively delete the reference, any children, and any URIs they refer to */
@@ -3016,8 +2992,9 @@ public class DBClient {
         File scriptDir = new File(_rootDir, "scripts");
         File scriptFile = new File(scriptDir, propName);
         if (scriptFile.exists()) {
+            BufferedReader in = null;
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null) {
                     int split = line.indexOf('=');
@@ -3029,10 +3006,14 @@ public class DBClient {
                     if (name.startsWith("//") || (name.startsWith("--")) || (name.startsWith("#"))) continue;
                     rv.setProperty(name, val);
                 }
+                in.close();
+                in = null;
             } catch (UnsupportedEncodingException uee) {
                 //ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 //ignore
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         }
         return rv;
@@ -3156,19 +3137,24 @@ public class DBClient {
         File scriptDir = new File(_rootDir, "scripts");
         File script = new File(scriptDir, scriptName);
         if (script.exists()) {
+            BufferedReader in = null;
             try {
                 ui.debugMessage("running script from " + script.getAbsolutePath());
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null) {
                     if (line.startsWith("//") || line.startsWith("#") || line.startsWith(";"))
                         continue;
                     ui.insertCommand(line);
                 }
+                in.close();
+                in = null;
             } catch (UnsupportedEncodingException uee) {
                 ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 ui.errorMessage("Error running the script " + script, ioe);
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         } else {
             ui.debugMessage("script does not exist [" + script.getAbsolutePath() + "]");

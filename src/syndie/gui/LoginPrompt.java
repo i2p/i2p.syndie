@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Button;
 /**
  *
  */
-public class LoginPrompt {
+public final class LoginPrompt {
     private DBClient _client;
     private Browser _browser;
     private Shell _shell;

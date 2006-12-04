@@ -397,7 +397,7 @@ public class PageRenderer implements Themeable {
         }
         // the _imageIndexes/_images contain the image for the linkEnd values, but
         // we may want to keep track of them separately for menu handling
-        Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
+        //Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
         
         _linkTags = sbuilder.getLinkTags();
         _imageTags = sbuilder.getImageTags();
@@ -1212,7 +1212,7 @@ public class PageRenderer implements Themeable {
                 Long msgId = imgURI.getMessageId();
                 if ( (scope == null) || (msgId == null) ) {
                     // ok, yes, its implicitly from this message
-                    scope = _msg.getScopeChannel();
+                    //scope = _msg.getScopeChannel();
                     scopeId = _msg.getScopeChannelId();
                     msgId = new Long(_msg.getMessageId());
                 } else {

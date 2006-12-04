@@ -121,7 +121,7 @@ public class ChannelInfo {
     public String getPassphrasePrompt() { return _passphrasePrompt; }
     public void setPassphrasePrompt(String prompt) { _passphrasePrompt = prompt; }
     
-    public boolean equals(Object obj) { return ((ChannelInfo)obj)._channelId == _channelId; }
+    public boolean equals(Object obj) { return (obj instanceof ChannelInfo) ? ((ChannelInfo)obj)._channelId == _channelId : false; }
     public int hashCode() { return (int)_channelId; }
     public String toString() {
         StringBuffer buf = new StringBuffer();

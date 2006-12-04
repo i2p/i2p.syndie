@@ -99,7 +99,7 @@ public class MessageTreeCommand implements CLI.Command {
         return rv;
     }
     
-    private class Listener implements MessageTree.MessageTreeListener {
+    private static class Listener implements MessageTree.MessageTreeListener {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
             if ( (uri != null) && (uri.getScope() != null) ) {
                 if (toView)

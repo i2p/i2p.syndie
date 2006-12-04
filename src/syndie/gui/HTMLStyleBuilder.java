@@ -29,7 +29,6 @@ class HTMLStyleBuilder {
     private String _msgText;
     private MessageInfo _msg;
     private boolean _enableImages;
-    private List _tagRanges;
     private StyleRange[] _styleRanges;
     private ArrayList _imageIndexes;
     /** Image instances loaded up at the _imageIndexes location */
@@ -149,9 +148,10 @@ class HTMLStyleBuilder {
         // now go through the breakpoints and check what other tags are applicable there.
         // the list of tags will contain all tags that are in that set, but it can contain
         // tags that should not be
-        for (Iterator iter = breakPointTags.keySet().iterator(); iter.hasNext(); ) {
-            Integer bp = (Integer)iter.next();
-            List tags = (List)breakPointTags.get(bp);
+        for (Iterator iter = breakPointTags.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Integer bp = (Integer)entry.getKey();
+            List tags = (List)entry.getValue();
             int orig = tags.size();
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
@@ -514,7 +514,6 @@ class HTMLStyleBuilder {
                 Long msgId = imgURI.getMessageId();
                 if ( (scope == null) || (msgId == null) ) {
                     // ok, yes, its implicitly from this message
-                    scope = _msg.getScopeChannel();
                     scopeId = _msg.getScopeChannelId();
                     msgId = new Long(_msg.getMessageId());
                 } else {
@@ -525,9 +524,9 @@ class HTMLStyleBuilder {
                 byte imgData[] = _source.getMessageAttachmentData(internalMsgId, attachmentId.intValue());
                 if (imgData != null) {
                     img = ImageUtil.createImage(imgData);
-                    System.out.println("image attachment is valid [" + imgData.length + " bytes]");
+                    //System.out.println("image attachment is valid [" + imgData.length + " bytes]");
                 } else {
-                    System.out.println("image attachment is null (" + attachmentId + ")");
+                    //System.out.println("image attachment is null (" + attachmentId + ")");
                 }
             }
         }
@@ -537,7 +536,7 @@ class HTMLStyleBuilder {
     }
     
     private void includeLinkEnd(final StyleRange style, final HTMLTag aTag) {
-        SyndieURI targetURI = getURI(aTag.getAttribValue("href"));
+        //SyndieURI targetURI = getURI(aTag.getAttribValue("href"));
         //if (targetURI == null) {
         //    System.out.println("no target uri in " + aTag);
         //    return;
@@ -642,7 +641,6 @@ class HTMLStyleBuilder {
     }
     
     private void buildFonts(Properties fontConfig) {
-        String defaultConfig = fontConfig.getProperty("default", "Times;12;NORMAL");
         _fontDefault = buildFont(_fontDefault, fontConfig.getProperty("default"), null);
         _fontP = buildFont(_fontP, fontConfig.getProperty("p"), _fontDefault);
         _fontLI = buildFont(_fontLI, fontConfig.getProperty("li"), _fontDefault);
@@ -669,7 +667,7 @@ class HTMLStyleBuilder {
             // ignore
         }
         int fontStyle = SWT.NORMAL;
-        String styleLower = cfg[2].toLowerCase();
+        String styleLower = Constants.lowercase(cfg[2]);
         if (styleLower.indexOf("bold") >= 0)
             fontStyle |= SWT.BOLD;
         if (styleLower.indexOf("italic") >= 0)

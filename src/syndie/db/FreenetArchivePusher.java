@@ -120,13 +120,19 @@ public class FreenetArchivePusher {
             for (int i = 0; i < files.size(); i++) {
                 File f = (File)files.get(i);
                 byte buf[] = new byte[4096];
-                FileInputStream fin = new FileInputStream(f);
-                int read = -1;
-                while ( (read = fin.read(buf)) != -1) {
-                    out.write(buf, 0, read);
-                    bytes += read;
+                FileInputStream fin = null;
+                try {
+                    fin = new FileInputStream(f);
+                    int read = -1;
+                    while ( (read = fin.read(buf)) != -1) {
+                        out.write(buf, 0, read);
+                        bytes += read;
+                    }
+                    fin.close();
+                    fin = null;
+                } finally {
+                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
-                fin.close();
             }
             
             _ui.debugMessage("FCP message written, now reading the response");

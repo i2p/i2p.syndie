@@ -141,9 +141,10 @@ public class ArchiveChannel {
                     }
                 }
                 DataHelper.writeLong(out, 4, thirdParty.size());
-                for (Iterator iter = thirdParty.keySet().iterator(); iter.hasNext(); ) {
-                    Hash scope = (Hash)iter.next();
-                    List msgs = (List)thirdParty.get(scope);
+                for (Iterator iter = thirdParty.entrySet().iterator(); iter.hasNext(); ) {
+                    Map.Entry entry = (Map.Entry)iter.next();
+                    Hash scope = (Hash)entry.getKey();
+                    List msgs = (List)entry.getValue();
                     out.write(scope.getData());
                     DataHelper.writeLong(out, 4, msgs.size());
                     for (int i = 0; i < msgs.size(); i++) {
@@ -239,8 +240,12 @@ public class ArchiveChannel {
     public void addUnauthorizedMessage(ArchiveMessage msg) { _unauthMessageEntries.add(msg); }
     
     public boolean equals(Object o) {
-        ArchiveChannel chan = (ArchiveChannel)o;
-        return DataHelper.eq(chan.getScope(), getScope()) && (chan.getVersion() == getVersion());
+        if (o instanceof ArchiveChannel) {
+            ArchiveChannel chan = (ArchiveChannel)o;
+            return DataHelper.eq(chan.getScope(), getScope()) && (chan.getVersion() == getVersion());
+        } else {
+            return false;
+        }
     }
     public int hashCode() { return DataHelper.hashCode(getScope()) ^ (int)getVersion(); }
 }

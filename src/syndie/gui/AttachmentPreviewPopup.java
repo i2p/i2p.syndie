@@ -167,7 +167,6 @@ class AttachmentPreviewPopup implements Translatable {
                 show = false;
             }
         }
-        GridData gd = (GridData)_preview.getLayoutData();
         if (show) {
             _preview.setVisible(true);
             _browser.getUI().debugMessage("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -208,6 +207,8 @@ class AttachmentPreviewPopup implements Translatable {
             box.setText(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_TITLE, "Error saving attachment"));
             box.setMessage(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_MSG, "Attachment could not be saved: ") + ioe.getMessage());
             box.open();
+        } finally {
+            if (fos != null) try { fos.close(); } catch (IOException ioe) {}
         }
     }
     

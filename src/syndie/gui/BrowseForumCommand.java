@@ -57,7 +57,7 @@ public class BrowseForumCommand implements CLI.Command {
         });
     }
     
-    private class Listener implements MessageTree.MessageTreeListener {
+    private static class Listener implements MessageTree.MessageTreeListener {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
             if ( (uri != null) && (uri.getScope() != null) ) {
                 if (toView)

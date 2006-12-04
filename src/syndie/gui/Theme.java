@@ -213,9 +213,9 @@ public class Theme {
             }
 
             String str = props.getProperty(prefPrefix + ".bold");
-            Boolean bold = str != null ? new Boolean(str) : null;
+            Boolean bold = str != null ? Boolean.valueOf(str) : null;
             str = props.getProperty(prefPrefix + ".italic");
-            Boolean italic = str != null ? new Boolean(str) : null;
+            Boolean italic = str != null ? Boolean.valueOf(str) : null;
 
             return adjustHeight(prefPrefix, old, szMod, bold, italic, face);
         } catch (Exception e) {

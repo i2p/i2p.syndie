@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.*;
 import org.eclipse.swt.custom.StyleRange;
+import syndie.Constants;
 import syndie.data.MessageInfo;
 
 /**
@@ -67,7 +68,7 @@ class HTMLStateBuilder {
         
         // heuristic to check for html formatted pages that assume <html><body>
         // this isn't perfect, since the body could be in a comment, but, well...
-        String lowerHTML = HTMLTag.lowercase(_html);
+        String lowerHTML = Constants.lowercase(_html);
         boolean assumeBody = ( (lowerHTML.indexOf("<body>") == -1) && (lowerHTML.indexOf("<body ") == -1));
         
         //System.out.println("unparsed html:\n" + _html);

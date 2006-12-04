@@ -40,7 +40,6 @@ import syndie.data.SyndieURI;
  */
 class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
     private Text _out;
-    private Text _in;
     private Button _levelError;
     private Button _levelStatus;
     private Button _levelDebug;
@@ -145,7 +144,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
         getBrowser().getThemeRegistry().unregister(this);
         _closed = true; 
         synchronized (_pendingMessages) { 
-            _pendingMessages.notify(); 
+            _pendingMessages.notifyAll();
         }
     }
     
@@ -169,7 +168,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
         if ( (ERROR == type) && (!_error) ) return;
         synchronized (_pendingMessages) {
             _pendingMessages.add(new Record(type, msg, e));
-            _pendingMessages.notify();
+            _pendingMessages.notifyAll();
         }
     }
     

@@ -106,7 +106,7 @@ class MessageReferenceBuilder {
         }
     }
     
-    private class MsgReferenceNode extends ReferenceNode {
+    private static class MsgReferenceNode extends ReferenceNode {
         private int _referenceId;
         private int _parentReferenceId;
         private int _siblingOrder;

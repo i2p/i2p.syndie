@@ -392,13 +392,6 @@ public class SyndieURI {
         else
             return null;
     }
-    private byte[] getBytes(String key) {
-        String val = (String)_attributes.get(key);
-        if (val != null)
-            return Base64.decode(val);
-        else
-            return null;
-    }
     public Long getMessageId() { return getLong("messageId"); }
     public Long getAttachment() { return getLong("attachment"); }
     public Long getPage() { return getLong("page"); }
@@ -551,10 +544,11 @@ public class SyndieURI {
     private static final String bencode(TreeMap attributes) {
         StringBuffer buf = new StringBuffer(64);
         buf.append('d');
-        for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
+        for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            String key = (String)entry.getKey();
             buf.append(key.length()).append(':').append(key);
-            buf.append(bencode(attributes.get(key)));
+            buf.append(bencode(entry.getValue()));
         }
         buf.append('e');
         return buf.toString();

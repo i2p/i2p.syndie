@@ -96,7 +96,6 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private SyndieURI _selectedURI;
     private long _forumId;
     private Hash _forum;
-    private long _internalMsgId;
     
     /** list of NymKey instances shown in the syndieReadKeyCombo */
     private List _readKeys;

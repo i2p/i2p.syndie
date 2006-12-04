@@ -29,7 +29,6 @@ abstract class BrowserTab implements Themeable {
     private BrowserControl _browser;
     private CTabItem _item;
     private SyndieURI _uri;
-    private ScrolledComposite _scroll;
     private Composite _root;
     
     private static final int TAB_ICON_SIZE = 16;
@@ -106,20 +105,6 @@ abstract class BrowserTab implements Themeable {
         debug("constructing base browser tab");
         _item = new CTabItem(browser.getTabFolder(), SWT.CLOSE | SWT.BORDER);
         _uri = uri;
-        /*
-        _scroll = new ScrolledComposite(browser.getTabFolder(), SWT.H_SCROLL | SWT.V_SCROLL);
-        _root = new Composite(_scroll, SWT.NONE);
-        _scroll.setContent(_root);
-        _scroll.setExpandHorizontal(true);
-        _scroll.setExpandVertical(true);
-        debug("constructing base browser tab: initializing components");
-        initComponents();
-        Rectangle sz2 = browser.getTabFolder().getClientArea();
-        Point sz1 = _root.computeSize(sz2.width, sz2.height);
-        _scroll.setMinSize(sz1);
-        debug("**constructing base browser tab: configuring the item: " + sz1 +" / " + sz2 + " - " + getClass().getName());
-         */
-
         debug("constructing base browser tab: initializing components");
         _root = new Composite(browser.getTabFolder(), SWT.NONE);
         _item.setControl(_root);
@@ -137,7 +122,6 @@ abstract class BrowserTab implements Themeable {
     protected void tabShown() {}
     protected void configItem() {
         reconfigItem();
-        //_item.setControl(_scroll);
         _item.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent evt) { _browser.unview(_uri); }
         });

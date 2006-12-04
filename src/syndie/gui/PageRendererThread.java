@@ -5,7 +5,7 @@ import java.util.ArrayList;
 /**
  *
  */
-public class PageRendererThread implements Runnable {
+public final class PageRendererThread implements Runnable {
     private static final ArrayList _enqueued = new ArrayList();
     private static final PageRendererThread _instance = new PageRendererThread();
     

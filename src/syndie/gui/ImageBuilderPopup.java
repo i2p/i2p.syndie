@@ -62,7 +62,6 @@ public class ImageBuilderPopup {
     
     private Composite _config;
     private Button _configPreview;
-    private ScrolledComposite _configPreviewScroll;
     private Image _configPreviewImageOrig;
     private byte[] _configPreviewImageSerialized;
     private ImageCanvas _configPreviewCanvas;
@@ -480,11 +479,9 @@ public class ImageBuilderPopup {
                 redrawPreview(img);
             } else {
                 _configPreviewCanvas.setVisible(false);
-                //_configPreviewScroll.setSize(50, 50);
             }
         } else {
             _configPreviewCanvas.setVisible(false);
-            //_configPreviewScroll.setSize(50, 50);
         }
         _shell.layout(true, true);
     }
@@ -506,7 +503,6 @@ public class ImageBuilderPopup {
         if (img == null) {
             _configPreviewCanvas.setVisible(false);
             _configPreviewCanvas.setSize(50, 50);
-            //_configPreviewScroll.setSize(50, 50);
         } else {
             _configPreviewCanvas.setVisible(true);
             int width = Math.min(600, img.getBounds().width);
@@ -586,7 +582,6 @@ public class ImageBuilderPopup {
             serializeImage();
         } catch (OutOfMemoryError oom) {
             System.out.println("Image size is too large (OOMed): " + width + "x" + height + ": " + oom.getMessage());
-            data = null;
             if ( (img != null) && (!img.isDisposed()) )
                 img.dispose();
             _configPreviewCanvas.setImage(_configPreviewImageOrig);

@@ -93,48 +93,79 @@ public class ViewMessage extends CommandImpl {
             dir.mkdirs();
             
             File statusFile = new File(outDir, "status.txt");
-            FileOutputStream fos = new FileOutputStream(statusFile);
-            fos.write(DataHelper.getUTF8(info.toString()));
-            fos.close();
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(statusFile);
+                fos.write(DataHelper.getUTF8(info.toString()));
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
             
             // now extract the pages and attachments
             for (int i = 0; i < info.getPageCount(); i++) {
                 String data = client.getMessagePageData(info.getInternalId(), i);
                 if (data != null) {
-                    fos = new FileOutputStream(new File(dir, "page" + i + ".dat"));
-                    fos.write(DataHelper.getUTF8(data));
-                    fos.close();
+                    try {
+                        fos = new FileOutputStream(new File(dir, "page" + i + ".dat"));
+                        fos.write(DataHelper.getUTF8(data));
+                        fos.close();
+                        fos = null;
+                    } finally {
+                        if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                    }
                 }
                 
                 String cfg = client.getMessagePageConfig(info.getInternalId(), i);
                 if (cfg != null) {
-                    fos = new FileOutputStream(new File(dir, "page" + i + ".cfg"));
-                    fos.write(DataHelper.getUTF8(cfg));
-                    fos.close();
+                    try {
+                        fos = new FileOutputStream(new File(dir, "page" + i + ".cfg"));
+                        fos.write(DataHelper.getUTF8(cfg));
+                        fos.close();
+                        fos = null;
+                    } finally {
+                        if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                    }
                 }
             }
             for (int i = 0; i < info.getAttachmentCount(); i++) {
                 byte data[] = client.getMessageAttachmentData(info.getInternalId(), i);
                 if (data != null) {
-                    fos = new FileOutputStream(new File(dir, "attachment" + i + ".dat"));
-                    fos.write(data);
-                    fos.close();
+                    try {
+                        fos = new FileOutputStream(new File(dir, "attachment" + i + ".dat"));
+                        fos.write(data);
+                        fos.close();
+                        fos = null;
+                    } finally {
+                        if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                    }
                 }
                 
                 String cfg = client.getMessageAttachmentConfigRaw(info.getInternalId(), i);
                 if (cfg != null) {
-                    fos = new FileOutputStream(new File(dir, "attachment" + i + ".cfg"));
-                    fos.write(DataHelper.getUTF8(cfg));
-                    fos.close();
+                    try {
+                        fos = new FileOutputStream(new File(dir, "attachment" + i + ".cfg"));
+                        fos.write(DataHelper.getUTF8(cfg));
+                        fos.close();
+                        fos = null;
+                    } finally {
+                        if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                    }
                 }
             }
             
             List refs = info.getReferences();
             if (refs.size() > 0) {
                 String refStr = ReferenceNode.walk(refs);
-                fos = new FileOutputStream(new File(dir, "references.cfg"));
-                fos.write(DataHelper.getUTF8(refStr));
-                fos.close();
+                try {
+                    fos = new FileOutputStream(new File(dir, "references.cfg"));
+                    fos.write(DataHelper.getUTF8(refStr));
+                    fos.close();
+                    fos = null;
+                } finally {
+                    if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                }
             }
             
             ui.statusMessage("Message extracted to " + dir.getAbsolutePath());

@@ -47,7 +47,6 @@ public class MessagePreview {
     private Composite _header;
     private Image _headerAvatar;
     private Image _headerAvatarDefault;
-    private ImageCanvas _headerAvatarCanvas;
     private Text _headerSubject;
     private Label _headerDate;
     private Label _headerAuthor;
@@ -286,12 +285,6 @@ public class MessagePreview {
         
         _headerAvatarDefault = _root.getDisplay().getSystemImage(SWT.ICON_QUESTION);
         _headerAvatar = _headerAvatarDefault;
-        
-        //_headerAvatarCanvas = new ImageCanvas(_header, false);
-        //_headerAvatarCanvas.setImage(_headerAvatarDefault);
-        //gd = new GridData(GridData.CENTER, GridData.CENTER, false, false);
-        //_headerAvatarCanvas.forceSize(48,48);
-        //_headerAvatarCanvas.setLayoutData(gd);
         
         _headerSubject = new Text(_header, SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY);
         _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));

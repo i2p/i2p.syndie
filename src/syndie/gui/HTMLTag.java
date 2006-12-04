@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
+import syndie.Constants;
 
 
 class HTMLTag {
@@ -39,7 +40,7 @@ class HTMLTag {
                 if (_name == null) {
                     if (i == 0)
                         _name = "";
-                    _name = lowercase(tagBody.substring(0, i));
+                    _name = Constants.lowercase(tagBody.substring(0, i));
                 } else {
                     if (quoteChar != -1) {
                         // keep going, we are inside a quote
@@ -54,7 +55,7 @@ class HTMLTag {
                         } else {
                             // whitespace does terminate an unquoted attribute value though
                             quoteChar = -1;
-                            String name = lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                            String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                             String val = tagBody.substring(attribValueStart, i);
                             _attributes.setProperty(name, val);
                             attribNameStart = -1;
@@ -65,7 +66,7 @@ class HTMLTag {
                 }
             }  else if ((quoteChar != -1) && (quoteChar == c) && (attribValueStart != -1)) {
                 quoteChar = -1;
-                String name = lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                 String val = tagBody.substring(attribValueStart, i);
                 _attributes.setProperty(name, val);
                 attribNameStart = -1;
@@ -93,14 +94,14 @@ class HTMLTag {
             }
         } // end looping over the tag body
         if (_name == null)
-            _name = lowercase(tagBody);
+            _name = Constants.lowercase(tagBody);
     }
     
     /** lower case tag name */
     public String getName() { return _name; }
-    public String getAttribValue(String name) { return _attributes.getProperty(lowercase(name)); }
-    public void setAttribValue(String name, String value) { _attributes.setProperty(lowercase(name), value); }
-    public void removeAttribValue(String name) { _attributes.remove(lowercase(name)); }
+    public String getAttribValue(String name) { return _attributes.getProperty(Constants.lowercase(name)); }
+    public void setAttribValue(String name, String value) { _attributes.setProperty(Constants.lowercase(name), value); }
+    public void removeAttribValue(String name) { _attributes.remove(Constants.lowercase(name)); }
     public int getStartIndex() { return _startIndex; }
     /** the tag was closed at the given body index */
     public void setEndIndex(int index) { _endIndex = index; }
@@ -112,15 +113,6 @@ class HTMLTag {
     public HTMLTag getParent() { return _parent; }
     public boolean wasConsumed() { return _consumed; }
     public void consume() { _consumed = true; }
-
-    static final String lowercase(String orig) {
-        if (orig == null) return null;
-        // for HTML data, we need to ignore the user's locale, otherwise things
-        // could get b0rked.  the canonical case here is "TITLE".toLowerCase() with
-        // a turkish locale returns "T\u0131tle" (with unicode 0131 being the turkish
-        // dotless-i)
-        return orig.toLowerCase(Locale.ENGLISH);
-    }
     
     public String toString() {
         StringBuffer rv = new StringBuffer();

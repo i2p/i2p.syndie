@@ -371,10 +371,10 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         // get all the attributes together and call buildSearchURI(...)
         
         String scopes[] = null;
-        if (_channels == null) {
-            scopes = new String[] { "all" };
-        } else {
-            synchronized (this) {
+        synchronized (this) {
+            if (_channels == null) {
+                scopes = new String[] { "all" };
+            } else {
                 scopes = new String[_channels.length];
                 for (int i = 0; i < _channels.length; i++)
                     scopes[i] = _channels[i].toBase64();

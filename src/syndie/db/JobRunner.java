@@ -5,7 +5,7 @@ import java.util.ArrayList;
 /**
  *
  */
-public class JobRunner {
+public final class JobRunner {
     private ArrayList _pending;
     private boolean _alive;
     private UI _ui;
@@ -24,7 +24,7 @@ public class JobRunner {
     }
     
     public void enqueue(Runnable r) {
-        synchronized (_pending) { _pending.add(r); _pending.notify(); }
+        synchronized (_pending) { _pending.add(r); _pending.notifyAll(); }
     }
     public void stop() { _alive = false; synchronized (_pending) { _pending.notifyAll(); } }
     public void setUI(UI ui) { _ui = ui; }

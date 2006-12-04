@@ -109,7 +109,6 @@ public class ArchiveIndex {
                 if (msgFile.exists()) {
                     long size = msgFile.length();
             
-                    String name = msgFile.getName();
                     long when = msgFile.lastModified();
                     when = when - (when % 24*60*60*1000); // ignore the time of day
 
@@ -404,7 +403,7 @@ public class ArchiveIndex {
                     rv.fetchNewUnauthorizedMetadata.add(scopeMeta);
                     for (int j = 0; j < _channelEntries.size(); j++) {
                         ArchiveChannel curChan = (ArchiveChannel)_channelEntries.get(j);
-                        if (curChan.getScope().equals(scope)) {
+                        if (DataHelper.eq(curChan.getScope(), scope.getData())) {
                             rv.fetchNewUnauthorizedBytes += curChan.getEntrySize();
                             break;
                         }

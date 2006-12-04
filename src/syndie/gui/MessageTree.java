@@ -246,7 +246,7 @@ public class MessageTree implements Translatable, Themeable {
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void resized() { resizeCols(); }
-            public void selected(boolean rightClick) { /*fireSelected(false);*/ }
+            public void selected() { /*fireSelected(false);*/ }
             public void returnHit() { fireSelected(true); }
             public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
@@ -314,9 +314,12 @@ public class MessageTree implements Translatable, Themeable {
             _filter = "";
         }
     
-        Long days = uri.getLong("age");
-        if (days == null)
-            days = uri.getLong("agelocal");
+        Long days = null;
+        if (uri != null) { 
+            days = uri.getLong("age");
+            if (days == null)
+                days = uri.getLong("agelocal");
+        }
         if (days != null) {
             switch (days.intValue()) {
                 case 60: _filterAge.select(AGE_LASTMONTH); break;
@@ -331,7 +334,9 @@ public class MessageTree implements Translatable, Themeable {
                     break;
             }
         }
-        String tags[] = uri.getStringArray("tagrequire");
+        String tags[] = null;
+        if (uri != null)
+            tags = uri.getStringArray("tagrequire");
         if ( (tags == null) || (tags.length == 0) ) {
             _filterTag.select(0);
         } else if (_filterTag.indexOf(tags[0]) > 0) {
@@ -659,7 +664,7 @@ public class MessageTree implements Translatable, Themeable {
                 tags = "";
             }
             item.setText(0, subj);
-            if (msg.getWasPrivate())
+            if ( (msg != null) && (msg.getWasPrivate()) )
                 item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
             else
                 item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);

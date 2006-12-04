@@ -29,7 +29,7 @@ public class ArchiveInfo {
     public SyndieURI getURI() { return _uri; }
     public void setURI(SyndieURI uri) { _uri = uri; }
     
-    public boolean equals(Object o) { return ((ArchiveInfo)o)._archiveId == _archiveId; }
+    public boolean equals(Object o) { return (o instanceof ArchiveInfo) ? ((ArchiveInfo)o)._archiveId == _archiveId : false; }
     public int hashCode() { return (int)_archiveId; }
     public String toString() { return "Archive " + _archiveId + ": " + _uri; }
 }

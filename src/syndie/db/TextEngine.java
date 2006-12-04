@@ -64,6 +64,7 @@ public class TextEngine {
         _exit = false;
         _rootFile = client.getRootDir().getAbsolutePath();
         _commandHistory = new ArrayList();
+        _ui.debugMessage("intantiating textengine");
         rebuildMenus();
         buildInstallDir();
         if ( (_client != null) && (_client.isLoggedIn()) ) {
@@ -118,6 +119,7 @@ public class TextEngine {
         String cmdStr = opts.getCommand();
         boolean ignored = true;
         String origLine = opts.getOrigLine();
+        _ui.debugMessage("read command: " + origLine);
         if ( (cmdStr == null) || (cmdStr.trim().startsWith("--")) ) {
             // noop
         } else if (processMeta(opts) || processMenu(opts)) {
@@ -216,7 +218,7 @@ public class TextEngine {
         InputStream in = null;
         FileOutputStream fos = null;
         try {
-            in = getClass().getResourceAsStream(name);
+            in = TextEngine.class.getResourceAsStream(name);
             fos = new FileOutputStream(toFile);
             if (in != null) {
                 byte buf[] = new byte[1024];

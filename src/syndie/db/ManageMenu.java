@@ -553,7 +553,7 @@ class ManageMenu implements TextEngine.Menu {
         
         String enc = opts.getOptValue("encryptContent");
         if (enc != null) {
-            _encryptContent = new Boolean(opts.getOptBoolean("encryptContent", false));
+            _encryptContent = Boolean.valueOf(opts.getOptBoolean("encryptContent", false));
             ui.statusMessage("Updated channel encryption policy");
         }
         

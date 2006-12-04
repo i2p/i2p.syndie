@@ -104,7 +104,7 @@ class TextUITab extends BrowserTab implements Browser.UIListener {
         getBrowser().removeUIListener(this); 
         _closed = true; 
         synchronized (_pendingMessages) { 
-            _pendingMessages.notify(); 
+            _pendingMessages.notifyAll(); 
         }
     }
     
@@ -136,7 +136,7 @@ class TextUITab extends BrowserTab implements Browser.UIListener {
         if ( (DEBUG == type) && (!_debug) ) return;
         synchronized (_pendingMessages) {
             _pendingMessages.add(new Record(type, msg, e));
-            _pendingMessages.notify();
+            _pendingMessages.notifyAll();
         }
     }
     

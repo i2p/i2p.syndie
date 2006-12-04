@@ -153,7 +153,7 @@ public class MessageInfo {
     public boolean getReplyKeyUnknown() { return _replyKeyUnknown; }
     public void setReplyKeyUnknown(boolean isUnknown) { _replyKeyUnknown = isUnknown; }
     
-    public boolean equals(Object o) { return ((MessageInfo)o)._internalId == _internalId; }
+    public boolean equals(Object o) { return (o instanceof MessageInfo) ? ((MessageInfo)o)._internalId == _internalId : false; }
     public int hashCode() { return (int)_internalId; }
     public String toString() {
         StringBuffer buf = new StringBuffer();

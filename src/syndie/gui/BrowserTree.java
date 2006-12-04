@@ -252,13 +252,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             return null;
     }
     
-    private void showMenu(Tree tree, TreeItem selected) {
-        pickMenu(tree, selected);
-        Menu menu = tree.getMenu();
-        if (menu != null)
-            menu.setVisible(true);
-    }
-    
     private void pickMenu(Tree tree, TreeItem item) {
         if (item == null) {
             tree.setMenu(null);

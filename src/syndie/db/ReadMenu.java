@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -723,7 +724,7 @@ class ReadMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     
-    private static final class HighestFirstComparator implements Comparator {
+    private static final class HighestFirstComparator implements Comparator, Serializable {
         public int compare(Object lhs, Object rhs) {
             if (lhs instanceof Long)
                 return -1*((Long)lhs).compareTo((Long)rhs);

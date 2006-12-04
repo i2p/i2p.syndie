@@ -298,10 +298,8 @@ public class SyndicationManager {
             archiveWasRemote = false;
         } else {
             try {
-                if (record.getStatus() == FETCH_STOPPED) {
-                    if (archiveWasRemote) out.delete(); 
+                if (record.getStatus() == FETCH_STOPPED)
                     return;
-                }
                 out = File.createTempFile("syndicate", ".index", _client.getTempDir());
                 EepGet get = new EepGet(_client.ctx(), shouldProxy, proxyHost, (int)proxyPort, 0, out.getPath(), url, false, null, null);
                 UIStatusListener lsnr = new UIStatusListener();
@@ -332,14 +330,14 @@ public class SyndicationManager {
                 record.setStatus(FETCH_FAILED);
                 record.setDetail(ioe.getMessage());
                 fireIndexStatus(record);
-                if (archiveWasRemote)
+                if (archiveWasRemote && out != null)
                     out.delete();
                 return;
             }
         }
         try {
             if (record.getStatus() == FETCH_STOPPED) {
-                if (archiveWasRemote) out.delete(); 
+                if (archiveWasRemote && out != null) out.delete(); 
                 return;
             }
             ArchiveIndex index = ArchiveIndex.loadIndex(out, _ui, unauth);
@@ -1038,7 +1036,7 @@ public class SyndicationManager {
         _ui.debugMessage("archives loaded");
     }
     
-    private class NymArchive {
+    private static class NymArchive {
         private String _name;
         private SyndieURI _uri;
         private String _customProxyHost;

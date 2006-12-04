@@ -40,10 +40,14 @@ public class ArchiveMessage {
     
     /** true if they refer to the same message */
     public boolean equals(Object o) {
-        ArchiveMessage msg = (ArchiveMessage)o;
-        if ((msg.getPrimaryScope() == null) || (getPrimaryScope() == null))
-            return msg == this;
-        return (msg.getPrimaryScope().equals(getPrimaryScope()) && (msg.getMessageId() == getMessageId()));
+        if (o instanceof ArchiveMessage) {
+            ArchiveMessage msg = (ArchiveMessage)o;
+            if ((msg.getPrimaryScope() == null) || (getPrimaryScope() == null))
+                return msg == this;
+            return (msg.getPrimaryScope().equals(getPrimaryScope()) && (msg.getMessageId() == getMessageId()));
+        } else {
+            return false;
+        }
     }
     public int hashCode() { return (getPrimaryScope() == null ? 0 : getPrimaryScope().hashCode()) ^ ((int)getMessageId()); }
 }

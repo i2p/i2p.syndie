@@ -594,7 +594,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         
         String file = _avatarDialog.open();
         if (file != null) {
-            File f = new File(file);
             //ignoring it here, since we scale it down later
             //if (f.length() > Constants.MAX_AVATAR_SIZE)
             //    return;

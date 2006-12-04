@@ -148,6 +148,7 @@ public class ImageUtil {
     }
     
     public static Image createImage(byte data[]) {
+        if (data == null) return null;
         try {
             return new Image(Display.getDefault(), new ByteArrayInputStream(data));
         } catch (IllegalArgumentException iae) {

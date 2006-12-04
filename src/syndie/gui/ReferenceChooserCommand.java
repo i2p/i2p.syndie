@@ -110,7 +110,7 @@ public class ReferenceChooserCommand implements CLI.Command {
         shell.open();
     }
     
-    private class RefListener implements ReferenceChooserTree.ChoiceListener {
+    private static class RefListener implements ReferenceChooserTree.ChoiceListener {
         private UI _ui;
         public RefListener(UI ui) { _ui = ui; }
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) {
@@ -129,7 +129,7 @@ public class ReferenceChooserCommand implements CLI.Command {
             _ui.statusMessage("other item selected [" + item.getText() + "]");
         }
     }
-    private class AcceptListener implements ReferenceChooserTree.AcceptanceListener {
+    private static class AcceptListener implements ReferenceChooserTree.AcceptanceListener {
         private UI _ui;
         private ReferenceChooserTree _chooser;
         private ReferenceChooserSearch _search;

@@ -190,7 +190,6 @@ public class PageEditor implements Translatable {
     
     private Color getControlFGColor() { return ifDiff(_txtFGColor.getBackground(), _txtFGColor.getParent().getBackground()); }
     private Color getControlBGColor() { return ifDiff(_txtBGColor.getBackground(), _txtBGColor.getParent().getBackground()); }
-    private Image getControlPageBGImage() { return ifDiff(_text.getBackgroundImage(), _text.getParent().getBackgroundImage()); }
     private Color getControlPageBGColor() { return ifDiff(_pageBGColor.getBackground(), _pageBGColor.getParent().getBackground()); }
     private boolean getControlBold() { return _txtBold.getSelection(); }
     private boolean getControlItalic() { return _txtItalic.getSelection(); }
@@ -450,11 +449,6 @@ public class PageEditor implements Translatable {
                 _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
             }
         }
-    }
-    
-    private Properties getAttributes(String attributes) {
-        Properties rv = new Properties();
-        return rv;
     }
     
     private void prepareHeader() {

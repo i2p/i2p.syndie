@@ -661,8 +661,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             int addedFonts = 0;
             int addedColors = 0;
             int addedGC = 0;
-            lost = new ArrayList();
-            added = new ArrayList();
             for (int i = 0; i < dumpedObj.size(); i++) {
                 Object cur = dumpedObj.get(i);
                 if ( (_lastDumpedObj == null) || (!_lastDumpedObj.contains(cur)) ) {
@@ -892,7 +890,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 SyndieURI uri = (SyndieURI)iter.next();
                 BrowserTab tab = (BrowserTab)_openTabs.get(uri);
                 if (tab.getTabItem() == item) {
-                    SyndieURI curURI = tab.getURI(); // may have changed since insert
+                    //SyndieURI curURI = tab.getURI(); // may have changed since insert
                     //
                     return;
                 }

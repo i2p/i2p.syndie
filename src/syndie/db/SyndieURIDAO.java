@@ -42,7 +42,7 @@ public class SyndieURIDAO {
                     } else {
                         boolean valBool = rs.getBoolean(4);
                         if (!rs.wasNull()) {
-                            attribs.put(key, new Boolean(valBool));
+                            attribs.put(key, Boolean.valueOf(valBool));
                         } else {
                             String valStrings = rs.getString(5);
                             if (!rs.wasNull()) {
@@ -105,9 +105,10 @@ public class SyndieURIDAO {
             if (_log.shouldLog(Log.DEBUG))
                 _log.debug("URI " + id + " added with type " + type);
             Map attributes = uri.getAttributes();
-            for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
-                String key = (String)iter.next();
-                Object val = attributes.get(key);
+            for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry entry = (Map.Entry)iter.next();
+                String key = (String)entry.getKey();
+                Object val = entry.getValue();
                 if (val == null)
                     continue;
                 if (val.getClass().isArray()) {

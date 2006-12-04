@@ -457,7 +457,6 @@ public class ThreadAccumulator {
     }
     
     private boolean filterPassed(List tags, SyndieURI uri, ReferenceNode node, Harvester harvester, boolean isRoot) {
-        ReferenceNode rv = node;
         boolean ok = true;
         if (isRoot || _applyTagFilterToMessages)
             if (!tagFilterPassed(tags, uri))

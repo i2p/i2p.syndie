@@ -219,7 +219,7 @@ class SyndicateMenu implements TextEngine.Menu {
             out.delete();
     }
     
-    private class UIStatusListener implements EepGet.StatusListener {
+    private static class UIStatusListener implements EepGet.StatusListener {
         private UI _ui;
         public UIStatusListener(UI ui) { _ui = ui; }
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {
@@ -577,12 +577,5 @@ class SyndicateMenu implements TextEngine.Menu {
         long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
         SyndicationManager.buildIndex(client, ui, maxSize);
         ui.commandComplete(0, null);
-    }
-    
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
-    private static final String when(long when) {
-        synchronized (_fmt) {
-            return _fmt.format(new Date(when));
-        }
     }
 }

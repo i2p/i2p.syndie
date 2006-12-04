@@ -86,10 +86,11 @@ public class TranslationRegistry {
         Map translations = new HashMap();
         int translation = 0;
         while (true) {
+            BufferedReader reader = null;
             try {
                 InputStream in = getClass().getResourceAsStream("/translation_ " + translation + ".txt");
                 if (in != null) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                     Properties props = new Properties();
                     String line = null;
                     String lang = null;
@@ -108,7 +109,8 @@ public class TranslationRegistry {
                         else
                             props.setProperty(key, val);
                     }
-                    in.close();
+                    reader.close();
+                    reader = null;
                     if (lang != null)
                         translations.put(lang, props);
                     translation++;
@@ -117,6 +119,8 @@ public class TranslationRegistry {
                 }
             } catch (IOException ioe) {
                 _browser.getUI().errorMessage("problem getting the embedded translations", ioe);
+            } finally {
+                if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
         }
         _embeddedTranslations = translations;
@@ -133,10 +137,11 @@ public class TranslationRegistry {
             }
         });
         for (int i = 0; i < files.length; i++) {
+            BufferedReader reader = null;
             try {
                 InputStream in = new FileInputStream(files[i]);
                 if (in != null) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                     Properties props = new Properties();
                     String line = null;
                     String lang = null;
@@ -155,12 +160,15 @@ public class TranslationRegistry {
                         else
                             props.setProperty(key, val);
                     }
-                    in.close();
+                    reader.close();
+                    reader = null;
                     if (lang != null)
                         translations.put(lang, props);
                 }
             } catch (IOException ioe) {
                 _browser.getUI().errorMessage("problem getting the file translations", ioe);
+            } finally {
+                if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
         }
     }

@@ -73,7 +73,7 @@ public class BrowseForumTab extends BrowserTab {
         debug("browseforumtab.initComponents: complete");
     }
     
-    private class ForumListener implements MessageTree.MessageTreeListener {
+    private static class ForumListener implements MessageTree.MessageTreeListener {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {}
         public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
     }

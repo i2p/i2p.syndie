@@ -201,44 +201,82 @@ public class MessageExtract extends CommandImpl {
         dir.mkdirs();
         for (int i = 0; i < body.getPages(); i++) {
             File page = new File(dir, "page" + i + ".dat");
-            FileOutputStream fos = new FileOutputStream(page);
-            fos.write(body.getPage(i));
-            fos.close();
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(page);
+                fos.write(body.getPage(i));
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
             
             File cfg = new File(dir, "page" + i + ".cfg");
-            fos = new FileOutputStream(cfg);
-            write(body.getPageConfig(i), fos);
-            fos.close();
-            fos.close();
+            try {
+                fos = new FileOutputStream(cfg);
+                write(body.getPageConfig(i), fos);
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
         }
         for (int i = 0; i < body.getAttachments(); i++) {
             File attach = new File(dir, "attach" + i + ".dat");
-            FileOutputStream fos = new FileOutputStream(attach);
-            fos.write(body.getAttachment(i));
-            fos.close();
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(attach);
+                fos.write(body.getAttachment(i));
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
             
             File cfg = new File(dir, "attach" + i + ".cfg");
-            fos = new FileOutputStream(cfg);
-            write(body.getAttachmentConfig(i), fos);
-            fos.close();
+            try {
+                fos = new FileOutputStream(cfg);
+                write(body.getAttachmentConfig(i), fos);
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
         }
         File avatar = new File(dir, "avatar.png");
         InputStream in = body.getAvatar();
         if (in != null) {
-            FileOutputStream fos = new FileOutputStream(avatar);
-            byte buf[] = new byte[1024];
-            int read = -1;
-            while ( (read = in.read(buf)) != -1)
-                fos.write(buf, 0, read);
-            fos.close();
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(avatar);
+                byte buf[] = new byte[1024];
+                int read = -1;
+                while ( (read = in.read(buf)) != -1)
+                    fos.write(buf, 0, read);
+                fos.close();
+                fos = null;
+            } finally {
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
         }
         
-        FileOutputStream out = new FileOutputStream(new File(dir, "privHeaders.txt"));
-        write(body.getHeaders(), out);
-        out.close();
-        out = new FileOutputStream(new File(dir, "pubHeaders.txt"));
-        write(enc.getHeaders(), out);
-        out.close();
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(new File(dir, "privHeaders.txt"));
+            write(body.getHeaders(), out);
+            out.close();
+            out = null;
+        } finally {
+            if (out != null) try { out.close(); } catch (IOException ioe) {}
+        }
+        try {
+            out = new FileOutputStream(new File(dir, "pubHeaders.txt"));
+            write(enc.getHeaders(), out);
+            out.close();
+            out = null;
+        } finally {
+            if (out != null) try { out.close(); } catch (IOException ioe) {}
+        }
         
         ui.commandComplete(0, null);
     }
@@ -248,7 +286,6 @@ public class MessageExtract extends CommandImpl {
             //ImportPost.process(_client, enc, nymId);
             
             EnclosureBody body = null;
-            SigningPublicKey ident = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
             SessionKey key = enc.getHeaderSessionKey(Constants.MSG_HEADER_BODYKEY);
             if (key != null) {
                 try {

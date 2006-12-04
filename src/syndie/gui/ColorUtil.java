@@ -49,7 +49,6 @@ public class ColorUtil {
     }
     private static Map _systemColorSwatches = new HashMap();
     private static void buildSystemColorSwatches() {
-        Device dev = Display.getDefault();
         for (Iterator iter = _colorNameToSystem.values().iterator(); iter.hasNext(); ) {
             Color color = (Color)iter.next();
             _systemColorSwatches.put(color, ImageUtil.createImage(16, 16, color, true));

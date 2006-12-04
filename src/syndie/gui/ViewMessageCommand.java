@@ -69,7 +69,7 @@ public class ViewMessageCommand implements CLI.Command {
         });
     }
     
-    private class DummyPageActionListener implements PageRenderer.PageActionListener {
+    private static class DummyPageActionListener implements PageRenderer.PageActionListener {
         private UI _ui;
         public DummyPageActionListener(UI ui) { _ui = ui; }
 

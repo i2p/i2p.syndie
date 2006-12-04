@@ -267,7 +267,6 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         if (info != null) {
             String name = info.getName();
             if (name == null) name = scope.toBase64().substring(0,6);
-            StringBuffer buf = new StringBuffer();
             _metaName.setText(name);
             
             byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());

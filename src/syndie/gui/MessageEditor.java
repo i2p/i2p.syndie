@@ -480,9 +480,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
         String base = dialog.getFilterPath();
-        File baseFile = null;
-        if ( (base != null) && (base.trim().length() > 0) )
-            baseFile = new File(base);
         for (int i = 0; i < selected.length; i++) {
             File cur = null;
             if (base == null)
@@ -508,7 +505,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _extensionToType.put("syndie", "application/x-syndie");
     }
     public static final String guessContentType(String filename) {
-        filename = HTMLTag.lowercase(filename);
+        filename = Constants.lowercase(filename);
         int split = filename.lastIndexOf('.');
         if ( (split >= 0) && (split + 1 < filename.length()) ) {
             String type = (String)_extensionToType.get(filename.substring(split+1));
@@ -524,7 +521,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         String fname = file.getName();
         String name = Constants.stripFilename(fname, false);
         String type = guessContentType(fname);
-        fname = HTMLTag.lowercase(fname);
         
         if (file.length() > Constants.MAX_ATTACHMENT_SIZE)
             return;
@@ -806,7 +802,6 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private void pickAvatar() {
         String file = _controlAvatarDialog.open();
         if (file != null) {
-            File f = new File(file);
             //ignoring it here, since we scale it down later
             //if (f.length() > Constants.MAX_AVATAR_SIZE)
             //    return;

@@ -127,7 +127,7 @@ public class Constants {
                 if (off-start > 0) {
                     vals.add(new String(str, start, off-start));
                 } else if (includeZeroSizedElem) {
-                    vals.add(new String(""));
+                    vals.add("");
                 }
                 start = off+1;
             }
@@ -165,12 +165,23 @@ public class Constants {
         return new String(rv);
     }
 
-    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
+    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
     public static final String getDate(long msgId) { 
         synchronized (_dayFmt) { 
             return _dayFmt.format(new Date(msgId)); 
         } 
     }
+    
+    /** lowercase that is not dependent upon the user's locale */
+    public static final String lowercase(String orig) {
+        if (orig == null) return null;
+        // for HTML data, we need to ignore the user's locale, otherwise things
+        // could get b0rked.  the canonical case here is "TITLE".toLowerCase() with
+        // a turkish locale returns "T\u0131tle" (with unicode 0131 being the turkish
+        // dotless-i)
+        return orig.toLowerCase(Locale.UK);
+    }
+
     
     public static void main(String args[]) {
         String split[] = split('\n', "hi\nhow are you?\n\nw3wt\n\nthe above is a blank line");
