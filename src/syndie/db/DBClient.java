@@ -1230,7 +1230,7 @@ public class DBClient {
         return rv;
     }
     
-    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt, importDate FROM channel WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
@@ -1265,6 +1265,7 @@ public class DBClient {
                 boolean readKeyMissing = rs.getBoolean(11);
                 if (rs.wasNull()) readKeyMissing = false;
                 String pbePrompt = rs.getString(12);
+                Date importDate = rs.getDate(13);
                 
                 info.setChannelId(channelId);
                 info.setChannelHash(new Hash(chanHash));
@@ -1281,6 +1282,7 @@ public class DBClient {
                     info.setExpiration(-1);
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
+                info.setReceiveDate(importDate.getTime());
             } else {
                 return null;
             }
@@ -1809,9 +1811,54 @@ public class DBClient {
         }
         return msgId;
     }
+    public long getMessageId(Hash scope, Long messageId) {
+        if (messageId == null)
+            return -1;
+        else
+            return getMessageId(scope, messageId.longValue());
+    }
+    public long getMessageId(Hash scope, long messageId) {
+        long chanId = getChannelId(scope);
+        if (chanId >= 0)
+            return getMessageId(chanId, messageId);
+        else
+            return -1;
+    }
+    private static final String SQL_GET_CHANNEL_VERSION = "SELECT edition FROM channel WHERE channelId = ?";
+    /** locally known edition of the given scope, or -1 if not known */
+    public long getChannelVersion(Hash scope) {        
+        if ( (scope == null) || (scope.getData() == null) ) return -1;
+        long channelId = getChannelId(scope);
+        if (channelId < 0) return -1;
+        return getChannelVersion(channelId);
+    }
+    public long getChannelVersion(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_VERSION);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long edition = rs.getLong(1);
+                if (rs.wasNull())
+                    edition = -1;
+                return edition;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's id", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }   
+    }
     
     private static final String SQL_GET_MESSAGE_INFO = "SELECT authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId, " +
-                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt " +
+                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt, importDate " +
                                                        "FROM channelMessage WHERE msgId = ?";
     private static final String SQL_GET_MESSAGE_HIERARCHY = "SELECT referencedChannelHash, referencedMessageId FROM messageHierarchy WHERE msgId = ? ORDER BY referencedCloseness ASC";
     private static final String SQL_GET_MESSAGE_TAG = "SELECT tag, isPublic FROM messageTag WHERE msgId = ?";
@@ -1830,7 +1877,7 @@ public class DBClient {
             if (rs.next()) {
                 // authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId,
                 // forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, 
-                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE
+                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, importDate
                 long authorId = rs.getLong(1);
                 if (rs.wasNull()) authorId = -1;
                 //byte author[] = rs.getBytes(1);
@@ -1866,6 +1913,7 @@ public class DBClient {
                 boolean replyKeyMissing = rs.getBoolean(18);
                 if (rs.wasNull()) replyKeyMissing = false;
                 String pbePrompt = rs.getString(19);
+                Date importDate = rs.getDate(20);
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setReplyKeyUnknown(replyKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
@@ -1898,6 +1946,8 @@ public class DBClient {
                     info.setExpiration(exp.getTime());
                 else
                     info.setExpiration(-1);
+                if (importDate != null)
+                    info.setReceiveDate(importDate.getTime());
             } else {
                 return null;
             }

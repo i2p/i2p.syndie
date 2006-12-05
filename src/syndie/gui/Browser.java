@@ -694,6 +694,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _client.updateNymReference(_client.getLoggedInNymId(), bookmark);
         _bookmarks.refreshBookmarks();
     }
+    public boolean isBookmarked(SyndieURI syndieURI) { return _bookmarks.isBookmarked(syndieURI); }
     
     public UI getUI() { return this; }
     public TranslationRegistry getTranslationRegistry() { return _translation; }

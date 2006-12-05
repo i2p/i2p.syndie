@@ -24,6 +24,7 @@ import syndie.db.SyndicationManager;
 public class SyndicationConfigView implements Translatable {
     private BrowserControl _browser;
     private Composite _parent;
+    private SyndicationView _view;
     private Composite _root;
     private Button _actionIndex;
     private Button _actionPullOnly;
@@ -48,9 +49,10 @@ public class SyndicationConfigView implements Translatable {
     private Label _fcpPortLabel;
     private Text _fcpPort;
     
-    public SyndicationConfigView(BrowserControl browser, Composite parent) {
+    public SyndicationConfigView(BrowserControl browser, Composite parent, SyndicationView view) {
         _browser = browser;
         _parent = parent;
+        _view = view;
         initComponents();
     }
     
@@ -151,8 +153,8 @@ public class SyndicationConfigView implements Translatable {
         _pullExplicitButton = new Button(_root, SWT.NONE);
         _pullExplicitButton.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, true, false, 3, 1));
         _pullExplicitButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickExplicit(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickExplicit(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickExplicit(); _view.showDiff(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickExplicit(); _view.showDiff(); }
         });
         
         _proxyHostLabel = new Label(_root, SWT.NONE);
@@ -197,9 +199,12 @@ public class SyndicationConfigView implements Translatable {
         _browser.getTranslationRegistry().register(this);
     }
     
-    private void pickExplicit() {
+    public void pickExplicit() {
         _pullStrategy.select(SyndicationManager.PULL_STRATEGY_EXPLICIT);
-        // show a popup w/ diffs of known indexes
+        if (_actionIndex.getSelection()) {
+            _actionIndex.setSelection(false);
+            _actionPullOnly.setSelection(true);
+        }
     }
     
     private void updateStrategy(TranslationRegistry registry) {

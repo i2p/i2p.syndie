@@ -12,6 +12,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +63,7 @@ public class SyndicationManager {
     public static final int PULL_STRATEGY_DELTA = 0;
     public static final int PULL_STRATEGY_DELTABOOKMARKED = 1;
     public static final int PULL_STRATEGY_DELTAKNOWN = 2;
-    public static final int PULL_STRATEGY_EXPLICIT = 2;
+    public static final int PULL_STRATEGY_EXPLICIT = 3;
     public static final int PULL_STRATEGY_PIR = 4;
     public static final int PULL_STRATEGY_DEFAULT = PULL_STRATEGY_DELTA;
     
@@ -394,10 +395,18 @@ public class SyndicationManager {
      * @param archiveNames set of archive names to sync with
      */
     public void sync(int maxkb, int pullStrategy, int pushStrategy, Set archiveNames) {
-        pull(maxkb, pullStrategy, archiveNames);
+        sync(maxkb, pullStrategy, pushStrategy, archiveNames, null);
+    }
+    /**
+     * @param explicit archive name to a Set of SyndieURIs that should be fetched from 
+     *                 them (for the explicit pull strategy)
+     */
+    public void sync(int maxkb, int pullStrategy, int pushStrategy, Set archiveNames, Map explicit) {
+        _ui.debugMessage("sync strategy: " + pullStrategy+"/"+pushStrategy + ": " + explicit);
+        pull(maxkb, pullStrategy, archiveNames, explicit);
         push(maxkb, pushStrategy, archiveNames);
     }
-    private void pull(int maxkb, int pullStrategy, Set archiveNames) {
+    private void pull(int maxkb, int pullStrategy, Set archiveNames, Map explicit) {
         HashSet uris = new HashSet();
         switch (pullStrategy) {
             case PULL_STRATEGY_DELTAKNOWN:
@@ -453,9 +462,19 @@ public class SyndicationManager {
                     }
                 }
                 break;
+            case PULL_STRATEGY_EXPLICIT:
+                for (Iterator iter = explicit.entrySet().iterator(); iter.hasNext(); ) {
+                    Map.Entry entry = (Map.Entry)iter.next();
+                    String archive = (String)entry.getKey();
+                    Set curURIs = (Set)entry.getValue();
+                    for (Iterator uriIter = curURIs.iterator(); uriIter.hasNext(); )
+                        fetch(archive, (SyndieURI)uriIter.next());
+                }
+                break;
         }
     }
     private void push(int maxkb, int pushStrategy, Set archiveNames) {
+        if (pushStrategy == -1) return;
         for (int i = 0; i < _archives.size(); i++) {
             NymArchive archive = (NymArchive)_archives.get(i);
             if (!archiveNames.contains(archive.getName()))
@@ -1136,7 +1155,6 @@ public class SyndicationManager {
                 case FETCH_IMPORT_CORRUPT:
                 case FETCH_INDEX_DIFF_OK:
                 case FETCH_INDEX_LOAD_ERROR:
-                case FETCH_INDEX_LOAD_OK:
                 case FETCH_STOPPED:
                     return true;
                 case FETCH_COMPLETE:

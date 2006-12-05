@@ -33,7 +33,17 @@ public class ArchiveMessage {
     public Hash getPrimaryScope() { return _primaryScope; }
 
     void setMessageId(long id) { _messageId = id; }
-    void setReceiveDate(long when) { _recvDate = when; }
+    void setReceiveDate(long when) { setReceiveDate(when, -1); }
+    void setReceiveDate(long when, long days) {
+        _recvDate = when; 
+        /*
+        if (when < 0) {
+            new Exception("receive date is negative? " + when).printStackTrace();
+        } else if (when > System.currentTimeMillis()) {
+            new Exception("receive date is in the future? " + (when-System.currentTimeMillis()) + " (days: " + days + ", " + (System.currentTimeMillis()/(24*60*60*1000l) + ")")).printStackTrace();
+        }
+         */
+    }
     void setEntrySize(long size) { _entrySize = size; }
     void setFlags(int flags) { _flags = flags; }
     void setPrimaryScope(Hash channel) { _primaryScope = channel; }

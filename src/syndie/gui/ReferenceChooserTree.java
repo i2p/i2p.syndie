@@ -167,6 +167,24 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _tree.setRedraw(true);
     }
     
+    public boolean isBookmarked(SyndieURI uri) {
+        if (uri == null) return false;
+        for (int i = 0; i < _nymRefs.size(); i++) {
+            ReferenceNode ref = (ReferenceNode)_nymRefs.get(i);
+            if (isBookmarked(ref, uri))
+                return true;
+        }
+        return false;
+    }
+    private boolean isBookmarked(ReferenceNode ref, SyndieURI uri) {
+        if ( (ref.getURI() != null) && (ref.getURI().equals(uri)) )
+            return true;
+        for (int i = 0; i < ref.getChildCount(); i++)
+            if (isBookmarked(ref.getChild(i), uri))
+                return true;
+        return false;
+    }
+    
     private void getOpenGroupIds(TreeItem base, ArrayList openGroupIds) {
         if (base.getExpanded()) {
             openGroupIds.add(new Long((((NymReferenceNode)_bookmarkNodes.get(base)).getGroupId())));

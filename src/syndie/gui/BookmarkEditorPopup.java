@@ -10,7 +10,7 @@ import syndie.data.NymReferenceNode;
 /**
  *
  */
-class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Translatable {
+class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Translatable, Themeable {
     private BrowserControl _browser;
     private Shell _parent;
     private Shell _shell;
@@ -38,6 +38,7 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
         });
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     public void setBookmark(NymReferenceNode node) { _editor.setBookmark(node); }
@@ -65,5 +66,8 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_TITLE, "Bookmark editor"));
+    }
+    public void applyTheme(Theme theme) {
+        _shell.setFont(theme.SHELL_FONT);
     }
 }

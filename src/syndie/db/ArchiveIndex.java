@@ -109,8 +109,8 @@ public class ArchiveIndex {
                 if (msgFile.exists()) {
                     long size = msgFile.length();
             
-                    long when = msgFile.lastModified();
-                    when = when - (when % 24*60*60*1000); // ignore the time of day
+                    long when = msgInfo.getReceiveDate(); //.msgFile.lastModified();
+                    when = when - (when % 24*60*60*1000L); // ignore the time of day
 
                     if (size > maxSize)
                         continue;
@@ -174,13 +174,13 @@ public class ArchiveIndex {
             
                     String name = msgFile.getName();
                     long when = msgFile.lastModified();
-                    when = when - (when % 24*60*60*1000); // ignore the time of day
+                    when = when - (when % 24*60*60*1000L); // ignore the time of day
 
                     if (size > maxSize)
                         continue;
 
                     boolean isNew = false;
-                    if (when >= System.currentTimeMillis() - AGE_NEW_DAYS*24*60*60*1000)
+                    if (when >= System.currentTimeMillis() - AGE_NEW_DAYS*24*60*60*1000L)
                         isNew = true;
 
                     if (!isNew) {
@@ -216,8 +216,9 @@ public class ArchiveIndex {
         // grab the metadata
         File mdFile = new File(channelDir, "meta" + Constants.FILENAME_SUFFIX);
         long mdSize = mdFile.length();
-        long mdDate = mdFile.lastModified();
-        mdDate = mdDate - (mdDate % 24*60*60*1000); // ignore the time of day
+        //long mdDate = mdFile.lastModified();
+        long mdDate = info.getReceiveDate();
+        mdDate = mdDate - (mdDate % 24*60*60*1000L); // ignore the time of day
         chan.setReceiveDate(mdDate);
         chan.setEntrySize(mdSize);
         

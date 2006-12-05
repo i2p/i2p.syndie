@@ -54,4 +54,6 @@ public interface BrowserControl {
     public void removeUIListener(Browser.UIListener lsnr);
     
     public MessageEditor.MessageEditorListener getMessageEditorListener();
+
+    public boolean isBookmarked(SyndieURI syndieURI);
 }

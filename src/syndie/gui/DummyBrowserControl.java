@@ -55,4 +55,6 @@ public class DummyBrowserControl implements BrowserControl {
     public ThemeRegistry getThemeRegistry() { return null; } 
 
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
+
+    public boolean isBookmarked(SyndieURI syndieURI) { return false; }
 }

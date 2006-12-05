@@ -18,6 +18,7 @@ public class ChannelInfo {
     private boolean _allowPublicPosts;
     private boolean _allowPublicReplies;
     private long _expiration;
+    private long _receiveDate;
     /** set of Strings that anyone can know about the channel */
     private Set _publicTags;
     /** set of Strings only authorized people can see */
@@ -54,6 +55,7 @@ public class ChannelInfo {
         _readKeyUnknown = false;
         _passphrasePrompt = null;
         _expiration = -1;
+        _receiveDate = -1;
         _publicTags = Collections.EMPTY_SET;
         _privateTags = Collections.EMPTY_SET;
         _authorizedPosters = Collections.EMPTY_SET;
@@ -76,6 +78,8 @@ public class ChannelInfo {
     public void setEncryptKey(PublicKey key) { _encryptKey = key; }
     public long getEdition() { return _edition; }
     public void setEdition(long edition) { _edition = edition; }
+    public long getReceiveDate() { return _receiveDate; }
+    public void setReceiveDate(long when) { _receiveDate = when; }
     public String getName() { return _name; }
     public void setName(String name) { _name = name; }
     public String getDescription() { return _description; }

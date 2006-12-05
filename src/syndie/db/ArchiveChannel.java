@@ -53,7 +53,17 @@ public class ArchiveChannel {
     
     void setScope(byte scope[]) { _scope = scope; }
     void setVersion(long version) { _metaVersion = version; }
-    void setReceiveDate(long when) { _receiveDate = when; }
+    void setReceiveDate(long when) { setReceiveDate(when, -1); }
+    void setReceiveDate(long when, long days) { 
+        _receiveDate = when; 
+        /*
+        if (when < 0) {
+            new Exception("receive date is negative? " + when).printStackTrace();
+        } else if (when > System.currentTimeMillis()) {
+            new Exception("receive date is in the future? " + (when-System.currentTimeMillis()) + " (days: " + days + ", " + (System.currentTimeMillis()/(24*60*60*1000l) + ")")).printStackTrace();
+        }
+         */
+    }
     void setMessages(List messages) { _messageEntries = messages; }
     void setPseudoAuthorizedMessages(List messages) { _pseudoAuthorizedMessages = messages; }
     void setUnauthorizedMessages(List messages) { _unauthMessageEntries = messages; }
@@ -67,7 +77,10 @@ public class ArchiveChannel {
             //$metaVersion
             DataHelper.writeLong(out, 4, getVersion());
             //$recvDate
-            DataHelper.writeLong(out, 4, getReceiveDate()/24*60*60*1000l);
+            long date = getReceiveDate();
+            long days = date / (24*60*60*1000l);
+            //_ui.debugMessage("writing out chan w/ days " + days + "/" + date);
+            DataHelper.writeLong(out, 4, days);
             //$metadataEntrySize
             DataHelper.writeLong(out, 4, getEntrySize());
             //$numMessages
@@ -102,7 +115,10 @@ public class ArchiveChannel {
                         //    $flags {authorized|isReply|isPBE}
                         if (msg.getIsNew() || !newOnly) {
                             DataHelper.writeLong(out, 8, msg.getMessageId());
-                            DataHelper.writeLong(out, 4, msg.getReceiveDate()/24*60*60*1000l);
+                            long msgDate = msg.getReceiveDate();
+                            long msgDays = msgDate / (24*60*60*1000L);
+                            //_ui.debugMessage("writing msg " + msg.getMessageId() + " days " + msgDays + "/" + msgDate);
+                            DataHelper.writeLong(out, 4, msgDays);
                             DataHelper.writeLong(out, 4, msg.getEntrySize());
                             DataHelper.writeLong(out, 1, msg.getFlags());
                             //_ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
@@ -150,7 +166,10 @@ public class ArchiveChannel {
                     for (int i = 0; i < msgs.size(); i++) {
                         ArchiveMessage msg = (ArchiveMessage)msgs.get(i);
                         DataHelper.writeLong(out, 8, msg.getMessageId());
-                        DataHelper.writeLong(out, 4, msg.getReceiveDate()/24*60*60*1000L);
+                        long tpDate = msg.getReceiveDate();
+                        long tpDays = tpDate / (24*60*60*1000L);
+                        //_ui.debugMessage("writing thirdparty " + msg.getMessageId() + " days " + tpDays + "/" + tpDate);
+                        DataHelper.writeLong(out, 4, tpDays);
                         DataHelper.writeLong(out, 4, msg.getEntrySize());
                         DataHelper.writeLong(out, 1, msg.getFlags());
                         //_ui.debugMessage("\t" + msg.getPrimaryScope().toBase64() + ":" + msg.getMessageId());
@@ -172,7 +191,8 @@ public class ArchiveChannel {
                 throw new IOException("Not enough data for the scope (read=" + read + ")");
             Hash scopeHash = new Hash(scope);
             long version = DataHelper.readLong(in, 4);
-            long recvDate = DataHelper.readLong(in, 4)*24*60*60*1000l;
+            long recvDays = DataHelper.readLong(in, 4);
+            long recvDate = recvDays*24*60*60*1000l;
             long entrySize = DataHelper.readLong(in, 4);
 
             long numMsgs = DataHelper.readLong(in, 4);
@@ -181,12 +201,14 @@ public class ArchiveChannel {
             for (int i = 0; i < subsequent; i++) {
                 ArchiveMessage msg = new ArchiveMessage();
                 long msgId = DataHelper.readLong(in, 8);
-                long msgRecv = DataHelper.readLong(in, 4)*24*60*60*1000l;
+                long msgRecvDays = DataHelper.readLong(in, 4);
+                long msgRecv = msgRecvDays*24*60*60*1000l;
+                //_ui.debugMessage("msg " + msgId + " recvDays: " + msgRecvDays + "/" + msgRecv);
                 long msgSize = DataHelper.readLong(in, 4);
                 int msgFlags = (int)DataHelper.readLong(in, 1);
                 msg.setPrimaryScope(scopeHash);
                 msg.setMessageId(msgId);
-                msg.setReceiveDate(msgRecv);
+                msg.setReceiveDate(msgRecv, msgRecvDays);
                 msg.setEntrySize(msgSize);
                 msg.setFlags(msgFlags);
                 if (_messageEntries == null)
@@ -204,12 +226,14 @@ public class ArchiveChannel {
                 int msgs = (int)DataHelper.readLong(in, 4);
                 for (int j = 0; j < msgs; j++) {
                     long curMsgId = DataHelper.readLong(in, 8);
-                    long curRecvDate = DataHelper.readLong(in, 4)*24*60*60*1000L;
+                    long curRecvDays = DataHelper.readLong(in, 4);
+                    long curRecvDate = curRecvDays*24*60*60*1000L;
+                    //_ui.debugMessage("thirdparty msg " + curMsgId + " recvDays: " + curRecvDays + "/" + curRecvDate);
                     int curEntrySize = (int)DataHelper.readLong(in, 4);
                     int curFlags = (int)DataHelper.readLong(in, 1);
                     ArchiveMessage curMsg = new ArchiveMessage();
                     curMsg.setMessageId(curMsgId);
-                    curMsg.setReceiveDate(curRecvDate);
+                    curMsg.setReceiveDate(curRecvDate, curRecvDays);
                     curMsg.setEntrySize(curEntrySize);
                     curMsg.setFlags(curFlags);
                     curMsg.setPrimaryScope(thirdPartyChan);
@@ -224,7 +248,8 @@ public class ArchiveChannel {
             _scope = scope;
             _knownMessageCount = numMsgs;
             _metaVersion = version;
-            _receiveDate = recvDate;
+            //_ui.debugMessage("meta recvDays: " + recvDays + "/" + recvDate);
+            setReceiveDate(recvDate, recvDays);
             _entrySize = entrySize;
             return true;
         } catch (DataFormatException dfe) {
