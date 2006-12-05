@@ -11,6 +11,7 @@ import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
 import org.eclipse.swt.layout.FillLayout;
@@ -20,6 +21,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
@@ -50,12 +53,18 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
     private TreeColumn _colIsNewScope;
     private TreeColumn _colIsBookmarked;
     
+    private MenuItem _menuBookmarkedOnly;
+    private MenuItem _menuNewScope;
+    private MenuItem _menuKnownScope;
+    
     /** uri to TreeItem */
     private Map _uriToItem;
     /** archive name to Set of SyndieURIs that are included in the diff */
     private Map _archiveURIs;
-    /** set of SyndieURIs that should be fetched */
-    private Set _selectedURIs;
+    
+    private boolean _displayUnbookmarked;
+    private boolean _displayNewScope;
+    private boolean _displayKnownScope;
     
     public SyndicationDiff(BrowserControl browser, Composite parent, SyndicationView view) {
         _browser = browser;
@@ -63,7 +72,9 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _view = view;
         _uriToItem = new HashMap();
         _archiveURIs = new HashMap();
-        _selectedURIs = new HashSet();
+        _displayUnbookmarked = true;
+        _displayNewScope = true;
+        _displayKnownScope = true;
         initComponents();
     }
     
@@ -88,6 +99,18 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
                 if (item.getChecked())
                     rv.add(uri);
             }
+        }
+        return rv;
+    }
+    /** set of URIs that were expanded */
+    public Set getExpandedURIs() {
+        Set rv = new HashSet();
+        for (Iterator iter = _uriToItem.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            SyndieURI uri = (SyndieURI)entry.getKey();
+            TreeItem item = (TreeItem)entry.getValue();
+            if (item.getExpanded())
+                rv.add(uri);
         }
         return rv;
     }
@@ -131,16 +154,13 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
     }
     
     private void displayDiff() {
-        // we should save selection state before clearing everything, since 
-        // displayDiff is called by the SyndicationManager whenever an archive's index
-        // is fully loaded
         Set prevSelected = getSelectedURIs();
+        Set expanded = getExpandedURIs();
         
         _browser.getUI().debugMessage("displaying diff");
         _tree.setRedraw(false);
         // first remove all the old stuff
         _archiveURIs.clear();
-        _selectedURIs.clear();
         for (Iterator iter = _uriToItem.values().iterator(); iter.hasNext(); )
             ((TreeItem)iter.next()).dispose();
         _uriToItem.clear();
@@ -160,32 +180,42 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
             for (int j = 0; j < index.getChannelCount(); j++) {
                 ArchiveChannel chan = index.getChannel(j);
                 if (!banned.contains(new Hash(chan.getScope())))
-                    displayDiff(index.getChannel(j), name, banned, prevSelected);
+                    displayDiff(index.getChannel(j), name, banned, prevSelected, expanded);
             }
         }
         _tree.setRedraw(true);
     }
     
-    private void displayDiff(ArchiveChannel channel, String archive, List banned, Set toSelectURIs) {
+    private void displayDiff(ArchiveChannel channel, String archive, List banned, Set toSelectURIs, Set expanded) {
         Hash scope = new Hash(channel.getScope());
         long channelId = _browser.getClient().getChannelId(scope);
         long remVersion = channel.getVersion();
         long localVersion = -1;
         if (channelId >= 0)
             localVersion = _browser.getClient().getChannelVersion(channelId);
+        
+        if (!_displayKnownScope && (channelId >= 0))
+            return;
+        else if (!_displayNewScope && (channelId < 0))
+            return;
+        
         List wantedMessages = new ArrayList();
         for (int i = 0; i < channel.getMessageCount(); i++) {
             ArchiveMessage msg = channel.getMessage(i);
             if (banned.contains(msg.getPrimaryScope()))
                 continue;
-            //if (_browser.getClient().getMessageId(msg.getPrimaryScope(), msg.getMessageId()) == -1) {
+            if (_browser.getClient().getMessageId(msg.getPrimaryScope(), msg.getMessageId()) == -1) {
                 wantedMessages.add(msg);
                 _browser.getUI().debugMessage("want message " + msg.getMessageId() + " from " + scope.toBase64() + " from " + archive);
-            //}
+            }
         }
         
         if ( (wantedMessages.size() > 0) || (remVersion > localVersion) ) {
             SyndieURI scopeURI = SyndieURI.createScope(scope);
+            boolean isBookmarked = ((channelId >= 0) && _browser.isBookmarked(scopeURI));
+            if (!_displayUnbookmarked && !isBookmarked)
+                return;
+            
             TreeItem scopeItem = (TreeItem)_uriToItem.get(scopeURI);
             if (scopeItem == null) {
                 scopeItem = new TreeItem(_tree, SWT.NONE);
@@ -193,8 +223,11 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
                 long msgSize = 0;
                 for (int i = 0; i < wantedMessages.size(); i++)
                     msgSize += ((ArchiveMessage)wantedMessages.get(i)).getEntrySize();
-                displayScope(scopeItem, scope, channelId, localVersion < remVersion, channel, msgSize, toSelectURIs);
+                displayScope(scopeItem, scope, channelId, localVersion < remVersion, channel, msgSize, toSelectURIs, isBookmarked);
             }
+
+            if (expanded.contains(scopeURI))
+                scopeItem.setExpanded(true);
             
             Set archiveURIs = (Set)_archiveURIs.get(archive);
             if (remVersion > localVersion)
@@ -209,18 +242,19 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
                     _uriToItem.put(msgURI, msgItem);
                     displayMsg(msgItem, scopeItem, msg, toSelectURIs);
                 }
+                if (expanded.contains(msgURI))
+                    msgItem.setExpanded(true);
                 archiveURIs.add(msgURI);
             }
         }
     }
-    private void displayScope(TreeItem item, Hash scope, long channelId, boolean remoteIsNewer, ArchiveChannel channel, long msgSize, Set toSelectURIs) {
+    private void displayScope(TreeItem item, Hash scope, long channelId, boolean remoteIsNewer, ArchiveChannel channel, long msgSize, Set toSelectURIs, boolean isBookmarked) {
         String name = null;
         //int size = channel.get
         long size = channel.getEntrySize();
         long recv = channel.getReceiveDate();
         boolean isNew = (channelId < 0);
         SyndieURI uri = SyndieURI.createScope(scope);
-        boolean isBookmarked = (!isNew && _browser.isBookmarked(uri));
         
         if (channelId >= 0) {
             ChannelInfo info = _browser.getClient().getChannel(channelId);
@@ -306,7 +340,10 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
                 if (evt.detail == SWT.CHECK)
                     selectionUpdated();
             }
-    
+            public void doubleclick() {
+                super.doubleclick();
+                toggleSubtree();
+            }
         };
         _tree.addControlListener(lsnr);
         _tree.addKeyListener(lsnr);
@@ -320,10 +357,63 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _colRecvDate = new TreeColumn(_tree, SWT.LEFT);
         _colIsNewScope = new TreeColumn(_tree, SWT.CENTER);
         _colIsBookmarked = new TreeColumn(_tree, SWT.CENTER);
+    
+        Menu menu = new Menu(_tree);
+        _tree.setMenu(menu);
+        
+        _menuBookmarkedOnly = new MenuItem(menu, SWT.CHECK);
+        _menuBookmarkedOnly.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _displayUnbookmarked = !_menuBookmarkedOnly.getSelection();
+                displayDiff();
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _displayUnbookmarked = !_menuBookmarkedOnly.getSelection();
+                displayDiff();
+            }
+        });
+        _menuNewScope = new MenuItem(menu, SWT.CHECK);
+        _menuNewScope.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _displayNewScope = _menuNewScope.getSelection();
+                displayDiff();
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _displayNewScope = _menuNewScope.getSelection();
+                displayDiff();
+            }
+        });
+        _menuKnownScope = new MenuItem(menu, SWT.CHECK);
+        _menuKnownScope.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _displayKnownScope = _menuKnownScope.getSelection();
+                displayDiff();
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _displayKnownScope = _menuKnownScope.getSelection();
+                displayDiff();
+            }
+        });
+        
+        _menuBookmarkedOnly.setSelection(!_displayUnbookmarked);
+        _menuNewScope.setSelection(_displayNewScope);
+        _menuKnownScope.setSelection(_displayKnownScope);
         
         _browser.getThemeRegistry().register(this);
         _browser.getTranslationRegistry().register(this);
         _browser.getSyndicationManager().addListener(this);
+    }
+    
+    private void toggleSubtree() {
+        TreeItem items[] = _tree.getSelection();
+        if (items != null) {
+            for (int i = 0; i < items.length; i++) {
+                boolean checked = items[i].getChecked();
+                items[i].setChecked(!checked);
+                for (int j = 0; j < items[i].getItemCount(); j++)
+                    items[i].getItem(j).setChecked(!checked);
+            }
+        }
     }
     
     private static final String T_TREE_GROUP = "syndie.gui.syndicationdiff.treegroup";
@@ -333,6 +423,13 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
     private static final String T_COLRECVDATE = "syndie.gui.syndicationdiff.colrecvdate";
     private static final String T_COLISNEW = "syndie.gui.syndicationdiff.colisnew";
     private static final String T_COLBOOKMARKED = "syndie.gui.syndicationdiff.colisbookmarked";
+    private static final String T_COLSIZE_TOOLTIP = "syndie.gui.syndicationdiff.colsizetooltip";
+    private static final String T_COLRECVDATE_TOOLTIP = "syndie.gui.syndicationdiff.colrecvdatetooltip";
+    private static final String T_COLISNEW_TOOLTIP = "syndie.gui.syndicationdiff.colisnewtooltip";
+    private static final String T_COLBOOKMARKED_TOOLTIP = "syndie.gui.syndicationdiff.colisbookmarkedtooltip";
+    private static final String T_BOOKMARKEDONLY = "syndie.gui.syndicationdiff.bookmarkedonly";
+    private static final String T_NEWSCOPE = "syndie.gui.syndicationdiff.newscope";
+    private static final String T_KNOWNSCOPE = "syndie.gui.syndicationdiff.knownscope";
     
     public void translate(TranslationRegistry registry) {
         _treeGroup.setText(registry.getText(T_TREE_GROUP, "Differences:"));
@@ -343,7 +440,16 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _colRecvDate.setText(registry.getText(T_COLRECVDATE, "Date"));
         _colIsNewScope.setText(registry.getText(T_COLISNEW, "New scope?"));
         _colIsBookmarked.setText(registry.getText(T_COLBOOKMARKED, "Bookmarked?"));
-                
+
+        _colSize.setToolTipText(registry.getText(T_COLSIZE_TOOLTIP, "Size in kilobytes"));
+        _colRecvDate.setToolTipText(registry.getText(T_COLRECVDATE_TOOLTIP, "When the remote archive says they received the message"));
+        _colIsNewScope.setToolTipText(registry.getText(T_COLISNEW_TOOLTIP, "Is this forum one that we do not yet know locally?"));
+        _colIsBookmarked.setToolTipText(registry.getText(T_COLBOOKMARKED_TOOLTIP, "Is this forum bookmarked?"));
+
+        _menuBookmarkedOnly.setText(registry.getText(T_BOOKMARKEDONLY, "Only show posts in bookmarked forums?"));
+        _menuKnownScope.setText(registry.getText(T_KNOWNSCOPE, "Show posts in forums already known locally?"));
+        _menuNewScope.setText(registry.getText(T_NEWSCOPE, "Show posts in forums not known locally?"));
+
         _colName.pack();
         _colType.setWidth(24);
         _colSize.pack();

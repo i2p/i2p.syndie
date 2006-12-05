@@ -117,7 +117,7 @@ public class SyndicationView implements Translatable {
         String fcpHost = _config.getFCPHost();
         _browser.getSyndicationManager().setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
         Set names = new HashSet(_archives.getSelectedNames());
-
+        
         Map explicit = null;
         int action = _config.getAction();
         switch (action) {

@@ -38,8 +38,6 @@ public class SyndicationConfigView implements Translatable {
     private Spinner _size;
     private Label _concurrencyLabel;
     private Spinner _concurrency;
-    private Label _pullExplicitLabel;
-    private Button _pullExplicitButton;
     private Label _proxyHostLabel;
     private Text _proxyHost;
     private Label _proxyPortLabel;
@@ -148,15 +146,6 @@ public class SyndicationConfigView implements Translatable {
         _concurrency.setMaximum(10);
         _concurrency.setSelection(1);
         
-        _pullExplicitLabel = new Label(_root, SWT.NONE);
-        _pullExplicitLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _pullExplicitButton = new Button(_root, SWT.NONE);
-        _pullExplicitButton.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, true, false, 3, 1));
-        _pullExplicitButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickExplicit(); _view.showDiff(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickExplicit(); _view.showDiff(); }
-        });
-        
         _proxyHostLabel = new Label(_root, SWT.NONE);
         _proxyHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _proxyHost = new Text(_root, SWT.SINGLE | SWT.BORDER);
@@ -255,8 +244,6 @@ public class SyndicationConfigView implements Translatable {
     private static final String T_PUSH_STRATEGY = "syndie.gui.syndicationconfigview.pushstrategy";
     private static final String T_CONCURRENCY = "syndie.gui.syndicationconfigview.concurrency";
     private static final String T_CONCURRENCY_TOOLTIP = "syndie.gui.syndicationconfigview.concurrency_tooltip";
-    private static final String T_PULLEXPLICIT = "syndie.gui.syndicationconfigview.pullexplicit";
-    private static final String T_PULLEXPLICITBUTTON = "syndie.gui.syndicationconfigview.pullexplicitbutton";
     private static final String T_PROXYHOST = "syndie.gui.syndicationconfigview.proxyhost";
     private static final String T_PROXYPORT = "syndie.gui.syndicationconfigview.proxyport";
     private static final String T_FCPHOST = "syndie.gui.syndicationconfigview.fcphost";
@@ -274,8 +261,6 @@ public class SyndicationConfigView implements Translatable {
         _size.setToolTipText(registry.getText(T_SIZE_TOOLTIP, "kilobytes"));
         _concurrencyLabel.setText(registry.getText(T_CONCURRENCY, "Concurrency: "));
         _concurrency.setToolTipText(registry.getText(T_CONCURRENCY_TOOLTIP, "Number of locations fetched at a time"));
-        _pullExplicitLabel.setText(registry.getText(T_PULLEXPLICIT, "Explicit:"));
-        _pullExplicitButton.setText(registry.getText(T_PULLEXPLICITBUTTON, "Customize messages and forums to pull"));
         
         _proxyHostLabel.setText(registry.getText(T_PROXYHOST, "HTTP proxy host:"));
         _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "port:"));
