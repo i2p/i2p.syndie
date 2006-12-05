@@ -744,7 +744,7 @@ class HTMLStyleBuilder {
     }
     
     private static void test(String body) {
-        HTMLStateBuilder b = new HTMLStateBuilder(body, null, -1);
+        HTMLStateBuilder b = new HTMLStateBuilder(body, -1);
         b.buildState();
         String text = b.getAsText();
         System.out.println("parsed: [" + body + "]");

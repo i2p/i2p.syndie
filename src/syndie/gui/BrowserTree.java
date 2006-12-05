@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.Collection;
+import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
@@ -34,6 +35,7 @@ import syndie.db.DBClient;
  *
  */
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
+    private Browser _browser;
     private Menu _bookmarkMenu;
     private Menu _postMenu;
     private Menu _manageMenu;
@@ -56,12 +58,18 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private long _startInit;
     private long _superInit;
     
-    public BrowserTree(BrowserControl browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+    private List _nymRefs;
+    
+    public BrowserTree(Browser browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         super(browser, parent, lsnr, accept, false);
+        _browser = browser;
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
         long t2 = System.currentTimeMillis();
         System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
+        if (_nymRefs != null)
+            _browser.bookmarksUpdated(_nymRefs);
+        _nymRefs = null;
     }
     private BookmarkEditorPopup getBookmarkEditor() {
         // only called by the swt thread, so no need to sync
@@ -337,6 +345,13 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             getBrowser().view(search.getURI());
             return;
         }
+    }
+
+    protected void bookmarksRebuilt(List nymRefs) {
+        if (_browser != null)
+            _browser.bookmarksUpdated(nymRefs);
+        else
+            _nymRefs = nymRefs;
     }
     
     private static final String T_BOOKMARK_VIEW = "syndie.gui.browsertree.bookmark.view";

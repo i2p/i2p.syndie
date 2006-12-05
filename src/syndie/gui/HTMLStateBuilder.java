@@ -10,7 +10,6 @@ import syndie.data.MessageInfo;
  */
 class HTMLStateBuilder {
     private String _html;
-    private MessageInfo _msg;
     private String _plainText;
     /** used during state building */
     private boolean _isInComment;
@@ -52,10 +51,9 @@ class HTMLStateBuilder {
         _closeNestedTags.add("table");
     }
     
-    public HTMLStateBuilder(String html, MessageInfo msg) { this(html, msg, -1); }
-    public HTMLStateBuilder(String html, MessageInfo msg, int charsPerLine) {
+    public HTMLStateBuilder(String html) { this(html, -1); }
+    public HTMLStateBuilder(String html, int charsPerLine) {
         _html = html;
-        _msg = msg;
         _charsPerLine = charsPerLine;
         _curLine = 1;
     }
@@ -294,6 +292,12 @@ class HTMLStateBuilder {
                 appendBody(body, '\n');
                 _prevWasWhitespace = true;
             }
+        } else if ("tr".equals(tagName)) {
+            appendBody(body, '\n');
+            _prevWasWhitespace = true;
+        //} else if ("td".equals(tagName)) {
+        //    appendBody(body, '\n');
+        //    _prevWasWhitespace = true;
         } else if ("h1".equals(tagName) || "h2".equals(tagName) || "h3".equals(tagName) || "h4".equals(tagName)) {
             // make sure the <h*>foo</h*> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
@@ -377,6 +381,12 @@ class HTMLStateBuilder {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("pre".equals(tag.getName())) {
+                    appendBody(body, '\n');
+                    _prevWasWhitespace = true;
+                } else if ("tr".equals(tag.getName())) {
+                    appendBody(body, '\n');
+                    _prevWasWhitespace = true;
+                } else if ("td".equals(tag.getName())) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
                 } else if ("quote".equals(tag.getName())) {
@@ -742,7 +752,7 @@ class HTMLStateBuilder {
     }
     
     private static void test(String body) {
-        HTMLStateBuilder b = new HTMLStateBuilder(body, null);
+        HTMLStateBuilder b = new HTMLStateBuilder(body);
         b.buildState();
         String text = b.getAsText();
         System.out.println("Text: " + text);

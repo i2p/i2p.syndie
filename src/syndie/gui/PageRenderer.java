@@ -81,6 +81,7 @@ public class PageRenderer implements Themeable {
     private MenuItem _bodyBanAuthor;
     private MenuItem _bodyEnable;
     private MenuItem _bodyDisable;
+    private MenuItem _bodyViewAsText;
     private MenuItem _bodySaveAll;
     
     private MenuItem _imgView;
@@ -116,6 +117,7 @@ public class PageRenderer implements Themeable {
 
     private boolean _enableImages;
     private boolean _enableRender;
+    private boolean _viewAsText;
     
     private SyndieURI _currentEventURI;
     private HTMLTag _currentEventLinkTag;
@@ -140,6 +142,7 @@ public class PageRenderer implements Themeable {
         
         _enableImages = true;
         _enableRender = true;
+        _viewAsText = false;
         _viewSizeModifier = 0;
     
         buildMenus();
@@ -314,7 +317,7 @@ public class PageRenderer implements Themeable {
         Properties props = new Properties();
         CommandImpl.parseProps(cfg, props);
         String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
-        if ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType)) {
+        if (!_viewAsText && ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType))) {
             renderHTML(body);
         } else {
             renderText(body);
@@ -355,6 +358,7 @@ public class PageRenderer implements Themeable {
             // for bullet points, as each line is given a bullet
             _text.getDisplay().syncExec(new Runnable() {
                 public void run() {
+                    // problem: this uses the default font, not the themed font.  can we get around this?
                     GC gc = new GC(_text);
                     FontMetrics metrics = gc.getFontMetrics();
                     int charWidth = metrics.getAverageCharWidth();
@@ -382,7 +386,7 @@ public class PageRenderer implements Themeable {
 
         _charsPerLine = getCharsPerLine();
         
-        final HTMLStateBuilder builder = new HTMLStateBuilder(html, _msg, _charsPerLine);
+        final HTMLStateBuilder builder = new HTMLStateBuilder(html, _charsPerLine);
         builder.buildState();
         final String text = builder.getAsText();
         final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
@@ -429,6 +433,8 @@ public class PageRenderer implements Themeable {
                 _bgColor = sbuilder.getBackgroundColor();
                 if (_bgColor != null)
                     _text.setBackground(_bgColor);
+                else
+                    _text.setBackground(null);
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _parent.setCursor(null);
@@ -807,10 +813,12 @@ public class PageRenderer implements Themeable {
             _bodyViewForumMetadata.setEnabled(false);
             _bodyEnable.setEnabled(false);
             _bodyDisable.setEnabled(false);
+            _bodyViewAsText.setEnabled(false);
             _bodySaveAll.setEnabled(false);
         } else {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
+            _bodyViewAsText.setEnabled(!_viewAsText);
             _bodySaveAll.setEnabled(true);
             long targetId = _msg.getTargetChannelId();
             long authorId = _msg.getAuthorChannelId();
@@ -966,6 +974,11 @@ public class PageRenderer implements Themeable {
         rerender();
     }
     
+    private void toggleViewAsText() {
+        _viewAsText = !_viewAsText;
+        rerender();
+    }
+    
     private abstract class FireEventListener implements SelectionListener {
         public void widgetSelected(SelectionEvent selectionEvent) { fireEvent(); }
         public void widgetDefaultSelected(SelectionEvent selectionEvent) { fireEvent(); }
@@ -1073,6 +1086,11 @@ public class PageRenderer implements Themeable {
             public void fireEvent() {
                 toggleImages();
             }
+        });
+        _bodyViewAsText = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewAsText.setText("View as text");
+        _bodyViewAsText.addSelectionListener(new FireEventListener() {
+            public void fireEvent() { toggleViewAsText(); }
         });
         
         new MenuItem(_bodyMenu, SWT.SEPARATOR);

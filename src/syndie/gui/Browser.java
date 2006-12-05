@@ -86,6 +86,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
+    private MenuItem _bookmarkMenuRoot;
+    private Menu _bookmarkMenu;
+    private MenuItem _bookmarkMenuShow;
     private MenuItem _postMenuRoot;
     private MenuItem _postMenuNew;
     private MenuItem _postMenuResumeRoot;
@@ -288,6 +291,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuExit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { exit(); }
             public void widgetSelected(SelectionEvent selectionEvent) { exit(); }
+        });
+        
+        _bookmarkMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        _bookmarkMenu = new Menu(_bookmarkMenuRoot);
+        _bookmarkMenuRoot.setMenu(_bookmarkMenu);
+        _bookmarkMenuShow = new MenuItem(_bookmarkMenu, SWT.CHECK);
+        _bookmarkMenuShow.setSelection(true);
+        _bookmarkMenuShow.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
+            }
         });
         
         _postMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
@@ -964,6 +981,39 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     
+    void bookmarksUpdated(List nymRefs) {
+        MenuItem items[] = _bookmarkMenu.getItems();
+        for (int i = 0; i < items.length; i++)
+            if (items[i] != _bookmarkMenuShow)
+                items[i].dispose();
+        for (int i = 0; i < nymRefs.size(); i++) {
+            final NymReferenceNode ref = (NymReferenceNode)nymRefs.get(i);
+            bookmarksUpdated(ref, _bookmarkMenu);
+        }
+    }
+    private void bookmarksUpdated(final NymReferenceNode ref, Menu parent) {
+        MenuItem item = null;
+        if (ref.getChildCount() == 0) {
+            item = new MenuItem(parent, SWT.PUSH);
+        } else {
+            item = new MenuItem(parent, SWT.CASCADE);
+            Menu sub = new Menu(item);
+            item.setMenu(sub);
+            for (int j = 0; j < ref.getChildCount(); j++) {
+                NymReferenceNode child = (NymReferenceNode)ref.getChild(j);
+                bookmarksUpdated(child, sub);
+            }
+        }
+        item.setText(ref.getName());
+        if (ref.getURI() != null) {
+            item.setImage(ImageUtil.getTypeIcon(ref.getURI()));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(ref.getURI()); }
+                public void widgetSelected(SelectionEvent selectionEvent) { view(ref.getURI()); }
+            });
+        }
+    }
+    
     private class BookmarkChoiceListener implements ReferenceChooserTree.ChoiceListener {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) { view(node.getURI()); }
         public void manageChannelSelected(TreeItem item, ChannelInfo channel) { view(SyndieURI.createScope(channel.getChannelHash())); }
@@ -1060,6 +1110,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
     private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
+    private static final String T_BOOKMARK_MENU_TITLE = "syndie.gui.browser.bookmarkmenu";
+    private static final String T_BOOKMARK_MENU_SHOW = "syndie.gui.browser.bookmarkmenu.show";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
@@ -1109,7 +1161,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
-    
+
+        _bookmarkMenuRoot.setText(registry.getText(T_BOOKMARK_MENU_TITLE, "&Bookmarks"));
+        _bookmarkMenuShow.setText(registry.getText(T_BOOKMARK_MENU_SHOW, "&Manage"));
+        
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));

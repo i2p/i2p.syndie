@@ -258,6 +258,8 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected TreeItem getPostRoot() { return _postRoot; }
     protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
     
+    protected void bookmarksRebuilt(List nymRefs) {}
+    
     private void rebuildBookmarks() {
         JobRunner.instance().enqueue(new Rebuilder());
     }
@@ -268,7 +270,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             synchronized (_nymRefs) {
                 _rebuilding = true;
             }
-            List refs = _client.getNymReferences(_client.getLoggedInNymId());
+            final List refs = _client.getNymReferences(_client.getLoggedInNymId());
             final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {
                 _nymRefs.clear();
@@ -278,7 +280,8 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             Display.getDefault().asyncExec(new Runnable() {
                 public void run() { 
                     long t4 = System.currentTimeMillis();
-                    _tree.setVisible(false);
+                    bookmarksRebuilt(refs);
+                    _tree.setRedraw(false);
                     redrawBookmarks();
                     long t5 = System.currentTimeMillis();
                     boolean view = false;
@@ -290,7 +293,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                     }
                     if (view)
                         viewStartupItems(getBookmarkRoot());
-                    _tree.setVisible(true);
+                    _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
                     System.out.println("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
                 }
