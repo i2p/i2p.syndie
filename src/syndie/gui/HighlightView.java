@@ -67,6 +67,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private List _postponedId;
     private List _postponedVersion;
     
+    private TreeItem _selected;
+    
     public HighlightView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
@@ -300,7 +302,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         
         _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _tree.setHeaderVisible(true);
+        //_tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
         
         final Menu menu = new Menu(_tree);
@@ -313,7 +315,16 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _colSummary = new TreeColumn(_tree, SWT.RIGHT);
         _colDetail = new TreeColumn(_tree, SWT.LEFT);
         
-        SyndieTreeListener lsnr = new SyndieTreeListener(_tree);
+        SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
+            public void selectionUpdated() {
+                // make it look like nothing is ever selected
+                TreeItem items[] = _tree.getSelection();
+                if ( (items != null) && (items.length == 1) )
+                    _selected = items[0];
+                _tree.setSelection(new TreeItem[0]);
+                super.selectionUpdated();
+            }
+        };
         _tree.addControlListener(lsnr);
         _tree.addMouseListener(lsnr);
         _tree.addKeyListener(lsnr);
@@ -361,7 +372,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         MenuItem items[] = menu.getItems();
         for (int i = 0; i < items.length; i++) items[i].dispose();
         
-        TreeItem sel[] = _tree.getSelection();
+        // the tree's listener resets the selection, but stores the last selection
+        // in _selected
+        //TreeItem sel[] = _tree.getSelection();
+        TreeItem sel[] = null;
+        if (_selected != null)
+            sel = new TreeItem[] { _selected };
+        else
+            sel = new TreeItem[0];
         if ( (sel != null) && (sel.length == 1) ) {
             TreeItem parent = sel[0].getParentItem();
             TreeItem child = null;

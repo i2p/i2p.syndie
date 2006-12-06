@@ -17,18 +17,18 @@ public class Theme {
         TAB_FONT = adjustHeight("inittab", SYSFONT, -2);
         MENU_FONT = adjustHeight("initmenu", SYSFONT, -2);
         SHELL_FONT = adjustHeight("initshell", SYSFONT, 0);
-        TREE_FONT = adjustHeight("inittree", SYSFONT, -2);
-        TABLE_FONT = adjustHeight("inittable", SYSFONT, -2);
-        BUTTON_FONT = adjustHeight("initbutton", SYSFONT, 0);
-        CONTENT_FONT = adjustHeight("initcontent", SYSFONT, -2);
-        LINK_FONT = adjustHeight("initlink", SYSFONT, -2, Boolean.TRUE, null);
+        TREE_FONT = adjustHeight("inittree", SYSFONT, -4);
+        TABLE_FONT = adjustHeight("inittable", SYSFONT, -4);
+        BUTTON_FONT = adjustHeight("initbutton", SYSFONT, -4);
+        CONTENT_FONT = adjustHeight("initcontent", SYSFONT, -4);
+        LINK_FONT = adjustHeight("initlink", SYSFONT, -4, Boolean.TRUE, null);
         LOG_FONT = adjustHeight("initlog", SYSFONT, -4, null, null, "Courier");
-        MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, -2, null, Boolean.TRUE);
-        MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, -2, null, null);
-        MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -2, Boolean.TRUE, null);
-        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -2, null, Boolean.TRUE);
-        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -2, null, null);
-        DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -2);
+        MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, -4, null, Boolean.TRUE);
+        MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, -4, null, null);
+        MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -4, Boolean.TRUE, null);
+        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -4, null, Boolean.TRUE);
+        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -4, null, null);
+        DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -4);
     }
     
     private static final Font SYSFONT = Display.getDefault().getSystemFont();

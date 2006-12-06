@@ -54,11 +54,12 @@ public class ThreadAccumulator {
     private boolean _alreadyDecrypted;
     private boolean _pbe;
     private boolean _privateMessage;
+    private boolean _unreadOnly;
     private Set _channelHashes;
     private Set _requiredTags;
     private Set _wantedTags;
     private Set _rejectedTags;
-        
+    
     public ThreadAccumulator(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
@@ -127,6 +128,7 @@ public class ThreadAccumulator {
         _pbe = criteria.getBoolean("pbe", false);
         _privateMessage = criteria.getBoolean("private", false);
         _showThreaded = criteria.getBoolean("threaded", true);
+        _unreadOnly = criteria.getBoolean("unreadonly", false);
     }
     
     private static final Set getTags(String tags[]) {
@@ -412,6 +414,22 @@ public class ThreadAccumulator {
         }
     }
     
+    private boolean allRead(ReferenceNode node) {
+        SyndieURI uri = node.getURI();
+        if ( (uri == null) || (uri.getScope() == null) || (uri.getMessageId() == null) )
+            return true;
+        long chanId = _client.getChannelId(uri.getScope());
+        long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+        int status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, chanId);
+        if (status == DBClient.MSG_STATUS_NEW_UNREAD)
+            return false;
+        for (int i = 0; i < node.getChildCount(); i++) {
+            if (!allRead(node.getChild(i)))
+                return false;
+        }
+        return true;
+    }
+    
     /**
      * currently, this requires the entire thread to pass the filter, trimming 
      * it off at each leaf that does not pass.  todo: this should instead remove
@@ -493,6 +511,29 @@ public class ThreadAccumulator {
                 _ui.debugMessage("filter fail cause: author not passed");
             }
         }
+        if (ok) {
+            if (_unreadOnly) {
+                int status = _client.getMessageStatus(_client.getLoggedInNymId(), msg.getInternalId(), chan.getChannelId());
+                if (status != DBClient.MSG_STATUS_NEW_UNREAD) {
+                    if (!_showThreaded) {
+                        ok = false;
+                        _ui.debugMessage("filter fail cause: message is already read (" + status + ")");
+                    } else if (isRoot) {
+                        boolean unreadFound = false;
+                        for (int i = 0; i < node.getChildCount(); i++) {
+                            if (!allRead(node.getChild(i))) {
+                                unreadFound = true;
+                                break;
+                            }
+                        }
+                        if (!unreadFound) {
+                            _ui.debugMessage("entire thread is read: " + node.getURI());
+                            ok = false;
+                        }
+                    }
+                }
+            }
+        }
         
         if (ok) {
             long when = -1;
@@ -545,7 +586,6 @@ public class ThreadAccumulator {
             _ui.debugMessage("filter fail cause: maxRefs");
         }
         // todo: honor minKeys and maxKeys
-        
         return ok;
     }
     private boolean authorFilterPassed(MessageInfo msg, ChannelInfo chan, ReferenceNode node) {

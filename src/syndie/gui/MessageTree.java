@@ -66,6 +66,7 @@ public class MessageTree implements Translatable, Themeable {
     private Combo _filterAge;
     private Label _filterTagLabel;
     private Combo _filterTag;
+    private Button _filterUnreadOnly;
     private Button _filterAdvanced;
     private String _filter;
     //private Button _filterApply;
@@ -195,7 +196,7 @@ public class MessageTree implements Translatable, Themeable {
         
         Composite filterRow = new Composite(_root, SWT.BORDER);
         filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        filterRow.setLayout(new GridLayout(5, false));
+        filterRow.setLayout(new GridLayout(6, false));
         _filterLabel = new Label(filterRow, SWT.NONE);
         _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -227,6 +228,12 @@ public class MessageTree implements Translatable, Themeable {
             }
         });
         _filterTag.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
+        });
+        
+        _filterUnreadOnly = new Button(filterRow, SWT.CHECK);
+        _filterUnreadOnly.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
             public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
         });
@@ -479,6 +486,13 @@ public class MessageTree implements Translatable, Themeable {
             _filterTag.select(idx);
         else
             _filterTag.setText(tag);
+    
+        boolean unreadOnly = _filterUnreadOnly.getSelection();
+        if (unreadOnly)
+            attributes.put("unreadonly", Boolean.TRUE.toString());
+        else
+            attributes.remove("unreadonly");
+        
         String rv = new SyndieURI(uri.getType(), attributes).toString();
         _browser.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
         return rv;
@@ -791,6 +805,7 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_DATE = "syndie.gui.messagetree.date";
     private static final String T_TAGS = "syndie.gui.messagetree.tags";
     private static final String T_FILTER_LABEL = "syndie.gui.messagetree.filter.label";
+    private static final String T_FILTER_UNREAD = "syndie.gui.messagetree.filter.unread";
     private static final String T_FILTER_ADVANCED = "syndie.gui.messagetree.filter.advanced";
     private static final String T_FILTER_EDIT_SHELL = "syndie.gui.messagetree.filter.edit.shell";
     private static final String T_FILTER_TAG = "syndie.gui.messagetree.filter.tag";
@@ -810,6 +825,7 @@ public class MessageTree implements Translatable, Themeable {
         
         _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
         _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
+        _filterUnreadOnly.setText(registry.getText(T_FILTER_UNREAD, "Unread only"));
         if (_filterEditor != null)
             _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
 
@@ -828,6 +844,7 @@ public class MessageTree implements Translatable, Themeable {
         _filterAge.setFont(theme.DEFAULT_FONT);
         _filterTagLabel.setFont(theme.DEFAULT_FONT);
         _filterTag.setFont(theme.DEFAULT_FONT);
+        _filterUnreadOnly.setFont(theme.DEFAULT_FONT);
         if (_filterEditorShell != null) {
             _filterEditorShell.setFont(theme.SHELL_FONT);
             _filterEditorShell.layout(true, true);

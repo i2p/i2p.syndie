@@ -41,7 +41,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private Menu _manageMenu;
     private Menu _searchMenu;
     
-    private Text _search;
     private Button _searchAdvanced;
     
     private BookmarkEditorPopup _bookmarkEditor;
@@ -83,21 +82,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         super.initComponents(false);
         _superInit = System.currentTimeMillis();
         
-        Composite searchRow = new Composite((Composite)getControl(), SWT.NONE);
-        searchRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        searchRow.setLayout(new GridLayout(2, false));
-        
-        _search = new Text(searchRow, SWT.BORDER | SWT.SINGLE);
-        _search.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _search.addTraverseListener(new TraverseListener() {
-            public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN)
-                    search();
-            }
-        });
-        
-        _searchAdvanced = new Button(searchRow, SWT.PUSH);
-        _searchAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        _searchAdvanced = new Button((Composite)getControl(), SWT.PUSH);
+        _searchAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _searchAdvanced.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { searchAdvanced(); }
             public void widgetSelected(SelectionEvent selectionEvent) { searchAdvanced(); }
@@ -110,18 +96,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     }
     
     private void search() {
-        String txt = _search.getText();
         if (_searchDetail == null)
             createSearchDetailPopup();
-        _searchDetail.setTags(txt);
         _searchDetail.search();
         _searchDetailPopup.setVisible(false);
     }
     private void searchAdvanced() { 
-        String txt = _search.getText();
         if (_searchDetail == null)
             createSearchDetailPopup();
-        _searchDetail.setTags(txt);
         _searchDetailPopup.open(); 
     }
     
@@ -132,7 +114,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     }
     
     private void createSearchDetailPopup() {
-        _searchDetailPopup = new Shell(_search.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _searchDetailPopup = new Shell(_searchAdvanced.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _searchDetailPopup.setLayout(new FillLayout());
         _searchDetail = new ReferenceChooserSearch(_searchDetailPopup, this, getBrowser());
         _searchDetailPopup.setSize(_searchDetailPopup.computeSize(300, SWT.DEFAULT));
@@ -147,7 +129,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-
     }
     
     protected void configTreeListeners(final Tree tree) {
@@ -376,7 +357,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _postMenuItem.setText(registry.getText(T_POST_TITLE, "Post"));
         _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
         _searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
-        _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Advanced..."));
+        _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Search..."));
         if (_searchDetailPopup != null)
             _searchDetailPopup.setText(registry.getText(T_SEARCH_DETAIL_POPUP, "Search"));
     }
@@ -385,7 +366,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         super.applyTheme(theme);
         if (_searchDetailPopup != null)
             _searchDetailPopup.setFont(theme.SHELL_FONT);
-        _search.setFont(theme.DEFAULT_FONT);
         _searchAdvanced.setFont(theme.BUTTON_FONT);
     }
 }

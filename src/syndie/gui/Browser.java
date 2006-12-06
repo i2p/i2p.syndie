@@ -97,6 +97,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _bookmarkMenuRoot;
     private Menu _bookmarkMenu;
     private MenuItem _bookmarkMenuShow;
+    private MenuItem _forumMenuRoot;
+    private MenuItem _forumMenuSearch;
+    private MenuItem _forumMenuBrowse;
+    private MenuItem _forumMenuCreate;
     private MenuItem _postMenuRoot;
     private MenuItem _postMenuNew;
     private MenuItem _postMenuResumeRoot;
@@ -328,6 +332,25 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) {
                 _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
             }
+        });
+        
+        _forumMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        Menu forumMenu = new Menu(_forumMenuRoot);
+        _forumMenuRoot.setMenu(forumMenu);
+        _forumMenuSearch = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuSearch.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { searchForums(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { searchForums(); }
+        });
+        _forumMenuBrowse = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuBrowse.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(SyndieURI.DEFAULT_SEARCH_URI); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(SyndieURI.DEFAULT_SEARCH_URI); }
+        });
+        _forumMenuCreate = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuCreate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
         });
         
         _postMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
@@ -969,6 +992,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         shell.open();
     }
     
+    private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
+    
+    private void searchForums() {
+        final ReferenceChooserPopup popup = new ReferenceChooserPopup(_shell, this, T_SEARCH_FORUM_TITLE, "Forum search");
+        popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+            public void referenceAccepted(SyndieURI uri) { view(uri); }
+            public void referenceChoiceAborted() { popup.dispose(); }
+        });
+        popup.show();
+    }
+    
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
     }
@@ -1222,6 +1256,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
     private static final String T_BOOKMARK_MENU_TITLE = "syndie.gui.browser.bookmarkmenu";
     private static final String T_BOOKMARK_MENU_SHOW = "syndie.gui.browser.bookmarkmenu.show";
+    private static final String T_FORUM_MENU_TITLE = "syndie.gui.browser.forummenu.title";
+    private static final String T_FORUM_MENU_SEARCH = "syndie.gui.browser.forummenu.search";
+    private static final String T_FORUM_MENU_BROWSE = "syndie.gui.browser.forummenu.browse";
+    private static final String T_FORUM_MENU_CREATE = "syndie.gui.browser.forummenu.create";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
@@ -1280,12 +1318,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _bookmarkMenuRoot.setText(registry.getText(T_BOOKMARK_MENU_TITLE, "&Bookmarks"));
         _bookmarkMenuShow.setText(registry.getText(T_BOOKMARK_MENU_SHOW, "&Manage"));
         
+        _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
+        _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Search"));
+        _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Browse"));
+        _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
+        
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
-        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "&Now"));
+        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "&Manage"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));

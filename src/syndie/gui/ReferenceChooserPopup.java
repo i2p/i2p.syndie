@@ -32,15 +32,26 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     private ReferenceChooserTree _tree;
     private ReferenceChooserSearch _search;
     private ReferenceChooserInfo _info;
+    private String _titleKey;
+    private String _titleVal;
     
+    public ReferenceChooserPopup(Shell parent, BrowserControl browser, String titleKey, String titleVal) { this(parent, browser, null, titleKey, titleVal); }
+    public ReferenceChooserPopup(Shell parent, BrowserControl browser) { this(parent, browser, null); }
     public ReferenceChooserPopup(Shell parent, BrowserControl browser, ReferenceChooserTree.AcceptanceListener lsnr) {
+        this(parent, browser, lsnr, T_TITLE, "Reference chooser");
+    }
+    public ReferenceChooserPopup(Shell parent, BrowserControl browser, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
         _parent = parent;
         _browser = browser;
         _ui = browser.getUI();
         _client = browser.getClient();
+        _titleKey = titleKey;
+        _titleVal = titleVal;
         _lsnr = lsnr;
         initComponents();
     }
+    
+    public void setListener(ReferenceChooserTree.AcceptanceListener lsnr) { _lsnr = lsnr; }
     
     public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
@@ -107,6 +118,6 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     private static final String T_TITLE = "syndie.gui.referencechooser.title";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Reference chooser"));
+        _shell.setText(registry.getText(_titleKey, _titleVal));
     }
 }

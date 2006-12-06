@@ -33,10 +33,11 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void resized() {}
     /** always expand on return, but we may not always want to collapse on return.  default is to do so though */
     public boolean collapseOnReturn() { return true; }
+    public void selectionUpdated() {}
     
     // remaining are the implementations of the listeners
     
-    protected void selected(SelectionEvent evt) { selected(); }
+    protected void selected(SelectionEvent evt) { selectionUpdated(); selected(); }
     
     public void widgetDefaultSelected(SelectionEvent evt) { selected(evt); }
     public void widgetSelected(SelectionEvent evt) { selected(evt); }
@@ -54,10 +55,12 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
             }
             returnHit();
         }
+        selectionUpdated();
     }
     
     public void keyPressed(KeyEvent keyEvent) {}
     public void keyReleased(KeyEvent evt) {
+        selectionUpdated();
         if (evt.keyCode == SWT.ARROW_LEFT) {
             TreeItem selected = getSelected();
             if (selected.getExpanded()) {
@@ -90,7 +93,9 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void controlResized(ControlEvent evt) { resized(); }
 
     public void mouseDoubleClick(MouseEvent evt) { doubleclick(); }
-    public void mouseDown(MouseEvent evt) {}
+    public void mouseDown(MouseEvent evt) {
+        selectionUpdated();
+    }
     public void mouseUp(MouseEvent evt) {}
     public void collapsed() {}
     public void expanded() {}
