@@ -415,7 +415,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     public void archiveAdded(SyndicationManager mgr, String name) { redrawArchives(name); }
     public void archiveRemoved(SyndicationManager mgr, String name) { 
         _browser.getUI().debugMessage("redraw after deleting " + name);
-        redrawArchives();
+        _table.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(); } });
     }
     public void archiveUpdated(SyndicationManager mgr, String oldName, final String newName) {
         _table.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(newName); } });
@@ -434,4 +434,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     }
 
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+    public void archivesLoaded(SyndicationManager mgr) { 
+        _table.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(); } });
+    }
 }

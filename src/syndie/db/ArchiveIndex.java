@@ -12,18 +12,22 @@ import syndie.data.SyndieURI;
  *
  */
 public class ArchiveIndex {
+    private long _builtOn;
     private List _channelEntries;
 
     /** default max file size to include in the index when filtering */
     public static final long DEFAULT_MAX_SIZE = 32*1024;
     
     protected ArchiveIndex() {
+        _builtOn = System.currentTimeMillis();
         _channelEntries = new ArrayList();
     }
     
     public int getChannelCount() { return _channelEntries.size(); }
     public ArchiveChannel getChannel(int index) { return (ArchiveChannel)_channelEntries.get(index); }
     protected void addChannel(ArchiveChannel channel) { _channelEntries.add(channel); }
+    
+    public long getBuiltOn() { return _builtOn; }
 
     public ArchiveMessage getMessage(SyndieURI uri) {
         ArchiveChannel chan = getChannel(uri);

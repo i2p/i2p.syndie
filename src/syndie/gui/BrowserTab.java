@@ -40,6 +40,7 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_SYNDICATE = "syndicate";
     static final String TYPE_SQL = "sql";
     static final String TYPE_TRANSLATE = "translate";
+    static final String TYPE_HIGHLIGHT = "highlight";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -95,6 +96,8 @@ abstract class BrowserTab implements Themeable {
             return new SQLTab(browser, uri);
         } else if (uri.isText()) {
             return new PageRendererTab(browser, uri);
+        } else if (TYPE_HIGHLIGHT.equals(uri.getType())) {
+            return new HighlightViewTab(browser, uri);
         }
         
         return null;

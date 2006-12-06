@@ -83,6 +83,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _bookmarkTab;
     private MenuItem _fileMenuRoot;
     private MenuItem _fileMenuOpen;
+    private MenuItem _fileMenuHighlights;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
@@ -123,6 +124,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
     private Map _openTabs;
+    
+    private List _bookmarkCache;
     
     private List _uiListeners;
     private List _commands;
@@ -283,6 +286,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuRoot.setMenu(fileMenu);
         _fileMenuOpen = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuOpen.setEnabled(false);
+        _fileMenuHighlights = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuHighlights.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
+        });
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.setEnabled(false);
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
@@ -946,6 +954,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
     public SyndieURI createTranslateURI() { return new SyndieURI(BrowserTab.TYPE_TRANSLATE, new HashMap()); }
     public SyndieURI createSyndicationURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE, new HashMap()); }
+    public SyndieURI createHighlightsURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
@@ -981,7 +990,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     
+    /** get the bookmarks (NymReferenceNode) currently loaded */
+    public List getBookmarks() { 
+        if (_bookmarkCache == null)
+            return Collections.EMPTY_LIST;
+        else
+            return new ArrayList(_bookmarkCache);
+    }
+    
     void bookmarksUpdated(List nymRefs) {
+        _bookmarkCache = nymRefs;
         MenuItem items[] = _bookmarkMenu.getItems();
         for (int i = 0; i < items.length; i++)
             if (items[i] != _bookmarkMenuShow)
@@ -1106,6 +1124,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
     private static final String T_FILE_MENU_TITLE_ACCELERATOR = "syndie.gui.browser.filemenu.title.accelerator";
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
+    private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
@@ -1158,6 +1177,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "&File"));
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
+        _fileMenuHighlights.setText(registry.getText(T_FILE_MENU_HIGHLIGHTS, "&Highlights"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));

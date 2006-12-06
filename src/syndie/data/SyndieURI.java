@@ -395,6 +395,7 @@ public class SyndieURI {
     public Long getMessageId() { return getLong("messageId"); }
     public Long getAttachment() { return getLong("attachment"); }
     public Long getPage() { return getLong("page"); }
+    public Hash getSearchScope() { return getHash("scope"); }
     
     public void fromString(String bencodedURI) throws URISyntaxException {
         if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");

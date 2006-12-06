@@ -680,6 +680,31 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_NAME = "SELECT name FROM channel WHERE channelHash = ?";
+    public String getChannelName(Hash channel) {
+        if (channel == null) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME);
+            stmt.setBytes(1, channel.getData());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String name = rs.getString(1);
+                return name;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel name", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND "+
@@ -3181,7 +3206,66 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(messageId) FROM channelMessage LEFT OUTER JOIN nymChannelReadThrough ON scope = targetChannelId AND nymId = ? WHERE importDate > readThrough AND targetChannelId = ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
+    public int countUnreadMessages(long nymId, Hash scope) {
+        long chan = getChannelId(scope);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_COUNT_UNREAD_MESSAGES);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, chan);
+            stmt.setLong(3, nymId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (rs.wasNull())
+                    return 0;
+                else
+                    return count;
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting unread message count", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
     
+    private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM channel WHERE channelId NOT IN (SELECT scope FROM nymChannelReadThrough WHERE nymId = ?)";
+    /** list of forums where the nym hasn't set a nymChannelReadThrough date (not even one in 1970) */
+    public List getNewChannelIds() { return getNewChannelIds(_nymId); }
+    public List getNewChannelIds(long nymId) {
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NEW_CHANNEL_IDS);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                long chanId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(chanId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting new channel ids", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+
     /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */
     public void runScript(UI ui, String scriptName) {
         File scriptDir = new File(_rootDir, "scripts");

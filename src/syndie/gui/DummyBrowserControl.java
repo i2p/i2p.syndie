@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.custom.CTabFolder;
 import syndie.data.NymReferenceNode;
@@ -38,6 +39,8 @@ public class DummyBrowserControl implements BrowserControl {
     public void deleteBookmark(long bookmarkGroupId) {}
     public void updateBookmark(NymReferenceNode bookmark) {}
     public void bookmark(NymReferenceNode node) {}
+    public List getBookmarks() { return null; }
+
     
     public void showWaitCursor(boolean show) {}
     public TranslationRegistry getTranslationRegistry() { return null; }

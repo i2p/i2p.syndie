@@ -455,6 +455,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         packCols();
     }
     
+    public void archivesLoaded(SyndicationManager mgr) {}
     public void archiveAdded(SyndicationManager mgr, String name) {}
     public void archiveRemoved(SyndicationManager mgr, String name) {}
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {}

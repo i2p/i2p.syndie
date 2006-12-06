@@ -88,6 +88,7 @@ public class SyndicationManager {
         public void archiveAdded(SyndicationManager mgr, String name);
         public void archiveRemoved(SyndicationManager mgr, String name);
         public void archiveUpdated(SyndicationManager mgr, String oldName, String newName);
+        public void archivesLoaded(SyndicationManager mgr);
 
         /**
          * ideal status sequence: SCHEDULED, STARTEd, COMPLETE, INDEX_LOAD_OK, INDEX_DIFF_OK
@@ -994,6 +995,10 @@ public class SyndicationManager {
     
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
+        if (_archives.size() > 0) {
+            _ui.debugMessage("not loading archives, as they are already loaded");
+            return;
+        }
         _ui.debugMessage("Loading archives");
         _archives.clear();
         PreparedStatement stmt = null;
@@ -1057,6 +1062,8 @@ public class SyndicationManager {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         _ui.debugMessage("archives loaded");
+        for (int i = 0; i < _listeners.size(); i++)
+            ((SyndicationManager.SyndicationListener)_listeners.get(i)).archivesLoaded(this);
     }
     
     private static class NymArchive {

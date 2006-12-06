@@ -463,6 +463,7 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _treeGroup.setFont(theme.DEFAULT_FONT);
     }
 
+    public void archivesLoaded(SyndicationManager mgr) {}
     public void archiveAdded(SyndicationManager mgr, String name) {}
     public void archiveRemoved(SyndicationManager mgr, String name) {}
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {}

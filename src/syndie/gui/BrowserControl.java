@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.List;
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
 import syndie.db.SyndicationManager;
@@ -18,6 +19,9 @@ public interface BrowserControl {
     public void bookmark(NymReferenceNode node);
     public void deleteBookmark(long bookmarkGroupId);
     public void updateBookmark(NymReferenceNode bookmark);
+    /** get the bookmarks (NymReferenceNode) currently loaded */
+    public List getBookmarks();
+    
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
