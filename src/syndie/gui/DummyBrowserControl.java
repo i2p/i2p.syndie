@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.List;
+import java.util.TreeMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.custom.CTabFolder;
 import syndie.data.NymReferenceNode;
@@ -60,4 +61,6 @@ public class DummyBrowserControl implements BrowserControl {
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
 
     public boolean isBookmarked(SyndieURI syndieURI) { return false; }
+
+    public TreeMap getResumeable() { return null; }
 }

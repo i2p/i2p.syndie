@@ -1,25 +1,37 @@
 package syndie.gui;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ArmEvent;
+import org.eclipse.swt.events.ArmListener;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
@@ -50,11 +62,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     
     /** ordered list of forums (Hash) underneath the _itemWatchedForums */
     private List _watchedForums;
+    /** ordered list of forums (Hash) underneath the _itemNewForums */
+    private List _newForums;
     
     public HighlightView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         _watchedForums = new ArrayList();
+        _newForums = new ArrayList();
         initComponents();
         refreshHighlights();
         _browser.getSyndicationManager().addListener(this);
@@ -67,10 +82,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         updateWatchedForums();
         updateArchives();
         updateNewForums();
+        updatePostponed();
         _tree.setRedraw(true);
     }
     
-    private void updatePrivateMessages() {}
+    private void updatePrivateMessages() {
+        _itemPrivateMessages.setText(1, 0+"");
+        rethemePrivateMessages(_browser.getThemeRegistry().getTheme());
+    }
     private void updateWatchedForums() {
         List refs = _browser.getBookmarks();
         Set watched = getWatched(refs);
@@ -101,6 +120,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             }
         }
         _itemWatchedForums.setText(1, _browser.getTranslationRegistry().getText(T_WATCHED_DETAIL_SUMMARY_PREFIX, "Active forums/unread messages: ") + activeForums + "/" + totalUnread);
+        rethemeWatchedForums(_browser.getThemeRegistry().getTheme());
     }
     private List sortWatchedForums(Map scopeToName) {
         _watchedForums.clear();
@@ -187,19 +207,22 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             String name = mgr.getArchiveName(i);
             ArchiveIndex index = mgr.getArchiveIndex(i);
             long syncAge = -1;
+            long builtOn = -1;
             if (index != null) {
-                syncAge = System.currentTimeMillis() - index.getBuiltOn();
+                builtOn = index.getBuiltOn();
+                syncAge = System.currentTimeMillis() - builtOn;
                 if (syncAge < 3*60*60*1000L)
                     recentlySynced++;
             }
             TreeItem item = new TreeItem(_itemArchives, SWT.NONE);
             item.setText(0, name);
             if (syncAge > 0)
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Last sync: ") + DataHelper.formatDuration(syncAge));
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Last sync: ") + getDateTime(builtOn));
             else
                 item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NEVERSYNCED, "Last sync: never"));
         }
         _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + (archives-recentlySynced));
+        rethemeArchives(_browser.getThemeRegistry().getTheme());
     }
     
     private void updateNewForums() {
@@ -207,6 +230,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
         
         // list of forums where the nym hasn't set a nymChannelReadThrough date (not even one in 1970)
+        _newForums.clear();
         int activeForums = 0;
         int newMessages = 0;
         List channelIds = _browser.getClient().getNewChannelIds();
@@ -216,6 +240,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             int msgs = _browser.getClient().countUnreadMessages(info.getChannelHash());
             //if (msgs == 0)
             //    continue;
+            _newForums.add(info.getChannelHash());
             TreeItem item = new TreeItem(_itemNewForums, SWT.NONE);
             String name = info.getName();
             if (name == null)
@@ -234,7 +259,30 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             else
                 item.setText(1, _browser.getTranslationRegistry().getText(T_NEWFORUM_DETAIL_PREFIX, "Messages: ") + msgs + " " + desc);
         }
-        _itemNewForums.setText(1, _browser.getTranslationRegistry().getText(T_NEWFORUM_DETAIL_SUMMARY_PREFIX, "Total forums/active forums/messages") + ": " + channelIds.size() + "/" + activeForums + "/" + newMessages);
+        _itemNewForums.setText(1, _browser.getTranslationRegistry().getText(T_NEWFORUM_DETAIL_SUMMARY_PREFIX, "Total forums/active forums/messages") + ": " + channelIds.size() + "/" + activeForums + "/" + newMessages);        
+        rethemeNewForums(_browser.getThemeRegistry().getTheme());
+    }
+    
+    private void updatePostponed() {
+        TreeItem items[] = _itemPostponed.getItems();
+        if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
+        
+        TreeMap resumeable = _browser.getResumeable();
+        for (Iterator iter = resumeable.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Long resumeableId = (Long)entry.getKey();
+            Integer version = (Integer)entry.getValue();
+            TreeItem item = new TreeItem(_itemPostponed, SWT.NONE);
+            item.setText(0, _browser.getTranslationRegistry().getText(T_POSTPONED_NAME, "Postponed on"));
+            item.setText(1, getDateTime(resumeableId.longValue()));
+        }
+        _itemPostponed.setText(1, Integer.toString(resumeable.size()));
+        rethemePostponed(_browser.getThemeRegistry().getTheme());
+    }
+    
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+    private static final String getDateTime(long ts) {
+        synchronized (_fmt) { return _fmt.format(new Date(ts)); }
     }
     
     private void initComponents() {
@@ -245,6 +293,13 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
+        
+        final Menu menu = new Menu(_tree);
+        _tree.setMenu(menu);
+        menu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) { reconfigMenu(menu); }
+        });
         
         _colSummary = new TreeColumn(_tree, SWT.RIGHT);
         _colDetail = new TreeColumn(_tree, SWT.LEFT);
@@ -273,11 +328,121 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _browser.getThemeRegistry().register(this);
     }
     
+    private void reconfigMenu(Menu menu) {
+        MenuItem items[] = menu.getItems();
+        for (int i = 0; i < items.length; i++) items[i].dispose();
+        
+        TreeItem sel[] = _tree.getSelection();
+        if ( (sel != null) && (sel.length == 1) ) {
+            TreeItem parent = sel[0].getParentItem();
+            TreeItem child = null;
+            if (parent == null)
+                parent = sel[0];
+            else
+                child = sel[0];
+            
+            if (parent == _itemArchives) {
+                reconfigArchiveMenu(menu, child);
+            } else if (parent == _itemNewForums) {
+                reconfigNewForumMenu(menu, child);
+            } else if (parent == _itemPostponed) {
+                reconfigPostponedMenu(menu, child);
+            } else if (parent == _itemPrivateMessages) {
+                reconfigPrivateMessagesMenu(menu, child);
+            } else if (parent == _itemWatchedForums) {
+                reconfigWatchedForumsMenu(menu, child);
+            }
+        }
+    }
+    private void reconfigArchiveMenu(Menu menu, TreeItem selected) {}
+    private void reconfigNewForumMenu(Menu menu, final TreeItem selected) {
+        if (selected != null) {
+            TreeItem parent = selected.getParentItem();
+            final int idx = parent.indexOf(selected);
+            if (idx == -1)
+                return;
+            
+            final Hash forum = (Hash)_newForums.get(idx);
+            
+            MenuItem view = new MenuItem(menu, SWT.PUSH);
+            view.setText(_browser.getTranslationRegistry().getText(T_NEWFORUM_MENU_VIEW, "View"));
+            view.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.createScope(forum)); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.createScope(forum)); }
+            });
+            
+            final long channelId = _browser.getClient().getChannelId(forum);
+            MenuItem markRead = new MenuItem(menu, SWT.PUSH);
+            markRead.setText(_browser.getTranslationRegistry().getText(T_NEWFORUM_MENU_MARKREAD, "Mark as read"));
+            markRead.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { 
+                    _browser.getClient().markChannelRead(channelId); 
+                    _tree.setRedraw(false);
+                    updateNewForums();
+                    _itemNewForums.setExpanded(true);
+                    _tree.setRedraw(true);
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) { 
+                    _browser.getClient().markChannelRead(channelId);
+                    _tree.setRedraw(false);
+                    updateNewForums();
+                    _itemNewForums.setExpanded(true);
+                    _tree.setRedraw(true);
+                }
+            });
+        }
+    }
+    private void reconfigPostponedMenu(Menu menu, TreeItem selected) {}
+    private void reconfigPrivateMessagesMenu(Menu menu, TreeItem selected) {}
+    private void reconfigWatchedForumsMenu(Menu menu, final TreeItem selected) {
+        if (selected != null) {
+            TreeItem parent = selected.getParentItem();
+            final int idx = parent.indexOf(selected);
+            if (idx == -1)
+                return;
+            
+            final Hash forum = (Hash)_watchedForums.get(idx);
+            
+            MenuItem view = new MenuItem(menu, SWT.PUSH);
+            view.setText(_browser.getTranslationRegistry().getText(T_WATCHED_MENU_VIEW, "View"));
+            view.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.createScope(forum)); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.createScope(forum)); }
+            });
+            
+            final long channelId = _browser.getClient().getChannelId(forum);
+            MenuItem markRead = new MenuItem(menu, SWT.PUSH);
+            markRead.setText(_browser.getTranslationRegistry().getText(T_WATCHED_MENU_MARKREAD, "Mark as read"));
+            markRead.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { 
+                    _browser.getClient().markChannelRead(channelId); 
+                    _tree.setRedraw(false);
+                    updateWatchedForums();
+                    _itemWatchedForums.setExpanded(true);
+                    _tree.setRedraw(true);
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) { 
+                    _browser.getClient().markChannelRead(channelId);
+                    _tree.setRedraw(false);
+                    updateWatchedForums();
+                    _itemWatchedForums.setExpanded(true);
+                    _tree.setRedraw(true);
+                }
+            });
+        }
+    }
+    
     public void applyTheme(Theme theme) {
         _tree.setFont(theme.TREE_FONT);
         _browseForums.setFont(theme.BUTTON_FONT);
         _post.setFont(theme.BUTTON_FONT);
         _createForum.setFont(theme.BUTTON_FONT);
+        
+        rethemePrivateMessages(theme);
+        rethemeWatchedForums(theme);
+        rethemeArchives(theme);
+        rethemeNewForums(theme);
+        rethemePostponed(theme);
         
         // font sizes may change, so expand as necessary
         setMinWidth(_colSummary, _itemPrivateMessages.getText(0), 50);
@@ -285,6 +450,57 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         setMinWidth(_colSummary, _itemArchives.getText(0), 50);
         setMinWidth(_colSummary, _itemNewForums.getText(0), 50);
         setMinWidth(_colSummary, _itemPostponed.getText(0), 50);
+    }
+    
+    private void rethemePrivateMessages(Theme theme) {
+        if (_itemPrivateMessages.getItemCount() > 0) {
+            _itemPrivateMessages.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            //TreeItem items[] = _itemPrivateMessages.getItems();
+            //for (int i = 0; i < items.length; i++)
+            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+        } else {
+            _itemPrivateMessages.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+        }
+    }
+    private void rethemeWatchedForums(Theme theme) {
+        if (_itemWatchedForums.getItemCount() > 0) {
+            _itemWatchedForums.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            //TreeItem items[] = _itemWatchedForums.getItems();
+            //for (int i = 0; i < items.length; i++)
+            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+        } else {
+            _itemWatchedForums.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+        }
+    }
+    private void rethemeArchives(Theme theme) {
+        if (_itemArchives.getItemCount() > 0) {
+            _itemArchives.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            //TreeItem items[] = _itemArchives.getItems();
+            //for (int i = 0; i < items.length; i++)
+            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+        } else {
+            _itemArchives.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+        }
+    }
+    private void rethemeNewForums(Theme theme) {
+        if (_itemNewForums.getItemCount() > 0) {
+            _itemNewForums.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            //TreeItem items[] = _itemNewForums.getItems();
+            //for (int i = 0; i < items.length; i++)
+            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+        } else {
+            _itemNewForums.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+        }
+    }
+    private void rethemePostponed(Theme theme) {
+        if (_itemPostponed.getItemCount() > 0) {
+            _itemPostponed.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            //TreeItem items[] = _itemPostponed.getItems();
+            //for (int i = 0; i < items.length; i++)
+            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+        } else {
+            _itemPostponed.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+        }
     }
     
     private static final String T_BROWSE = "syndie.gui.highlightview.browse";
@@ -305,9 +521,17 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private static final String T_ARCHIVE_DETAIL_SUMMARY_PREFIX = "syndie.gui.highlightview.archivedetailsummaryprefix";
     private static final String T_NEWFORUM_DETAIL_PREFIX = "syndie.gui.highlightview.newforumdetailprefix";
     private static final String T_NEWFORUM_DETAIL_SUMMARY_PREFIX = "syndie.gui.highlightview.newforumdetailsummaryprefix";
+
+    private static final String T_NEWFORUM_MENU_MARKREAD = "syndie.gui.highlightview.newforum.menu.markread";
+    private static final String T_NEWFORUM_MENU_VIEW = "syndie.gui.highlightview.newforum.menu.view";
+
+    private static final String T_WATCHED_MENU_MARKREAD = "syndie.gui.highlightview.watched.menu.markread";
+    private static final String T_WATCHED_MENU_VIEW = "syndie.gui.highlightview.watched.menu.view";
+    
+    private static final String T_POSTPONED_NAME = "syndie.gui.highlightview.postponedname";
     
     public void translate(TranslationRegistry registry) {
-        _browseForums.setText(registry.getText(T_BROWSE, "Browse all forums"));
+        _browseForums.setText(registry.getText(T_BROWSE, "Browse forums"));
         _post.setText(registry.getText(T_POST, "Post a new message"));
         _createForum.setText(registry.getText(T_CREATEFORUM, "Create a new forum"));
         
@@ -340,20 +564,31 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     }
 
     public void archivesLoaded(SyndicationManager mgr) { 
-        _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true);
+        _tree.getDisplay().asyncExec(new Runnable() { 
+            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+        });
     }
     public void archiveAdded(SyndicationManager mgr, String name) { 
-        _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true);
+        _tree.getDisplay().asyncExec(new Runnable() { 
+            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+        });
     }
     public void archiveRemoved(SyndicationManager mgr, String name) {
-        _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true);
+        _tree.getDisplay().asyncExec(new Runnable() { 
+            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+        });
     }
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {
-        _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true);
+        _tree.getDisplay().asyncExec(new Runnable() { 
+            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+        });
     }
     public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
-        if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK)
-            _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true);
+        if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK) {
+            _tree.getDisplay().asyncExec(new Runnable() { 
+                public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+            });
+        }
     }
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
 }

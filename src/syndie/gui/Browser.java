@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -84,6 +85,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuRoot;
     private MenuItem _fileMenuOpen;
     private MenuItem _fileMenuHighlights;
+    private MenuItem _fileMenuMinimize;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
@@ -290,6 +292,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuHighlights.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
+        });
+        _fileMenuMinimize = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuMinimize.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
         });
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.setEnabled(false);
@@ -519,15 +526,21 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         public void messagePostponed(MessageEditor editor, long postponementId) { Browser.this.populateResumeable(); }
         public void messageCancelled(MessageEditor editor) { Browser.this.populateResumeable(); }
     }
+    
+    private static final Comparator INVERSE_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }
+        public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
+    };
 
-    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId ORDER BY postponeId DESC";
-    private void populateResumeable() {
-        while (_postMenuResumeMenu.getItemCount() > 0)
-            _postMenuResumeMenu.getItem(0).dispose();
+    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";    
+    /**
+     * ordered map of postponeId (Long) to the most recent version (Integer),
+     * with the most recent messages first 
+     */
+    public TreeMap getResumeable() {
+        TreeMap postponeIdToVersion = new TreeMap(INVERSE_COMPARATOR);
         PreparedStatement stmt = null;
         ResultSet rs = null;
-        List ids = new ArrayList();
-        List versions = new ArrayList();
         try {
             stmt = _client.con().prepareStatement(SQL_LIST_RESUMEABLE);
             stmt.setLong(1, _client.getLoggedInNymId());
@@ -535,8 +548,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 int ver = rs.getInt(2);
-                ids.add(new Long(id));
-                versions.add(new Integer(ver));
+                postponeIdToVersion.put(new Long(id), new Integer(ver));
             }
         } catch (SQLException se) {
             errorMessage("Internal eror populating resumeable list", se);
@@ -544,14 +556,22 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        return postponeIdToVersion;
+    }
+    
+    private void populateResumeable() {
+        while (_postMenuResumeMenu.getItemCount() > 0)
+            _postMenuResumeMenu.getItem(0).dispose();
+        TreeMap postponeIdToVersion = getResumeable();
         
-        if (ids.size() == 0) {
+        if (postponeIdToVersion.size() == 0) {
             _postMenuResumeRoot.setEnabled(false);
         } else {
             _postMenuResumeRoot.setEnabled(true);
-            for (int i = 0; i < ids.size(); i++) {
-                final long id = ((Long)ids.get(i)).longValue();
-                final int ver = ((Integer)versions.get(i)).intValue();
+            for (Iterator iter = postponeIdToVersion.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry entry = (Map.Entry)iter.next();
+                final long id = ((Long)entry.getKey()).longValue();
+                final int ver = ((Integer)entry.getValue()).intValue();
                 String when = getVersionTime(id);
                 MenuItem item = new MenuItem(_postMenuResumeMenu, SWT.PUSH);
                 item.setText(when);
@@ -579,10 +599,22 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _shell.setCursor(null);
     }
     
-    public void view(SyndieURI uri) { 
+    public void view(SyndieURI uri) {
+        showWaitCursor(true);
+        try {
+            doView(uri);
+        } catch (Exception e) {
+            errorMessage("Internal error viewing " + uri, e);
+            MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR);
+            box.setText(getTranslationRegistry().getText(T_ERRORVIEW_TITLE, "Internal error"));
+            box.setMessage(getTranslationRegistry().getText(T_ERRORVIEW_MSG, "There was an internal error viewing the given location: ") + uri.toString());
+            box.open();
+        }
+        showWaitCursor(false);
+    }
+    private void doView(SyndieURI uri) {
         debugMessage("Viewing [" + uri + "]");
         if (uri == null) return;
-        showWaitCursor(true);
         BrowserTab tab = null;
         Hash scope = uri.getHash("scope");
         Long msgId = uri.getMessageId();
@@ -623,7 +655,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             debugMessage("tab selected");
             tab.tabShown();
         } 
-        showWaitCursor(false);
         if (tab == null) {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(getTranslationRegistry().getText(T_BADURI_TITLE, "Invalid URI"));
@@ -1125,6 +1156,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_TITLE_ACCELERATOR = "syndie.gui.browser.filemenu.title.accelerator";
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
     private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
+    private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
@@ -1170,6 +1202,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_BADURI_TITLE = "syndie.gui.browser.baduri.title";
     private static final String T_BADURI_MSG = "syndie.gui.browser.baduri.msg";
     
+    private static final String T_ERRORVIEW_TITLE = "syndie.gui.browser.errorview.title";
+    private static final String T_ERRORVIEW_MSG = "syndie.gui.browser.errorview.msg";
+    
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_SHELL_TITLE, "Syndie"));
         _copyTabLocation.setText(registry.getText(T_COPY_TAB_LOC, "copy tab location"));
@@ -1178,6 +1213,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "&File"));
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
         _fileMenuHighlights.setText(registry.getText(T_FILE_MENU_HIGHLIGHTS, "&Highlights"));
+        _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));

@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.List;
+import java.util.TreeMap;
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
 import syndie.db.SyndicationManager;
@@ -60,4 +61,10 @@ public interface BrowserControl {
     public MessageEditor.MessageEditorListener getMessageEditorListener();
 
     public boolean isBookmarked(SyndieURI syndieURI);
+    
+    /**
+     * ordered map of postponeId (Long) to the most recent version (Integer),
+     * with the most recent messages first 
+     */
+    public TreeMap getResumeable();
 }
