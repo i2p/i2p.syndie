@@ -63,4 +63,5 @@ public class DummyBrowserControl implements BrowserControl {
     public boolean isBookmarked(SyndieURI syndieURI) { return false; }
 
     public TreeMap getResumeable() { return null; }
+    public void resumePost(long postponeId, int postponeVersion) {}
 }

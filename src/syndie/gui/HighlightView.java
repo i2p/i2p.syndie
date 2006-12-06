@@ -64,12 +64,16 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private List _watchedForums;
     /** ordered list of forums (Hash) underneath the _itemNewForums */
     private List _newForums;
+    private List _postponedId;
+    private List _postponedVersion;
     
     public HighlightView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         _watchedForums = new ArrayList();
         _newForums = new ArrayList();
+        _postponedId = new ArrayList();
+        _postponedVersion = new ArrayList();
         initComponents();
         refreshHighlights();
         _browser.getSyndicationManager().addListener(this);
@@ -267,6 +271,9 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         TreeItem items[] = _itemPostponed.getItems();
         if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
         
+        _postponedId.clear();
+        _postponedVersion.clear();
+        
         TreeMap resumeable = _browser.getResumeable();
         for (Iterator iter = resumeable.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
@@ -275,6 +282,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             TreeItem item = new TreeItem(_itemPostponed, SWT.NONE);
             item.setText(0, _browser.getTranslationRegistry().getText(T_POSTPONED_NAME, "Postponed on"));
             item.setText(1, getDateTime(resumeableId.longValue()));
+            _postponedId.add(resumeableId);
+            _postponedVersion.add(version);
         }
         _itemPostponed.setText(1, Integer.toString(resumeable.size()));
         rethemePostponed(_browser.getThemeRegistry().getTheme());
@@ -321,8 +330,28 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         _browseForums = new Button(actions, SWT.PUSH);
+        _browseForums.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.DEFAULT_SEARCH_URI); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(SyndieURI.DEFAULT_SEARCH_URI); }
+        });
         _post = new Button(actions, SWT.PUSH);
+        _post.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _browser.view(_browser.createPostURI(null, null));
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _browser.view(_browser.createPostURI(null, null));
+            }
+        });
         _createForum = new Button(actions, SWT.PUSH);
+        _createForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _browser.view(_browser.createManageURI(null));
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _browser.view(_browser.createManageURI(null));
+            }
+        });
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -354,7 +383,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             }
         }
     }
-    private void reconfigArchiveMenu(Menu menu, TreeItem selected) {}
+    private void reconfigArchiveMenu(Menu menu, TreeItem selected) {
+        MenuItem sync = new MenuItem(menu, SWT.PUSH);
+        sync.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_MENU_SYNC, "Syndicate"));
+        sync.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationURI()); }
+        });
+    }
     private void reconfigNewForumMenu(Menu menu, final TreeItem selected) {
         if (selected != null) {
             TreeItem parent = selected.getParentItem();
@@ -392,7 +428,24 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             });
         }
     }
-    private void reconfigPostponedMenu(Menu menu, TreeItem selected) {}
+    private void reconfigPostponedMenu(Menu menu, TreeItem selected) {
+        if (selected != null) {
+            TreeItem parent = selected.getParentItem();
+            final int idx = parent.indexOf(selected);
+            if (idx == -1)
+                return;
+            
+            final long id = ((Long)_postponedId.get(idx)).longValue();
+            final int ver = ((Integer)_postponedVersion.get(idx)).intValue();
+            
+            MenuItem resume = new MenuItem(menu, SWT.PUSH);
+            resume.setText(_browser.getTranslationRegistry().getText(T_POSTPONE_MENU_RESUME, "Resume"));
+            resume.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.resumePost(id, ver); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _browser.resumePost(id, ver); }
+            });
+        }
+    }
     private void reconfigPrivateMessagesMenu(Menu menu, TreeItem selected) {}
     private void reconfigWatchedForumsMenu(Menu menu, final TreeItem selected) {
         if (selected != null) {
@@ -529,6 +582,10 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private static final String T_WATCHED_MENU_VIEW = "syndie.gui.highlightview.watched.menu.view";
     
     private static final String T_POSTPONED_NAME = "syndie.gui.highlightview.postponedname";
+    
+    private static final String T_POSTPONE_MENU_RESUME = "syndie.gui.highlightview.postpone.menu.resume";
+    
+    private static final String T_ARCHIVE_MENU_SYNC= "syndie.gui.highlightview.archive.menu.sync";
     
     public void translate(TranslationRegistry registry) {
         _browseForums.setText(registry.getText(T_BROWSE, "Browse forums"));

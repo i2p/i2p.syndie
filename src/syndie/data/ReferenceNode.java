@@ -229,6 +229,7 @@ public class ReferenceNode {
     }
     
     public static ArrayList deepCopy(List orig) {
+        if (orig == null) return new ArrayList();;
         ArrayList rv = new ArrayList(orig.size());
         for (int i = 0; i < orig.size(); i++) {
             ReferenceNode node = (ReferenceNode)orig.get(i);
@@ -237,6 +238,7 @@ public class ReferenceNode {
         return rv;
     }
     public static ReferenceNode deepCopy(ReferenceNode node) {
+        if (node == null) return null;
         ReferenceNode copy = new ReferenceNode(node.getName(), node.getURI(), node.getDescription(), node.getReferenceType());
         for (int i = 0; i < node.getChildCount(); i++)
             copy.addChild(deepCopy(node.getChild(i)));

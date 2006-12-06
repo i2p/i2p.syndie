@@ -3207,7 +3207,7 @@ public class DBClient {
         }
     }
 
-    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(messageId) FROM channelMessage LEFT OUTER JOIN nymChannelReadThrough ON scope = targetChannelId AND nymId = ? WHERE importDate > readThrough AND targetChannelId = ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(messageId) FROM channelMessage LEFT OUTER JOIN nymChannelReadThrough ON scope = targetChannelId AND nymId = ? WHERE (readThrough IS NULL OR importDate > readThrough) AND targetChannelId = ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
     public int countUnreadMessages(long nymId, Hash scope) {
         long chan = getChannelId(scope);

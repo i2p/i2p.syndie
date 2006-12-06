@@ -52,7 +52,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class SQLTab extends BrowserTab implements Translatable {
+class SQLTab extends BrowserTab implements Translatable, Themeable {
     private Combo _in;
     private Text _msgs;
     private Table _results;
@@ -89,6 +89,7 @@ class SQLTab extends BrowserTab implements Translatable {
             }
         });
         getBrowser().getTranslationRegistry().register(this);
+        getBrowser().getThemeRegistry().register(this);
     }
 
     private static final SimpleDateFormat _dateFmt = new SimpleDateFormat("yyyy/MM/dd");
@@ -259,7 +260,10 @@ class SQLTab extends BrowserTab implements Translatable {
     public String getName() { return _name; }
     public String getDescription() { return _description; }
     
-    protected void disposeDetails() { getBrowser().getTranslationRegistry().unregister(this); }
+    protected void disposeDetails() { 
+        getBrowser().getTranslationRegistry().unregister(this);
+        getBrowser().getThemeRegistry().register(this);
+    }
 
     private static final String T_NAME = "syndie.gui.sqltab.name";
     private static final String T_DESC = "syndie.gui.sqltab.desc";
@@ -269,5 +273,11 @@ class SQLTab extends BrowserTab implements Translatable {
         _description = registry.getText(T_DESC, "Advanced SQL interface");
         
         _icon = ImageUtil.ICON_TAB_SQL;
+    }
+    
+    public void applyTheme(Theme theme) {
+        _results.setFont(theme.TABLE_FONT);
+        _in.setFont(theme.DEFAULT_FONT);
+        _msgs.setFont(theme.DEFAULT_FONT);
     }
 }

@@ -67,4 +67,5 @@ public interface BrowserControl {
      * with the most recent messages first 
      */
     public TreeMap getResumeable();
+    public void resumePost(long postponeId, int postponeVersion);
 }

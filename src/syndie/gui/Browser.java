@@ -576,8 +576,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 MenuItem item = new MenuItem(_postMenuResumeMenu, SWT.PUSH);
                 item.setText(when);
                 item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { resume(id, ver); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { resume(id, ver); }
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { resumePost(id, ver); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { resumePost(id, ver); }
                 });
             }
         }
@@ -588,7 +588,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         synchronized (_fmt) { return _fmt.format(new Date(ts)); }
     }
     
-    private void resume(long postponeId, int postponeVersion) {
+    public void resumePost(long postponeId, int postponeVersion) {
         view(createPostURI(postponeId, postponeVersion));
     }
     

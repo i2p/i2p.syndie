@@ -271,6 +271,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             
             _origInfo = info;
         } else {
+            // new forum
             _browser.getUI().debugMessage("forum NOT loaded");
             _channelId = -1;
             _auth.select(AUTH_AUTHORIZEDONLY);

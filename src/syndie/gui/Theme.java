@@ -23,8 +23,8 @@ public class Theme {
         MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, 0, null, Boolean.TRUE);
         MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, 0, null, null);
         MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, 0, Boolean.TRUE, null);
-        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -2, null, Boolean.TRUE);
-        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -2, null, null);
+        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, 0, null, Boolean.TRUE);
+        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, 0, null, null);
         DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, 0);
     }
     

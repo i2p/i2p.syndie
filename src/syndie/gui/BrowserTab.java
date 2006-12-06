@@ -67,7 +67,7 @@ abstract class BrowserTab implements Themeable {
                     return new BrowseForumTab(browser, uri);
                 } else {
                     // view a specific message
-                    // todo: perhaps a separate tab instead of this browse w/ preview?
+                    // todo: perhaps optimize this w/ features for rendering sans message tree?
                     return new BrowseForumTab(browser, uri);
                 }
             }
@@ -98,6 +98,8 @@ abstract class BrowserTab implements Themeable {
             return new PageRendererTab(browser, uri);
         } else if (TYPE_HIGHLIGHT.equals(uri.getType())) {
             return new HighlightViewTab(browser, uri);
+        } else if (uri.isSearch()) {
+            return new BrowseForumTab(browser, uri);
         }
         
         return null;
