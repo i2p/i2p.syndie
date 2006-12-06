@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+import syndie.Constants;
 import syndie.data.*;
 
 /**
@@ -217,7 +218,7 @@ public class ThreadAccumulator {
      */
     public void gatherThreads() {
         init();
-        _ui.debugMessage("beginning gather threads");
+        _ui.debugMessage("beginning gather threads w/ state: \n" + toString());
         
         // - iterate across all matching channels
         //  - list all threads in the channel
@@ -381,6 +382,7 @@ public class ThreadAccumulator {
         
         // now filter
         if (filterPassed(tags, threadRoot.getURI(), threadRoot, visitor, true)) {
+            _ui.debugMessage("filter passed for " + threadRoot.getURI().toString());
             _rootURIs.add(threadRoot.getURI());
             _threadSubject.add(threadRoot.getDescription());
             _threadLatestAuthorId.add(new Long(latestAuthorId));
@@ -391,6 +393,7 @@ public class ThreadAccumulator {
             _roots.add(threadRoot);
         } else {
             // the root didn't pass, but maybe its children will
+            _ui.debugMessage("filter did not pass for " + threadRoot.getURI().toString());
         }
         
         removeFilteredChildren(threadRoot, visitor);
@@ -457,27 +460,38 @@ public class ThreadAccumulator {
     }
     
     private boolean filterPassed(List tags, SyndieURI uri, ReferenceNode node, Harvester harvester, boolean isRoot) {
+        _ui.debugMessage("attempting filter pass for " + uri);
         boolean ok = true;
-        if (isRoot || _applyTagFilterToMessages)
-            if (!tagFilterPassed(tags, uri))
+        if (isRoot || _applyTagFilterToMessages) {
+            if (!tagFilterPassed(tags, uri)) {
+                _ui.debugMessage("filter fail cause: tags");
                 ok = false;
+            }
+        }
         
         long chanId = -1;
         if (ok) {
             chanId = _client.getChannelId(uri.getScope());
-            if (chanId == -1) ok = false;
+            if (chanId == -1) {
+                ok = false;
+                _ui.debugMessage("filter fail cause: scope not known");
+            }
         }
         ChannelInfo chan = null;
         MessageInfo msg = null;
         if (ok) {
             chan = _client.getChannel(chanId);
             msg = _client.getMessage(chanId, uri.getMessageId());
-            if ( (chan == null) || (msg == null) ) 
+            if ( (chan == null) || (msg == null) ) {
                 ok = false;
+                _ui.debugMessage("filter fail cause: " + (chan == null ? "chan" : "") + "/" + (msg == null ? "msg" : "") + " not known");
+            }
         }
         if (ok) {
-            if (!authorFilterPassed(msg, chan, node))
+            if (!authorFilterPassed(msg, chan, node)) {
                 ok = false;
+                _ui.debugMessage("filter fail cause: author not passed");
+            }
         }
         
         if (ok) {
@@ -487,29 +501,49 @@ public class ThreadAccumulator {
             else
                 when = uri.getMessageId().longValue();
             if ( ( (_earliestReceiveDate >= 0) && (when < _earliestReceiveDate) ) ||
-                 ( (_earliestPostDate >= 0) && (when < _earliestPostDate) ) )
+                 ( (_earliestPostDate >= 0) && (when < _earliestPostDate) ) ) {
                 ok = false;
+                _ui.debugMessage("filter fail cause: too early");
+            }
         }
         
-        if ( ok && ( (_pbe && !msg.getWasPassphraseProtected()) || (!_pbe && msg.getWasPassphraseProtected()) ) )
+        if ( ok && ( (_pbe && !msg.getWasPassphraseProtected()) || (!_pbe && msg.getWasPassphraseProtected()) ) ) {
             ok = false;
-        if ( ok && ( (_privateMessage && !msg.getWasPrivate()) || (!_privateMessage && msg.getWasPrivate()) ) )
+            _ui.debugMessage("filter fail cause: pbe");
+        }
+        if ( ok && ( (_privateMessage && !msg.getWasPrivate()) || (!_privateMessage && msg.getWasPrivate()) ) ) {
             ok = false;
+            _ui.debugMessage("filter fail cause: privMsg");
+        }
         if ( ok && ( (_alreadyDecrypted && (msg.getReadKeyUnknown() || msg.getPassphrasePrompt() != null) ) ||
-                     (!_alreadyDecrypted && !msg.getReadKeyUnknown() && (msg.getPassphrasePrompt() == null) ) ) )
+                     (!_alreadyDecrypted && !msg.getReadKeyUnknown() && (msg.getPassphrasePrompt() == null) ) ) ) {
             ok = false;
-        if ( ok && ((_minPages >= 0) && (msg.getPageCount() < _minPages)) )
+            _ui.debugMessage("filter fail cause: decryption status");
+        }
+        if ( ok && ((_minPages >= 0) && (msg.getPageCount() < _minPages)) ) {
             ok = false;
-        if ( ok && ((_maxPages >= 0) && (msg.getPageCount() > _maxPages)) )
+            _ui.debugMessage("filter fail cause: minPages");
+        }
+        if ( ok && ((_maxPages >= 0) && (msg.getPageCount() > _maxPages)) ) {
             ok = false;
-        if ( ok && ((_minAttachments >= 0) && (msg.getAttachmentCount() < _minAttachments)) )
+            _ui.debugMessage("filter fail cause: maxPages");
+        }
+        if ( ok && ((_minAttachments >= 0) && (msg.getAttachmentCount() < _minAttachments)) ) {
             ok = false;
-        if ( ok && ((_maxAttachments >= 0) && (msg.getAttachmentCount() > _maxAttachments)) )
+            _ui.debugMessage("filter fail cause: minAttachments");
+        }
+        if ( ok && ((_maxAttachments >= 0) && (msg.getAttachmentCount() > _maxAttachments)) ) {
             ok = false;
-        if ( ok && ((_minReferences >= 0) && ( (msg.getReferences() == null) || (msg.getReferences().size() < _minReferences) ) ))
+            _ui.debugMessage("filter fail cause: maxAttachments");
+        }
+        if ( ok && ((_minReferences >= 0) && ( (msg.getReferences() == null) || (msg.getReferences().size() < _minReferences) ) )) {
             ok = false;
-        if ( ok && ((_maxReferences >= 0) && ( (msg.getReferences() != null) && (msg.getReferences().size() > _maxReferences) ) ))
+            _ui.debugMessage("filter fail cause: minRefs");
+        }
+        if ( ok && ((_maxReferences >= 0) && ( (msg.getReferences() != null) && (msg.getReferences().size() > _maxReferences) ) )) {
             ok = false;
+            _ui.debugMessage("filter fail cause: maxRefs");
+        }
         // todo: honor minKeys and maxKeys
         
         return ok;
@@ -517,12 +551,16 @@ public class ThreadAccumulator {
     private boolean authorFilterPassed(MessageInfo msg, ChannelInfo chan, ReferenceNode node) {
         if (_includeUnauthorizedPosts || chan.getAllowPublicPosts()) return true;
         Hash author = msg.getURI().getScope();
+        if (author == null)
+            _ui.debugMessage("author is null for msg? " + msg.getURI());
         long authorId = msg.getAuthorChannelId();
         if (authorId != msg.getScopeChannelId())
             author = _client.getChannelHash(authorId);
         if (allowedToPost(author, chan))
             return true;
-        if (chan.getAllowPublicReplies()) {
+        boolean allowReply = chan.getAllowPublicReplies();
+        _ui.debugMessage("author not explicitly allowed to post: " + author + "/" + chan.getChannelHash() + " allowPublicReplies? " + allowReply);
+        if (allowReply) {
             // not explicitly authorized, so check its parents
             ReferenceNode cur = node.getParent();
             while (cur != null) {
@@ -543,18 +581,27 @@ public class ThreadAccumulator {
         }
     }
     private boolean allowedToPost(Hash author, ChannelInfo chan) {
+        if ( (author == null) || (chan == null) )
+            return false;
+        //_ui.debugMessage("allowedToPost: author=" + author.toBase64().substring(0,6) + " chan=" + chan.getChannelHash().toBase64().substring(0,6));
+        //_ui.debugMessage("allowedToPost: mgrs=" + chan.getAuthorizedManagerHashes());
+        //_ui.debugMessage("allowedToPost: posters=" + chan.getAuthorizedPosterHashes());
         if (chan.getChannelHash().equals(author)) {
+            //_ui.debugMessage("allowed to post: author");
             if (_includeOwners || _includeManagers || _includeAuthorizedPosters || _includeAuthorizedReplies)
                 return true;
         }
-        if (chan.getAuthorizedManagers().contains(author)) {
+        if (chan.getAuthorizedManagerHashes().contains(author)) {
+            //_ui.debugMessage("allowed to post: manager");
             if (_includeManagers || _includeAuthorizedPosters || _includeAuthorizedReplies)
                 return true;
         }
-        if (chan.getAuthorizedPosters().contains(author)) {
+        if (chan.getAuthorizedPosterHashes().contains(author)) {
+            //_ui.debugMessage("allowed to post: authPoster");
             if (_includeAuthorizedPosters || _includeAuthorizedReplies)
                 return true;
         }
+        //_ui.debugMessage("allowed to post: !auth");
         return false;
     }
     /** return true if the tags for the message meet our search criteria */
@@ -592,5 +639,38 @@ public class ThreadAccumulator {
             }
         }
         return true;
+    }
+    
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+        buf.append(" threaded? ").append(_showThreaded);
+        buf.append(" owners? ").append(_includeOwners);
+        buf.append(" managers? ").append(_includeManagers);
+        buf.append(" authPosters? ").append(_includeAuthorizedPosters);
+        buf.append(" authReplies? ").append(_includeAuthorizedReplies);
+        buf.append(" unauthPosts? ").append(_includeUnauthorizedPosts);
+        if (_earliestReceiveDate > 0)
+            buf.append(" _earliestReceiveDate? ").append(Constants.getDate(_earliestReceiveDate));
+        if (_earliestPostDate > 0)
+            buf.append(" _earliestPostDate? ").append(Constants.getDate(_earliestPostDate));
+        buf.append(" applyTagFilterToMessages? ").append(_applyTagFilterToMessages);
+        buf.append(" pagesRequired? ").append(_minPages > 0);
+        buf.append(" attachmentsRequired? ").append(_minAttachments > 0);
+        buf.append(" refsRequired? ").append(_minReferences > 0);
+        buf.append(" keysRequired? ").append(_minKeys > 0);
+        buf.append(" decrypted? ").append(_alreadyDecrypted);
+        buf.append(" PBE? ").append(_pbe);
+        buf.append(" privateMessages? ").append(_privateMessage);
+        if (_channelHashes != null)
+            buf.append(" channels: ").append(_channelHashes);
+        else
+            buf.append(" channels: all");
+        if ( (_requiredTags != null) && (_requiredTags.size() > 0) )
+            buf.append(" requiredTags: [").append(_requiredTags).append("]");
+        if ( (_wantedTags != null) && (_wantedTags.size() > 0) )
+            buf.append(" wantedTags: [").append(_wantedTags).append("]");
+        if ( (_rejectedTags != null) && (_rejectedTags.size() > 0) )
+            buf.append(" rejectedTags: [").append(_rejectedTags).append("]");
+        return buf.toString();
     }
 }

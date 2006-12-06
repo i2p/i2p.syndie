@@ -208,6 +208,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         configTreeListeners(_tree);
         long t3 = System.currentTimeMillis();
         
+        _browser.getUI().debugMessage("init refChooserTree", new Exception("source"));
         rebuildBookmarks();
         long t4 = System.currentTimeMillis();
         JobRunner.instance().enqueue(new Runnable() {
@@ -266,10 +267,11 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     private class Rebuilder implements Runnable {
         public void run() {
             final long t1 = System.currentTimeMillis();
-            System.out.println("rebuilder started");
             synchronized (_nymRefs) {
+                if (_rebuilding) return;
                 _rebuilding = true;
             }
+            _browser.getUI().debugMessage("rebuilder started");
             final List refs = _client.getNymReferences(_client.getLoggedInNymId());
             final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {

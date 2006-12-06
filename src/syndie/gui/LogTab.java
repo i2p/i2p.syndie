@@ -28,6 +28,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.db.DBClient;
 import syndie.db.Opts;
@@ -38,8 +40,10 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
+class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Translatable {
     private Text _out;
+    private MenuItem _menuClear;
+    private Group _levels;
     private Button _levelError;
     private Button _levelStatus;
     private Button _levelDebug;
@@ -47,6 +51,8 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
     private boolean _status;
     private boolean _debug;
     private boolean _closed;
+    private String _name;
+    private String _desc;
     
     private int _sizeModifier;
     
@@ -94,24 +100,28 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
         _out = new Text(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
         _out.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        Group levels = new Group(getRoot(), SWT.NONE);
-        levels.setText("Log levels");
-        levels.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        levels.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _levelError = new Button(levels, SWT.CHECK);
-        _levelError.setText("errors");
+        Menu menu = new Menu(_out);
+        _out.setMenu(menu);
+        _menuClear = new MenuItem(menu, SWT.PUSH);
+        _menuClear.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _out.setText(""); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _out.setText(""); }
+        });
+        
+        _levels = new Group(getRoot(), SWT.NONE);
+        _levels.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _levels.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _levelError = new Button(_levels, SWT.CHECK);
         _levelError.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _error = _levelError.getSelection(); }
             public void widgetSelected(SelectionEvent selectionEvent) { _error = _levelError.getSelection(); }
         });
-        _levelStatus = new Button(levels, SWT.CHECK);
-        _levelStatus.setText("status");
+        _levelStatus = new Button(_levels, SWT.CHECK);
         _levelStatus.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _status = _levelStatus.getSelection(); }
             public void widgetSelected(SelectionEvent selectionEvent) { _status = _levelStatus.getSelection(); }
         });
-        _levelDebug = new Button(levels, SWT.CHECK);
-        _levelDebug.setText("debug");
+        _levelDebug = new Button(_levels, SWT.CHECK);
         _levelDebug.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _debug = _levelDebug.getSelection(); }
             public void widgetSelected(SelectionEvent selectionEvent) { _debug = _levelDebug.getSelection(); }
@@ -126,6 +136,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
         _levelDebug.setSelection(_debug);
         
         getBrowser().getThemeRegistry().register(this);
+        getBrowser().getTranslationRegistry().register(this);
         
         getBrowser().addUIListener(this);
     }
@@ -142,6 +153,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
     protected void disposeDetails() { 
         getBrowser().removeUIListener(this);
         getBrowser().getThemeRegistry().unregister(this);
+        getBrowser().getTranslationRegistry().unregister(this);
         _closed = true; 
         synchronized (_pendingMessages) { 
             _pendingMessages.notifyAll();
@@ -228,8 +240,8 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
     public void commandComplete(final int status, final List location) {}
     
     public Image getIcon() { return ImageUtil.ICON_TAB_LOGS; }
-    public String getName() { return "Logs"; }
-    public String getDescription() { return "Log messages"; }
+    public String getName() { return _name; }
+    public String getDescription() { return _desc; }
     
     private static class Record {
         long when;
@@ -242,5 +254,25 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable {
     
     public void applyTheme(Theme theme) {
         _out.setFont(theme.LOG_FONT);
+    }
+    
+    private static final String T_MENU_CLEAR = "syndie.gui.logtab.menuclear";
+    private static final String T_NAME = "syndie.gui.logtab.name";
+    private static final String T_DESC = "syndie.gui.logtab.desc";
+    private static final String T_DEBUG = "syndie.gui.logtab.debug";
+    private static final String T_STATUS = "syndie.gui.logtab.status";
+    private static final String T_ERROR = "syndie.gui.logtab.error";
+    private static final String T_LEVELS = "syndie.gui.logtab.levels";
+    
+    public void translate(TranslationRegistry registry) {
+        _menuClear.setText(registry.getText(T_MENU_CLEAR, "Clear records"));
+        _name = registry.getText(T_NAME, "Logs");
+        _desc = registry.getText(T_DESC, "Log messages");
+        _levelDebug.setText(registry.getText(T_DEBUG, "Debug"));
+        _levelStatus.setText(registry.getText(T_STATUS, "Status"));
+        _levelError.setText(registry.getText(T_ERROR, "Error"));
+        _levels.setText(registry.getText(T_LEVELS, "Log levels"));
+        
+        reconfigItem();
     }
 }

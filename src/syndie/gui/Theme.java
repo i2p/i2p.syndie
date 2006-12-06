@@ -11,21 +11,24 @@ import org.eclipse.swt.SWT;
  */
 public class Theme {
     private Theme() {
-        TAB_FONT = adjustHeight("inittab", SYSFONT, 0);
-        MENU_FONT = adjustHeight("initmenu", SYSFONT, 0);
+        // SYSFONT, on GTK, is the font used to display the window title (aka pretty big)
+        // swt only promises that its a valid font.  there doesn't seem to be a way to get
+        // the default font for particular components
+        TAB_FONT = adjustHeight("inittab", SYSFONT, -2);
+        MENU_FONT = adjustHeight("initmenu", SYSFONT, -2);
         SHELL_FONT = adjustHeight("initshell", SYSFONT, 0);
-        TREE_FONT = adjustHeight("inittree", SYSFONT, 0);
-        TABLE_FONT = adjustHeight("inittable", SYSFONT, 0);
+        TREE_FONT = adjustHeight("inittree", SYSFONT, -2);
+        TABLE_FONT = adjustHeight("inittable", SYSFONT, -2);
         BUTTON_FONT = adjustHeight("initbutton", SYSFONT, 0);
-        CONTENT_FONT = adjustHeight("initcontent", SYSFONT, 0);
-        LINK_FONT = adjustHeight("initlink", SYSFONT, 0, Boolean.TRUE, null);
-        LOG_FONT = adjustHeight("initlog", SYSFONT, 0, null, null, "Courier");
-        MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, 0, null, Boolean.TRUE);
-        MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, 0, null, null);
-        MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, 0, Boolean.TRUE, null);
-        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, 0, null, Boolean.TRUE);
-        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, 0, null, null);
-        DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, 0);
+        CONTENT_FONT = adjustHeight("initcontent", SYSFONT, -2);
+        LINK_FONT = adjustHeight("initlink", SYSFONT, -2, Boolean.TRUE, null);
+        LOG_FONT = adjustHeight("initlog", SYSFONT, -4, null, null, "Courier");
+        MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, -2, null, Boolean.TRUE);
+        MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, -2, null, null);
+        MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -2, Boolean.TRUE, null);
+        HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -2, null, Boolean.TRUE);
+        HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -2, null, null);
+        DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -2);
     }
     
     private static final Font SYSFONT = Display.getDefault().getSystemFont();

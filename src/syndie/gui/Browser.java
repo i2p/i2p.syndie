@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +30,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.graphics.Font;
@@ -40,8 +43,10 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
@@ -287,7 +292,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Menu fileMenu = new Menu(_fileMenuRoot);
         _fileMenuRoot.setMenu(fileMenu);
         _fileMenuOpen = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuOpen.setEnabled(false);
+        _fileMenuOpen.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { openPrompt(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { openPrompt(); }
+        });
         _fileMenuHighlights = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuHighlights.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
@@ -908,6 +916,57 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         PrintWriter pw = new PrintWriter(sw);
         src.printStackTrace(pw);
         debugMessage(sw.toString());
+    }
+    
+    private static final String T_OPEN_LABEL = "syndie.gui.browser.openlabel";
+    private static final String T_OPEN_BUTTON = "syndie.gui.browser.openbutton";
+    private static final String T_OPEN_TITLE = "syndie.gui.browser.opentitle";
+    
+    private void openPrompt() {
+        final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        shell.setLayout(new GridLayout(3, false));
+        shell.setText(getTranslationRegistry().getText(T_OPEN_TITLE, "Open Syndie URI"));
+        Label label = new Label(shell, SWT.NONE);
+        label.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        label.setText(getTranslationRegistry().getText(T_OPEN_LABEL, "Location: "));
+        final Text field = new Text(shell, SWT.BORDER | SWT.SINGLE);
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = ImageUtil.getWidth("abcdefghijklmnopqrstuvwxyz", field);
+        field.setLayoutData(gd);
+        final Button ok = new Button(shell, SWT.PUSH);
+        ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        ok.setText(getTranslationRegistry().getText(T_OPEN_BUTTON, "Open"));
+        
+        ok.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                try {
+                    SyndieURI uri = new SyndieURI(field.getText());
+                    shell.dispose();
+                    view(uri);
+                } catch (URISyntaxException use) {}
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                try {
+                    SyndieURI uri = new SyndieURI(field.getText());
+                    shell.dispose();
+                    view(uri);
+                } catch (URISyntaxException use) {}
+            }
+        });
+        field.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) {
+                    try {
+                        SyndieURI uri = new SyndieURI(field.getText());
+                        shell.dispose();
+                        view(uri);
+                    } catch (URISyntaxException use) {}
+                }
+            }
+        });
+        
+        shell.pack();
+        shell.open();
     }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {

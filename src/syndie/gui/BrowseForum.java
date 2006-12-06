@@ -95,12 +95,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _top = new Composite(_root, SWT.NONE);
         _top.setLayout(new GridLayout(1, true));
         _meta = new Composite(_top, SWT.NONE);
-        _meta.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.exclude = true;
+        _meta.setLayoutData(gd);
         _meta.setLayout(new GridLayout(8, false));
 
         _metaAvatar = new ImageCanvas(_meta, false);
         _metaAvatar.forceSize(1, 1);
-        GridData gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
+        gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.exclude = true;
         _metaAvatar.setLayoutData(gd);
         _metaName = new Label(_meta, SWT.WRAP);
@@ -119,10 +121,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaIconArchives.setLayoutData(new GridData(20, 20));
         _metaIconReferences.setLayoutData(new GridData(20, 20));
         _metaIconAdmins.setLayoutData(new GridData(20, 20));
-        //_metaIconManageable.setEnabled(false);
-        //_metaIconPostable.setEnabled(false);
-        //_metaIconReferences.setEnabled(false);
-        //_metaIconAdmins.setEnabled(false);
+        _metaIconManageable.setVisible(false);
+        _metaIconPostable.setVisible(false);
+        _metaIconArchives.setVisible(false);
+        _metaIconReferences.setVisible(false);
+        _metaIconAdmins.setVisible(false);
         _metaIconManageable.setImage(ImageUtil.ICON_BROWSE_MANAGEABLE);
         _metaIconPostable.setImage(ImageUtil.ICON_BROWSE_POSTABLE);
         _metaIconArchives.setImage(ImageUtil.ICON_BROWSE_ARCHIVES);
@@ -220,7 +223,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _browser.getUI().debugMessage("browseForum.initialize: creating preview");
         _preview = new MessagePreview(_browser, _root);
         _browser.getUI().debugMessage("browseForum.initialize: preview created");
-        _root.setWeights(new int[] { 50, 50 });
+        _root.setWeights(new int[] { 75, 25 });
         
         if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
             _root.setMaximizedControl(_preview.getControl());
@@ -247,6 +250,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         else if (uri.isSearch())
             scope = uri.getHash("scope");
         
+        _browser.getUI().debugMessage("Update metadata for " + scope + " / " + uri);
+        
         if ( ( (scope == null) && (_scope == null) ) || ( (scope != null) && (scope.equals(_scope)) ) )
             return; // same as before
         
@@ -265,6 +270,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         }
         
         if (info != null) {
+            GridData gd = (GridData)_meta.getLayoutData();
+            gd.exclude = false;
+            _ui.debugMessage("update metadata: forum: " + info.getChannelHash().toBase64());
             String name = info.getName();
             if (name == null) name = scope.toBase64().substring(0,6);
             _metaName.setText(name);
@@ -285,7 +293,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                 _browser.getUI().debugMessage("no avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
             }
             _metaAvatar.setImage(img);
-            GridData gd = (GridData)_metaAvatar.getLayoutData();
+            gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = (img == null);
             _metaAvatar.setVisible(img != null);
             if (img == null)
@@ -310,7 +318,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             
             boolean admins = (info.getAuthorizedManagers().size() > 0) || (info.getAuthorizedPosters().size() > 0);
             _metaIconAdmins.setVisible(admins);
+            _top.layout(true, true);
         } else {
+            GridData gd = (GridData)_meta.getLayoutData();
+            gd.exclude = false;
+            _ui.debugMessage("update metadata: no forum");
             _metaName.setText("");
             _metaDesc.setText(_browser.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
             _metaIconManageable.setVisible(false);
@@ -319,10 +331,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             _metaIconReferences.setVisible(false);
             _metaIconAdmins.setVisible(false);
             _browser.getUI().debugMessage("no avatar found for no channel: " + uri);
-            GridData gd = (GridData)_metaAvatar.getLayoutData();
+            gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = true;
             _metaAvatar.setVisible(false);
             _metaAvatar.forceSize(1, 1);
+            _top.layout(true, true);
         }
         _scope = scope;
         // need to layout the root, since the image size can change, thereby adjusting the meta hight
@@ -336,9 +349,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     public void setFilter(SyndieURI filter) { 
         _ui.debugMessage("setting filter...");
         _tree.setFilter(filter);
-        _ui.debugMessage("applying filter...");
+        _ui.debugMessage("applying filter...: " + filter);
         _tree.applyFilter();
-        _ui.debugMessage("filter applied");
+        _ui.debugMessage("filter applied: " + filter);
     }
     
     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {

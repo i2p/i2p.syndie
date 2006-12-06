@@ -25,8 +25,10 @@ public class ChannelInfo {
     private Set _privateTags;
     /** set of SigningPublicKeys that are allowed to sign posts to the channel */
     private Set _authorizedPosters;
+    private Set _authorizedPosterHashes;
     /** set of SigningPublicKeys that are allowed to sign metadata posts for the channel */
     private Set _authorizedManagers;
+    private Set _authorizedManagerHashes;
     /** set of ArchiveInfo instances that anyone can see to get more posts */
     private Set _publicArchives;
     /** set of ArchiveInfo instances that only authorized people can see to get more posts */
@@ -59,6 +61,8 @@ public class ChannelInfo {
         _publicTags = Collections.EMPTY_SET;
         _privateTags = Collections.EMPTY_SET;
         _authorizedPosters = Collections.EMPTY_SET;
+        _authorizedPosters = Collections.EMPTY_SET;
+        _authorizedManagers = Collections.EMPTY_SET;
         _authorizedManagers = Collections.EMPTY_SET;
         _publicArchives = Collections.EMPTY_SET;
         _privateArchives = Collections.EMPTY_SET;
@@ -98,10 +102,12 @@ public class ChannelInfo {
     public void setPrivateTags(Set tags) { _privateTags = tags; }
     /** set of SigningPublicKeys that are allowed to sign posts to the channel */
     public Set getAuthorizedPosters() { return _authorizedPosters; }
-    public void setAuthorizedPosters(Set who) { _authorizedPosters = who; }
+    public Set getAuthorizedPosterHashes() { return _authorizedPosterHashes; }
+    public void setAuthorizedPosters(Set who) { _authorizedPosters = who; _authorizedPosterHashes = hash(who); }
     /** set of SigningPublicKeys that are allowed to sign metadata posts for the channel */
     public Set getAuthorizedManagers() { return _authorizedManagers; }
-    public void setAuthorizedManagers(Set who) { _authorizedManagers = who; }
+    public Set getAuthorizedManagerHashes() { return _authorizedManagerHashes; }
+    public void setAuthorizedManagers(Set who) { _authorizedManagers = who; _authorizedManagerHashes = hash(who); }
     /** set of ArchiveInfo instances that anyone can see to get more posts */
     public Set getPublicArchives() { return _publicArchives; }
     public void setPublicArchives(Set where) { _publicArchives = where; }
@@ -124,6 +130,17 @@ public class ChannelInfo {
     public void setReadKeyUnknown(boolean unknown) { _readKeyUnknown = unknown; }
     public String getPassphrasePrompt() { return _passphrasePrompt; }
     public void setPassphrasePrompt(String prompt) { _passphrasePrompt = prompt; }
+    
+    private Set hash(Set keys) {
+        if (keys.size() == 0)
+            return Collections.EMPTY_SET;
+        Set rv = new HashSet();
+        for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
+            SigningPublicKey pub = (SigningPublicKey)iter.next();
+            rv.add(pub.calculateHash());
+        }
+        return rv;
+    }
     
     public boolean equals(Object obj) { return (obj instanceof ChannelInfo) ? ((ChannelInfo)obj)._channelId == _channelId : false; }
     public int hashCode() { return (int)_channelId; }

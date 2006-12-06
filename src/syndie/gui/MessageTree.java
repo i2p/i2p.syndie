@@ -193,8 +193,6 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
         });
         
-        createFilterEditor();
-        
         Composite filterRow = new Composite(_root, SWT.BORDER);
         filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         filterRow.setLayout(new GridLayout(5, false));
@@ -202,7 +200,7 @@ public class MessageTree implements Translatable, Themeable {
         _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _filterAge = new Combo(filterRow, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _filterAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _filterAge.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         _filterAge.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 if (_filterAge.getSelectionIndex() == AGE_CUSTOM)
@@ -218,13 +216,11 @@ public class MessageTree implements Translatable, Themeable {
             }
         });
         
-        populateAgeCombo();
-        
         _filterTagLabel = new Label(filterRow, SWT.NONE);
         _filterTagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _filterTag = new Combo(filterRow, SWT.DROP_DOWN | SWT.BORDER);
-        _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
         _filterTag.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN) applyFilter();
@@ -235,10 +231,8 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
         });
         
-        populateTagCombo();
-        
         _filterAdvanced = new Button(filterRow, SWT.PUSH);
-        _filterAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _filterAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         _filterAdvanced.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { editFilter(); }
             public void widgetSelected(SelectionEvent selectionEvent) { editFilter(); }
@@ -272,6 +266,8 @@ public class MessageTree implements Translatable, Themeable {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+        _filterEditorShell.setText(_browser.getTranslationRegistry().getText(T_FILTER_EDIT_SHELL, "Message filter"));
+        _filterEditorShell.setFont(_browser.getThemeRegistry().getTheme().SHELL_FONT);
         _filterEditor = new MessageTreeFilter(_browser, _filterEditorShell, this);
         _filterEditorShell.pack();
         _filterEditorShell.setSize(_filterEditor.getControl().computeSize(400, 400));
@@ -291,7 +287,8 @@ public class MessageTree implements Translatable, Themeable {
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
-        _filterEditor.dispose();
+        if (_filterEditor != null)
+            _filterEditor.dispose();
     }
     
     public void setFilter(SyndieURI searchURI) {
@@ -778,10 +775,15 @@ public class MessageTree implements Translatable, Themeable {
     private void editFilter() { 
         String txt = _filter;
         //System.out.println("showing edit for [" + txt + "]");
+        if (_filterEditor == null)
+            createFilterEditor();
         _filterEditor.setFilter(txt);
         _filterEditorShell.open();
     }
-    void hideFilterEditor() { _filterEditorShell.setVisible(false); }
+    void hideFilterEditor() { 
+        if (_filterEditor != null)
+            _filterEditorShell.setVisible(false); 
+    }
 
     private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
     private static final String T_AUTHOR = "syndie.gui.messagetree.author";
@@ -808,7 +810,8 @@ public class MessageTree implements Translatable, Themeable {
         
         _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
         _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
-        _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
+        if (_filterEditor != null)
+            _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
 
         _view.setText(registry.getText(T_VIEW, "View the messages"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
@@ -825,10 +828,12 @@ public class MessageTree implements Translatable, Themeable {
         _filterAge.setFont(theme.DEFAULT_FONT);
         _filterTagLabel.setFont(theme.DEFAULT_FONT);
         _filterTag.setFont(theme.DEFAULT_FONT);
-        _filterEditorShell.setFont(theme.SHELL_FONT);
+        if (_filterEditorShell != null) {
+            _filterEditorShell.setFont(theme.SHELL_FONT);
+            _filterEditorShell.layout(true, true);
+        }
         _root.layout(true, true);
         _filterLabel.getParent().layout(true);
-        _filterEditorShell.layout(true, true);
         for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);

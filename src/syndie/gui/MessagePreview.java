@@ -60,6 +60,7 @@ public class MessagePreview {
     private AttachmentPreviewPopup _attachmentPopup;
     
     private StackLayout _bodyStack;
+    private Composite _stackPane;
     private PageRenderer _body;
     private ManageReferenceChooser _refs;
     private SyndieURI _uri;
@@ -180,6 +181,8 @@ public class MessagePreview {
         if (_page > pageCount) {
             // view references
             _browser.getUI().debugMessage("view references (page=" + _page + "/" + pageCount + ")");
+            if (_refs == null)
+                createRefChooser();
             if (refs != null)
                 _refs.setReferences(refs);
             else
@@ -335,12 +338,12 @@ public class MessagePreview {
         _attachmentPopup = new AttachmentPreviewPopup(_browser, _root.getShell());
         
         _bodyStack = new StackLayout();
-        Composite pane = new Composite(_root, SWT.NONE);
-        pane.setLayout(_bodyStack);
-        pane.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _stackPane = new Composite(_root, SWT.NONE);
+        _stackPane.setLayout(_bodyStack);
+        _stackPane.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         //_body = new PageRenderer(_root, true);
-        _body = new PageRenderer(pane, true, _browser);
+        _body = new PageRenderer(_stackPane, true, _browser);
         //_body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) {
@@ -376,9 +379,10 @@ public class MessagePreview {
             }
         });
         
-        _refs = new ManageReferenceChooser(pane, _browser, false);
         _bodyStack.topControl = _body.getComposite();
     }
+    
+    private void createRefChooser() { _refs = new ManageReferenceChooser(_stackPane, _browser, false); }
     
     // indexes into the _headerAction
     private static final int ACTION_VIEW = 1;
