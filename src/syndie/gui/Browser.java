@@ -56,6 +56,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.db.ArchiveDiff;
 import syndie.db.JobRunner;
 import syndie.db.SyndicationManager;
 import syndie.gui.TranslationRegistry;
@@ -91,6 +92,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuOpen;
     private MenuItem _fileMenuHighlights;
     private MenuItem _fileMenuMinimize;
+    private MenuItem _fileMenuNextTab;
+    private MenuItem _fileMenuPrevTab;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
@@ -106,7 +109,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _postMenuResumeRoot;
     private Menu _postMenuResumeMenu;
     private MenuItem _syndicateMenuRoot;
-    private MenuItem _syndicateMenuItem;
+    private Menu _syndicateMenu;
+    private MenuItem _syndicateMenuManage;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
@@ -311,6 +315,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
             public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
         });
+        _fileMenuNextTab = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuNextTab.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { nextTab(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { nextTab(); }
+        });
+        _fileMenuNextTab.setAccelerator(SWT.MOD1 + SWT.ARROW_RIGHT);
+        _fileMenuPrevTab = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuPrevTab.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { prevTab(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { prevTab(); }
+        });
+        _fileMenuPrevTab.setAccelerator(SWT.MOD1 + SWT.ARROW_LEFT);
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.setEnabled(false);
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
@@ -376,10 +392,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         });
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
-        Menu syndicateMenu = new Menu(_syndicateMenuRoot);
-        _syndicateMenuRoot.setMenu(syndicateMenu);
-        _syndicateMenuItem = new MenuItem(syndicateMenu, SWT.PUSH);
-        _syndicateMenuItem.addSelectionListener(new SelectionListener() {
+        _syndicateMenu = new Menu(_syndicateMenuRoot);
+        _syndicateMenuRoot.setMenu(_syndicateMenu);
+        _syndicateMenuManage = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuManage.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showSyndicate(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showSyndicate(); }
         });
@@ -480,6 +496,72 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _helpMenuTextManual.setEnabled(false);
         
         _shell.setMenuBar(_mainMenu);
+        
+        _syndicationManager.addListener(new SyndicationManager.SyndicationListener() {
+            public void archiveAdded(SyndicationManager mgr, String name) { refreshSyndicationMenu(); }
+            public void archiveRemoved(SyndicationManager mgr, String name) { refreshSyndicationMenu(); }
+            public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) { refreshSyndicationMenu(); }
+            public void archivesLoaded(SyndicationManager mgr) { refreshSyndicationMenu(); }
+            public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+                if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK)
+                    refreshSyndicationMenu();
+            }
+            public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+        });
+    }
+    private static final String T_SYNDICATE_FETCHDIFF = "syndie.gui.browser.syndicate.fetchdiff";
+    private static final String T_SYNDICATE_SELECTEXPLICIT = "syndie.gui.browser.syndicate.selectedexplicit";
+    
+    private void refreshSyndicationMenu() {
+        _shell.getDisplay().asyncExec(new Runnable() {
+            public void run() { doRefreshSyndicationMenu(); }
+        });
+    }
+    private void doRefreshSyndicationMenu() {
+        MenuItem item[] = _syndicateMenu.getItems();
+        for (int i = 0; i < item.length; i++) {
+            if ( (item[i] != _syndicateMenuManage) && (item[i] != _syndicateMenuRoot) )
+                item[i].dispose();
+        }
+        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
+        int numDiffs = 0;
+        for (int i = 0; i < _syndicationManager.getArchiveCount(); i++) {
+            final String name = _syndicationManager.getArchiveName(i);
+            ArchiveDiff diff = _syndicationManager.getArchiveDiff(i);
+            MenuItem base = new MenuItem(_syndicateMenu, SWT.CASCADE);
+            Menu menu = new Menu(base);
+            base.setMenu(menu);
+            base.setText(name);
+            MenuItem fetchDiff = new MenuItem(menu, SWT.PUSH);
+            fetchDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_FETCHDIFF, "Refetch index"));
+            fetchDiff.setEnabled(diff == null);
+            fetchDiff.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createSyndicationURI());
+                    _syndicationManager.startFetching(1);
+                    _syndicationManager.fetchIndex(name);
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createSyndicationURI());
+                    _syndicationManager.startFetching(1);
+                    _syndicationManager.fetchIndex(name);
+                }
+            });
+            if (diff != null)
+                numDiffs++;
+        }
+        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
+        MenuItem manualDiff = new MenuItem(_syndicateMenu, SWT.PUSH);
+        manualDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_SELECTEXPLICIT, "Select items to pull explicitly"));
+        manualDiff.setEnabled(numDiffs != 0);
+        manualDiff.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                view(createSyndicationURI());
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                view(createSyndicationURI());
+            }
+        });
     }
     
     private void initSystray() {
@@ -536,6 +618,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 items--;
             }
         }
+        
+        new MenuItem(_languageMenu, SWT.SEPARATOR);
+        
         // now rebuild given what we know
         List translations = _translation.getTranslations();
         if (selected == null)
@@ -999,6 +1084,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         shell.open();
     }
     
+    private void prevTab() { switchTab(-1); }
+    private void nextTab() { switchTab(1); }
+    private void switchTab(int delta) {
+        int tot = _tabs.getItemCount();
+        if (tot <= 0) return;
+        int cur = _tabs.getSelectionIndex();
+        int nxt = cur + delta;
+        if (nxt < 0) nxt += tot;
+        else if (nxt >= tot)
+            nxt -= tot;
+        debugMessage("switch tab to " + nxt);
+        _tabs.setSelection(nxt);
+    }
+    
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
     private void searchForums() {
@@ -1135,6 +1234,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         for (int i = 0; i < items.length; i++)
             if (items[i] != _bookmarkMenuShow)
                 items[i].dispose();
+        
+        new MenuItem(_bookmarkMenu, SWT.SEPARATOR);
+        
         for (int i = 0; i < nymRefs.size(); i++) {
             final NymReferenceNode ref = (NymReferenceNode)nymRefs.get(i);
             bookmarksUpdated(ref, _bookmarkMenu);
@@ -1257,6 +1359,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
     private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
     private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
+    private static final String T_FILE_MENU_PREVTAB = "syndie.gui.browser.filemenu.prevtab";
+    private static final String T_FILE_MENU_NEXTTAB = "syndie.gui.browser.filemenu.nexttab";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
@@ -1271,7 +1375,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
-    private static final String T_SYNDICATE_MENU_ITEM = "syndie.gui.browser.syndicatemenu.item";
+    private static final String T_SYNDICATE_MENU_MANAGE = "syndie.gui.browser.syndicatemenu.item";
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
     private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
     private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
@@ -1319,6 +1423,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
         _fileMenuHighlights.setText(registry.getText(T_FILE_MENU_HIGHLIGHTS, "&Highlights"));
         _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
+        _fileMenuNextTab.setText(registry.getText(T_FILE_MENU_NEXTTAB, "&Next tab"));
+        _fileMenuPrevTab.setText(registry.getText(T_FILE_MENU_PREVTAB, "&Previous tab"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
@@ -1336,7 +1442,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
-        _syndicateMenuItem.setText(registry.getText(T_SYNDICATE_MENU_ITEM, "&Manage"));
+        _syndicateMenuManage.setText(registry.getText(T_SYNDICATE_MENU_MANAGE, "&Manage"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
