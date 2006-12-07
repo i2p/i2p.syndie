@@ -132,9 +132,9 @@ public class PageRenderer implements Themeable {
         _parent = parent;
         _browser = browser;
         if (scrollbars)
-            _text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+            _text = new CustomStyledText(browser.getUI(), parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         else
-            _text = new StyledText(parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+            _text = new CustomStyledText(browser.getUI(), parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         _fonts = null;
         _colors = null;
         _imageTags = new ArrayList();

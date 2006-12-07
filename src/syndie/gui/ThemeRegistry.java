@@ -71,7 +71,9 @@ public class ThemeRegistry {
         
         long before = System.currentTimeMillis();
         _browser.getUI().debugMessage("beginning applyTheme to the browser");
+        CustomStyledText.IGNORE_FORCE = true;
         _browser.applyTheme(theme);
+        CustomStyledText.IGNORE_FORCE = false;
         long after = System.currentTimeMillis();
         _browser.getUI().debugMessage("finally, apply theme to the browser: " + (after-before));
     }
