@@ -786,7 +786,7 @@ public class MessageTreeFilter implements ReferenceChooserTree.AcceptanceListene
         _itemDisplay.setText(registry.getText(T_DISPLAY, "Filter display options"));
         _displayThreaded.setText(registry.getText(T_DISPLAY_THREADED, "organize in threads"));
         
-        _root.layout(true, true);
+        //_root.layout(true, true);
         
         _itemContent.setHeight(_content.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
         _itemAge.setHeight(_age.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);

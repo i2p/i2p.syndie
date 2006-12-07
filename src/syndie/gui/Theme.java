@@ -72,6 +72,24 @@ public class Theme {
         return rv;
     }
     
+    public void dispose() {
+        dispose(TAB_FONT);
+        dispose(MENU_FONT);
+        dispose(SHELL_FONT);
+        dispose(TREE_FONT);
+        dispose(TABLE_FONT);
+        dispose(BUTTON_FONT);
+        dispose(CONTENT_FONT);
+        dispose(LINK_FONT);
+        dispose(LOG_FONT);
+        dispose(MSG_OLD_FONT);
+        dispose(MSG_NEW_READ_FONT);
+        dispose(MSG_NEW_UNREAD_FONT);
+        dispose(HIGHLIGHT_INACTIVE_FONT);
+        dispose(HIGHLIGHT_ACTIVE_FONT);
+        dispose(DEFAULT_FONT);
+    }
+    
     public String validate() { 
         if (true) return null;
         
@@ -250,10 +268,7 @@ public class Theme {
     }
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace) {
         FontData oldData[] = old.getFontData();
-        if ( (old != SYSFONT) && (!old.equals(SYSFONT)) ) {
-            //System.out.println("disposing: " + old);
-            old.dispose();
-        }
+        dispose(old);
         FontData newData[] = new FontData[oldData.length];
         for (int i = 0; i < newData.length; i++) {
             newData[i] = new FontData(oldData[i].toString());
@@ -280,6 +295,12 @@ public class Theme {
         Font rv = new Font(Display.getDefault(), newData);
         //System.out.println("creating [" + src + "]: " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
+    }
+    private void dispose(Font font) {
+        if ( (font != SYSFONT) && (!font.equals(SYSFONT)) ) {
+            //System.out.println("disposing: " + old);
+            font.dispose();
+        }
     }
     
     public static String getFace(Font font) {

@@ -115,6 +115,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _styleMenuRoot;
     private MenuItem _styleMenuIncreaseFont;
     private MenuItem _styleMenuDecreaseFont;
+    private MenuItem _styleMenuReset;
     private MenuItem _styleMenuEdit;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
@@ -423,6 +424,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { decreaseFont(); }
         });
         _styleMenuDecreaseFont.setAccelerator(SWT.MOD1 + '-');
+        _styleMenuReset = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuReset.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { resetStyle(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { resetStyle(); }
+        });
         _styleMenuEdit = new MenuItem(_styleMenu, SWT.PUSH);
         _styleMenuEdit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { }
@@ -793,6 +799,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private void increaseFont() { _themes.increaseFont(); }
     private void decreaseFont() { _themes.decreaseFont(); }
+    private void resetStyle() { _themes.resetTheme(); }
     
     private List _lastDumpedObj;
     private List _lastDumpedSrc;
@@ -1271,6 +1278,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_STYLE_MENU_TITLE = "syndie.gui.browser.style.title";
     private static final String T_STYLE_MENU_INCREASE = "syndie.gui.browser.style.increase";
     private static final String T_STYLE_MENU_DECREASE = "syndie.gui.browser.style.decrease";
+    private static final String T_STYLE_MENU_RESET = "syndie.gui.browser.style.reset";
     private static final String T_STYLE_MENU_EDIT = "syndie.gui.browser.style.edit";
     private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
     private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
@@ -1320,7 +1328,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
         _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Search"));
-        _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Browse"));
+        _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
         _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
         
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
@@ -1337,6 +1345,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "S&tyle"));
         _styleMenuIncreaseFont.setText(registry.getText(T_STYLE_MENU_INCREASE, "&Increase font"));
         _styleMenuDecreaseFont.setText(registry.getText(T_STYLE_MENU_DECREASE, "&Decrease font"));
+        _styleMenuReset.setText(registry.getText(T_STYLE_MENU_RESET, "&Reset style"));
         _styleMenuEdit.setText(registry.getText(T_STYLE_MENU_EDIT, "&Configure"));
         
         _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "&Advanced"));
@@ -1357,9 +1366,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     public void applyTheme(Theme theme) {
+        long t1 = System.currentTimeMillis();
         _shell.setFont(theme.SHELL_FONT);
         _tabs.setFont(theme.TAB_FONT);
         _statusRow.setFont(theme.DEFAULT_FONT);
+        long t2 = System.currentTimeMillis();
+        // recursive layout of syndie is bloody heavy duty, so avoid the flicker
+        showWaitCursor(true);
+        _shell.setRedraw(false);
+        long t3 = System.currentTimeMillis();
         _shell.layout(true, true);
+        long t4 = System.currentTimeMillis();
+        _shell.setRedraw(true);
+        showWaitCursor(false);
+        long t5 = System.currentTimeMillis();
+        debugMessage("applyTheme time: " + (t2-t1) + ", redraw: " + (t3-t2) + ", layout: " + (t4-t3) + ", redrawAgain: " + (t5-t4));
     }
 }

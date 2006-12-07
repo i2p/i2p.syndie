@@ -49,8 +49,10 @@ public class ThemeRegistry {
             Themeable cur = (Themeable)iter.next();
             String err = theme.validate();
             if (err == null) {
-                _browser.getUI().debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
+                long before = System.currentTimeMillis();
                 cur.applyTheme(theme);
+                long after = System.currentTimeMillis();
+                _browser.getUI().debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur) + " took " + (after-before));
             } else {
                 _browser.getUI().errorMessage("cannot apply theme: " + err);
             }
@@ -59,15 +61,25 @@ public class ThemeRegistry {
 
     public void increaseFont() {
         _browser.getUI().debugMessage("increasing font size");
+        long before = System.currentTimeMillis();
         _cur.increaseFont();
+        long t1 = System.currentTimeMillis();
         notifyAll(_cur);
+        long t2 = System.currentTimeMillis();
         saveTheme();
+        long t3 = System.currentTimeMillis();
+        _browser.getUI().debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
     }
     public void decreaseFont() {
         _browser.getUI().debugMessage("decreasing font size");
+        long before = System.currentTimeMillis();
         _cur.decreaseFont();
+        long t1 = System.currentTimeMillis();
         notifyAll(_cur);
+        long t2 = System.currentTimeMillis();
         saveTheme();
+        long t3 = System.currentTimeMillis();
+        _browser.getUI().debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
     }
     
     private void saveTheme() {
@@ -77,6 +89,25 @@ public class ThemeRegistry {
     }
     public void loadTheme() {
         Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+        if (_cur != null) {
+            _browser.getUI().debugMessage("disposing old theme");
+            _cur.dispose();
+        }
+        _cur = Theme.getTheme(prefs);
+        notifyAll(_cur);
+    }
+    public void resetTheme() {
+        Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+        for (Iterator iter = prefs.keySet().iterator(); iter.hasNext(); ) {
+            String key = (String)iter.next();
+            if (key.startsWith("theme."))
+                iter.remove();
+        }
+        _browser.getClient().setNymPrefs(_browser.getClient().getLoggedInNymId(), prefs);
+        if (_cur != null) {
+            _browser.getUI().debugMessage("disposing old theme");
+            _cur.dispose();
+        }
         _cur = Theme.getTheme(prefs);
         notifyAll(_cur);
     }

@@ -101,8 +101,6 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private ReferenceChooserPopup _refChooser;
     private boolean _addingPoster;
     
-    private FileDialog _avatarDialog;
-    
     public boolean _editable;
     
     public ManageForum(BrowserControl browser, Composite parent, ManageForumListener lsnr) {
@@ -304,10 +302,13 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         });
         _avatar.addKeyListener(new KeyListener() {
             public void keyPressed(KeyEvent keyEvent) {}
-            public void keyReleased(KeyEvent keyEvent) { pickAvatar(); }
+            public void keyReleased(KeyEvent evt) {
+                // escape seems to be sent to the component when hit to close the popup, at least
+                // on swt-I20060602-1317-gtk-linux-x86
+                if (evt.character != 0x1B)
+                    pickAvatar();
+            }
         });
-        
-        _avatarDialog = new FileDialog(_root.getShell(), SWT.OPEN);
         
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -570,7 +571,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     String getPassphrase() { return _passphrase; }
     String getPassphrasePrompt() { return _passphrasePrompt; }
     long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
-    Image getAvatar() { return _avatarImage; }
+    Image getAvatar() { return (_avatarImage == ImageUtil.ICON_QUESTION ? null : _avatarImage); }
     
     private void save() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), this);
@@ -590,10 +591,21 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         }
     }
     
+    private static final String T_PICKAVATAR = "syndie.gui.manageforum.pickavatar";
+    private static final String T_PICKAVATAR_IMAGES = "syndie.gui.manageforum.pickavatarimages";
+    private static final String T_PICKAVATAR_ALL = "syndie.gui.manageforum.pickavatarall";
+    
     private void pickAvatar() {
+        //_browser.getUI().debugMessage("pickAvatar", new Exception("source"));
         if (!_editable) return;
         
-        String file = _avatarDialog.open();
+        FileDialog dialog = new FileDialog(_root.getShell(), SWT.OPEN);
+        dialog.setText(_browser.getTranslationRegistry().getText(T_PICKAVATAR, "Select an avatar"));
+        dialog.setFilterExtensions(new String[] { "*.png; *.jpeg; *.jpg; *.gif; *.ico", "*.*" });
+        dialog.setFilterNames(new String[] { _browser.getTranslationRegistry().getText(T_PICKAVATAR_IMAGES, "Images"), 
+                                             _browser.getTranslationRegistry().getText(T_PICKAVATAR_ALL, "All") });
+        
+        String file = dialog.open();
         if (file != null) {
             //ignoring it here, since we scale it down later
             //if (f.length() > Constants.MAX_AVATAR_SIZE)
@@ -615,6 +627,14 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 // again, invalid.  so don't touch the current avatar
             }
             _avatar.setRedraw(true);
+        } else {
+            if ( (_avatarImage != null) && (_avatarImage != ImageUtil.ICON_QUESTION) ) {
+                _avatar.setRedraw(false);
+                ImageUtil.dispose(_avatarImage);
+                _avatarImage = ImageUtil.ICON_QUESTION;
+                _avatar.setImage(_avatarImage);
+                _avatar.setRedraw(true);
+            }
         }
     }
 

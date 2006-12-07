@@ -107,7 +107,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             ReferenceNode node = (ReferenceNode)iter.next();
             _searchResults.add(node);
         }
-        _tree.getDisplay().asyncExec(new Runnable() { public void run() { redrawSearchResults(); } });
+        _tree.getDisplay().asyncExec(new Runnable() { public void run() { redrawSearchResults(true); } });
     }
     public void setListener(ChoiceListener lsnr) { _choiceListener = lsnr; }
     public void setAcceptanceListener(AcceptanceListener lsnr) { _acceptanceListener = lsnr; }
@@ -218,7 +218,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                    public void run() {
                        redrawPostable();
                        redrawManageable();
-                       redrawSearchResults();
+                       redrawSearchResults(false);
                    } 
                 });
             }
@@ -418,13 +418,15 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             add(childItem, sub);
         }
     }
-    private void redrawSearchResults() {
+    private void redrawSearchResults(boolean forceExpand) {
         _searchRoot.removeAll();
         _searchNodes.clear();
         for (int i = 0; i < _searchResults.size(); i++) {
             ReferenceNode node = (ReferenceNode)_searchResults.get(i);
             add(_searchRoot, node);
         }
+        if (forceExpand)
+            _searchRoot.setExpanded(true);
     }
     private void add(TreeItem parent, ReferenceNode child) {
         TreeItem childItem = new TreeItem(parent, SWT.NONE);

@@ -849,7 +849,7 @@ public class MessageTree implements Translatable, Themeable {
             _filterEditorShell.setFont(theme.SHELL_FONT);
             _filterEditorShell.layout(true, true);
         }
-        _root.layout(true, true);
+        //_root.layout(true, true);
         _filterLabel.getParent().layout(true);
         for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();

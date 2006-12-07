@@ -296,8 +296,7 @@ public class PageRenderer implements Themeable {
         _msg = msg;
         _page = pageNum;
         //System.out.println("rendering "+ msg + ": " + pageNum);
-        Cursor cursor = _parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
-        _parent.setCursor(cursor);
+        _text.setCursor(_parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
         //_text.setRedraw(false);
         PageRendererThread.enqueue(this);
     }
@@ -342,7 +341,7 @@ public class PageRenderer implements Themeable {
                 }
                 _text.setVisible(true);
                 _text.setRedraw(true);
-                _parent.setCursor(null);
+                _text.setCursor(null);
                 if (body == null)
                     _text.setEnabled(false);
                 else
@@ -393,26 +392,34 @@ public class PageRenderer implements Themeable {
         //todo: do this in two parts, once in the current thread, another in the swt thread
         sbuilder.buildStyles(_viewSizeModifier);
         sbuilder.ts("styles completely built");
-        _fonts = sbuilder.getFonts();
-        _colors = sbuilder.getCustomColors();
+        final ArrayList fonts = sbuilder.getFonts();
+        final ArrayList colors = sbuilder.getCustomColors();
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
         // so that the listeners registered in the constructor can do their thing
-        _imageIndexes = sbuilder.getImageIndexes();
-        _liIndexes = sbuilder.getListItemIndexes();
-        _images = sbuilder.getImages();
-        if (_images.size() != _imageIndexes.size()) {
-            throw new RuntimeException("images: " + _images + " imageIndexes: " + _imageIndexes);
+        final ArrayList imageIndexes = sbuilder.getImageIndexes();
+        final ArrayList liIndexes = sbuilder.getListItemIndexes();
+        final ArrayList images = sbuilder.getImages();
+        if (images.size() != imageIndexes.size()) {
+            throw new RuntimeException("images: " + images + " imageIndexes: " + imageIndexes);
         }
         // the _imageIndexes/_images contain the image for the linkEnd values, but
         // we may want to keep track of them separately for menu handling
         //Collection linkEndIndexes = sbuilder.getLinkEndIndexes();
         
-        _linkTags = sbuilder.getLinkTags();
-        _imageTags = sbuilder.getImageTags();
+        final ArrayList linkTags = sbuilder.getLinkTags();
+        final ArrayList imageTags = sbuilder.getImageTags();
         
         _browser.getUI().debugMessage("before syncExec to write on the styledText");
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
+                _fonts = fonts;
+                _colors = colors;
+                _imageIndexes = imageIndexes;
+                _liIndexes = liIndexes;
+                _images = images;
+                _linkTags = linkTags;
+                _imageTags = imageTags;
+        
                 _text.setRedraw(false);
                 _text.setEnabled(true);
                 _text.setText(text);
@@ -437,7 +444,7 @@ public class PageRenderer implements Themeable {
                     _text.setBackground(null);
                 _text.setVisible(true);
                 _text.setRedraw(true);
-                _parent.setCursor(null);
+                _text.setCursor(null);
                 _browser.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured");
             }
         });
@@ -1538,6 +1545,9 @@ public class PageRenderer implements Themeable {
     
     public void applyTheme(Theme theme) {
         // old fonts are disposed and new ones created in the HTMLStyleBuilder
+        long before = System.currentTimeMillis();
         rerender();
+        long after = System.currentTimeMillis();
+        _browser.getUI().debugMessage("applyTheme to pageRenderer: render took " + (after-before));
     }
 }
