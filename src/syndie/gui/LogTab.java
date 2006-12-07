@@ -58,7 +58,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     
     private List _pendingMessages;
     
-    private static int MAX_CHARS = 300*120;
+    private static int MAX_CHARS = 10000*120;
     
     public LogTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);

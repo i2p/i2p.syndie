@@ -211,7 +211,23 @@ public class ThreadAccumulator {
     }
     
     private static final String SQL_LIST_THREADS_ALL = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy)";
-    private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy) )";
+    // this does not deal with messages that have parents who are not locally known
+    //private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR msgId NOT IN (SELECT DISTINCT msgId FROM messageHierarchy) )";
+    // fix w/ subquery looking for known parents (surely this can be simplified)
+    /*
+SELECT msgId, scopeChannelId, authorChannelId, targetChannelId 
+FROM channelMessage WHERE 
+(targetChannelId = ? OR scopeChannelId = ?)
+AND 
+(forceNewThread = TRUE OR 
+ msgId NOT IN (
+	SELECT DISTINCT mh.msgId FROM messageHierarchy mh 
+		JOIN channelMessage cm ON mh.referencedMessageId = cm.messageId 
+		JOIN channel c ON c.channelHash = mh.referencedChannelHash AND c.channelId = cm.scopeChannelId
+	) 
+)
+     */
+    private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR  msgId NOT IN ( SELECT DISTINCT mh.msgId FROM messageHierarchy mh JOIN channelMessage cm ON mh.referencedMessageId = cm.messageId JOIN channel c ON c.channelHash = mh.referencedChannelHash AND c.channelId = cm.scopeChannelId ) )";
     /**
      * @param channelHashes set of Hash for each channel to pull threads out of (null means all channels!)
      * @param tagsRequired threads must have all of the tags in this set
@@ -299,7 +315,7 @@ public class ThreadAccumulator {
                 MessageThreadBuilder builder = new MessageThreadBuilder(_client, _ui);
                 //_ui.debugMessage("building thread for root msgId: " + msgId);
                 ReferenceNode root = builder.buildThread(_client.getMessage(msgId.longValue()));
-                //_ui.debugMessage("thread built for root msgId: " + msgId);
+                _ui.debugMessage("thread built for root msgId: " + msgId + " - " + (root != null ? root.getURI() : null));
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
                 loadInfo(root);
@@ -375,16 +391,33 @@ public class ThreadAccumulator {
         roots.add(threadRoot);
         ReferenceNode.walk(roots, visitor);
         
-        long rootAuthorId = _client.getChannelId(threadRoot.getURI().getScope());
         int messageCount = visitor.getMessageCount();
         ReferenceNode latestPost = visitor.getLatestPost();
         long latestPostDate = latestPost.getURI().getMessageId().longValue();
         long latestAuthorId = _client.getChannelId(latestPost.getURI().getScope());
         List tags = visitor.getTags();
-        
+    
+        long rootAuthorId = -1;
+        List newRoots = filterRoots(tags, threadRoot.getURI(), threadRoot, visitor, true);
+        for (int i = 0; i < newRoots.size(); i++) {
+            ReferenceNode newRoot = (ReferenceNode)newRoots.get(i);
+            long newRootAuthorId = _client.getChannelId(newRoot.getURI().getScope());
+            _ui.debugMessage("filter passed for root " + newRoot.getURI().toString());
+            _rootURIs.add(newRoot.getURI());
+            _threadSubject.add(newRoot.getDescription());
+            _threadLatestAuthorId.add(new Long(latestAuthorId));
+            _threadLatestPostDate.add(new Long(latestPostDate));
+            _threadMessages.add(new Integer(messageCount));
+            _threadRootAuthorId.add(new Long(newRootAuthorId));
+            _threadTags.add(tags);
+            _roots.add(newRoot);
+            if (rootAuthorId == -1)
+                rootAuthorId = newRootAuthorId;
+        }
+        /*
         // now filter
         if (filterPassed(tags, threadRoot.getURI(), threadRoot, visitor, true)) {
-            _ui.debugMessage("filter passed for " + threadRoot.getURI().toString());
+            _ui.debugMessage("filter passed for root " + threadRoot.getURI().toString());
             _rootURIs.add(threadRoot.getURI());
             _threadSubject.add(threadRoot.getDescription());
             _threadLatestAuthorId.add(new Long(latestAuthorId));
@@ -395,8 +428,12 @@ public class ThreadAccumulator {
             _roots.add(threadRoot);
         } else {
             // the root didn't pass, but maybe its children will
-            _ui.debugMessage("filter did not pass for " + threadRoot.getURI().toString());
+            _ui.debugMessage("filter did not pass for root " + threadRoot.getURI().toString());
+            if (threadRoot.getChildCount() > 0) {
+                _ui.debugMessage("thread children: " + threadRoot.toString());
+            }
         }
+         */
         
         removeFilteredChildren(threadRoot, visitor);
         
@@ -410,6 +447,28 @@ public class ThreadAccumulator {
                 ReferenceNode child = threadRoot.getChild(0);
                 threadRoot.removeChild(child);
                 add(child, rootAuthorId, visitor);
+            }
+        }
+    }
+    
+    private List filterRoots(List tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot) {
+        List rv = new ArrayList();
+        filterRoots(tags, rootURI, root, visitor, isRoot, rv);
+        return rv;
+    }
+    private void filterRoots(List tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot, List rv) {
+        if (filterPassed(tags, rootURI, root, visitor, isRoot)) {
+            _ui.debugMessage("filter passed for root " + rootURI.toString());
+            rv.add(root);
+        } else {
+            // the root didn't pass, but maybe its children will, so recurse
+            _ui.debugMessage("filter did not pass for root " + rootURI.toString());
+            if (root.getChildCount() > 0) {
+                _ui.debugMessage("thread children: " + root.toString());
+                for (int i = 0; i < root.getChildCount(); i++) {
+                    ReferenceNode child = root.getChild(i);
+                    filterRoots(tags, child.getURI(), child, visitor, false, rv);
+                }
             }
         }
     }
@@ -437,11 +496,13 @@ public class ThreadAccumulator {
      * pass the filter
      */
     private void removeFilteredChildren(ReferenceNode cur, Harvester harvester) {
+        _ui.debugMessage("removeFilteredChildren from " + cur.getURI());
         for (int i = 0; i < cur.getChildCount(); i++) {
             ReferenceNode child = cur.getChild(i);
             
             long chanId = _client.getChannelId(child.getURI().getScope());
             MessageInfo msg = _client.getMessage(chanId, child.getURI().getMessageId());
+            _ui.debugMessage("removeFilteredChildren: child: " + child.getURI() + " msg known? " + (msg != null));
             List tags = new ArrayList();
             tags.addAll(msg.getPublicTags());
             tags.addAll(msg.getPrivateTags());
@@ -452,6 +513,7 @@ public class ThreadAccumulator {
                 removeFilteredChildren(child, harvester);
             }
         }
+        _ui.debugMessage("removeFilteredChildren complete");
     }
     
     private void add(ReferenceNode cur, long rootAuthorId, Harvester harvester) {
@@ -586,6 +648,8 @@ public class ThreadAccumulator {
             _ui.debugMessage("filter fail cause: maxRefs");
         }
         // todo: honor minKeys and maxKeys
+        if (ok)
+            _ui.debugMessage("filter pass for " + uri);
         return ok;
     }
     private boolean authorFilterPassed(MessageInfo msg, ChannelInfo chan, ReferenceNode node) {

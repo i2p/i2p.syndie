@@ -70,49 +70,65 @@ public class ColorUtil {
         public ColorQuery(String col, Map cacheVal) { color = col; cache = cacheVal; }
     }
     
+    public static Color getSystemColor(String rgb) { return (Color)_colorRGBToSystem.get(rgb); }
+    
     /**
      * get the given color, pulling it from the set of system colors or the cache,
      * if possible.  can be called from any thread
      */
     public static Color getColor(String color, Map cache) {
+        if (color == null) return null;
+        color = color.trim();
+        if (color.length() <= 0) return null;
         final ColorQuery q = new ColorQuery(color, cache);
-        Display.getDefault().syncExec(new Runnable() {
-            public void run() {
-                if (q.color != null) {
-                    q.color = q.color.trim();
-                    String rgb = (String)_colorNameToRGB.get(q.color);
-                    if (rgb != null)
-                        q.color = rgb;
-                    //System.out.println("color: " + color);
-                    if (q.color.startsWith("#") && (q.color.length() == 7)) {
-                        Color cached = (Color)_colorRGBToSystem.get(q.color);
-                        if ( (q.cache != null) && (cached == null) )
-                            cached = (Color)q.cache.get(q.color);
-                        if (cached == null) {
-                            try {
-                                int r = Integer.parseInt(q.color.substring(1, 3), 16);
-                                int g = Integer.parseInt(q.color.substring(3, 5), 16);
-                                int b = Integer.parseInt(q.color.substring(5, 7), 16);
-                                cached = new Color(Display.getDefault(), r, g, b);
-                                if (q.cache != null)
-                                    q.cache.put(q.color, cached);
-                                //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
-                            } catch (NumberFormatException nfe) {
-                                // invalid rgb
-                                System.out.println("invalid rgb");
-                                nfe.printStackTrace();
-                            }
-                        }
-                        if (cached != null)
-                            q.rv = cached;
-                    } else {
-                        // invalid rgb
-                        //System.out.println("rgb is not valid [" + color + "]");
-                    }
+        String rgb = (String)_colorNameToRGB.get(q.color);
+        if (rgb != null)
+            q.color = rgb;
+        
+        int r = -1;
+        int g = -1;
+        int b = -1;
+
+        //System.out.println("color: " + color);
+        if (q.color.startsWith("#") && (q.color.length() == 7)) {
+            Color cached = (Color)_colorRGBToSystem.get(q.color);
+            if ( (q.cache != null) && (cached == null) )
+                cached = (Color)q.cache.get(q.color);
+            if (cached == null) {
+                try {
+                    r = Integer.parseInt(q.color.substring(1, 3), 16);
+                    g = Integer.parseInt(q.color.substring(3, 5), 16);
+                    b = Integer.parseInt(q.color.substring(5, 7), 16);
+                    //System.out.println("rgb: " + cached + " [" + r + "/" + g + "/" + b + "]");
+                } catch (NumberFormatException nfe) {
+                    // invalid rgb
+                    //System.out.println("invalid rgb");
+                    //nfe.printStackTrace();
                 }
             }
-        });
-        return q.rv;
+            if (cached != null)
+                return cached;
+        } else {
+            // invalid rgb, and not one of the system colors
+            return null;
+        }
+        
+        if (r != -1) {
+            final int qr = r;
+            final int qg = g;
+            final int qb = b;
+            Display.getDefault().syncExec(new Runnable() {
+                public void run() {
+                    Color cached = new Color(Display.getDefault(), qr, qg, qb);
+                    if (q.cache != null)
+                        q.cache.put(q.color, cached);
+                    q.rv = cached;
+                }
+            });
+            return q.rv;
+        } else {
+            return null;
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ public final class PageRendererThread implements Runnable {
     
     private PageRendererThread() {
         Thread t = new Thread(this, "Page renderer");
+        t.setPriority(Thread.MIN_PRIORITY);
         t.setDaemon(true);
         t.start();
     }
@@ -39,9 +40,11 @@ public final class PageRendererThread implements Runnable {
             if (cur != null) {
                 try {
                     long before = System.currentTimeMillis();
+                    // on retheme, likely competing w/ the swt thread
+                    Thread.currentThread().yield();
                     cur.threadedRender();
                     long renderTime = System.currentTimeMillis() - before;
-                    System.out.println("async render time: " + renderTime);
+                    //System.out.println("async render time: " + renderTime);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

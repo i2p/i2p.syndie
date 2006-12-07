@@ -298,10 +298,12 @@ public class PageRenderer implements Themeable {
         //System.out.println("rendering "+ msg + ": " + pageNum);
         _text.setCursor(_parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
         //_text.setRedraw(false);
+        _browser.getUI().debugMessage("Enqueue html render");
         PageRendererThread.enqueue(this);
     }
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
     void threadedRender() {
+        long before = System.currentTimeMillis();
         if (_msg == null) {
             renderText(null);
             return;
@@ -321,6 +323,8 @@ public class PageRenderer implements Themeable {
         } else {
             renderText(body);
         }
+        long after = System.currentTimeMillis();
+        _browser.getUI().debugMessage("threaded page render took " + (after-before));
     }
     private void renderText(final String body) {
         _text.getDisplay().asyncExec(new Runnable() {
@@ -368,13 +372,14 @@ public class PageRenderer implements Themeable {
                     //if (paneWidth > 800) paneWidth = 800;
                     //else if (paneWidth < 100) paneWidth = 100;
                     _charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
-                    System.out.println("max chars per line: " + _charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
+                    _browser.getUI().debugMessage("max chars per line: " + _charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
                 }
             });
         }
         return _charsPerLine;
     }
     private void renderHTML(String html) {
+        _browser.getUI().debugMessage("Beginning renderHTML");
         _text.getDisplay().syncExec(new Runnable() {
             public void run() {
                 disposeFonts();
@@ -382,16 +387,20 @@ public class PageRenderer implements Themeable {
                 disposeImages();
             }
         });
+        _browser.getUI().debugMessage("renderHTML: old stuff disposed");
 
         _charsPerLine = getCharsPerLine();
         
         final HTMLStateBuilder builder = new HTMLStateBuilder(html, _charsPerLine);
         builder.buildState();
+        _browser.getUI().debugMessage("renderHTML: state built");
         final String text = builder.getAsText();
-        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_source, builder.getTags(), text, _msg, _enableImages);
+        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), text, _msg, _enableImages);
+        
+        _browser.getUI().debugMessage("renderHTML: building styles");
         //todo: do this in two parts, once in the current thread, another in the swt thread
         sbuilder.buildStyles(_viewSizeModifier);
-        sbuilder.ts("styles completely built");
+        _browser.getUI().debugMessage("renderHTML: styles built");
         final ArrayList fonts = sbuilder.getFonts();
         final ArrayList colors = sbuilder.getCustomColors();
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
@@ -426,8 +435,10 @@ public class PageRenderer implements Themeable {
                 _browser.getUI().debugMessage("syncExec to write on the styledText: text written");
                 _text.setStyleRanges(sbuilder.getStyleRanges());
                 _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set");
+                long before = System.currentTimeMillis();
                 setLineProperties(builder, sbuilder);
-                _browser.getUI().debugMessage("syncExec to write on the styledText: line props set");
+                long after = System.currentTimeMillis();
+                _browser.getUI().debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
 
                 _bgImage = sbuilder.getBackgroundImage();
                 if (_bgImage != null) {
@@ -455,27 +466,72 @@ public class PageRenderer implements Themeable {
      * level, with indents, coloring, bullets, etc
      */
     private void setLineProperties(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder) {
+        long prep = System.currentTimeMillis();
         int lines = _text.getLineCount();
+        _text.setLineAlignment(0, lines, SWT.LEFT);
+        _text.setLineBackground(0, lines, null);
+        _text.setLineBullet(0, lines, null);
+        _text.setLineIndent(0, lines, 0);
+        _text.setLineJustify(0, lines, false);
+        
+        // this is only an estimate used for indentation, so the fact that it doesn't
+        // actually take into account the actual fonts used can probably be overlooked
+        int charWidth = -1;
+        GC gc = new GC(_text);
+        FontMetrics metrics = gc.getFontMetrics();
+        charWidth = metrics.getAverageCharWidth();
+        gc.dispose();
+        
+        long bulletTime = 0;
+        long indentTime = 0;
+        long alignmentTime = 0;
+        int alignmentMods = 0;
+        int prevAlignment = -1;
+        int sequentialAligned = 0;
+
+        ArrayList lineTags = new ArrayList(16);
+        java.util.List stateTags = stateBuilder.getTags();
+        int stateTagCount = stateTags.size();
+        
         int bodySize = _text.getCharCount();
         Map bulletLists = new HashMap();
+        long times[] = new long[lines];
+        long timesOff[] = new long[lines];
+        long timesGetTags[] = new long[lines];
+        long timesFindAlign[] = new long[lines];
+        long timesFindList[] = new long[lines];
+        long timesPrepare[] = new long[lines];
+        long endPrep = System.currentTimeMillis();
         for (int line = 0; line < lines; line++) {
+            times[line] = System.currentTimeMillis();
             int lineStart = _text.getOffsetAtLine(line);
             int lineEnd = -1;
             if (line + 1 == lines)
                 lineEnd = bodySize;
             else
                 lineEnd = _text.getOffsetAtLine(line+1)-1;
+            timesOff[line] = System.currentTimeMillis();
             
             int alignment = SWT.LEFT;
             
             // now get the tags applicable to [lineStart,lineEnd]
-            ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
-            if (HTMLStyleBuilder.containsTag(tags, "pre")) {
+            lineTags.clear();
+            for (int i = 0; i < stateTagCount; i++) {
+                HTMLTag tag = (HTMLTag)stateTags.get(i);
+                int tStart = tag.getStartIndex();
+                int tEnd = tag.getEndIndex();
+                if ( ( (tStart <= lineStart) && (tEnd > lineStart) ) ||
+                     ( (tStart >= lineStart) && (tStart < lineEnd) ) )
+                    lineTags.add(tag);
+            }
+            //ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
+            timesGetTags[line] = System.currentTimeMillis();
+            if (HTMLStyleBuilder.containsTag(lineTags, "pre")) {
                 // if they have pre, do no formatting
             } else {
                 // look for alignment attributes
-                for (int i = 0; i < tags.size(); i++) {
-                    HTMLTag tag = (HTMLTag)tags.get(i);
+                for (int i = 0; i < lineTags.size(); i++) {
+                    HTMLTag tag = (HTMLTag)lineTags.get(i);
                     String align = tag.getAttribValue("align");
                     if (align != null) {
                         if ("left".equalsIgnoreCase(align))
@@ -490,9 +546,11 @@ public class PageRenderer implements Themeable {
                     }
                 }
                 // look for center tags
-                if (HTMLStyleBuilder.containsTag(tags, "center"))
+                if (HTMLStyleBuilder.containsTag(lineTags, "center"))
                     alignment = SWT.CENTER;
             }
+            
+            timesFindAlign[line] = System.currentTimeMillis();
             
             boolean bulletOrdered = false;
             int olLevel = 0;
@@ -502,8 +560,8 @@ public class PageRenderer implements Themeable {
             boolean liFound = false;
             int indentLevel = 0;
             // look for li tags, and indent $x times the nesting layer
-            for (int i = 0; i < tags.size(); i++) {
-                HTMLTag tag = (HTMLTag)tags.get(i);
+            for (int i = 0; i < lineTags.size(); i++) {
+                HTMLTag tag = (HTMLTag)lineTags.get(i);
                 if ("li".equals(tag.getName())) {
                     indentLevel++;
                     // we only want to put a bullet point on the first line of
@@ -540,13 +598,15 @@ public class PageRenderer implements Themeable {
                 }
             }
             
+            timesFindList[line] = System.currentTimeMillis();
+            
             //if (indentLevel > 0)
             //    System.out.println("indent level: " + indentLevel + " bullet: " + bullet + " ulLevel: " + ulLevel + " olLevel: " + olLevel);
             
             boolean quoteFound = false;
             // look for <quote> tags, and indent $x times the nesting layer
-            for (int i = 0; i < tags.size(); i++) {
-                HTMLTag tag = (HTMLTag)tags.get(i);
+            for (int i = 0; i < lineTags.size(); i++) {
+                HTMLTag tag = (HTMLTag)lineTags.get(i);
                 if ("quote".equals(tag.getName())) {
                     indentLevel++;
                     quoteFound = true;
@@ -554,45 +614,60 @@ public class PageRenderer implements Themeable {
             }
             
             // look for <dd/dt> tags, and indent $x times the nesting layer
-            if (HTMLStyleBuilder.containsTag(tags, "dd"))
+            if (HTMLStyleBuilder.containsTag(lineTags, "dd"))
                 indentLevel += 2;
-            if (HTMLStyleBuilder.containsTag(tags, "dt"))
+            if (HTMLStyleBuilder.containsTag(lineTags, "dt"))
                 indentLevel++;
             
             //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: quote? " + quoteFound + " tags: " + tags 
             //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
             //                   + " indent: " + indentLevel + ")");
             
-            int charWidth = -1;
-            if (indentLevel > 0) {
-                GC gc = new GC(_text);
-                FontMetrics metrics = gc.getFontMetrics();
-                charWidth = metrics.getAverageCharWidth();
-                gc.dispose();
+            timesPrepare[line] = System.currentTimeMillis();
+            
+            // we could optimize the line settings to deal with sequential lines w/ == settings,
+            // but its not worth it atm
+            long t1 = System.currentTimeMillis();
+            if (alignment != SWT.LEFT)
+                _text.setLineAlignment(line, 1, alignment);
+            long t2 = System.currentTimeMillis();
+            alignmentTime += (t2-t1);
+            if (prevAlignment != alignment) {
+                prevAlignment = alignment;
+                //sequentialAligned = 0;
+            } else {
+                sequentialAligned++;
             }
-            
-            _text.setLineAlignment(line, 1, alignment);
-            
+
             if (bullet != null) {
                 bullet.style.metrics.width = indentLevel * 4 * charWidth;
                 _text.setLineBullet(line, 1, bullet);
-            } else {
+                long t3 = System.currentTimeMillis();
+                bulletTime += (t3-t2);
+            } else if (indentLevel > 0) {
                 _text.setLineIndent(line, 1, indentLevel * 4 * charWidth);
+                long t3 = System.currentTimeMillis();
+                indentTime += (t3-t2);
             }
         }
-    }
-    
-    private ArrayList getTags(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder, int start, int end) {
-        ArrayList rv = new ArrayList();
-        for (Iterator iter = stateBuilder.getTags().iterator(); iter.hasNext(); ) {
-            HTMLTag tag = (HTMLTag)iter.next();
-            int tStart = tag.getStartIndex();
-            int tEnd = tag.getEndIndex();
-            if ( ( (tStart <= start) && (tEnd > start) ) ||
-                 ( (tStart >= start) && (tStart < end) ) )
-                rv.add(tag);
+
+        long timesOffTot = 0;
+        long timesGetTagsTot = 0;
+        long timesFindAlignTot = 0;
+        long timesFindListTot = 0;
+        for (int i = 0; i < lines; i++) {
+            timesOffTot += timesOff[i]-times[i];
+            timesGetTagsTot += timesGetTags[i]-timesOff[i];
+            timesFindAlignTot += timesFindAlign[i]-timesGetTags[i];
+            timesFindListTot += timesFindList[i]-timesFindAlign[i];
         }
-        return rv;
+        _browser.getUI().debugMessage("line style: alignment: " + alignmentTime + ", bullets: " + bulletTime 
+                                      + " indent: " + indentTime 
+                                      //+ " sequential: " + sequentialAligned 
+                                      + " prep: " + (endPrep-prep) + " timesOff: " + timesOffTot
+                                      + " timesGetTags: " + timesGetTagsTot
+                                      + " timesAlign: " + timesFindAlignTot 
+                                      + " timesList: " + timesFindListTot);
     }
     
     public void dispose() {

@@ -1,10 +1,9 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -14,12 +13,13 @@ import org.eclipse.swt.widgets.Listener;
  *
  */
 public class ThemeRegistry {
-    private BrowserControl _browser;
-    private Set _listeners = Collections.synchronizedSet(new HashSet());
+    private Browser _browser;
+    private ArrayList _listeners;
     private Theme _cur;
     
-    public ThemeRegistry(BrowserControl browser) {
+    public ThemeRegistry(Browser browser) {
         _browser = browser;
+        _listeners = new ArrayList();
         _cur = Theme.getDefault();
         //loadTheme();
         // the SWT.Settings event is fired when the user adjust their OSes system
@@ -34,20 +34,31 @@ public class ThemeRegistry {
     
     public void register(Themeable lsnr) { 
         _browser.getUI().debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
-        _listeners.add(lsnr);
+        synchronized (_listeners) {
+            _listeners.add(lsnr);
+        }
         lsnr.applyTheme(_cur); 
     }
     public void unregister(Themeable lsnr) { 
         _browser.getUI().debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
-        _listeners.remove(lsnr); 
+        synchronized (_listeners) {
+            _listeners.remove(lsnr);
+        }
     }
     
     public Theme getTheme() { return _cur; }
     
     private void notifyAll(Theme theme) {
-        for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) {
-            Themeable cur = (Themeable)iter.next();
-            String err = theme.validate();
+        // we need to make sure the browser is themed last, so that when it 
+        // calls a recursive layout, it uses rethemed component info.
+        Object lsnrs[] = null;
+        synchronized (_listeners) {
+            lsnrs = _listeners.toArray();
+        }
+        for (int i = 0; i < lsnrs.length; i++) {
+            Themeable cur = (Themeable)lsnrs[i];
+            if (cur == _browser) continue;
+            String err = null; //theme.validate();
             if (err == null) {
                 long before = System.currentTimeMillis();
                 cur.applyTheme(theme);
@@ -57,6 +68,12 @@ public class ThemeRegistry {
                 _browser.getUI().errorMessage("cannot apply theme: " + err);
             }
         }
+        
+        long before = System.currentTimeMillis();
+        _browser.getUI().debugMessage("beginning applyTheme to the browser");
+        _browser.applyTheme(theme);
+        long after = System.currentTimeMillis();
+        _browser.getUI().debugMessage("finally, apply theme to the browser: " + (after-before));
     }
 
     public void increaseFont() {

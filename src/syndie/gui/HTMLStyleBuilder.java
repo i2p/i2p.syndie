@@ -19,11 +19,14 @@ import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.NullUI;
+import syndie.db.UI;
 
 /**
  *
  */
 class HTMLStyleBuilder {
+    private UI _ui;
     private PageRendererSource _source;
     private List _htmlTags;
     private String _msgText;
@@ -64,7 +67,8 @@ class HTMLStyleBuilder {
     
     private int _viewSizeModifier;
 
-    public HTMLStyleBuilder(PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
+    public HTMLStyleBuilder(UI ui, PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
+        _ui = ui;
         _source = src;
         _htmlTags = htmlTags;
         _msgText = msgText;
@@ -144,7 +148,7 @@ class HTMLStyleBuilder {
         breakPointTags.remove(new Integer(_msgText.length()));
         
         int bps = breakPointTags.size();
-        System.out.println("breakpoints: " + bps);
+        _ui.debugMessage("breakpoints: " + bps);
         // now go through the breakpoints and check what other tags are applicable there.
         // the list of tags will contain all tags that are in that set, but it can contain
         // tags that should not be
@@ -189,16 +193,19 @@ class HTMLStyleBuilder {
              */
         }
         
-        ts("tag children found");
+        ts("tag children found in thread: " + Thread.currentThread().getName());
         
         setBodyOptions(bodyBgImage, bodyBgColor);
         
+        long buildTime = 0;
+        int buildInstances = 0;
         // iterate across those points, building a new StyleRange out of all tags applicable there
         _styleRanges = new StyleRange[breakPointTags.size()];
         int rangeIndex = 0;
         Iterator iter = breakPointTags.keySet().iterator();
         Integer nextIndex = null;
         for (;;) {
+            long t1 = System.currentTimeMillis();
             //ts("iterating over breakpoint");
             Integer curBreakPoint = nextIndex;
             if (nextIndex == null) {
@@ -222,6 +229,7 @@ class HTMLStyleBuilder {
                 length = _msgText.length() - start;
             }
             
+            long t2 = System.currentTimeMillis();
             // now trim the set of applicable tags
             List tags = (List)breakPointTags.get(curBreakPoint);
             for (int i = 0; i < tags.size(); i++) {
@@ -234,11 +242,19 @@ class HTMLStyleBuilder {
                 }
             }
             
-            _styleRanges[rangeIndex] = buildStyle((List)breakPointTags.get(curBreakPoint), start, length);
+            long t3 = System.currentTimeMillis();
+            List bpt = (List)breakPointTags.get(curBreakPoint);
+            _styleRanges[rangeIndex] = buildStyle(bpt, start, length);
             rangeIndex++;
+            long t4 = System.currentTimeMillis();
+            if (t4-t1 > 10) {
+                //ts("breakpoint: " + rangeIndex + " " + (t2-t1) +"/"+(t3-t2)+"/"+(t4-t3) + ": " + bpt);
+                buildInstances++;
+                buildTime += (t4-t3);
+            }
         }
         
-        ts("done iterating over breakpoints");
+        ts("done iterating over breakpoints: " + breakPointTags.size() + " build:" + buildInstances+"/"+buildTime);
         
         if (_enableImages) {
             // put images in for all the <img> tags
@@ -280,20 +296,17 @@ class HTMLStyleBuilder {
                         _bgImage = img;
                 }
                 if (bodyBgColor != null) {
-                    Color color = getColor(bodyBgColor);
+                    Color color = ColorUtil.getColor(bodyBgColor, _customColors);
                     if (color != null) {
                         _bgColor = color;
-                        System.out.println("setting the body bgcolor to " + color);
+                        _ui.debugMessage("setting the body bgcolor to " + color);
                     }
                 }
             }
         });
     }
     
-    private static final long _start = System.currentTimeMillis();
-    static final void ts(String msg) {
-        System.out.println((System.currentTimeMillis()-_start) + ": " + msg);
-    }
+    private final void ts(String msg) { _ui.debugMessage(msg); }
     
     public ArrayList getImageIndexes() { return _imageIndexes; }
     public ArrayList getImages() { return _images; }
@@ -444,7 +457,7 @@ class HTMLStyleBuilder {
         //System.out.println("Looking for a bgcolor in " + tags);
         for (int i = 0; (bgColor == null) && (i < tags.size()); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            bgColor = getColor(tag.getAttribValue("bgcolor"));
+            bgColor = ColorUtil.getColor(tag.getAttribValue("bgcolor"), _customColors);
         }
         if ((bgColor == null) && (containsTag(tags, "quote")))
             bgColor = _bgColorQuote;
@@ -461,7 +474,7 @@ class HTMLStyleBuilder {
             if (color == null)
                 color = tag.getAttribValue("color");
             
-            fgColor = getColor(color);
+            fgColor = ColorUtil.getColor(color, _customColors);
             if (fgColor != null) break;
         }
         
@@ -471,15 +484,15 @@ class HTMLStyleBuilder {
         if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
             // ok, we can't use a default font, so lets construct a new one (or use a cached one)
             //style.font = 
+            long before = System.currentTimeMillis();
             buildFont(style.font, customStyle, sizeModifier, fontName, style);
+            long after = System.currentTimeMillis();
+            //if (after-before > 10)
+            //    ts("custom font took " + (after-before) + ": " + fontName + "/" + customStyle+"/"+sizeModifier+"/"+_viewSizeModifier);
         }
         
         // images are built later
         return style;
-    }
-    
-    private Color getColor(String color) {
-        return ColorUtil.getColor(color, _customColors);
     }
     
     private void includeImage(final StyleRange style, final HTMLTag imgTag) {
@@ -531,7 +544,7 @@ class HTMLStyleBuilder {
             }
         }
         if (img == null)
-            System.out.println("no image attachment for " + imgURI);
+            _ui.debugMessage("no image attachment for " + imgURI);
         return img;
     }
     
@@ -717,7 +730,10 @@ class HTMLStyleBuilder {
             }
         }
         if (rv == null) {
+            long before = System.currentTimeMillis();
             rv = new Font(Display.getDefault(), newData);
+            long after = System.currentTimeMillis();
+            _ui.debugMessage("new custom font built: " + (after-before) + " [" + fontName + "/" + swtAttribs + "/" + sizeModifier);
             _customFonts.add(rv);
         }
         return rv;
@@ -749,7 +765,7 @@ class HTMLStyleBuilder {
         String text = b.getAsText();
         System.out.println("parsed: [" + body + "]");
         System.out.println("text: [" + text + "]");
-        HTMLStyleBuilder sb = new HTMLStyleBuilder(null, b.getTags(), text, null, true);
+        HTMLStyleBuilder sb = new HTMLStyleBuilder(new NullUI(), null, b.getTags(), text, null, true);
         try {
             sb.buildStyles();
         } catch (Exception e) {

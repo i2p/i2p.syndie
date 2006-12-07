@@ -347,11 +347,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";
     
     public void setFilter(SyndieURI filter) { 
-        _ui.debugMessage("setting filter...");
-        _tree.setFilter(filter);
-        _ui.debugMessage("applying filter...: " + filter);
-        _tree.applyFilter();
-        _ui.debugMessage("filter applied: " + filter);
+        if (!_viewOnly) {
+            _ui.debugMessage("setting filter...");
+            _tree.setFilter(filter);
+            _ui.debugMessage("applying filter...: " + filter);
+            _tree.applyFilter();
+            _ui.debugMessage("filter applied: " + filter);
+        }
     }
     
     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
@@ -450,6 +452,6 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaName.setFont(theme.LINK_FONT);
         _metaDesc.setFont(theme.DEFAULT_FONT);
         _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
-        _root.layout(true, true);
+        //_root.layout(true, true);
     }
 }
