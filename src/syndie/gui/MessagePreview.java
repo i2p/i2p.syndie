@@ -50,7 +50,7 @@ public class MessagePreview implements Themeable, Translatable {
     //private Composite _header;
     private Label _headerSubject;
     private Button _headerView;
-    private Composite _headerIcons;
+    private MessageFlagBar _headerIcons;
     private Label _headerTags;
     
     private PageRenderer _body;
@@ -91,6 +91,8 @@ public class MessagePreview implements Themeable, Translatable {
         if (msg != null) {
             updateMeta(msg);
             _body.renderPage(new PageRendererSource(_browser), _uri);
+        } else {
+            _headerIcons.setMessage(null);
         }
     }
     private void updateMeta(MessageInfo msg) {
@@ -110,7 +112,7 @@ public class MessagePreview implements Themeable, Translatable {
         }
         _headerTags.setText(buf.toString());
         
-        // icons as well...
+        _headerIcons.setMessage(msg);
         
         _root.layout(true);
     }
@@ -137,13 +139,10 @@ public class MessagePreview implements Themeable, Translatable {
         _headerSubject.setLayoutData(gd);
         _headerSubject.setText("");
         
-        _headerIcons = new Composite(_root, SWT.NONE);
-        _headerIcons.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _headerIcons = new MessageFlagBar(_browser, _root);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.heightHint = ICON_HEIGHT;
-        _headerIcons.setLayoutData(gd);
-        
-        //new Label(_headerIcons, SWT.BORDER).setText("icons go here");
+        _headerIcons.getControl().setLayoutData(gd);
         
         _headerTags = new Label(_root, SWT.SINGLE | SWT.WRAP | SWT.READ_ONLY);
         _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false));

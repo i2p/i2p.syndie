@@ -3102,7 +3102,8 @@ public class DBClient {
     public static final int MSG_STATUS_NEW_UNREAD = 3;
 
     private static final String SQL_GET_MSG_STATUS = "SELECT importDate, readThrough, ncrm.msgId FROM channelMessage cm, nymChannelReadThrough ncrt  JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? WHERE cm.msgId = ? AND ncrt.nymId = ?";
-    public int getMessageStatus(long nymId, long msgId, long chanId) {
+    public int getMessageStatus(long msgId, long targetChanId) { return getMessageStatus(_nymId, msgId, targetChanId); }
+    public int getMessageStatus(long nymId, long msgId, long targetChanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -3129,7 +3130,7 @@ public class DBClient {
                 // this new & unread
                 
                 // insert a nymChannelReadThrough record for a really old date
-                markChannelReadThrough(nymId, chanId, 0);
+                markChannelReadThrough(nymId, targetChanId, 0);
                 return MSG_STATUS_NEW_UNREAD;
             }
         } catch (SQLException se) {

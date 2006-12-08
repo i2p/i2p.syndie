@@ -66,6 +66,23 @@ public class ImageUtil {
     public static final Image ICON_MSG_TYPE_NORMAL = createImageFromResource("iconMsgNormal.png");
     public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
     public static final Image ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
+
+    // used for the MessageFlagBar to describe a message
+    public static final Image ICON_MSG_FLAG_READKEYUNKNOWN = createImageFromResource("iconMsgFlagReadKeyUnknown.png");
+    public static final Image ICON_MSG_FLAG_REPLYKEYUNKNOWN = createImageFromResource("iconMsgFlagReplyKeyUnknown.png");
+    public static final Image ICON_MSG_FLAG_PBE = createImageFromResource("iconMsgFlagPBE.png");
+    public static final Image ICON_MSG_FLAG_UNREADABLE = createImageFromResource("iconMsgFlagUnreadable.png");
+    public static final Image ICON_MSG_FLAG_PUBLIC = createImageFromResource("iconMsgFlagPublic.png");
+    public static final Image ICON_MSG_FLAG_AUTHENTICATED = createImageFromResource("iconMsgFlagAuthenticated.png");
+    public static final Image ICON_MSG_FLAG_AUTHORIZED = createImageFromResource("iconMsgFlagAuthorized.png");
+    public static final Image ICON_MSG_FLAG_BANNED = createImageFromResource("iconMsgFlagBanned.png");
+    public static final Image ICON_MSG_FLAG_BOOKMARKED = createImageFromResource("iconMsgFlagBookmarked.png");
+    public static final Image ICON_MSG_FLAG_SCHEDULEDFOREXPIRE = createImageFromResource("iconMsgFlagScheduledForExpire.png");
+    public static final Image ICON_MSG_FLAG_HASKEYS = createImageFromResource("iconMsgFlagHasKeys.png");
+    public static final Image ICON_MSG_FLAG_HASARCHIVES = createImageFromResource("iconMsgFlagHasArchives.png");
+    public static final Image ICON_MSG_FLAG_HASREFS = createImageFromResource("iconMsgFlagHasRefs.png");
+    public static final Image ICON_MSG_FLAG_HASATTACHMENTS = createImageFromResource("iconMsgFlagHasAttachments.png");
+    public static final Image ICON_MSG_FLAG_ISNEW = createImageFromResource("iconMsgFlagIsNew.png");
     
     public static final Image ICON_REF_MSG = createImageFromResource("iconRefMsg.png");
     public static final Image ICON_REF_FORUM = createImageFromResource("iconRefForum.png");
@@ -114,7 +131,23 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSG_TYPE_NORMAL);
         _indisposableImages.add(ICON_MSG_TYPE_META);
         _indisposableImages.add(ICON_MSG_TYPE_PRIVATE);
-    
+        
+        _indisposableImages.add(ICON_MSG_FLAG_PBE);
+        _indisposableImages.add(ICON_MSG_FLAG_READKEYUNKNOWN);
+        _indisposableImages.add(ICON_MSG_FLAG_REPLYKEYUNKNOWN);
+        _indisposableImages.add(ICON_MSG_FLAG_UNREADABLE);
+        _indisposableImages.add(ICON_MSG_FLAG_PUBLIC);
+        _indisposableImages.add(ICON_MSG_FLAG_AUTHENTICATED);
+        _indisposableImages.add(ICON_MSG_FLAG_AUTHORIZED);
+        _indisposableImages.add(ICON_MSG_FLAG_BANNED);
+        _indisposableImages.add(ICON_MSG_FLAG_BOOKMARKED);
+        _indisposableImages.add(ICON_MSG_FLAG_SCHEDULEDFOREXPIRE);
+        _indisposableImages.add(ICON_MSG_FLAG_HASKEYS);
+        _indisposableImages.add(ICON_MSG_FLAG_HASARCHIVES);
+        _indisposableImages.add(ICON_MSG_FLAG_HASREFS);
+        _indisposableImages.add(ICON_MSG_FLAG_HASATTACHMENTS);
+        _indisposableImages.add(ICON_MSG_FLAG_ISNEW);
+        
         _indisposableImages.add(ICON_REF_MSG);
         _indisposableImages.add(ICON_REF_FORUM);
         _indisposableImages.add(ICON_REF_ARCHIVE);
