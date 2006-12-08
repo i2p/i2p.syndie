@@ -165,6 +165,7 @@ abstract class BrowserTab implements Themeable {
     protected Composite getRoot() { return _root; }
     protected DBClient getClient() { return _browser.getClient(); }
     protected BrowserControl getBrowser() { return _browser; }
+    /** ask the browser to close us (call this internally - do not use close()) */
     protected void closeTab() { _browser.unview(getURI()); }
     
     public CTabItem getTabItem() { return _item; }
@@ -172,9 +173,18 @@ abstract class BrowserTab implements Themeable {
     public String getDescription() { return getURI().toString(); }
     public String getName() { return "tab"; }
     public Image getIcon() { return null; }
+    /** 
+     * vetoable close and dispose (including the associated tab item), returning true
+     * if the tab was closed, false if it was left intact (aka the tab vetoed closure).
+     * call this from the Browser - internally use closeTab(), which then asks the Browser
+     * to call close() (after doing some bookkeeping)
+     */
+    public boolean close() { dispose(); return true; }
+    /** unvetoable close */
     public void dispose() {
         _browser.getThemeRegistry().unregister(this);
-        _item.dispose();
+        if (!_item.isDisposed())
+            _item.dispose();
         ImageUtil.dispose(getIcon());
         disposeDetails();
     }

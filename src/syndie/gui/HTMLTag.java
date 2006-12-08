@@ -8,23 +8,28 @@ import syndie.Constants;
 
 class HTMLTag {
     /** tag name, lower case */
-    private String _name;
+    public String name;
     /** attributes on the tag */
-    private Properties _attributes;
+    public Properties attributes;
     /** start index for the body text that the tag is applicable to */
-    private int _startIndex;
-    private int _endIndex;
-    private int _srcLine;
-    private HTMLTag _parent;
-    private boolean _consumed;
+    public int startIndex;
+    /** the tag was closed at the given body index */
+    public int endIndex;
+    public int srcLine;
+    /** 
+     * the tag is at least partly within the parent: <a><b/></a> and <a><b></a><c/></b> both use 'a' as
+     * the parent for 'b'
+     */
+    public HTMLTag parent;
+    public boolean consumed;
     
     public HTMLTag(String tagBody, int startIndex, HTMLTag parent, int srcLine) {
-        _startIndex = startIndex;
-        _endIndex = -1;
-        _parent = parent;
-        _srcLine = srcLine;
-        _consumed = false;
-        _attributes = new Properties();
+        this.startIndex = startIndex;
+        endIndex = -1;
+        this.parent = parent;
+        this.srcLine = srcLine;
+        consumed = false;
+        attributes = new Properties();
         int attribNameStart = -1;
         int attribNameEnd = -1;
         int attribValueStart = -1;
@@ -37,10 +42,10 @@ class HTMLTag {
         for (int i = 0; i < len; i++) {
             char c = tagBody.charAt(i);
             if (Character.isWhitespace(c) || (c == '/')) {
-                if (_name == null) {
+                if (this.name == null) {
                     if (i == 0)
-                        _name = "";
-                    _name = Constants.lowercase(tagBody.substring(0, i));
+                        this.name = "";
+                    this.name = Constants.lowercase(tagBody.substring(0, i));
                 } else {
                     if (quoteChar != -1) {
                         // keep going, we are inside a quote
@@ -57,7 +62,7 @@ class HTMLTag {
                             quoteChar = -1;
                             String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                             String val = tagBody.substring(attribValueStart, i);
-                            _attributes.setProperty(name, val);
+                            attributes.setProperty(name, val);
                             attribNameStart = -1;
                             attribNameEnd = -1;
                             attribValueStart = -1;
@@ -68,11 +73,11 @@ class HTMLTag {
                 quoteChar = -1;
                 String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                 String val = tagBody.substring(attribValueStart, i);
-                _attributes.setProperty(name, val);
+                attributes.setProperty(name, val);
                 attribNameStart = -1;
                 attribNameEnd = -1;
                 attribValueStart = -1;
-            } else if (_name != null) {
+            } else if (this.name != null) {
                 // already have our name, so we are parsing attributes
                 if (attribNameStart == -1) {
                     attribNameStart = i;
@@ -93,41 +98,30 @@ class HTMLTag {
                 // name not known, and we haven't reached whitespace yet.  keep going
             }
         } // end looping over the tag body
-        if (_name == null)
-            _name = Constants.lowercase(tagBody);
+        if (this.name == null)
+            this.name = Constants.lowercase(tagBody);
     }
     
-    /** lower case tag name */
-    public String getName() { return _name; }
-    public String getAttribValue(String name) { return _attributes.getProperty(Constants.lowercase(name)); }
-    public void setAttribValue(String name, String value) { _attributes.setProperty(Constants.lowercase(name), value); }
-    public void removeAttribValue(String name) { _attributes.remove(Constants.lowercase(name)); }
-    public int getStartIndex() { return _startIndex; }
-    /** the tag was closed at the given body index */
-    public void setEndIndex(int index) { _endIndex = index; }
-    public int getEndIndex() { return _endIndex; }
-    /** 
-     * the tag is at least partly within the parent: <a><b/></a> and <a><b></a><c/></b> both use 'a' as
-     * the parent for 'b'
-     */
-    public HTMLTag getParent() { return _parent; }
-    public boolean wasConsumed() { return _consumed; }
-    public void consume() { _consumed = true; }
+    public String getAttribValue(String name) { return attributes.getProperty(Constants.lowercase(name)); }
+    public void setAttribValue(String name, String value) { attributes.setProperty(Constants.lowercase(name), value); }
+    public void removeAttribValue(String name) { attributes.remove(Constants.lowercase(name)); }
+    public boolean wasConsumed() { return consumed; }
+    public void consume() { consumed = true; }
     
     public String toString() {
         StringBuffer rv = new StringBuffer();
         rv.append(toHTML());
-        rv.append("[" + _startIndex + (_endIndex >= 0 ? ":" + _endIndex : ":?") + ":" + _srcLine + "]");
+        rv.append("[" + this.startIndex + (endIndex >= 0 ? ":" + endIndex : ":?") + ":" + this.srcLine + "]");
         return rv.toString();
     }
     public String toHTML() {
         StringBuffer rv = new StringBuffer();
         rv.append('<');
-        rv.append(_name);
+        rv.append(this.name);
         rv.append(' ');
-        for (Iterator iter = _attributes.keySet().iterator(); iter.hasNext(); ) {
+        for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
             String name = (String)iter.next();
-            String val = _attributes.getProperty(name);
+            String val = attributes.getProperty(name);
             rv.append(name).append('=').append('\'').append(val).append('\'').append(' ');
         }
         rv.append('>');

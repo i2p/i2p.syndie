@@ -74,6 +74,13 @@ public class EditMessageTab extends BrowserTab implements Translatable {
     public String getName() { return _name; }
     public String getDescription() { return _description; }
     
+    public boolean close() {
+        if (allowClose())
+            return super.close();
+        else
+            return false;
+    }
+    
     protected boolean allowClose() {
         MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
         confirm.setText(getBrowser().getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Postpone message?"));

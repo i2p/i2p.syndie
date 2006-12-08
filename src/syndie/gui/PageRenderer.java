@@ -174,7 +174,7 @@ public class PageRenderer implements Themeable {
                     StyleRange imgRange = null;
                     for (int i = 0; i < _linkTags.size(); i++) {
                         HTMLTag tag = (HTMLTag)_linkTags.get(i);
-                        if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                        if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             linkTag = tag;
                             linkRange = range;
@@ -183,7 +183,7 @@ public class PageRenderer implements Themeable {
                     }
                     for (int i = 0; i < _imageTags.size(); i++) {
                         HTMLTag tag = (HTMLTag)_imageTags.get(i);
-                        if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                        if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             imgRange = range;
                             imgTag = tag;
@@ -490,8 +490,8 @@ public class PageRenderer implements Themeable {
         int sequentialAligned = 0;
 
         ArrayList lineTags = new ArrayList(16);
-        java.util.List stateTags = stateBuilder.getTags();
-        int stateTagCount = stateTags.size();
+        HTMLTag stateTags[] = (HTMLTag[])stateBuilder.getTags().toArray(new HTMLTag[0]);
+        int stateTagCount = stateTags.length;
         
         int bodySize = _text.getCharCount();
         Map bulletLists = new HashMap();
@@ -515,14 +515,13 @@ public class PageRenderer implements Themeable {
             int alignment = SWT.LEFT;
             
             // now get the tags applicable to [lineStart,lineEnd]
-            lineTags.clear();
             for (int i = 0; i < stateTagCount; i++) {
-                HTMLTag tag = (HTMLTag)stateTags.get(i);
-                int tStart = tag.getStartIndex();
-                int tEnd = tag.getEndIndex();
-                if ( ( (tStart <= lineStart) && (tEnd > lineStart) ) ||
-                     ( (tStart >= lineStart) && (tStart < lineEnd) ) )
+                HTMLTag tag = stateTags[i];
+                if ( ( (tag.startIndex <= lineStart) && (tag.endIndex > lineStart) ) ||
+                     ( (tag.startIndex >= lineStart) && (tag.startIndex < lineEnd) ) )
                     lineTags.add(tag);
+                else if (tag.endIndex > lineStart)
+                    break; // the stateTags are ordered with earliest end first
             }
             //ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
             timesGetTags[line] = System.currentTimeMillis();
@@ -562,7 +561,7 @@ public class PageRenderer implements Themeable {
             // look for li tags, and indent $x times the nesting layer
             for (int i = 0; i < lineTags.size(); i++) {
                 HTMLTag tag = (HTMLTag)lineTags.get(i);
-                if ("li".equals(tag.getName())) {
+                if ("li".equals(tag.name)) {
                     indentLevel++;
                     // we only want to put a bullet point on the first line of
                     // a potentially multiline list item
@@ -570,7 +569,7 @@ public class PageRenderer implements Themeable {
                         liFound = true;
                         tag.consume();
                     }
-                } else if ("ol".equals(tag.getName()) && liFound) {
+                } else if ("ol".equals(tag.name) && liFound) {
                     if ( (olLevel == 0) && (ulLevel == 0) ) {
                         bulletOrdered = true;
                         bullet = (Bullet)bulletLists.get(tag);
@@ -583,7 +582,7 @@ public class PageRenderer implements Themeable {
                         }
                     }
                     olLevel++;
-                } else if ("ul".equals(tag.getName()) && liFound) {
+                } else if ("ul".equals(tag.name) && liFound) {
                     if ( (olLevel == 0) && (ulLevel == 0) ) {
                         bulletOrdered = false;
                         bullet = (Bullet)bulletLists.get(tag);
@@ -607,7 +606,7 @@ public class PageRenderer implements Themeable {
             // look for <quote> tags, and indent $x times the nesting layer
             for (int i = 0; i < lineTags.size(); i++) {
                 HTMLTag tag = (HTMLTag)lineTags.get(i);
-                if ("quote".equals(tag.getName())) {
+                if ("quote".equals(tag.name)) {
                     indentLevel++;
                     quoteFound = true;
                 }
@@ -649,6 +648,8 @@ public class PageRenderer implements Themeable {
                 long t3 = System.currentTimeMillis();
                 indentTime += (t3-t2);
             }
+            
+            lineTags.clear();
         }
 
         long timesOffTot = 0;
@@ -730,14 +731,14 @@ public class PageRenderer implements Themeable {
             HTMLTag imgTag = null;
             for (int i = 0; i < _linkTags.size(); i++) {
                 HTMLTag tag = (HTMLTag)_linkTags.get(i);
-                if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                     linkTag = tag;
                     break;
                 }
             }
             for (int i = 0; i < _imageTags.size(); i++) {
                 HTMLTag tag = (HTMLTag)_imageTags.get(i);
-                if ( (off >= tag.getStartIndex()) && (off <= tag.getEndIndex()) ) {
+                if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                     imgTag = tag;
                     break;
                 }
@@ -803,7 +804,7 @@ public class PageRenderer implements Themeable {
             if (imgTag != null) {
                 for (int i = 0; i < _imageIndexes.size(); i++) {
                     Integer idx = (Integer)_imageIndexes.get(i);
-                    if (idx.intValue() == imgTag.getStartIndex()) {
+                    if (idx.intValue() == imgTag.startIndex) {
                         _currentEventImage = (Image)_images.get(i);
                         _currentEventImageTag = imgTag;
                         break;
@@ -942,7 +943,7 @@ public class PageRenderer implements Themeable {
         if (imgTag != null) {
             for (int i = 0; i < _imageIndexes.size(); i++) {
                 Integer idx = (Integer)_imageIndexes.get(i);
-                if (idx.intValue() == imgTag.getStartIndex()) {
+                if (idx.intValue() == imgTag.startIndex) {
                     _currentEventImage = (Image)_images.get(i);
                     _currentEventImageTag = imgTag;
                     break;
@@ -1295,7 +1296,7 @@ public class PageRenderer implements Themeable {
             }
             for (int j = 0; j < _imageIndexes.size(); j++) {
                 Integer idx = (Integer)_imageIndexes.get(j);
-                if (idx.intValue() == tag.getStartIndex()) {
+                if (idx.intValue() == tag.startIndex) {
                     images.put(suggestedName, _images.get(j));
                     break;
                 }
@@ -1619,6 +1620,7 @@ public class PageRenderer implements Themeable {
     }
     
     public void applyTheme(Theme theme) {
+        if (_msg == null) return;
         // old fonts are disposed and new ones created in the HTMLStyleBuilder
         long before = System.currentTimeMillis();
         rerender();

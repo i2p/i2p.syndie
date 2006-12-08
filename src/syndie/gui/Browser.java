@@ -97,6 +97,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuMinimize;
     private MenuItem _fileMenuNextTab;
     private MenuItem _fileMenuPrevTab;
+    private MenuItem _fileMenuCloseTab;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
@@ -143,6 +144,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
     private Map _openTabs;
+    /** CTabItem to uri */
+    private Map _openTabURIs;
     
     private List _bookmarkCache;
     
@@ -153,6 +156,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public Browser(DBClient client) {
         _client = client;
         _openTabs = new HashMap();
+        _openTabURIs = new HashMap();
         _uiListeners = new ArrayList();
         _commands = new ArrayList();
         _initialized = false;
@@ -330,6 +334,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { prevTab(); }
         });
         _fileMenuPrevTab.setAccelerator(SWT.MOD1 + SWT.ARROW_LEFT);
+        _fileMenuCloseTab = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuCloseTab.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { closeTab(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { closeTab(); }
+        });
+        _fileMenuCloseTab.setAccelerator(SWT.MOD1 + 'w');
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.setEnabled(false);
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
@@ -882,13 +892,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 if (browseURI == null) {
                     debugMessage("building normal URI: " + uri);
                     tab = BrowserTab.build(this, uri);
-                    if (tab != null)
+                    if (tab != null) {
                         _openTabs.put(uri, tab);
+                        _openTabURIs.put(tab.getTabItem(), uri);
+                    }
                 } else {
                     debugMessage("building browseURI: " + browseURI);
                     tab = BrowserTab.build(this, browseURI);
-                    if (tab != null)
+                    if (tab != null) {
                         _openTabs.put(browseURI, tab);
+                        _openTabURIs.put(tab.getTabItem(), browseURI);
+                    }
                 }
                 debugMessage("tab built: " + tab);
             }
@@ -915,13 +929,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         BrowserTab tab = null;
         synchronized (_openTabs) {
             tab = (BrowserTab)_openTabs.remove(uri);
+            if (tab != null)
+                _openTabURIs.remove(tab.getTabItem());
         }
-        if (tab != null) {
-            if (_tabs.getSelection() == tab.getTabItem()) {
-                // view the previous
-            }
+        if (tab != null)
             tab.dispose();
-        }
     }
     private BookmarkEditorPopup getBookmarkEditor() {
         if (_bookmarkEditor == null)
@@ -1223,6 +1235,25 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         debugMessage("switch tab to " + nxt);
         _tabs.setSelection(nxt);
     }
+    private void closeTab() {
+        CTabItem cur = _tabs.getSelection();
+        SyndieURI uri = null;
+        BrowserTab tab = null;
+        synchronized (_openTabs) {
+            uri = (SyndieURI)_openTabURIs.get(cur);
+            tab = (BrowserTab)_openTabs.get(uri);
+        }
+        if (tab != null) {
+            if (tab.close()) {
+                synchronized (_openTabs) {
+                    _openTabURIs.remove(cur);
+                    _openTabs.remove(uri);
+                }
+            }
+        }
+        //_tabs.getSelection().dispose();
+        // need to verify if they want to close, then remove 'em from _openTabs and dispose the tab
+    }
     
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
@@ -1496,6 +1527,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
     private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
     private static final String T_FILE_MENU_PREVTAB = "syndie.gui.browser.filemenu.prevtab";
+    private static final String T_FILE_MENU_CLOSETAB = "syndie.gui.browser.filemenu.closetab";
     private static final String T_FILE_MENU_NEXTTAB = "syndie.gui.browser.filemenu.nexttab";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
@@ -1561,6 +1593,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
         _fileMenuNextTab.setText(registry.getText(T_FILE_MENU_NEXTTAB, "&Next tab"));
         _fileMenuPrevTab.setText(registry.getText(T_FILE_MENU_PREVTAB, "&Previous tab"));
+        _fileMenuCloseTab.setText(registry.getText(T_FILE_MENU_CLOSETAB, "&Close tab"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));

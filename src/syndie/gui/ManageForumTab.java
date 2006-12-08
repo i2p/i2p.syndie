@@ -52,6 +52,13 @@ public class ManageForumTab extends BrowserTab implements Translatable {
         _manage.dispose();
     }
     
+    public boolean close() {
+        if (allowClose()) 
+            return super.close();
+        else
+            return false;
+    }
+    
     protected boolean allowClose() { return _manage.confirmClose(); }
     
     public void translate(TranslationRegistry registry) {

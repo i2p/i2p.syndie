@@ -185,7 +185,7 @@ class HTMLStateBuilder {
         // close any unclosed tags
         for (int i = _activeTags.size()-1; i >= 0; i--) {
             HTMLTag tag = (HTMLTag)_activeTags.get(i);
-            receiveTagEnd(tag.getName(), body.length(), body);
+            receiveTagEnd(tag.name, body.length(), body);
         }
         
         return body.toString();
@@ -218,7 +218,7 @@ class HTMLStateBuilder {
     private boolean tagIsActive(String tagName) {
         for (int i = 0; i < _activeTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_activeTags.get(i);
-            if (tag.getName().equals(tagName))
+            if (tag.name.equals(tagName))
                 return true;
         }
         return false;
@@ -242,12 +242,12 @@ class HTMLStateBuilder {
             parent = (HTMLTag)_activeTags.get(_activeTags.size()-1);
         HTMLTag tag = new HTMLTag(tagContent, bodyIndex, parent, _curLine);
         
-        String tagName = tag.getName();
+        String tagName = tag.name;
         // implicitly close any open paragraphs / dds / dts
         if (_noNestTags.contains(tagName)) {
             for (int i = _activeTags.size()-1; i >= 0; i--) {
                 HTMLTag c = (HTMLTag)_activeTags.get(i);
-                if (tagName.equals(c.getName())) {
+                if (tagName.equals(c.name)) {
                     // ok, implicitly close everything in that block
                     // e.g. with "<dl><dt>hi<dd>ho<dt>new def</dl>", the
                     // second <dt> closes both the previous <dt> and the <dd>
@@ -261,14 +261,14 @@ class HTMLStateBuilder {
                         //System.out.println(body.substring(c.getStartIndex(), bodyIndex));
                         for (int j = 0; j < toRemove.size(); j++) {
                             HTMLTag r = (HTMLTag)toRemove.get(j);
-                            r.setEndIndex(bodyIndex);
+                            r.endIndex = bodyIndex;
                             _closedTags.add(r);
                             //System.out.println("implicitly closing nested tag: " + r + " when receiving a new " + tag);
                         }
                         break;
                     } else {
                         _activeTags.remove(i);
-                        c.setEndIndex(bodyIndex);
+                        c.endIndex = bodyIndex;
                         _closedTags.add(c);
                         break;
                     }
@@ -373,51 +373,51 @@ class HTMLStateBuilder {
         HTMLTag tag = new HTMLTag(content, bodyIndex, parent, _curLine);
         for (int i = _activeTags.size()-1; i >= 0; i--) {
             HTMLTag open = (HTMLTag)_activeTags.get(i);
-            if (tag.getName().equals(open.getName())) {
-                open.setEndIndex(bodyIndex);
+            if (tag.name.equals(open.name)) {
+                open.endIndex = bodyIndex;
                 _activeTags.remove(i);
-                if ("p".equals(tag.getName())) {
+                if ("p".equals(tag.name)) {
                     appendBody(body, '\n');
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("pre".equals(tag.getName())) {
+                } else if ("pre".equals(tag.name)) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("tr".equals(tag.getName())) {
+                } else if ("tr".equals(tag.name)) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("td".equals(tag.getName())) {
+                } else if ("td".equals(tag.name)) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("quote".equals(tag.getName())) {
-                    appendBody(body, '\n');
-                    appendBody(body, '\n');
-                    _prevWasWhitespace = true;
-                } else if ("h1".equals(tag.getName()) || 
-                           "h2".equals(tag.getName()) || 
-                           "h3".equals(tag.getName()) || 
-                           "h4".equals(tag.getName()) || 
-                           "h5".equals(tag.getName())) {
+                } else if ("quote".equals(tag.name)) {
                     appendBody(body, '\n');
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("li".equals(tag.getName())) {
+                } else if ("h1".equals(tag.name) || 
+                           "h2".equals(tag.name) || 
+                           "h3".equals(tag.name) || 
+                           "h4".equals(tag.name) || 
+                           "h5".equals(tag.name)) {
+                    appendBody(body, '\n');
+                    appendBody(body, '\n');
+                    _prevWasWhitespace = true;
+                } else if ("li".equals(tag.name)) {
                     //body.append("\n");
                     //_prevWasWhitespace = true;
-                } else if ("dl".equals(tag.getName()) ||
-                           "ul".equals(tag.getName()) ||
-                           "ol".equals(tag.getName())) {
+                } else if ("dl".equals(tag.name) ||
+                           "ul".equals(tag.name) ||
+                           "ol".equals(tag.name)) {
                     appendBody(body, '\n');
                     _prevWasWhitespace = true;
-                } else if ("a".equals(tag.getName())) {
+                } else if ("a".equals(tag.name)) {
                     appendBody(body, ' ');
                     appendBody(body, PLACEHOLDER_LINK_END);
                 }
                 
-                if (_closeNestedTags.contains(tag.getName())) {
+                if (_closeNestedTags.contains(tag.name)) {
                     for (int j = _activeTags.size()-1; j > i; j--) {
                         HTMLTag nested = (HTMLTag)_activeTags.remove(j);
-                        nested.setEndIndex(bodyIndex);
+                        nested.endIndex = bodyIndex;
                         _closedTags.add(nested);
                         //System.out.println("closing nested tag: " + nested + " when receiving tag end of " + open);
                         //System.out.println("------------------------");

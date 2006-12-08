@@ -106,26 +106,26 @@ class HTMLStyleBuilder {
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
-            if ("a".equals(tag.getName()) && (tag.getAttribValue("href") != null)) {
+            if ("a".equals(tag.name) && (tag.getAttribValue("href") != null)) {
                 _linkTags.add(tag);
-            } else if ("img".equals(tag.getName())) {
+            } else if ("img".equals(tag.name)) {
                 _imageTags.add(tag);
-            } else if ("body".equals(tag.getName())) {
+            } else if ("body".equals(tag.name)) {
                 bodyBgImage = tag.getAttribValue("bgimage");
                 bodyBgColor = tag.getAttribValue("bgcolor");
             }
-            List tags = (List)breakPointTags.get(new Integer(tag.getStartIndex()));
+            List tags = (List)breakPointTags.get(new Integer(tag.startIndex));
             if (tags == null) {
                 tags = new ArrayList();
-                breakPointTags.put(new Integer(tag.getStartIndex()), tags);
+                breakPointTags.put(new Integer(tag.startIndex), tags);
             }
             tags.add(tag);
             
             // now for ends
-            tags = (List)breakPointTags.get(new Integer(tag.getEndIndex()));
+            tags = (List)breakPointTags.get(new Integer(tag.endIndex));
             if (tags == null) {
                 tags = new ArrayList();
-                breakPointTags.put(new Integer(tag.getEndIndex()), tags);
+                breakPointTags.put(new Integer(tag.endIndex), tags);
             }
             tags.add(tag);
             //ts("breakpoints for tag " + tag + ": " + tag.getStartIndex() + ", " + tag.getEndIndex());
@@ -159,10 +159,10 @@ class HTMLStyleBuilder {
             int orig = tags.size();
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
-                while (tag.getParent() != null) {
-                    HTMLTag cParent = tag.getParent();
+                while (tag.parent != null) {
+                    HTMLTag cParent = tag.parent;
                     if (!tags.contains(cParent)) {
-                        if ( (cParent.getStartIndex() <= bp.intValue()) && (cParent.getEndIndex() >= bp.intValue()) ) {
+                        if ( (cParent.startIndex <= bp.intValue()) && (cParent.endIndex >= bp.intValue()) ) {
                             tags.add(cParent);
                         } else {
                             break;
@@ -234,7 +234,7 @@ class HTMLStyleBuilder {
             List tags = (List)breakPointTags.get(curBreakPoint);
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
-                if ( (tag.getStartIndex() <= start) && (tag.getEndIndex() >= start+length) ) {
+                if ( (tag.startIndex <= start) && (tag.endIndex >= start+length) ) {
                     // ok, applicable
                 } else {
                     tags.remove(i);
@@ -261,7 +261,7 @@ class HTMLStyleBuilder {
             for (int i = 0; i < _imageTags.size(); i++) {
                 HTMLTag imgTag = (HTMLTag)_imageTags.get(i);
                 for (int j = 0; j < _styleRanges.length; j++) {
-                    if (_styleRanges[j].start == imgTag.getStartIndex()) {
+                    if (_styleRanges[j].start == imgTag.startIndex) {
                         //System.out.println("img in range @ " + _styleRanges[j].start + ": " + imgTag);
                         includeImage(_styleRanges[j], imgTag);
                         break;
@@ -276,7 +276,7 @@ class HTMLStyleBuilder {
         for (int i = 0; i < _linkTags.size(); i++) {
             HTMLTag linkTag = (HTMLTag)_linkTags.get(i);
             for (int j = 0; j < _styleRanges.length; j++) {
-                if (_styleRanges[j].start == linkTag.getEndIndex()) {
+                if (_styleRanges[j].start == linkTag.endIndex) {
                     //System.out.println("link in range @ " + _styleRanges[j].start + ": " + linkTag);
                     includeLinkEnd(_styleRanges[j], linkTag);
                     break;
@@ -354,7 +354,7 @@ class HTMLStyleBuilder {
         StringBuffer buf = new StringBuffer();
         buf.append("building style for [" + start + " through " + (start+length) + "]: ");
         for (int i = 0; i < tags.size(); i++)
-            buf.append(((HTMLTag)tags.get(i)).getName() + " ");
+            buf.append(((HTMLTag)tags.get(i)).name + " ");
         if (length > 0)
             buf.append("\t[" + _msgText.substring(start, start+length).trim() + "]");
         else
@@ -368,7 +368,7 @@ class HTMLStyleBuilder {
     
     static boolean containsTag(List tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
-            if (((HTMLTag)tags.get(i)).getName().equalsIgnoreCase(tagName))
+            if (((HTMLTag)tags.get(i)).name.equalsIgnoreCase(tagName))
                 return true;
         return false;
     }
@@ -420,7 +420,7 @@ class HTMLStyleBuilder {
         // innermost font size is used
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            if (tag.getName().equalsIgnoreCase("font")) {
+            if (tag.name.equalsIgnoreCase("font")) {
                 String sz = tag.getAttribValue("size");
                 if (sz != null) {
                     sz = sz.trim();
@@ -442,7 +442,7 @@ class HTMLStyleBuilder {
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
             String name = null;
-            if (tag.getName().equalsIgnoreCase("font"))
+            if (tag.name.equalsIgnoreCase("font"))
                 name = tag.getAttribValue("name");
             else
                 name = tag.getAttribValue("font");
