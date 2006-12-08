@@ -46,6 +46,17 @@ public class SyndicationView implements Translatable {
         _archive = archive;
         browser.getSyndicationManager().loadArchives();
         initComponents();
+        if (BrowserTab.TYPE_SYNDICATE.equals(archive.getType())) {
+            String view = archive.getString("view");
+            if (view != null) {
+                if ("diff".equals(view))
+                    showDiff();
+                else if ("status".equals(view))
+                    showStatus();
+                else
+                    showConfig();
+            }
+        }
     }
     
     public void dispose() {
@@ -68,7 +79,6 @@ public class SyndicationView implements Translatable {
         _archives = new SyndicationArchiveView(_browser, _archiveGroup);
         if (_archive != null)
             _archives.highlight(_archive);
-        
         
         _syndicate = new Button(top, SWT.PUSH);
         _syndicate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -151,6 +161,14 @@ public class SyndicationView implements Translatable {
     
     public void showDiff() {
         _detailChooser.select(CHOICE_DIFF);
+        choose();
+    }
+    public void showStatus() {
+        _detailChooser.select(CHOICE_STATUS);
+        choose();
+    }
+    public void showConfig() {
+        _detailChooser.select(CHOICE_CONFIG);
         choose();
     }
     /** the explicit selection view was updated, so pick that as the pull strategy */

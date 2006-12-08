@@ -60,9 +60,11 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     
     public void keyPressed(KeyEvent keyEvent) {}
     public void keyReleased(KeyEvent evt) {
+        TreeItem selected = getSelected();
+        if (selected == null) return;
+        
         selectionUpdated();
         if (evt.keyCode == SWT.ARROW_LEFT) {
-            TreeItem selected = getSelected();
             if (selected.getExpanded()) {
                 selected.setExpanded(false);
                 collapsed();
@@ -75,11 +77,9 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
                 }
             }
         } else if (evt.keyCode == SWT.ARROW_RIGHT) {
-            TreeItem selected = getSelected();
             selected.setExpanded(true);
             expanded();
         } else if (evt.character == ' ') {
-            TreeItem selected = getSelected();
             boolean expand = !selected.getExpanded();
             selected.setExpanded(expand);
             if (expand)
