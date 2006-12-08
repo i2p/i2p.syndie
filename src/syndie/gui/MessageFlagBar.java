@@ -6,6 +6,7 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -30,6 +31,24 @@ public class MessageFlagBar implements Translatable {
     }
     
     public Control getControl() { return _root; }
+    public Image[] getFlags() {
+        Control ctl[] = _root.getChildren();
+        Image rv[] = new Image[ctl.length];
+        for (int i = 0; i < ctl.length; i++)
+            rv[i] = ((Label)ctl[i]).getImage();
+        return rv;
+    }
+    public String getTooltip() {
+        Control ctl[] = _root.getChildren();
+        StringBuffer rv = new StringBuffer();
+        for (int i = 0; i < ctl.length; i++) {
+            String tt = ((Label)ctl[i]).getToolTipText();
+            rv.append(tt);
+            if (i + 1 < ctl.length)
+                rv.append(" ");
+        }
+        return rv.toString();
+    }
     
     public void setMessage(MessageInfo msg) { 
         _msg = msg;

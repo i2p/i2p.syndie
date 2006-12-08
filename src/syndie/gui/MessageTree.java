@@ -21,6 +21,9 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -28,7 +31,9 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -100,6 +105,8 @@ public class MessageTree implements Translatable, Themeable {
     private Set _itemsNewUnread;
     /** item to MessageInfo */
     private Map _itemToMsg;
+    /** item to MessageFlagBar */
+    private Map _itemToMsgFlags;
     
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, true, true, true, true); }        
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags) {
@@ -116,6 +123,7 @@ public class MessageTree implements Translatable, Themeable {
         _itemsNewRead = new HashSet();
         _itemsNewUnread = new HashSet();
         _itemToMsg = new HashMap();
+        _itemToMsgFlags = new HashMap();
         _tags = new HashSet();
         _customDate = -1;
         initComponents();
@@ -160,6 +168,8 @@ public class MessageTree implements Translatable, Themeable {
         public void filterApplied(MessageTree tree, SyndieURI searchURI);
     }
     
+    private static final int FLAG_SPACING = 2;
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
@@ -172,6 +182,43 @@ public class MessageTree implements Translatable, Themeable {
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
         _colDate = new TreeColumn(_tree, SWT.LEFT);
         _colTags = new TreeColumn(_tree, SWT.LEFT);
+        _tree.addListener(SWT.MeasureItem, new Listener() {
+            public void handleEvent(Event evt) {
+                if (evt.index == 1) {
+                    MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
+                    if (bar != null) {
+                        Image imgs[] = bar.getFlags();
+                        int width = _tree.getGridLineWidth() * 2;
+                        for (int i = 0; i < imgs.length; i++)
+                            width += imgs[i].getBounds().width + FLAG_SPACING;
+                        evt.width = width;
+                        //evt.height = sz.y;
+                    }
+                }
+            }
+        });
+        _tree.addListener(SWT.PaintItem, new Listener() {
+            public void handleEvent(Event evt) {
+                if (evt.index == 1) {
+                    MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
+                    if (bar != null) {
+                        Image imgs[] = bar.getFlags();
+                        String tt = bar.getTooltip();
+                        int off = evt.x;
+                        _browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
+                        for (int i = 0; i < imgs.length; i++) {
+                            Rectangle sz = imgs[i].getBounds();
+                            int excess = evt.height-sz.height;
+                            if (excess > 1)
+                                evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
+                            else
+                                evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
+                            off += imgs[i].getBounds().width + FLAG_SPACING;
+                        }
+                    }
+                }
+            }
+        });
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
@@ -570,6 +617,10 @@ public class MessageTree implements Translatable, Themeable {
         _tree.removeAll();
         _itemToURI.clear();
         _itemToMsg.clear();
+        // MessageFlagBar instances may allocate icons
+        for (Iterator iter = _itemToMsgFlags.values().iterator(); iter.hasNext(); )
+            ((MessageFlagBar)iter.next()).dispose();
+        _itemToMsgFlags.clear();
         _itemsOld.clear();
         _itemsNewRead.clear();
         _itemsNewUnread.clear();
@@ -675,10 +726,14 @@ public class MessageTree implements Translatable, Themeable {
                 tags = "";
             }
             item.setText(0, subj);
-            if ( (msg != null) && (msg.getWasPrivate()) )
-                item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
-            else
-                item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
+            // msgbar stuff
+            MessageFlagBar bar = new MessageFlagBar(_browser, _tree);
+            bar.setMessage(msg);
+            _itemToMsgFlags.put(item, bar);
+            //if ( (msg != null) && (msg.getWasPrivate()) )
+            //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
+            //else
+            //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
             item.setText(2, auth);
             item.setText(3, chan);
             item.setText(4, date);
@@ -718,7 +773,7 @@ public class MessageTree implements Translatable, Themeable {
         if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
             subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
         
-        _colType.setWidth(24);
+        //_colType.setWidth(24);
         _colSubject.setWidth(subjWidth);
         _colChannel.setWidth(chanWidth);
         _colAuthor.setWidth(authWidth);
