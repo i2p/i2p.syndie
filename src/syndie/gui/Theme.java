@@ -14,7 +14,7 @@ public class Theme {
         // SYSFONT, on GTK, is the font used to display the window title (aka pretty big)
         // swt only promises that its a valid font.  there doesn't seem to be a way to get
         // the default font for particular components
-        TAB_FONT = adjustHeight("inittab", SYSFONT, -2);
+        TAB_FONT = adjustHeight("inittab", SYSFONT, -4);
         MENU_FONT = adjustHeight("initmenu", SYSFONT, -2);
         SHELL_FONT = adjustHeight("initshell", SYSFONT, 0);
         TREE_FONT = adjustHeight("inittree", SYSFONT, -4);

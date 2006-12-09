@@ -43,7 +43,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class ManageReferenceChooser implements Translatable {
+public class ManageReferenceChooser implements Translatable, Themeable {
     private BrowserControl _browser;
     private Composite _parent;
     private Tree _tree;
@@ -188,6 +188,7 @@ public class ManageReferenceChooser implements Translatable {
         //_editPopup = new EditPopup();
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     private int getColumn(int x) {
@@ -219,6 +220,7 @@ public class ManageReferenceChooser implements Translatable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
         if (_editPopup != null)
             _editPopup.dispose();
     }
@@ -628,6 +630,8 @@ public class ManageReferenceChooser implements Translatable {
         //_colName.setWidth(_tree.getClientArea().width - _colTarget.getWidth() - _colType.getWidth() - _colDescription.getWidth());
         _colName.pack();
     }
+    
+    public void applyTheme(Theme theme) { _tree.setFont(theme.TREE_FONT); }
 
     private class EditPopup extends LinkBuilderPopup {
         private ReferenceNode _parentNode;

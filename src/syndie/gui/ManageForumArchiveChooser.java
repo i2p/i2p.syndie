@@ -21,7 +21,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class ManageForumArchiveChooser implements Translatable {
+public class ManageForumArchiveChooser implements Translatable, Themeable {
     private BrowserControl _browser;
     private ManageForum _forum;
     private Composite _parent;
@@ -102,9 +102,11 @@ public class ManageForumArchiveChooser implements Translatable {
         _addToLocalArchive = new AddToLocalPopup();
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
         _addPopup.dispose();
         _addToLocalArchive.dispose();
     }
@@ -324,6 +326,8 @@ public class ManageForumArchiveChooser implements Translatable {
         _setPublic.setText(registry.getText(T_SETPUBLIC, "Public?"));
     }
     
+    public void applyTheme(Theme theme) { _table.setFont(theme.TABLE_FONT); }
+    
     private class AddToForumPopup extends SyndicationArchivePopup {
         private TableItem _curItem;
         private SyndieURI _curURI;
@@ -346,6 +350,7 @@ public class ManageForumArchiveChooser implements Translatable {
         }
         
     }
+    
     private class AddToLocalPopup extends SyndicationArchivePopup {
         public AddToLocalPopup() {
             super(_browser, _parent.getShell(), false);
