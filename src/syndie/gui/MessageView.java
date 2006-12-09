@@ -115,7 +115,10 @@ public class MessageView implements Translatable, Themeable {
         _avatar.disposeImage();
     }
     
-    public String getSubject() { return _headerSubject.getText(); }
+    public String getTitle() { 
+        String rv = _headerSubject.getText();
+        return _browser.getTranslationRegistry().getText(T_TITLE_PREFIX, "msg: ") + rv;
+    }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )
@@ -580,7 +583,9 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_PAGE = "syndie.gui.messageview.page";
     private static final String T_REFERENCES = "syndie.gui.messageview.references";
     private static final String T_THREAD = "syndie.gui.messageview.thread";
-        
+
+    private static final String T_TITLE_PREFIX = "syndie.gui.messageview.title";
+
     public void translate(TranslationRegistry registry) {
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
@@ -590,31 +595,4 @@ public class MessageView implements Translatable, Themeable {
         _footerReferenceLabel.setText(registry.getText(T_REFERENCES, "References:"));
         _footerThreadLabel.setText(registry.getText(T_THREAD, "Thread:"));
     }
-    
-    /*
-    //private void createRefChooser() { _refs = new ManageReferenceChooser(_stackPane, _browser, false); }
-    
-    // indexes into the _headerAction
-    private static final int ACTION_VIEW = 1;
-    private static final int ACTION_REPLY_TO_FORUM = 2;
-    private static final int ACTION_REPLY_TO_AUTHOR = 3;
-    private void honorAction() {
-        int idx = _headerActions.getSelectionIndex();
-        switch (idx) {
-            case ACTION_VIEW:
-                if (_browser != null)
-                    _browser.view(_uri);
-                break;
-            case ACTION_REPLY_TO_AUTHOR:
-                if (_browser != null)
-                    _browser.view(_browser.createPostURI(_author, _uri, true));
-                break;
-            case ACTION_REPLY_TO_FORUM:
-                if (_browser != null)
-                    _browser.view(_browser.createPostURI(_target, _uri));
-                break;
-        }
-        _headerActions.select(0);
-    }
-     */
 }

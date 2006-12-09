@@ -38,7 +38,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     }
     
     public Image getIcon() { return ImageUtil.ICON_TAB_MSG; }
-    public String getName() { return _view.getSubject(); }
+    public String getName() { return _view.getTitle(); }
     public String getDescription() { return getURI().toString(); }
 
     public void translate(TranslationRegistry registry) {
