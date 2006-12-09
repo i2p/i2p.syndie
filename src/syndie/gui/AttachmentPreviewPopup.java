@@ -26,7 +26,7 @@ import syndie.db.DBClient;
 /**
  *
  */
-class AttachmentPreviewPopup implements Translatable {
+class AttachmentPreviewPopup implements Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     private Shell _parent;
@@ -58,7 +58,7 @@ class AttachmentPreviewPopup implements Translatable {
     }
     
     private void initComponents() {
-        _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
+        _shell = new Shell(_parent, SWT.CLOSE | SWT.TITLE | SWT.APPLICATION_MODAL);
         _shell.setLayout(new GridLayout(4, false));
         
         _nameLabel = new Label(_shell, SWT.NONE);
@@ -67,7 +67,7 @@ class AttachmentPreviewPopup implements Translatable {
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _preview = new ImageCanvas(_shell, false);
-        _preview.setLayoutData(new GridData(GridData.BEGINNING, GridData.BEGINNING, false, false, 2, 4));
+        _preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 4));
         _preview.forceSize(64, 64);
         
         _descLabel = new Label(_shell, SWT.NONE);
@@ -103,7 +103,7 @@ class AttachmentPreviewPopup implements Translatable {
         });
         
         _cancel = new Button(_shell, SWT.PUSH);
-        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 4, 1));
+        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 4, 1));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
@@ -120,6 +120,7 @@ class AttachmentPreviewPopup implements Translatable {
         
         _dialog = new FileDialog(_shell, SWT.SAVE);
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     
     public void showURI(SyndieURI uri) {
@@ -212,7 +213,10 @@ class AttachmentPreviewPopup implements Translatable {
         }
     }
     
-    public void dispose() { _browser.getTranslationRegistry().unregister(this); }
+    public void dispose() { 
+        _browser.getTranslationRegistry().unregister(this); 
+        _browser.getThemeRegistry().unregister(this);
+    }
     
     private static final String T_SAVE_OK_TITLE = "syndie.gui.attachmentpreviewpopup.save.ok.title";
     private static final String T_SAVE_OK_MSG = "syndie.gui.attachmentpreviewpopup.save.ok.msg";
@@ -229,7 +233,7 @@ class AttachmentPreviewPopup implements Translatable {
     private static final String T_CANCEL = "syndie.gui.attachmentpreviewpopup.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(_browser.getTranslationRegistry().getText(T_TITLE, "Preview attachment"));
+        _shell.setText(_browser.getTranslationRegistry().getText(T_TITLE, "Attachment"));
         _nameLabel.setText(_browser.getTranslationRegistry().getText(T_NAME, "Name:"));
         _descLabel.setText(_browser.getTranslationRegistry().getText(T_DESC, "Description:"));
         _sizeLabel.setText(_browser.getTranslationRegistry().getText(T_SIZE, "Size:"));
@@ -238,5 +242,22 @@ class AttachmentPreviewPopup implements Translatable {
         _saveAsBrowse.setText(_browser.getTranslationRegistry().getText(T_SAVEAS_BROWSE, "Browse..."));
         _saveAsOk.setText(_browser.getTranslationRegistry().getText(T_SAVE, "Save"));
         _cancel.setText(_browser.getTranslationRegistry().getText(T_CANCEL, "Cancel"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _shell.setFont(theme.SHELL_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
+        _desc.setFont(theme.CONTENT_FONT);
+        _descLabel.setFont(theme.DEFAULT_FONT);
+        _name.setFont(theme.CONTENT_FONT);
+        _nameLabel.setFont(theme.DEFAULT_FONT);
+        _saveAs.setFont(theme.CONTENT_FONT);
+        _saveAsBrowse.setFont(theme.BUTTON_FONT);
+        _saveAsLabel.setFont(theme.DEFAULT_FONT);
+        _saveAsOk.setFont(theme.BUTTON_FONT);
+        _size.setFont(theme.CONTENT_FONT);
+        _sizeLabel.setFont(theme.DEFAULT_FONT);
+        _type.setFont(theme.CONTENT_FONT);
+        _typeLabel.setFont(theme.DEFAULT_FONT);
     }
 }

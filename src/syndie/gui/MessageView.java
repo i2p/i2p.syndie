@@ -439,6 +439,8 @@ public class MessageView implements Translatable, Themeable {
         _footer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
         _footer.setLayout(new RowLayout(SWT.HORIZONTAL));
         
+        // label/combo pairs are in composites so the footer's row layout wraps them together
+        
         Composite c = new Composite(_footer, SWT.NONE);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         _footerPageLabel = new Label(c, SWT.NONE);
@@ -502,6 +504,8 @@ public class MessageView implements Translatable, Themeable {
             _refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell());
         _refPopup.setReferences(_refRoots);
         _refPopup.show();
+        _footerReference.clearSelection();
+        _footerReference.deselectAll();
     }
     private void threadChosen() {
         int idx = _footerThread.getSelectionIndex();
@@ -554,6 +558,15 @@ public class MessageView implements Translatable, Themeable {
         _headerDateLabel.setFont(theme.DEFAULT_FONT);
         _headerDate.setFont(theme.DEFAULT_FONT);
         _headerTags.setFont(theme.DEFAULT_FONT);
+        
+        _footerAttachment.setFont(theme.DEFAULT_FONT);
+        _footerAttachmentLabel.setFont(theme.DEFAULT_FONT);
+        _footerPage.setFont(theme.DEFAULT_FONT);
+        _footerPageLabel.setFont(theme.DEFAULT_FONT);
+        _footerReference.setFont(theme.DEFAULT_FONT);
+        _footerReferenceLabel.setFont(theme.DEFAULT_FONT);
+        _footerThread.setFont(theme.DEFAULT_FONT);
+        _footerThreadLabel.setFont(theme.DEFAULT_FONT);
     }
     
     private static final String T_AUTHOR = "syndie.gui.messageview.author";

@@ -32,7 +32,10 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
     }
     
     public void setReferences(List refs) { _refs.setReferences(refs); }
-    public void show() { _shell.open(); }
+    public void show() {
+        //_shell.pack(true); 
+        _shell.open();
+    }
     public void hide() { _shell.setVisible(false); }
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
@@ -45,8 +48,8 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         _shell.setLayout(new GridLayout(1, true));
         _refs = new ManageReferenceChooser(_shell, _browser, false);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
-        gd.widthHint = 600;
-        gd.heightHint = 300;
+        //gd.widthHint = 600;
+        //gd.heightHint = 300;
         _refs.getControl().setLayoutData(gd);
         
         _close = new Button(_shell, SWT.PUSH);
@@ -65,11 +68,13 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _shell.pack();
-        Point sz = _refs.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        sz.x += 50;
-        sz.y += 200;
-        _shell.setSize(sz.x, sz.y);
+        //_shell.pack();
+        //Point sz = _refs.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        //sz.x += 50;
+        //sz.y += 200;
+        //_shell.setSize(sz.x, sz.y);
+        
+        _shell.setSize(_shell.computeSize(400, 200));
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
