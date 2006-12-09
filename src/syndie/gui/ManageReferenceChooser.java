@@ -184,7 +184,8 @@ public class ManageReferenceChooser implements Translatable {
             public void menuShown(MenuEvent evt) { configMenu(); }
         });
 
-        _editPopup = new EditPopup();
+        //lazy init
+        //_editPopup = new EditPopup();
         
         _browser.getTranslationRegistry().register(this);
     }
@@ -218,14 +219,19 @@ public class ManageReferenceChooser implements Translatable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
-        _editPopup.dispose();
+        if (_editPopup != null)
+            _editPopup.dispose();
     }
     private void add() {
+        if (_editPopup == null)
+            _editPopup = new EditPopup();
         _editPopup.setParent(null);
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
     }
     private void addChild() {
+        if (_editPopup == null)
+            _editPopup = new EditPopup();
         _editPopup.setParent(getSelectedNode());
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
@@ -233,6 +239,8 @@ public class ManageReferenceChooser implements Translatable {
     private void edit() {
         ReferenceNode node = getSelectedNode();
         if (node != null) {
+            if (_editPopup == null)
+                _editPopup = new EditPopup();
             _editPopup.setCurrentNode(node);
             _editPopup.showPopup(node.getURI());
         }

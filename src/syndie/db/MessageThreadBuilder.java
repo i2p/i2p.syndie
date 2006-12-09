@@ -19,7 +19,7 @@ import syndie.data.SyndieURI;
  * the root.  or, of course, improve the algorithm so that it has a single
  * canonical form.
  */
-class MessageThreadBuilder {
+public class MessageThreadBuilder {
     private DBClient _client;
     private UI _ui;
     private Map _uriToReferenceNode;

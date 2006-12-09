@@ -201,7 +201,7 @@ public class ImageCanvas extends Canvas {
                 //System.out.println("(too tall, y=" + y +")");
             }
         
-            System.out.println("drawing the image onto " + pane.width +"x" + pane.height + " from " + bounds.width + "x" + bounds.height);
+            //System.out.println("drawing the image onto " + pane.width +"x" + pane.height + " from " + bounds.width + "x" + bounds.height);
             
             // center the image if its smaller than the pane
             int xOff = 0;
@@ -215,7 +215,7 @@ public class ImageCanvas extends Canvas {
             if (_scroll) {
                 gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
             } else {
-                System.out.println("x=" + x + " y=" + y + " img.w=" + bounds.width + " img.h=" + bounds.height + " xoff=" + xOff + " yoff=" + yOff + " p.w=" + pane.width + " p.h=" + pane.height);
+                //System.out.println("x=" + x + " y=" + y + " img.w=" + bounds.width + " img.h=" + bounds.height + " xoff=" + xOff + " yoff=" + yOff + " p.w=" + pane.width + " p.h=" + pane.height);
                 gc.drawImage(_imageCurrent, x, y, bounds.width, bounds.height, xOff, yOff, pane.width, pane.height);
             }
         }

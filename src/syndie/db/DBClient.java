@@ -2178,8 +2178,11 @@ public class DBClient {
             stmt.setLong(1, internalMessageId);
             stmt.setInt(2, attachmentNum);
             rs = stmt.executeQuery();
-            if (rs.next())
-                return rs.getInt(1);
+            if (rs.next()) {
+                int val = rs.getInt(1);
+                val /= 2; // hsqldb HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
+                return val;
+            }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the attachment data", se);

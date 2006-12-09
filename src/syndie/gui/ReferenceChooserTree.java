@@ -208,7 +208,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         configTreeListeners(_tree);
         long t3 = System.currentTimeMillis();
         
-        _browser.getUI().debugMessage("init refChooserTree", new Exception("source"));
+        //_browser.getUI().debugMessage("init refChooserTree", new Exception("source"));
         rebuildBookmarks();
         long t4 = System.currentTimeMillis();
         JobRunner.instance().enqueue(new Runnable() {
