@@ -288,6 +288,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         
         _managerList.setRedraw(true);
         _posterList.setRedraw(true);
+        _modified = false;
     }
     
     private void initComponents() {
@@ -317,7 +318,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _name = new Text(_root, SWT.BORDER | SWT.SINGLE | (_editable ? 0 : SWT.READ_ONLY));
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _name.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent modifyEvent) { _modified = true; }
+            public void modifyText(ModifyEvent modifyEvent) { modified(); }
         });
         
         _tagsLabel = new Label(_root, SWT.NONE);
@@ -326,7 +327,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _tags = new Text(_root, SWT.BORDER | SWT.SINGLE | (_editable ? 0 : SWT.READ_ONLY));
         _tags.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _tags.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent modifyEvent) { _modified = true; }
+            public void modifyText(ModifyEvent modifyEvent) { modified(); }
         });
         
         _expireLabel = new Label(_root, SWT.NONE);
@@ -337,7 +338,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         gd.widthHint = 50;
         _expire.setLayoutData(gd);
         _expire.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent modifyEvent) { _modified = true; }
+            public void modifyText(ModifyEvent modifyEvent) { modified(); }
         });
         
         _descLabel = new Label(_root, SWT.NONE);
@@ -346,7 +347,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _desc = new Text(_root, SWT.BORDER | SWT.SINGLE | SWT.WRAP | (_editable ? 0 : SWT.READ_ONLY));
         _desc.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         _desc.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent modifyEvent) { _modified = true; }
+            public void modifyText(ModifyEvent modifyEvent) { modified(); }
         });
         
         _privacyLabel = new Label(_root, SWT.NONE);
@@ -355,9 +356,9 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _privacy = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
         _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _privacy.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _modified = true; }
-            public void widgetSelected(SelectionEvent selectionEvent) { _modified = true; }
-        };
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+        });
         
         _authLabel = new Label(_root, SWT.NONE);
         _authLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -365,9 +366,9 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _auth = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
         _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _auth.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _modified = true; }
-            public void widgetSelected(SelectionEvent selectionEvent) { _modified = true; }
-        };
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+        });
     
         _detailTabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP | SWT.BORDER);
         _detailTabs.setMaximizeVisible(false);
@@ -585,7 +586,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private void pickAvatar() {
         //_browser.getUI().debugMessage("pickAvatar", new Exception("source"));
         if (!_editable) return;
-        _modified = true;
+        modified();
         
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.OPEN);
         dialog.setText(_browser.getTranslationRegistry().getText(T_PICKAVATAR, "Select an avatar"));
@@ -627,12 +628,12 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     }
     
     private void addManager() {
-        _modified = true;
+        modified();
         _addingPoster = false;
         _refChooser.show();
     }
     private void addPoster() {
-        _modified = true;
+        modified();
         _addingPoster = true;
         _refChooser.show();
     }
@@ -648,14 +649,14 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _browser.view(SyndieURI.createScope(((SigningPublicKey)_posterKeys.get(idx)).calculateHash()));
     }
     private void removeManager() {
-        _modified = true;
+        modified();
         int idx = _managerList.getSelectionIndex();
         if (idx < 0) return;
         _managerKeys.remove(idx);
         _managerList.remove(idx);
     }
     private void removePoster() {
-        _modified = true;
+        modified();
         int idx = _posterList.getSelectionIndex();
         if (idx < 0) return;
         _posterKeys.remove(idx);
@@ -663,7 +664,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     }
     
     public void referenceAccepted(SyndieURI uri) {
-        _modified = true;
+        modified();
         _browser.getUI().debugMessage("ref selected: " + uri);
         long id = _browser.getClient().getChannelId(uri.getScope());
         ChannelInfo info = _browser.getClient().getChannel(id);
@@ -702,6 +703,13 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     }
 
     public void referenceChoiceAborted() { _refChooser.hide(); }
+    
+    private void modified() { 
+        if (!_modified) {
+            _modified = true;
+            _browser.getUI().debugMessage("modified", new Exception("modified by"));
+        }
+    }
     
     public boolean confirmClose() {
         if (!_editable || !_modified) return true;
