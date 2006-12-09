@@ -58,6 +58,8 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.Constants;
+import syndie.data.NymKey;
 import syndie.db.ArchiveDiff;
 import syndie.db.ArchiveIndex;
 import syndie.db.JobRunner;
@@ -108,10 +110,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _forumMenuSearch;
     private MenuItem _forumMenuBrowse;
     private MenuItem _forumMenuCreate;
+    private MenuItem _forumMenuManageRoot;
+    private Menu _forumMenuManageMenu;
     private MenuItem _postMenuRoot;
     private MenuItem _postMenuNew;
     private MenuItem _postMenuResumeRoot;
     private Menu _postMenuResumeMenu;
+    private MenuItem _postMenuManageableRoot;
+    private Menu _postMenuManageableMenu;
+    private MenuItem _postMenuPostableRoot;
+    private Menu _postMenuPostableMenu;
+    private MenuItem _postMenuPublicRoot;
+    private Menu _postMenuPublicMenu;
     private MenuItem _syndicateMenuRoot;
     private Menu _syndicateMenu;
     private MenuItem _syndicateMenuManage;
@@ -382,6 +392,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
         });
+        _forumMenuManageRoot = new MenuItem(forumMenu, SWT.CASCADE);
+        _forumMenuManageMenu = new Menu(_forumMenuManageRoot);
+        _forumMenuManageRoot.setMenu(_forumMenuManageMenu);
         
         _postMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu postMenu = new Menu(_postMenuRoot);
@@ -403,6 +416,21 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 });
             }
         });
+        
+        _postMenuManageableRoot = new MenuItem(postMenu, SWT.CASCADE);
+        _postMenuManageableMenu = new Menu(_postMenuManageableRoot);
+        _postMenuManageableRoot.setMenu(_postMenuManageableMenu);
+        
+        _postMenuPostableRoot = new MenuItem(postMenu, SWT.CASCADE);
+        _postMenuPostableMenu = new Menu(_postMenuPostableRoot);
+        _postMenuPostableRoot.setMenu(_postMenuPostableMenu);
+        
+        _postMenuPublicRoot = new MenuItem(postMenu, SWT.CASCADE);
+        _postMenuPublicMenu = new Menu(_postMenuPublicRoot);
+        _postMenuPublicRoot.setMenu(_postMenuPublicMenu);
+        
+        // queue it up to run sometime soon
+        JobRunner.instance().enqueue(new Runnable() { public void run() { populatePostMenus(); } });
         
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _syndicateMenu = new Menu(_syndicateMenuRoot);
@@ -519,7 +547,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK)
                     refreshSyndicationMenu();
             }
-            public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+            public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+                if (record.getStatus() == SyndicationManager.FETCH_IMPORT_OK)
+                    populatePostMenus(); // might have fetched a new publically postable forum's meta
+            }
         });
         
         JobRunner.instance().enqueue(new Runnable() {
@@ -776,7 +807,160 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             });
         }
     }
+    
+    private void populatePostMenus() {
+        final DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true);
+        Display.getDefault().asyncExec(new Runnable() {
+            public void run() { 
+                populateManageable(chans); 
+                populatePostable(chans); 
+                populatePublicPostable(chans);
+            }
+        });
+    }
 
+    private void populateManageable(DBClient.ChannelCollector chans) {
+        while (_postMenuManageableMenu.getItemCount() > 0)
+            _postMenuManageableMenu.getItem(0).dispose();
+        
+        while (_forumMenuManageMenu.getItemCount() > 0)
+            _forumMenuManageMenu.getItem(0).dispose();
+        
+        for (int i = 0; i < chans.getIdentityChannelCount(); i++) {
+            final ChannelInfo info = chans.getIdentityChannel(i);
+            MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            String name = info.getName();
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+            });
+            
+            item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createManageURI(info.getChannelHash()));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createManageURI(info.getChannelHash()));
+                }
+            });
+        }
+        for (int i = 0; i < chans.getManagedChannelCount(); i++) {
+            final ChannelInfo info = chans.getManagedChannel(i);
+            MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            String name = info.getName();
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+            });
+            
+            item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createManageURI(info.getChannelHash()));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createManageURI(info.getChannelHash()));
+                }
+            });
+        }
+        
+        _postMenuManageableRoot.setEnabled(_postMenuManageableMenu.getItemCount() > 0);
+        _forumMenuManageRoot.setEnabled(_forumMenuManageMenu.getItemCount() > 0);
+    }
+    
+    private void populatePostable(DBClient.ChannelCollector chans) {
+        while (_postMenuPostableMenu.getItemCount() > 0)
+            _postMenuPostableMenu.getItem(0).dispose();
+        
+        for (int i = 0; i < chans.getPostChannelCount(); i++) {
+            final ChannelInfo info = chans.getPostChannel(i);
+            MenuItem item = new MenuItem(_postMenuPostableMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            String name = info.getName();
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+            });
+        }
+        
+        _postMenuPostableRoot.setEnabled(_postMenuPostableMenu.getItemCount() > 0);
+    }
+    
+    private void populatePublicPostable(DBClient.ChannelCollector chans) {
+        while (_postMenuPublicMenu.getItemCount() > 0)
+            _postMenuPublicMenu.getItem(0).dispose();
+        
+        for (int i = 0; i < chans.getPublicPostChannelCount(); i++) {
+            final ChannelInfo info = chans.getPublicPostChannel(i);
+            MenuItem item = new MenuItem(_postMenuPublicMenu, SWT.PUSH);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            String name = info.getName();
+            if (name != null)
+                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+            else
+                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    view(createPostURI(info.getChannelHash(), null));
+                }
+            });
+        }
+        
+        _postMenuPublicRoot.setEnabled(_postMenuPublicMenu.getItemCount() > 0);
+    }
+    
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return _editorListener; }
     
     private class MsgEditorListener implements MessageEditor.MessageEditorListener {
@@ -816,7 +1000,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         return postponeIdToVersion;
     }
-    
+
     private void populateResumeable() {
         while (_postMenuResumeMenu.getItemCount() > 0)
             _postMenuResumeMenu.getItem(0).dispose();
@@ -1539,9 +1723,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FORUM_MENU_SEARCH = "syndie.gui.browser.forummenu.search";
     private static final String T_FORUM_MENU_BROWSE = "syndie.gui.browser.forummenu.browse";
     private static final String T_FORUM_MENU_CREATE = "syndie.gui.browser.forummenu.create";
+    private static final String T_FORUM_MENU_MANAGE = "syndie.gui.browser.forummenu.manage";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
+    private static final String T_POST_MENU_MANAGEABLE = "syndie.gui.browser.postmenu.manageable";
+    private static final String T_POST_MENU_POSTABLE = "syndie.gui.browser.postmenu.postable";
+    private static final String T_POST_MENU_PUBLIC = "syndie.gui.browser.postmenu.public";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
     private static final String T_SYNDICATE_MENU_MANAGE = "syndie.gui.browser.syndicatemenu.item";
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
@@ -1605,10 +1793,15 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Search"));
         _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
         _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
+        _forumMenuManageRoot.setText(registry.getText(T_FORUM_MENU_MANAGE, "&Manage"));
         
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
+
+        _postMenuManageableRoot.setText(registry.getText(T_POST_MENU_MANAGEABLE, "&Manageable forums"));
+        _postMenuPostableRoot.setText(registry.getText(T_POST_MENU_POSTABLE, "&Postable forums"));
+        _postMenuPublicRoot.setText(registry.getText(T_POST_MENU_PUBLIC, "&Publically postable forums"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
         _syndicateMenuManage.setText(registry.getText(T_SYNDICATE_MENU_MANAGE, "&Manage"));
