@@ -327,6 +327,10 @@ public class PageRenderer implements Themeable {
         _browser.getUI().debugMessage("threaded page render took " + (after-before));
     }
     private void renderText(final String body) {
+        if (_text.isDisposed()) {
+            _browser.getUI().errorMessage("render after dispose?", new Exception("source"));
+            return;
+        }
         _text.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 _text.setRedraw(false);
@@ -676,7 +680,6 @@ public class PageRenderer implements Themeable {
         disposeColors();
         disposeImages();
         _browser.getThemeRegistry().unregister(this);
-        _text.dispose(); // should be unnecessary...
     }
     
     private void disposeFonts() {

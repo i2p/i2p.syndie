@@ -77,7 +77,10 @@ public class MessagePreview implements Themeable, Translatable {
     }
     
     public Control getControl() { return _root; }
-    public void dispose() { _body.dispose(); }
+    public void dispose() { 
+        _body.dispose();
+        _headerIcons.dispose();
+    }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )

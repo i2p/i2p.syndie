@@ -104,6 +104,7 @@ public class ImageUtil {
     public static final Image ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
+    public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, 16, 16, false);
 
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
@@ -168,6 +169,7 @@ public class ImageUtil {
         _indisposableImages.add(ICON_TAB_SQL);
         _indisposableImages.add(ICON_TAB_PAGE);
         _indisposableImages.add(ICON_TAB_HIGHLIGHTS);
+        _indisposableImages.add(ICON_TAB_MSG);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

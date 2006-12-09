@@ -60,15 +60,14 @@ abstract class BrowserTab implements Themeable {
                 // create a new editor tab
                 return new EditMessageTab(browser, uri, scope, parent, asReply);
             }
-        } else if ("channel".equalsIgnoreCase(uri.getType())) {
+        } else if (uri.isChannel()) {
             if (uri.getScope() != null) {
                 if (uri.getMessageId() == null) {
                     // browse the forum as a whole
                     return new BrowseForumTab(browser, uri);
                 } else {
                     // view a specific message
-                    // todo: perhaps optimize this w/ features for rendering sans message tree?
-                    return new BrowseForumTab(browser, uri);
+                    return new MessageViewTab(browser, uri);
                 }
             }
         } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
