@@ -257,6 +257,7 @@ public class DBClient {
     }
     
     public long nextId(String seq) {
+        ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

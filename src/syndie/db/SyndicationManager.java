@@ -42,6 +42,8 @@ public class SyndicationManager {
     private String _fcpHost;
     private int _fcpPort;
     
+    private boolean _archivesLoaded;
+    
     public static final int FETCH_SCHEDULED = 0;
     public static final int FETCH_STARTED = 1;
     public static final int FETCH_COMPLETE = 2;
@@ -78,6 +80,7 @@ public class SyndicationManager {
         _listeners = new ArrayList();
         _fetchRecords = new ArrayList();
         _mergedIndex = null;
+        _archivesLoaded = false;
     }
     
     /** 
@@ -995,10 +998,12 @@ public class SyndicationManager {
     
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
-        if (_archives.size() > 0) {
+        if (_archivesLoaded) {
             _ui.debugMessage("not loading archives, as they are already loaded");
             return;
         }
+        _archivesLoaded = true;
+        
         _ui.debugMessage("Loading archives");
         _archives.clear();
         PreparedStatement stmt = null;
