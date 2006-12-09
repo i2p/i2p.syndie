@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -30,6 +31,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -52,8 +54,20 @@ public class MessageView implements Translatable, Themeable {
     private Label _headerSubject;
     private Label _headerAuthorLabel;
     private Label _headerAuthor;
+    private Button _headerAuthorAction;
+    private Menu _authorMenu;
+    private MenuItem _authorMenuViewMsgs;
+    private MenuItem _authorMenuViewMeta;
+    private MenuItem _authorMenuBookmark;
+    private MenuItem _authorMenuBan;
     private Label _headerForumLabel;
     private Label _headerForum;
+    private Button _headerForumAction;
+    private Menu _forumMenu;
+    private MenuItem _forumMenuViewMsgs;
+    private MenuItem _forumMenuViewMeta;
+    private MenuItem _forumMenuBookmark;
+    private MenuItem _forumMenuBan;
     private Label _headerDateLabel;
     private Label _headerDate;
     private MessageFlagBar _headerFlags;
@@ -191,10 +205,12 @@ public class MessageView implements Translatable, Themeable {
             boolean showAuthor = (msg.getTargetChannelId() != msg.getAuthorChannelId());
             ((GridData)_headerAuthorLabel.getLayoutData()).exclude = !showAuthor;
             ((GridData)_headerAuthor.getLayoutData()).exclude = !showAuthor;
-            ((GridData)_headerForum.getLayoutData()).horizontalSpan = (showAuthor ? 1 : 3);
+            ((GridData)_headerAuthorAction.getLayoutData()).exclude = !showAuthor;
+            ((GridData)_headerForum.getLayoutData()).horizontalSpan = (showAuthor ? 1 : 4);
             
             _headerAuthorLabel.setVisible(showAuthor);
             _headerAuthor.setVisible(showAuthor);
+            _headerAuthorAction.setVisible(showAuthor);
             
             String date = Constants.getDate(msg.getMessageId());
             _headerDate.setText(date);
@@ -398,7 +414,7 @@ public class MessageView implements Translatable, Themeable {
 
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(7, false));
+        _root.setLayout(new GridLayout(9, false));
     
         _avatar = new ImageCanvas(_root, false);
         GridData gd = new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, 3);
@@ -408,20 +424,94 @@ public class MessageView implements Translatable, Themeable {
         _avatar.setLayoutData(gd);
         
         _headerSubject = new Label(_root, SWT.WRAP);
-        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 6, 1));
+        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 8, 1));
         
         _headerAuthorLabel = new Label(_root, SWT.NONE);
         _headerAuthorLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _headerAuthor = new Label(_root, SWT.WRAP);
-        _headerAuthor.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        _headerAuthor.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        _headerAuthor.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) { _authorMenu.setVisible(true); }
+            public void mouseDown(MouseEvent mouseEvent) { _authorMenu.setVisible(true); }
+            public void mouseUp(MouseEvent mouseEvent) { }
+        });
         
+        _headerAuthorAction = new Button(_root, SWT.ARROW | SWT.DOWN);
+        _headerAuthorAction.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, true, false));
+        _headerAuthorAction.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
+        });
+        
+        _authorMenu = new Menu(_headerAuthorAction);
+        _headerAuthorAction.setMenu(_authorMenu);
+        
+        _authorMenuViewMsgs = new MenuItem(_authorMenu, SWT.PUSH);
+        _authorMenuViewMsgs.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewAuthorMsgs(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewAuthorMsgs(); }
+        });
+        _authorMenuViewMeta = new MenuItem(_authorMenu, SWT.PUSH);
+        _authorMenuViewMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewAuthorMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewAuthorMeta(); }
+        });
+        _authorMenuBookmark = new MenuItem(_authorMenu, SWT.PUSH);
+        _authorMenuBookmark.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkAuthor(); }
+        });
+        new MenuItem(_authorMenu, SWT.SEPARATOR);
+        _authorMenuBan = new MenuItem(_authorMenu, SWT.PUSH);
+        _authorMenuBan.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { banAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { banAuthor(); }
+        });
+
         _headerForumLabel = new Label(_root, SWT.NONE);
         _headerForumLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _headerForum = new Label(_root, SWT.WRAP);
-        _headerForum.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        _headerForum.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        _headerForum.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) { _forumMenu.setVisible(true); }
+            public void mouseDown(MouseEvent mouseEvent) { _forumMenu.setVisible(true); }
+            public void mouseUp(MouseEvent mouseEvent) { }
+        });
         
+        _headerForumAction = new Button(_root, SWT.ARROW | SWT.DOWN);
+        _headerForumAction.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, true, false));
+        _headerForumAction.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _forumMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _forumMenu.setVisible(true); }
+        });
+                
+        _forumMenu = new Menu(_headerForumAction);
+        _headerForumAction.setMenu(_forumMenu);
+        
+        _forumMenuViewMsgs = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuViewMsgs.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewForumMsgs(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewForumMsgs(); }
+        });
+        _forumMenuViewMeta = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuViewMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewForumMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewForumMeta(); }
+        });
+        _forumMenuBookmark = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuBookmark.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkForum(); }
+        });
+        new MenuItem(_forumMenu, SWT.SEPARATOR);
+        _forumMenuBan = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuBan.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { banForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { banForum(); }
+        });
+
         _headerDateLabel = new Label(_root, SWT.NONE);
         _headerDateLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -429,17 +519,17 @@ public class MessageView implements Translatable, Themeable {
         _headerDate.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         
         _headerFlags = new MessageFlagBar(_browser, _root);
-        _headerFlags.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 2, 1));
+        _headerFlags.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 4, 1));
         
         _headerTags = new Label(_root, SWT.WRAP);
         _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false, 4, 1));
         
         _body = new PageRenderer(_root, true, _browser);
-        _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
+        _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
         _body.setListener(new PageListener());
         
         _footer = new Composite(_root, SWT.NONE);
-        _footer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        _footer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 9, 1));
         _footer.setLayout(new RowLayout(SWT.HORIZONTAL));
         
         // label/combo pairs are in composites so the footer's row layout wraps them together
@@ -486,7 +576,52 @@ public class MessageView implements Translatable, Themeable {
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
     }
-    
+
+    private void viewAuthorMsgs() {
+        if (_author != null)
+            _browser.view(SyndieURI.createScope(_author));
+    }
+    private void viewAuthorMeta() {
+        if (_author != null)
+            _browser.view(_browser.createMetaURI(_author));
+    }
+    private void bookmarkAuthor() {
+        if (_author != null)
+            _browser.bookmark(SyndieURI.createScope(_author));
+    }
+    private void banAuthor() {
+        if (_author != null) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_MSGAUTHOR, "Do you want to ban the author?  All of the messages they have written will be removed and you will never receive a message from them again, or any posts on their forum"));
+            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+            int rc = box.open();
+            if (rc == SWT.YES)
+                _browser.getClient().ban(_author, _browser.getUI(), true);
+        }
+    }
+    private void viewForumMsgs() {
+        if (_target != null)
+            _browser.view(SyndieURI.createScope(_target));
+    }
+    private void viewForumMeta() {
+        if (_target != null)
+            _browser.view(_browser.createMetaURI(_target));
+    }
+    private void bookmarkForum() {
+        if (_target != null)
+            _browser.view(SyndieURI.createScope(_target));
+    }
+    private void banForum() {
+        if (_target != null) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_MSGFORUM, "Do you want to ban the forum?  All of the messages in it will be removed and you will never receive any messages in it again, or posts written by the forum's owner"));
+            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+            int rc = box.open();
+            if (rc == SWT.YES)
+                _browser.getClient().ban(_target, _browser.getUI(), true);
+        }
+    }
+
     private void pageChosen() {
         int page = _footerPage.getSelectionIndex()+1;
         _page = page;
@@ -586,6 +721,20 @@ public class MessageView implements Translatable, Themeable {
 
     private static final String T_TITLE_PREFIX = "syndie.gui.messageview.title";
 
+    private static final String T_CONFIRMBAN_MSGFORUM = "syndie.gui.messageview.confirmbanforum";
+    private static final String T_CONFIRMBAN_MSGAUTHOR = "syndie.gui.messageview.confirmbanauthor";
+    private static final String T_CONFIRMBAN_NAME = "syndie.gui.messageview.confirmbanname";
+    
+    private static final String T_AUTHORBAN = "syndie.gui.messageview.authorban";
+    private static final String T_AUTHORBOOKMARK = "syndie.gui.messageview.authorbookmark";
+    private static final String T_AUTHORVIEWMETA = "syndie.gui.messageview.authorviewmeta";
+    private static final String T_AUTHORVIEWMSGS = "syndie.gui.messageview.authorviewmsgs";
+    
+    private static final String T_FORUMBAN = "syndie.gui.messageview.forumban";
+    private static final String T_FORUMBOOKMARK = "syndie.gui.messageview.forumbookmark";
+    private static final String T_FORUMVIEWMETA = "syndie.gui.messageview.forumviewmeta";
+    private static final String T_FORUMVIEWMSGS = "syndie.gui.messageview.forumviewmsgs";
+    
     public void translate(TranslationRegistry registry) {
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
@@ -594,5 +743,15 @@ public class MessageView implements Translatable, Themeable {
         _footerPageLabel.setText(registry.getText(T_PAGE, "Pages:"));
         _footerReferenceLabel.setText(registry.getText(T_REFERENCES, "References:"));
         _footerThreadLabel.setText(registry.getText(T_THREAD, "Thread:"));
+        
+        _authorMenuBan.setText(registry.getText(T_AUTHORBAN, "Ban author"));
+        _authorMenuBookmark.setText(registry.getText(T_AUTHORBOOKMARK, "Bookmark author"));
+        _authorMenuViewMeta.setText(registry.getText(T_AUTHORVIEWMETA, "View author's information"));
+        _authorMenuViewMsgs.setText(registry.getText(T_AUTHORVIEWMSGS, "View author's forum"));
+        
+        _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
+        _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
+        _forumMenuViewMeta.setText(registry.getText(T_FORUMBAN, "View fourm information"));
+        _forumMenuViewMsgs.setText(registry.getText(T_FORUMBAN, "View forum messages"));
     }
 }
