@@ -86,7 +86,7 @@ public class EepGet {
     public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, String outputFile, String url, boolean allowCaching, String etag, String postData) {
         _context = ctx;
         _log = ctx.logManager().getLog(EepGet.class);
-        _shouldProxy = shouldProxy;
+        _shouldProxy = (proxyHost != null) && (proxyHost.length() > 0) && (proxyPort > 0) && shouldProxy;
         _proxyHost = proxyHost;
         _proxyPort = proxyPort;
         _numRetries = numRetries;
@@ -727,11 +727,15 @@ public class EepGet {
         } else {
             try {
                 URL url = new URL(_actualURL);
-                String host = url.getHost();
-                int port = url.getPort();
-                if (port == -1)
-                    port = 80;
-                _proxy = new Socket(host, port);
+                if ("http".equals(url.getProtocol())) {
+                    String host = url.getHost();
+                    int port = url.getPort();
+                    if (port == -1)
+                        port = 80;
+                    _proxy = new Socket(host, port);
+                } else {
+                    throw new IOException("URL is not supported:" + _actualURL);
+                }
             } catch (MalformedURLException mue) {
                 throw new IOException("Request URL is invalid");
             }

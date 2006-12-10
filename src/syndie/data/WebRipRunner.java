@@ -17,14 +17,14 @@ import net.i2p.data.DataHelper;
 import net.i2p.util.EepGet;
 import syndie.Constants;
 import syndie.db.JobRunner;
-import syndie.db.Opts;
-import syndie.db.TextUI;
+import syndie.db.NullUI;
 import syndie.db.UI;
 
 /**
  *
  */
-class WebRipRunner implements EepGet.StatusListener {
+public class WebRipRunner implements EepGet.StatusListener {
+    private UI _ui;
     private String _location;
     private String _proxyHost;
     private int _proxyPort;
@@ -64,6 +64,8 @@ class WebRipRunner implements EepGet.StatusListener {
         TORRENT_SUFFIXES.add(".torrent");
     }
     
+    private RipListener _lsnr;
+    
     /** the rip has not yet been configured */
     public static final int STATE_INIT = 0;
     /** the rip has been configured */
@@ -81,7 +83,8 @@ class WebRipRunner implements EepGet.StatusListener {
     /** an error occurred during the rip */
     public static final int STATE_ERROR = -1;
     
-    public WebRipRunner(String location, String proxy, int proxyPort, File tmpDir) {
+    public WebRipRunner(UI ui, String location, String proxy, int proxyPort, File tmpDir) {
+        _ui = ui;
         _location = location;
         _proxyHost = proxy;
         _proxyPort = proxyPort;
@@ -101,6 +104,12 @@ class WebRipRunner implements EepGet.StatusListener {
         _allowedSuffixes = new HashSet();
     }
     
+    public void setListener(RipListener lsnr) { _lsnr = lsnr; }
+    
+    public interface RipListener {
+        public void statusUpdated(WebRipRunner runner);
+    }
+    
     /**
      * @param images if true, fetch attachments that look like images (*.png, *.gif, etc)
      * @param torrents if true, fetch attachments ending in .torrent
@@ -114,11 +123,13 @@ class WebRipRunner implements EepGet.StatusListener {
         _maxAttachKB = maxAttachKB;
         _maxTotalKB = maxTotalKB;
         _allowFileURLs = allowFileURLs;
+        _existingAttachments = existingAttachments;
         setState(STATE_CONFIGURED);
     }
 
     /** fire up a new thread to run blockingRip() */
     public void nonblockingRip() {
+        _ui.debugMessage("starting nbrip");
         Thread t = new Thread(new Runnable() {
             public void run() { blockingRip(); }
         }, "WebRip");
@@ -130,6 +141,7 @@ class WebRipRunner implements EepGet.StatusListener {
      * abortRip() from another thread to cancel it asap (though it won't abort immediately)
      */
     public void blockingRip() {
+        _ui.debugMessage("starting blocking rip");
         try {
             _htmlFile = File.createTempFile("webrip", ".html", _tmpDir);
         } catch (IOException ioe) {
@@ -151,7 +163,7 @@ class WebRipRunner implements EepGet.StatusListener {
         }
     }
     
-    public List getErrorMessages() { return _errorMessages; }
+    public List getErrorMessages() { return new ArrayList(_errorMessages); }
     public List getExceptions() { return _exceptions; }
     public File getRewrittenFile() { return _htmlFile; }
     public List getAttachmentFiles() { return _attachmentFiles; }
@@ -159,12 +171,20 @@ class WebRipRunner implements EepGet.StatusListener {
     public int getState() { return _state; }
     /** how many attachments are pending fetch (only relevent during STATE_STARTED_FETCH_ATTACHMENTS) */
     public int getPendingAttachments() { return _pendingAttachments; }
+    public int getTotalAttachments() { return _attachmentFiles.size(); }
     
     public void abortRip() {
-        fatal("aborted by the user");
+        if (!died())
+            fatal("aborted by the user");
     }
     
-    private void setState(int state) { if (_state != STATE_ERROR) _state = state; }
+    private void setState(int state) { 
+        if (_state != STATE_ERROR) 
+            _state = state; 
+        _ui.debugMessage("setState(" + state + ") lsnr=" + _lsnr);
+        if (_lsnr != null)
+            _lsnr.statusUpdated(this);
+    }
     
     /** delete all temporary files, including the rewritten html and attachments */
     public void cleanupData() {
@@ -215,6 +235,7 @@ class WebRipRunner implements EepGet.StatusListener {
             } else {
                 int size = (int)file.length();
                 if ( (size > _maxAttachKB*1024) || (_totalSize + size > _maxTotalKB*1024) ) {
+                    _ui.debugMessage("attachment " + i + " fetched, but too large (" + size + ") from " + url);
                     file.delete();
                     _attachmentFiles.remove(i);
                     _attachmentURLRefs.remove(i);
@@ -222,14 +243,19 @@ class WebRipRunner implements EepGet.StatusListener {
                     _otherURLRefs.add(refURL);
                     i--;
                 } else {
+                    _ui.debugMessage("attachment " + i + " fetched (" + size + ") from " + url);
                     _totalSize += size;
                 }
             }
             _pendingAttachments--;
+            _lsnr.statusUpdated(this);
         }
     }
     
     private boolean get(File file, String url) {
+        if ( (url == null) || (url.trim().length() <= 0) )
+            return false;
+        
         if (_allowFileURLs && url.startsWith("file://")) {
             String f = url.substring("file://".length());
             FileInputStream fis = null;
@@ -245,6 +271,7 @@ class WebRipRunner implements EepGet.StatusListener {
                 fos.close();
                 fis = null;
                 fos = null;
+                _ui.debugMessage("file fetch ok for " + f);
                 return true;
             } catch (IOException ioe) {
                 fatal("error fetching from the file [" + f + "]", ioe);
@@ -254,16 +281,24 @@ class WebRipRunner implements EepGet.StatusListener {
                 if (fos != null) try { fos.close(); } catch (IOException ioe) {}
             }
         }
+        if ((_proxyPort <= 0) || (_proxyHost == null) || (_proxyHost.trim().length() == 0) ) {
+            _proxyPort = -1;
+            _proxyHost = null;
+        }
         EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _proxyHost, _proxyPort, 0, file.getPath(), url, false);
         get.addStatusListener(this);
         boolean fetched = get.fetch(30*1000);
         if (fetched) {
+            _ui.debugMessage("fetch ok for " + url);
             return true;
         } else {
+            _ui.debugMessage("fetch failed for " + url);
             file.delete(); // delete partial fetch
             return false;
         }
     }
+    
+    public String getRewrittenHTML() { return read(_htmlFile); }
     
     private String parse(File htmlFile) {
         if (!htmlFile.exists()) {
@@ -272,11 +307,13 @@ class WebRipRunner implements EepGet.StatusListener {
         }
         String html = read(htmlFile);
         if (html == null) {
+            _ui.debugMessage("read html is null");
             return null;
         } else {
-            HTMLStateBuilder builder = new HTMLStateBuilder(new StdoutUI(), html);
+            HTMLStateBuilder builder = new HTMLStateBuilder(_ui, html);
             builder.buildState();
             List tags = builder.getTags();
+            _ui.debugMessage("parsed rip into " + tags.size() + " tags");
             parseTags(tags);
             return html;
         }
@@ -297,6 +334,7 @@ class WebRipRunner implements EepGet.StatusListener {
     }
     
     private void parseLink(String ref) {
+        _ui.debugMessage("parseLink [" + ref + "]");
         if (ref == null) return;
         if (shouldFetchLink(ref))
             parseRef(ref);
@@ -304,6 +342,7 @@ class WebRipRunner implements EepGet.StatusListener {
             _otherURLRefs.add(ref);
     }
     private void parseRef(String ref) {
+        _ui.debugMessage("parseRef [" + ref + "]");
         if (ref == null) return;
         String absoluteRef = getAbsolute(ref);
         scheduleFetch(absoluteRef, ref);
@@ -368,6 +407,7 @@ class WebRipRunner implements EepGet.StatusListener {
     }
 
     private void scheduleFetch(String absoluteURL, String relative) {
+        _ui.debugMessage("schedule fetch of " + absoluteURL);
         if ( (absoluteURL != null) && (!_attachmentURLRefs.contains(relative)) ) {
             try {
                 File f = File.createTempFile("webrip", ".attach", _tmpDir);
@@ -381,13 +421,16 @@ class WebRipRunner implements EepGet.StatusListener {
         }
     }
     
-    private boolean died() { return _errorMessages.size() > 0; }
+    private boolean died() { return _state == STATE_ERROR || _errorMessages.size() > 0; }
     private void fatal(String msg) { fatal(msg, null); }
     private void fatal(String msg, Exception e) {
+        _ui.debugMessage("", new Exception("fatal source"));
         if (msg != null)
             _errorMessages.add(msg);
         if (e != null)
             _exceptions.add(e);
+        _ui.errorMessage(msg, e);
+        setState(STATE_ERROR);
     }
     
     public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
@@ -398,7 +441,7 @@ class WebRipRunner implements EepGet.StatusListener {
     public void attempting(String url) {}
     
     public static void main(String args[]) {
-        WebRipRunner runner = new WebRipRunner("file:///tmp/webrip/src/index.html", null, -1, new File("/tmp/webrip/tmp"));
+        WebRipRunner runner = new WebRipRunner(new NullUI(), "file:///tmp/webrip/src/index.html", null, -1, new File("/tmp/webrip/tmp"));
         runner.configure(true, true, 16, 64, true, 0);
         runner.blockingRip();
         List err = runner.getErrorMessages();
@@ -433,39 +476,5 @@ class WebRipRunner implements EepGet.StatusListener {
         } finally {
             if (in != null) try { in.close(); } catch (IOException ioe) {}
         }
-    }
-    
-    private class StdoutUI implements UI {
-        public Opts readCommand() { return null; }
-        public Opts readCommand(boolean displayPrompt) { return null; }
-        public void errorMessage(String msg) {
-            System.err.println(msg);
-        }
-
-        public void errorMessage(String msg, Exception cause) {
-            System.err.println(msg);
-            if (cause != null)
-                cause.printStackTrace();
-        }
-
-        public void statusMessage(String msg) {
-            System.out.println(msg);
-        }
-
-        public void debugMessage(String msg) {
-            System.out.println(msg);
-        }
-
-        public void debugMessage(String msg, Exception cause) {
-            System.out.println(msg);
-            if (cause != null)
-                cause.printStackTrace();
-        }
-
-        public void commandComplete(int status, List location) {}
-        public boolean toggleDebug() { return true; }
-        public boolean togglePaginate() { return true; }
-        public void insertCommand(String commandline) {}
-        public String readStdIn() { return ""; }
     }
 }

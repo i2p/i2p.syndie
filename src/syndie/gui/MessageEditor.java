@@ -38,6 +38,8 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
@@ -54,6 +56,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Label;
 import syndie.Constants;
@@ -63,6 +66,7 @@ import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -145,6 +149,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
 
     private MenuItem _pageAddHTML;
     private MenuItem _pageAddText;
+    private MenuItem _pageAddWebRip;
     private MenuItem _pageRemove;
     private MenuItem _attachmentAdd;
     private MenuItem _attachmentRemove;
@@ -154,6 +159,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     /** version is incremented each time the state is saved */
     private int _postponeVersion;
     private boolean _modifiedSinceSave;
+    /** set to false to disable saving state (useful for automated multistep processes) */
+    private boolean _enableSave;
     
     /** Creates a new instance of MessageEditor */
     public MessageEditor(BrowserControl browser, Composite parent, MessageEditorListener lsnr) {
@@ -172,6 +179,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _referenceNodes = new ArrayList();
         _postponeId = -1;
         _postponeVersion = -1;
+        _enableSave = true;
         modified();
     
         _browser.getUI().debugMessage("editor: fetching channels");
@@ -286,7 +294,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         gl.verticalSpacing = 0;
         line2.setLayout(gl);
         
-        _controlForumCombo = new Combo(line2, SWT.DROP_DOWN);
+        _controlForumCombo = new Combo(line2, SWT.DROP_DOWN | SWT.READ_ONLY);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 200;
         _controlForumCombo.setLayoutData(gd);
@@ -304,7 +312,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         
         _controlPrivacy = new Label(line2, SWT.NONE);
         _controlPrivacy.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _controlPrivacyCombo = new Combo(line2, SWT.DROP_DOWN);
+        _controlPrivacyCombo = new Combo(line2, SWT.DROP_DOWN | SWT.READ_ONLY);
         _controlPrivacyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         // author is under the avatar
@@ -331,7 +339,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         line3.setLayout(gl);
         line3.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _controlPageCombo = new Combo(line3, SWT.DROP_DOWN);
+        _controlPageCombo = new Combo(line3, SWT.DROP_DOWN | SWT.READ_ONLY);
         _controlPageCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _controlPageCombo.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { if (_pages.size() > 0) showPage(_controlPageCombo.getSelectionIndex()); }
@@ -351,6 +359,11 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPage("text/plain"); }
             public void widgetSelected(SelectionEvent selectionEvent) { addPage("text/plain"); }
         });
+        _pageAddWebRip = new MenuItem(_controlPageMenu, SWT.PUSH);
+        _pageAddWebRip.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addWebRip(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addWebRip(); }
+        });
         new MenuItem(_controlPageMenu, SWT.SEPARATOR);
         _pageRemove = new MenuItem(_controlPageMenu, SWT.PUSH);
         _pageRemove.addSelectionListener(new SelectionListener() {
@@ -366,7 +379,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _controlAttachment = new Label(line3, SWT.NONE);
         _controlAttachment.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _controlAttachmentCombo = new Combo(line3, SWT.DROP_DOWN);
+        _controlAttachmentCombo = new Combo(line3, SWT.DROP_DOWN | SWT.READ_ONLY);
         gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.widthHint = 100;
         _controlAttachmentCombo.setLayoutData(gd);
@@ -423,8 +436,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             _pageRoot.layout();
         }
     }
-    public void addPage() { addPage("text/html"); }
-    public void addPage(String type) {
+    public PageEditor addPage() { return addPage("text/html"); }
+    public PageEditor addPage(String type) {
         saveState();
         _modifiedSinceSave = true;
         _browser.getUI().debugMessage("addPage: creating editor");
@@ -434,6 +447,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         showPage(_pages.size()-1);
         _browser.getUI().debugMessage("addPage: page shown");
         rebuildPagesCombo();
+        return page;
     }
     public void removePage() {
         saveState();
@@ -591,6 +605,70 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _controlAttachmentCombo.setRedraw(true);
     }
 
+    private static final String T_WEBRIP_TITLE = "syndie.gui.messageeditor.webrip";
+    private static final String T_WEBRIP_FAIL = "syndie.gui.messageeditor.webrip.fail";
+    
+    private void addWebRip() {
+        Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        shell.setLayout(new FillLayout());
+        final WebRipControl ctl = new WebRipControl(_browser, shell);
+        ctl.setListener(new WebRipListener(shell, ctl));
+        ctl.setExistingAttachments(_attachments.size());
+        shell.pack();
+        shell.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_TITLE, "Add web rip"));
+        shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { ctl.dispose(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        shell.open();
+    }
+    
+    private class WebRipListener implements WebRipControl.RipControlListener {
+        private Shell _shell;
+        private WebRipControl _ctl;
+        public WebRipListener(Shell shell, WebRipControl ctl) {
+            _shell = shell;
+            _ctl = ctl;
+        }
+        public void ripComplete(boolean successful, WebRipRunner runner) {
+            if (successful) {
+                disableAutoSave();
+                PageEditor editor = addPage("text/html");
+                String content = runner.getRewrittenHTML();
+                if (content != null)
+                    editor.setContent(content);
+                List files = runner.getAttachmentFiles();
+                for (int i = 0; i < files.size(); i++) {
+                    File f = (File)files.get(i);
+                    addAttachment(f);
+                }
+                enableAutoSave();
+                saveState();
+                _shell.dispose();
+                _ctl.dispose();
+            } else {
+                ripFailed(_shell, _ctl);
+            }
+        }
+    }
+    
+    private void ripFailed(Shell shell, WebRipControl ctl) {
+        shell.dispose();
+        List msgs = ctl.getErrorMessages();
+        ctl.dispose();
+        
+        MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+        box.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_FAIL, "Error ripping web page"));
+        StringBuffer err = new StringBuffer();
+        for (int i = 0; i < msgs.size(); i++)
+            err.append((String)msgs.get(i)).append('\n');
+        box.setMessage(err.toString());
+        box.open();
+    }
+    
     int getPageCount() { return _pages.size(); }
     String getPageContent(int page) {
         PageEditor editor = (PageEditor)_pages.get(page);
@@ -849,9 +927,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
     }
     
+    private void disableAutoSave() { _enableSave = false; }
+    private void enableAutoSave() { _enableSave = true; }
+    
     private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
     void saveState() {
-        if (!_modifiedSinceSave) return;
+        if (!_modifiedSinceSave || !_enableSave) return;
         long stateId = _postponeId;
         if (stateId < 0)
             stateId = System.currentTimeMillis();
@@ -1071,6 +1152,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private static final String T_PAGE_ACTION = "syndie.gui.messageeditor.page.action";
     private static final String T_PAGE_ADD_HTML = "syndie.gui.messageeditor.page.addhtml";
     private static final String T_PAGE_ADD_TEXT = "syndie.gui.messageeditor.page.addtext";
+    private static final String T_PAGE_ADD_WEBRIP = "syndie.gui.messageeditor.page.addwebrip";
     private static final String T_PAGE_REMOVE = "syndie.gui.messageeditor.page.remove";
     private static final String T_ATTACHMENTS = "syndie.gui.messageeditor.attachments";
     private static final String T_ATTACHMENTS_NONE = "syndie.gui.messageeditor.attachments.none";
@@ -1122,6 +1204,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _controlPageAction.setText(registry.getText(T_PAGE_ACTION, "+/-"));
         _pageAddHTML.setText(registry.getText(T_PAGE_ADD_HTML, "Add HTML page"));
         _pageAddText.setText(registry.getText(T_PAGE_ADD_TEXT, "Add text page"));
+        _pageAddWebRip.setText(registry.getText(T_PAGE_ADD_WEBRIP, "Add web rip"));
         _pageRemove.setText(registry.getText(T_PAGE_REMOVE, "Remove current page"));
         _controlAttachment.setText(registry.getText(T_ATTACHMENTS, "Attachments:"));
 
