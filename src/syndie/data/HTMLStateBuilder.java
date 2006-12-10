@@ -1,16 +1,15 @@
-package syndie.gui;
+package syndie.data;
 
 import java.util.*;
-import org.eclipse.swt.custom.StyleRange;
 import syndie.Constants;
-import syndie.data.MessageInfo;
 import syndie.db.NullUI;
 import syndie.db.UI;
+//import syndie.gui.*;
 
 /**
  *
  */
-class HTMLStateBuilder {
+public class HTMLStateBuilder {
     private UI _ui;
     private String _html;
     private String _plainText;
@@ -362,11 +361,11 @@ class HTMLStateBuilder {
     }
     
     /** the following character is inserted into the document whenever there should be an image */
-    static final char PLACEHOLDER_IMAGE = '\u0001';
+    public static final char PLACEHOLDER_IMAGE = '\u0001';
     /** the following character is inserted into the document after all links */
-    static final char PLACEHOLDER_LINK_END = '\u0002';
+    public static final char PLACEHOLDER_LINK_END = '\u0002';
     /** the following character is inserted into the document before any list items */
-    static final char PLACEHOLDER_LISTITEM = '\u0003';
+    public static final char PLACEHOLDER_LISTITEM = '\u0003';
     
     private void receiveTagEnd(StringBuffer content, int bodyIndex, StringBuffer body) {
         receiveTagEnd(content.toString(), bodyIndex, body);
@@ -764,7 +763,7 @@ class HTMLStateBuilder {
         System.out.println("Text: " + text);
     }
     /** try to flex the supported html... */
-    static final String COMPREHENSIVE_TEST = 
+    public static final String COMPREHENSIVE_TEST = 
 "<html><body bgimage=\"attachment0\">\n" +
 "<p>html test page (links to syndieURIs are invalid, as are pages/images)</p>\n" +
 "<b>i am bold</b><br />\n" +

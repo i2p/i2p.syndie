@@ -34,6 +34,8 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.*;
 import syndie.Constants;
+import syndie.data.HTMLStateBuilder;
+import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;

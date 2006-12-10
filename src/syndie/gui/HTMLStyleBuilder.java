@@ -15,6 +15,8 @@ import org.eclipse.swt.graphics.GlyphMetrics;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import syndie.Constants;
+import syndie.data.HTMLStateBuilder;
+import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;

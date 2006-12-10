@@ -1,12 +1,11 @@
-package syndie.gui;
+package syndie.data;
 
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
 import syndie.Constants;
 
-
-class HTMLTag {
+public class HTMLTag {
     /** tag name, lower case */
     public String name;
     /** attributes on the tag */

@@ -553,39 +553,12 @@ public class TextEngine {
                 orig = cmd.substring(1, searchEnd);
                 replacement = cmd.substring(searchEnd+1);
             }
-            String newVal = replace(prev, orig, replacement, 1);
+            String newVal = Constants.replace(prev, orig, replacement, 1);
             _ui.insertCommand(newVal);
         } else {
             _ui.errorMessage("No history to mangle");
             _ui.commandComplete(-1, null);
         }
-    }
-    
-    private static final String replace(String orig, String oldval, String newval, int howManyReplacements) {
-        if ( (orig == null) || (oldval == null) || (oldval.length() <= 0) ) return orig;
-        
-        StringBuffer rv = new StringBuffer();
-        char origChars[] = orig.toCharArray();
-        char search[] = oldval.toCharArray();
-        int numReplaced = 0;
-        for (int i = 0; i < origChars.length; i++) {
-            boolean match = true;
-            if (howManyReplacements <= numReplaced)
-                match = false; // matched enough, stop
-            for (int j = 0; match && j < search.length && (j + i < origChars.length); j++) {
-                if (search[j] != origChars[i+j])
-                    match = false;
-            }
-            if (match) {
-                if (newval != null)
-                    rv.append(newval);
-                i += search.length-1;
-                numReplaced++;
-            } else {
-                rv.append(origChars[i]);
-            }
-        }
-        return rv.toString();
     }
     
     private void processDefineCommand(Opts opts) {

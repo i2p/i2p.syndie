@@ -181,7 +181,35 @@ public class Constants {
         // dotless-i)
         return orig.toLowerCase(Locale.UK);
     }
-
+    
+    
+    public static final String replace(String orig, String oldval, String newval) { return replace(orig, oldval, newval, 0); }
+    public static final String replace(String orig, String oldval, String newval, int howManyReplacements) {
+        if ( (orig == null) || (oldval == null) || (oldval.length() <= 0) ) return orig;
+        
+        StringBuffer rv = new StringBuffer();
+        char origChars[] = orig.toCharArray();
+        char search[] = oldval.toCharArray();
+        int numReplaced = 0;
+        for (int i = 0; i < origChars.length; i++) {
+            boolean match = true;
+            if ((howManyReplacements > 0) && (howManyReplacements <= numReplaced))
+                match = false; // matched enough, stop
+            for (int j = 0; match && j < search.length && (j + i < origChars.length); j++) {
+                if (search[j] != origChars[i+j])
+                    match = false;
+            }
+            if (match) {
+                if (newval != null)
+                    rv.append(newval);
+                i += search.length-1;
+                numReplaced++;
+            } else {
+                rv.append(origChars[i]);
+            }
+        }
+        return rv.toString();
+    }
     
     public static void main(String args[]) {
         String split[] = split('\n', "hi\nhow are you?\n\nw3wt\n\nthe above is a blank line");

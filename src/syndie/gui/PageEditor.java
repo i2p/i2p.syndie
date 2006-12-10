@@ -60,6 +60,7 @@ import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
