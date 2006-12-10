@@ -283,10 +283,15 @@ public class TextEngine {
             pass = DEFAULT_PASS;
         }
         
-        if (_client == null)
+        if (_client == null) {
             _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
-        else
-            _client.close();
+        } else if (_client.isLoggedIn()) {
+            if (_client.getLogin().equals(login)) {
+                _ui.statusMessage("Login successful (already logged in)");
+                _client.runScript(_ui, "login");
+                return;
+            }
+        }
         try {
             if (pass == null)
                 pass = "";
@@ -695,13 +700,14 @@ public class TextEngine {
     }
     
     private void processInit(Opts opts) {
-        if (_client != null) return;
+        if ( (_client != null) && (_client.isLoggedIn()) ) return;
         List args = opts.getArgs();
         String url = getDefaultURL();
         if (args.size() == 1)
             url = (String)args.get(0);
         try {
-            _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
+            if (_client == null)
+                _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
             _client.connect(url);
             //_client.close();
             _ui.statusMessage("Database created at " + url);
@@ -922,9 +928,8 @@ public class TextEngine {
                 String db = opts.getOptValue("db");
                 if (db == null)
                     db = getDefaultURL();
-                if (client == null) {
+                if (client == null)
                     client = new DBClient(I2PAppContext.getGlobalContext(), new File(_rootFile));
-                }
                 client.restore(ui, in, db);
                 return true;
             } else {

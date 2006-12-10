@@ -65,19 +65,23 @@ public class DBClient {
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
-        _shutdownHook = new Thread(new Thread(new Runnable() {
-            public void run() {
-                _shutdownInProgress = true;
-                close();
-            }
-        }, "DB shutdown"));
     }
     
     public void connect(String url) throws SQLException { 
         //System.out.println("Connecting to " + url);
         _url = url;
         _con = DriverManager.getConnection(url);
-        Runtime.getRuntime().addShutdownHook(_shutdownHook);
+        if (_shutdownHook == null) {
+            _shutdownHook = new Thread(new Runnable() {
+                public void run() {
+                    _shutdownInProgress = true;
+                    close();
+                }
+            }, "DB shutdown");
+            Runtime.getRuntime().addShutdownHook(_shutdownHook);
+        } else {
+            throw new RuntimeException("already connected");
+        }
         
         initDB();
         _uriDAO = new SyndieURIDAO(this);
@@ -141,7 +145,7 @@ public class DBClient {
             stmt = _con.prepareStatement("SHUTDOWN");
             stmt.execute();
             if (_log.shouldLog(Log.INFO))
-                _log.info("Database shutdown");
+                _log.info("Database shutdown", new Exception("shutdown by"));
             stmt.close();
             stmt = null;
             _con.close();
@@ -151,8 +155,10 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        if (!_shutdownInProgress)
-            Runtime.getRuntime().removeShutdownHook(_shutdownHook);
+        Thread hook = _shutdownHook;
+        _shutdownHook = null;
+        if (!_shutdownInProgress && (hook != null))
+            Runtime.getRuntime().removeShutdownHook(hook);
     }
     
     String getString(String query, int column, long keyVal) {
@@ -257,7 +263,7 @@ public class DBClient {
     }
     
     public long nextId(String seq) {
-        ensureLoggedIn();
+        if (_con == null) throw new IllegalStateException("not connected");
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

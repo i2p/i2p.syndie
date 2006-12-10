@@ -38,8 +38,8 @@ public class ViewMetadata extends CommandImpl {
             if (args.dbOptsSpecified()) {
                 if (client == null)
                     client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
-                else
-                    client.close();
+                //else
+                //    client.close();
                 nymId = client.connect(args.getOptValue("db"), args.getOptValue("login"), args.getOptValue("pass"));
                 if (nymId < 0) {
                     ui.errorMessage("Login incorrect");

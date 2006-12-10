@@ -34,6 +34,7 @@ public class SyndicationManager {
     private List _archives;
     private List _listeners;
     private List _fetchRecords;
+    private List _fetchMetaRecords;
     private MergedArchiveIndex _mergedIndex;
     private ArchiveDiff _mergedDiff;
     private int _concurrent;
@@ -79,6 +80,7 @@ public class SyndicationManager {
         _archives = new ArrayList();
         _listeners = new ArrayList();
         _fetchRecords = new ArrayList();
+        _fetchMetaRecords = new ArrayList();
         _mergedIndex = null;
         _archivesLoaded = false;
     }
@@ -204,6 +206,8 @@ public class SyndicationManager {
         fireFetchStatusUpdated(rec);
         synchronized (_fetchRecords) {
             _fetchRecords.add(rec);
+            if (uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() == null))
+                _fetchMetaRecords.add(rec);
             _fetchRecords.notifyAll();
         }
     }
@@ -710,6 +714,7 @@ public class SyndicationManager {
     public void removeFetchRecord(StatusRecord rec) {
         synchronized (_fetchRecords) {
             _fetchRecords.remove(rec);
+            _fetchMetaRecords.remove(rec);
         }
     }
     
@@ -1196,15 +1201,32 @@ public class SyndicationManager {
             for (;;) {
                 int nonterminalRemaining = 0;
                 synchronized (_fetchRecords) {
-                    for (int i = 0; i < _fetchRecords.size(); i++) {
+                    // fetch all metadata records before fetching any other records
+                    int nonterminalMeta = 0;
+                    for (int i = 0; i < _fetchMetaRecords.size(); i++) {
                         StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                         if (rec.getStatus() == FETCH_SCHEDULED) {
                             rec.setStatus(FETCH_STARTED);
                             cur = rec;
+                            nonterminalMeta++;
                             break;
                         }
-                        if (!rec.isTerminal())
+                        if (!rec.isTerminal()) {
                             nonterminalRemaining++;
+                            nonterminalMeta++;
+                        }
+                    }
+                    if ( (cur == null) && (nonterminalMeta == 0) ) {
+                        for (int i = 0; i < _fetchRecords.size(); i++) {
+                            StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
+                            if (rec.getStatus() == FETCH_SCHEDULED) {
+                                rec.setStatus(FETCH_STARTED);
+                                cur = rec;
+                                break;
+                            }
+                            if (!rec.isTerminal())
+                                nonterminalRemaining++;
+                        }
                     }
                     if (cur == null) {
                         try {

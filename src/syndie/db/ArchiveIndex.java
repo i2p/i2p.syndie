@@ -88,7 +88,16 @@ public class ArchiveIndex {
             return;
         }
         
+        
         ArchiveChannel chan = new ArchiveChannel(ui);
+        File metaFile = new File(channelDir, "meta" + Constants.FILENAME_SUFFIX);
+        if (!metaFile.exists()) {
+            ui.debugMessage("metadata for " + channelDir.getName() + " is in the database, but not the archive");
+            // if its not writable, it will not be written to disk as part of our
+            // index, but it will be used as part of our in-memory index to determine
+            // what to pull from others
+            chan.setWritable(false);
+        }
         
         List messages = new ArrayList();
         List pseudoAuthMessages = new ArrayList();

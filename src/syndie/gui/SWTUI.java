@@ -82,7 +82,12 @@ public class SWTUI {
         
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
-        lsnr.waitFor("login");
+        boolean ok = lsnr.waitFor("login", 30*1000);
+        if (!ok) {
+            browser.errorMessage("Timed out trying to start syndie up.  Please review the logs");
+            System.exit(0);
+            return;
+        }
         long t8 = System.currentTimeMillis();
         browser.debugMessage("db login complete, starting browser...");
         browser.startup();
@@ -109,14 +114,17 @@ public class SWTUI {
         public void scriptComplete(String script) {
             synchronized (_complete) { _complete.add(script); _complete.notifyAll(); }
         }
-        public void waitFor(String scriptName) {
+        public boolean waitFor(String scriptName, long maxPeriod) {
+            long endAt = System.currentTimeMillis() + maxPeriod;
             for (;;) {
+                long remaining = endAt - System.currentTimeMillis();
+                if (remaining <= 0) return false;
                 try {
                     synchronized (_complete) {
                         if (_complete.contains(scriptName))
-                            return;
+                            return true;
                         else
-                            _complete.wait();
+                            _complete.wait(remaining);
                     }
                 } catch (InterruptedException ie) {}
             }

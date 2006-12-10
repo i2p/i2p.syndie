@@ -17,6 +17,7 @@ public class ArchiveChannel {
     private long _knownMessageCount;
     private long _entrySize;
     protected UI _ui;
+    private boolean _writable;
 
     public ArchiveChannel(UI ui) {
         _ui = ui;
@@ -24,6 +25,7 @@ public class ArchiveChannel {
         _pseudoAuthorizedMessages = null;
         _unauthMessageEntries = null;
         _knownMessageCount = -1;
+        _writable = true;
     }
     
     public byte[] getScope() { return _scope; }
@@ -68,8 +70,10 @@ public class ArchiveChannel {
     void setPseudoAuthorizedMessages(List messages) { _pseudoAuthorizedMessages = messages; }
     void setUnauthorizedMessages(List messages) { _unauthMessageEntries = messages; }
     void setEntrySize(long size) { _entrySize = size; }
+    void setWritable(boolean writable) { _writable = writable; }
 
     public void write(OutputStream out, boolean newOnly, boolean chanOnly, boolean includeUnauthorized) throws IOException {            
+        if (!_writable) return;
         try {
             //_ui.debugMessage("Writing channel " + Base64.encode(getScope()) + " (new? " + newOnly + " meta? " + chanOnly + " unauthorized? " + includeUnauthorized + ")");
             //$scopeHash
