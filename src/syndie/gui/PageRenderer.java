@@ -395,7 +395,7 @@ public class PageRenderer implements Themeable {
 
         _charsPerLine = getCharsPerLine();
         
-        final HTMLStateBuilder builder = new HTMLStateBuilder(html, _charsPerLine);
+        final HTMLStateBuilder builder = new HTMLStateBuilder(_browser.getUI(), html, _charsPerLine);
         builder.buildState();
         _browser.getUI().debugMessage("renderHTML: state built");
         final String text = builder.getAsText();
@@ -436,7 +436,7 @@ public class PageRenderer implements Themeable {
                 _text.setRedraw(false);
                 _text.setEnabled(true);
                 _text.setText(text);
-                _browser.getUI().debugMessage("syncExec to write on the styledText: text written");
+                _browser.getUI().debugMessage("syncExec to write on the styledText: text written: list indexes: " + _liIndexes);
                 _text.setStyleRanges(sbuilder.getStyleRanges());
                 _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set");
                 long before = System.currentTimeMillis();
@@ -521,11 +521,11 @@ public class PageRenderer implements Themeable {
             // now get the tags applicable to [lineStart,lineEnd]
             for (int i = 0; i < stateTagCount; i++) {
                 HTMLTag tag = stateTags[i];
-                if ( ( (tag.startIndex <= lineStart) && (tag.endIndex > lineStart) ) ||
-                     ( (tag.startIndex >= lineStart) && (tag.startIndex < lineEnd) ) )
+                if ( (tag.startIndex <= lineEnd) && (tag.endIndex >= lineStart) )
                     lineTags.add(tag);
-                else if (tag.endIndex > lineStart)
-                    break; // the stateTags are ordered with earliest end first
+                //else if (tag.endIndex > lineStart)
+                //    break; // the stateTags are ordered with earliest end first
+                //!! which means that you can't break there jrandom.
             }
             //ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
             timesGetTags[line] = System.currentTimeMillis();

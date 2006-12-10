@@ -136,6 +136,7 @@ class HTMLStyleBuilder {
             insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_IMAGE, breakPointTags, _imageIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LINK_END, breakPointTags, _linkIndexes);
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LISTITEM, breakPointTags, _listItemIndexes);
+        _ui.debugMessage("list item indexes: " + _listItemIndexes);
 
         ts("character breakpoints inserted");
         

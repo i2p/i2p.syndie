@@ -4,11 +4,14 @@ import java.util.*;
 import org.eclipse.swt.custom.StyleRange;
 import syndie.Constants;
 import syndie.data.MessageInfo;
+import syndie.db.NullUI;
+import syndie.db.UI;
 
 /**
  *
  */
 class HTMLStateBuilder {
+    private UI _ui;
     private String _html;
     private String _plainText;
     /** used during state building */
@@ -51,8 +54,11 @@ class HTMLStateBuilder {
         _closeNestedTags.add("table");
     }
     
-    public HTMLStateBuilder(String html) { this(html, -1); }
-    public HTMLStateBuilder(String html, int charsPerLine) {
+    public HTMLStateBuilder(String html) { this(new NullUI(), html, -1); }
+    public HTMLStateBuilder(UI ui, String html) { this(ui, html, -1); }
+    public HTMLStateBuilder(String html, int charsPerLine) { this(new NullUI(), html, -1); }
+    public HTMLStateBuilder(UI ui, String html, int charsPerLine) {
+        _ui = ui;
         _html = html;
         _charsPerLine = charsPerLine;
         _curLine = 1;
@@ -419,10 +425,10 @@ class HTMLStateBuilder {
                         HTMLTag nested = (HTMLTag)_activeTags.remove(j);
                         nested.endIndex = bodyIndex;
                         _closedTags.add(nested);
-                        //System.out.println("closing nested tag: " + nested + " when receiving tag end of " + open);
-                        //System.out.println("------------------------");
-                        //System.out.println(body.substring(open.getStartIndex(), bodyIndex));
-                        //System.out.println("------------------------");
+                        _ui.debugMessage("closing nested tag: " + nested + " when receiving tag end of " + open);
+                        //_ui.debugMessage("------------------------");
+                        //_ui.debugMessage(body.substring(open.startIndex, bodyIndex));
+                        //_ui.debugMessage("------------------------");
                     }
                 }
                 
