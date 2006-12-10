@@ -104,6 +104,9 @@ public class SyndicationManager {
          * ideal status sequence: SCHEDULED, STARTED, COMPLETE, ( IMPORT_OK | IMPORT_PBE )
          */
         public void fetchStatusUpdated(SyndicationManager mgr, StatusRecord record);
+        
+        /** all syndication tasks are terminal */
+        public void syndicationComplete(SyndicationManager mgr);
     }
     
     public int getArchiveCount() { return _archives.size(); }
@@ -668,6 +671,7 @@ public class SyndicationManager {
                 writeUnauth(outFullUnauth, chan);
                 outAll.close();
                 outNew.close();
+                outUnauth.close();
             }
             outFullMeta.close();
             outFullNew.close();
@@ -722,6 +726,13 @@ public class SyndicationManager {
         for (int i = 0; i < _listeners.size(); i++) {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
             lsnr.fetchStatusUpdated(this, record);
+        }
+    }
+    
+    private void fireSyndicationComplete() {
+        for (int i = 0; i < _listeners.size(); i++) {
+            SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
+            lsnr.syndicationComplete(this);
         }
     }
     
@@ -1240,6 +1251,7 @@ public class SyndicationManager {
                 if (nonterminalRemaining == 0) {
                     _ui.debugMessage("All of the records are terminal, rebuilding our local archive index");
                     buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
+                    fireSyndicationComplete();
                 }
                 cur = null;
             }

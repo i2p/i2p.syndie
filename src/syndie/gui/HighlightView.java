@@ -405,8 +405,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         MenuItem sync = new MenuItem(menu, SWT.PUSH);
         sync.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_MENU_SYNC, "Syndicate"));
         sync.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationArchiveURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationArchiveURI()); }
         });
     }
     private void reconfigNewForumMenu(Menu menu, final TreeItem selected) {
@@ -666,4 +666,5 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         }
     }
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+    public void syndicationComplete(SyndicationManager mgr) {}
 }

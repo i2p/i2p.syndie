@@ -31,7 +31,7 @@ import syndie.db.SyndicationManager;
 /**
  *
  */
-public class SyndicationArchiveView implements Translatable, SyndicationManager.SyndicationListener {
+public class SyndicationArchiveView implements Translatable, Themeable, SyndicationManager.SyndicationListener {
     private BrowserControl _browser;
     private SyndicationManager _manager;
     private Composite _parent;
@@ -46,19 +46,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private TableColumn _colCustomProxy;
     private TableColumn _colError;
     private ArrayList _names;
-    private Map _errors;
-    /*
-    private Button _fetch;
-    private Label _proxyHostLabel;
-    private Text _proxyHost;
-    private Label _proxyPortLabel;
-    private Text _proxyPort;
-    private Label _fcpHostLabel;
-    private Text _fcpHost;
-    private Label _fcpPortLabel;
-    private Text _fcpPort;
-     */
-    
+    private Map _errors;    
     private Menu _menu;
     private MenuItem _menuAdd;
     private MenuItem _menuEdit;
@@ -79,6 +67,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
         _editPopup.dispose();
     }
     
@@ -185,7 +174,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colLastSync.pack();
         _colCustomProxy.pack();
         _colError.pack();
-        _colName.pack();// pack last
+        _colName.pack();
         
         _table.setRedraw(true);
     }
@@ -205,35 +194,6 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _table.setLinesVisible(true);
         _table.setHeaderVisible(true);
 
-        /*
-        _fetch = new Button(_root, SWT.PUSH);
-        _fetch.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _fetch.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fetchSelected(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fetchSelected(); }
-        });
-        
-        _proxyHostLabel = new Label(_root, SWT.NONE);
-        _proxyHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _proxyHost = new Text(_root, SWT.BORDER);
-        _proxyHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _proxyPortLabel = new Label(_root, SWT.NONE);
-        _proxyPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _proxyPort = new Text(_root, SWT.BORDER);
-        _proxyPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _fcpHostLabel = new Label(_root, SWT.NONE);
-        _fcpHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _fcpHost = new Text(_root, SWT.BORDER);
-        _fcpHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _fcpPortLabel = new Label(_root, SWT.NONE);
-        _fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _fcpPort = new Text(_root, SWT.BORDER);
-        _fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-         */
-    
         _menu = new Menu(_table);
         _table.setMenu(_menu);
         _menuAdd = new MenuItem(_menu, SWT.PUSH);
@@ -255,26 +215,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _editPopup = new SyndicationArchivePopup(_browser, _table.getShell());
         
         _browser.getTranslationRegistry().register(this);
-        
-        loadProxyDefaults();
-    }
-    
-    private void loadProxyDefaults() {
-        /*
-        String host = _browser.getClient().getDefaultHTTPProxyHost();
-        if (host == null) host = "";
-        _proxyHost.setText(host);
-        int port = _browser.getClient().getDefaultHTTPProxyPort();
-        if ( (port > 0) && (host.length() > 0) )
-            _proxyPort.setText(Integer.toString(port));
-        
-        host = _browser.getClient().getDefaultFreenetHost();
-        if (host == null) host = "";
-        _fcpHost.setText(host);
-        port = _browser.getClient().getDefaultFreenetPort();
-        if ( (port > 0) && (host.length() > 0) )
-            _fcpPort.setText(Integer.toString(port));
-         */
+        _browser.getThemeRegistry().register(this);
     }
     
     private void add() { _editPopup.open(); }
@@ -308,27 +249,7 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
             }
         }
     }
-    
-    /*
-    private void fetchSelected() {
-        int proxyPort = -1;
-        String proxyHost = _proxyHost.getText().trim();
-        try { int i = Integer.parseInt(_proxyPort.getText()); proxyPort = i; } catch (NumberFormatException nfe) {}
-        int fcpPort = 8481;
-        String fcpHost = _fcpHost.getText();
-        try { int i = Integer.parseInt(_fcpPort.getText()); fcpPort = i; } catch (NumberFormatException nfe) {}
-        
-        _manager.setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
-        ArrayList names = getSelectedNames();
-        if (names.size() == 0)
-            names = new ArrayList(_names);
-        for (int i = 0; i < names.size(); i++) {
-            int archive = _manager.getArchiveNum((String)names.get(i));
-            _manager.fetchIndex(archive);
-        }
-    }
-     */
-    
+
     /** selected archive names, or if none are selected explicitly, all names */
     public ArrayList getSelectedNames() {
         ArrayList rv = new ArrayList();
@@ -361,15 +282,6 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     private static final String T_ERROR = "syndie.gui.syndicationarchiveview.error";
     private static final String T_ERROR_TOOLTIP = "syndie.gui.syndicationarchiveview.error_tooltip";
     
-    /*
-    private static final String T_SYNC = "syndie.gui.syndicationarchiveview.sync";
-    private static final String T_SYNC_TOOLTIP = "syndie.gui.syndicationarchiveview.sync_tooltip";
-    private static final String T_PROXYHOST = "syndie.gui.syndicationarchiveview.proxyhost";
-    private static final String T_PROXYPORT = "syndie.gui.syndicationarchiveview.proxyport";
-    private static final String T_FCPHOST = "syndie.gui.syndicationarchiveview.fcphost";
-    private static final String T_FCPPORT = "syndie.gui.syndicationarchiveview.fcpport";
-     */
-    
     private static final String T_MENU_ADD = "syndie.gui.syndicationarchiveview.menuadd";
     private static final String T_MENU_EDIT = "syndie.gui.syndicationarchiveview.menuedit";
     private static final String T_MENU_DELETE = "syndie.gui.syndicationarchiveview.menudelete";
@@ -397,19 +309,22 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
         _colError.setText(registry.getText(T_ERROR, ""));
         _colError.setToolTipText(registry.getText(T_ERROR_TOOLTIP, "Any error from the last index sync"));
         
-        /*
-        _fetch.setText(registry.getText(T_SYNC, "sync"));
-        _fetch.setToolTipText(registry.getText(T_SYNC_TOOLTIP, "Fetch the selected archive indexes"));
-        
-        _proxyHostLabel.setText(registry.getText(T_PROXYHOST, "Proxy host:"));
-        _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "port:"));
-        _fcpHostLabel.setText(registry.getText(T_FCPHOST, "FCP host:"));
-        _fcpPortLabel.setText(registry.getText(T_FCPPORT, "port:"));
-         */
-        
         _menuAdd.setText(registry.getText(T_MENU_ADD, "Add"));
         _menuEdit.setText(registry.getText(T_MENU_EDIT, "Edit"));
         _menuDelete.setText(registry.getText(T_MENU_DELETE, "Delete"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _table.setFont(theme.TABLE_FONT);
+        _colType.setWidth(24);
+        _colNumForums.pack();
+        _colNumMsgs.pack();
+        _colNumNewForums.pack();
+        _colNumNewMsgs.pack();
+        _colLastSync.pack();
+        _colCustomProxy.pack();
+        _colError.pack();
+        _colName.pack();
     }
 
     public void archiveAdded(SyndicationManager mgr, String name) { redrawArchives(name); }
@@ -437,4 +352,5 @@ public class SyndicationArchiveView implements Translatable, SyndicationManager.
     public void archivesLoaded(SyndicationManager mgr) { 
         _table.getDisplay().asyncExec(new Runnable() { public void run() { redrawArchives(); } });
     }
+    public void syndicationComplete(SyndicationManager mgr) {}
 }

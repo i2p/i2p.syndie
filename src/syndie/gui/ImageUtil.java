@@ -262,7 +262,11 @@ public class ImageUtil {
             if (str != null) {
                 if (BrowserTab.TYPE_LOGS.equals(str))
                     return ICON_TAB_LOGS;
-                else if (BrowserTab.TYPE_SYNDICATE.equals(str))
+                else if (BrowserTab.TYPE_SYNDICATE_ARCHIVES.equals(str))
+                    return ICON_TAB_SYNDICATE;
+                else if (BrowserTab.TYPE_SYNDICATE_CONFIG.equals(str))
+                    return ICON_TAB_SYNDICATE;
+                else if (BrowserTab.TYPE_SYNDICATE_STATUS.equals(str))
                     return ICON_TAB_SYNDICATE;
                 else if (BrowserTab.TYPE_POST.equals(str))
                     return ICON_TAB_EDIT;
@@ -309,7 +313,7 @@ public class ImageUtil {
                 return TYPE_FORUM;
             else
                 return TYPE_MSG;
-        } else if (BrowserTab.TYPE_SYNDICATE.equals(uri.getType())) {
+        } else if (BrowserTab.TYPE_SYNDICATE_ARCHIVES.equals(uri.getType())) {
             return TYPE_ARCHIVE;
         } else if (BrowserTab.TYPE_MANAGE.equals(uri.getType())) {
             return TYPE_FORUM;

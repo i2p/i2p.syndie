@@ -42,7 +42,6 @@ import syndie.db.SyndicationManager;
 public class SyndicationDiff implements Translatable, Themeable, SyndicationManager.SyndicationListener {
     private BrowserControl _browser;
     private Composite _parent;
-    private SyndicationView _view;
     private Composite _root;
     private Group _treeGroup;
     private Tree _tree;
@@ -66,10 +65,9 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
     private boolean _displayNewScope;
     private boolean _displayKnownScope;
     
-    public SyndicationDiff(BrowserControl browser, Composite parent, SyndicationView view) {
+    public SyndicationDiff(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
-        _view = view;
         _uriToItem = new HashMap();
         _archiveURIs = new HashMap();
         _displayUnbookmarked = true;
@@ -183,6 +181,8 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
                     displayDiff(index.getChannel(j), name, banned, prevSelected, expanded);
             }
         }
+        _tree.setEnabled(_tree.getItemCount() > 0);
+        _treeGroup.setEnabled(_tree.getItemCount() > 0);
         _tree.setRedraw(true);
     }
     
@@ -315,7 +315,8 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
     }
     
     private void selectionUpdated() {
-        _view.explicitSelectionUpdated();
+        //if (_view != null)
+        //    _view.explicitSelectionUpdated();
     }
     
     private void initComponents() {
@@ -399,9 +400,11 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _menuNewScope.setSelection(_displayNewScope);
         _menuKnownScope.setSelection(_displayKnownScope);
         
-        _browser.getThemeRegistry().register(this);
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
         _browser.getSyndicationManager().addListener(this);
+        
+        displayDiff();
     }
     
     private void toggleSubtree() {
@@ -449,7 +452,11 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _menuBookmarkedOnly.setText(registry.getText(T_BOOKMARKEDONLY, "Only show posts in bookmarked forums?"));
         _menuKnownScope.setText(registry.getText(T_KNOWNSCOPE, "Show posts in forums already known locally?"));
         _menuNewScope.setText(registry.getText(T_NEWSCOPE, "Show posts in forums not known locally?"));
-
+    }
+    
+    public void applyTheme(Theme theme) {
+        _tree.setFont(theme.TREE_FONT);
+        _treeGroup.setFont(theme.DEFAULT_FONT);
         _colName.pack();
         _colType.setWidth(24);
         _colSize.pack();
@@ -457,13 +464,12 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         _colIsNewScope.pack();
         _colIsBookmarked.pack();
     }
-    
-    public void applyTheme(Theme theme) {
-        _tree.setFont(theme.TREE_FONT);
-        _treeGroup.setFont(theme.DEFAULT_FONT);
-    }
 
-    public void archivesLoaded(SyndicationManager mgr) {}
+    public void archivesLoaded(SyndicationManager mgr) {
+        Display.getDefault().asyncExec(new Runnable() { 
+            public void run() { displayDiff(); }
+        });
+    }
     public void archiveAdded(SyndicationManager mgr, String name) {}
     public void archiveRemoved(SyndicationManager mgr, String name) {}
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {}
@@ -477,4 +483,9 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         }
     }
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+    public void syndicationComplete(SyndicationManager mgr) {
+        Display.getDefault().asyncExec(new Runnable() { 
+            public void run() { displayDiff(); }
+        });
+    }
 }

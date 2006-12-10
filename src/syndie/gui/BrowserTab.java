@@ -37,7 +37,9 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_LOGS = "logs";
     static final String TYPE_META = "meta";
     static final String TYPE_MANAGE = "manage";
-    static final String TYPE_SYNDICATE = "syndicate";
+    static final String TYPE_SYNDICATE_ARCHIVES = "syndicatearchive";
+    static final String TYPE_SYNDICATE_CONFIG = "syndicateconfig";
+    static final String TYPE_SYNDICATE_STATUS = "syndicatestatus";
     static final String TYPE_SQL = "sql";
     static final String TYPE_TRANSLATE = "translate";
     static final String TYPE_HIGHLIGHT = "highlight";
@@ -88,9 +90,13 @@ abstract class BrowserTab implements Themeable {
         } else if (TYPE_LOGS.equals(uri.getType())) {
             return new LogTab(browser, uri);
         } else if (uri.isArchive()) {
-            return new SyndicationTab(browser, uri);
-        } else if (TYPE_SYNDICATE.equals(uri.getType())) {
-            return new SyndicationTab(browser, uri);
+            return new SyndicationArchiveTab(browser, uri);
+        } else if (TYPE_SYNDICATE_ARCHIVES.equals(uri.getType())) {
+            return new SyndicationArchiveTab(browser, uri);
+        } else if (TYPE_SYNDICATE_CONFIG.equals(uri.getType())) {
+            return new SyndicationConfigTab(browser, uri);
+        } else if (TYPE_SYNDICATE_STATUS.equals(uri.getType())) {
+            return new SyndicationStatusTab(browser, uri);
         } else if (TYPE_SQL.equals(uri.getType())) {
             return new SQLTab(browser, uri);
         } else if (uri.isText()) {

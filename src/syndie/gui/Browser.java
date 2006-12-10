@@ -124,7 +124,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private Menu _postMenuPublicMenu;
     private MenuItem _syndicateMenuRoot;
     private Menu _syndicateMenu;
-    private MenuItem _syndicateMenuManage;
+    private MenuItem _syndicateMenuArchives;
+    private MenuItem _syndicateMenuConfig;
+    private MenuItem _syndicateMenuStatus;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
@@ -435,10 +437,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _syndicateMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _syndicateMenu = new Menu(_syndicateMenuRoot);
         _syndicateMenuRoot.setMenu(_syndicateMenu);
-        _syndicateMenuManage = new MenuItem(_syndicateMenu, SWT.PUSH);
-        _syndicateMenuManage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showSyndicate(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showSyndicate(); }
+        _syndicateMenuConfig = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuConfig.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
+        });
+        _syndicateMenuArchives = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuArchives.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationArchiveURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationArchiveURI()); }
+        });
+        _syndicateMenuStatus = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuStatus.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationStatusURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationStatusURI()); }
         });
         
         _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
@@ -551,6 +563,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 if (record.getStatus() == SyndicationManager.FETCH_IMPORT_OK)
                     populatePostMenus(); // might have fetched a new publically postable forum's meta
             }
+            public void syndicationComplete(SyndicationManager mgr) {}
         });
         
         JobRunner.instance().enqueue(new Runnable() {
@@ -574,7 +587,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void doRefreshSyndicationMenu() {
         MenuItem item[] = _syndicateMenu.getItems();
         for (int i = 0; i < item.length; i++) {
-            if ( (item[i] != _syndicateMenuManage) && (item[i] != _syndicateMenuRoot) )
+            if ( (item[i] != _syndicateMenuArchives) && (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuStatus) && (item[i] != _syndicateMenuRoot) )
                 item[i].dispose();
         }
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
@@ -1202,7 +1215,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
     private void showLogs() { view(createLogsURI()); }
-    private void showSyndicate() { view(createSyndicationURI()); }
     
     private void increaseFont() { _themes.increaseFont(); }
     private void decreaseFont() { _themes.decreaseFont(); }
@@ -1524,18 +1536,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
     public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
     public SyndieURI createTranslateURI() { return new SyndieURI(BrowserTab.TYPE_TRANSLATE, new HashMap()); }
-    public SyndieURI createSyndicationURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE, new HashMap()); }
     public SyndieURI createHighlightsURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
-    public SyndieURI createSyndicationDiffURI() { 
-        Map map = new HashMap();
-        map.put("view", "diff");
-        return new SyndieURI(BrowserTab.TYPE_SYNDICATE, map);
-    }
-    public SyndieURI createSyndicationStatusURI() { 
-        Map map = new HashMap();
-        map.put("view", "status");
-        return new SyndieURI(BrowserTab.TYPE_SYNDICATE, map);
-    }
+    public SyndieURI createSyndicationArchiveURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_ARCHIVES, new HashMap()); }
+    public SyndieURI createSyndicationConfigURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_CONFIG, new HashMap()); }
+    public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
+    public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
@@ -1731,7 +1736,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_POST_MENU_POSTABLE = "syndie.gui.browser.postmenu.postable";
     private static final String T_POST_MENU_PUBLIC = "syndie.gui.browser.postmenu.public";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
-    private static final String T_SYNDICATE_MENU_MANAGE = "syndie.gui.browser.syndicatemenu.item";
+    private static final String T_SYNDICATE_MENU_ARCHIVES = "syndie.gui.browser.syndicatemenu.archives";
+    private static final String T_SYNDICATE_MENU_CONFIG = "syndie.gui.browser.syndicatemenu.config";
+    private static final String T_SYNDICATE_MENU_STATUS = "syndie.gui.browser.syndicatemenu.status";
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
     private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
     private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
@@ -1804,7 +1811,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuPublicRoot.setText(registry.getText(T_POST_MENU_PUBLIC, "&Publically postable forums"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
-        _syndicateMenuManage.setText(registry.getText(T_SYNDICATE_MENU_MANAGE, "&Manage"));
+        _syndicateMenuArchives.setText(registry.getText(T_SYNDICATE_MENU_ARCHIVES, "&Manage archives"));
+        _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
+        _syndicateMenuStatus.setText(registry.getText(T_SYNDICATE_MENU_STATUS, "View &status"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));

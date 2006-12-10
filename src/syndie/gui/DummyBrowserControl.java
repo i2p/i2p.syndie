@@ -46,7 +46,11 @@ public class DummyBrowserControl implements BrowserControl {
     public void showWaitCursor(boolean show) {}
     public TranslationRegistry getTranslationRegistry() { return null; }
 
-    public SyndieURI createSyndicationURI() { return null; }
+    public SyndieURI createSyndicationArchiveURI() { return null; }
+    public SyndieURI createSyndicationConfigURI() { return null; }
+    public SyndieURI createSyndicationDiffURI() { return null; }
+    public SyndieURI createSyndicationStatusURI() { return null; }
+
     public SyndicationManager getSyndicationManager() { return null; }
 
     public SyndieURI createMetaURI(Hash forum) { return null; }

@@ -41,8 +41,11 @@ public interface BrowserControl {
     public SyndieURI createMetaPostersURI(Hash forum);
     /** view the details, but zoom in on the published authorized managers */
     public SyndieURI createMetaManagersURI(Hash forum);
-
-    public SyndieURI createSyndicationURI();
+    
+    public SyndieURI createSyndicationArchiveURI();
+    public SyndieURI createSyndicationConfigURI();
+    public SyndieURI createSyndicationDiffURI();
+    public SyndieURI createSyndicationStatusURI();
 
     public void showWaitCursor(boolean wait);
     

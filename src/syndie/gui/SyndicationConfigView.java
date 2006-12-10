@@ -1,5 +1,9 @@
 package syndie.gui;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -11,20 +15,21 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import syndie.db.ArchiveIndex;
+import syndie.db.JobRunner;
 import syndie.db.SyndicationManager;
 
 /**
  *
  */
-public class SyndicationConfigView implements Translatable {
+public class SyndicationConfigView implements Translatable, Themeable {
     private BrowserControl _browser;
     private Composite _parent;
-    private SyndicationView _view;
     private Composite _root;
     private Button _actionIndex;
     private Button _actionPullOnly;
@@ -47,10 +52,11 @@ public class SyndicationConfigView implements Translatable {
     private Label _fcpPortLabel;
     private Text _fcpPort;
     
-    public SyndicationConfigView(BrowserControl browser, Composite parent, SyndicationView view) {
+    private SyndicationDiff _diff;
+    
+    public SyndicationConfigView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
-        _view = view;
         initComponents();
     }
     
@@ -58,7 +64,9 @@ public class SyndicationConfigView implements Translatable {
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
     }
+    public void setDiff(SyndicationDiff diff) { _diff = diff; }
     
     public int getProxyPort() { return (getProxyHost() != null ? getPort(_proxyPort) : -1); }
     public String getProxyHost() { return getHost(_proxyHost); }
@@ -111,11 +119,27 @@ public class SyndicationConfigView implements Translatable {
         Composite actionRow = new Composite(_root, SWT.NONE);
         actionRow.setLayout(new FillLayout(SWT.HORIZONTAL));
         actionRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
-        _actionIndex = new Button(actionRow, SWT.RADIO);
-        _actionPullOnly = new Button(actionRow, SWT.RADIO);
-        _actionPushPull = new Button(actionRow, SWT.RADIO);
-        _actionPushOnly = new Button(actionRow, SWT.RADIO);
-    
+        _actionIndex = new Button(actionRow, SWT.PUSH);
+        _actionIndex.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(ACTION_INDEXES); }
+            public void widgetSelected(SelectionEvent selectionEvent) { syndicate(ACTION_INDEXES); }
+        });
+        _actionPullOnly = new Button(actionRow, SWT.PUSH);
+        _actionPullOnly.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PULL_ONLY); }
+            public void widgetSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PULL_ONLY); }
+        });
+        _actionPushPull = new Button(actionRow, SWT.PUSH);
+        _actionPushPull.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PULL_PUSH); }
+            public void widgetSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PULL_PUSH); }
+        });
+        _actionPushOnly = new Button(actionRow, SWT.PUSH);
+        _actionPushOnly.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PUSH_ONLY); }
+            public void widgetSelected(SelectionEvent selectionEvent) { syndicate(ACTION_PUSH_ONLY); }
+        });
+        
         _pullStrategyLabel = new Label(_root, SWT.NONE);
         _pullStrategyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _pullStrategy = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -186,6 +210,68 @@ public class SyndicationConfigView implements Translatable {
         }
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
+    }
+
+    /** run outside the swt thread */
+    private Set getArchiveNames() { 
+        SyndicationManager mgr = _browser.getSyndicationManager();
+        mgr.loadArchives();
+        Set rv = new HashSet();
+        int archives = mgr.getArchiveCount();
+        for (int i = 0; i < archives; i++)
+            rv.add(mgr.getArchiveName(i));
+        return rv;
+    }
+    
+    private void syndicate() { syndicate(getAction()); }
+    private void syndicate(final int action) {
+        final int proxyPort = getProxyPort();
+        final String proxyHost = getProxyHost();
+        final int fcpPort = getFCPPort();
+        final String fcpHost = getFCPHost();
+        final Map explicit = _diff.getExplicit();
+        final int concurrency = getConcurrency();
+        final int maxKB = getMaxKB();
+        final int pushStrategy = getPushStrategy();
+        final int pullStrategy = getPullStrategy();
+              
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                _browser.getSyndicationManager().setProxies(proxyHost, proxyPort, fcpHost, fcpPort);
+                Set names = getArchiveNames();
+
+                switch (action) {
+                    case SyndicationConfigView.ACTION_INDEXES:
+                        for (Iterator iter = names.iterator(); iter.hasNext(); )
+                            _browser.getSyndicationManager().fetchIndex((String)iter.next());
+                        break;
+                    case SyndicationConfigView.ACTION_PUSH_ONLY:
+                        _browser.getSyndicationManager().sync(maxKB, -1, pushStrategy, names);
+                        break;
+                    case SyndicationConfigView.ACTION_PULL_PUSH:
+                        if (pullStrategy != SyndicationManager.PULL_STRATEGY_EXPLICIT)
+                            _browser.getSyndicationManager().sync(maxKB, pullStrategy, pushStrategy, names, null);
+                        else
+                            _browser.getSyndicationManager().sync(maxKB, pullStrategy, pushStrategy, names, explicit);
+                        break;
+                    case SyndicationConfigView.ACTION_PULL_ONLY:
+                        if (pullStrategy != SyndicationManager.PULL_STRATEGY_EXPLICIT)
+                            _browser.getSyndicationManager().sync(maxKB, pullStrategy, -1, names, null);
+                        else
+                            _browser.getSyndicationManager().sync(maxKB, pullStrategy, -1, names, explicit);
+                        break;
+                }
+                // if enough runners are already started, no new ones are started
+                _browser.getSyndicationManager().startFetching(concurrency);
+                
+                Display.getDefault().asyncExec(new Runnable() { 
+                    public void run() {
+                        _browser.view(_browser.createSyndicationStatusURI());
+                    }
+                });
+            }
+        });
     }
     
     public void pickExplicit() {
@@ -250,7 +336,7 @@ public class SyndicationConfigView implements Translatable {
     private static final String T_FCPPORT = "syndie.gui.syndicationconfigview.fcpport";
     
     public void translate(TranslationRegistry registry) {
-        _actionIndex.setText(registry.getText(T_ACTION_INDEX, "Fetch archive index"));
+        _actionIndex.setText(registry.getText(T_ACTION_INDEX, "Pull index"));
         _actionPullOnly.setText(registry.getText(T_ACTION_PULLONLY, "Pull only"));
         _actionPushPull.setText(registry.getText(T_ACTION_PUSHPULL, "Pull and push"));
         _actionPushOnly.setText(registry.getText(T_ACTION_PUSHONLY, "Push only"));
@@ -266,5 +352,29 @@ public class SyndicationConfigView implements Translatable {
         _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "port:"));
         _fcpHostLabel.setText(registry.getText(T_FCPHOST, "Freenet FCP host:"));
         _fcpPortLabel.setText(registry.getText(T_FCPPORT, "port:"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _actionIndex.setFont(theme.BUTTON_FONT);
+        _actionPullOnly.setFont(theme.BUTTON_FONT);
+        _actionPushPull.setFont(theme.BUTTON_FONT);
+        _actionPushOnly.setFont(theme.BUTTON_FONT);
+        _pullStrategyLabel.setFont(theme.DEFAULT_FONT);
+        _pullStrategy.setFont(theme.DEFAULT_FONT);
+        _pushStrategyLabel.setFont(theme.DEFAULT_FONT);
+        _pushStrategy.setFont(theme.DEFAULT_FONT);
+        _sizeLabel.setFont(theme.DEFAULT_FONT);
+        _size.setFont(theme.DEFAULT_FONT);
+        _concurrencyLabel.setFont(theme.DEFAULT_FONT);
+        _concurrency.setFont(theme.DEFAULT_FONT);
+        _proxyHostLabel.setFont(theme.DEFAULT_FONT);
+        _proxyHost.setFont(theme.DEFAULT_FONT);
+        _proxyPortLabel.setFont(theme.DEFAULT_FONT);
+        _proxyPort.setFont(theme.DEFAULT_FONT);
+        _fcpHostLabel.setFont(theme.DEFAULT_FONT);
+        _fcpHost.setFont(theme.DEFAULT_FONT);
+        _fcpPortLabel.setFont(theme.DEFAULT_FONT);
+        _fcpPort.setFont(theme.DEFAULT_FONT);
+        _root.layout(true, true);
     }
 }

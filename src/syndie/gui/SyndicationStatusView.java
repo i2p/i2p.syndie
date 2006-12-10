@@ -27,7 +27,7 @@ import syndie.db.SyndicationManager;
 /**
  *
  */
-public class SyndicationStatusView implements Translatable, SyndicationManager.SyndicationListener {
+public class SyndicationStatusView implements Translatable, Themeable, SyndicationManager.SyndicationListener {
     private BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
@@ -64,6 +64,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
     }
     public Control getControl() { return _root; }
     
@@ -103,6 +104,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         _colDetail = new TableColumn(_table, SWT.LEFT);
         
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
         _browser.getSyndicationManager().addListener(this);
     }
     
@@ -239,7 +241,7 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         setMinWidth(_colSource, item.getText(4));
     }
     private void setMinWidth(TableColumn col, String text) {
-        int width = ImageUtil.getWidth(text, _table) + _table.getGridLineWidth()*2;
+        int width = ImageUtil.getWidth(text, _table) + _table.getGridLineWidth()*2 + 10;
         int existing = col.getWidth();
         if (width > existing) {
             _browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
@@ -366,11 +368,11 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
     }
     
     private void packCols() {
-        _colAuthor.pack();
-        _colDetail.pack();
-        _colMsgId.pack();
-        _colSource.pack();
-        _colTarget.pack();
+        setMinWidth(_colAuthor, _colAuthor.getText());
+        setMinWidth(_colDetail, _colDetail.getText());
+        setMinWidth(_colMsgId, _colMsgId.getText());
+        setMinWidth(_colSource, _colSource.getText());
+        setMinWidth(_colTarget, _colTarget.getText());
         _colType.setWidth(24);
         _colStatus.setWidth(24);
     }
@@ -452,6 +454,10 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         _view.setText( registry.getText(T_VIEW, "View selected"));
         _clear.setText(registry.getText(T_VIEW, "Clear selected"));
         _stop.setText(registry.getText(T_VIEW, "Stop selected"));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _table.setFont(theme.TABLE_FONT);
         packCols();
     }
     
@@ -472,4 +478,5 @@ public class SyndicationStatusView implements Translatable, SyndicationManager.S
         else
             update(record);
     }
+    public void syndicationComplete(SyndicationManager mgr) {}
 }
