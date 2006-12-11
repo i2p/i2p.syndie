@@ -243,7 +243,7 @@ public class HTMLStateBuilder {
                 // <!-- <asdf> --> would get receiveTag("-- <asdf")
                 _isInComment = true;
             }
-            _ui.debugMessage("nested comment begin @ " + bodyIndex + " still in comment? " + _isInComment);
+            //_ui.debugMessage("nested comment begin @ " + bodyIndex + " still in comment? " + _isInComment);
             return;
         }
         HTMLTag parent = null;
@@ -299,6 +299,7 @@ public class HTMLStateBuilder {
             // make sure the <p>foo</p> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
                 _prevWasWhitespace = true;
             }
         } else if ("tr".equals(tagName)) {
@@ -311,32 +312,41 @@ public class HTMLStateBuilder {
             // make sure the <h*>foo</h*> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
                 _prevWasWhitespace = true;
             }
         } else if ("quote".equals(tagName)) {
             // make sure the <quote>foo</quote> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
                 _prevWasWhitespace = true;
             }
         } else if ("pre".equals(tagName)) {
             // make sure the <pre>foo</pre> starts off on a new line
             if (!isStartOfLine(body, bodyIndex)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
                 _prevWasWhitespace = true;
             }
         } else if ("li".equals(tagName)) {
-            if (!isStartOfLine(body, bodyIndex))
+            if (!isStartOfLine(body, bodyIndex)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
+            }
             appendBody(body, PLACEHOLDER_LISTITEM);
             _prevWasWhitespace = true;
         } else if ("dd".equals(tagName)) {
-            if (!isStartOfLine(body, bodyIndex))
+            if (!isStartOfLine(body, bodyIndex)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
+            }
             _prevWasWhitespace = true;
         } else if ("dt".equals(tagName)) {
-            if (!isStartOfLine(body, bodyIndex))
+            if (!isStartOfLine(body, bodyIndex)) {
                 appendBody(body, '\n');
+                tag.startIndex++;
+            }
             _prevWasWhitespace = true;
         }
         

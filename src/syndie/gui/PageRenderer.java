@@ -499,6 +499,15 @@ public class PageRenderer implements Themeable {
         HTMLTag stateTags[] = (HTMLTag[])stateBuilder.getTags().toArray(new HTMLTag[0]);
         int stateTagCount = stateTags.length;
         
+        /*
+        for (int i = 0; i < stateTags.length; i++) {
+            if ("li".equals(stateTags[i].name)) {
+                _browser.getUI().debugMessage("li tag: " + stateTags[i].toString());
+                _browser.getUI().debugMessage("li tag body: " + _text.getText(stateTags[i].startIndex, stateTags[i].endIndex) + "\n\n");
+            }
+        }
+         */
+        
         int bodySize = _text.getCharCount();
         Map bulletLists = new HashMap();
         long times[] = new long[lines];
@@ -517,18 +526,27 @@ public class PageRenderer implements Themeable {
             else
                 lineEnd = _text.getOffsetAtLine(line+1)-1;
             timesOff[line] = System.currentTimeMillis();
+            //_browser.getUI().debugMessage("line " + line + " goes from " + lineStart + " to " + lineEnd);
             
             int alignment = SWT.LEFT;
             
             // now get the tags applicable to [lineStart,lineEnd]
+            //boolean liRowFound = false;
             for (int i = 0; i < stateTagCount; i++) {
                 HTMLTag tag = stateTags[i];
-                if ( (tag.startIndex <= lineEnd) && (tag.endIndex >= lineStart) )
+                if ( (tag.startIndex <= lineEnd) && (tag.endIndex >= lineStart) ) {
+                    //if (tag.name.equals("li") && (tag.startIndex >= lineStart) )
+                    //    liRowFound = true;
                     lineTags.add(tag);
+                }
                 //else if (tag.endIndex > lineStart)
                 //    break; // the stateTags are ordered with earliest end first
                 //!! which means that you can't break there jrandom.
             }
+            //if (liRowFound) {
+            //    _browser.getUI().debugMessage("tag for line " + line + ": " + lineTags);
+            //    _browser.getUI().debugMessage("content on that line: " + _text.getText(lineStart, lineEnd));
+            //}
             //ArrayList tags = getTags(stateBuilder, styleBuilder, lineStart, lineEnd);
             timesGetTags[line] = System.currentTimeMillis();
             if (HTMLStyleBuilder.containsTag(lineTags, "pre")) {
@@ -619,10 +637,27 @@ public class PageRenderer implements Themeable {
             }
             
             // look for <dd/dt> tags, and indent $x times the nesting layer
+            /*
             if (HTMLStyleBuilder.containsTag(lineTags, "dd"))
                 indentLevel += 2;
             if (HTMLStyleBuilder.containsTag(lineTags, "dt"))
                 indentLevel++;
+             */
+            //boolean defFound = false;
+            for (int i = 0; i < lineTags.size(); i++) {
+                HTMLTag tag = (HTMLTag)lineTags.get(i);
+                if ("dd".equals(tag.name)) {
+                    indentLevel += 2;
+                    //defFound = true;
+                }
+                if ("dt".equals(tag.name)) {
+                    indentLevel++;
+                    //defFound = true;
+                }
+            }
+            //if (defFound)
+            //    _browser.getUI().debugMessage("def found on line " + line + ", indentLevel: " + indentLevel + " tags: " + lineTags + "\n content: " + _text.getText(lineStart, lineEnd));
+
             
             //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: quote? " + quoteFound + " tags: " + tags 
             //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
@@ -668,6 +703,7 @@ public class PageRenderer implements Themeable {
             timesFindAlignTot += timesFindAlign[i]-timesGetTags[i];
             timesFindListTot += timesFindList[i]-timesFindAlign[i];
         }
+        /*
         _browser.getUI().debugMessage("line style: alignment: " + alignmentTime + ", bullets: " + bulletTime 
                                       + " indent: " + indentTime 
                                       //+ " sequential: " + sequentialAligned 
@@ -675,6 +711,7 @@ public class PageRenderer implements Themeable {
                                       + " timesGetTags: " + timesGetTagsTot
                                       + " timesAlign: " + timesFindAlignTot 
                                       + " timesList: " + timesFindListTot);
+         */
     }
     
     public void dispose() {
