@@ -716,6 +716,19 @@ AND
                 if (tags.contains(tag)) {
                     _ui.debugMessage("Rejecting thread tagged with " + tag + ": " + msg.toString());
                     return false;
+                } else {
+                    if (tag.endsWith("*") && (tag.length() > 0)) {
+                        // substring match
+                        String prefix = tag.substring(0, tag.length()-1);
+                        boolean substringMatch = false;
+                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
+                            String cur = (String)msgTagIter.next();
+                            if (cur.startsWith(prefix)) {
+                                _ui.debugMessage("Rejecting thread prefix tagged with " + tag + ": " + msg.toString());
+                                return false;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -723,8 +736,27 @@ AND
             for (Iterator iter = _requiredTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (!tags.contains(tag)) {
-                    _ui.debugMessage("Rejecting thread not tagged with " + tag + ": " + msg.toString());
-                    return false;
+                    if (tag.endsWith("*") && (tag.length() > 0)) {
+                        // substring match
+                        String prefix = tag.substring(0, tag.length()-1);
+                        boolean substringMatch = false;
+                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
+                            String cur = (String)msgTagIter.next();
+                            if (cur.startsWith(prefix)) {
+                                substringMatch = true;
+                                break;
+                            }
+                        }
+                        if (substringMatch) {
+                            _ui.debugMessage("Substring tagged with " + tag + ": " + msg.toString());
+                        } else {
+                            _ui.debugMessage("Rejecting thread not substring tagged with " + tag + ": " + msg.toString());
+                            return false;
+                        }
+                    } else {
+                        _ui.debugMessage("Rejecting thread not tagged with " + tag + ": " + msg.toString());
+                        return false;
+                    }
                 }
             }
         }
@@ -735,6 +767,20 @@ AND
                 if (tags.contains(tag)) {
                     found = true;
                     break;
+                } else {
+                    if (tag.endsWith("*") && (tag.length() > 0)) {
+                        // substring match
+                        String prefix = tag.substring(0, tag.length()-1);
+                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
+                            String cur = (String)msgTagIter.next();
+                            if (cur.startsWith(prefix)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found)
+                            break;
+                    }
                 }
             }
             if (!found) {
