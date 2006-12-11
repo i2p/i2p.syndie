@@ -75,8 +75,23 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     }
 
     public void ripComplete(boolean successful, WebRipRunner runner) {
-        if (successful)
+        if (successful) {
             postRip(runner);
+        } else {
+            List msgs = runner.getErrorMessages();
+            final StringBuffer err = new StringBuffer();
+            for (int i = 0; i < msgs.size(); i++)
+                err.append((String)msgs.get(i)).append("\n");
+            
+            _shell.getDisplay().asyncExec(new Runnable() {
+                public void run() {
+                    MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
+                    box.setMessage(_browser.getTranslationRegistry().getText(T_ERROR_MSG, "Web rip could not be created: " + err.toString()));
+                    box.setText(_browser.getTranslationRegistry().getText(T_ERROR_TITLE, "Web rip failed"));
+                    box.open();
+                }
+            });
+        }
         dispose();
     }
     
@@ -118,6 +133,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     
     private static final String T_FAIL_MSG = "syndie.gui.webrippostpopup.fail.msg";
     private static final String T_FAIL_TITLE = "syndie.gui.webrippostpopup.fail.title";
+    private static final String T_ERROR_MSG = "syndie.gui.webrippostpopup.err.msg";
+    private static final String T_ERROR_TITLE = "syndie.gui.webrippostpopup.err.title";
     
     private void post(final String html, final List attachmentNames, final List attachmentTypes, final List attachmentData, final Hash author, final Hash target, final String tags, final int privacy, final String passphrase, final String passphrasePrompt) {
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {

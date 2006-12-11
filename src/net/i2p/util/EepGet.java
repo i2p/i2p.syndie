@@ -347,7 +347,9 @@ public class EepGet {
                     ((StatusListener)_listeners.get(i)).attempting(_url);
                 sendRequest();
                 doFetch();
-                return true;
+                if (!_transferFailed)
+                    return true;
+                break;
             } catch (IOException ioe) {
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).attemptFailed(_url, _bytesTransferred, _bytesRemaining, _currentAttempt, _numRetries, ioe);
@@ -495,7 +497,7 @@ public class EepGet {
         _out = null;
         
         if (_log.shouldLog(Log.DEBUG))
-            _log.debug("Done transferring " + _bytesTransferred);
+            _log.debug("Done transferring " + _bytesTransferred + " (ok? " + !_transferFailed + ")");
 
         if (_transferFailed) {
             // 404, etc
@@ -523,6 +525,9 @@ public class EepGet {
         if (!read) throw new IOException("Unable to read the first line");
         int responseCode = handleStatus(buf.toString());
         boolean redirect = false;
+        
+        if (_log.shouldLog(Log.DEBUG))
+            _log.debug("rc: " + responseCode + " for " + _actualURL);
 
         boolean rcOk = false;
         switch (responseCode) {
