@@ -40,10 +40,10 @@ public class CustomStyledText extends StyledText {
         long before = System.currentTimeMillis();
         Control rv[] = super.getChildren();
         long after = System.currentTimeMillis();
-        trace("cst: getChildren(): " + (after-before));
-        if (rv != null)
-            for (int i = 0; i < rv.length; i++)
-                trace("cst: getChildren(): child " + i + ": " + rv[i].getClass().getName());
+        //trace("cst: getChildren(): " + (after-before));
+        //if (rv != null)
+        //    for (int i = 0; i < rv.length; i++)
+        //        trace("cst: getChildren(): child " + i + ": " + rv[i].getClass().getName());
         return rv;
     }
 
@@ -51,31 +51,31 @@ public class CustomStyledText extends StyledText {
         long before = System.currentTimeMillis();
         super.layout();
         long after = System.currentTimeMillis();
-        trace("cst: layout(): " + (after-before));
+        //trace("cst: layout(): " + (after-before));
     }
     public void layout(Control changed[]) {
         long before = System.currentTimeMillis();
         super.layout(changed);
         long after = System.currentTimeMillis();
-        trace("cst: layout(Control[]): " + (after-before));
+        //trace("cst: layout(Control[]): " + (after-before));
     }
     public void layout(boolean changed) {
         long before = System.currentTimeMillis();
         super.layout(changed && !IGNORE_FORCE);
         long after = System.currentTimeMillis();
-        trace("cst: layout(" + changed + "): " + (after-before));
+        //trace("cst: layout(" + changed + "): " + (after-before));
     }
     public void layout(boolean changed, boolean all) {
         long before = System.currentTimeMillis();
         super.layout(changed && !IGNORE_FORCE, all && !IGNORE_FORCE);
         long after = System.currentTimeMillis();
-        trace("cst: layout(" + changed + ", " + all + "): " + (after-before));
+        //trace("cst: layout(" + changed + ", " + all + "): " + (after-before));
     }
     public Point computeSize(int wHint, int hHint) {
         long before = System.currentTimeMillis();
         Point rv = super.computeSize(wHint, hHint);
         long after = System.currentTimeMillis();
-        trace("cst: computeSize(" + wHint + ", " + hHint+ "): " + (after-before));
+        //trace("cst: computeSize(" + wHint + ", " + hHint+ "): " + (after-before));
         return rv;
     }
     public Point computeSize(int wHint, int hHint, boolean changed) {
@@ -97,21 +97,21 @@ public class CustomStyledText extends StyledText {
         long before = System.currentTimeMillis();
         Point rv = super.getSize();
         long after = System.currentTimeMillis();
-        trace("cst: getSize(): " + (after-before));
+        //trace("cst: getSize(): " + (after-before));
         return rv;
     }
     public Rectangle getBounds() {
         long before = System.currentTimeMillis();
         Rectangle rv = super.getBounds();
         long after = System.currentTimeMillis();
-        trace("cst: getBounds(): " + (after-before));
+        //trace("cst: getBounds(): " + (after-before));
         return rv;
     }
     public Rectangle computeTrim(int x, int y, int width, int height) {
         long before = System.currentTimeMillis();
         Rectangle rv = super.computeTrim(x, y, width, height);
         long after = System.currentTimeMillis();
-        trace("cst: computeTrim(...): " + (after-before));
+        //trace("cst: computeTrim(...): " + (after-before));
         return rv;
     }
     

@@ -30,6 +30,8 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
@@ -124,6 +126,7 @@ public class PageEditor implements Translatable, Themeable {
     private Button _txtAlignRight;
     private Button _styleOk;
     private Button _styleCancel;
+    private Font _sampleFont;
     
     // spell checker dialog
     private Shell _spellShell;
@@ -476,6 +479,13 @@ public class PageEditor implements Translatable, Themeable {
 
     private void createStyleChooser() {
         _txtShell = new Shell(_parent.getShell(), SWT.DIALOG_TRIM);
+        _txtShell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) { evt.doit = false; _txtShell.setVisible(false); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
         
         RowLayout rl = new RowLayout(SWT.VERTICAL);
         rl.fill = true;
@@ -554,6 +564,8 @@ public class PageEditor implements Translatable, Themeable {
         _txtAlignRight.addSelectionListener(lsnr);
         addListeners(lsnr, _txtFGColor);
         addListeners(lsnr, _txtBGColor);
+        
+        lsnr.redrawSample();
     }
     
     private void addListeners(PreviewStyle lsnr, Button button) {
@@ -569,14 +581,10 @@ public class PageEditor implements Translatable, Themeable {
     }
     
     private class PreviewStyle implements SelectionListener, TraverseListener {
-        private Font _sampleFont;
-        public PreviewStyle() {
-            _sampleFont = null;
-        }
         public void widgetDefaultSelected(SelectionEvent selectionEvent) { redrawSample(); }
         public void widgetSelected(SelectionEvent selectionEvent) { redrawSample(); }
         public void keyTraversed(TraverseEvent traverseEvent) { redrawSample(); }
-        private void redrawSample() {
+        public void redrawSample() {
             if ( (_sampleFont != null) && (!_sampleFont.isDisposed()) ) _sampleFont.dispose();
             _sampleFont = null;
             boolean bold = getControlBold();
@@ -603,7 +611,7 @@ public class PageEditor implements Translatable, Themeable {
         }
         
         private Font getSampleFont(boolean bold, boolean italic, String style, String sz) {
-            int fontHeight = 12;
+            int fontHeight = Theme.getSize(_browser.getThemeRegistry().getTheme().CONTENT_FONT);
             try {
                 if (sz.startsWith("+"))
                     sz = sz.substring(1);
@@ -695,7 +703,11 @@ public class PageEditor implements Translatable, Themeable {
         }
         
         int begin = buf.length();
-        buf.append("CONTENT GOES HERE");
+        String sel = _text.getSelectionText();
+        if ( (sel == null) || (sel.trim().length() <= 0) )
+            buf.append("CONTENT GOES HERE");
+        else
+            buf.append(sel);
         int end = buf.length();
         
         if (fontSet) buf.append("</font>");
@@ -705,9 +717,17 @@ public class PageEditor implements Translatable, Themeable {
         if (bold) buf.append("</b>");
         
         String str = buf.toString();
-        insertAtCaret(str);
-        _text.setCaretOffset(_text.getCaretOffset() - (str.length()-begin));
-        _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+        if ( (sel == null) || (sel.trim().length() == 0) ) {
+            insertAtCaret(str);
+            _text.setCaretOffset(_text.getCaretOffset() - (str.length()-begin));
+            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+        } else {
+            _messageEditor.modified();
+            Point range = _text.getSelectionRange();
+            _text.replaceTextRange(range.x, range.y, str);
+            _text.setCaretOffset(range.x+begin);
+            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+        }
     }
     
     void insertAtCaret(String text) {
@@ -764,7 +784,7 @@ public class PageEditor implements Translatable, Themeable {
         }
     }
     
-    private void showStyleChooser() { resetTextStyle(); _txtShell.setVisible(true); }
+    private void showStyleChooser() { resetTextStyle(); _txtShell.open(); }
     private void showLinkPopup() { _linkPopup.showPopup(); }
     private void showImagePopup(boolean forBodyBackground) { _imagePopup.showPopup(forBodyBackground); }
     
@@ -1481,6 +1501,8 @@ public class PageEditor implements Translatable, Themeable {
         // destroy all the data.  the page has been dropped or cancelled
         if (!_root.isDisposed())
             _root.dispose();
+        if ( (_sampleFont != null) && (!_sampleFont.isDisposed()) )
+            _sampleFont.dispose();
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
@@ -1676,7 +1698,9 @@ public class PageEditor implements Translatable, Themeable {
     }
     
     public void applyTheme(Theme theme) {
-        _text.setFont(theme.CONTENT_FONT);
+        _root.setRedraw(false);
+        // styledText doesnt like this... seems it needs stylerange instead
+        //_text.setFont(theme.CONTENT_FONT);
 
         if (_txtShell != null) {
             _txtShell.setFont(theme.SHELL_FONT);
@@ -1697,7 +1721,8 @@ public class PageEditor implements Translatable, Themeable {
         
         if (_spellShell != null) {
             _spellShell.setFont(theme.SHELL_FONT);
-            _spellContext.setFont(theme.CONTENT_FONT);
+            //see above
+            //_spellContext.setFont(theme.CONTENT_FONT);
             _spellWord.setFont(theme.CONTENT_FONT);
             _spellSuggestions.setFont(theme.DEFAULT_FONT);
             _spellReplace.setFont(theme.BUTTON_FONT);
@@ -1735,5 +1760,6 @@ public class PageEditor implements Translatable, Themeable {
         _grpAlign.setFont(theme.DEFAULT_FONT);
 
         _txtShell.pack(true);
+        _root.setRedraw(true);
     }
 }
