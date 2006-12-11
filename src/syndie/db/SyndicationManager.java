@@ -188,6 +188,12 @@ public class SyndicationManager {
         _httpProxyPort = httpPort;
         _fcpHost = fcpHost;
         _fcpPort = fcpPort;
+        
+        _client.setDefaultHTTPProxyHost(httpHost);
+        _client.setDefaultHTTPProxyPort(httpPort);
+        _client.setDefaultFreenetHost(fcpHost);
+        _client.setDefaultFreenetPort(fcpPort);
+        _client.saveProxyConfig();
     }
     
     /**

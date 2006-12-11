@@ -214,6 +214,9 @@ public class DBClient {
                         _login = login;
                         _pass = passphrase;
                         _nymId = nymId;
+                        
+                        Properties prefs = getNymPrefs(nymId);
+                        loadProxyConfig(prefs);
                         return nymId;
                     } else {
                         return NYM_ID_PASSPHRASE_INVALID;
@@ -304,6 +307,73 @@ public class DBClient {
             client.close();
         } catch (SQLException se) {
             se.printStackTrace();
+        }
+    }
+    
+    public void saveProxyConfig() {
+        Properties props = getNymPrefs(_nymId);
+        if (props == null)
+            props = new Properties();
+        if ( (getDefaultFreenetHost() == null) || (getDefaultFreenetPort() <= 0) ) {
+            props.remove("fcpHost");
+            props.remove("fcpPort");
+        } else {
+            props.setProperty("fcpHost", getDefaultFreenetHost());
+            props.setProperty("fcpPort", getDefaultFreenetPort()+"");
+        }
+        
+        if ( (getDefaultFreenetPrivateKey() == null) || (getDefaultFreenetPublicKey() == null) ) {
+            props.remove("freenetPrivateKey");
+            props.remove("freenetPublicKey");
+        } else {
+            props.setProperty("freenetPrivateKey", getDefaultFreenetPrivateKey());
+            props.setProperty("freenetPublicKey", getDefaultFreenetPublicKey());
+        }
+        
+        if ( (getDefaultHTTPProxyHost() == null) || (getDefaultHTTPProxyPort() <= 0) ) {
+            props.remove("httpproxyhost");
+            props.remove("httpproxyport");
+        } else {
+            props.setProperty("httpproxyhost", getDefaultHTTPProxyHost());
+            props.setProperty("httpproxyport", getDefaultHTTPProxyPort()+"");
+        }
+        
+        _ui.debugMessage("saveProxyConfig [" + getDefaultHTTPProxyHost() +'/' + getDefaultHTTPProxyPort() + "]: " + props);
+        setNymPrefs(_nymId, props);
+    }
+    
+    public void loadProxyConfig(Properties prefs) {
+        if (prefs == null) prefs = new Properties();
+        setDefaultHTTPProxyHost(prefs.getProperty("httpproxyhost"));
+        String port = prefs.getProperty("httpproxyport");
+        if (port != null) {
+            try {
+                int num = Integer.parseInt(port);
+                setDefaultHTTPProxyPort(num);
+            } catch (NumberFormatException nfe) {
+                _ui.errorMessage("HTTP proxy port preference is invalid", nfe);
+                setDefaultHTTPProxyPort(-1);
+                setDefaultHTTPProxyHost(null);
+            }
+        } else {
+            setDefaultHTTPProxyPort(-1);
+            setDefaultHTTPProxyHost(null);
+        }
+        
+        setDefaultFreenetPrivateKey(prefs.getProperty("freenetPrivateKey"));
+        setDefaultFreenetPublicKey(prefs.getProperty("freenetPublicKey"));
+        setDefaultFreenetHost(prefs.getProperty("fcpHost"));
+        port = prefs.getProperty("fcpPort");
+        if (port != null) {
+            try {
+                int num = Integer.parseInt(port);
+                setDefaultFreenetPort(num);
+            } catch (NumberFormatException nfe) {
+                _ui.errorMessage("Freenet port preference is invalid", nfe);
+                setDefaultFreenetPort(-1);
+            }
+        } else {
+            setDefaultFreenetPort(-1);
         }
     }
     

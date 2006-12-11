@@ -634,6 +634,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             _ctl = ctl;
         }
         public void ripComplete(boolean successful, WebRipRunner runner) {
+            _browser.getUI().debugMessage("rip complete: ok?" + successful);
             if (successful) {
                 disableAutoSave();
                 PageEditor editor = addPage("text/html");
@@ -658,15 +659,18 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private void ripFailed(Shell shell, WebRipControl ctl) {
         shell.dispose();
         List msgs = ctl.getErrorMessages();
-        ctl.dispose();
-        
-        MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-        box.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_FAIL, "Error ripping web page"));
-        StringBuffer err = new StringBuffer();
-        for (int i = 0; i < msgs.size(); i++)
-            err.append((String)msgs.get(i)).append('\n');
-        box.setMessage(err.toString());
-        box.open();
+        ctl.dispose();        
+        if (msgs.size() > 0) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_FAIL, "Rip failed"));
+            StringBuffer err = new StringBuffer();
+            for (int i = 0; i < msgs.size(); i++)
+                err.append((String)msgs.get(i)).append('\n');
+            box.setMessage(err.toString());
+            box.open();
+        } else {
+            _browser.getUI().debugMessage("rip failed, but no messages, so it must have been cancelled");
+        }
     }
     
     int getPageCount() { return _pages.size(); }

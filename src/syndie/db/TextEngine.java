@@ -817,36 +817,8 @@ public class TextEngine {
             }
             _ui.statusMessage("Preference: paginate output? " + paginate);
         }
-        _client.setDefaultHTTPProxyHost(prefs.getProperty("httpproxyhost"));
-        String port = prefs.getProperty("httpproxyport");
-        if (port != null) {
-            try {
-                int num = Integer.parseInt(port);
-                _client.setDefaultHTTPProxyPort(num);
-            } catch (NumberFormatException nfe) {
-                _ui.errorMessage("HTTP proyx port preference is invalid", nfe);
-                _client.setDefaultHTTPProxyPort(-1);
-            }
-        } else {
-            _client.setDefaultHTTPProxyPort(-1);
-        }
+        _client.loadProxyConfig(prefs);
         _client.setDefaultHTTPArchive(prefs.getProperty("archive"));
-        
-        _client.setDefaultFreenetPrivateKey(prefs.getProperty("freenetPrivateKey"));
-        _client.setDefaultFreenetPublicKey(prefs.getProperty("freenetPublicKey"));
-        _client.setDefaultFreenetHost(prefs.getProperty("fcpHost"));
-        port = prefs.getProperty("fcpPort");
-        if (port != null) {
-            try {
-                int num = Integer.parseInt(port);
-                _client.setDefaultFreenetPort(num);
-            } catch (NumberFormatException nfe) {
-                _ui.errorMessage("Freenet port preference is invalid", nfe);
-                _client.setDefaultFreenetPort(-1);
-            }
-        } else {
-            _client.setDefaultFreenetPort(-1);
-        }
         
         if ( (_client.getDefaultHTTPProxyHost() != null) && (_client.getDefaultHTTPProxyPort() > 0) )
             _ui.statusMessage("Preference: default HTTP proxy: " + _client.getDefaultHTTPProxyHost() + ":" + _client.getDefaultHTTPProxyPort());

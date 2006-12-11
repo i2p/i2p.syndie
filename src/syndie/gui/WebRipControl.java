@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -30,6 +31,7 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     private Text _url;
     private Button _urlOptions;
     private Button _rip;
+    private Button _cancel;
     private Label _status;
     private Menu _optionMenu;
     private MenuItem _optionImages;
@@ -42,17 +44,20 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     private Text _proxyHost;
     private Label _proxyPortLabel;
     private Text _proxyPort;
+    private Button _proxyAsDefault;
     private Button _proxyOk;
     
     private int _existingAttachments;
     
     private WebRipRunner _ripRunner;
+    private List _errorMessages;
     private RipControlListener _listener;
     
     public WebRipControl(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         _existingAttachments = 0;
+        _errorMessages = Collections.EMPTY_LIST;
         initComponents();
     }
     
@@ -64,7 +69,12 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         public void ripComplete(boolean successful, WebRipRunner runner);
     }
     
-    public List getErrorMessages() { return _ripRunner.getErrorMessages(); }
+    public List getErrorMessages() { 
+        if (_ripRunner == null)
+            return _errorMessages;
+        else
+            return _ripRunner.getErrorMessages(); 
+    }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -97,10 +107,17 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         });
         
         _rip = new Button(_root, SWT.PUSH);
-        _rip.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _rip.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         _rip.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { rip(); }
             public void widgetSelected(SelectionEvent selectionEvent) { rip(); }
+        });
+        
+        _cancel = new Button(_root, SWT.PUSH);
+        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
         });
         
         _status = new Label(_root, SWT.NONE);
@@ -121,15 +138,17 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.widthHint = 75;
         _proxyPort.setLayoutData(gd);
+        _proxyAsDefault = new Button(_proxyShell, SWT.CHECK);
+        _proxyAsDefault.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         _proxyOk = new Button(_proxyShell, SWT.PUSH);
         _proxyOk.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         _proxyOk.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { hideProxyConfig(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { hideProxyConfig(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { hideProxyConfig(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { hideProxyConfig(true); }
         });
         _proxyShell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; hideProxyConfig(); }
+            public void shellClosed(ShellEvent evt) { evt.doit = false; hideProxyConfig(false); }
             public void shellDeactivated(ShellEvent shellEvent) {}
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
@@ -141,13 +160,22 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         if ( (port > 0) && (host != null) && (host.length() > 0) ) {
             _proxyPort.setText(Integer.toString(port));
             _proxyHost.setText(host);
+            _proxyAsDefault.setSelection(true);
         } else {
             _proxyPort.setText("");
             _proxyHost.setText("");
+            _proxyAsDefault.setSelection(false);
         }
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+    
+    public void cancel() {
+        if (_ripRunner != null)
+            _ripRunner.abortRip();
+        if (_listener != null)
+            _listener.ripComplete(false, _ripRunner);
     }
     
     /** 
@@ -166,7 +194,28 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     }
     
     private void configProxy() { _proxyShell.open(); }
-    private void hideProxyConfig() { _proxyShell.setVisible(false); }
+    private void hideProxyConfig(boolean save) { 
+        _proxyShell.setVisible(false);
+        _browser.getUI().debugMessage("hiding proxy config (" + save + "): saveAsDefault? " + _proxyAsDefault.getSelection());
+        if (save && _proxyAsDefault.getSelection()) {
+            String host = _proxyHost.getText().trim();
+            String port = _proxyPort.getText().trim();
+            try {
+                int portNum = Integer.parseInt(port);
+                if ( (host.length() > 0) && (portNum > 0) ) {
+                    _browser.getClient().setDefaultHTTPProxyHost(host);
+                    _browser.getClient().setDefaultHTTPProxyPort(portNum);
+                } else {
+                    _browser.getClient().setDefaultHTTPProxyHost(null);
+                    _browser.getClient().setDefaultHTTPProxyPort(-1);
+                }
+            } catch (NumberFormatException nfe) {
+                _browser.getClient().setDefaultHTTPProxyHost(null);
+                _browser.getClient().setDefaultHTTPProxyPort(-1);
+            }
+            _browser.getClient().saveProxyConfig();
+        }
+    }
     
     private void rip() {
         _rip.setEnabled(false);
@@ -175,6 +224,10 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         _urlLabel.setEnabled(false);
         _root.layout(true, true);
         String url = _url.getText();
+        if (url.trim().length() <= 0) {
+            cancel();
+            return;
+        }
         
         _browser.getUI().debugMessage("ripping (existing attachments: " + _existingAttachments + ")");
         
@@ -268,9 +321,9 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
                 key = T_STATUS_ERROR;
                 def = DEFAULT_STATUS_ERROR;
                 StringBuffer buf = new StringBuffer();
-                List msgs = runner.getErrorMessages();
-                for (int i = 0; i < msgs.size(); i++) {
-                    String msg = (String)msgs.get(i);
+                _errorMessages = runner.getErrorMessages();
+                for (int i = 0; i < _errorMessages.size(); i++) {
+                    String msg = (String)_errorMessages.get(i);
                     _browser.getUI().debugMessage(msg);
                     buf.append(msg).append(" ");
                 }
@@ -306,6 +359,7 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     private static final String T_URL = "syndie.gui.webripcontrol.url";
     private static final String T_OPTIONS = "syndie.gui.webripcontrol.options";
     private static final String T_RIP = "syndie.gui.webripcontrol.rip";
+    private static final String T_CANCEL = "syndie.gui.webripcontrol.cancel";
     private static final String T_OPT_ALLOWFILES = "syndie.gui.webripcontrol.opt.allowfiles";
     private static final String T_OPT_IMAGES = "syndie.gui.webripcontrol.opt.images";
     private static final String T_OPT_PROXY = "syndie.gui.webripcontrol.opt.proxy";
@@ -314,19 +368,22 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     private static final String T_PROXY_HOST = "syndie.gui.webripcontrol.proxy.host";
     private static final String T_PROXY_PORT = "syndie.gui.webripcontrol.proxy.port";
     private static final String T_PROXY_OK = "syndie.gui.webripcontrol.proxy.ok";
+    private static final String T_PROXY_ASDEFAULT = "syndie.gui.webripcontrol.proxy.asdefault";
     private static final String T_PROXY_SHELL = "syndie.gui.webripcontrol.proxy.shell";
     
     public void translate(TranslationRegistry registry) {
         _urlLabel.setText(registry.getText(T_URL, "Rip URL:"));
         _urlOptions.setText(registry.getText(T_OPTIONS, "Options..."));
         _rip.setText(registry.getText(T_RIP, "Rip!"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         _optionAllowFiles.setText(registry.getText(T_OPT_ALLOWFILES, "Import file attachments (dangerous!)"));
         _optionImages.setText(registry.getText(T_OPT_IMAGES, "Attach images"));
-        _optionProxy.setText(registry.getText(T_OPT_PROXY, "Configure proxy"));
+        _optionProxy.setText(registry.getText(T_OPT_PROXY, "Configure proxy..."));
         _optionTorrents.setText(registry.getText(T_OPT_TORRENTS, "Attach torrents"));
         
         _proxyHostLabel.setText(registry.getText(T_PROXY_HOST, "HTTP proxy host:"));
         _proxyPortLabel.setText(registry.getText(T_PROXY_PORT, "HTTP proxy port:"));
+        _proxyAsDefault.setText(registry.getText(T_PROXY_ASDEFAULT, "Save as my default HTTP proxy"));
         _proxyOk.setText(registry.getText(T_PROXY_OK, "OK"));
         _proxyShell.setText(registry.getText(T_PROXY_SHELL, "Proxy"));
     }
@@ -334,6 +391,7 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     public void applyTheme(Theme theme) {
         _url.setFont(theme.DEFAULT_FONT);
         _rip.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
         _status.setFont(theme.LOG_FONT);
         _urlLabel.setFont(theme.DEFAULT_FONT);
         _urlOptions.setFont(theme.BUTTON_FONT);
@@ -343,6 +401,7 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         _proxyOk.setFont(theme.BUTTON_FONT);
         _proxyPort.setFont(theme.DEFAULT_FONT);
         _proxyPortLabel.setFont(theme.DEFAULT_FONT);
+        _proxyAsDefault.setFont(theme.DEFAULT_FONT);
         _proxyShell.setFont(theme.SHELL_FONT);
         
         _proxyShell.pack(true);
