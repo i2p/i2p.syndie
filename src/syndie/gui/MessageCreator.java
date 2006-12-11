@@ -32,12 +32,13 @@ import syndie.db.UI;
  
  */
 class MessageCreator {
-    private MessageEditor _editor;
+    //private MessageEditor _editor;
+    private MessageCreatorSource _editor;
     private SyndieURI _createdURI;
     private StringBuffer _errorBuf;
     private UI _ui;
     
-    public MessageCreator(MessageEditor editor) {
+    public MessageCreator(MessageCreatorSource editor) {
         _editor = editor;
         _ui = editor.getUI();
         _errorBuf = new StringBuffer();
@@ -137,11 +138,10 @@ class MessageCreator {
         }
 
         List names = _editor.getAttachmentNames();
-        List descriptions = _editor.getAttachmentDescriptions();
         List types = _editor.getAttachmentTypes();
         for (int i = 0; i < names.size(); i++) {
             String fname = (String)names.get(i);
-            String desc = (String)descriptions.get(i);
+            String desc = null; // the ui doesn't have a way to specify the attachment description
             String type = (String)types.get(i);
             byte data[] = _editor.getAttachmentData(i+1);
             
@@ -272,11 +272,21 @@ class MessageCreator {
             genOpts.setOptValue("postAsReply", "true"); // if true, the post should be encrypted to the channel's reply key
         
         String tags[] = _editor.getPublicTags();
-        for (int i = 0; i < tags.length; i++)
-            genOpts.addOptValue("pubTag", tags[i]);
+        for (int i = 0; i < tags.length; i++) {
+            if (tags[i] != null) {
+                String str = tags[i].trim();
+                if (str.length() > 0)
+                    genOpts.addOptValue("pubTag", str);
+            }
+        }
         tags = _editor.getPrivateTags();
-        for (int i = 0; i < tags.length; i++)
-            genOpts.addOptValue("privTag", tags[i]);
+        for (int i = 0; i < tags.length; i++) {
+            if (tags[i] != null) {
+                String str = tags[i].trim();
+                if (str.length() > 0)
+                    genOpts.addOptValue("privTag", str);
+            }
+        }
         
         List referenceNodes = _editor.getReferenceNodes();
         if (referenceNodes.size() > 0) {
@@ -362,4 +372,34 @@ class MessageCreator {
         if (refFile != null)
             refFile.delete();
     }
+    
+    public interface MessageCreatorSource {
+        public DBClient getClient();
+        public UI getUI();
+        public Hash getAuthor();
+        public Hash getTarget();
+        public int getPageCount();
+        public String getPageContent(int page);
+        public String getPageType(int page);
+        public List getAttachmentNames();
+        public List getAttachmentTypes();
+        /** @param attachmentIndex starts at 1 */
+        public byte[] getAttachmentData(int attachmentIndex);
+        public String getSubject();
+        public boolean getPrivacyPBE();
+        public String getPassphrase();
+        public String getPassphrasePrompt();
+        public boolean getPrivacyPublic();
+        public String getAvatarUnmodifiedFilename();
+        public byte[] getAvatarModifiedData();
+        public boolean getPrivacyReply();
+        public String[] getPublicTags();
+        public String[] getPrivateTags();
+        public List getReferenceNodes();
+        public int getParentCount();
+        public SyndieURI getParent(int depth);
+        public String getExpiration();
+        public boolean getForceNewThread();
+        public boolean getRefuseReplies();
+    }   
 }

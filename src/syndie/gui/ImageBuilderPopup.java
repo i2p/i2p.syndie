@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import syndie.data.WebRipRunner;
 
 /**
  *
@@ -333,7 +334,7 @@ public class ImageBuilderPopup {
                     if (read != buf.length)
                         return;
                     data = buf;
-                    type = MessageEditor.guessContentType(fname.getName());
+                    type = WebRipRunner.guessContentType(fname.getName());
                 } catch (IOException ioe) {
                     return;
                 }

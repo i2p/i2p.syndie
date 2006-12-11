@@ -21,10 +21,10 @@ import org.eclipse.swt.widgets.Text;
 import syndie.data.WebRipRunner;
 
 /**
- *
+ * rip a web page to add as a new page to an existing post
  */
-public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipListener {
-    private BrowserControl _browser;
+public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.RipListener {
+    protected BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
     private Label _urlLabel;
@@ -53,7 +53,7 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
     private List _errorMessages;
     private RipControlListener _listener;
     
-    public WebRipControl(BrowserControl browser, Composite parent) {
+    public WebRipPageControl(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         _existingAttachments = 0;
@@ -94,17 +94,9 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         });
         
         _optionMenu = new Menu(_urlOptions);
-        _optionImages = new MenuItem(_optionMenu, SWT.CHECK);
-        _optionImages.setSelection(true);
-        _optionTorrents = new MenuItem(_optionMenu, SWT.CHECK);
-        _optionTorrents.setSelection(false);
-        _optionAllowFiles = new MenuItem(_optionMenu, SWT.CHECK);
-        _optionAllowFiles.setSelection(false);
-        _optionProxy = new MenuItem(_optionMenu, SWT.PUSH);
-        _optionProxy.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { configProxy(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { configProxy(); }
-        });
+        createOptions(_optionMenu);
+        
+        createAttributeFields(_root);
         
         _rip = new Button(_root, SWT.PUSH);
         _rip.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
@@ -193,6 +185,23 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         }
     }
     
+    protected void createOptions(Menu optionMenu) {
+        _optionImages = new MenuItem(optionMenu, SWT.CHECK);
+        _optionImages.setSelection(true);
+        _optionTorrents = new MenuItem(optionMenu, SWT.CHECK);
+        _optionTorrents.setSelection(false);
+        _optionAllowFiles = new MenuItem(optionMenu, SWT.CHECK);
+        _optionAllowFiles.setSelection(false);
+        _optionProxy = new MenuItem(optionMenu, SWT.PUSH);
+        _optionProxy.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { configProxy(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { configProxy(); }
+        });
+    }
+    
+    
+    protected void createAttributeFields(Composite root) {}
+    
     private void configProxy() { _proxyShell.open(); }
     private void hideProxyConfig(boolean save) { 
         _proxyShell.setVisible(false);
@@ -217,7 +226,9 @@ public class WebRipControl implements Translatable, Themeable, WebRipRunner.RipL
         }
     }
     
-    private void rip() {
+    public String getURL() { return _url.getText().trim(); }
+    
+    protected void rip() {
         _rip.setEnabled(false);
         _urlOptions.setEnabled(false);
         _url.setEnabled(false);

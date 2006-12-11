@@ -74,7 +74,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  Translatable, Themeable {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  MessageCreator.MessageCreatorSource, Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
@@ -212,8 +212,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         updateAuthor();
     }
     
-    UI getUI() { return _ui; }
-    BrowserControl getBrowser() { return _browser; }
+    public UI getUI() { return _ui; }
+    public BrowserControl getBrowser() { return _browser; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -507,35 +507,12 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
     }
 
-    private static final Map _extensionToType;
-    static {
-        _extensionToType = new HashMap();
-        _extensionToType.put("png", "image/png");
-        _extensionToType.put("jpg", "image/jpg");
-        _extensionToType.put("jpeg", "image/jpg");
-        _extensionToType.put("gif", "image/gif");
-        _extensionToType.put("html", "text/html");
-        _extensionToType.put("htm", "text/html");
-        _extensionToType.put("txt", "text/plain");
-        _extensionToType.put("syndie", "application/x-syndie");
-    }
-    public static final String guessContentType(String filename) {
-        filename = Constants.lowercase(filename);
-        int split = filename.lastIndexOf('.');
-        if ( (split >= 0) && (split + 1 < filename.length()) ) {
-            String type = (String)_extensionToType.get(filename.substring(split+1));
-            if (type != null)
-                return type;
-        }
-        return "application/octet-stream";
-    } 
-    
     private void addAttachment(File file) {
         saveState();
         modified();
         String fname = file.getName();
         String name = Constants.stripFilename(fname, false);
-        String type = guessContentType(fname);
+        String type = WebRipRunner.guessContentType(fname);
         
         if (file.length() > Constants.MAX_ATTACHMENT_SIZE)
             return;
@@ -612,7 +589,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     private void addWebRip() {
         Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         shell.setLayout(new FillLayout());
-        final WebRipControl ctl = new WebRipControl(_browser, shell);
+        final WebRipPageControl ctl = new WebRipPageControl(_browser, shell);
         ctl.setListener(new WebRipListener(shell, ctl));
         ctl.setExistingAttachments(_attachments.size());
         shell.pack();
@@ -627,10 +604,10 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         shell.open();
     }
     
-    private class WebRipListener implements WebRipControl.RipControlListener {
+    private class WebRipListener implements WebRipPageControl.RipControlListener {
         private Shell _shell;
-        private WebRipControl _ctl;
-        public WebRipListener(Shell shell, WebRipControl ctl) {
+        private WebRipPageControl _ctl;
+        public WebRipListener(Shell shell, WebRipPageControl ctl) {
             _shell = shell;
             _ctl = ctl;
         }
@@ -657,7 +634,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
     }
     
-    private void ripFailed(Shell shell, WebRipControl ctl) {
+    private void ripFailed(Shell shell, WebRipPageControl ctl) {
         shell.dispose();
         List msgs = ctl.getErrorMessages();
         ctl.dispose();        
@@ -674,17 +651,17 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
     }
     
-    int getPageCount() { return _pages.size(); }
-    String getPageContent(int page) {
+    public int getPageCount() { return _pages.size(); }
+    public String getPageContent(int page) {
         PageEditor editor = (PageEditor)_pages.get(page);
         return editor.getContent();
     }
-    String getPageType(int page) {
+    public String getPageType(int page) {
         PageEditor editor = (PageEditor)_pages.get(page);
         return editor.getContentType();
     }
     
-    List getAttachmentTypes() {
+    public List getAttachmentTypes() {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             Properties cfg = (Properties)_attachmentConfig.get(i);
@@ -697,8 +674,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         return rv;
     }
 
-    List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
-    List getAttachmentDescriptions(boolean imagesOnly) {
+    public List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
+    public List getAttachmentDescriptions(boolean imagesOnly) {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             if (imagesOnly) {
@@ -712,7 +689,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
         return rv;
     }
-    List getAttachmentNames() {
+    public List getAttachmentNames() {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             Properties cfg = (Properties)_attachmentConfig.get(i);
@@ -720,11 +697,11 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
         return rv;
     }
-    byte[] getAttachmentData(int attachment) {
+    public byte[] getAttachmentData(int attachment) {
         if ( (attachment <= 0) || (attachment > _attachments.size()) ) return null;
         return (byte[])_attachments.get(attachment-1);
     }
-    byte[] getImageAttachment(int idx) {
+    public byte[] getImageAttachment(int idx) {
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             Properties cfg = (Properties)_attachmentConfig.get(i);
@@ -737,7 +714,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
         return null;
     }
-    int getImageAttachmentNum(int imageNum) { 
+    public int getImageAttachmentNum(int imageNum) { 
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             Properties cfg = (Properties)_attachmentConfig.get(i);
@@ -750,7 +727,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
         return -1;
     }
-    void updateImageAttachment(int imageNum, String contentType, byte data[]) { 
+    public void updateImageAttachment(int imageNum, String contentType, byte data[]) { 
         modified();
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
@@ -909,9 +886,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
     }
 
-    Hash getAuthor() { return _author; }
-    Hash getTarget() { return _target; }
-    DBClient getClient() { return _client; }
+    public Hash getAuthor() { return _author; }
+    public Hash getTarget() { return _target; }
+    public DBClient getClient() { return _client; }
 
     private void postMessage() {
         MessageCreator creator = new MessageCreator(this);

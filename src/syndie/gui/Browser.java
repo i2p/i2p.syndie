@@ -114,6 +114,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private Menu _forumMenuManageMenu;
     private MenuItem _postMenuRoot;
     private MenuItem _postMenuNew;
+    private MenuItem _postMenuWebRip;
     private MenuItem _postMenuResumeRoot;
     private Menu _postMenuResumeMenu;
     private MenuItem _postMenuManageableRoot;
@@ -405,6 +406,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuNew.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postNew(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postNew(); }
+        });
+        _postMenuWebRip = new MenuItem(postMenu, SWT.PUSH);
+        _postMenuWebRip.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { postWebRip(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { postWebRip(); }
         });
         _postMenuResumeRoot = new MenuItem(postMenu, SWT.CASCADE);
         _postMenuResumeMenu = new Menu(_postMenuResumeRoot);
@@ -1220,6 +1226,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void decreaseFont() { _themes.decreaseFont(); }
     private void resetStyle() { _themes.resetTheme(); }
     
+    private void postWebRip() {
+        WebRipPostPopup popup = new WebRipPostPopup(this, _shell);
+        popup.open();
+    }
+    
     private List _lastDumpedObj;
     private List _lastDumpedSrc;
     private void dumpResources(boolean full) {
@@ -1731,6 +1742,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FORUM_MENU_MANAGE = "syndie.gui.browser.forummenu.manage";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
     private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
+    private static final String T_POST_MENU_WEBRIP = "syndie.gui.browser.postmenu.webrip";
     private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
     private static final String T_POST_MENU_MANAGEABLE = "syndie.gui.browser.postmenu.manageable";
     private static final String T_POST_MENU_POSTABLE = "syndie.gui.browser.postmenu.postable";
@@ -1804,6 +1816,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
+        _postMenuWebRip.setText(registry.getText(T_POST_MENU_WEBRIP, "Post &web rip"));
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
 
         _postMenuManageableRoot.setText(registry.getText(T_POST_MENU_MANAGEABLE, "&Manageable forums"));

@@ -109,9 +109,13 @@ public class MessagePreview implements Themeable, Translatable {
         tags.addAll(msg.getPrivateTags());
         StringBuffer buf = new StringBuffer();
         for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
-            buf.append((String)iter.next());
-            if (iter.hasNext())
-                buf.append(", ");
+            String str = (String)iter.next();
+            str = str.trim();
+            if (str.length() > 0) {
+                buf.append(str);
+                if (iter.hasNext())
+                    buf.append(", ");
+            }
         }
         _headerTags.setText(buf.toString());
         

@@ -467,8 +467,11 @@ public class MessageGen extends CommandImpl {
         List tags = args.getOptValues("pubTag");
         if ( (tags != null) && (tags.size() > 0) ) {
             StringBuffer buf = new StringBuffer();
-            for (int i = 0; i < tags.size(); i++)
-                buf.append(strip((String)tags.get(i))).append('\t');
+            for (int i = 0; i < tags.size(); i++) {
+                String stripped = strip((String)tags.get(i));
+                if (stripped.length() > 0)
+                    buf.append(stripped).append('\t');
+            }
             rv.put(Constants.MSG_META_HEADER_TAGS, buf.toString());
         }
         
@@ -503,8 +506,11 @@ public class MessageGen extends CommandImpl {
         List tags = args.getOptValues("privTag");
         if ( (tags != null) && (tags.size() > 0) ) {
             StringBuffer buf = new StringBuffer();
-            for (int i = 0; i < tags.size(); i++)
-                buf.append(strip((String)tags.get(i))).append('\t');
+            for (int i = 0; i < tags.size(); i++) {
+                String stripped = strip((String)tags.get(i));
+                if (stripped.length() > 0)
+                    buf.append(stripped).append('\t');
+            }
             rv.put(Constants.MSG_META_HEADER_TAGS, buf.toString());
         }
         

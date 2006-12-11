@@ -9,8 +9,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
@@ -34,6 +36,10 @@ public class WebRipRunner implements EepGet.StatusListener {
     private List _attachmentFiles;
     /** absolute url used to fetch (String) */
     private List _attachmentURLs;
+    /** suggested filenames */
+    private List _attachmentNames;
+    /** suggested content types */
+    private List _attachmentTypes;
     /** url found in the html (String) */
     private List _attachmentURLRefs;
     /** relative url from the html */
@@ -63,6 +69,29 @@ public class WebRipRunner implements EepGet.StatusListener {
         IMAGE_SUFFIXES.add(".ico");
         TORRENT_SUFFIXES.add(".torrent");
     }
+
+    private static final Map _extensionToType;
+    static {
+        _extensionToType = new HashMap();
+        _extensionToType.put("png", "image/png");
+        _extensionToType.put("jpg", "image/jpg");
+        _extensionToType.put("jpeg", "image/jpg");
+        _extensionToType.put("gif", "image/gif");
+        _extensionToType.put("html", "text/html");
+        _extensionToType.put("htm", "text/html");
+        _extensionToType.put("txt", "text/plain");
+        _extensionToType.put("syndie", "application/x-syndie");
+    }
+    public static final String guessContentType(String filename) {
+        filename = Constants.lowercase(filename);
+        int split = filename.lastIndexOf('.');
+        if ( (split >= 0) && (split + 1 < filename.length()) ) {
+            String type = (String)_extensionToType.get(filename.substring(split+1));
+            if (type != null)
+                return type;
+        }
+        return "application/octet-stream";
+    } 
     
     private RipListener _lsnr;
     
@@ -98,6 +127,8 @@ public class WebRipRunner implements EepGet.StatusListener {
         _attachmentFiles = new ArrayList();
         _attachmentURLRefs = new ArrayList();
         _attachmentURLs = new ArrayList();
+        _attachmentNames = new ArrayList();
+        _attachmentTypes = new ArrayList();
         _otherURLRefs = new ArrayList();
         _errorMessages = new ArrayList();
         _exceptions = new ArrayList();
@@ -174,7 +205,7 @@ public class WebRipRunner implements EepGet.StatusListener {
     public int getTotalAttachments() { return _attachmentFiles.size(); }
     
     public void abortRip() {
-        if (!died())
+        if (!died() && (_state != STATE_REWRITE_HTML_COMPLETE))
             fatal("aborted by the user");
     }
     
@@ -240,6 +271,8 @@ public class WebRipRunner implements EepGet.StatusListener {
                     _attachmentFiles.remove(i);
                     _attachmentURLRefs.remove(i);
                     _attachmentURLs.remove(i);
+                    _attachmentNames.remove(i);
+                    _attachmentTypes.remove(i);
                     _otherURLRefs.add(refURL);
                     i--;
                 } else {
@@ -299,6 +332,32 @@ public class WebRipRunner implements EepGet.StatusListener {
     }
     
     public String getRewrittenHTML() { return read(_htmlFile); }
+    /** read in the data from the attachment files fully, returning a byte[] for each, or null if there was an error */
+    public List getAttachmentData() {
+        List rv = new ArrayList();
+        for (int i = 0; i < _attachmentFiles.size(); i++) {
+            File f = (File)_attachmentFiles.get(i);
+            byte[] data = new byte[(int)f.length()];
+            FileInputStream fin = null;
+            try {
+                fin = new FileInputStream(f);
+                int read = DataHelper.read(fin, data);
+                if (read != data.length)
+                    throw new IOException("Not enough data");
+                fin.close();
+                fin = null;
+                rv.add(data);
+            } catch (IOException ioe) {
+                _ui.errorMessage("Error reading attachment file", ioe);
+                return null;
+            } finally {
+                if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+            }
+        }
+        return rv;
+    }
+    public List getAttachmentNames() { return _attachmentNames; }
+    public List getAttachmentTypes() { return _attachmentTypes; }
     
     private String parse(File htmlFile) {
         if (!htmlFile.exists()) {
@@ -345,7 +404,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         _ui.debugMessage("parseRef [" + ref + "]");
         if (ref == null) return;
         String absoluteRef = getAbsolute(ref);
-        scheduleFetch(absoluteRef, ref);
+        scheduleFetch(absoluteRef, ref, guessContentType(ref));
     }
     private boolean shouldFetchLink(String ref) {
         String lc = Constants.lowercase(ref);
@@ -406,7 +465,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         }
     }
 
-    private void scheduleFetch(String absoluteURL, String relative) {
+    private void scheduleFetch(String absoluteURL, String relative, String contentType) {
         _ui.debugMessage("schedule fetch of " + absoluteURL);
         if ( (absoluteURL != null) && (!_attachmentURLRefs.contains(relative)) ) {
             try {
@@ -414,6 +473,8 @@ public class WebRipRunner implements EepGet.StatusListener {
                 _attachmentFiles.add(f);
                 _attachmentURLs.add(absoluteURL);
                 _attachmentURLRefs.add(relative);
+                _attachmentNames.add(f.getName());
+                _attachmentTypes.add(contentType);
                 _pendingAttachments++;
             } catch (IOException ioe) {
                 fatal("error creating temporary file for attachment", ioe);

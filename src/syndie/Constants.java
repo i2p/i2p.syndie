@@ -124,19 +124,25 @@ public class Constants {
         char str[] = orig.toCharArray();
         while (off < str.length) {
             if (splitElements.indexOf(str[off]) != -1) {
+                String val = null;
                 if (off-start > 0) {
-                    vals.add(new String(str, start, off-start));
-                } else if (includeZeroSizedElem) {
-                    vals.add("");
+                    val = new String(str, start, off-start);
+                } else {
+                    val = "";
                 }
+                if ( (val.trim().length() > 0) || (includeZeroSizedElem) )
+                    vals.add(val);
                 start = off+1;
             }
             off++;
         }
+        String val = null;
         if (off-start > 0)
-            vals.add(new String(str, start, off-start));
-        else if (includeZeroSizedElem)
-            vals.add(new String(""));
+            val = new String(str, start, off-start);
+        else 
+            val = "";
+        if ( (val.trim().length() > 0) || (includeZeroSizedElem) )
+            vals.add(val);
         String rv[] = new String[vals.size()];
         for (int i = 0; i < rv.length; i++)
             rv[i] = (String)vals.get(i);
