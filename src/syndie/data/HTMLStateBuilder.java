@@ -140,6 +140,7 @@ public class HTMLStateBuilder {
                         // look to see if we just hit "-->"
                         if ( (i >= 2) && (_html.charAt(i-1) == '-') && (_html.charAt(i-2) == '-') ) {
                             _isInComment = false;
+                            _ui.debugMessage("nested comment ended @ " + i);
                         }
                         break;
                     }
@@ -164,6 +165,8 @@ public class HTMLStateBuilder {
                 default:
                     if (tagStarted) {
                         tagContent.append(c);
+                    } else if (_isInComment) {
+                        // ignore
                     } else {
                         // should we make sure that we are in a <body> tag?
                         if ( (assumeBody || tagIsActive("body")) && !tagIsActive("script")) {
@@ -240,6 +243,7 @@ public class HTMLStateBuilder {
                 // <!-- <asdf> --> would get receiveTag("-- <asdf")
                 _isInComment = true;
             }
+            _ui.debugMessage("nested comment begin @ " + bodyIndex + " still in comment? " + _isInComment);
             return;
         }
         HTMLTag parent = null;

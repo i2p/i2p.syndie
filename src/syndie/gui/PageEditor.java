@@ -70,7 +70,7 @@ import syndie.db.UI;
 /**
  * wysiwyg editor for text or html pages in a message
  */
-public class PageEditor implements Translatable {
+public class PageEditor implements Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     private MessageEditor _messageEditor;
@@ -185,6 +185,7 @@ public class PageEditor implements Translatable {
         _browser = browser;
         buildControls();
         browser.getTranslationRegistry().register(this);
+        browser.getThemeRegistry().register(this);
     }
     
     public Control getControl() { return _root; }
@@ -1480,8 +1481,8 @@ public class PageEditor implements Translatable {
         // destroy all the data.  the page has been dropped or cancelled
         if (!_root.isDisposed())
             _root.dispose();
-        // todo: the rest
         _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
     }
     
     String getContent() { return _text.getText(); }
@@ -1577,6 +1578,10 @@ public class PageEditor implements Translatable {
     private static final String T_PAGEBGCOLOR = "syndie.gui.pageeditor.pagebgcolor";
     private static final String T_PAGEBGCOLOR_TOOLTIP = "syndie.gui.pageeditor.pagebgcolortooltip";
     
+    private static final String T_SPELL_END = "syndie.gui.pageeditor.spell.end";
+    private static final String T_SPELL_END_OK = "syndie.gui.pageeditor.spell.end.ok";
+    private static final String T_COLOR_DEFAULT = "syndie.gui.pageeditor.color.default";
+    
     public void translate(TranslationRegistry registry) {
         _htmlStyleChooser.setText(registry.getText(T_STYLE_BUTTON, "text style"));
         _htmlStyleChooser.setToolTipText(registry.getText(T_STYLE_BUTTON_TOOLTIP, "Build the text styling"));
@@ -1667,11 +1672,68 @@ public class PageEditor implements Translatable {
         _pageBGColor.setText(registry.getText(T_PAGEBGCOLOR, "pagebg"));
         _pageBGColor.setToolTipText(registry.getText(T_PAGEBGCOLOR_TOOLTIP, "Adjust the page bg color"));
         
-        _txtShell.pack(true);
         // rebuild color combos to translate the color names
     }
     
-    private static final String T_SPELL_END = "syndie.gui.pageeditor.spell.end";
-    private static final String T_SPELL_END_OK = "syndie.gui.pageeditor.spell.end.ok";
-    private static final String T_COLOR_DEFAULT = "syndie.gui.pageeditor.color.default";
+    public void applyTheme(Theme theme) {
+        _text.setFont(theme.CONTENT_FONT);
+
+        if (_txtShell != null) {
+            _txtShell.setFont(theme.SHELL_FONT);
+            _txtBold.setFont(theme.BUTTON_FONT);
+            _txtItalic.setFont(theme.BUTTON_FONT);
+            _txtUnderline.setFont(theme.BUTTON_FONT);
+            _txtStrikeout.setFont(theme.BUTTON_FONT);
+            _txtFont.setFont(theme.DEFAULT_FONT);
+            _txtFontSize.setFont(theme.DEFAULT_FONT);
+            _txtFGColor.setFont(theme.BUTTON_FONT);
+            _txtBGColor.setFont(theme.BUTTON_FONT);
+            _txtAlignLeft.setFont(theme.BUTTON_FONT);
+            _txtAlignCenter.setFont(theme.BUTTON_FONT);
+            _txtAlignRight.setFont(theme.BUTTON_FONT);
+            _styleOk.setFont(theme.BUTTON_FONT);
+            _styleCancel.setFont(theme.BUTTON_FONT);
+        }
+        
+        if (_spellShell != null) {
+            _spellShell.setFont(theme.SHELL_FONT);
+            _spellContext.setFont(theme.CONTENT_FONT);
+            _spellWord.setFont(theme.CONTENT_FONT);
+            _spellSuggestions.setFont(theme.DEFAULT_FONT);
+            _spellReplace.setFont(theme.BUTTON_FONT);
+            _spellReplaceAll.setFont(theme.BUTTON_FONT);
+            _spellIgnore.setFont(theme.BUTTON_FONT);
+            _spellIgnoreAll.setFont(theme.BUTTON_FONT);
+            _spellAdd.setFont(theme.BUTTON_FONT);
+            _spellCancel.setFont(theme.BUTTON_FONT);
+    
+            _spellWordLabel.setFont(theme.DEFAULT_FONT);
+            _spellSuggestionsLabel.setFont(theme.DEFAULT_FONT);
+        }
+        
+        if (_findShell != null) {
+            _findShell.setFont(theme.SHELL_FONT);
+            _findText.setFont(theme.CONTENT_FONT);
+            _findReplace.setFont(theme.CONTENT_FONT);
+            _findMatchCase.setFont(theme.BUTTON_FONT);
+            _findWrapAround.setFont(theme.BUTTON_FONT);
+            _findBackwards.setFont(theme.BUTTON_FONT);
+            
+            _findTextLabel.setFont(theme.DEFAULT_FONT);
+            _findReplaceLabel.setFont(theme.DEFAULT_FONT);
+            _findNext.setFont(theme.BUTTON_FONT);
+            _close.setFont(theme.BUTTON_FONT);
+            _replace.setFont(theme.BUTTON_FONT);
+            _replaceAll.setFont(theme.BUTTON_FONT);
+        }
+        
+        _grpHTML.setFont(theme.DEFAULT_FONT);
+        _grpMeta.setFont(theme.DEFAULT_FONT);
+        _grpPage.setFont(theme.DEFAULT_FONT);
+        _grpList.setFont(theme.DEFAULT_FONT);
+        _grpText.setFont(theme.DEFAULT_FONT);
+        _grpAlign.setFont(theme.DEFAULT_FONT);
+
+        _txtShell.pack(true);
+    }
 }

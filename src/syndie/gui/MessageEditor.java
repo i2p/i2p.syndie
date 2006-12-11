@@ -74,7 +74,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  Translatable {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  Translatable, Themeable {
     private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
@@ -245,6 +245,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         });
         
         getBrowser().getTranslationRegistry().register(this);
+        getBrowser().getThemeRegistry().register(this);
     }
     
     public void setAsReply(boolean asReply) {
@@ -1056,6 +1057,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _root.dispose();
         _refChooser.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
+        getBrowser().getThemeRegistry().unregister(this);
     }
     
     public int getParentCount() { return _parents.size(); }
@@ -1225,6 +1227,30 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         
         if (_author == null)
             _controlAuthor.setText(registry.getText(T_AUTHOR_UNKNOWN, "author..."));
+    }
+    
+    public void applyTheme(Theme theme) {
+        _ok.setFont(theme.BUTTON_FONT);
+        _save.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
+        _controlAuthor.setFont(theme.DEFAULT_FONT);
+        _controlSubject.setFont(theme.DEFAULT_FONT);
+        _controlSubjectText.setFont(theme.DEFAULT_FONT);
+        _controlForum.setFont(theme.DEFAULT_FONT);
+        _controlForumCombo.setFont(theme.DEFAULT_FONT);
+        _controlTags.setFont(theme.DEFAULT_FONT);
+        _controlTagsText.setFont(theme.DEFAULT_FONT);
+        _controlPrivacy.setFont(theme.DEFAULT_FONT);
+        _controlPrivacyCombo.setFont(theme.DEFAULT_FONT);
+        _controlPage.setFont(theme.DEFAULT_FONT);
+        _controlPageCombo.setFont(theme.DEFAULT_FONT);
+        _controlPageAction.setFont(theme.BUTTON_FONT);
+        _controlAttachment.setFont(theme.DEFAULT_FONT);
+        _controlAttachmentAction.setFont(theme.BUTTON_FONT);
+        _controlAttachmentCombo.setFont(theme.DEFAULT_FONT);
+        _controlRefAction.setFont(theme.BUTTON_FONT);
+        _controlExpiration.setFont(theme.DEFAULT_FONT);
+        _controlExpirationText.setFont(theme.DEFAULT_FONT);
         
         _root.pack(true);
     }
