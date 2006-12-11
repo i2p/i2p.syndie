@@ -762,9 +762,9 @@ public class EepGet {
             path = path + "?" + query;
         if (_log.shouldLog(Log.DEBUG)) _log.debug("Requesting " + path);
         if (post) {
-            buf.append("POST ").append(path).append(" HTTP/1.1\r\n");
+            buf.append("POST ").append(_actualURL).append(" HTTP/1.1\r\n");
         } else {
-            buf.append("GET ").append(path).append(" HTTP/1.1\r\n");
+            buf.append("GET ").append(_actualURL).append(" HTTP/1.1\r\n");
         }
         buf.append("Host: ").append(url.getHost()).append("\r\n");
         if (_alreadyTransferred > 0) {
