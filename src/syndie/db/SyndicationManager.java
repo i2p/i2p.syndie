@@ -498,6 +498,8 @@ public class SyndicationManager {
                 continue;
             String url = archive.getURI().getURL();
             
+            _ui.debugMessage("push to " + archive.getName() + " @ " + url);
+            
             int keyStart = -1;
             keyStart = url.indexOf("CHK@");
             if (keyStart == -1)
@@ -573,6 +575,7 @@ public class SyndicationManager {
                 syndicator.setDeleteOutboundAfterSend(false);
                 //syndicator.setPostPassphrase(archive.getURI().getString(""))
 
+                _ui.debugMessage("http push strategy: " + pushStrategy);
                 switch (pushStrategy) {
                     case PUSH_STRATEGY_DELTAKNOWN:
                         syndicator.schedulePut("archive", true);
@@ -580,6 +583,8 @@ public class SyndicationManager {
                     case PUSH_STRATEGY_DELTA:
                         syndicator.schedulePut("archive", false);
                         break;
+                    default:
+                        _ui.debugMessage("http push strategy unknown: " + pushStrategy);
                 }
                 // add a record so the post() can occur in one of the worker threads
                 StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), syndicator);
@@ -1238,6 +1243,10 @@ public class SyndicationManager {
                             StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                             if (rec.getStatus() == FETCH_SCHEDULED) {
                                 rec.setStatus(FETCH_STARTED);
+                                cur = rec;
+                                break;
+                            } else if (rec.getStatus() == PUSH_SCHEDULED) {
+                                rec.setStatus(PUSH_STARTED);
                                 cur = rec;
                                 break;
                             }

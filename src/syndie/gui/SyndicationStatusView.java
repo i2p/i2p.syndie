@@ -303,7 +303,16 @@ public class SyndicationStatusView implements Translatable, Themeable, Syndicati
     private void update(TableItem item, SyndicationManager.StatusRecord record, boolean isPrivate, String author, String target) {
         SyndieURI uri = record.getURI();
         if (record.getURI().isArchive()) {
-            item.setImage(0, ImageUtil.ICON_REF_ARCHIVE);
+            switch (record.getStatus()) {
+                case SyndicationManager.PUSH_ERROR:
+                case SyndicationManager.PUSH_SCHEDULED:
+                case SyndicationManager.PUSH_SENT:
+                case SyndicationManager.PUSH_STARTED:
+                    item.setImage(0, ImageUtil.ICON_SYNDICATE_PUSH);
+                    break;
+                default: // fetch
+                    item.setImage(0, ImageUtil.ICON_REF_ARCHIVE);
+            }
         } else if (record.getURI().getMessageId() == null) {
             item.setImage(0, ImageUtil.ICON_MSG_TYPE_META);
         } else if ( (record.getStatus() == SyndicationManager.FETCH_IMPORT_PBE) ||
@@ -335,11 +344,13 @@ public class SyndicationStatusView implements Translatable, Themeable, Syndicati
             case SyndicationManager.FETCH_INDEX_LOAD_ERROR:
             case SyndicationManager.FETCH_IMPORT_CORRUPT:
             case SyndicationManager.FETCH_STOPPED:
+            case SyndicationManager.PUSH_ERROR:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 break;
             case SyndicationManager.FETCH_INDEX_LOAD_OK:
             case SyndicationManager.FETCH_INDEX_DIFF_OK:
             case SyndicationManager.FETCH_IMPORT_OK:
+            case SyndicationManager.PUSH_SENT:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 //item.setText(5, "importOK");
                 break;
@@ -351,11 +362,13 @@ public class SyndicationStatusView implements Translatable, Themeable, Syndicati
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 break;
             case SyndicationManager.FETCH_SCHEDULED:
+            case SyndicationManager.PUSH_SCHEDULED:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 //item.setText(5, "scheduled");
                 break;
             case SyndicationManager.FETCH_COMPLETE:
             case SyndicationManager.FETCH_STARTED:
+            case SyndicationManager.PUSH_STARTED:
                 item.setImage(5, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 //item.setText(5, "started");
                 break;

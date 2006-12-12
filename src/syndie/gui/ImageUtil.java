@@ -57,7 +57,8 @@ public class ImageUtil {
     public static final Image ICON_SYNDICATE_STATUS_ERROR = createImageFromResource("iconSynError.png");
     public static final Image ICON_SYNDICATE_STATUS_PBE = createImageFromResource("iconSynPBE.png");
     public static final Image ICON_SYNDICATE_STATUS_OK = createImageFromResource("iconSynOk.png");
-
+    public static final Image ICON_SYNDICATE_PUSH = createImageFromResource("iconSynPush.png");
+    
     public static final Image ICON_ARCHIVE_TYPE_FILE = createImageFromResource("iconArchiveFile.png");
     public static final Image ICON_ARCHIVE_TYPE_FREENET = createImageFromResource("iconArchiveFreenet.png");
     public static final Image ICON_ARCHIVE_TYPE_URL = createImageFromResource("iconArchiveURL.png");
@@ -128,6 +129,7 @@ public class ImageUtil {
         _indisposableImages.add(ICON_SYNDICATE_STATUS_NOKEY);
         _indisposableImages.add(ICON_SYNDICATE_STATUS_PBE);
         _indisposableImages.add(ICON_SYNDICATE_STATUS_OK);
+        _indisposableImages.add(ICON_SYNDICATE_PUSH);
         
         _indisposableImages.add(ICON_MSG_TYPE_NORMAL);
         _indisposableImages.add(ICON_MSG_TYPE_META);
