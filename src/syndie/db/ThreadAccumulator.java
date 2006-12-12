@@ -502,15 +502,21 @@ AND
             
             long chanId = _client.getChannelId(child.getURI().getScope());
             MessageInfo msg = _client.getMessage(chanId, child.getURI().getMessageId());
-            _ui.debugMessage("removeFilteredChildren: child: " + child.getURI() + " msg known? " + (msg != null));
-            List tags = new ArrayList();
-            tags.addAll(msg.getPublicTags());
-            tags.addAll(msg.getPrivateTags());
-            if (!filterPassed(tags, child.getURI(), child, harvester, false)) {
+            if (msg != null) {
+                _ui.debugMessage("removeFilteredChildren: child: " + child.getURI() + " msg known? " + (msg != null));
+                List tags = new ArrayList();
+                tags.addAll(msg.getPublicTags());
+                tags.addAll(msg.getPrivateTags());
+                if (!filterPassed(tags, child.getURI(), child, harvester, false)) {
+                    cur.removeChild(child);
+                    i--;
+                } else {
+                    removeFilteredChildren(child, harvester);
+                }
+            } else {
                 cur.removeChild(child);
                 i--;
-            } else {
-                removeFilteredChildren(child, harvester);
+                // todo: keep a stub in here rather than trim the whole tree
             }
         }
         _ui.debugMessage("removeFilteredChildren complete");

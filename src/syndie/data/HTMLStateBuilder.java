@@ -233,6 +233,10 @@ public class HTMLStateBuilder {
     }
     
     private void receiveTagBegin(StringBuffer content, int bodyIndex, StringBuffer body) {
+        if ( (content == null) || (content.length() <= 0) ) {
+            _ui.debugMessage("tagBegin is empty @ index=" + bodyIndex + ": body=" + body, new Exception("source"));
+            return;
+        }
         //System.out.println("Receive tag begin: " + content.toString() + " [applies to " + bodyIndex + "]");
         String tagContent = content.toString();
         if (tagContent.startsWith("!--")) {
@@ -385,6 +389,10 @@ public class HTMLStateBuilder {
         receiveTagEnd(content.toString(), bodyIndex, body);
     }
     private void receiveTagEnd(String content, int bodyIndex, StringBuffer body) {
+        if ( (content == null) || (content.length() <= 0) ) {
+            _ui.debugMessage("tag is empty @ index=" + bodyIndex + ": body=" + body, new Exception("source"));
+            return;
+        }
         //System.out.println("Receive tag end: " + content + " [applies to " + bodyIndex + "]");
         HTMLTag parent = null;
         if (_activeTags.size() > 0)

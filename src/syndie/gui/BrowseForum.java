@@ -43,7 +43,8 @@ import syndie.db.UI;
 public class BrowseForum implements MessageTree.MessageTreeListener, Translatable, Themeable {
     private DBClient _client;
     private Composite _parent;
-    private SashForm _root;
+    private Composite _root;
+    private SashForm _sash;
     private Composite _top;
     private Composite _meta;
     private ImageCanvas _metaAvatar;
@@ -65,6 +66,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private MessageTree _tree;
     private MessageTree.MessageTreeListener _listener;
     private MessagePreview _preview;
+    private Composite _filterRow;
     private Hash _scope;
     private UI _ui;
     private BrowserControl _browser;
@@ -85,14 +87,17 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _ui.debugMessage("browse initialized");
     }
     
-    public Control getControl() { return _root; }
+    public Control getControl() { return _sash; }
     
     private void initComponents() {
-        _root = new SashForm(_parent, SWT.VERTICAL);
-        _root.SASH_WIDTH = 3;
-        _root.setBackground(ColorUtil.getColor("gray", null));
+        _root = new Composite(_parent, SWT.NONE);
+        _root.setLayout(new GridLayout(1, true));
+        _sash = new SashForm(_root, SWT.VERTICAL | SWT.BORDER);
+        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _sash.SASH_WIDTH = 3;
+        _sash.setBackground(ColorUtil.getColor("gray", null));
         
-        _top = new Composite(_root, SWT.NONE);
+        _top = new Composite(_sash, SWT.NONE);
         _top.setLayout(new GridLayout(1, true));
         _meta = new Composite(_top, SWT.NONE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
@@ -218,17 +223,24 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         });
         
         _browser.getUI().debugMessage("browseForum.initialize: creating tree");
-        _tree = new MessageTree(_browser, _top, this);
+        _tree = new MessageTree(_browser, _top, this, true);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _browser.getUI().debugMessage("browseForum.initialize: creating preview");
-        _preview = new MessagePreview(_browser, _root);
+        _preview = new MessagePreview(_browser, _sash);
         _browser.getUI().debugMessage("browseForum.initialize: preview created");
-        _root.setWeights(new int[] { 75, 25 });
+        _sash.setWeights(new int[] { 75, 25 });
         
         if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
-            _root.setMaximizedControl(_preview.getControl());
+            _sash.setMaximizedControl(_preview.getControl());
         else
-            _root.setMaximizedControl(_top);
+            _sash.setMaximizedControl(_top);
+        
+        _filterRow = new Composite(_root, SWT.BORDER);
+        _filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _filterRow.setLayout(new GridLayout(6, false));
+        
+        // the tree keeps track of the components, updating 'em, etc, and disposing on tree disposal
+        _tree.createFilterBar(_filterRow);
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -341,7 +353,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         // need to layout the root, since the image size can change, thereby adjusting the meta hight
         // and thereby the message table height
         //_meta.layout(true, true);
-        _root.layout(true, true);
+        _sash.layout(true, true);
     }
 
     private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";
@@ -360,7 +372,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         //if (toView)
         //    _shell.setVisible(false);
         _ui.debugMessage("message selected: " + uri);
-        preview(uri, false);
+        if (toView)
+            _browser.view(uri);
+        else
+            preview(uri, false);
         if (_listener != null)
             _listener.messageSelected(tree, uri, toView);
     }
@@ -371,13 +386,29 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         if (_listener != null)
             _listener.filterApplied(tree, searchURI);
     }
+
+    private SyndieURI _toPreview;
+    private static final int PREVIEW_DELAY = 500;
+    // only actually preview if 500ms passes w/out trying to preview something else
+    void preview(final SyndieURI uri, final boolean fullscreen) {
+        _browser.getUI().debugMessage("preview request for " + uri);
+        _toPreview = uri;
+        _root.getDisplay().timerExec(PREVIEW_DELAY, new Runnable() { 
+            public void run() { 
+                if (uri == _toPreview)
+                    doPreview(uri, fullscreen); 
+            } 
+        });
+    }
     
-    void preview(SyndieURI uri, boolean fullscreen) { 
+    // actually preview
+    void doPreview(SyndieURI uri, boolean fullscreen) {
+        _browser.getUI().debugMessage("previewing " + uri);
         _tree.select(uri);
         if (fullscreen && uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() != null) )
-            _root.setMaximizedControl(_preview.getControl());
+            _sash.setMaximizedControl(_preview.getControl());
         else
-            _root.setMaximizedControl(null);
+            _sash.setMaximizedControl(null);
         // dont update the metadata, since a message may be selected that isn't strictly
         // in this forum (eg its in another forum, but uses something in the filtered messages
         // as a parent).  when viewing a forum, the forum metadata at the top stays the same

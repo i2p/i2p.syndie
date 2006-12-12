@@ -67,12 +67,15 @@ public class MessageTree implements Translatable, Themeable {
     private TreeColumn _colDate;
     private TreeColumn _colTags;
 
+    //private FilterBar _filterBar;
+    /*
     private Label _filterLabel;
     private Combo _filterAge;
     private Label _filterTagLabel;
     private Combo _filterTag;
     private Button _filterUnreadOnly;
     private Button _filterAdvanced;
+     */
     private String _filter;
     //private Button _filterApply;
     //private Button _filterEdit;
@@ -90,8 +93,6 @@ public class MessageTree implements Translatable, Themeable {
     private boolean _showDate;
     private boolean _showTags;
     
-    /** if > 0, the custom date being filtered */
-    private long _customDate;
     /** tags applied to the messages being displayed */
     private Set _tags;
 
@@ -108,8 +109,15 @@ public class MessageTree implements Translatable, Themeable {
     /** item to MessageFlagBar */
     private Map _itemToMsgFlags;
     
-    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, true, true, true, true); }        
-    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags) {
+    /** list of FilterBar instances added to this tree */
+    private List _bars;
+    private boolean _hideFilter;
+    
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(browser, parent, lsnr, true, true, true, true, hideFilter);
+    }
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
@@ -118,6 +126,7 @@ public class MessageTree implements Translatable, Themeable {
         _showChannel = showChannel;
         _showDate = showDate;
         _showTags = showTags;
+        _hideFilter = hideFilter;
         _itemToURI = new HashMap();
         _itemsOld = new HashSet();
         _itemsNewRead = new HashSet();
@@ -125,7 +134,7 @@ public class MessageTree implements Translatable, Themeable {
         _itemToMsg = new HashMap();
         _itemToMsgFlags = new HashMap();
         _tags = new HashSet();
-        _customDate = -1;
+        _bars = new ArrayList();
         initComponents();
     }
     
@@ -155,6 +164,11 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    
+    public void createFilterBar(Composite row) {
+        FilterBar bar = new FilterBar(_browser, this, row);
+        _bars.add(bar);
+    }
 
     public interface MessageTreeListener {
         /** 
@@ -167,6 +181,299 @@ public class MessageTree implements Translatable, Themeable {
         /** the new filter was applied */
         public void filterApplied(MessageTree tree, SyndieURI searchURI);
     }
+    
+    private static class FilterBar implements Translatable, Themeable {
+        private BrowserControl _ctl;
+        private Composite _filterRow;
+        private MessageTree _msgTree;
+        private Label _filterLabel;
+        private Combo _filterAge;
+        private Label _filterTagLabel;
+        private Combo _filterTag;
+        private Button _filterUnreadOnly;
+        private Button _filterAdvanced;
+        /** if > 0, the custom date being filtered */
+        private long _customDate;
+        
+        public FilterBar(BrowserControl browser, MessageTree msgTree, Composite bar) {
+            _ctl = browser;
+            _msgTree = msgTree;
+            _filterRow = bar;
+            _customDate = -1;
+            initBar();
+        }
+        private void initBar() {
+            _filterLabel = new Label(_filterRow, SWT.NONE);
+            _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+
+            _filterAge = new Combo(_filterRow, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+            _filterAge.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+            _filterAge.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    if (_filterAge.getSelectionIndex() == AGE_CUSTOM)
+                        pickDate();
+                    else
+                        _msgTree.applyFilter();
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    if (_filterAge.getSelectionIndex() == AGE_CUSTOM)
+                        pickDate();
+                    else
+                        _msgTree.applyFilter();
+                }
+            });
+
+            _filterTagLabel = new Label(_filterRow, SWT.NONE);
+            _filterTagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+
+            _filterTag = new Combo(_filterRow, SWT.DROP_DOWN | SWT.BORDER);
+            _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+            _filterTag.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) {
+                    if (evt.detail == SWT.TRAVERSE_RETURN) _msgTree.applyFilter();
+                }
+            });
+            _filterTag.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+            });
+
+            _filterUnreadOnly = new Button(_filterRow, SWT.CHECK);
+            _filterUnreadOnly.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+            });
+
+            _filterAdvanced = new Button(_filterRow, SWT.PUSH);
+            _filterAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+            _filterAdvanced.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
+            });
+            
+            _ctl.getTranslationRegistry().register(this);
+            _ctl.getThemeRegistry().register(this);
+        }
+        
+        public void dispose() {
+            _ctl.getTranslationRegistry().unregister(this);
+            _ctl.getThemeRegistry().unregister(this);
+        }
+        
+        public void pickDate() {
+            _customDate = 1; // erm, do a popup
+            String when = Constants.getDate(_customDate) + "...";
+            _filterAge.setItem(AGE_CUSTOM, when);
+            _filterAge.setText(when);
+            _filterAge.select(AGE_CUSTOM);
+            _msgTree.applyFilter();
+        }
+        public void setFilter(SyndieURI uri) {
+            Long days = null;
+            if (uri != null) { 
+                days = uri.getLong("age");
+                if (days == null)
+                    days = uri.getLong("agelocal");
+            }
+            if (days != null) {
+                switch (days.intValue()) {
+                    case 60: _filterAge.select(AGE_LASTMONTH); break;
+                    case 30: _filterAge.select(AGE_THISMONTH); break;
+                    case 14: _filterAge.select(AGE_LASTWEEK); break;
+                    case 7: _filterAge.select(AGE_THISWEEK); break;
+                    case 2: _filterAge.select(AGE_YESTERDAY); break;
+                    case 1: _filterAge.select(AGE_TODAY); break;
+                    default: 
+                        _filterAge.setItem(AGE_CUSTOM, Constants.getDate(System.currentTimeMillis()-days.longValue()) + "...");
+                        _filterAge.select(AGE_CUSTOM);
+                        break;
+                }
+            }
+            String tags[] = null;
+            if (uri != null)
+                tags = uri.getStringArray("tagrequire");
+            if ( (tags == null) || (tags.length == 0) ) {
+                _filterTag.select(0);
+            } else if (_filterTag.indexOf(tags[0]) > 0) {
+                _filterTag.select(_filterTag.indexOf(tags[0]));
+            } else {
+                _filterTag.setText(tags[0]);
+            }
+        }
+        
+        
+        private static final int AGE_TODAY = 0;
+        private static final int AGE_YESTERDAY = 1;
+        private static final int AGE_THISWEEK = 2;
+        private static final int AGE_LASTWEEK = 3;
+        private static final int AGE_THISMONTH = 4;
+        private static final int AGE_LASTMONTH = 5;
+        private static final int AGE_CUSTOM = 6;
+        private static final int AGE_DEFAULT = AGE_THISWEEK;
+
+        private static final String T_AGE_TODAY = "syndie.gui.messagetree.age.today";
+        private static final String T_AGE_YESTERDAY = "syndie.gui.messagetree.age.yesterday";
+        private static final String T_AGE_THISWEEK = "syndie.gui.messagetree.age.thisweek";
+        private static final String T_AGE_LASTWEEK = "syndie.gui.messagetree.age.lastweek";
+        private static final String T_AGE_THISMONTH = "syndie.gui.messagetree.age.thismonth";
+        private static final String T_AGE_LASTMONTH = "syndie.gui.messagetree.age.lastmonth";
+        private static final String T_AGE_CUSTOM = "syndie.gui.messagetree.age.custom";
+
+        private void populateAgeCombo() {
+            int selected = AGE_DEFAULT;
+            if (_filterAge.getItemCount() > 0)
+                selected = _filterAge.getSelectionIndex();
+            _filterAge.setRedraw(false);
+            _filterAge.removeAll();
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_TODAY, "Today"));
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_YESTERDAY, "Since yesterday"));
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_THISWEEK, "This week"));
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_LASTWEEK, "Since last week"));
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_THISMONTH, "This month"));
+            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_LASTMONTH, "Since last month"));
+            if (_customDate > 0)
+                _filterAge.add(Constants.getDate(_customDate) + "...");
+            else
+                _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_CUSTOM, "Custom date..."));
+            _filterAge.select(selected);
+            _filterAge.setRedraw(true);
+        }
+
+        private static final String T_TAG_ALL = "syndie.gui.messagetree.tag.all";
+
+        private void populateTagCombo() {
+            String txt = _filterTag.getText();
+            int selected = -1;
+            if ( (_filterTag.getItemCount() > 0) && (txt.trim().length() == 0) )
+                selected = _filterTag.getSelectionIndex();
+            _ctl.getUI().debugMessage("populateTagCombo text=[" + txt + "] selected [" + selected + "]");
+            _filterTag.setRedraw(false);
+            _filterTag.removeAll();
+            TreeSet tags = new TreeSet(_msgTree.getTags());
+            _filterTag.add(_ctl.getTranslationRegistry().getText(T_TAG_ALL, "Any tags"));
+            for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
+                String tag = (String)iter.next();
+                _filterTag.add(tag);
+            }
+            if (selected > 0) {
+                _filterTag.select(selected);
+            } else {
+                _filterTag.setText(txt);
+                //_filterTag.select(0);
+            }
+            _filterTag.setRedraw(true);
+        }
+
+        private String buildFilter() {
+            SyndieURI uri = null;
+            String filter = _msgTree.getFilter();
+            try {
+                if ( (filter == null) || (filter.trim().length() <= 0) )
+                    filter = SyndieURI.DEFAULT_SEARCH_URI.toString();
+                uri = new SyndieURI(filter);
+            } catch (URISyntaxException use) {
+                uri = SyndieURI.DEFAULT_SEARCH_URI;
+            }
+
+            Map attributes = uri.getAttributes();
+            int days = 1;
+            switch (_filterAge.getSelectionIndex()) {
+                case AGE_CUSTOM:
+                    if (_customDate > 0) {
+                        long diff = System.currentTimeMillis() - _customDate;
+                        days = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
+                    }
+                    break;
+                case AGE_LASTMONTH: days = 60; break;
+                case AGE_THISMONTH: days = 30; break;
+                case AGE_LASTWEEK: days = 14; break;
+                case AGE_THISWEEK: days = 7; break;
+                case AGE_YESTERDAY: days = 2; break;
+                case AGE_TODAY: 
+                default:
+                    days = 1; 
+                    break;
+            }
+            attributes.put("age", new Integer(days));
+            attributes.put("agelocal", new Integer(days));
+
+            String tag = _filterTag.getText().trim();
+            if ( (_filterTag.getSelectionIndex() == 0) || 
+                 ( (_filterTag.getItemCount() > 0) && _filterTag.getItem(0).equals(tag)) ) {
+                tag = "";
+                attributes.remove("tagrequire");
+                attributes.remove("taginclude");
+                attributes.remove("tagexclude");
+            }
+            if (tag.length() > 0) {
+                // should this be subsequent to the applied filters, or additive? 
+                // the following is additive, but may be confusing...
+                if (false) {
+                    String require[] = (String[])attributes.get("tagrequire");
+                    if (require == null) {
+                        require = new String[] { tag };
+                    } else {
+                        boolean found = false;
+                        for (int i = 0; !found && i < require.length; i++)
+                            if (require[i].equals(tag))
+                                found = true;
+                        if (!found) {
+                            String req[] = new String[require.length + 1];
+                            System.arraycopy(require, 0, req, 0, require.length);
+                            req[req.length-1] = tag;
+                            require = req;
+                        }
+                    }
+                    attributes.put("tagrequire", require);
+                    attributes.remove("taginclude");
+                    attributes.remove("tagexclude");
+                } else {
+                    attributes.put("tagrequire", new String[] { tag });
+                    attributes.remove("taginclude");
+                    attributes.remove("tagexclude");
+                }
+            }
+
+            int idx = _filterTag.indexOf(tag);
+            if (idx >= 0)
+                _filterTag.select(idx);
+            else
+                _filterTag.setText(tag);
+
+            boolean unreadOnly = _filterUnreadOnly.getSelection();
+            if (unreadOnly)
+                attributes.put("unreadonly", Boolean.TRUE.toString());
+            else
+                attributes.remove("unreadonly");
+
+            String rv = new SyndieURI(uri.getType(), attributes).toString();
+            _ctl.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
+            return rv;
+        }
+        
+        public void translate(TranslationRegistry registry) {
+            _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filters:"));
+
+            _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
+            _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
+            _filterUnreadOnly.setText(registry.getText(T_FILTER_UNREAD, "Unread only"));
+            populateAgeCombo();
+            populateTagCombo();
+        }
+        
+        public void applyTheme(Theme theme) {
+            _filterAdvanced.setFont(theme.BUTTON_FONT);
+            _filterLabel.setFont(theme.DEFAULT_FONT);
+            _filterAge.setFont(theme.DEFAULT_FONT);
+            _filterTagLabel.setFont(theme.DEFAULT_FONT);
+            _filterTag.setFont(theme.DEFAULT_FONT);
+            _filterUnreadOnly.setFont(theme.DEFAULT_FONT);
+            _filterRow.layout(true);
+        }
+    }
+    
+    private Set getTags() { return _tags; }
+    private String getFilter() { return _filter; }
     
     private static final int FLAG_SPACING = 2;
     
@@ -203,9 +510,9 @@ public class MessageTree implements Translatable, Themeable {
                     MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
                     if (bar != null) {
                         Image imgs[] = bar.getFlags();
-                        String tt = bar.getTooltip();
+                        //String tt = bar.getTooltip();
                         int off = evt.x;
-                        _browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
+                        //_browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
                         for (int i = 0; i < imgs.length; i++) {
                             Rectangle sz = imgs[i].getBounds();
                             int excess = evt.height-sz.height;
@@ -244,57 +551,17 @@ public class MessageTree implements Translatable, Themeable {
         Composite filterRow = new Composite(_root, SWT.BORDER);
         filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         filterRow.setLayout(new GridLayout(6, false));
-        _filterLabel = new Label(filterRow, SWT.NONE);
-        _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _filterAge = new Combo(filterRow, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _filterAge.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        _filterAge.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                if (_filterAge.getSelectionIndex() == AGE_CUSTOM)
-                    pickDate();
-                else
-                    applyFilter();
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                if (_filterAge.getSelectionIndex() == AGE_CUSTOM)
-                    pickDate();
-                else
-                    applyFilter();
-            }
-        });
-        
-        _filterTagLabel = new Label(filterRow, SWT.NONE);
-        _filterTagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        
-        _filterTag = new Combo(filterRow, SWT.DROP_DOWN | SWT.BORDER);
-        _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
-        _filterTag.addTraverseListener(new TraverseListener() {
-            public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN) applyFilter();
-            }
-        });
-        _filterTag.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
-        });
-        
-        _filterUnreadOnly = new Button(filterRow, SWT.CHECK);
-        _filterUnreadOnly.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { applyFilter(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { applyFilter(); }
-        });
-        
-        _filterAdvanced = new Button(filterRow, SWT.PUSH);
-        _filterAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        _filterAdvanced.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { editFilter(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { editFilter(); }
-        });
+        if (_hideFilter) {
+            filterRow.setVisible(false);
+            ((GridData)filterRow.getLayoutData()).exclude = true;   
+        } else {
+            createFilterBar(filterRow);
+        }
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void resized() { resizeCols(); }
-            public void selected() { /*fireSelected(false);*/ }
+            public void selected() { fireSelected(false); }
             public void returnHit() { fireSelected(true); }
             public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
@@ -343,6 +610,8 @@ public class MessageTree implements Translatable, Themeable {
         _browser.getThemeRegistry().unregister(this);
         if (_filterEditor != null)
             _filterEditor.dispose();
+        for (int i = 0; i < _bars.size(); i++)
+            ((FilterBar)_bars.get(i)).dispose();
     }
     
     public void setFilter(SyndieURI searchURI) {
@@ -365,197 +634,19 @@ public class MessageTree implements Translatable, Themeable {
             _filter = "";
         }
     
-        Long days = null;
-        if (uri != null) { 
-            days = uri.getLong("age");
-            if (days == null)
-                days = uri.getLong("agelocal");
-        }
-        if (days != null) {
-            switch (days.intValue()) {
-                case 60: _filterAge.select(AGE_LASTMONTH); break;
-                case 30: _filterAge.select(AGE_THISMONTH); break;
-                case 14: _filterAge.select(AGE_LASTWEEK); break;
-                case 7: _filterAge.select(AGE_THISWEEK); break;
-                case 2: _filterAge.select(AGE_YESTERDAY); break;
-                case 1: _filterAge.select(AGE_TODAY); break;
-                default: 
-                    _filterAge.setItem(AGE_CUSTOM, Constants.getDate(System.currentTimeMillis()-days.longValue()) + "...");
-                    _filterAge.select(AGE_CUSTOM);
-                    break;
-            }
-        }
-        String tags[] = null;
-        if (uri != null)
-            tags = uri.getStringArray("tagrequire");
-        if ( (tags == null) || (tags.length == 0) ) {
-            _filterTag.select(0);
-        } else if (_filterTag.indexOf(tags[0]) > 0) {
-            _filterTag.select(_filterTag.indexOf(tags[0]));
-        } else {
-            _filterTag.setText(tags[0]);
-        }
-    }
-    
-    private static final int AGE_TODAY = 0;
-    private static final int AGE_YESTERDAY = 1;
-    private static final int AGE_THISWEEK = 2;
-    private static final int AGE_LASTWEEK = 3;
-    private static final int AGE_THISMONTH = 4;
-    private static final int AGE_LASTMONTH = 5;
-    private static final int AGE_CUSTOM = 6;
-    private static final int AGE_DEFAULT = AGE_THISWEEK;
-    
-    private static final String T_AGE_TODAY = "syndie.gui.messagetree.age.today";
-    private static final String T_AGE_YESTERDAY = "syndie.gui.messagetree.age.yesterday";
-    private static final String T_AGE_THISWEEK = "syndie.gui.messagetree.age.thisweek";
-    private static final String T_AGE_LASTWEEK = "syndie.gui.messagetree.age.lastweek";
-    private static final String T_AGE_THISMONTH = "syndie.gui.messagetree.age.thismonth";
-    private static final String T_AGE_LASTMONTH = "syndie.gui.messagetree.age.lastmonth";
-    private static final String T_AGE_CUSTOM = "syndie.gui.messagetree.age.custom";
-    
-    private void populateAgeCombo() {
-        int selected = AGE_DEFAULT;
-        if (_filterAge.getItemCount() > 0)
-            selected = _filterAge.getSelectionIndex();
-        _filterAge.setRedraw(false);
-        _filterAge.removeAll();
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_TODAY, "Today"));
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_YESTERDAY, "Since yesterday"));
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_THISWEEK, "This week"));
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_LASTWEEK, "Since last week"));
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_THISMONTH, "This month"));
-        _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_LASTMONTH, "Since last month"));
-        if (_customDate > 0)
-            _filterAge.add(Constants.getDate(_customDate) + "...");
-        else
-            _filterAge.add(_browser.getTranslationRegistry().getText(T_AGE_CUSTOM, "Custom date..."));
-        _filterAge.select(selected);
-        _filterAge.setRedraw(true);
-    }
-    
-    private static final String T_TAG_ALL = "syndie.gui.messagetree.tag.all";
-    
-    private void populateTagCombo() {
-        String txt = _filterTag.getText();
-        int selected = -1;
-        if ( (_filterTag.getItemCount() > 0) && (txt.trim().length() == 0) )
-            selected = _filterTag.getSelectionIndex();
-        _browser.getUI().debugMessage("populateTagCombo text=[" + txt + "] selected [" + selected + "]");
-        _filterTag.setRedraw(false);
-        _filterTag.removeAll();
-        TreeSet tags = new TreeSet(_tags);
-        _filterTag.add(_browser.getTranslationRegistry().getText(T_TAG_ALL, "Any tags"));
-        for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
-            String tag = (String)iter.next();
-            _filterTag.add(tag);
-        }
-        if (selected > 0) {
-            _filterTag.select(selected);
-        } else {
-            _filterTag.setText(txt);
-            //_filterTag.select(0);
-        }
-        _filterTag.setRedraw(true);
-    }
-    
-    private String buildFilter() {
-        SyndieURI uri = null;
-        try {
-            if ( (_filter == null) || (_filter.length() <= 0) )
-                _filter = SyndieURI.DEFAULT_SEARCH_URI.toString();
-            uri = new SyndieURI(_filter);
-        } catch (URISyntaxException use) {
-            uri = SyndieURI.DEFAULT_SEARCH_URI;
-        }
-        
-        Map attributes = uri.getAttributes();
-        int days = 1;
-        switch (_filterAge.getSelectionIndex()) {
-            case AGE_CUSTOM:
-                if (_customDate > 0) {
-                    long diff = System.currentTimeMillis() - _customDate;
-                    days = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
-                }
-                break;
-            case AGE_LASTMONTH: days = 60; break;
-            case AGE_THISMONTH: days = 30; break;
-            case AGE_LASTWEEK: days = 14; break;
-            case AGE_THISWEEK: days = 7; break;
-            case AGE_YESTERDAY: days = 2; break;
-            case AGE_TODAY: 
-            default:
-                days = 1; 
-                break;
-        }
-        attributes.put("age", new Integer(days));
-        attributes.put("agelocal", new Integer(days));
-        
-        String tag = _filterTag.getText().trim();
-        if ( (_filterTag.getSelectionIndex() == 0) || 
-             ( (_filterTag.getItemCount() > 0) && _filterTag.getItem(0).equals(tag)) ) {
-            tag = "";
-            attributes.remove("tagrequire");
-            attributes.remove("taginclude");
-            attributes.remove("tagexclude");
-        }
-        if (tag.length() > 0) {
-            // should this be subsequent to the applied filters, or additive? 
-            // the following is additive, but may be confusing...
-            if (false) {
-                String require[] = (String[])attributes.get("tagrequire");
-                if (require == null) {
-                    require = new String[] { tag };
-                } else {
-                    boolean found = false;
-                    for (int i = 0; !found && i < require.length; i++)
-                        if (require[i].equals(tag))
-                            found = true;
-                    if (!found) {
-                        String req[] = new String[require.length + 1];
-                        System.arraycopy(require, 0, req, 0, require.length);
-                        req[req.length-1] = tag;
-                        require = req;
-                    }
-                }
-                attributes.put("tagrequire", require);
-                attributes.remove("taginclude");
-                attributes.remove("tagexclude");
-            } else {
-                attributes.put("tagrequire", new String[] { tag });
-                attributes.remove("taginclude");
-                attributes.remove("tagexclude");
-            }
-        }
-        
-        int idx = _filterTag.indexOf(tag);
-        if (idx >= 0)
-            _filterTag.select(idx);
-        else
-            _filterTag.setText(tag);
-    
-        boolean unreadOnly = _filterUnreadOnly.getSelection();
-        if (unreadOnly)
-            attributes.put("unreadonly", Boolean.TRUE.toString());
-        else
-            attributes.remove("unreadonly");
-        
-        String rv = new SyndieURI(uri.getType(), attributes).toString();
-        _browser.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
-        return rv;
-    }
-    
-    public void pickDate() {
-        _customDate = 1; // erm, do a popup
-        String when = Constants.getDate(_customDate) + "...";
-        _filterAge.setItem(AGE_CUSTOM, when);
-        _filterAge.setText(when);
-        _filterAge.select(AGE_CUSTOM);
-        applyFilter();
+        for (int i = 0; i < _bars.size(); i++)
+            ((FilterBar)_bars.get(i)).setFilter(uri);
+        //_filterBar.setFilter(uri);
     }
     
     public void applyFilter() {
-        _filter = buildFilter();
+        String filter = null;
+        for (int i = 0; i < _bars.size() && filter == null; i++)
+            filter = ((FilterBar)_bars.get(i)).buildFilter();
+        applyFilter(filter);
+    }
+    public void applyFilter(String filter) {
+        _filter = filter;
         final String txt = _filter;
         if (txt.trim().length() > 0) {
             try {
@@ -636,7 +727,8 @@ public class MessageTree implements Translatable, Themeable {
         _colAuthor.pack();
         _colTags.pack();
         
-        populateTagCombo();
+        for (int i = 0; i < _bars.size(); i++)
+            ((FilterBar)_bars.get(i)).populateTagCombo();
         
         resizeCols();
         _tree.setRedraw(true);
@@ -876,36 +968,21 @@ public class MessageTree implements Translatable, Themeable {
         _colDate.setText(registry.getText(T_DATE, "Date"));
         _colTags.setText(registry.getText(T_TAGS, "Tags"));
         
-        _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filters:"));
-        
-        _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
-        _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
-        _filterUnreadOnly.setText(registry.getText(T_FILTER_UNREAD, "Unread only"));
         if (_filterEditor != null)
             _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
 
         _view.setText(registry.getText(T_VIEW, "View the messages"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
-
-        populateAgeCombo();
-        populateTagCombo();
     }
     
     public void applyTheme(Theme theme) {
         _tree.setFont(theme.TREE_FONT);
-        _filterAdvanced.setFont(theme.BUTTON_FONT);
-        _filterLabel.setFont(theme.DEFAULT_FONT);
-        _filterAge.setFont(theme.DEFAULT_FONT);
-        _filterTagLabel.setFont(theme.DEFAULT_FONT);
-        _filterTag.setFont(theme.DEFAULT_FONT);
-        _filterUnreadOnly.setFont(theme.DEFAULT_FONT);
         if (_filterEditorShell != null) {
             _filterEditorShell.setFont(theme.SHELL_FONT);
             _filterEditorShell.layout(true, true);
         }
         //_root.layout(true, true);
-        _filterLabel.getParent().layout(true);
         for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);

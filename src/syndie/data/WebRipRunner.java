@@ -262,7 +262,15 @@ public class WebRipRunner implements EepGet.StatusListener {
             String refURL = (String)_attachmentURLRefs.get(i);
             File file = (File)_attachmentFiles.get(i);
             if (!get(file, url)) {
-                fatal("Unable to retrieve an attachment: [" + refURL + "] from [" + url + "]");
+                _ui.debugMessage("unable to retrieve attachment " + i + " from " + url);
+                file.delete();
+                _attachmentFiles.remove(i);
+                _attachmentURLRefs.remove(i);
+                _attachmentURLs.remove(i);
+                _attachmentNames.remove(i);
+                _attachmentTypes.remove(i);
+                _otherURLRefs.add(refURL);
+                i--;
             } else {
                 int size = (int)file.length();
                 if ( (size > _maxAttachKB*1024) || (_totalSize + size > _maxTotalKB*1024) ) {
