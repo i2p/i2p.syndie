@@ -404,8 +404,9 @@ public class PageRenderer implements Themeable {
         final HTMLStateBuilder builder = new HTMLStateBuilder(_browser.getUI(), html, _charsPerLine);
         builder.buildState();
         _browser.getUI().debugMessage("renderHTML: state built");
-        final String text = builder.getAsText();
-        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), text, _msg, _enableImages, _styled);
+        final String rawText = builder.getAsText();
+        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), rawText, _msg, _enableImages, _styled);
+        final String text = builder.stripPlaceholders(rawText);
         
         _browser.getUI().debugMessage("renderHTML: building styles");
         //todo: do this in two parts, once in the current thread, another in the swt thread
@@ -960,7 +961,7 @@ public class PageRenderer implements Themeable {
                 _bodyViewAuthorForum.setEnabled(false);
                 _bodyViewAuthorMetadata.setEnabled(false);
                 _bodyReplyToForum.setEnabled(true);
-                _bodyReplyToAuthor.setEnabled(false);
+                _bodyReplyToAuthor.setEnabled(true);
                 _bodyBanForum.setEnabled(true);
                 _bodyBookmarkForum.setEnabled(true);
                 _bodyViewForum.setEnabled(true);

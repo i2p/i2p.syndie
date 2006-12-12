@@ -501,6 +501,13 @@ public class HTMLStateBuilder {
     public String getAsText() { return _plainText; }
     /** list of parsed HTMLTag instances, specifying their start and end index in the body */
     public List getTags() { return _closedTags; }
+    public static String stripPlaceholders(String orig) {
+        char c[] = orig.toCharArray();
+        for (int i = 0; i < c.length; i++)
+            if ( (c[i] == PLACEHOLDER_IMAGE) || (c[i] == PLACEHOLDER_LINK_END) || (c[i] == PLACEHOLDER_LISTITEM) )
+                c[i] = ' ';
+        return new String(c);
+    }
 
     private static void buildEntities() {
 

@@ -59,6 +59,7 @@ public class MessageView implements Translatable, Themeable {
     private MenuItem _authorMenuViewMsgs;
     private MenuItem _authorMenuViewMeta;
     private MenuItem _authorMenuBookmark;
+    private MenuItem _authorMenuReplyPrivate;
     private MenuItem _authorMenuBan;
     private Label _headerForumLabel;
     private Label _headerForum;
@@ -67,6 +68,8 @@ public class MessageView implements Translatable, Themeable {
     private MenuItem _forumMenuViewMsgs;
     private MenuItem _forumMenuViewMeta;
     private MenuItem _forumMenuBookmark;
+    private MenuItem _forumMenuReplyPrivate;
+    private MenuItem _forumMenuReplyPublic;
     private MenuItem _forumMenuBan;
     private Label _headerDateLabel;
     private Label _headerDate;
@@ -467,6 +470,12 @@ public class MessageView implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkAuthor(); }
         });
         new MenuItem(_authorMenu, SWT.SEPARATOR);
+        _authorMenuReplyPrivate = new MenuItem(_authorMenu, SWT.PUSH);
+        _authorMenuReplyPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+        });
+        new MenuItem(_authorMenu, SWT.SEPARATOR);
         _authorMenuBan = new MenuItem(_authorMenu, SWT.PUSH);
         _authorMenuBan.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { banAuthor(); }
@@ -508,6 +517,17 @@ public class MessageView implements Translatable, Themeable {
         _forumMenuBookmark.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkForum(); }
+        });
+        new MenuItem(_forumMenu, SWT.SEPARATOR);
+        _forumMenuReplyPrivate = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuReplyPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+        });
+        _forumMenuReplyPublic = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuReplyPublic.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
         });
         new MenuItem(_forumMenu, SWT.SEPARATOR);
         _forumMenuBan = new MenuItem(_forumMenu, SWT.PUSH);
@@ -579,6 +599,19 @@ public class MessageView implements Translatable, Themeable {
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+    
+    private void replyPrivateAuthor() {
+        if (_author != null)
+            _browser.view(_browser.createPostURI(_author, _uri, true));
+    }
+    private void replyPrivateForum() {
+        if (_target != null)
+            _browser.view(_browser.createPostURI(_target, _uri, true));
+    }
+    private void replyPublicForum() {
+        if (_target != null)
+            _browser.view(_browser.createPostURI(_target, _uri, false));
     }
 
     private void viewAuthorMsgs() {
@@ -739,6 +772,10 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_FORUMVIEWMETA = "syndie.gui.messageview.forumviewmeta";
     private static final String T_FORUMVIEWMSGS = "syndie.gui.messageview.forumviewmsgs";
     
+    private static final String T_AUTHORREPLYPRIV = "syndie.gui.messageview.authorreplypriv";
+    private static final String T_FORUMREPLYPUB = "syndie.gui.messageview.forumreplypub";
+    private static final String T_FORUMREPLYPRIV = "syndie.gui.messageview.forumreplypriv";
+    
     public void translate(TranslationRegistry registry) {
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
@@ -752,10 +789,13 @@ public class MessageView implements Translatable, Themeable {
         _authorMenuBookmark.setText(registry.getText(T_AUTHORBOOKMARK, "Bookmark author"));
         _authorMenuViewMeta.setText(registry.getText(T_AUTHORVIEWMETA, "View author's information"));
         _authorMenuViewMsgs.setText(registry.getText(T_AUTHORVIEWMSGS, "View author's forum"));
+        _authorMenuReplyPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
         
         _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
         _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
-        _forumMenuViewMeta.setText(registry.getText(T_FORUMBAN, "View fourm information"));
-        _forumMenuViewMsgs.setText(registry.getText(T_FORUMBAN, "View forum messages"));
+        _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View fourm information"));
+        _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
+        _forumMenuReplyPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
+        _forumMenuReplyPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
     }
 }

@@ -390,9 +390,9 @@ public class WebRipRunner implements EepGet.StatusListener {
         if (tags != null) {
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
-                if ("a".equals(tag.name))
+                if ("a".equals(tag.name) && tag.attributes.containsKey("href"))
                     parseLink(tag.attributes.getProperty("href"));
-                else if ("img".equals(tag.name))
+                else if ("img".equals(tag.name) && tag.attributes.containsKey("src"))
                     parseRef(tag.attributes.getProperty("src"));
                 if (died())
                     break;

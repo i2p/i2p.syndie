@@ -90,7 +90,8 @@ public class CustomStyledText extends StyledText {
         }
         _lastSize = rv;
         long after = System.currentTimeMillis();
-        trace("cst: computeSize(" + wHint + ", " + hHint+ ", " + changed + "): " + (after-before) + " [" + rv + "] [ignored? " + ignored + "]");
+        if ((after-before > 200) && (ignored == false))
+            trace("cst: computeSize(" + wHint + ", " + hHint+ ", " + changed + "): " + (after-before) + " [" + rv + "] [ignored? " + ignored + "]");
         return rv;
     }
     public Point getSize() {
@@ -118,7 +119,7 @@ public class CustomStyledText extends StyledText {
     private void trace(String str) {
         UI ui = _ui;
         if (ui != null)
-            ui.debugMessage(str);
+            ui.debugMessage(str, new Exception("source"));
         else
             System.err.println(str);
     }
