@@ -112,59 +112,29 @@ in a webserver and tell people the URL.  They will then be able to load up
 their Syndie instance and use the <a href="manual.html#getindex">getindex and fetch</a>
 commands to pull posts from the archive into their local Syndie instance.</p>
 
-<p>To enable people to upload posts to an HTTP archive, Syndie bundles an
-<code>import.cgi</code> CGI script - simply place the <code>import.cgi</code>
-in the <code>$dataRoot/archive/</code> directory, mark it as executable and
-tell your webserver to run <code>.cgi</code> files as CGI scripts.  For example,
-the following Apache httpd.conf directives would suffice (assuming your login
-was <code>jrandom</code>):</p><pre>
-        &lt;Directory /home/jrandom/.syndie/archive/&gt;
-               Options ExecCGI Indexes
-        &lt;/Directory&gt;
-        Alias /archive/ "/home/jrandom/.syndie/archive/"
-        AddHandler cgi-script .cgi
-        AddType application/x-syndie .syndie
-</pre>
+<p>Syndie also includes a built-in HTTP server (run with the
+<a href="manual.html#httpserv">httpserv</a> command), which both serves up the
+content and accepts HTTP posts from others (if allowed).</p>
 
-<p>The CGI accepts posts (uploaded through <a href="manual.html">schedule and put</a>),
-writing them to <code>/tmp/cgiImport/</code> (another directory can be chosen
-by modifying the <code>import.cgi</code>).  In addition, while the CGI allows
-anyone to upload posts by default, you can require a password instead - simply
-set the <code>$requiredPassphrase</code> in the CGI and share that value with
-those authorized to upload posts.  Authorized users will then be able to post
-by providing that value in the <code>--pass $passphrase</code> parameter for
-<code>put</code>).</p>
+<p>The server accepts posts (uploaded through
+<a href="manual.html">schedule and put</a>), writing them to a temporary directory
+under the syndie root, and running <a href="manual.html#bulkimport">bulkimport</a>
+on them after they've all been read.</p>
 
-<p>To fully enable users to upload posts, you will need to set up a
-recurring task on your OS running the following Syndie script on occation
-(once every hour is perhaps reasonable):</p>
+<p>The HTTP post received is not a mime-encoded post, but a fairly simple concatenation
+of all of the data to be uploaded (with metadata messages first):</p>
 <pre>
-  login
-  menu syndicate
-  bulkimport --dir /tmp/cgiImport --delete true
-  buildindex
-  exit
+  POST /import.cgi\r\n
+  Content-length: $total\r\n
+  \r\n
+  $headerSize	// 2 bytes
+  $header	// $headerSize bytes, for authorization/etc 
+  foreach (msg)
+    $msgFlags	// 1 byte.  0x0 for normal posts, 0x1 for metadata posts
+    $msgSize	// 4 bytes
+    $msgData	// $msgSize bytes
 </pre>
 
-<p>This tells Syndie to pull in all of the <code>.syndie</code> files
-stored in <code>/tmp/cgiImport</code>, deleting the original files on
-completion.  The <code>buildindex</code> then regenerates the <code>index-*</code>
-files.  An example <code>cron</code> line would be: </p><pre>
-30 * * * * /home/jrandom/syndie/bin/syndie @/home/jrandom/syndie/bin/bulkimport.syndie > /home/jrandom/syndie/import.log
-</pre>
-
-<p>An example upload form:</p>
-<pre>
-&lt;form action="import.cgi" method="POST" enctype="multipart/form-data"&gt;
-Metadata file: &lt;input type="file" name="meta0" /&gt;&lt;br /&gt;
-Metadata file: &lt;input type="file" name="meta1" /&gt;&lt;br /&gt;
-Metadata file: &lt;input type="file" name="meta2" /&gt;&lt;br /&gt;
-Post file: &lt;input type="file" name="post0" /&gt;&lt;br /&gt;
-Post file: &lt;input type="file" name="post1" /&gt;&lt;br /&gt;
-Post file: &lt;input type="file" name="post2" /&gt;&lt;br /&gt;
-&lt;input type="submit" /&gt;
-&lt;/form&gt;
-</pre>
 </div>
 </body>
 </html>

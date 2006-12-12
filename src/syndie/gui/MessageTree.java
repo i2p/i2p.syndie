@@ -479,7 +479,12 @@ public class MessageTree implements Translatable, Themeable {
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(1, true));
+        GridLayout gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        _root.setLayout(gl);
         _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
@@ -548,14 +553,10 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
         });
         
-        Composite filterRow = new Composite(_root, SWT.BORDER);
-        filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        filterRow.setLayout(new GridLayout(6, false));
-        
-        if (_hideFilter) {
-            filterRow.setVisible(false);
-            ((GridData)filterRow.getLayoutData()).exclude = true;   
-        } else {
+        if (!_hideFilter) {
+            Composite filterRow = new Composite(_root, SWT.BORDER);
+            filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            filterRow.setLayout(new GridLayout(6, false));
             createFilterBar(filterRow);
         }
         
@@ -850,6 +851,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void resizeCols() {
+        /*
         int total = _tree.getClientArea().width;
         int subjWidth = 100;
         
@@ -864,8 +866,40 @@ public class MessageTree implements Translatable, Themeable {
         
         if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
             subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
+         */
         
-        //_colType.setWidth(24);
+        ////_colType.setWidth(24);
+        //_colSubject.setWidth(subjWidth);
+        //_colChannel.setWidth(chanWidth);
+        //_colAuthor.setWidth(authWidth);
+        //_colDate.setWidth(dateWidth);
+        //_colTags.setWidth(tagsWidth);
+        
+        /*
+        _colSubject.pack();
+        _colChannel.pack();
+        _colAuthor.pack();
+        _colDate.pack();
+        _colTags.pack();
+        */
+        
+        int total = _tree.getClientArea().width;
+        int subjWidth = 150;
+        
+        int chanWidth = 50;
+        if (!_showChannel) chanWidth = 0;
+        int authWidth = 50;
+        if (!_showAuthor) authWidth = 0;
+        _colDate.pack();
+        int dateWidth = _colDate.getWidth();
+        if (!_showDate) dateWidth = 0;
+        int tagsWidth = 50;
+        if (!_showTags) tagsWidth = 0;
+        
+        if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
+            subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
+        
+        ////_colType.setWidth(24);
         _colSubject.setWidth(subjWidth);
         _colChannel.setWidth(chanWidth);
         _colAuthor.setWidth(authWidth);

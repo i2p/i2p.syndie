@@ -208,7 +208,7 @@ public class ImportPost {
                             continue;
                         } catch (DataFormatException dfe) {
                             //dfe.printStackTrace();
-                            _ui.debugMessage("Read key attempt failed, continuing...", dfe);
+                            _ui.debugMessage("Read key " + i + "/" + keys.size() + " attempt failed, continuing...");//, dfe);
                             continue;
                         }
                     }

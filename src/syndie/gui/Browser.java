@@ -1663,6 +1663,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public Opts readCommand(boolean displayPrompt) { return readCommand(); }
     public void errorMessage(String msg) { errorMessage(msg, null); }
     public void errorMessage(String msg, Exception cause) {
+        // todo: make this async too
         synchronized (_uiListeners) {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
@@ -1672,6 +1673,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
 
     public void statusMessage(String msg) {
+        // todo: make this async too
         synchronized (_uiListeners) {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).statusMessage(msg);
@@ -1681,6 +1683,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     public void debugMessage(String msg) { debugMessage(msg, null); }
     public void debugMessage(String msg, Exception cause) {
+        // todo: make this async too
         synchronized (_uiListeners) {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
@@ -1690,6 +1693,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
 
     public void commandComplete(int status, List location) {
+        // todo: make this async too
         synchronized (_uiListeners) {
             for (int i = 0; i < _uiListeners.size(); i++)
                 ((UIListener)_uiListeners.get(i)).commandComplete(status, location);

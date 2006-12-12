@@ -146,6 +146,13 @@ delimited <code>name=value</code> pairs)</p>
   <dt id="general_definecmd"><code>definecmd --name $cmdName --class $className</code></dt>
   <dd>Extend the text interface by defining a new command to be run when the
       specified name is executed.</dd>
+  <dt id="general_httpserv"><code>httpserv ([--port $port] [--listeners $num] [--writable $boolean] | --kill true)</code></dt>
+  <dd>Run an HTTP server for the archive (or stop an existing one, if kill is specified).
+      By default, it listens on port 8080 and can handle 5 concurrent requests.  It
+      supports GET for archive content (index files, metadata, messages) and POST
+      compatible with the latest <a href="#syndicate_post">post</a> command, but
+      later it will include support for filters of what can be served up (limiting by
+      channel, date, etc), and authentication for both GET and POST.</dd>
  </dl></li>
 
  <li id="read">Read menu (<a href="#menu">up</a>)<dl>

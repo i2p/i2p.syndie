@@ -10,11 +10,16 @@
 package syndie.db;
 
 import java.io.*;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.i2p.data.Base64;
+import net.i2p.data.DataFormatException;
+import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.util.EepGet;
 import net.i2p.util.EepGetScheduler;
@@ -334,7 +339,8 @@ public class HTTPSyndicator implements Cloneable {
         } else if (_archiveURL.startsWith("https")) {
             postSSL();
         } else if (_archiveURL.startsWith("http")) {
-            postHTTP();
+            //postHTTP();
+            postHTTPNew();
         } else {
             _ui.errorMessage("Only know how to post to HTTP or HTTPS");
             _ui.commandComplete(-1, null);
@@ -349,6 +355,119 @@ public class HTTPSyndicator implements Cloneable {
         _ui.commandComplete(-1, null);
     }
     
+    private void postHTTPNew() {
+        long len = 0;
+        List metaFiles = new ArrayList();
+        List msgFiles = new ArrayList();
+        for (int i = 0; i < _postURIs.size(); i++) {
+            SyndieURI uri = (SyndieURI)_postURIs.get(i);
+            File chanDir = new File(_client.getArchiveDir(), uri.getScope().toBase64());
+            File f = null;
+            if (uri.getMessageId() == null) {
+                f = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
+                len += f.length();
+                metaFiles.add(f);
+            } else {
+                f = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+                len += f.length();
+                msgFiles.add(f);
+            }
+            
+            len += 5; // attribs
+            
+            _ui.debugMessage("Posting " + f.getPath());
+        }
+        _ui.statusMessage("Posting " + metaFiles.size() + " metadata messages and " + msgFiles.size() + " posts, totalling " + len);
+        
+        String url = null;
+        if (_postURLOverride == null) {
+            if (_archiveURL.endsWith("/"))
+                url = _archiveURL + "import.cgi";
+            else
+                url = _archiveURL + "/import.cgi";
+        } else {
+            url = _postURLOverride;
+        }
+        
+        _ui.debugMessage("About to post messages to " + url);
+        Socket s = null;
+        try {
+            if ( (_proxyHost != null) && (_proxyHost.length() > 0) && (_proxyPort > 0) ) {
+                s = new Socket(_proxyHost, _proxyPort);
+            } else {
+                try {
+                    URI uri = new URI(url);
+                    String host = uri.getHost();
+                    int port = uri.getPort();
+                    s = new Socket(host, port);
+                } catch (URISyntaxException use) {
+                    throw new IOException("invalid uri: " + use.getMessage());
+                }
+            }
+            
+            len += 2; // header size=0
+            
+            StringBuffer buf = new StringBuffer();
+            buf.append("POST " + url + " HTTP/1.0\r\nConnection: close\r\nContent-length: ");
+            buf.append(len).append("\r\n\r\n");
+            OutputStream out = s.getOutputStream();
+            out.write(DataHelper.getUTF8(buf.toString()));
+            DataHelper.writeLong(out, 2, 0);
+            int idx = 0;
+            for (int i = 0; i < metaFiles.size(); i++)
+                send(++idx, out, (File)metaFiles.get(i), 0x1);
+            for (int i = 0; i < msgFiles.size(); i++)
+                send(++idx, out, (File)msgFiles.get(i), 0x0);
+            out.flush();
+            
+            String line = DataHelper.readLine(s.getInputStream());
+            _ui.debugMessage("result from http post: " + line);
+            if (line == null)
+                _error = "post failed";
+            out.close();
+            s.close();
+            
+            _ui.statusMessage("Files posted");
+            if (_postShouldDeleteOutbound) {
+                for (int i = 0; i < _postToDelete.size(); i++) {
+                    File f = (File)_postToDelete.get(i);
+                    _ui.statusMessage("Removing " + f.getPath() + " from the outbound queue");
+                    f.delete();
+                    File parent = f.getParentFile();
+                    String siblings[] = parent.list();
+                    if ( (siblings == null) || (siblings.length == 0) ) {
+                        parent.delete();
+                        _ui.debugMessage("Removing empty queue dir " + parent.getPath());
+                    }
+                }
+            }
+            _ui.commandComplete(0, null);
+        } catch (DataFormatException dfe) {
+            _ui.errorMessage("Error posting", dfe);
+            _ui.commandComplete(-1, null);
+        } catch (IOException ioe) {
+            _ui.errorMessage("Error posting", ioe);
+            _ui.commandComplete(-1, null);
+        }
+    }
+    
+    private void send(int idx, OutputStream out, File file, int flag) throws IOException, DataFormatException {
+        _ui.debugMessage(idx + ": Sending" + file.getPath() + "/" + file.length() + "/" + flag);
+        DataHelper.writeLong(out, 1, flag);
+        DataHelper.writeLong(out, 4, file.length());
+        byte buf[] = new byte[4096];
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream(file);
+            int read = -1;
+            while ( (read = fin.read(buf)) != -1)
+                out.write(buf, 0, read);
+            fin.close();
+            fin = null;
+        } finally {
+            if (fin != null) fin.close();
+        }
+    }
     private void postHTTP() {
         Map fields = new HashMap();
         int numMeta = 0;

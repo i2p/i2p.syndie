@@ -97,13 +97,23 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         //_sash.SASH_WIDTH = 3;
         //_sash.setBackground(ColorUtil.getColor("gray", null));
         
-        _top = new Composite(_sash, SWT.BORDER);
-        _top.setLayout(new GridLayout(1, true));
+        _top = new Composite(_sash, SWT.NONE);
+        GridLayout gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        _top.setLayout(gl);
         _meta = new Composite(_top, SWT.NONE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.exclude = true;
         _meta.setLayoutData(gd);
-        _meta.setLayout(new GridLayout(8, false));
+        gl = new GridLayout(8, false);
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        _meta.setLayout(gl);
 
         _metaAvatar = new ImageCanvas(_meta, false);
         _metaAvatar.forceSize(1, 1);
