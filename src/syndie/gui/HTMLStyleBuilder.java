@@ -34,6 +34,7 @@ class HTMLStyleBuilder {
     private String _msgText;
     private MessageInfo _msg;
     private boolean _enableImages;
+    private boolean _styled;
     private StyleRange[] _styleRanges;
     private ArrayList _imageIndexes;
     /** Image instances loaded up at the _imageIndexes location */
@@ -69,13 +70,14 @@ class HTMLStyleBuilder {
     
     private int _viewSizeModifier;
 
-    public HTMLStyleBuilder(UI ui, PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages) {
+    public HTMLStyleBuilder(UI ui, PageRendererSource src, List htmlTags, String msgText, MessageInfo msg, boolean enableImages, boolean styled) {
         _ui = ui;
         _source = src;
         _htmlTags = htmlTags;
         _msgText = msgText;
         _msg = msg;
         _enableImages = enableImages;
+        _styled = styled;
         _imageIndexes = new ArrayList();
         _linkIndexes = new ArrayList();
         _listItemIndexes = new ArrayList();
@@ -465,7 +467,7 @@ class HTMLStyleBuilder {
         if ((bgColor == null) && (containsTag(tags, "quote")))
             bgColor = _bgColorQuote;
         
-        if (bgColor != null)
+        if (_styled && (bgColor != null))
             style.background = bgColor;
         
         Color fgColor = null;
@@ -481,7 +483,7 @@ class HTMLStyleBuilder {
             if (fgColor != null) break;
         }
         
-        if (fgColor != null)
+        if (_styled && (fgColor != null))
             style.foreground = fgColor;
         
         if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
@@ -768,7 +770,7 @@ class HTMLStyleBuilder {
         String text = b.getAsText();
         System.out.println("parsed: [" + body + "]");
         System.out.println("text: [" + text + "]");
-        HTMLStyleBuilder sb = new HTMLStyleBuilder(new NullUI(), null, b.getTags(), text, null, true);
+        HTMLStyleBuilder sb = new HTMLStyleBuilder(new NullUI(), null, b.getTags(), text, null, true, true);
         try {
             sb.buildStyles();
         } catch (Exception e) {

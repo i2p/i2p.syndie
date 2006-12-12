@@ -84,6 +84,7 @@ public class PageRenderer implements Themeable {
     private MenuItem _bodyEnable;
     private MenuItem _bodyDisable;
     private MenuItem _bodyViewAsText;
+    private MenuItem _bodyViewStyled;
     private MenuItem _bodySaveAll;
     
     private MenuItem _imgView;
@@ -120,6 +121,8 @@ public class PageRenderer implements Themeable {
     private boolean _enableImages;
     private boolean _enableRender;
     private boolean _viewAsText;
+    
+    private boolean _styled;
     
     private SyndieURI _currentEventURI;
     private HTMLTag _currentEventLinkTag;
@@ -297,6 +300,7 @@ public class PageRenderer implements Themeable {
         _source = src;
         _msg = msg;
         _page = pageNum;
+        _styled = _bodyViewStyled.getSelection();
         //System.out.println("rendering "+ msg + ": " + pageNum);
         _text.setCursor(_parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
         //_text.setRedraw(false);
@@ -401,7 +405,7 @@ public class PageRenderer implements Themeable {
         builder.buildState();
         _browser.getUI().debugMessage("renderHTML: state built");
         final String text = builder.getAsText();
-        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), text, _msg, _enableImages);
+        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), text, _msg, _enableImages, _styled);
         
         _browser.getUI().debugMessage("renderHTML: building styles");
         //todo: do this in two parts, once in the current thread, another in the swt thread
@@ -447,7 +451,7 @@ public class PageRenderer implements Themeable {
                 _browser.getUI().debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
 
                 _bgImage = sbuilder.getBackgroundImage();
-                if (_bgImage != null) {
+                if (_styled && _bgImage != null) {
                     _text.setBackgroundImage(_bgImage);
                 } else {
                     _text.setBackgroundImage(null);
@@ -455,7 +459,7 @@ public class PageRenderer implements Themeable {
                 }
 
                 _bgColor = sbuilder.getBackgroundColor();
-                if (_bgColor != null)
+                if (_styled && _bgColor != null)
                     _text.setBackground(_bgColor);
                 else
                     _text.setBackground(null);
@@ -939,12 +943,14 @@ public class PageRenderer implements Themeable {
             _bodyEnable.setEnabled(false);
             _bodyDisable.setEnabled(false);
             _bodyViewAsText.setEnabled(false);
+            _bodyViewStyled.setEnabled(false);
             _bodySaveAll.setEnabled(false);
         } else {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
             _bodyViewAsText.setEnabled(!_viewAsText);
             _bodySaveAll.setEnabled(true);
+            _bodyViewStyled.setEnabled(true);
             long targetId = _msg.getTargetChannelId();
             long authorId = _msg.getAuthorChannelId();
             if ( (targetId == authorId) || (authorId < 0) ) {
@@ -1103,6 +1109,7 @@ public class PageRenderer implements Themeable {
         _viewAsText = !_viewAsText;
         rerender();
     }
+    private void toggleViewStyled() { rerender(); }
     
     private abstract class FireEventListener implements SelectionListener {
         public void widgetSelected(SelectionEvent selectionEvent) { fireEvent(); }
@@ -1217,6 +1224,12 @@ public class PageRenderer implements Themeable {
         _bodyViewAsText.addSelectionListener(new FireEventListener() {
             public void fireEvent() { toggleViewAsText(); }
         });
+        _bodyViewStyled = new MenuItem(_bodyMenu, SWT.CHECK);
+        _bodyViewStyled.setText("View styled");
+        _bodyViewStyled.addSelectionListener(new FireEventListener() {
+            public void fireEvent() { toggleViewStyled(); }
+        });
+        _bodyViewStyled.setSelection(true);
         
         new MenuItem(_bodyMenu, SWT.SEPARATOR);
         _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
