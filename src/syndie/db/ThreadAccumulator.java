@@ -238,6 +238,8 @@ AND
         init();
         _ui.debugMessage("beginning gather threads w/ state: \n" + toString());
         
+        _client.beginTrace();
+        
         // - iterate across all matching channels
         //  - list all threads in the channel
         //  - list all tags for each thread
@@ -324,6 +326,8 @@ AND
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);
         }
+        
+        _ui.debugMessage("gather threads trace: " + _client.completeTrace());
     }
     
     private void init() {
@@ -374,13 +378,9 @@ AND
             if ( (_latest == null) || (_latest.getURI().getMessageId().longValue() < node.getURI().getMessageId().longValue()) )
                 _latest = node;
             long chanId = _client.getChannelId(node.getURI().getScope());
-            MessageInfo msg = _client.getMessage(chanId, node.getURI().getMessageId());
-            if (msg == null) {
-                _ui.debugMessage("Visiting node " + node.getURI() + " is in channelId " + chanId + " but the message isn't in the database?");
-                return;
-            }
-            _tags.addAll(msg.getPublicTags());
-            _tags.addAll(msg.getPrivateTags());
+            Set tags = _client.getMessageTags(chanId, node.getURI().getMessageId().longValue(), true, true);
+            if (tags != null)
+                _tags.addAll(tags);
         }        
     }
     
@@ -501,6 +501,24 @@ AND
             ReferenceNode child = cur.getChild(i);
             
             long chanId = _client.getChannelId(child.getURI().getScope());
+            Set tags = null;
+            if (child.getURI().getMessageId() != null)
+                tags = _client.getMessageTags(chanId, child.getURI().getMessageId().longValue(), true, true);
+            
+            _ui.debugMessage("removeFilteredChildren: child: " + child.getURI() + " msg known? " + (tags != null));
+            if (tags != null) {
+                if (!filterPassed(tags, child.getURI(), child, harvester, false)) {
+                    cur.removeChild(child);
+                    i--;
+                } else {
+                    removeFilteredChildren(child, harvester);
+                }
+            } else {
+                cur.removeChild(child);
+                i--;
+                // todo: keep a stub in here rather than trim the whole tree
+            }
+            /*
             MessageInfo msg = _client.getMessage(chanId, child.getURI().getMessageId());
             if (msg != null) {
                 _ui.debugMessage("removeFilteredChildren: child: " + child.getURI() + " msg known? " + (msg != null));
@@ -518,21 +536,23 @@ AND
                 i--;
                 // todo: keep a stub in here rather than trim the whole tree
             }
+             */
         }
         _ui.debugMessage("removeFilteredChildren complete");
     }
     
     private void add(ReferenceNode cur, long rootAuthorId, Harvester harvester) {
+        if (cur.getURI().getMessageId() == null) return;
         long chanId = _client.getChannelId(cur.getURI().getScope());
-        MessageInfo msg = _client.getMessage(chanId, cur.getURI().getMessageId());
-        List tags = new ArrayList();
-        tags.addAll(msg.getPublicTags());
-        tags.addAll(msg.getPrivateTags());
-
+        //MessageInfo msg = _client.getMessage(chanId, cur.getURI().getMessageId());
+        Set msgTags = _client.getMessageTags(chanId, cur.getURI().getMessageId().longValue(), true, true);
+        List tags = new ArrayList(msgTags);
+        long authorChanId = _client.getMessageAuthor(chanId, cur.getURI().getMessageId().longValue());
+        
         // all filtered messages were removed above in removeFilteredChildren
         _rootURIs.add(cur.getURI());
         _threadSubject.add(cur.getDescription());
-        _threadLatestAuthorId.add(new Long(msg.getAuthorChannelId()));
+        _threadLatestAuthorId.add(new Long(authorChanId));
         _threadLatestPostDate.add(cur.getURI().getMessageId());
         _threadMessages.add(new Integer(1));
         _threadRootAuthorId.add(new Long(rootAuthorId));
@@ -545,9 +565,23 @@ AND
         }
     }
     
-    private boolean filterPassed(List tags, SyndieURI uri, ReferenceNode node, Harvester harvester, boolean isRoot) {
+    private boolean filterPassed(Collection tags, SyndieURI uri, ReferenceNode node, Harvester harvester, boolean isRoot) {
         _ui.debugMessage("attempting filter pass for " + uri);
         boolean ok = true;
+                
+        if (ok) {
+            long when = -1;
+            if (isRoot)
+                when = harvester.getLatestPost().getURI().getMessageId().longValue();
+            else
+                when = uri.getMessageId().longValue();
+            if ( ( (_earliestReceiveDate >= 0) && (when < _earliestReceiveDate) ) ||
+                 ( (_earliestPostDate >= 0) && (when < _earliestPostDate) ) ) {
+                ok = false;
+                _ui.debugMessage("filter fail cause: too early");
+            }
+        }
+        
         if (isRoot || _applyTagFilterToMessages) {
             if (!tagFilterPassed(tags, uri)) {
                 _ui.debugMessage("filter fail cause: tags");
@@ -602,20 +636,7 @@ AND
                 }
             }
         }
-        
-        if (ok) {
-            long when = -1;
-            if (isRoot)
-                when = harvester.getLatestPost().getURI().getMessageId().longValue();
-            else
-                when = uri.getMessageId().longValue();
-            if ( ( (_earliestReceiveDate >= 0) && (when < _earliestReceiveDate) ) ||
-                 ( (_earliestPostDate >= 0) && (when < _earliestPostDate) ) ) {
-                ok = false;
-                _ui.debugMessage("filter fail cause: too early");
-            }
-        }
-        
+
         if ( ok && ( (_pbe && !msg.getWasPassphraseProtected()) || (!_pbe && msg.getWasPassphraseProtected()) ) ) {
             ok = false;
             _ui.debugMessage("filter fail cause: pbe");
@@ -715,7 +736,7 @@ AND
         return false;
     }
     /** return true if the tags for the message meet our search criteria */
-    private boolean tagFilterPassed(List tags, SyndieURI msg) {
+    private boolean tagFilterPassed(Collection tags, SyndieURI msg) {
         if (_rejectedTags != null) {
             for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();

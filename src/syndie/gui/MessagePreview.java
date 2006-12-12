@@ -127,7 +127,7 @@ public class MessagePreview implements Themeable, Translatable {
     private static final int ICON_HEIGHT = 16;
     
     private void initComponents() {
-        _root = new Composite(_parent, SWT.NONE);
+        _root = new Composite(_parent, SWT.BORDER);
         _root.setLayout(new GridLayout(2, false));
         
         _headerView = new Button(_root, SWT.PUSH | SWT.FLAT);

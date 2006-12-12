@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.*;
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
-import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -41,10 +40,10 @@ public class MessageThreadBuilder {
      */
     public ReferenceNode buildThread(MessageInfo msg) {
         long chanId = msg.getScopeChannelId();
-        ChannelInfo chan = _client.getChannel(chanId);
+        Hash chanHash = _client.getChannelHash(chanId);
         long msgId = msg.getMessageId();
-        if ( (chan != null) && (msgId >= 0) )
-            _pendingURI.add(SyndieURI.createMessage(chan.getChannelHash(), msgId));
+        if ( (chanHash != null) && (msgId >= 0) )
+            _pendingURI.add(SyndieURI.createMessage(chanHash, msgId));
         while (_pendingURI.size() > 0)
             processNextMessage();
         buildTree();
@@ -61,9 +60,9 @@ public class MessageThreadBuilder {
         List childURIs = null;
         long chanId = _client.getChannelId(uri.getScope());
         if (chanId >= 0) {
-            ChannelInfo chanInfo = _client.getChannel(chanId);
-            if (chanInfo != null)
-                authorName = chanInfo.getName();
+            String chanName = _client.getChannelName(chanId);
+            if (chanName != null)
+                authorName = chanName;
             else
                 authorName = uri.getScope().toBase64().substring(0,6);
             
@@ -147,7 +146,7 @@ public class MessageThreadBuilder {
         }
     }
 
-    private static final String SQL_GET_CHILD_URIS = "SELECT msgId FROM messageHierarchy WHERE referencedChannelHash = ? AND referencedMessageId = ? ORDER BY referencedCloseness ASC, msgId DESC";
+    private static final String SQL_GET_CHILD_URIS = "SELECT c.channelHash, messageId FROM messageHierarchy mh JOIN channelMessage cm ON cm.msgId = mh.msgId JOIN channel c ON c.channelId = cm.scopeChannelId WHERE referencedChannelHash = ? AND referencedMessageId = ? ORDER BY referencedCloseness ASC, msgId DESC";
     /* CREATE CACHED TABLE messageHierarchy (
      *         msgId                   BIGINT
      *         -- refers to a targetChannelId
@@ -172,11 +171,12 @@ public class MessageThreadBuilder {
             rs = stmt.executeQuery();
             List rv = new ArrayList();
             while (rs.next()) {
-                long internalMsgId = rs.getLong(1);
-                if (!rs.wasNull()) {
-                    MessageInfo msg = _client.getMessage(internalMsgId);
-                    if (msg != null)
-                        rv.add(msg.getURI());
+                byte scope[] = rs.getBytes(1);
+                long childMessageId = rs.getLong(2);
+                if (!rs.wasNull() && (scope != null) && (scope.length == Hash.HASH_LENGTH)) {
+                    rv.add(SyndieURI.createMessage(new Hash(scope), childMessageId));
+                } else {
+                    _ui.errorMessage("error getting children of " + channel.toBase64() + ":" + messageId + ": messageId=" + childMessageId + " scope=" + scope);
                 }
             }
             return rv;

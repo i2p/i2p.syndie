@@ -782,6 +782,30 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_NAME_ID = "SELECT name FROM channel WHERE channelId = ?";
+    public String getChannelName(long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME_ID);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String name = rs.getString(1);
+                return name;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel name", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND "+
@@ -1342,6 +1366,8 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
         ensureLoggedIn();
+        long start = System.currentTimeMillis();
+        if (_trace) _getChanCount++;
         ChannelInfo info = new ChannelInfo();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1653,6 +1679,9 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getChanTime += (end-start);
         return info;
     }
     
@@ -1968,6 +1997,8 @@ public class DBClient {
     private static final String SQL_GET_MESSAGE_ATTACHMENT_COUNT = "SELECT COUNT(*) FROM messageAttachment WHERE msgId = ?";
     public MessageInfo getMessage(long internalMessageId) {
         ensureLoggedIn();
+        long start = System.currentTimeMillis();
+        if (_trace) _getMsgCount++;
         MessageInfo info = new MessageInfo();
         info.setInternalId(internalMessageId);
         PreparedStatement stmt = null;
@@ -2024,13 +2055,15 @@ public class DBClient {
                 //if (author != null) info.setAuthorChannel(new Hash(author));
                 info.setMessageId(messageId);
                 info.setScopeChannelId(scopeChannelId);
-                ChannelInfo scope = getChannel(scopeChannelId);
+                Hash scope = getChannelHash(scopeChannelId);
+                //ChannelInfo scope = getChannel(scopeChannelId);
                 if (scope != null)
-                    info.setURI(SyndieURI.createMessage(scope.getChannelHash(), messageId));
+                    info.setURI(SyndieURI.createMessage(scope, messageId));
                 info.setTargetChannelId(targetChannelId);
-                ChannelInfo chan = getChannel(targetChannelId);
+                Hash chan = getChannelHash(targetChannelId);
+                //ChannelInfo chan = getChannel(targetChannelId);
                 if (chan != null)
-                    info.setTargetChannel(chan.getChannelHash());
+                    info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
                     info.setOverwriteChannel(new Hash(overwriteChannel));
@@ -2169,9 +2202,78 @@ public class DBClient {
             return null;
         }
         
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getMsgTime += (end-start);
         return info;
     }
 
+    public Set getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {
+        ensureLoggedIn();
+        Set rv = new HashSet();
+        long msgId = getMessageId(chanId, messageId);
+        if (msgId < 0) 
+            return null;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TAG);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // tag, wasEncrypted
+                String tag = rs.getString(1);
+                boolean isPublic = rs.getBoolean(2);
+                if (rs.wasNull())
+                    isPublic = false;
+                if (isPublic && includePublic)
+                    rv.add(tag);
+                else if (!isPublic && includePrivate)
+                    rv.add(tag);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's tags", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        return rv;
+    }
+    
+    private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
+    public long getMessageAuthor(long chanId, long messageId) {
+        long msgId = getMessageId(chanId, messageId);
+        if (msgId < 0) return -1;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_AUTHOR);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long authorChanId = rs.getLong(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return authorChanId;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's authorChanId", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageData(long internalMessageId, int pageNum) {
@@ -3433,5 +3535,25 @@ public class DBClient {
         byte rv[] = new byte[decr.length-pad];
         System.arraycopy(decr, 0, rv, 0, rv.length);
         return rv;
+    }
+    
+    private boolean _trace;
+    private int _getMsgCount;
+    private int _getChanCount;
+    private long _getMsgTime;
+    private long _getChanTime;
+    private long _traceStart;
+    public void beginTrace() { 
+        _trace = true;
+        _traceStart = System.currentTimeMillis();
+        _getMsgCount = 0;
+        _getChanCount = 0;
+        _getMsgTime = 0;
+        _getChanTime = 0;
+    }
+    public String completeTrace() {
+        long end = System.currentTimeMillis();
+        _trace = false;
+        return "time: " + (end-_traceStart) + " getMsg: " + _getMsgCount + "/" + _getMsgTime + " getChan: " + _getChanCount + "/" + _getChanTime;
     }
 }
