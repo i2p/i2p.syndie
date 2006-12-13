@@ -16,6 +16,7 @@ public class TextUI implements UI {
     private PrintStream _debugOut;
     private BufferedReader _in;
     private TextEngine _engine;
+    private boolean _readStdin;
     
     /** @param wantsDebug if true, we want to display debug messages */
     public TextUI(boolean wantsDebug) {
@@ -58,6 +59,7 @@ public class TextUI implements UI {
     }
     
     private String readLine() {
+        if (!_readStdin) throw new IllegalStateException("no stdin");
         try {
             return _in.readLine();
         } catch (IOException ioe) {
@@ -75,13 +77,26 @@ public class TextUI implements UI {
             try {
                 _linesSinceInput = 0;
                 String line = null;
-                if (_insertedCommands.size() == 0) {
-                    line = readLine(); //DataHelper.readLine(System.in);
-                    debugMessage("command line read [" + line + "]");
+                if (!_readStdin) {
+                    while (line == null) {
+                        try {
+                            synchronized (_insertedCommands) {
+                                if (_insertedCommands.size() > 0)
+                                        line = (String)_insertedCommands.remove(0);
+                                else
+                                    _insertedCommands.wait();
+                            }
+                        } catch (InterruptedException ie) {}
+                    }
                 } else {
-                    line = (String)_insertedCommands.remove(0);
-                    line = line.trim();
-                    debugMessage("command line inserted [" + line + "]");
+                    if (_insertedCommands.size() == 0) {
+                        line = readLine(); //DataHelper.readLine(System.in);
+                        debugMessage("command line read [" + line + "]");
+                    } else {
+                        line = (String)_insertedCommands.remove(0);
+                        line = line.trim();
+                        debugMessage("command line inserted [" + line + "]");
+                    }
                 }
                 if (line == null) {
                     // EOF, so assume "exit"
@@ -163,8 +178,12 @@ public class TextUI implements UI {
             if ( (c == '\n') || (c == '\r') ) {
                 cmd = cmd.substring(0, cmd.length()-1);
             } else {
-                if (cmd.length() > 0)
-                    _insertedCommands.add(cmd);
+                if (cmd.length() > 0) {
+                    synchronized (_insertedCommands) {
+                        _insertedCommands.add(cmd);
+                        _insertedCommands.notifyAll();
+                    }
+                }
                 return;
             }
         }
@@ -177,10 +196,24 @@ public class TextUI implements UI {
         statusMessage("Reading standard input until a line containing a single \".\" is reached");
         String line = null;
         while (true) {
-            if (_insertedCommands.size() == 0)
-                line = readLine();
-            else
-                line = (String)_insertedCommands.remove(0);
+            if (_readStdin) {
+                if (_insertedCommands.size() == 0)
+                    line = readLine();
+                else
+                    line = (String)_insertedCommands.remove(0);
+            } else {
+                line = null;
+                while (line == null) {
+                    try {
+                        synchronized (_insertedCommands) {
+                            if (_insertedCommands.size() > 0)
+                                line = (String)_insertedCommands.remove(0);
+                            else
+                                _insertedCommands.wait();
+                        }
+                    } catch (InterruptedException ie) {}
+                }
+            }
             
             if ( (line == null) || ( (line.length() == 1) && (line.charAt(0) == '.') ) )
                 break;
@@ -201,9 +234,12 @@ public class TextUI implements UI {
         
         String rootDir = TextEngine.getRootPath();
         String script = null;
+        boolean readStdin = true;
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("@"))
                 script = args[i].substring(1);
+            else if (args[i].equals("--nostdin"))
+                readStdin = false;
             else
                 rootDir = args[i];
         }
@@ -224,6 +260,7 @@ public class TextUI implements UI {
                 if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         }
+        _readStdin = readStdin;
         _engine = new TextEngine(rootDir, this);
     }
     

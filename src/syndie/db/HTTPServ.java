@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
+import net.i2p.data.SessionKey;
 
 /**
  * CLI parameters: ([--port $num] [--listeners $num] [--writable true] | [--kill true])
@@ -33,6 +34,7 @@ public class HTTPServ implements CLI.Command {
         _ssocket = null;
         _runners = new ArrayList();
         _client = null;
+        _allowPost = false;
     }
     
     public static void killAll() { 
@@ -54,7 +56,7 @@ public class HTTPServ implements CLI.Command {
         
         int port = (int)opts.getOptLong("port", 8080);
         int listeners = (int)opts.getOptLong("listeners", 5);
-        boolean allowPost = opts.getOptBoolean("writable", true);
+        _allowPost = opts.getOptBoolean("writable", true);
         try {
             _ssocket = new ServerSocket(port);
             _alive = true;
@@ -120,6 +122,7 @@ public class HTTPServ implements CLI.Command {
     }
     
     private void handle(Socket socket) throws IOException {
+        _ui.debugMessage("handling a client");
         InputStream in = socket.getInputStream();
         OutputStream out = socket.getOutputStream();
         String line = null;
@@ -215,9 +218,6 @@ public class HTTPServ implements CLI.Command {
     }
     
     
-    private static final byte[] SEND_OK_BEGIN = DataHelper.getUTF8("HTTP/1.0 200 OK\r\nContent-length: ");
-    private static final byte[] SEND_OK_AFTERSIZE = DataHelper.getUTF8("\r\n\r\n");
-    
     private void send(Socket socket, InputStream in, OutputStream out, File file) throws IOException {
         String type = "application/octet-stream";
         String name = file.getName();
@@ -242,6 +242,7 @@ public class HTTPServ implements CLI.Command {
             while ( (read = fin.read(dbuf)) != -1)
                 out.write(dbuf, 0, read);
             out.flush();
+            try { Thread.sleep(500); } catch (InterruptedException ie) {}
             out.close();
             in.close();
             socket.close();
@@ -294,7 +295,13 @@ public class HTTPServ implements CLI.Command {
             remaining -= headerSize + 2;
             
             _ui.debugMessage("handlePost: header read, remaining: " + remaining);
-
+            
+            SessionKey authKey = getAuthorizationKey(header);
+            SessionKey encKey = getEncryptionKey(header);
+            if (!authorized(authKey)) {
+                fail403(socket, in, out);
+            }
+            
             int msgNum = 0;
             while (remaining > 0) {
                 msgNum++;
@@ -339,7 +346,9 @@ public class HTTPServ implements CLI.Command {
             socket.close();
             if (msgNum > 0) {
                 _ui.statusMessage("HTTP server received " + msgNum + " messages, scheduling bulk import");
+                _ui.insertCommand("menu syndicate");
                 _ui.insertCommand("bulkimport --dir '" + importDir.getPath() + "' --delete true");
+                _ui.insertCommand("buildindex");
             }
         } catch (DataFormatException dfe) {
             delete(importDir);
@@ -349,6 +358,13 @@ public class HTTPServ implements CLI.Command {
             throw ioe;
         }
     }
+    
+    /** key used to verify they're authorized to post */
+    private SessionKey getAuthorizationKey(byte header[]) { return null; }
+    /** key used to decrypt the content (to extract the .syndie files) */
+    private SessionKey getEncryptionKey(byte header[]) { return null; }
+    /** true if they're authorized to post */
+    private boolean authorized(SessionKey authorizationKey) { return true; }
     
     private void delete(File dir) {
         File files[] = dir.listFiles();
