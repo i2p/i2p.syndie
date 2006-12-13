@@ -730,6 +730,7 @@ public class SyndicationManager {
         synchronized (_fetchRecords) {
             _fetchRecords.remove(rec);
             _fetchMetaRecords.remove(rec);
+            _fetchRecords.notifyAll();
         }
     }
     
@@ -738,6 +739,7 @@ public class SyndicationManager {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
             lsnr.fetchStatusUpdated(this, record);
         }
+        synchronized (_fetchRecords) { _fetchRecords.notifyAll(); }
     }
     
     private void fireSyndicationComplete() {
@@ -745,6 +747,7 @@ public class SyndicationManager {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
             lsnr.syndicationComplete(this);
         }
+        synchronized (_fetchRecords) { _fetchRecords.notifyAll(); }
     }
     
     public void addListener(SyndicationListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
