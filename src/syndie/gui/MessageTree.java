@@ -50,6 +50,7 @@ import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.ThreadAccumulator;
+import syndie.db.ThreadAccumulatorJWZ;
 
 /**
  * 
@@ -485,7 +486,7 @@ public class MessageTree implements Translatable, Themeable {
         gl.marginWidth = 0;
         gl.verticalSpacing = 0;
         _root.setLayout(gl);
-        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
+        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
@@ -687,7 +688,8 @@ public class MessageTree implements Translatable, Themeable {
      *         threaded, simply one per message
      */
     private List calculateNodes(SyndieURI uri) {
-        ThreadAccumulator acc = new ThreadAccumulator(_client, _browser.getUI());
+        //ThreadAccumulator acc = new ThreadAccumulator(_client, _browser.getUI());
+        ThreadAccumulator acc = new ThreadAccumulatorJWZ(_client, _browser.getUI());
         _browser.getUI().debugMessage("setting the filter: " + uri.toString());
         acc.setFilter(uri);
         _browser.getUI().debugMessage("gathering the threads");
@@ -851,7 +853,6 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void resizeCols() {
-        /*
         int total = _tree.getClientArea().width;
         int subjWidth = 100;
         
@@ -866,14 +867,13 @@ public class MessageTree implements Translatable, Themeable {
         
         if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
             subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
-         */
         
         ////_colType.setWidth(24);
-        //_colSubject.setWidth(subjWidth);
-        //_colChannel.setWidth(chanWidth);
-        //_colAuthor.setWidth(authWidth);
-        //_colDate.setWidth(dateWidth);
-        //_colTags.setWidth(tagsWidth);
+        _colSubject.setWidth(subjWidth);
+        _colChannel.setWidth(chanWidth);
+        _colAuthor.setWidth(authWidth);
+        _colDate.setWidth(dateWidth);
+        _colTags.setWidth(tagsWidth);
         
         /*
         _colSubject.pack();
@@ -883,6 +883,7 @@ public class MessageTree implements Translatable, Themeable {
         _colTags.pack();
         */
         
+        /*
         int total = _tree.getClientArea().width;
         int subjWidth = 150;
         
@@ -905,6 +906,7 @@ public class MessageTree implements Translatable, Themeable {
         _colAuthor.setWidth(authWidth);
         _colDate.setWidth(dateWidth);
         _colTags.setWidth(tagsWidth);
+         */
         
         //System.out.println("resize w/ total=" + total + " colSubject=" + _colSubject.getWidth());
     }

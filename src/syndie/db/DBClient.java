@@ -965,22 +965,32 @@ public class DBClient {
         return rv;
     }
 
-    private static final String SQL_GET_AUTHORIZED_POSTERS = "SELECT identKey FROM channel WHERE channelId = ?" +
-                                                             " UNION " +
-                                                             "SELECT authPubKey FROM channelPostKey WHERE channelId = ?" +
-                                                             " UNION " +
-                                                             "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     public List getAuthorizedPosters(Hash channel) {
+        return getAuthorizedPosters(getChannelId(channel), true, true, true);
+    }
+    private static final String SQL_GET_AUTHORIZED_OWNER = "SELECT identKey FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_AUTHORIZED_POSTER = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
+    private static final String SQL_GET_AUTHORIZED_MANAGER = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
+    /**
+     * @param owner include the owner's identity 
+     * @param manager include the identity of anyone allowed to manage the channel
+     * @param authorizedPoster include the identity of anyone explicitly allowed to post in the channel
+     * @return list of SigningPublicKey instances
+     */
+    public List getAuthorizedPosters(long channelId, boolean owner, boolean manager, boolean authorizedPoster) {
         ensureLoggedIn();
-        long channelId = getChannelId(channel);
         List rv = new ArrayList();
+        if (owner) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_OWNER);
+        if (manager) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_MANAGER);
+        if (authorizedPoster) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_POSTER);
+        return rv;
+    }
+    private void getAuthorizedPosters(long channelId, List rv, String query) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement(SQL_GET_AUTHORIZED_POSTERS);
+            stmt = _con.prepareStatement(query);
             stmt.setLong(1, channelId);
-            stmt.setLong(2, channelId);
-            stmt.setLong(3, channelId);
             rs = stmt.executeQuery();
             while (rs.next()) {
                 byte key[] = rs.getBytes(1);
@@ -996,12 +1006,10 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's authorized posting keys", se);
-            return null;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        return rv;
     }
 
     private static final String SQL_GET_IDENT_KEY = "SELECT identKey FROM channel WHERE channelHash = ?";
@@ -1026,6 +1034,34 @@ public class DBClient {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's ident key", se);
             return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_ALLOW_PUB_REPLIES = "SELECT allowPubPost, allowPubReply FROM channel WHERE channelId = ?";
+    public boolean getChannelAllowPublicReplies(long targetChannelId) {        
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ALLOW_PUB_REPLIES);
+            stmt.setLong(1, targetChannelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean pubPost = rs.getBoolean(1);
+                if (rs.wasNull()) pubPost = false;
+                boolean pubReply = rs.getBoolean(2);
+                if (rs.wasNull()) pubReply = false;
+                return pubPost || pubReply;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error seeing if the channel allows public replies", se);
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -1955,6 +1991,61 @@ public class DBClient {
         else
             return -1;
     }
+    
+    private static final String SQL_GET_MESSAGE_SCOPE = "SELECT channelHash FROM channel JOIN channelMessage ON scopeChannelId = channelId WHERE msgId = ?";
+    public Hash getMessageScope(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_SCOPE);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte hash[] = rs.getBytes(1);
+                if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
+                    return new Hash(hash);
+                else
+                    return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's scope", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_ID = "SELECT messageId FROM channelMessage WHERE msgId = ?";
+    public long getMessageId(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ID);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long messageId = rs.getLong(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return messageId;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's id", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_VERSION = "SELECT edition FROM channel WHERE channelId = ?";
     /** locally known edition of the given scope, or -1 if not known */
     public long getChannelVersion(Hash scope) {        
@@ -2209,9 +2300,12 @@ public class DBClient {
     }
 
     public Set getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {
+        return getMessageTags(getMessageId(chanId, messageId), includePrivate, includePublic);
+    }
+        
+    public Set getMessageTags(long msgId, boolean includePrivate, boolean includePublic) {
         ensureLoggedIn();
         Set rv = new HashSet();
-        long msgId = getMessageId(chanId, messageId);
         if (msgId < 0) 
             return null;
         
@@ -2239,14 +2333,15 @@ public class DBClient {
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
-        
+        }        
         return rv;
     }
     
     private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
-    public long getMessageAuthor(long chanId, long messageId) {
-        long msgId = getMessageId(chanId, messageId);
+    public long getMessageAuthor(long chanId, long messageId) { 
+        return getMessageAuthor(getMessageId(chanId, messageId));
+    }
+    public long getMessageAuthor(long msgId) {
         if (msgId < 0) return -1;
         
         PreparedStatement stmt = null;
@@ -2268,6 +2363,31 @@ public class DBClient {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the message's authorChanId", se);
             return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_SUBJECT = "SELECT subject FROM channelMessage WHERE msgId = ?";
+    public String getMessageSubject(long msgId) {
+        if (msgId < 0) return null;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TARGET);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's subject", se);
+            return null;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -3284,6 +3404,7 @@ public class DBClient {
     public static final int MSG_STATUS_NEW_UNREAD = 3;
 
     private static final String SQL_GET_MSG_STATUS = "SELECT importDate, readThrough, ncrm.msgId FROM channelMessage cm, nymChannelReadThrough ncrt  JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? WHERE cm.msgId = ? AND ncrt.nymId = ?";
+    public int getMessageStatus(long msgId) { return getMessageStatus(msgId, -1); }
     public int getMessageStatus(long msgId, long targetChanId) { return getMessageStatus(_nymId, msgId, targetChanId); }
     public int getMessageStatus(long nymId, long msgId, long targetChanId) {
         PreparedStatement stmt = null;
@@ -3312,6 +3433,8 @@ public class DBClient {
                 // this new & unread
                 
                 // insert a nymChannelReadThrough record for a really old date
+                if (targetChanId < 0)
+                    targetChanId = getMessageTarget(msgId);
                 markChannelReadThrough(nymId, targetChanId, 0);
                 return MSG_STATUS_NEW_UNREAD;
             }
@@ -3319,6 +3442,34 @@ public class DBClient {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error getting message status", se);
             return MSG_STATUS_NEW_UNREAD;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_TARGET = "SELECT targetChannelId FROM channelMessage WHERE msgId = ?";
+    public long getMessageTarget(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TARGET);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                long chanId = rs.getLong(1);
+                if (!rs.wasNull())
+                    return chanId;
+                else
+                    return -1;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting message target", se);
+            return -1;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
