@@ -40,7 +40,7 @@ public class HTMLTag {
         int len = tagBody.length();
         for (int i = 0; i < len; i++) {
             char c = tagBody.charAt(i);
-            if (Character.isWhitespace(c) || (c == '/')) {
+            if (Character.isWhitespace(c)) {// || (c == '/')) {
                 if (this.name == null) {
                     if (i == 0)
                         this.name = "";
@@ -91,14 +91,18 @@ public class HTMLTag {
                     } else if (c == '\"') {
                         quoteChar = c;
                         attribValueStart = i+1;
+                    } else {
+                        attribValueStart = i;
                     }
                 }
             } else {
                 // name not known, and we haven't reached whitespace yet.  keep going
             }
         } // end looping over the tag body
-        if (this.name == null)
+        if ((this.name == null) || (this.name.trim().length() <= 0)) {
+            //System.out.println("name is empty for tag [" + tagBody + "] @ " + startIndex);
             this.name = Constants.lowercase(tagBody);
+        }
     }
     
     public String getAttribValue(String name) { return attributes.getProperty(Constants.lowercase(name)); }

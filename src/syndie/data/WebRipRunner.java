@@ -394,6 +394,8 @@ public class WebRipRunner implements EepGet.StatusListener {
                     parseLink(tag.attributes.getProperty("href"));
                 else if ("img".equals(tag.name) && tag.attributes.containsKey("src"))
                     parseRef(tag.attributes.getProperty("src"));
+                //else if ("a".equals(tag.name) || "img".equals(tag.name))
+                //    _ui.debugMessage("not parsing ref: " + tag);
                 if (died())
                     break;
             }
@@ -401,7 +403,7 @@ public class WebRipRunner implements EepGet.StatusListener {
     }
     
     private void parseLink(String ref) {
-        _ui.debugMessage("parseLink [" + ref + "]");
+        //_ui.debugMessage("parseLink [" + ref + "]");
         if (ref == null) return;
         if (shouldFetchLink(ref))
             parseRef(ref);
@@ -409,8 +411,8 @@ public class WebRipRunner implements EepGet.StatusListener {
             _otherURLRefs.add(ref);
     }
     private void parseRef(String ref) {
-        _ui.debugMessage("parseRef [" + ref + "]");
-        if (ref == null) return;
+        //_ui.debugMessage("parseRef [" + ref + "]");
+        if ( (ref == null) || (ref.trim().length() <= 0) ) return;
         String absoluteRef = getAbsolute(ref);
         scheduleFetch(absoluteRef, ref, guessContentType(ref));
     }

@@ -37,6 +37,8 @@ public class HTMLStateBuilder {
         _noBodyTags.add("br");
         _noBodyTags.add("hr");
         _noBodyTags.add("meta");
+        _noBodyTags.add("input");
+        _noBodyTags.add("option");
         _noBodyTags.add("link");
         // tags that can't nest (and should be closed implicitly when a new occurence of that same tag is reached)
         _noNestTags.add("p");
@@ -160,6 +162,7 @@ public class HTMLStateBuilder {
                         break;
                     } else {
                         // syntax error, skip the char (or should we interpret it as &gt; ?)
+                        _ui.debugMessage("skip > @ " + tagContent);
                         break;
                     }
                 default:
@@ -296,7 +299,7 @@ public class HTMLStateBuilder {
         if ("br".equals(tagName)) {
             appendBody(body, '\n');
             _prevWasWhitespace = true;
-        } else if ("img".equals(tagName)) {
+        } else if ("img".equals(tagName)) { // && (tag.getAttribValue("src") != null)) {
             appendBody(body, PLACEHOLDER_IMAGE);
             _prevWasWhitespace = false;
         } else if ("p".equals(tagName)) {
@@ -446,7 +449,7 @@ public class HTMLStateBuilder {
                         HTMLTag nested = (HTMLTag)_activeTags.remove(j);
                         nested.endIndex = bodyIndex;
                         _closedTags.add(nested);
-                        _ui.debugMessage("closing nested tag: " + nested + " when receiving tag end of " + open);
+                        //_ui.debugMessage("closing nested tag: " + nested + " when receiving tag end of " + open);
                         //_ui.debugMessage("------------------------");
                         //_ui.debugMessage(body.substring(open.startIndex, bodyIndex));
                         //_ui.debugMessage("------------------------");

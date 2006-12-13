@@ -501,13 +501,14 @@ class HTMLStyleBuilder {
     }
     
     private void includeImage(final StyleRange style, final HTMLTag imgTag) {
-        if (imgTag == null) {
+        final SyndieURI srcURI = getURI(imgTag.getAttribValue("src"));
+        if ( (imgTag == null) || (srcURI == null) || (!srcURI.isChannel()) || (srcURI.getAttachment() == null)) {
             _images.add(ImageUtil.ICON_IMAGE_UNKNOWN);
             return;
         }
         Display.getDefault().syncExec(new Runnable() { 
             public void run() {
-                Image img = getImage(getURI(imgTag.getAttribValue("src")));
+                Image img = getImage(srcURI);
                 if (img == null)
                     img = ImageUtil.ICON_IMAGE_UNKNOWN;
                 int width = img.getBounds().width;
