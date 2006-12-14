@@ -265,9 +265,9 @@ public class PageEditor implements Translatable, Themeable {
         createFind();
         
         getUI().debugMessage("pageEditor.buildControls creating link popup");
-        _linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), this);
+        //_linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), this);
         getUI().debugMessage("pageEditor.buildControls creating image popup");
-        _imagePopup = new ImageBuilderPopup(this);
+        //_imagePopup = new ImageBuilderPopup(this);
         
         GridLayout gl = new GridLayout(1, true);
         _root.setLayout(gl);
@@ -785,8 +785,16 @@ public class PageEditor implements Translatable, Themeable {
     }
     
     private void showStyleChooser() { resetTextStyle(); _txtShell.open(); }
-    private void showLinkPopup() { _linkPopup.showPopup(); }
-    private void showImagePopup(boolean forBodyBackground) { _imagePopup.showPopup(forBodyBackground); }
+    private void showLinkPopup() { 
+        if (_linkPopup == null)
+            _linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), this);
+        _linkPopup.showPopup();
+    }
+    private void showImagePopup(boolean forBodyBackground) { 
+        if (_imagePopup == null)
+            _imagePopup = new ImageBuilderPopup(this);
+        _imagePopup.showPopup(forBodyBackground); 
+    }
     
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) { return buildColorCombo(parent, name, tooltip, defaultColor, enable, null); }
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {

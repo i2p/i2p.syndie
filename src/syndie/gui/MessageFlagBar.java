@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import net.i2p.data.Hash;
@@ -24,23 +25,33 @@ public class MessageFlagBar implements Translatable {
     private Composite _root;
     private MessageInfo _msg;
     private boolean _includeTooltips;
+    private List _images;
+    private boolean _realized;
     
     public MessageFlagBar(BrowserControl browser, Composite parent, boolean includeTooltips) {
         _browser = browser;
         _parent = parent;
         _includeTooltips = includeTooltips;
+        _images = new ArrayList();
+        _realized = false;
         initComponents();
     }
     
-    public Control getControl() { return _root; }
+    public Control getControl() {
+        return _root;
+    }
     public Image[] getFlags() {
+        return (Image[])_images.toArray(new Image[0]);
+        /*
         Control ctl[] = _root.getChildren();
         Image rv[] = new Image[ctl.length];
         for (int i = 0; i < ctl.length; i++)
             rv[i] = ((Label)ctl[i]).getImage();
         return rv;
+         */
     }
     public String getTooltip() {
+        if (!_realized) realizeComponents();
         Control ctl[] = _root.getChildren();
         StringBuffer rv = new StringBuffer();
         for (int i = 0; i < ctl.length; i++) {
@@ -58,32 +69,42 @@ public class MessageFlagBar implements Translatable {
     }
     
     private void rebuildFlags() {
-        _browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
-        _root.setRedraw(false);
-        disposeFlags();
-        buildFlags();
-        _root.layout(true, true);
-        _root.setRedraw(true);
-    }
-    private void disposeFlags() {
-        Control ctl[] = _root.getChildren();
-        for (int i = 0; i < ctl.length; i++) {
-            Label l = (Label)ctl[i];
-            if (!l.isDisposed()) {
-                Image img = l.getImage();
-                ImageUtil.dispose(img);
-                l.dispose();
+        if (_realized) {
+            _browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
+            _root.setRedraw(false);
+            disposeImages();
+            Control ctl[] = _root.getChildren();
+            for (int i = 0; i < ctl.length; i++) {
+                if (!ctl[i].isDisposed())
+                    ctl[i].dispose();
             }
+            buildImages();
+            for (int i = 0; i < _images.size(); i++)
+                new Label(_root, SWT.NONE).setImage((Image)_images.get(i));
+            _root.layout(true, true);
+            _root.setRedraw(true);
+        } else {
+            _browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
+            disposeImages();
+            buildImages();
         }
     }
-    private void buildFlags() {
+    private void disposeImages() {
+        for (int i = 0; i < _images.size(); i++) {
+            Image img = (Image)_images.get(i);
+            ImageUtil.dispose(img);
+        }
+    }
+    private void buildImages() {
         if (_msg == null) return;
         
         boolean unreadable = _msg.getPassphrasePrompt() != null || _msg.getReadKeyUnknown() || _msg.getReplyKeyUnknown();
         boolean isPrivate = _msg.getWasPrivate();
         
+        _images.clear();
+        
         if (unreadable) {
-            buildUnreadableFlags(isPrivate);
+            buildUnreadableImages(isPrivate);
         } else {
             boolean wasPBE = _msg.getWasPassphraseProtected();
             boolean wasPublic = !_msg.getWasEncrypted();
@@ -130,36 +151,31 @@ public class MessageFlagBar implements Translatable {
                 }
             }
             
-            if (wasPBE)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_PBE);
-            if (isPrivate)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
-            if (wasPublic)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_PUBLIC);
-            if (authenticated)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_AUTHENTICATED);
-            if (authorized)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_AUTHORIZED);
-            if (banned)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_BANNED);
-            if (bookmarked)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_BOOKMARKED);
-            if (scheduledForExpire)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE);
-            if (hasKeys)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_HASKEYS);
-            if (hasArchives)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_HASARCHIVES);
-            if (hasRefs)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_HASREFS);
-            if (hasAttachments)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
-            if (isNew)
-                new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_ISNEW);
+            if (wasPBE) _images.add(ImageUtil.ICON_MSG_FLAG_PBE);
+            if (isPrivate) _images.add(ImageUtil.ICON_MSG_TYPE_PRIVATE);
+            if (wasPublic) _images.add(ImageUtil.ICON_MSG_FLAG_PUBLIC);
+            if (authenticated) _images.add(ImageUtil.ICON_MSG_FLAG_AUTHENTICATED);
+            if (authorized) _images.add(ImageUtil.ICON_MSG_FLAG_AUTHORIZED);
+            if (banned) _images.add(ImageUtil.ICON_MSG_FLAG_BANNED);
+            if (bookmarked) _images.add(ImageUtil.ICON_MSG_FLAG_BOOKMARKED);
+            if (scheduledForExpire) _images.add(ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE);
+            if (hasKeys) _images.add(ImageUtil.ICON_MSG_FLAG_HASKEYS);
+            if (hasArchives) _images.add(ImageUtil.ICON_MSG_FLAG_HASARCHIVES);
+            if (hasRefs) _images.add(ImageUtil.ICON_MSG_FLAG_HASREFS);
+            if (hasAttachments) _images.add(ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
+            if (isNew) _images.add(ImageUtil.ICON_MSG_FLAG_ISNEW);
         }
         
         // reapply translation to pull the per-image tooltips
         translate(_browser.getTranslationRegistry());
+    }
+    
+    private void realizeComponents() {
+        if (_realized) return;
+        _root = new Composite(_parent, SWT.NONE);
+        _root.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _browser.getTranslationRegistry().register(this);
+        _realized = true;
     }
     
     private boolean hasArchives(ReferenceNode node) {
@@ -191,27 +207,23 @@ public class MessageFlagBar implements Translatable {
         return false;
     }
     
-    private void buildUnreadableFlags(boolean isPrivate) {
-        new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_UNREADABLE);
-        if (isPrivate)
-            new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
-        if (_msg.getPassphrasePrompt() != null)
-            new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_PBE);
-        if (_msg.getReadKeyUnknown())
-            new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN);
-        if (_msg.getReplyKeyUnknown())
-            new Label(_root, SWT.NONE).setImage(ImageUtil.ICON_MSG_FLAG_REPLYKEYUNKNOWN);
+    private void buildUnreadableImages(boolean isPrivate) {
+        _images.add(ImageUtil.ICON_MSG_FLAG_UNREADABLE);
+        if (isPrivate) _images.add(ImageUtil.ICON_MSG_TYPE_PRIVATE);
+        if (_msg.getPassphrasePrompt() != null) _images.add(ImageUtil.ICON_MSG_FLAG_PBE);
+        if (_msg.getReadKeyUnknown()) _images.add(ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN);
+        if (_msg.getReplyKeyUnknown()) _images.add(ImageUtil.ICON_MSG_FLAG_REPLYKEYUNKNOWN);
     }
     
     private void initComponents() {
-        _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _browser.getTranslationRegistry().register(this);
+        if (_includeTooltips) 
+            realizeComponents(); // if we want tooltips, we want a real gui display
     }
     
     public void dispose() {
-        disposeFlags();
-        _browser.getTranslationRegistry().unregister(this);
+        disposeImages();
+        if (_realized)
+            _browser.getTranslationRegistry().unregister(this);
     }
     
     private static final String T_PBE = "syndie.gui.messageflagbar.pbe";
@@ -233,6 +245,7 @@ public class MessageFlagBar implements Translatable {
     
     public void translate(TranslationRegistry registry) {
         if (!_includeTooltips) return;
+        if (!_realized) return;
         Control ctl[] = _root.getChildren();
         for (int i = 0; i < ctl.length; i++) {
             Label l = (Label)ctl[i];

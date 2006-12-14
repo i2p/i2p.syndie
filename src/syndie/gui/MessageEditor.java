@@ -69,6 +69,7 @@ import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.UI;
 
 /**
@@ -187,7 +188,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _browser.getUI().debugMessage("editor: channels fetched.  init components");
         initComponents();
         _browser.getUI().debugMessage("editor: components initialized");
-        _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, this);
+        //_refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, this);
     }
     
     public void addListener(MessageEditorListener lsnr) { _listeners.add(lsnr); }
@@ -202,6 +203,18 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _parents.clear();
         if (uri != null) {
             _parents.add(uri);
+            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                List uris = ThreadAccumulatorJWZ.getAncestorURIs(_browser.getClient(), _browser.getUI(), msgId);
+                if (uris.size() > 0) {
+                    _browser.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + uris);
+                    _parents.addAll(uris);
+                } else {
+                    _browser.getUI().debugMessage("parentMessage is " + uri + ", and it has no ancestors");
+                }
+            } else {
+                _browser.getUI().debugMessage("parentMessage is " + uri + ", but we don't know it, so don't know its ancestors");
+            }
             modified();
         }
     }
@@ -776,6 +789,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             return;
         if (idx == _targetList.size()) {
             // "other...""
+            if (_refChooser == null)
+                _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, this);
             _refChooser.show();
             return;
         }
@@ -871,7 +886,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     }
 
     public void referenceAccepted(SyndieURI uri) {
-        _refChooser.hide();
+        if (_refChooser != null)
+            _refChooser.hide();
         if (uri == null) return;
         _target = uri.getScope();
         modified();
@@ -880,7 +896,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     }
     
     public void referenceChoiceAborted() {
-        _refChooser.hide();
+        if (_refChooser != null)
+            _refChooser.hide();
         updateAuthor();
     }
     
@@ -1059,7 +1076,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _attachmentConfig.clear();
         if (!_root.isDisposed())
             _root.dispose();
-        _refChooser.dispose();
+        if (_refChooser != null)
+            _refChooser.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);
     }

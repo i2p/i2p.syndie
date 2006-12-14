@@ -275,6 +275,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             } else {
                 _msgTags.put(msgId, tags);
+                //_ui.debugMessage("tags for msg " + msgId + ": " + tags);
             }
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
@@ -295,10 +296,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // now filter the remaining threads by authorization status (owner/manager/authPoster/authReply/unauth)
         // (done against the thread so as to allow simple authReply)
         for (int i = 0; i < threads.length; i++) {
-            boolean empty = filterAuthorizationStatus(threads[i]);
-            if (empty) {
-                _ui.debugMessage("reject because authorization status failed: \n" + threads[i]);
-                threads[i] = null;
+            if (threads[i] != null) {
+                boolean empty = filterAuthorizationStatus(threads[i]);
+                if (empty) {
+                    _ui.debugMessage("reject because authorization status failed: \n" + threads[i]);
+                    threads[i] = null;
+                }
             }
         }
         // prune like a motherfucker,
@@ -376,7 +379,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private ThreadReferenceNode[] buildThreads(Set matchingMsgIds) {
         _ui.debugMessage("building threads w/ matching msgIds: " + matchingMsgIds);
+        long beforeAncestors = System.currentTimeMillis();
         Map ancestors = buildAncestors(matchingMsgIds);
+        long afterAncestors = System.currentTimeMillis();
+        _ui.debugMessage("finding ancestors for " + matchingMsgIds.size() + " took " + (afterAncestors-beforeAncestors));
         List rootMsgs = new ArrayList(ancestors.size());
         Map msgContainers = new HashMap();
         for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
@@ -491,7 +497,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             node.setSubject(subject);
             node.setThreadTarget(target);
             
-            _ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName);
+            List tags = new ArrayList(); node.getThreadTags(tags);
+            _ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName + " tags: " + tags);
            
             // to mirror the MessageThreadBuilder, fill the node in per:
             //
@@ -538,10 +545,43 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 // this effectively runs recursively to populate entries in rv for
                 // the ancestors of the message and any of its ancestors, that we
                 // know of
-                buildAncestors(tmi, rv);
+                buildAncestors(_client, _ui, tmi, rv);
             }
         }
         return rv;
+    }
+    
+    /**
+     * list of ancestors (SyndieURI) that are parents (or parents of parents, etc) of the msgId given 
+     */
+    public static List getAncestorURIs(DBClient client, UI ui, long msgId) {
+        ThreadMsgId id = new ThreadMsgId(msgId);
+        Map tmiToAncestorIds = new HashMap();
+        int total = buildAncestors(client, ui, id, tmiToAncestorIds);
+        //ui.debugMessage("ancestors for " + msgId + ": " + tmiToAncestorIds);
+        List orderedAncestors = new ArrayList(tmiToAncestorIds.size());
+        if (total > 0) // fetch this so the ThreadMsgId.hashCode will match
+            id.messageId = client.getMessageId(msgId);
+        walkAncestors(ui, id, orderedAncestors, tmiToAncestorIds);
+        //ui.debugMessage("ordered ancestors: " + orderedAncestors);
+        List rv = new ArrayList(orderedAncestors.size());
+        for (int i = 0; i < orderedAncestors.size(); i++) {
+            ThreadMsgId cur = (ThreadMsgId)orderedAncestors.get(i);
+            rv.add(SyndieURI.createMessage(cur.scope, cur.messageId));
+        }
+        return rv;
+    }
+    private static void walkAncestors(UI ui, ThreadMsgId id, List rv, Map tmiToAncestorIds) {
+        ThreadMsgId cur = id;
+        List ancestors = (List)tmiToAncestorIds.get(cur);
+        if (ancestors != null) {
+            for (int i = 0; i < ancestors.size(); i++) {
+                ThreadMsgId ancestor = (ThreadMsgId)ancestors.get(i);
+                if (!rv.contains(ancestor))
+                    rv.add(ancestor);
+                walkAncestors(ui, ancestor, rv, tmiToAncestorIds);
+            }
+        }
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
@@ -551,28 +591,34 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
             "WHERE mh.msgId = ? " +
             "ORDER BY referencedCloseness ASC";
-    private void buildAncestors(ThreadMsgId tmi, Map existingAncestors) {
+    private static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map existingAncestors) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         
         List pendingMsgIds = new ArrayList();
         pendingMsgIds.add(new Long(tmi.msgId));
         
+        int queryRuns = 0;
+        long queryTime = 0;
+        int queryMatches = 0;
         try {
-            stmt = _client.con().prepareStatement(SQL_BUILD_ANCESTORS);
+            stmt = client.con().prepareStatement(SQL_BUILD_ANCESTORS);
             while (pendingMsgIds.size() > 0) {
                 Long msgId = (Long)pendingMsgIds.remove(0);
                 List rv = (List)existingAncestors.get(msgId);
                 if (rv == null) {
                     rv = new ArrayList();
                     tmi = new ThreadMsgId(msgId.longValue());
-                    tmi.scope = _client.getMessageScope(tmi.msgId);
-                    tmi.messageId = _client.getMessageId(tmi.msgId);
+                    tmi.scope = client.getMessageScope(tmi.msgId);
+                    tmi.messageId = client.getMessageId(tmi.msgId);
                     existingAncestors.put(tmi, rv);
                 }
                 stmt.setLong(1, msgId.longValue());
+                queryRuns++;
+                long before = System.currentTimeMillis();
                 rs = stmt.executeQuery();
                 while (rs.next()) {
+                    queryMatches++;
                     byte chanHash[] = rs.getBytes(1);
                     long messageId = rs.getLong(2);
                     int closeness = rs.getInt(3);
@@ -601,17 +647,23 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                             pendingMsgIds.add(aMsgId);
                     }
                 }
+                
+                long after = System.currentTimeMillis();
+                queryTime += (after-before);
                 rs.close();
                 rs = null;
             }
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
-            _ui.errorMessage("Internal error building ancestors", se);
+            ui.errorMessage("Internal error building ancestors", se);
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        
+        //_ui.debugMessage("building ancestors, query " + queryRuns + " in " + queryTime + " w/ " + queryMatches + " matches");
+        return queryMatches;
     }
     
     private static final class ThreadMsgId {
@@ -836,7 +888,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                             }
                         }
                         if (substringMatch) {
-                            _ui.debugMessage("Substring tagged with " + tag);
+                            //_ui.debugMessage("Substring tagged with " + tag);
                         } else {
                             _ui.debugMessage("Rejecting thread not substring tagged with " + tag);
                             return false;
@@ -978,10 +1030,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             return -1;
         }
         public void getThreadTags(List rv) { 
-            long msgId = getUniqueId();
-            Set tags = (Set)_msgTags.get(new Long(msgId));
-            if (tags != null)
-                rv.addAll(tags);
+            if (_msg != null) {
+                Set tags = (Set)_msgTags.get(new Long(_msg.msgId));
+                if (tags != null)
+                    rv.addAll(tags);
+            }
             for (int i = 0; i < getChildCount(); i++)
                 ((ThreadReferenceNode)getChild(i)).getThreadTags(rv);
         }

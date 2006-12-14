@@ -498,13 +498,18 @@ public class MessageTree implements Translatable, Themeable {
         _tree.addListener(SWT.MeasureItem, new Listener() {
             public void handleEvent(Event evt) {
                 if (evt.index == 1) {
-                    MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
-                    if (bar == null) {
-                        bar = new MessageFlagBar(_browser, _tree, false);
-                        bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
-                        _itemToMsgFlags.put(evt.item, bar);
-                    }
-                    if (bar != null) {
+                    if (true) {
+                        // to avoid a bunch of messageflagbar calcs, lets just assume 8 flags
+                        int width = _tree.getGridLineWidth() * 2;
+                        width += 8 * (ImageUtil.ICON_MSG_FLAG_AUTHENTICATED.getBounds().width + FLAG_SPACING);
+                        evt.width = width;
+                    } else {
+                        MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
+                        if (bar == null) {
+                            bar = new MessageFlagBar(_browser, _tree, false);
+                            bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
+                            _itemToMsgFlags.put(evt.item, bar);
+                        }
                         Image imgs[] = bar.getFlags();
                         int width = _tree.getGridLineWidth() * 2;
                         for (int i = 0; i < imgs.length; i++)
@@ -519,20 +524,23 @@ public class MessageTree implements Translatable, Themeable {
             public void handleEvent(Event evt) {
                 if (evt.index == 1) {
                     MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
-                    if (bar != null) {
-                        Image imgs[] = bar.getFlags();
-                        //String tt = bar.getTooltip();
-                        int off = evt.x;
-                        //_browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
-                        for (int i = 0; i < imgs.length; i++) {
-                            Rectangle sz = imgs[i].getBounds();
-                            int excess = evt.height-sz.height;
-                            if (excess > 1)
-                                evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
-                            else
-                                evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
-                            off += imgs[i].getBounds().width + FLAG_SPACING;
-                        }
+                    if (bar == null) {
+                        bar = new MessageFlagBar(_browser, _tree, false);
+                        bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
+                        _itemToMsgFlags.put(evt.item, bar);
+                    }
+                    Image imgs[] = bar.getFlags();
+                    //String tt = bar.getTooltip();
+                    int off = evt.x;
+                    //_browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
+                    for (int i = 0; i < imgs.length; i++) {
+                        Rectangle sz = imgs[i].getBounds();
+                        int excess = evt.height-sz.height;
+                        if (excess > 1)
+                            evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
+                        else
+                            evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
+                        off += imgs[i].getBounds().width + FLAG_SPACING;
                     }
                 }
             }
