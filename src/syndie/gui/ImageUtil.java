@@ -43,6 +43,8 @@ public class ImageUtil {
     public static final Image ICON_WARNING = Display.getDefault().getSystemImage(SWT.ICON_WARNING);
     public static final Image ICON_WORKING = Display.getDefault().getSystemImage(SWT.ICON_WORKING);
     
+    public static final Image ICON_SHELL = createImageFromResource("iconShell.png");
+    
     /** shown after a link when rendering */
     public static final Image ICON_LINK_END = createImageFromResource("iconLink.png");
     /** shown in place of a nonexistant image when rendering */
@@ -115,6 +117,8 @@ public class ImageUtil {
         _indisposableImages.add(ICON_QUESTION);
         _indisposableImages.add(ICON_WARNING);
         _indisposableImages.add(ICON_WORKING);
+        
+        _indisposableImages.add(ICON_SHELL);
         
         _indisposableImages.add(ICON_LINK_END);
         _indisposableImages.add(ICON_IMAGE_UNKNOWN);

@@ -204,6 +204,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _initialized = true;
         _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
         _shell.setLayout(new GridLayout(1, true));
+        _shell.setImage(ImageUtil.ICON_SHELL);
         
         long t1 = System.currentTimeMillis();
         
@@ -1801,7 +1802,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private Image createSystrayIcon() {
-        return ImageUtil.resize(ImageUtil.ICON_INFORMATION, 16, 16, false);
+        return ImageUtil.resize(ImageUtil.ICON_SHELL, 16, 16, false);
     }
 
     public void addUIListener(UIListener lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
