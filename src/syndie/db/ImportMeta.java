@@ -614,19 +614,35 @@ class ImportMeta {
      * );
      */
     private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData) VALUES (?, ?)";
+    private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*) FROM channelReadKey WHERE channelId = ? AND keyData = ?";
     private static void addChannelReadKeys(DBClient client, long channelId, SessionKey keys[]) throws SQLException {
         if (keys == null) return;
         Connection con = client.con();
         PreparedStatement stmt = null;
+        PreparedStatement existsStmt = null;
+        ResultSet rs = null;
         try {
             stmt = con.prepareStatement(SQL_INSERT_CHANNEL_READ_KEY);
+            existsStmt = con.prepareStatement(SQL_CHANNEL_READ_KEY_EXISTS);
             for (int i = 0; i < keys.length; i++) {
+                existsStmt.setLong(1, channelId);
+                existsStmt.setBytes(2, keys[i].getData());
+                rs = existsStmt.executeQuery();
+                boolean exists = false;
+                if ((rs.next()) && (rs.getLong(1) > 0))
+                    exists = true;
+                rs.close();
+                rs = null;
+                if (exists)
+                    continue;
+                
                 stmt.setLong(1, channelId);
                 stmt.setBytes(2, keys[i].getData());
                 if (stmt.executeUpdate() != 1)
                     throw new SQLException("Unable to insert the channel read key");
             }
         } finally {
+            if (rs != null) rs.close();
             if (stmt != null) stmt.close();
         }
     }

@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
@@ -110,7 +111,10 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
     private static final String toString(byte val[]) {
         if (val == null)
             return "[null]";
-        return DataHelper.toString(val, 128);
+        int len = val.length;
+        if (len > 32)
+            len = 32;
+        return Base64.encode(val, 0, len);
     }
     
     private void runCommand() {

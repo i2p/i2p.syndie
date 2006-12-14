@@ -158,6 +158,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TrayItem _systrayRoot;
     private ToolTip _systrayTip;
     
+    private FileDialog _importFileDialog;
+    
     private Composite _statusRow;
     private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
@@ -1498,17 +1500,23 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         // need to verify if they want to close, then remove 'em from _openTabs and dispose the tab
     }
 
+    private static final String T_IMPORT_SYNDIE_TITLE = "syndie.gui.browser.importsyndietitle";
     private static final String T_IMPORT_SYNDIE_EXTENSION = "syndie.gui.browser.importsyndieextension";
     private static final String T_IMPORT_ALL_EXTENSION = "syndie.gui.browser.importallextension";
     private static final String T_IMPORT_COMPLETE = "syndie.gui.browser.importcomplete";
     private static final String T_IMPORT_COMPLETE_PREFIX = "syndie.gui.browser.importcompleteprefix";
+    
     private void importMessage() {
-        FileDialog dialog = new FileDialog(_shell, SWT.OPEN | SWT.MULTI);
-        dialog.setFilterExtensions(new String[] { "*.syndie", "*" });
-        dialog.setFilterNames(new String[] { _translation.getText(T_IMPORT_SYNDIE_EXTENSION, "Syndie files"), _translation.getText(T_IMPORT_ALL_EXTENSION, "All files") });
-        if (null != dialog.open()) {
-            final String path = dialog.getFilterPath();
-            final String names[] = dialog.getFileNames();
+        if (_importFileDialog == null) {
+            _importFileDialog = new FileDialog(_shell, SWT.OPEN | SWT.MULTI);
+            _importFileDialog.setFilterExtensions(new String[] { "*.syndie", "*" });
+        }
+        // retranslate each time
+        _importFileDialog.setText(_translation.getText(T_IMPORT_SYNDIE_TITLE, "Import syndie file"));
+        _importFileDialog.setFilterNames(new String[] { _translation.getText(T_IMPORT_SYNDIE_EXTENSION, "Syndie files"), _translation.getText(T_IMPORT_ALL_EXTENSION, "All files") });
+        if (null != _importFileDialog.open()) {
+            final String path = _importFileDialog.getFilterPath();
+            final String names[] = _importFileDialog.getFileNames();
             JobRunner.instance().enqueue(new Runnable() {
                 public void run() {
                     int imported = 0;
