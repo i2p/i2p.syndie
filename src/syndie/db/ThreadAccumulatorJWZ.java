@@ -286,7 +286,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < threads.length; i++) {
                 threads[i].getThreadTags(tagBuf);
                 if (!tagFilterPassed(tagBuf)) {
-                    _ui.debugMessage("reject thread " + threads[i]+ " because tag filters failed: " + tagBuf);
+                    _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + "\n" + threads[i]);
                     threads[i] = null;
                 }
                 tagBuf.clear();
@@ -297,7 +297,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         for (int i = 0; i < threads.length; i++) {
             boolean empty = filterAuthorizationStatus(threads[i]);
             if (empty) {
-                _ui.debugMessage("reject " + threads[i] + " because authorization status failed");
+                _ui.debugMessage("reject because authorization status failed: \n" + threads[i]);
                 threads[i] = null;
             }
         }
@@ -383,8 +383,26 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             Map.Entry cur = (Map.Entry)iter.next();
             ThreadMsgId msg = (ThreadMsgId)cur.getKey();
             List msgAncestors = (List)cur.getValue();
-            if (msgAncestors.size() == 0)
-                rootMsgs.add(msg);
+            
+            boolean foundRoot = false;
+            for (int i = msgAncestors.size()-1; i >= 0; i--) {
+                ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
+                if (rootMsgs.contains(ancestorId)) {
+                    foundRoot = true;
+                    break;
+                }
+            }
+            if (!foundRoot) {
+                if (msgAncestors.size() > 0) {
+                    ThreadMsgId ancestor = (ThreadMsgId)msgAncestors.get(msgAncestors.size()-1);
+                    if (!rootMsgs.contains(ancestor))
+                        rootMsgs.add(ancestor);
+                } else {
+                    if (!rootMsgs.contains(msg))
+                        rootMsgs.add(msg);
+                }
+            }
+            
             
             // build up hierarchy relationships, jwz-threading style (though without
             // the rough missing-references/etc stuff, since syndie doesn't have backwards compatability)
@@ -401,7 +419,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 _ui.debugMessage("container exists for current node " + msg);
             }
             
-            _ui.debugMessage("building ancestor containers for " + msgAncestors);
+            if (msgAncestors.size() > 0)
+                _ui.debugMessage("building ancestor containers for " + msgAncestors);
             for (int i = 0; i < msgAncestors.size(); i++) {
                 ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
                 ThreadContainer container = (ThreadContainer)msgContainers.get(ancestorId);
@@ -436,7 +455,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         
         // now that we have the roots, we need to invert the tree to find children
-        Map parentToChildren = invertAncestors(ancestors);
+        //Map parentToChildren = invertAncestors(ancestors);
         
         /*
         _ui.debugMessage("childToAncestors: " + ancestors);
@@ -462,6 +481,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         */
         // now we can build the ThreadReferenceNode instances out of these
         List roots = new ArrayList(rootMsgs.size());
+        _ui.debugMessage("roots: " + rootMsgs);
         for (int i = 0; i < rootMsgs.size(); i++) {
             ThreadMsgId root = (ThreadMsgId)rootMsgs.get(i);
             ThreadReferenceNode thread = buildThread(root, msgContainers); //parentToChildren);
@@ -474,11 +494,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private ThreadReferenceNode buildThread(ThreadMsgId rootMsg, Map msgContainers) {
         ThreadReferenceNode node = new ThreadReferenceNode();
         node.setURI(SyndieURI.createMessage(rootMsg.scope, rootMsg.messageId));
-        if (rootMsg.msgId >= 0) {
+        if ( (rootMsg.msgId >= 0) && (!rootMsg.unreadable) ) {
             node.setIsDummy(false);
-            node.setAuthorId(_client.getMessageAuthor(rootMsg.msgId));
-            node.setSubject(_client.getMessageSubject(rootMsg.msgId));
-            node.setThreadTarget(_client.getMessageTarget(rootMsg.msgId));
+            long authorId = _client.getMessageAuthor(rootMsg.msgId);
+            String subject = _client.getMessageSubject(rootMsg.msgId);
+            long target = _client.getMessageTarget(rootMsg.msgId);
+            String authorName = _client.getChannelName(authorId);
+            node.setAuthorId(authorId);
+            node.setSubject(subject);
+            node.setThreadTarget(target);
+            
+            _ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName);
            
             // to mirror the MessageThreadBuilder, fill the node in per:
             //
@@ -486,7 +512,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             // * and the message subject in node.getDescription(), with the message URI in
             // * node.getURI().
             //
-            node.setName(_client.getChannelName(node.getAuthorId()));
+            node.setName(authorName);
             node.setDescription(node.getThreadSubject());
         } else {
             _ui.debugMessage("node is a dummy: " + rootMsg);
@@ -583,7 +609,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
-            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId " +
+            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing " +
             "FROM messageHierarchy mh " +
             "LEFT OUTER JOIN channel c ON channelHash = referencedChannelHash " +
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
@@ -615,13 +641,23 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     long messageId = rs.getLong(2);
                     int closeness = rs.getInt(3);
                     long ancestorMsgId = rs.getLong(4);
-                    if (rs.wasNull())
-                        ancestorMsgId = -1;
+                    if (rs.wasNull()) ancestorMsgId = -1;
+                    boolean readKeyMissing = rs.getBoolean(5);
+                    if (rs.wasNull()) readKeyMissing = false;
+                    String pbePrompt = rs.getString(6);
+                    boolean replyKeyMissing = rs.getBoolean(7);
+                    if (rs.wasNull()) replyKeyMissing = false;
                     
                     ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
                     ancestor.messageId = messageId;
                     if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
                         ancestor.scope = new Hash(chanHash);
+                    
+                    // if we don't have the actual data, just use a dummy
+                    if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) )
+                        ancestor.unreadable = true;
+                    
+                    
                     rv.add(ancestor);
                     if (ancestorMsgId >= 0) {
                         Long aMsgId = new Long(ancestorMsgId);
@@ -646,10 +682,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         public long msgId;
         public long messageId;
         public Hash scope;
+        public boolean unreadable;
         public ThreadMsgId(long id) {
             msgId = id;
             messageId = -1;
             scope = null;
+            unreadable = false;
         }
         public int hashCode() { return messageId >= 0 ? (int)messageId : (int)msgId; }
         public boolean equals(Object obj) throws ClassCastException {
@@ -683,14 +721,16 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (chanId >= 0)
                 allowedAuthorIds.add(new Long(chanId));
         }
+        boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
-        return filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, false);
+        _ui.debugMessage("filter thread status: allowedAuthorIds: " + allowedAuthorIds + " allowPubReplues to " + targetChannelId + ": " + allowPublicReplies + " root: " + root.getURI().toString());
+        return filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
     }
     
     /** flag any unauthorized posts as dummy nodes, returning true if the entire tree rooted at the node is made of dummies  */
-    private boolean filterAuthorizationStatus(ThreadReferenceNode node, Set authorIds, boolean authorizeReplies, boolean parentIsAuthorized) {
+    private boolean filterAuthorizationStatus(ThreadReferenceNode node, Set authorIds, boolean authorizeReplies, boolean allowAnyone, boolean parentIsAuthorized) {
         boolean rv = true;
-        boolean nodeIsAuthorized = false;
+        boolean nodeIsAuthorized = allowAnyone;
         if (!node.isDummy()) {
             long authorId = node.getAuthorId();
             if (authorIds.contains(new Long(authorId))) {
@@ -698,15 +738,21 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             } else if (authorizeReplies && parentIsAuthorized) {
                 nodeIsAuthorized = true;
             }
-            if (!nodeIsAuthorized)
+            if (!nodeIsAuthorized) {
+                _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI().toString() + " parentAuth?" + parentIsAuthorized);
+                _ui.debugMessage("parent: " + node.getParent());                
                 node.setIsDummy(true);
+            }
+        } else {
+            _ui.debugMessage("node is a dummy: " + node.getMsgId());
         }
         if (!node.isDummy())
             rv = false;
         for (int i = 0; i < node.getChildCount(); i++) {
-            boolean childIsEmpty = filterAuthorizationStatus((ThreadReferenceNode)node.getChild(i), authorIds, authorizeReplies, nodeIsAuthorized || parentIsAuthorized);
+            boolean childIsEmpty = filterAuthorizationStatus((ThreadReferenceNode)node.getChild(i), authorIds, authorizeReplies, allowAnyone, nodeIsAuthorized || parentIsAuthorized);
             rv = rv && childIsEmpty;
         }
+        _ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
     }
     

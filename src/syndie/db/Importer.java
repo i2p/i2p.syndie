@@ -143,6 +143,10 @@ public class Importer extends CommandImpl {
         }
     }
     
+    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase, boolean forceReimport) throws IOException {
+        return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport);
+    }
+
     /** 
      * process the message, importing it if possible.  If it was imported but
      * could not be decrypted (meaning that it is authentic and/or authorized),

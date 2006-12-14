@@ -1068,6 +1068,33 @@ public class DBClient {
         }
     }
 
+    public boolean getChannelAllowPublicPosts(long targetChannelId) {        
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ALLOW_PUB_REPLIES);
+            stmt.setLong(1, targetChannelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean pubPost = rs.getBoolean(1);
+                if (rs.wasNull()) pubPost = false;
+                boolean pubReply = rs.getBoolean(2);
+                if (rs.wasNull()) pubReply = false;
+                return pubPost;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error seeing if the channel allows public posts", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
     /*
     private static final String SQL_GET_INTERNAL_MESSAGE_ID_FULL = "SELECT msgId FROM channelMessage WHERE authorChannelHash = ? AND messageId = ? AND targetChannelId = ?";
     private static final String SQL_GET_INTERNAL_MESSAGE_ID_NOAUTH = "SELECT msgId FROM channelMessage WHERE authorChannelHash IS NULL AND messageId = ? AND targetChannelId = ?";

@@ -75,10 +75,11 @@ public class EditMessageTab extends BrowserTab implements Translatable {
     public String getDescription() { return _description; }
     
     public boolean close() {
-        if (allowClose())
+        if (allowClose()) {
             return super.close();
-        else
+        } else {
             return false;
+        }
     }
     
     protected boolean allowClose() {
@@ -100,6 +101,7 @@ public class EditMessageTab extends BrowserTab implements Translatable {
     }
     
     protected void disposeDetails() {
+        _editor.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
     }
 

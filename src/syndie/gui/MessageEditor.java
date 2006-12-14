@@ -315,6 +315,10 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _controlPrivacy.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _controlPrivacyCombo = new Combo(line2, SWT.DROP_DOWN | SWT.READ_ONLY);
         _controlPrivacyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _controlPrivacyCombo.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { privacyComboUpdated(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { privacyComboUpdated(); }
+        });
         
         // author is under the avatar
         _controlAuthor = new Text(_msgControl, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
@@ -423,6 +427,26 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         _referencesEditor = new MessageReferenceEditorPopup(_browser, _root.getShell(), this, this);
         
         updateAuthor();
+    }
+        
+    private void privacyComboUpdated() {
+        int idx = _controlPrivacyCombo.getSelectionIndex();
+        if (idx == PRIVACY_PBE) {
+            final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
+            dialog.setPassphrase(_passphrase);
+            dialog.setPassphrasePrompt(_passphrasePrompt);
+            dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
+                public void promptComplete(String passphraseEntered, String promptEntered) {
+                    _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
+                    _passphrase = passphraseEntered;
+                    _passphrasePrompt = promptEntered;
+                }
+            });
+            dialog.open();
+        } else {
+            _passphrase = null;
+            _passphrasePrompt = null;
+        }
     }
     
     public Control getControl() { return _root; }
@@ -1023,7 +1047,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     }
     
     private void editorComplete() {
-        _root.setVisible(false);
+        if (!_root.isDisposed())
+            _root.setVisible(false);
         // dispose of all of the pages
         while (_pages.size() > 0) {
             PageEditor editor = (PageEditor)_pages.remove(0);
@@ -1031,7 +1056,8 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         }
         _attachments.clear();
         _attachmentConfig.clear();
-        _root.dispose();
+        if (!_root.isDisposed())
+            _root.dispose();
         _refChooser.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);

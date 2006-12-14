@@ -1,5 +1,8 @@
 package syndie.gui;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
@@ -48,6 +51,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -62,6 +66,7 @@ import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.db.ArchiveDiff;
 import syndie.db.ArchiveIndex;
+import syndie.db.Importer;
 import syndie.db.JobRunner;
 import syndie.db.SyndicationManager;
 import syndie.gui.TranslationRegistry;
@@ -354,7 +359,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         });
         _fileMenuCloseTab.setAccelerator(SWT.MOD1 + 'w');
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuImport.setEnabled(false);
+        _fileMenuImport.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importMessage(); }
+        });
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExport.setEnabled(false);
         _fileMenuExit = new MenuItem(fileMenu, SWT.PUSH);
@@ -376,6 +384,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
             }
         });
+        _bookmarkMenuShow.setAccelerator(SWT.MOD2 + SWT.ESC); // shift-escape to toggle bookmarks
         
         _forumMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu forumMenu = new Menu(_forumMenuRoot);
@@ -1460,6 +1469,56 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         //_tabs.getSelection().dispose();
         // need to verify if they want to close, then remove 'em from _openTabs and dispose the tab
+    }
+
+    private static final String T_IMPORT_SYNDIE_EXTENSION = "syndie.gui.browser.importsyndieextension";
+    private static final String T_IMPORT_ALL_EXTENSION = "syndie.gui.browser.importallextension";
+    private static final String T_IMPORT_COMPLETE = "syndie.gui.browser.importcomplete";
+    private static final String T_IMPORT_COMPLETE_PREFIX = "syndie.gui.browser.importcompleteprefix";
+    private void importMessage() {
+        FileDialog dialog = new FileDialog(_shell, SWT.OPEN | SWT.MULTI);
+        dialog.setFilterExtensions(new String[] { "*.syndie", "*" });
+        dialog.setFilterNames(new String[] { _translation.getText(T_IMPORT_SYNDIE_EXTENSION, "Syndie files"), _translation.getText(T_IMPORT_ALL_EXTENSION, "All files") });
+        if (null != dialog.open()) {
+            final String path = dialog.getFilterPath();
+            final String names[] = dialog.getFileNames();
+            JobRunner.instance().enqueue(new Runnable() {
+                public void run() {
+                    int imported = 0;
+                    final int total = names.length;
+                    for (int i = 0; i < total; i++) {
+                        boolean ok = importFile(path, names[i]);
+                        if (ok)
+                            imported++;
+                    }
+                    final int successful = imported;
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+                            box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
+                            box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
+                            box.open();
+                        }
+                    });
+                }
+            });
+        }
+    }
+    
+    /** run outside the swt thread */
+    private boolean importFile(String path, String filename) {
+        Importer imp = new Importer(_client, null);
+        File f = new File(path, filename);
+        if (f.exists()) {
+            try {
+                return imp.processMessage(getUI(), _client, new FileInputStream(f), null, false);
+            } catch (IOException ioe) {
+                errorMessage("error importing " + path + "/" + filename, ioe);
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
     
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
