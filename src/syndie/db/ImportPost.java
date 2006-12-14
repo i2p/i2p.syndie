@@ -179,10 +179,12 @@ public class ImportPost {
                             // decrypt it with that key
                             _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), key);
                         } catch (DataFormatException dfe) {
-                            _ui.errorMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", dfe);
+                            _ui.errorMessage("Invalid passphrase");
+                            _ui.debugMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", dfe);
                             _body = new UnreadableEnclosureBody(_client.ctx());
                         } catch (IOException ioe) {
-                            _ui.errorMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", ioe);
+                            _ui.errorMessage("Invalid passphrase");
+                            _ui.debugMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", ioe);
                             _body = new UnreadableEnclosureBody(_client.ctx());
                         }
                     }

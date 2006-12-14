@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -39,6 +40,7 @@ import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.JobRunner;
 import syndie.db.MessageThreadBuilder;
 
 /**
@@ -95,6 +97,7 @@ public class MessageView implements Translatable, Themeable {
     private int _page;
     private Hash _author;
     private Hash _target;
+    private int _footerThreadCurrentIndex;
     
     /** ReferenceNode items for those going into the footerReference combo (depth first traversal of the trees) */
     private List _refs;
@@ -111,6 +114,7 @@ public class MessageView implements Translatable, Themeable {
         _refs = new ArrayList();
         _refRoots = new ArrayList();
         _threadURIs = new ArrayList();
+        _footerThreadCurrentIndex = 0;
         Long page = uri.getPage();
         if (page == null)
             _page = 1;
@@ -148,8 +152,10 @@ public class MessageView implements Translatable, Themeable {
         int pageCount = 0;
         List refs = null;
         MessageInfo msg = getMessage();
+        _browser.getUI().debugMessage("showPage: uri: " + _uri);
         _headerFlags.setMessage(msg);
         if (msg == null) {
+            _root.setVisible(true);
             _avatar.disposeImage();
             _headerSubject.setText("");
             _headerAuthor.setText("");
@@ -159,6 +165,20 @@ public class MessageView implements Translatable, Themeable {
             _author = null;
             _target = null;
         } else {
+            if (msg.getPassphrasePrompt() != null) {
+                _root.setVisible(false);
+                PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), false);
+                prompt.setPassphrasePrompt(msg.getPassphrasePrompt());
+                prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+                    public void promptComplete(String passphraseEntered, String promptEntered) {
+                        reimport(passphraseEntered);
+                    }
+                    public void promptAborted() { _browser.unview(_uri); }
+                });
+                prompt.open();
+            } else {
+                _root.setVisible(true);
+            }
             // perhaps we should check for the message avatar too...
             byte authorAvatar[] = _browser.getClient().getChannelAvatar(msg.getAuthorChannelId());
             if (authorAvatar != null) {
@@ -241,6 +261,34 @@ public class MessageView implements Translatable, Themeable {
         SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), _page);
         _body.renderPage(new PageRendererSource(_browser), uri);
         _root.layout(true, true);
+    }
+    
+    private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
+    private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";
+    private void reimport(final String passphrase) {
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                final boolean ok = _browser.reimport(_uri, passphrase);
+                Display.getDefault().asyncExec(new Runnable() { 
+                   public void run() {
+                       MessageBox box = null;
+                       if (!ok) {
+                           box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+                           box.setText(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
+                           box.setMessage(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           int rc = box.open();
+                           if (rc == SWT.YES)
+                               showPage();
+                           else
+                               _browser.unview(_uri);
+                           return;
+                       } else {
+                           showPage();
+                       }
+                   }
+                });
+            }
+        });
     }
     
     private void updateFooter(MessageInfo msg) {
@@ -395,6 +443,7 @@ public class MessageView implements Translatable, Themeable {
             
             if ( (_currentMessage != null) && (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) ) {
                 _currentIndex = _nodes;
+                _footerThreadCurrentIndex = _nodes;
                 walked.append("* ");
             }
             
@@ -542,7 +591,7 @@ public class MessageView implements Translatable, Themeable {
         _headerDate = new Label(_root, SWT.WRAP);
         _headerDate.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         
-        _headerFlags = new MessageFlagBar(_browser, _root);
+        _headerFlags = new MessageFlagBar(_browser, _root, true);
         _headerFlags.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 4, 1));
         
         _headerTags = new Label(_root, SWT.WRAP);
@@ -688,6 +737,7 @@ public class MessageView implements Translatable, Themeable {
             SyndieURI uri = (SyndieURI)_threadURIs.get(idx);
             _browser.view(uri);
         }
+        _footerThread.select(_footerThreadCurrentIndex);
     }
     
     private class PageListener implements PageRenderer.PageActionListener {

@@ -146,7 +146,7 @@ public class MessagePreview implements Themeable, Translatable {
         _headerSubject.setLayoutData(gd);
         _headerSubject.setText("");
         
-        _headerIcons = new MessageFlagBar(_browser, _root);
+        _headerIcons = new MessageFlagBar(_browser, _root, true);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.heightHint = ICON_HEIGHT;
         _headerIcons.getControl().setLayoutData(gd);

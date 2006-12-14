@@ -441,6 +441,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
                     _passphrase = passphraseEntered;
                     _passphrasePrompt = promptEntered;
                 }
+                public void promptAborted() {}
             });
             dialog.open();
         } else {

@@ -499,6 +499,11 @@ public class MessageTree implements Translatable, Themeable {
             public void handleEvent(Event evt) {
                 if (evt.index == 1) {
                     MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
+                    if (bar == null) {
+                        bar = new MessageFlagBar(_browser, _tree, false);
+                        bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
+                        _itemToMsgFlags.put(evt.item, bar);
+                    }
                     if (bar != null) {
                         Image imgs[] = bar.getFlags();
                         int width = _tree.getGridLineWidth() * 2;
@@ -822,9 +827,10 @@ public class MessageTree implements Translatable, Themeable {
             }
             item.setText(0, subj);
             // msgbar stuff
-            MessageFlagBar bar = new MessageFlagBar(_browser, _tree);
-            bar.setMessage(msg);
-            _itemToMsgFlags.put(item, bar);
+            // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
+            //MessageFlagBar bar = new MessageFlagBar(_browser, _tree, false);
+            //bar.setMessage(msg);
+            //_itemToMsgFlags.put(item, bar);
             //if ( (msg != null) && (msg.getWasPrivate()) )
             //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
             //else
@@ -843,7 +849,7 @@ public class MessageTree implements Translatable, Themeable {
                 _itemsNewUnread.add(item);
                 item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
             }
-            _browser.getUI().debugMessage("message status: " + status);
+            //_browser.getUI().debugMessage("message status: " + status);
         } else {
             // reference node does not point to a uri, so don't build a row
             item = parent;

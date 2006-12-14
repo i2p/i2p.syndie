@@ -71,4 +71,6 @@ public interface BrowserControl {
      */
     public TreeMap getResumeable();
     public void resumePost(long postponeId, int postponeVersion);
+    
+    public boolean reimport(SyndieURI uri, String passphrase);
 }

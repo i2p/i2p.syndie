@@ -425,6 +425,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
                 ThreadContainer container = (ThreadContainer)msgContainers.get(ancestorId);
                 _ui.debugMessage("ancestor: " + ancestorId + " container: " + container);
+                
                 if (container == null) {
                     _ui.debugMessage("building new container for " + ancestorId + " w/ child " + child);
                     container = new ThreadContainer();
@@ -453,46 +454,32 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 child = ancestorId;
             }
         }
-        
-        // now that we have the roots, we need to invert the tree to find children
-        //Map parentToChildren = invertAncestors(ancestors);
-        
-        /*
-        _ui.debugMessage("childToAncestors: " + ancestors);
-        _ui.debugMessage("parentToChildren: " + parentToChildren);
-        StringBuffer buf = new StringBuffer();
-        for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry cur = (Map.Entry)iter.next();
-            ThreadMsgId msg = (ThreadMsgId)cur.getKey();
-            List msgAncestors = (List)cur.getValue();
-            buf.append("\nancestors of " + msg);
-            for (int i = 0; i < msgAncestors.size(); i++)
-                buf.append("\n\t").append(msgAncestors.get(i).toString());
-        }
-        for (Iterator iter = parentToChildren.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry cur = (Map.Entry)iter.next();
-            ThreadMsgId msg = (ThreadMsgId)cur.getKey();
-            List children = (List)cur.getValue();
-            buf.append("\nchildren of " + msg);
-            for (int i = 0; i < children.size(); i++)
-                buf.append("\n\t").append(children.get(i).toString());
-        }
-        _ui.debugMessage(buf.toString());
-        */
+
         // now we can build the ThreadReferenceNode instances out of these
         List roots = new ArrayList(rootMsgs.size());
+        Set fakeRoots = new HashSet();
         _ui.debugMessage("roots: " + rootMsgs);
         for (int i = 0; i < rootMsgs.size(); i++) {
             ThreadMsgId root = (ThreadMsgId)rootMsgs.get(i);
-            ThreadReferenceNode thread = buildThread(root, msgContainers); //parentToChildren);
+            ThreadReferenceNode thread = buildThread(root, msgContainers, rootMsgs, fakeRoots);
             if (thread != null)
                 roots.add(thread);
+        }
+        for (Iterator iter = fakeRoots.iterator(); iter.hasNext(); ) {
+            ThreadMsgId fakeRootId = (ThreadMsgId)iter.next();
+            for (int j = 0; j < roots.size(); j++) {
+                ThreadReferenceNode thread = (ThreadReferenceNode)roots.get(j);
+                if (fakeRootId.equals(thread.getMsgId())) {
+                    roots.remove(j);
+                    break;
+                }
+            }
         }
         return (ThreadReferenceNode[])roots.toArray(new ThreadReferenceNode[0]);
     }
     
-    private ThreadReferenceNode buildThread(ThreadMsgId rootMsg, Map msgContainers) {
-        ThreadReferenceNode node = new ThreadReferenceNode();
+    private ThreadReferenceNode buildThread(ThreadMsgId rootMsg, Map msgContainers, List rootMsgs, Set fakeRoots) {
+        ThreadReferenceNode node = new ThreadReferenceNode(rootMsg);
         node.setURI(SyndieURI.createMessage(rootMsg.scope, rootMsg.messageId));
         if ( (rootMsg.msgId >= 0) && (!rootMsg.unreadable) ) {
             node.setIsDummy(false);
@@ -522,69 +509,18 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if ( (container != null) && (container.child != null) ) {
             ThreadContainer child = container.child;
             while (child != null) {
-                ThreadReferenceNode childNode = buildThread(child.msg, msgContainers);
+                // fake roots happen w/ incomplete ancestry is listed in a message, so
+                // simply make sure all children in a thread are not marked as roots for
+                // some other thread
+                if (rootMsgs.contains(child.msg))
+                    fakeRoots.add(child.msg);
+                // now build that child's thread
+                ThreadReferenceNode childNode = buildThread(child.msg, msgContainers, rootMsgs, fakeRoots);
                 node.addChild(childNode);
                 child = child.nextSibling;
             }
         }
         return node;
-    }
-    /*
-    private ThreadReferenceNode buildThread(ThreadMsgId rootMsg, Map parentToChildren) {
-        ThreadReferenceNode node = new ThreadReferenceNode();
-        node.setURI(SyndieURI.createMessage(rootMsg.scope, rootMsg.messageId));
-        if (rootMsg.msgId >= 0) {
-            node.setIsDummy(false);
-            node.setAuthorId(_client.getMessageAuthor(rootMsg.msgId));
-            node.setSubject(_client.getMessageSubject(rootMsg.msgId));
-            node.setThreadTarget(_client.getMessageTarget(rootMsg.msgId));
-           
-            // to mirror the MessageThreadBuilder, fill the node in per:
-            //
-            // * each node has the author's preferred name stored in node.getName()
-            // * and the message subject in node.getDescription(), with the message URI in
-            // * node.getURI().
-            //
-            node.setName(_client.getChannelName(node.getAuthorId()));
-            node.setDescription(node.getThreadSubject());
-        } else {
-            _ui.debugMessage("node is a dummy: " + rootMsg);
-            node.setIsDummy(true);
-        }
-        List children = (List)parentToChildren.get(rootMsg);
-        if (children != null) {
-            for (int i = 0; i < children.size(); i++) {
-                ThreadMsgId childId = (ThreadMsgId)children.get(i);
-                ThreadReferenceNode child = buildThread(childId, parentToChildren);
-                node.addChild(child);
-            }
-        }
-        return node;
-    }
-    */
-    
-    private Map invertAncestors(Map childToParents) {
-        /*
-        error.  this puts grandchildren is as direct children.  need to compare
-        ancestor-sets with other chilren to find siblings
-         */
-        Map parentToChildren = new HashMap(childToParents.size());
-        for (Iterator iter = childToParents.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry cur = (Map.Entry)iter.next();
-            ThreadMsgId msg = (ThreadMsgId)cur.getKey();
-            List ancestors = (List)cur.getValue();
-            for (int i = 0; i < ancestors.size(); i++) {
-                ThreadMsgId ancestor = (ThreadMsgId)ancestors.get(i);
-                List children = (List)parentToChildren.get(ancestor);
-                if (children == null) {
-                    children = new ArrayList();
-                    parentToChildren.put(ancestor, children);
-                }
-                if (!children.contains(msg))
-                    children.add(msg); // todo: loop check
-            }
-        }
-        return parentToChildren;
     }
     
     /** build a map of ThreadMsgId to a List of ThreadMsgId instances, most recent first */
@@ -1015,20 +951,22 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         private String _subject;
         private long _targetChannelId;
         private boolean _dummy;
-        public ThreadReferenceNode() {
+        private ThreadMsgId _msg;
+        public ThreadReferenceNode(ThreadMsgId id) {
             super(null, null, null, null);
+            _msg = id;
             _authorId = -1;
             _subject = null;
             _targetChannelId = -1;
             _dummy = false;
         }
+        public ThreadMsgId getMsgId() { return _msg; }
         public void setAuthorId(long authorId) { _authorId = authorId; }
         public void setSubject(String subject) { _subject = subject; }
         public void setThreadTarget(long channelId) { _targetChannelId = channelId; }
         /** this node represents something we do not have locally, or is filtered */
         public boolean isDummy() { return _dummy || getUniqueId() < 0; }
         public void setIsDummy(boolean dummy) { _dummy = dummy; }
-        public long getMsgId() { return getUniqueId(); }
         public long getThreadTarget() {
             if (_targetChannelId >= 0)
                 return _targetChannelId;

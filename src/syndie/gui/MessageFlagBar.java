@@ -23,10 +23,12 @@ public class MessageFlagBar implements Translatable {
     private Composite _parent;
     private Composite _root;
     private MessageInfo _msg;
+    private boolean _includeTooltips;
     
-    public MessageFlagBar(BrowserControl browser, Composite parent) {
+    public MessageFlagBar(BrowserControl browser, Composite parent, boolean includeTooltips) {
         _browser = browser;
         _parent = parent;
+        _includeTooltips = includeTooltips;
         initComponents();
     }
     
@@ -227,8 +229,10 @@ public class MessageFlagBar implements Translatable {
     private static final String T_HASREFS = "syndie.gui.messageflagbar.hasrefs";
     private static final String T_HASATTACHMENTS = "syndie.gui.messageflagbar.hasattachments";
     private static final String T_ISNEW = "syndie.gui.messageflagbar.isnew";
+    private static final String T_ISPRIVATE = "syndie.gui.messageflagbar.isprivate";
     
     public void translate(TranslationRegistry registry) {
+        if (!_includeTooltips) return;
         Control ctl[] = _root.getChildren();
         for (int i = 0; i < ctl.length; i++) {
             Label l = (Label)ctl[i];
@@ -265,6 +269,8 @@ public class MessageFlagBar implements Translatable {
                     l.setToolTipText(registry.getText(T_HASATTACHMENTS, "Message includes attachments"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_ISNEW)
                     l.setToolTipText(registry.getText(T_ISNEW, "Message is unread"));
+                else if (img == ImageUtil.ICON_MSG_TYPE_PRIVATE)
+                    l.setToolTipText(registry.getText(T_ISPRIVATE, "Message was privately encrypted"));
                 else {
                     _browser.getUI().debugMessage("translating icon " + i + ": UNKNOWN icon");
                 }

@@ -53,6 +53,7 @@ public class PassphrasePrompt implements Translatable, Themeable {
     
     public static interface PassphraseListener {
         public void promptComplete(String passphraseEntered, String promptEntered);
+        public void promptAborted();
     }
     
     private void initComponents() {
@@ -103,8 +104,12 @@ public class PassphrasePrompt implements Translatable, Themeable {
         _shell.dispose();
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
-        if (ok && (_listener != null))
-            _listener.promptComplete(pass, prompt);
+        if (_listener != null) {
+            if (ok)
+                _listener.promptComplete(pass, prompt);
+            else
+                _listener.promptAborted();
+        }
     }
     
     private static final String T_SHELL = "syndie.gui.passphraseprompt.shell";

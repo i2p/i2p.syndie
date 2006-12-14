@@ -1062,6 +1062,33 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         view(createPostURI(postponeId, postponeVersion));
     }
     
+    public boolean reimport(SyndieURI uri, String passphrase) {
+        if ( (uri == null) || (uri.getScope() == null) ) return false;
+        File dir = new File(_client.getArchiveDir(), uri.getScope().toBase64());
+        File msgFile = null;
+        if (uri.getMessageId() != null)
+            msgFile = new File(dir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+        else
+            msgFile = new File(dir, "meta" + Constants.FILENAME_SUFFIX);
+        Importer imp = new Importer(_client, passphrase);
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream(msgFile);
+            boolean ok = imp.processMessage(getUI(), _client, fin, passphrase, true);
+            fin.close();
+            fin = null;
+            debugMessage("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
+            // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
+            // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
+            return ok && !imp.wasMissingKey(); 
+        } catch (IOException ioe) {
+            errorMessage("Error reimporting " + uri, ioe);
+            return false;
+        } finally {
+            if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+        }
+    }
+    
     public void showWaitCursor(boolean show) {
         if (show)
             _shell.setCursor(ImageUtil.CURSOR_WAIT);
