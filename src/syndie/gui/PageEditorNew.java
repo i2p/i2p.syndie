@@ -49,6 +49,13 @@ public class PageEditorNew {
     
     public Control getControl() { return _root; }
     
+    public void setContent(String body) { _text.setText(body); }
+    
+    public void dispose() {
+        _preview.dispose();
+        _root.dispose();
+    }
+    
     private void initComponents() {
         Composite parent = _editor.getPageRoot();
         _root = new Composite(parent, SWT.NONE);
@@ -81,6 +88,7 @@ public class PageEditorNew {
         _findHighlight.background = ColorUtil.getColor("yellow", null);
     }
     
+    public void updated() { preview(); }
     
     private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void preview() {

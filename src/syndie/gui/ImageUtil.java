@@ -109,6 +109,11 @@ public class ImageUtil {
     public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, 16, 16, false);
 
+    public static final Image ICON_EDITOR_PRIVACY_PUBLIC = resize(ImageUtil.ICON_WARNING, 48, 48, false);
+    public static final Image ICON_EDITOR_PRIVACY_PBE = resize(ImageUtil.ICON_ERROR, 48, 48, false);
+    public static final Image ICON_EDITOR_PRIVACY_AUTHORIZED = resize(ImageUtil.ICON_INFORMATION, 48, 48, false);
+    public static final Image ICON_EDITOR_PRIVACY_REPLY = resize(ImageUtil.ICON_QUESTION, 48, 48, false);
+    
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     public static void init() {
@@ -176,6 +181,11 @@ public class ImageUtil {
         _indisposableImages.add(ICON_TAB_PAGE);
         _indisposableImages.add(ICON_TAB_HIGHLIGHTS);
         _indisposableImages.add(ICON_TAB_MSG);
+        
+        _indisposableImages.add(ICON_EDITOR_PRIVACY_PUBLIC);
+        _indisposableImages.add(ICON_EDITOR_PRIVACY_PBE);
+        _indisposableImages.add(ICON_EDITOR_PRIVACY_AUTHORIZED);
+        _indisposableImages.add(ICON_EDITOR_PRIVACY_REPLY);    
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {
