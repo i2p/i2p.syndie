@@ -13,11 +13,13 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
@@ -264,6 +266,38 @@ public class PageEditorNew {
             _text.setCaretOffset(_text.getCaretOffset()+text.length());
         }
         boolean focused = _text.forceFocus();
+    }
+    
+    private boolean isAtBeginningOfLine(int offset) {
+        if (offset == 0) return true;
+        int len = _text.getCharCount();
+        String txt = null;
+        if (offset >= len)
+            txt = _text.getText(0, offset-2);
+        else
+            txt = _text.getText(0, offset-1);
+        boolean isInTag = false;
+        for (int i = txt.length()-1; i >= 0; i--) {
+            char c = txt.charAt(i);
+            if ('\n' == c) {
+                return true;
+            } else if ('>' == c) {
+                isInTag = true;
+            } else if ('<' == c) {
+                isInTag = false;
+            } else if (!isInTag) {
+                return false;
+            }
+        }
+        // no non-tagged content, so this is the beginning of the page
+        return true;
+    }
+    
+    public void insert(String toInsert, boolean onNewline) {
+        if (onNewline && !isAtBeginningOfLine(_text.getCaretOffset()))
+            insertAtCaret('\n' + toInsert);
+        else
+            insertAtCaret(toInsert);
     }
     
     // find utils - called either from within the page editor or by the message editor's finder
@@ -527,5 +561,58 @@ public class PageEditorNew {
             return;
         _editor.showSpell(false);
         return;
+    }
+    
+    // callback from the styler
+    void cancelStyle() { _text.forceFocus(); }
+    String getSelectedText() { return _text.getSelectionText(); }
+    void insertStyle(String str, boolean insert, int begin, int end) {
+        if (insert) {
+            insertAtCaret(str);
+            _text.setCaretOffset(_text.getCaretOffset() - (str.length()-begin));
+            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+        } else { // replace selection
+            _editor.modified();
+            Point range = _text.getSelectionRange();
+            _text.replaceTextRange(range.x, range.y, str);
+            _text.setCaretOffset(range.x+begin);
+            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+        }
+    }
+    
+    // callbacks from pageBGColor/pageBGImage
+    void setBodyTags() { setBodyTags(null, null); }
+    void setBodyTags(String bgImageURL, String bodyColor) {
+        if ( (bodyColor != null) || (bgImageURL != null) ) {
+            String txt = _text.getText();
+            int body = txt.indexOf("<body");
+            if (body == -1) {
+                // ok, this assumes that if they don't have a <body> tag, they don't have an <html>
+                // tag either
+                StringBuffer buf = new StringBuffer();
+                buf.append("<html>\n<body ");
+                if (bodyColor != null)
+                    buf.append("bgcolor=\"").append(bodyColor).append("\" ");
+                if (bgImageURL != null)
+                    buf.append("bgimage=\"").append(bgImageURL).append("\" ");
+                buf.append(">\n");
+                _text.replaceTextRange(0, 0, buf.toString());
+                int sz = _text.getCharCount();
+                _text.replaceTextRange(sz, 0, "\n</body>\n</html>\n");
+            } else {
+                int bodyEnd = txt.indexOf('>', body);
+                String attributes = txt.substring(body+1, bodyEnd);
+                HTMLTag bodyTag = new HTMLTag(attributes, 0, null, -1);
+                if (bodyColor != null)
+                    bodyTag.setAttribValue("bgcolor", bodyColor);
+                else
+                    bodyTag.removeAttribValue("bgcolor");
+                if (bgImageURL != null)
+                    bodyTag.setAttribValue("bgimage", bgImageURL);
+                else
+                    bodyTag.removeAttribValue("bgimage");
+                _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
+            }
+        }
     }
 }

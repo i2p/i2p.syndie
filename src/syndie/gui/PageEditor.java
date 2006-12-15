@@ -72,7 +72,7 @@ import syndie.db.UI;
 /**
  * wysiwyg editor for text or html pages in a message
  */
-public class PageEditor implements Translatable, Themeable {
+public class PageEditor implements Translatable, Themeable, ImageBuilderPopup.ImageBuilderSource {
     private BrowserControl _browser;
     private DBClient _client;
     private MessageEditor _messageEditor;
@@ -421,7 +421,7 @@ public class PageEditor implements Translatable, Themeable {
     }
     
     void setBodyTags() { setBodyTags(null); }
-    void setBodyTags(String bgImageURL) {
+    public void setBodyTags(String bgImageURL) {
         String bodyColor = ColorUtil.getSystemColorName(_pageBGColor.getBackground());
         if ( (bodyColor != null) || (bgImageURL != null) ) {
             String txt = _text.getText();
@@ -730,7 +730,7 @@ public class PageEditor implements Translatable, Themeable {
         }
     }
     
-    void insertAtCaret(String text) {
+    public void insertAtCaret(String text) {
         if (text != null) {
             _messageEditor.modified();
             // rather than replacing everything selected, just insert at the caret
@@ -792,7 +792,7 @@ public class PageEditor implements Translatable, Themeable {
     }
     private void showImagePopup(boolean forBodyBackground) { 
         if (_imagePopup == null)
-            _imagePopup = new ImageBuilderPopup(this);
+            _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
         _imagePopup.showPopup(forBodyBackground); 
     }
     
@@ -1498,12 +1498,12 @@ public class PageEditor implements Translatable, Themeable {
 
     int getPageCount() { return _messageEditor.getPageCount(); }
     List getAttachmentDescriptions() { return _messageEditor.getAttachmentDescriptions(); }
-    List getAttachmentDescriptions(boolean imagesOnly) { return _messageEditor.getAttachmentDescriptions(imagesOnly); }
+    public List getAttachmentDescriptions(boolean imagesOnly) { return _messageEditor.getAttachmentDescriptions(imagesOnly); }
 
-    byte[] getImageAttachment(int idx) { return _messageEditor.getImageAttachment(idx); }
-    int getImageAttachmentNum(int imageNum) { return _messageEditor.getImageAttachmentNum(imageNum); }
-    void updateImageAttachment(int imageNum, String contentType, byte data[]) { _messageEditor.updateImageAttachment(imageNum, contentType, data); }
-    int addAttachment(String contentType, String name, byte[] data) { return _messageEditor.addAttachment(contentType, name, data); }
+    public byte[] getImageAttachment(int idx) { return _messageEditor.getImageAttachment(idx); }
+    public int getImageAttachmentNum(int imageNum) { return _messageEditor.getImageAttachmentNum(imageNum); }
+    public void updateImageAttachment(int imageNum, String contentType, byte data[]) { _messageEditor.updateImageAttachment(imageNum, contentType, data); }
+    public int addAttachment(String contentType, String name, byte[] data) { return _messageEditor.addAttachment(contentType, name, data); }
     
     void dispose() {
         // destroy all the data.  the page has been dropped or cancelled

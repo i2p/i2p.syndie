@@ -49,8 +49,9 @@ import syndie.data.WebRipRunner;
  *
  */
 public class ImageBuilderPopup {
-    private PageEditor _page;
+    private Shell _parent;
     private Shell _shell;
+    private ImageBuilderSource _page;
     private Composite _choices;
     private Button _choiceAttach;
     private Combo _choiceAttachCombo;
@@ -85,13 +86,26 @@ public class ImageBuilderPopup {
     
     private boolean _forBodyBackground;
     
-    public ImageBuilderPopup(PageEditor page) {
+    public ImageBuilderPopup(Shell parent, ImageBuilderSource page) {
         _page = page;
+        _parent = parent;
         initComponents();
     }
     
+    public interface ImageBuilderSource {
+        public List getAttachmentDescriptions(boolean imagesOnly);
+        public int addAttachment(String type, String name, byte data[]);
+        public void updateImageAttachment(int attachmentIndex, String type, byte data[]);
+        /** attachmentIndex starts at 0 */
+        public int getImageAttachmentNum(int attachmentIndex);
+        /** idx starts at 1 */
+        public byte[] getImageAttachment(int idx);
+        public void setBodyTags(String bgImageURI);
+        public void insertAtCaret(String html);
+    }
+    
     private void initComponents() {
-        _shell = new Shell(_page.getControl().getShell(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
+        _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setText("Include image...");
         _shell.setLayout(new GridLayout(1, true));
         
@@ -304,8 +318,8 @@ public class ImageBuilderPopup {
             ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
             loader.data = new ImageData[] { img.getImageData() };
             // foo. png not supported on early SWT (though newer swt revs do)
-            loader.save(outBuf, SWT.IMAGE_PNG);
-            //loader.save(outBuf, SWT.IMAGE_JPEG);
+            //loader.save(outBuf, SWT.IMAGE_PNG);
+            loader.save(outBuf, SWT.IMAGE_JPEG);
             _configPreviewImageSerialized = outBuf.toByteArray();
             System.out.println("image size: " + _configPreviewImageSerialized.length + " bytes");
         }
@@ -341,13 +355,13 @@ public class ImageBuilderPopup {
             }
             
             attachment = _page.addAttachment(type, Constants.stripFilename(fname.getName(), false), data);
-            System.out.println("Adding image attachment of size " + data.length + " at attachment " + attachment);
+            //System.out.println("Adding image attachment of size " + data.length + " at attachment " + attachment);
         } else if (_choiceAttach.getSelection()) {
             int img = _choiceAttachCombo.getSelectionIndex();
             if (_configPreviewImageSerialized != null) {
                 // image was resized
                 _page.updateImageAttachment(img, "image/png", _configPreviewImageSerialized);
-                System.out.println("Updating image attachment to " + _configPreviewImageSerialized.length);
+                //System.out.println("Updating image attachment to " + _configPreviewImageSerialized.length);
             }
             attachment = _page.getImageAttachmentNum(img);
         }

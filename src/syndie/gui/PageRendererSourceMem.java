@@ -81,13 +81,13 @@ public class PageRendererSourceMem extends PageRendererSource {
     }
     public byte[] getMessageAttachmentData(long internalMsgId, int attachmentNum) {
         if (_msg.getInternalId() != internalMsgId) {
-            System.out.println("not the current message... fetch other attachment");
+            //System.out.println("not the current message... fetch other attachment");
             return super.getMessageAttachmentData(internalMsgId, attachmentNum);
         }
         if ( (attachmentNum <= 0) || (attachmentNum > _attachmentOrder.size()) ) return null;
         String name = (String)_attachmentOrder.get(attachmentNum-1);
         byte data[] = (byte[])_attachments.get(attachmentNum-1);
-        System.out.println("current message... attachment count " + _attachmentOrder.size() + " (" + name + "): " + (data != null ? data.length+"" : "null"));
+        //System.out.println("current message... attachment count " + _attachmentOrder.size() + " (" + name + "): " + (data != null ? data.length+"" : "null"));
         return data;
     }
     
