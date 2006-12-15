@@ -72,6 +72,7 @@ public class ColorUtil {
     
     public static Color getSystemColor(String rgb) { return (Color)_colorRGBToSystem.get(rgb); }
     
+    public static Color getColor(String color) { return getColor(color, null); }
     /**
      * get the given color, pulling it from the set of system colors or the cache,
      * if possible.  can be called from any thread

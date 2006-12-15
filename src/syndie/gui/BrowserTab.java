@@ -105,6 +105,8 @@ abstract class BrowserTab implements Themeable {
             return new HighlightViewTab(browser, uri);
         } else if (uri.isSearch()) {
             return new BrowseForumTab(browser, uri);
+        } else if ("x-postnew".equals(uri.getType())) {
+            return new MessageEditorNewTab(browser, uri);
         }
         
         return null;
