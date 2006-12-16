@@ -1,9 +1,19 @@
 package syndie.gui;
 
 import com.swabunga.spell.engine.Word;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,6 +21,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -51,7 +66,10 @@ import syndie.data.ChannelInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.ThreadAccumulatorJWZ;
+import syndie.db.UI;
 
 /**
  *
@@ -175,14 +193,30 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     /** set to false to disable temporary save points (during automated updates) */
     private boolean _enableSave;
     
+    /** cache some details for who we have keys to write to / manage / etc */
     private DBClient.ChannelCollector _nymChannels;
+    /** set of MessageEditorListener */
+    private List _listeners;
     
     /** forum the post is targetting */
     private Hash _forum;
     /** who the post should be signed by */
     private Hash _author;
-
+    /**
+     * ordered list of earlier messages (SyndieURI) this follows in the thread 
+     * of (most recent parent first)
+     */
+    private List _parents;
+    /** if using PBE, this is the required passphrase */
+    private String _passphrase;
+    /** if using PBE, this is the prompt for the passphrase */
+    private String _passphrasePrompt;
     
+    /** postponeId is -1 if not yet saved, otherwise its the entry in nymMsgPostpone */
+    private long _postponeId;
+    /** version is incremented each time the state is saved */
+    private int _postponeVersion;
+
     private MessageEditorFind _finder;
     private MessageEditorSpell _spellchecker;
     private MessageEditorStyler _styler;
@@ -192,7 +226,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
-    public MessageEditorNew(BrowserControl browser, Composite parent) {
+    public MessageEditorNew(BrowserControl browser, Composite parent, MessageEditor.MessageEditorListener lsnr) {
         _browser = browser;
         _parent = parent;
         _currentPage = -1;
@@ -204,9 +238,17 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _attachmentSummary = new ArrayList();
         _referenceNodes = new ArrayList();
         _referenceNodeSource = new HashMap();
+        _parents = new ArrayList();
         _modified = true;
+        _enableSave = false;
+        _postponeId = -1;
+        _postponeVersion = -1;
+        _listeners = new ArrayList();
+        if (lsnr != null) _listeners.add(lsnr);
         initComponents();
     }
+    
+    public void addListener(MessageEditor.MessageEditorListener lsnr) { _listeners.add(lsnr); }
     
     public void dispose() {
         if (_refAddPopup != null) _refAddPopup.dispose();
@@ -224,12 +266,563 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     // PageEditors ask for these:
     Composite getPageRoot() { return _pageRoot; }
     void modified() { _modified = true; }
+    void enableAutoSave() { _enableSave = true; }
+    void disableAutoSave() { _enableSave = false;}
+    
     /** save the state of the message so if there is a crash / exit / etc, it is resumeable */
+    private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
     void saveState() {
         if (!_modified || !_enableSave) return;
+        long stateId = _postponeId;
+        if (stateId < 0)
+            stateId = System.currentTimeMillis();
+        _browser.getUI().debugMessage("saving state for postponeId " + _postponeId);
+        String state = serializeStateToB64(stateId); // increments the version too
+        if (state == null) {
+            _browser.getUI().errorMessage("Internal error serializing message state");
+            return;
+        }
+        int version = _postponeVersion;
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        try {
+            stmt = con.prepareStatement(SQL_POSTPONE);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, stateId);
+            stmt.setInt(3, version);
+            stmt.setString(4, state);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error postponing", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        _modified = false;
     }
-    void enableAutoSave() {}
-    void disableAutoSave() {}
+    
+    private static final String SQL_RESUME = "SELECT encryptedData FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion = ?";
+    public boolean loadState(long postponeId, int version) {
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        String state = null;
+        try {
+            stmt = con.prepareStatement(SQL_RESUME);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, postponeId);
+            stmt.setInt(3, version);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                state = rs.getString(1);
+            } else {
+                return false;
+            }
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error resuming", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if (state != null) {
+            deserializeStateFromB64(state, postponeId, version);
+            _modified = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    private static final String SQL_DROP = "DELETE FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ?";
+    void dropSavedState() {
+        _browser.getUI().debugMessage("dropping saved state for postponeId " + _postponeId);
+        Connection con = _browser.getClient().con();
+        PreparedStatement stmt = null;
+        try {
+            stmt = con.prepareStatement(SQL_DROP);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, _postponeId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _browser.getUI().errorMessage("Internal error dropping saved state", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String T_POSTED_MESSAGE = "syndie.gui.messageeditor.post.message";
+    private static final String T_POSTED_TITLE = "syndie.gui.messageeditor.post.title";
+    private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
+    private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
+    
+    private void postMessage() {
+        MessageCreator creator = new MessageCreator(new CreatorSource());
+        boolean ok = creator.execute();
+        if (ok) {
+            dropSavedState();
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
+            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+            box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
+            box.open();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditor.MessageEditorListener)iter.next()).messageCreated(creator.getCreatedURI());
+        } else {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
+            box.setText(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_TITLE, "Error creating the message"));
+            box.open();
+        }
+    }
+    
+    private class CreatorSource implements MessageCreator.MessageCreatorSource {
+        public DBClient getClient() { return _browser.getClient(); }
+        public UI getUI() { return _browser.getUI(); }
+        public Hash getAuthor() { return _author; }
+        public Hash getTarget() { return _forum; }
+        public int getPageCount() { return _pageEditors.size(); }
+        public String getPageContent(int page) { return ((PageEditorNew)_pageEditors.get(page)).getContent(); }
+        public String getPageType(int page) { return ((PageEditorNew)_pageEditors.get(page)).getContentType(); }
+        public List getAttachmentNames() {             
+            ArrayList rv = new ArrayList();
+            for (int i = 0; i < _attachmentConfig.size(); i++) {
+                Properties cfg = (Properties)_attachmentConfig.get(i);
+                rv.add(cfg.getProperty(Constants.MSG_ATTACH_NAME));
+            }
+            return rv;
+        }
+        public List getAttachmentTypes() { 
+            List rv = new ArrayList(_attachmentConfig.size());
+            for (int i = 0; i < _attachmentConfig.size(); i++) {
+                Properties cfg = (Properties)_attachmentConfig.get(i);
+                rv.add(cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE));
+            }
+            return rv;
+        }
+        /** @param attachmentIndex starts at 1 */
+        public byte[] getAttachmentData(int attachmentIndex) { return MessageEditorNew.this.getAttachmentData(attachmentIndex); }
+        public String getSubject() { return _subject.getText(); }
+        public boolean getPrivacyPBE() { return _privPBE.getSelection() && (_passphrase != null) && (_passphrasePrompt != null); }
+        public String getPassphrase() { return _privPBE.getSelection() ? _passphrase : null; }
+        public String getPassphrasePrompt() { return _privPBE.getSelection() ? _passphrasePrompt : null; }
+        public boolean getPrivacyPublic() { return _privPublic.getSelection(); }
+        public String getAvatarUnmodifiedFilename() { return null; }
+        public byte[] getAvatarModifiedData() { return null; }
+        public boolean getPrivacyReply() { return _privReply.getSelection(); }
+        public String[] getPublicTags() { return new String[0]; }
+        public String[] getPrivateTags() {
+            String src = _tag.getText().trim();
+            return Constants.split(" \t\r\n", src, false);
+        }
+        public List getReferenceNodes() { return _referenceNodes; }
+        public int getParentCount() { return _parents.size(); }
+        public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
+        public String getExpiration() { return null; }
+        public boolean getForceNewThread() { return false; }
+        public boolean getRefuseReplies() { return false; }
+    }   
+    
+    public void postponeMessage() {
+        saveState();
+        for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditor.MessageEditorListener)iter.next()).messagePostponed(_postponeId);
+    }
+    
+    private static final String T_CANCEL_MESSAGE = "syndie.gui.messageeditor.cancel.message";
+    private static final String T_CANCEL_TITLE = "syndie.gui.messageeditor.cancel.title";
+    
+    public void cancelMessage() { cancelMessage(true); }
+    public void cancelMessage(boolean requireConfirm) {
+        if (requireConfirm) {
+            // confirm
+            MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+            dialog.setMessage(getBrowser().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
+            dialog.setText(getBrowser().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
+            int rv = dialog.open();
+            if (rv == SWT.YES) {
+                cancelMessage(false);
+            }
+        } else {
+            dropSavedState();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                ((MessageEditor.MessageEditorListener)iter.next()).messageCancelled();
+        }
+    }
+
+    /**
+     * serialize a deep copy of the editor state (including pages, attachments, config),
+     * PBE encrypted with the currently logged in nym's passphrase, and return that after
+     * base64 encoding.  the first 16 bytes (24 characters) make up the salt for PBE decryption,
+     * and there is no substantial padding on the body (only up to the next 16 byte boundary)
+     */
+    public String serializeStateToB64(long postponementId) {
+        byte data[] = null;
+        try {
+            data = serializeState();
+        } catch (IOException ioe) {
+            // this is writing to memory...
+            _browser.getUI().errorMessage("Internal error serializing message state", ioe);
+            return null;
+        }
+        byte salt[] = new byte[16];
+        byte encr[] = _browser.getClient().pbeEncrypt(data, salt);
+        String rv = Base64.encode(salt) + Base64.encode(encr);
+        _postponeId = postponementId;
+        _postponeVersion++;
+        _browser.getUI().debugMessage("serialized state to " + encr.length + " bytes (" + rv.length() + " base64 encoded...)");
+        return rv;
+    }
+    
+    public long getPostponementId() { return _postponeId; }
+    public int getPostponementVersion() { return _postponeVersion; }
+    
+    public void deserializeStateFromB64(String state, long postponeId, int version) {
+        String salt = state.substring(0, 24);
+        String body = state.substring(24);
+        byte decr[] = _browser.getClient().pbeDecrypt(Base64.decode(body), Base64.decode(salt));
+        
+        if (decr == null) {
+            _browser.getUI().errorMessage("Error pbe decrypting " + postponeId + "." + version + ": state: " + state);
+            dispose();
+            return;
+        }
+
+        _browser.getUI().debugMessage("deserialized state to " + decr.length + " bytes (" + state.length() + " base64 encoded...)");
+        state = null;
+
+        ZipInputStream zin = null;
+        try {
+            zin = new ZipInputStream(new ByteArrayInputStream(decr));
+            deserializeState(zin);
+        } catch (IOException ioe) {
+            _browser.getUI().errorMessage("Internal error deserializing message state", ioe);
+            return;
+        } finally {
+            if (zin != null) try { zin.close(); } catch (IOException ioe) {}
+        }
+        _postponeId = postponeId;
+        _postponeVersion = version;
+    }
+    
+    private static final String SER_ENTRY_CONFIG = "config.txt";
+    private static final String SER_ENTRY_PAGE_PREFIX = "page";
+    private static final String SER_ENTRY_PAGE_CFG_PREFIX = "pageCfg";
+    private static final String SER_ENTRY_ATTACH_PREFIX = "attach";
+    private static final String SER_ENTRY_ATTACH_CFG_PREFIX = "attachCfg";
+    private static final String SER_ENTRY_REFS = "refs.txt";
+    private static final String SER_ENTRY_AVATAR = "avatar.png";
+    
+    private byte[] serializeState() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+        
+        Properties cfg = serializeConfig();
+        zos.putNextEntry(new ZipEntry(SER_ENTRY_CONFIG));
+        for (Iterator iter = cfg.keySet().iterator(); iter.hasNext(); ) {
+            String key = (String)iter.next();
+            String val = cfg.getProperty(key);
+            String line = CommandImpl.strip(key, "=:\r\t\n", '_') + "=" + CommandImpl.strip(val, "\r\t\n", '_') + "\n";
+            zos.write(DataHelper.getUTF8(line));
+        }
+        zos.closeEntry();
+        
+        if ( (_referenceNodes != null) && (_referenceNodes.size() > 0) ) {
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_REFS));
+            String str = ReferenceNode.walk(_referenceNodes);
+            zos.write(DataHelper.getUTF8(str));
+            zos.closeEntry();
+        }
+        
+        for (int i = 0; i < _pageEditors.size(); i++) {
+            PageEditorNew editor = (PageEditorNew)_pageEditors.get(i);
+            String type = editor.getContentType();
+            String data = editor.getContent();
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_PREFIX + i));
+            zos.write(DataHelper.getUTF8(data));
+            zos.closeEntry();
+            
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_CFG_PREFIX + i));
+            zos.write(DataHelper.getUTF8(type));
+            zos.closeEntry();
+        }
+        
+        for (int i = 0; i < _attachmentData.size(); i++) {
+            byte data[] = (byte[])_attachmentData.get(i);
+            Properties attCfg = (Properties)_attachmentConfig.get(i);
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_ATTACH_PREFIX + i));
+            zos.write(data);
+            zos.closeEntry();
+            
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_ATTACH_CFG_PREFIX + i));
+            for (Iterator iter = attCfg.keySet().iterator(); iter.hasNext(); ) {
+                String key = (String)iter.next();
+                String val = attCfg.getProperty(key);
+                String line = CommandImpl.strip(key, "=:\r\t\n", '_') + "=" + CommandImpl.strip(val, "\r\t\n", '_') + "\n";
+                zos.write(DataHelper.getUTF8(line));
+            }
+            zos.closeEntry();
+        }
+        
+        byte avatar[] = null;
+        /*
+        if (_controlAvatarImageSource == null)
+            avatar = getAvatarModifiedData();
+        else
+            avatar = getAvatarUnmodifiedData();
+        if (avatar != null) {
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_AVATAR));
+            zos.write(avatar);
+            zos.closeEntry();        
+        }
+         */
+        
+        zos.finish();
+        return baos.toByteArray();
+    }
+    
+    private void deserializeState(ZipInputStream zin) throws IOException {
+        ZipEntry entry = null;
+        Map pages = new TreeMap();
+        Map pageCfgs = new TreeMap();
+        Map attachments = new TreeMap();
+        Map attachmentCfgs = new TreeMap();
+        byte avatar[] = null;
+        while ( (entry = zin.getNextEntry()) != null) {
+            String name = entry.getName();
+            _browser.getUI().debugMessage("Deserializing state: entry = " + name);
+            if (name.equals(SER_ENTRY_CONFIG)) {
+                deserializeConfig(readCfg(read(zin)));
+            } else if (name.equals(SER_ENTRY_REFS)) {
+                _referenceNodes = ReferenceNode.buildTree(zin);
+            } else if (name.startsWith(SER_ENTRY_PAGE_CFG_PREFIX)) {
+                pageCfgs.put(name, read(zin));
+            } else if (name.startsWith(SER_ENTRY_PAGE_PREFIX)) {
+                pages.put(name, read(zin));
+            } else if (name.startsWith(SER_ENTRY_ATTACH_CFG_PREFIX)) {
+                attachmentCfgs.put(name, readCfg(read(zin)));
+            } else if (name.startsWith(SER_ENTRY_ATTACH_PREFIX)) {
+                attachments.put(name, readBytes(zin));
+            } else if (name.startsWith(SER_ENTRY_AVATAR)) {
+                avatar = readBytes(zin);
+            }
+            zin.closeEntry();
+        }
+
+        while (_pageEditors.size() > 0) {
+            PageEditorNew editor = (PageEditorNew)_pageEditors.remove(0);
+            editor.dispose();
+        }
+        int pageCount = pages.size();
+        for (int i = 0; i < pageCount; i++) {
+            String body = (String)pages.get(SER_ENTRY_PAGE_PREFIX + i);
+            String type = (String)pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
+            
+            _browser.getUI().debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
+            PageEditorNew editor = new PageEditorNew(_browser, this, TYPE_HTML.equals(type));
+            _pageEditors.add(editor);
+            editor.setContent(body);
+        }
+        
+        _attachmentData.clear();
+        _attachmentConfig.clear();
+        int attachmentCount = attachments.size();
+        for (int i = 0; i < attachmentCount; i++) {
+            byte data[] = (byte[])attachments.get(SER_ENTRY_ATTACH_PREFIX + i);
+            Properties cfg = (Properties)attachmentCfgs.get(SER_ENTRY_ATTACH_CFG_PREFIX + i);
+            if ( (cfg == null) || (data == null) ) 
+                break;
+            _browser.getUI().debugMessage("Deserializing state: adding attachment: " + i);
+            _attachmentData.add(data);
+            _attachmentConfig.add(cfg);
+        }
+        
+        /*
+        ImageUtil.dispose(_controlAvatarImage);
+        _controlAvatarImageSource = null;
+        Image img = null;
+        if (avatar != null) {
+            img = ImageUtil.createImage(avatar);
+            Rectangle bounds = img.getBounds();
+            if ( (bounds.width != Constants.MAX_AVATAR_WIDTH) || (bounds.height != Constants.MAX_AVATAR_HEIGHT) ) {
+                img = ImageUtil.resize(img, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
+            }
+        }
+        _controlAvatarImageSource = null;
+        if (img == null)
+            _controlAvatarImage = ImageUtil.ICON_QUESTION;
+        else
+            _controlAvatarImage = img;
+        _controlAvatar.setImage(_controlAvatarImage);
+         */
+        
+        rebuildAttachmentSummaries();
+        rebuildPageMenu();
+        rebuildRefs();
+        if (_pageEditors.size() > 0)
+            viewPage(0);
+        updateAuthor();
+        updateForum();
+    }
+    
+    private static final String SER_AUTHOR = "author";
+    private static final String SER_TARGET = "target";
+    private static final String SER_PARENTS = "parents";
+    private static final String SER_PARENTS_PREFIX = "parents_";
+    private static final String SER_PASS = "passphrase";
+    private static final String SER_PASSPROMPT = "passphraseprompt";
+    private static final String SER_SUBJECT = "subject";
+    private static final String SER_TAGS = "tags";
+    private static final String SER_PRIV = "privacy";
+    private static final String SER_EXPIRATION = "expiration";
+    private Properties serializeConfig() {
+        Properties rv = new Properties();
+        if (_author == null)
+            rv.setProperty(SER_AUTHOR, "");
+        else
+            rv.setProperty(SER_AUTHOR, _author.toBase64());
+        
+        if (_forum == null)
+            rv.setProperty(SER_TARGET, "");
+        else
+            rv.setProperty(SER_TARGET, _forum.toBase64());
+        
+        if (_parents == null) {
+            rv.setProperty(SER_PARENTS, "0");
+        } else {
+            rv.setProperty(SER_PARENTS, _parents.size() + "");
+            for (int i = 0; i < _parents.size(); i++)
+                rv.setProperty(SER_PARENTS_PREFIX + i, ((SyndieURI)_parents.get(i)).toString());
+        }
+        
+        if (_passphrase != null)
+            rv.setProperty(SER_PASS, _passphrase);
+        if (_passphrasePrompt != null)
+            rv.setProperty(SER_PASSPROMPT, _passphrasePrompt);
+        
+        rv.setProperty(SER_SUBJECT, _subject.getText());
+        rv.setProperty(SER_TAGS, _tag.getText());
+        
+        int privacy = -1;
+        if (_privPublic.getSelection()) privacy = 0;
+        else if (_privAuthorized.getSelection()) privacy = 1;
+        else if (_privPBE.getSelection()) privacy = 2;
+        else if (_privReply.getSelection()) privacy = 3;
+        else privacy = 1;
+        
+        rv.setProperty(SER_PRIV, privacy + "");
+        //String exp = getExpiration();
+        //if (exp != null)
+        //    rv.setProperty(SER_EXPIRATION, exp);
+        
+        return rv;
+    }
+    
+    private Hash getHash(Properties cfg, String prop) {
+        String t = cfg.getProperty(prop);
+        if (t == null) return null;
+        byte d[] = Base64.decode(t);
+        if ( (d == null) || (d.length != Hash.HASH_LENGTH) ) {
+            _browser.getUI().debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
+            return null;
+        } else {
+            return new Hash(d);
+        }
+    }
+    
+    private void deserializeConfig(Properties cfg) {
+        _browser.getUI().debugMessage("deserializing config: \n" + cfg.toString());
+        _author = getHash(cfg, SER_AUTHOR);
+        _forum = getHash(cfg, SER_TARGET);
+        
+        int parents = 0;
+        if ( (cfg.getProperty(SER_PARENTS) != null) && (cfg.getProperty(SER_PARENTS).length() > 0) )
+            try { parents = Integer.parseInt(cfg.getProperty(SER_PARENTS)); } catch (NumberFormatException nfe) {}
+
+        if (parents <= 0)
+            _parents = new ArrayList();
+        else
+            _parents = new ArrayList(parents);
+        for (int i = 0; i < parents; i++) {
+            String uriStr = cfg.getProperty(SER_PARENTS_PREFIX + i);
+            try {
+                SyndieURI uri = new SyndieURI(uriStr);
+                _parents.add(uri);
+            } catch (URISyntaxException use) {
+                //
+            }
+        }
+        
+        _passphrase = cfg.getProperty(SER_PASS);
+        _passphrasePrompt = cfg.getProperty(SER_PASSPROMPT);
+        if (cfg.containsKey(SER_SUBJECT))
+            _subject.setText(cfg.getProperty(SER_SUBJECT));
+        else
+            _subject.setText("");
+        if (cfg.containsKey(SER_TAGS))
+            _tag.setText(cfg.getProperty(SER_TAGS));
+        else
+            _tag.setText("");
+        
+        if (cfg.containsKey(SER_PRIV)) {
+            try {
+                int priv = Integer.parseInt(cfg.getProperty(SER_PRIV));
+                
+                _privPublic.setSelection(false);
+                _privAuthorized.setSelection(false);
+                _privPBE.setSelection(false);
+                _privReply.setSelection(false);
+                switch (priv) {
+                    case 0: _privPublic.setSelection(true); break;
+                    case 2: _privPBE.setSelection(true); break;
+                    case 3: _privReply.setSelection(true); break;
+                    case 1: 
+                    default: _privAuthorized.setSelection(true); break;
+                }
+            } catch (NumberFormatException nfe) {}
+        }
+        /*
+        if (cfg.containsKey(SER_EXPIRATION))
+            _controlExpirationText.setText(cfg.getProperty(SER_EXPIRATION));
+        else
+            _controlExpirationText.setText(_browser.getTranslationRegistry().getText(T_EXPIRATION_NONE, "none"));
+         */
+    }
+    
+    
+    private byte[] readBytes(InputStream in) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte buf[] = new byte[4096];
+        int read = -1;
+        while ( (read = in.read(buf)) != -1)
+            baos.write(buf, 0, read);
+        return baos.toByteArray();
+    }
+    private String read(InputStream in) throws IOException {
+        return DataHelper.getUTF8(readBytes(in));
+    }
+    private Properties readCfg(String str) throws IOException {
+        Properties cfg = new Properties();
+        
+        BufferedReader in = new BufferedReader(new StringReader(str));
+        String line = null;
+        while ( (line = in.readLine()) != null) {
+            int split = line.indexOf('=');
+            if (split > 0) {
+                String key = line.substring(0, split);
+                String val = null;
+                if (split >= line.length())
+                    val = "";
+                else
+                    val = line.substring(split+1);
+                cfg.setProperty(key, val);
+            }
+        }
+        return cfg;
+    }
     
     BrowserControl getBrowser() { return _browser; }
     
@@ -369,8 +962,20 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         c.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _post = new Button(c, SWT.PUSH);
+        _post.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { postMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { postMessage(); }
+        });
         _postpone = new Button(c, SWT.PUSH);
+        _postpone.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { postponeMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { postponeMessage(); }
+        });
         _cancel = new Button(c, SWT.PUSH);
+        _cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { cancelMessage(); }
+        });
         
         _post.setText("Post the message");
         _postpone.setText("Save the message for later");
@@ -380,6 +985,8 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private static final String TYPE_HTML = "text/html";
     
     private PageEditorNew addPage(String type) {
+        saveState();
+        modified();
         PageEditorNew ed = new PageEditorNew(_browser, this, TYPE_HTML.equals(type));
         _pageEditors.add(ed);
         _pageTypes.add(type);
@@ -594,6 +1201,54 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             });
         _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive);
         _linkPopup.showPopup();
+    }
+    
+    public Hash getForum() { return _forum; }
+    public int getParentCount() { return _parents.size(); }
+    public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
+    public boolean getPrivacyReply() { return _privReply.getSelection(); }
+    public void setParentMessage(SyndieURI uri) {
+        _parents.clear();
+        if (uri != null) {
+            _parents.add(uri);
+            long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                List uris = ThreadAccumulatorJWZ.getAncestorURIs(_browser.getClient(), _browser.getUI(), msgId);
+                if (uris.size() > 0) {
+                    _browser.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + uris);
+                    _parents.addAll(uris);
+                } else {
+                    _browser.getUI().debugMessage("parentMessage is " + uri + ", and it has no ancestors");
+                }
+                
+                ((GridData)_replyToLabel.getLayoutData()).exclude = false;
+                ((GridData)_replyTo.getLayoutData()).exclude = false;
+                _replyTo.setText(uri.toString()); // todo: beautify this (subject/date/author/etc)
+                _root.layout(true);
+            } else {
+                _browser.getUI().debugMessage("parentMessage is " + uri + ", but we don't know it, so don't know its ancestors");
+            }
+            modified();
+        }
+    }
+    public void setForum(Hash forum) { _forum = forum; }
+    public void setAsReply(boolean reply) {
+        if (reply) {
+            _privPublic.setSelection(false);
+            _privAuthorized.setSelection(false);
+            _privPBE.setSelection(false);
+            _privReply.setSelection(true);
+        }
+    }
+    public void configurationComplete() {
+        updateAuthor();
+        updateForum();
+        rebuildAttachmentSummaries();
+        rebuildPageMenu();
+        updateToolbar();
+        if (_pageEditors.size() > 0)
+            viewPage(0);
+        enableAutoSave();
     }
     
     private void initPage() {
@@ -1092,8 +1747,22 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED); }
         });
         _privPBE.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); promptForPassphrase(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); promptForPassphrase(); }
+            private void promptForPassphrase() {
+                final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
+                dialog.setPassphrase(_passphrase);
+                dialog.setPassphrasePrompt(_passphrasePrompt);
+                dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
+                    public void promptComplete(String passphraseEntered, String promptEntered) {
+                        _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
+                        _passphrase = passphraseEntered;
+                        _passphrasePrompt = promptEntered;
+                    }
+                    public void promptAborted() {}
+                });
+                dialog.open();
+            }
         });
         _privReply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY); }
@@ -1870,7 +2539,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             }
             toShare = new SyndieURI(type, newAttribs);
         }
-        ReferenceNode ref = new ReferenceNode(name, toShare, description, null);
+        ReferenceNode ref = new ReferenceNode(name, toShare, description, "ref");
         _referenceNodes.add(ref);
         _referenceNodeSource.put(uri, ref);
         rebuildRefs();

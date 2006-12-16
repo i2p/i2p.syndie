@@ -48,6 +48,8 @@ public class PageEditorNew {
     }
     
     public Control getControl() { return _root; }
+    public String getContent() { return _text.getText(); }
+    public String getContentType() { return _isPreviewable ? "text/html" : "text/plain"; }
     
     public void setContent(String body) { _text.setText(body); }
     
@@ -228,9 +230,8 @@ public class PageEditorNew {
                         }
                         break;
                     case 0x13: // ^S
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                        if ( (evt.stateMask & SWT.MOD1) != 0)
                             _editor.saveState();
-                        }
                         break;
                     case 0x15: // ^U
                         if ( (evt.stateMask & SWT.MOD1) != 0) {

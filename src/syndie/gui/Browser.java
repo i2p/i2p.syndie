@@ -995,9 +995,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return _editorListener; }
     
     private class MsgEditorListener implements MessageEditor.MessageEditorListener {
-        public void messageCreated(MessageEditor editor, SyndieURI postedURI) { Browser.this.populateResumeable(); }
-        public void messagePostponed(MessageEditor editor, long postponementId) { Browser.this.populateResumeable(); }
-        public void messageCancelled(MessageEditor editor) { Browser.this.populateResumeable(); }
+        public void messageCreated(SyndieURI postedURI) { Browser.this.populateResumeable(); }
+        public void messagePostponed(long postponementId) { Browser.this.populateResumeable(); }
+        public void messageCancelled() { Browser.this.populateResumeable(); }
     }
     
     private static final Comparator INVERSE_COMPARATOR = new Comparator() {

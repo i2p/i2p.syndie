@@ -62,12 +62,12 @@ public class EditMessageTab extends BrowserTab implements Translatable {
     }
     
     private class EditorListener implements MessageEditor.MessageEditorListener {
-        public void messageCreated(MessageEditor editor, SyndieURI postedURI) {
+        public void messageCreated(SyndieURI postedURI) {
             closeTab();
             getBrowser().view(postedURI);
         }
-        public void messagePostponed(MessageEditor editor, long postponementId) { closeTab(); }
-        public void messageCancelled(MessageEditor editor) { closeTab(); }
+        public void messagePostponed(long postponementId) { closeTab(); }
+        public void messageCancelled() { closeTab(); }
     }
         
     public Image getIcon() { return ImageUtil.ICON_TAB_EDIT; }

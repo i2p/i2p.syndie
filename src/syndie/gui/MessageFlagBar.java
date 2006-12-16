@@ -79,8 +79,11 @@ public class MessageFlagBar implements Translatable {
                     ctl[i].dispose();
             }
             buildImages();
-            for (int i = 0; i < _images.size(); i++)
-                new Label(_root, SWT.NONE).setImage((Image)_images.get(i));
+            for (int i = 0; i < _images.size(); i++) {
+                Label l = new Label(_root, SWT.NONE);
+                l.setImage((Image)_images.get(i));
+            }
+            translate(_browser.getTranslationRegistry());
             _root.layout(true, true);
             _root.setRedraw(true);
         } else {

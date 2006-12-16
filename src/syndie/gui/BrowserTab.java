@@ -50,9 +50,10 @@ abstract class BrowserTab implements Themeable {
             Long postponeId = uri.getLong("postponeid");
             Long postponeVer = uri.getLong("postponever");
             if ( (postponeId != null) && (postponeVer != null) ) {
-                return new EditMessageTab(browser, uri);
+                return new MessageEditorNewTab(browser, uri);
+                //return new EditMessageTab(browser, uri);
             } else {
-                Hash scope = uri.getScope();
+                Hash forum = uri.getScope();
                 String parentURI = uri.getString("parent");
                 SyndieURI parent = null;
                 if (parentURI != null) {
@@ -60,7 +61,8 @@ abstract class BrowserTab implements Themeable {
                 }
                 boolean asReply = uri.getBoolean("reply", false);
                 // create a new editor tab
-                return new EditMessageTab(browser, uri, scope, parent, asReply);
+                //return new EditMessageTab(browser, uri, scope, parent, asReply);
+                return new MessageEditorNewTab(browser, uri, forum, parent, asReply);
             }
         } else if (uri.isChannel()) {
             if (uri.getScope() != null) {

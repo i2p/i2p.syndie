@@ -194,9 +194,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     public void addListener(MessageEditorListener lsnr) { _listeners.add(lsnr); }
     
     public interface MessageEditorListener {
-        public void messageCreated(MessageEditor editor, SyndieURI postedURI);
-        public void messagePostponed(MessageEditor editor, long postponementId);
-        public void messageCancelled(MessageEditor editor);
+        public void messageCreated(SyndieURI postedURI);
+        public void messagePostponed(long postponementId);
+        public void messageCancelled();
     }
     
     public void setParentMessage(SyndieURI uri) {
@@ -942,7 +942,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
             box.open();
             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditorListener)iter.next()).messageCreated(this, creator.getCreatedURI());
+                ((MessageEditorListener)iter.next()).messageCreated(creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
@@ -1040,7 +1040,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     public void postponeMessage() {
         saveState();
         for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditorListener)iter.next()).messagePostponed(this, _postponeId);
+                ((MessageEditorListener)iter.next()).messagePostponed(_postponeId);
     }
     public void cancelMessage() { cancelMessage(true); }
     public void cancelMessage(boolean requireConfirm) {
@@ -1056,7 +1056,7 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
         } else {
             dropSavedState();
             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditorListener)iter.next()).messageCancelled(this);
+                ((MessageEditorListener)iter.next()).messageCancelled();
         }
     }
 
@@ -1614,9 +1614,9 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
     public void uriBuilt(SyndieURI uri, String text) {
         if (_pages.size() > 0) {
             int idx = _controlPageCombo.getSelectionIndex();
-            PageEditor editor = (PageEditor)_pages.remove(idx);
+            PageEditor editor = (PageEditor)_pages.get(idx);
             editor.insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
-            editor.dispose();
+            //editor.dispose();
         }
     }
 }
