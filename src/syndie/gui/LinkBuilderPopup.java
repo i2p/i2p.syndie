@@ -3,6 +3,7 @@ package syndie.gui;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -25,6 +26,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
@@ -45,19 +47,22 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private DBClient _client;
     private Shell _parentShell;
     private Shell _shell;
-    private PageEditor _target;
-    private MessageEditor _msgTarget;
+    private LinkBuilderSource _target;
     
     private Group _linkTypeGroup;
     private Button _linkTypeWeb;
     private Text _linkTypeWebText;
     private Button _linkTypeSyndie;
+    private Composite _syndieLines;
     private Text _linkTypeSyndieText;
+    private Label _syndieForumLabel;
     private Text _syndieForum;
     private Button _syndieForumBrowse;
+    private Label _syndieMessageLabel;
     private Text _syndieMessage;
     private Button _syndieMessageBrowse;
 
+    private Composite _syndieMessageDetailGroup;
     private Button _syndieMessageDetailGeneral;
 
     private Button _syndieMessageDetailPage;
@@ -68,12 +73,16 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private Combo _syndieMessageDetailAttachmentNum;
     //private Button _syndieMessageDetailAttachmentView;
 
+    private Composite _syndieReadKeyLine;
     private Button _syndieReadKey;
     private Combo _syndieReadKeyCombo;
+    private Composite _syndiePostKeyLine;
     private Button _syndiePostKey;
     private Combo _syndiePostKeyCombo;
+    private Composite _syndieReplyKeyLine;
     private Button _syndieReplyKey;
     private Combo _syndieReplyKeyCombo;
+    private Composite _syndieManageKeyLine;
     private Button _syndieManageKey;
     private Combo _syndieManageKeyCombo;
     
@@ -84,6 +93,20 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     private Button _linkTypeFreenet;
     private Text _linkTypeFreenetText;
+    
+    private Button _linkTypeI2P;
+    private Composite _linkTypeI2PRow;
+    private Label _linkTypeI2PNameLabel;
+    private Text _linkTypeI2PName;
+    private Label _linkTypeI2PDestinationLabel;
+    private Text _linkTypeI2PDestination;
+    
+    private Button _linkTypeEepsite;
+    private Composite _linkTypeEepsiteRow;
+    private Label _linkTypeEepsiteNameLabel;
+    private Text _linkTypeEepsiteName;
+    private Label _linkTypeEepsiteDestinationLabel;
+    private Text _linkTypeEepsiteDestination;
     
     private Button _linkTypeArchive;
     private Combo _linkTypeArchiveCombo;
@@ -111,25 +134,22 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     private String _text;
     
-    public LinkBuilderPopup(BrowserControl browser, Shell parent, PageEditor target) {
+    public LinkBuilderPopup(BrowserControl browser, Shell parent, LinkBuilderSource src) {
         _browser = browser;
         _client = browser.getClient();
         _parentShell = parent;
-        _target = target;
+        _target = src;
         _archives = new ArrayList();
         _text = "LINK TEXT";
         initComponents();
     }
-    public LinkBuilderPopup(BrowserControl browser, Shell parent, MessageEditor target) {
-        _browser = browser;
-        _client = browser.getClient();
-        _parentShell = parent;
-        _target = null;
-        _msgTarget = target;
-        _archives = new ArrayList();
-        _text = "LINK TEXT";
-        initComponents();
+    
+    public interface LinkBuilderSource {
+        public void uriBuilt(SyndieURI uri, String text);
+        public int getPageCount();
+        public List getAttachmentDescriptions();
     }
+    
     private void initComponents() {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setText("Link to...");
@@ -171,7 +191,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
         _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
 
-        if ( (_target == null) && (_msgTarget == null) ) {
+        if (_target == null) {
             ((GridData)_linkTypePage.getLayoutData()).exclude = true;
             ((GridData)_linkTypePageCombo.getLayoutData()).exclude = true;
             ((GridData)_linkTypeAttachment.getLayoutData()).exclude = true;
@@ -182,24 +202,24 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeSyndie.setText("Syndie:");
         _linkTypeSyndie.setLayoutData(new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false));
         
-        Composite syndieLines = new Composite(_linkTypeGroup, SWT.NONE);
-        syndieLines.setLayout(new GridLayout(3, false));
+        _syndieLines = new Composite(_linkTypeGroup, SWT.NONE);
+        _syndieLines.setLayout(new GridLayout(3, false));
         gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         gd.widthHint = 300;
-        syndieLines.setLayoutData(gd);
+        _syndieLines.setLayoutData(gd);
         
-        _linkTypeSyndieText = new Text(syndieLines, SWT.SINGLE | SWT.BORDER);
+        _linkTypeSyndieText = new Text(_syndieLines, SWT.SINGLE | SWT.BORDER);
         _linkTypeSyndieText.setToolTipText("Full syndie URL");
         _linkTypeSyndieText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
-        Label l = new Label(syndieLines, SWT.NONE);
-        l.setText("Forum: ");
-        l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _syndieForum = new Text(syndieLines, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
+        _syndieForumLabel = new Label(_syndieLines, SWT.NONE);
+        _syndieForumLabel.setText("Forum: ");
+        _syndieForumLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _syndieForum = new Text(_syndieLines, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _syndieForum.setText("");
         _syndieForum.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
         
-        _syndieForumBrowse = new Button(syndieLines, SWT.PUSH);
+        _syndieForumBrowse = new Button(_syndieLines, SWT.PUSH);
         _syndieForumBrowse.setText("Browse...");
         _syndieForumBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
@@ -207,13 +227,13 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         });
         _syndieForumBrowse.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        l = new Label(syndieLines, SWT.NONE);
-        l.setText("Message: ");
-        _syndieMessage = new Text(syndieLines, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
+        _syndieMessageLabel = new Label(_syndieLines, SWT.NONE);
+        _syndieMessageLabel.setText("Message: ");
+        _syndieMessage = new Text(_syndieLines, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _syndieMessage.setText("");
         _syndieMessage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _syndieMessageBrowse = new Button(syndieLines, SWT.PUSH);
+        _syndieMessageBrowse = new Button(_syndieLines, SWT.PUSH);
         _syndieMessageBrowse.setText("Browse...");
         _syndieMessageBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickMessage(); }
@@ -221,21 +241,21 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         });
         _syndieMessageBrowse.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        Composite syndieMessageDetailGroup = new Composite(syndieLines, SWT.NONE);
-        syndieMessageDetailGroup.setLayout(new GridLayout(2, false));
-        syndieMessageDetailGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _syndieMessageDetailGroup = new Composite(_syndieLines, SWT.NONE);
+        _syndieMessageDetailGroup.setLayout(new GridLayout(2, false));
+        _syndieMessageDetailGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
-        _syndieMessageDetailGeneral = new Button(syndieMessageDetailGroup, SWT.RADIO);
+        _syndieMessageDetailGeneral = new Button(_syndieMessageDetailGroup, SWT.RADIO);
         _syndieMessageDetailGeneral.setText("Link to the message as a whole");
         _syndieMessageDetailGeneral.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1));
         _syndieMessageDetailGeneral.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailPage = new Button(syndieMessageDetailGroup, SWT.RADIO);
+        _syndieMessageDetailPage = new Button(_syndieMessageDetailGroup, SWT.RADIO);
         _syndieMessageDetailPage.setText("Page: ");
         _syndieMessageDetailPage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailPage.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailPageNum = new Combo(syndieMessageDetailGroup, SWT.DROP_DOWN);
+        _syndieMessageDetailPageNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN);
         _syndieMessageDetailPageNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailPageNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailPage));
         
@@ -243,12 +263,12 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         //_syndieMessageDetailPageView.setText("View...");
         //_syndieMessageDetailPageView.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
-        _syndieMessageDetailAttachment = new Button(syndieMessageDetailGroup, SWT.RADIO);
+        _syndieMessageDetailAttachment = new Button(_syndieMessageDetailGroup, SWT.RADIO);
         _syndieMessageDetailAttachment.setText("Attachment: ");
         _syndieMessageDetailAttachment.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailAttachment.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailAttachmentNum = new Combo(syndieMessageDetailGroup, SWT.DROP_DOWN);
+        _syndieMessageDetailAttachmentNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN);
         _syndieMessageDetailAttachmentNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailAttachmentNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailAttachment));
         
@@ -256,50 +276,120 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         //_syndieMessageDetailAttachmentView.setText("View...");
         //_syndieMessageDetailAttachmentView.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
-        Composite syndieReadKeyLine = new Composite(syndieLines, SWT.NONE);
-        syndieReadKeyLine.setLayout(new GridLayout(2, false));
-        syndieReadKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        _syndieReadKey = new Button(syndieReadKeyLine, SWT.CHECK);
+        _syndieReadKeyLine = new Composite(_syndieLines, SWT.NONE);
+        _syndieReadKeyLine.setLayout(new GridLayout(2, false));
+        _syndieReadKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _syndieReadKey = new Button(_syndieReadKeyLine, SWT.CHECK);
         _syndieReadKey.setText("include read key");
         _syndieReadKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReadKey.addSelectionListener(new UpdateURIListener());
-        _syndieReadKeyCombo = new Combo(syndieReadKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _syndieReadKeyCombo = new Combo(_syndieReadKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieReadKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieReadKeyCombo.addSelectionListener(new GroupPickListener(_syndieReadKey));
         
-        Composite syndiePostKeyLine = new Composite(syndieLines, SWT.NONE);
-        syndiePostKeyLine.setLayout(new GridLayout(2, false));
-        syndiePostKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        _syndiePostKey = new Button(syndiePostKeyLine, SWT.CHECK);
+        _syndiePostKeyLine = new Composite(_syndieLines, SWT.NONE);
+        _syndiePostKeyLine.setLayout(new GridLayout(2, false));
+        _syndiePostKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _syndiePostKey = new Button(_syndiePostKeyLine, SWT.CHECK);
         _syndiePostKey.setText("include post key");
         _syndiePostKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndiePostKey.addSelectionListener(new UpdateURIListener());
-        _syndiePostKeyCombo = new Combo(syndiePostKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _syndiePostKeyCombo = new Combo(_syndiePostKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndiePostKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndiePostKeyCombo.addSelectionListener(new GroupPickListener(_syndiePostKey));
         
-        Composite syndieReplyKeyLine = new Composite(syndieLines, SWT.NONE);
-        syndieReplyKeyLine.setLayout(new GridLayout(2, false));
-        syndieReplyKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        _syndieReplyKey = new Button(syndieReplyKeyLine, SWT.CHECK);
+        _syndieReplyKeyLine = new Composite(_syndieLines, SWT.NONE);
+        _syndieReplyKeyLine.setLayout(new GridLayout(2, false));
+        _syndieReplyKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _syndieReplyKey = new Button(_syndieReplyKeyLine, SWT.CHECK);
         _syndieReplyKey.setText("include reply key");
         _syndieReplyKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReplyKey.addSelectionListener(new UpdateURIListener());
-        _syndieReplyKeyCombo = new Combo(syndieReplyKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _syndieReplyKeyCombo = new Combo(_syndieReplyKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieReplyKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieReplyKeyCombo.addSelectionListener(new GroupPickListener(_syndieReplyKey));
         
-        Composite syndieManageKeyLine = new Composite(syndieLines, SWT.NONE);
-        syndieManageKeyLine.setLayout(new GridLayout(2, false));
-        syndieManageKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        _syndieManageKey = new Button(syndieManageKeyLine, SWT.CHECK);
+        _syndieManageKeyLine = new Composite(_syndieLines, SWT.NONE);
+        _syndieManageKeyLine.setLayout(new GridLayout(2, false));
+        _syndieManageKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _syndieManageKey = new Button(_syndieManageKeyLine, SWT.CHECK);
         _syndieManageKey.setText("include manage key");
         _syndieManageKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieManageKey.addSelectionListener(new UpdateURIListener());
-        _syndieManageKeyCombo = new Combo(syndieManageKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _syndieManageKeyCombo = new Combo(_syndieManageKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieManageKeyCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieManageKeyCombo.addSelectionListener(new GroupPickListener(_syndieManageKey));
         
+        _linkTypeI2P = new Button(_linkTypeGroup, SWT.RADIO);
+        _linkTypeI2P.setText("I2P:");
+        gd = new GridData();
+        _linkTypeI2P.setLayoutData(gd);
+        
+        _linkTypeI2PRow = new Composite(_linkTypeGroup, SWT.NONE);
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeI2PRow.setLayoutData(gd);
+        _linkTypeI2PRow.setLayout(new GridLayout(4, false));
+        
+        _linkTypeI2PNameLabel = new Label(_linkTypeI2PRow, SWT.NONE);
+        _linkTypeI2PNameLabel.setText("Name:");
+        _linkTypeI2PNameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _linkTypeI2PName = new Text(_linkTypeI2PRow,  SWT.SINGLE | SWT.BORDER);
+        _linkTypeI2PName.setToolTipText("Nickname for the I2P destination");
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeI2PName.setLayoutData(gd);
+        _linkTypeI2PName.addTraverseListener(new GroupPickListener(_linkTypeI2P));
+        _linkTypeI2PName.addSelectionListener(new GroupPickListener(_linkTypeI2P));
+    
+        _linkTypeI2PDestinationLabel = new Label(_linkTypeI2PRow, SWT.NONE);
+        _linkTypeI2PDestinationLabel.setText("Destination:");
+        _linkTypeI2PDestinationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _linkTypeI2PDestination = new Text(_linkTypeI2PRow, SWT.SINGLE | SWT.BORDER);
+        _linkTypeI2PDestination.setToolTipText("Base64 I2P destination");
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeI2PDestination.setLayoutData(gd);
+        _linkTypeI2PDestination.addTraverseListener(new GroupPickListener(_linkTypeI2P));
+        _linkTypeI2PDestination.addSelectionListener(new GroupPickListener(_linkTypeI2P));
+        
+        _linkTypeEepsite = new Button(_linkTypeGroup, SWT.RADIO);
+        _linkTypeEepsite.setText("I2P eepsite:");
+        gd = new GridData();
+        _linkTypeEepsite.setLayoutData(gd);
+        
+        _linkTypeEepsiteRow = new Composite(_linkTypeGroup, SWT.NONE);
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeEepsiteRow.setLayoutData(gd);
+        _linkTypeEepsiteRow.setLayout(new GridLayout(4, false));
+        
+        _linkTypeEepsiteNameLabel = new Label(_linkTypeEepsiteRow, SWT.NONE);
+        _linkTypeEepsiteNameLabel.setText("Name:");
+        _linkTypeEepsiteNameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _linkTypeEepsiteName = new Text(_linkTypeEepsiteRow,  SWT.SINGLE | SWT.BORDER);
+        _linkTypeEepsiteName.setToolTipText("Nickname for the eepsite");
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeEepsiteName.setLayoutData(gd);
+        _linkTypeEepsiteName.addTraverseListener(new GroupPickListener(_linkTypeEepsite));
+        _linkTypeEepsiteName.addSelectionListener(new GroupPickListener(_linkTypeEepsite));
+        
+        _linkTypeEepsiteDestinationLabel = new Label(_linkTypeEepsiteRow, SWT.NONE);
+        _linkTypeEepsiteDestinationLabel.setText("Destination:");
+        _linkTypeEepsiteDestinationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _linkTypeEepsiteDestination = new Text(_linkTypeEepsiteRow, SWT.SINGLE | SWT.BORDER);
+        _linkTypeEepsiteDestination.setToolTipText("Base64 I2P destination");
+        gd = new GridData(GridData.FILL_BOTH);
+        gd.grabExcessHorizontalSpace = true;
+        _linkTypeEepsiteDestination.setLayoutData(gd);
+        _linkTypeEepsiteDestination.addTraverseListener(new GroupPickListener(_linkTypeEepsite));
+        _linkTypeEepsiteDestination.addSelectionListener(new GroupPickListener(_linkTypeEepsite));
+    
         
         _linkTypeFreenet = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeFreenet.setText("Freenet:");
@@ -457,6 +547,10 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                 _linkTypeFreenet.setSelection(false);
             if (_selectOnAction != _linkTypeArchive)
                 _linkTypeArchive.setSelection(false);
+            if (_selectOnAction != _linkTypeEepsite)
+                _linkTypeEepsite.setSelection(false);
+            if (_selectOnAction != _linkTypeI2P)
+                _linkTypeI2P.setSelection(false);
         }
     }
     
@@ -511,13 +605,35 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         } else if (_linkTypePage.getSelection()) {
             int idx = _linkTypePageCombo.getSelectionIndex();
             if (idx >= 0)
-                _selectedURI = SyndieURI.createRelativePage(idx);
+                _selectedURI = SyndieURI.createRelativePage(idx+1);
         } else if (_linkTypeFreenet.getSelection()) {
             _selectedURI = SyndieURI.createURL(_linkTypeFreenetText.getText().trim());
+        } else if (_linkTypeEepsite.getSelection()) {
+            StringBuffer buf = new StringBuffer();
+            String name = _linkTypeEepsiteName.getText();
+            if (!name.startsWith("http://"))
+                name = "http://" + name;
+            buf.append(name);
+            String dest = _linkTypeEepsiteDestination.getText().trim();
+            if (dest.length() > 0)
+                buf.append("?i2paddresshelper=").append(dest);
+            _selectedURI = SyndieURI.createURL(buf.toString());
+        } else if (_linkTypeI2P.getSelection()) {
+            StringBuffer buf = new StringBuffer();
+            String name = _linkTypeI2PName.getText();
+            String dest = _linkTypeI2PDestination.getText().trim();
+            SyndieURI uri = SyndieURI.createURL(name);
+            if (dest.length() > 0) {
+                Map attributes = uri.getAttributes();
+                attributes.put("destination", dest);
+                _selectedURI = new SyndieURI(uri.getType(), attributes);
+            } else {
+                _selectedURI = uri;
+            }
         } else if (_linkTypeAttachment.getSelection()) {
             int idx = _linkTypeAttachmentCombo.getSelectionIndex();
             if (idx >= 0)
-                _selectedURI = SyndieURI.createRelativeAttachment(idx);
+                _selectedURI = SyndieURI.createRelativeAttachment(idx+1);
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText("Error");
@@ -533,7 +649,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     protected void uriBuilt(SyndieURI uri) {
         if (_target != null)
-            _target.insertAtCaret("<a href=\"" + _selectedURI.toString() + "\">" + _text + "</a>");
+            _target.uriBuilt(uri, _text);
     }
     
     private void onCancel() {
@@ -544,28 +660,158 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     public SyndieURI getURI() { return _selectedURI; }
 
+    /** limit what type of link can be built */
+    public void limitOptions(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+        _shell.setRedraw(false);
+        // web
+        ((GridData)_linkTypeWeb.getLayoutData()).exclude = !web;
+        ((GridData)_linkTypeWebText.getLayoutData()).exclude = !web;
+        
+        // relative page link
+        ((GridData)_linkTypePage.getLayoutData()).exclude = !page;
+        ((GridData)_linkTypePageCombo.getLayoutData()).exclude = !page;
+        // relative attachment link
+        ((GridData)_linkTypeAttachment.getLayoutData()).exclude = !attach;
+        ((GridData)_linkTypeAttachmentCombo.getLayoutData()).exclude = !attach;
+        
+        // syndie links
+        ((GridData)_syndieLines.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_linkTypeSyndie.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_linkTypeSyndieText.getLayoutData()).exclude = !forum && !message && !submessage;
+        // - forum
+        ((GridData)_syndieForumLabel.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieForum.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieForumBrowse.getLayoutData()).exclude = !forum && !message && !submessage;
+        // - message
+        ((GridData)_syndieMessageLabel.getLayoutData()).exclude = !message && !submessage;
+        ((GridData)_syndieMessage.getLayoutData()).exclude = !message && !submessage;
+        ((GridData)_syndieMessageBrowse.getLayoutData()).exclude = !message && !submessage;
+        
+        ((GridData)_syndieMessageDetailGroup.getLayoutData()).exclude = !submessage;
+        // - message as a whole
+        ((GridData)_syndieMessageDetailGeneral.getLayoutData()).exclude = !submessage;
+        // - specific page
+        ((GridData)_syndieMessageDetailPage.getLayoutData()).exclude = !submessage;
+        ((GridData)_syndieMessageDetailPageNum.getLayoutData()).exclude = !submessage;
+        // - specific attachment
+        ((GridData)_syndieMessageDetailAttachment.getLayoutData()).exclude = !submessage;
+        ((GridData)_syndieMessageDetailAttachmentNum.getLayoutData()).exclude = !submessage;
+        
+        // syndie bundled keys
+        // - read keys
+        ((GridData)_syndieReadKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReadKey.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReadKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        // - post keys
+        ((GridData)_syndiePostKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndiePostKey.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndiePostKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        // - reply keys
+        ((GridData)_syndieReplyKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReplyKey.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReplyKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        // - manage keys
+        ((GridData)_syndieManageKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieManageKey.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieManageKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        
+        // freenet links
+        ((GridData)_linkTypeFreenet.getLayoutData()).exclude = !freenet;
+        ((GridData)_linkTypeFreenetText.getLayoutData()).exclude = !freenet;
+        
+        // eepsite links
+        ((GridData)_linkTypeEepsite.getLayoutData()).exclude = !eepsite;
+        ((GridData)_linkTypeEepsiteDestination.getLayoutData()).exclude = !eepsite;
+        ((GridData)_linkTypeEepsiteDestinationLabel.getLayoutData()).exclude = !eepsite;
+        ((GridData)_linkTypeEepsiteName.getLayoutData()).exclude = !eepsite;
+        ((GridData)_linkTypeEepsiteNameLabel.getLayoutData()).exclude = !eepsite;
+        ((GridData)_linkTypeEepsiteRow.getLayoutData()).exclude = !eepsite;
+        
+        // i2p links
+        ((GridData)_linkTypeI2P.getLayoutData()).exclude = !i2p;
+        ((GridData)_linkTypeI2PDestination.getLayoutData()).exclude = !i2p;
+        ((GridData)_linkTypeI2PDestinationLabel.getLayoutData()).exclude = !i2p;
+        ((GridData)_linkTypeI2PName.getLayoutData()).exclude = !i2p;
+        ((GridData)_linkTypeI2PNameLabel.getLayoutData()).exclude = !i2p;
+        ((GridData)_linkTypeI2PRow.getLayoutData()).exclude = !i2p;
+        
+        // syndie archive links
+        ((GridData)_linkTypeArchive.getLayoutData()).exclude = !archive;
+        ((GridData)_linkTypeArchiveCombo.getLayoutData()).exclude = !archive;
+        
+        // now...
+        adjustVisibility(_linkTypeWeb);
+        adjustVisibility(_linkTypeWebText);
+        adjustVisibility(_linkTypeSyndie);
+        adjustVisibility(_syndieLines);
+        adjustVisibility(_linkTypeSyndieText);
+        adjustVisibility(_syndieForumLabel);
+        adjustVisibility(_syndieForum);
+        adjustVisibility(_syndieForumBrowse);
+        adjustVisibility(_syndieMessageLabel);
+        adjustVisibility(_syndieMessage);
+        adjustVisibility(_syndieMessageBrowse);
+        adjustVisibility(_syndieMessageDetailGroup);
+        adjustVisibility(_syndieMessageDetailGeneral);
+        adjustVisibility(_syndieMessageDetailPage);
+        adjustVisibility(_syndieMessageDetailPageNum);
+        adjustVisibility(_syndieMessageDetailAttachment);
+        adjustVisibility(_syndieMessageDetailAttachmentNum);
+        adjustVisibility(_syndieReadKeyLine);
+        adjustVisibility(_syndieReadKey);
+        adjustVisibility(_syndieReadKeyCombo);
+        adjustVisibility(_syndiePostKeyLine);
+        adjustVisibility(_syndiePostKey);
+        adjustVisibility(_syndiePostKeyCombo);
+        adjustVisibility(_syndieReplyKeyLine);
+        adjustVisibility(_syndieReplyKey);
+        adjustVisibility(_syndieReplyKeyCombo);
+        adjustVisibility(_syndieManageKeyLine);
+        adjustVisibility(_syndieManageKey);
+        adjustVisibility(_syndieManageKeyCombo);
+        adjustVisibility(_linkTypePage);
+        adjustVisibility(_linkTypePageCombo);
+        adjustVisibility(_linkTypeAttachment);
+        adjustVisibility(_linkTypeAttachmentCombo);
+        adjustVisibility(_linkTypeFreenet);
+        adjustVisibility(_linkTypeFreenetText);
+        adjustVisibility(_linkTypeEepsite);
+        adjustVisibility(_linkTypeEepsiteDestination);
+        adjustVisibility(_linkTypeEepsiteDestinationLabel);
+        adjustVisibility(_linkTypeEepsiteName);
+        adjustVisibility(_linkTypeEepsiteNameLabel);
+        adjustVisibility(_linkTypeEepsiteRow);
+        adjustVisibility(_linkTypeI2P);
+        adjustVisibility(_linkTypeI2PDestination);
+        adjustVisibility(_linkTypeI2PDestinationLabel);
+        adjustVisibility(_linkTypeI2PName);
+        adjustVisibility(_linkTypeI2PNameLabel);
+        adjustVisibility(_linkTypeI2PRow);
+        adjustVisibility(_linkTypeArchive);
+        adjustVisibility(_linkTypeArchiveCombo);
+        
+        _shell.setRedraw(true);
+        _shell.layout(true, true);
+        _shell.setSize(_shell.computeSize(500, SWT.DEFAULT));
+    }
+    
+    private void adjustVisibility(Control ctl) { ctl.setVisible(!((GridData)ctl.getLayoutData()).exclude); }
+    
     public void showPopup() { showPopup(null); }
     public void showPopup(SyndieURI uri) {
         if (uri != null) {
             setURI(uri, _text);
         } else {
             blankSettings();
-            if ( (_msgTarget == null) && (_target == null) ) {
+            if (_target == null) {
                 _linkTypePage.setEnabled(false);
                 _linkTypePageCombo.setEnabled(false);
                 _linkTypeAttachment.setEnabled(false);
                 _linkTypeAttachmentCombo.setEnabled(false);
             } else {
-                int pages = 0;
-                List attachments = null;
-                if (_msgTarget != null) {
-                    pages = _msgTarget.getPageCount();
-                    attachments = _msgTarget.getAttachmentDescriptions();
-                } else {
-                    pages = _target.getPageCount();
-                    attachments = _target.getAttachmentDescriptions();
-                }
-                if (pages <= 1) {
+                int pages = _target.getPageCount();
+                List attachments = _target.getAttachmentDescriptions();
+                if (pages < 1) {
                     _linkTypePage.setEnabled(false);
                     _linkTypePageCombo.setEnabled(false);
                     _linkTypePageCombo.removeAll();

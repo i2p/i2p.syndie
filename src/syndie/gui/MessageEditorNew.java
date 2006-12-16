@@ -168,11 +168,16 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     
     /** forum the post is targetting */
     private Hash _forum;
+    /** who the post should be signed by */
+    private Hash _author;
+
     
     private MessageEditorFind _finder;
     private MessageEditorSpell _spellchecker;
     private MessageEditorStyler _styler;
     private ImageBuilderPopup _imagePopup;
+    private ReferenceChooserPopup _refChooser;
+    private LinkBuilderPopup _linkPopup;
     
     /** Creates a new instance of MessageEditorNew */
     public MessageEditorNew(BrowserControl browser, Composite parent) {
@@ -336,6 +341,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         
         _nymChannels = _browser.getClient().getChannels(true, true, true, true);
         updateForum();
+        updateAuthor();
     }
     
     private void initFooter() {
@@ -369,9 +375,9 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             modified();
             _browser.getUI().debugMessage("remove page " + pageNum);
             PageEditorNew editor = (PageEditorNew)_pageEditors.remove(pageNum);
+            _pageTypes.remove(pageNum);
             editor.dispose();
-            if (_pageEditors.size() > 0)
-                viewPage(_pageEditors.size()-1);
+            viewPage(_pageEditors.size()-1);
             rebuildPageMenu();
         } else {
             _browser.getUI().debugMessage("remove page " + pageNum + " is out of range");
@@ -465,15 +471,22 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     
     /** view the given (0-indexed) page */
     private void viewPage(int pageNum) {
-        PageEditorNew ed = (PageEditorNew)_pageEditors.get(pageNum);
-        String type = (String)_pageTypes.get(pageNum);
+        PageEditorNew ed = null;
+        String type = "";
+        if (pageNum >= 0) {
+            ed = (PageEditorNew)_pageEditors.get(pageNum);
+            type = (String)_pageTypes.get(pageNum);
+        }
         
         _browser.getUI().debugMessage("viewPage(" + pageNum + ")");
         
         _currentPage = pageNum;
         _currentPageType = type;
         
-        _stack.topControl = ed.getControl();
+        if (ed != null)
+            _stack.topControl = ed.getControl();
+        else
+            _stack.topControl = null;
         _pageRoot.layout();
         updateToolbar();
     }
@@ -482,7 +495,56 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
      * go through the toolbar to adjust the available options for the current page
      */
     private void updateToolbar() {
+        int pages = _pageEditors.size();
+        int attachments = _attachmentData.size();
+        boolean isHTML = TYPE_HTML.equals(_currentPageType);
+        boolean pageLoaded = (_currentPage >= 0);
         
+        _browser.getUI().debugMessage("updateToolbar: pages=" + pages + " attachments=" + attachments + " isHTML? " + isHTML + " pageLoaded? " + pageLoaded);
+       
+        _attachAddImage.setEnabled(isHTML);
+        _linkMenu.setEnabled(isHTML);
+        _linkArchive.setEnabled(isHTML);
+        _linkAttach.setEnabled(isHTML);
+        _linkButton.setEnabled(isHTML);
+        _linkEepsite.setEnabled(isHTML);
+        _linkForum.setEnabled(isHTML);
+        _linkFreenet.setEnabled(isHTML);
+        _linkGroup.setEnabled(isHTML);
+        _linkI2P.setEnabled(isHTML);
+        _linkMsg.setEnabled(isHTML);
+        _linkOther.setEnabled(isHTML);
+        _linkPage.setEnabled(isHTML);
+        _linkWeb.setEnabled(isHTML);
+        _styleMenu.setEnabled(isHTML);
+        _styleBGColor.setEnabled(isHTML);
+        _styleBGColorDefault.setEnabled(isHTML);
+        _styleBGColorMenu.setEnabled(isHTML);
+        _styleBGImage.setEnabled(isHTML);
+        _styleButton.setEnabled(isHTML);
+        _styleGroup.setEnabled(isHTML);
+        _styleHeading.setEnabled(isHTML);
+        _styleHeading1.setEnabled(isHTML);
+        _styleHeading2.setEnabled(isHTML);
+        _styleHeading3.setEnabled(isHTML);
+        _styleHeading4.setEnabled(isHTML);
+        _styleHeading5.setEnabled(isHTML);
+        _styleHeadingMenu.setEnabled(isHTML);
+        _styleImage.setEnabled(isHTML);
+        _styleListOrdered.setEnabled(isHTML);
+        _styleListUnordered.setEnabled(isHTML);
+        _stylePre.setEnabled(isHTML);
+        _styleText.setEnabled(isHTML);
+
+        if (isHTML) {
+            _linkPage.setEnabled(pages > 0);
+            _linkAttach.setEnabled(attachments > 0);
+        }
+        
+        _spellButton.setEnabled(pageLoaded);
+        _spellGroup.setEnabled(pageLoaded);
+        _searchButton.setEnabled(pageLoaded);
+        _searchGroup.setEnabled(pageLoaded);
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -500,6 +562,18 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         if (_imagePopup == null)
             _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
         _imagePopup.showPopup(forBodyBackground); 
+    }
+    private void showLinkPopup(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+        if (_linkPopup == null)
+            _linkPopup = new LinkBuilderPopup(getBrowser(), _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
+                public void uriBuilt(SyndieURI uri, String text) {
+                    insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
+                }
+                public int getPageCount() { return _pageEditors.size(); }
+                public List getAttachmentDescriptions() { return MessageEditorNew.this.getAttachmentDescriptions(); }
+            });
+        _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive);
+        _linkPopup.showPopup();
     }
     
     private void initPage() {
@@ -758,13 +832,42 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
                 new MenuItem(_forumMenu, SWT.SEPARATOR);
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText("other...");
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
+            });
         } else {
             if (itemsSinceSep)
                 new MenuItem(_forumMenu, SWT.SEPARATOR);
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText("other...");
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
+            });
             redrawForumAvatar(_forum, forumId, forumSummary, managed);
         }
+    }
+    
+    private static final String T_PICK_FORUM_KEY = "syndie.gui.messageeditor.pickotherforum";
+    private void pickOtherForum() {
+        if (_refChooser == null) {
+            String transKey = T_PICK_FORUM_KEY;
+            String transDefaultVal = "Forum chooser";
+            _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, new ReferenceChooserTree.AcceptanceListener() {
+                public void referenceAccepted(SyndieURI uri) {
+                    _forum = uri.getScope();
+                    _browser.getUI().debugMessage("other forum picked: " + uri);
+                    updateForum();
+                }
+
+                public void referenceChoiceAborted() {
+                    _browser.getUI().debugMessage("other forum selection aborted");
+                }
+            }, transKey, transDefaultVal);
+        }
+        _browser.getUI().debugMessage("picking other forum...");
+        _refChooser.show();
     }
 
     private void pickForum(Hash forum, long channelId, String summary, boolean isManaged) {
@@ -797,10 +900,10 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private void initForumControl() {
         _forumGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
         //ctl.setLayoutData(new RowData(48, 48));
+        _forumGroup.setLayoutData(new RowData(50, 50));
         _forumGroup.setLayout(new FillLayout());
         
         _forumButton = new Button(_forumGroup, SWT.PUSH);
-        _forumButton.setImage(ImageUtil.resize(ImageUtil.ICON_REF_SYNDIE, 48, 48, false));
         
         _forumMenu = new Menu(_forumButton);
         _forumGroup.setMenu(_forumMenu);
@@ -812,9 +915,112 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _forumGroup.setText("Forum:");
         _forumGroup.setToolTipText("Select the forum to post in");
     }
+
+    private void updateAuthor() {
+        MenuItem items[] = _authorMenu.getItems();
+        for (int i = 0; i < items.length; i++)
+            items[i].dispose();
+        
+        boolean authorFound = false;
+        
+        long authorId = -1;
+        String authorSummary = "";
+        _browser.getUI().debugMessage("updateAuthor: " + _author);
+        
+        boolean itemsSinceSep = false;
+        
+        for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
+            itemsSinceSep = true;
+            final ChannelInfo info = _nymChannels.getIdentityChannel(i);
+            
+            StringBuffer buf = new StringBuffer();
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
+            if ( (info.getName() != null) && (info.getName().length() > 0) )
+                buf.append(": ").append(info.getName());
+            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
+                buf.append(": ").append(info.getDescription());
+            
+            final String summary = buf.toString();
+            _browser.getUI().debugMessage("summary: " + summary);
+            
+            if (_author == null) {
+                _author = info.getChannelHash();
+                authorId = info.getChannelId();
+                authorSummary = summary;
+            } else if (_author.equals(info.getChannelHash())) {
+                authorId = info.getChannelId();
+                authorSummary = summary;
+            }
+            
+            MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
+            item.setText(summary);
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
+            });
+            if ( (_author != null) && (_author.equals(info.getChannelHash())))
+                authorFound = true;
+        }
+        if (itemsSinceSep) {
+            new MenuItem(_authorMenu, SWT.SEPARATOR);
+            itemsSinceSep = false;
+        }
+        for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
+            itemsSinceSep = true;
+            final ChannelInfo info = _nymChannels.getManagedChannel(i);
+
+            StringBuffer buf = new StringBuffer();
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
+            if ( (info.getName() != null) && (info.getName().length() > 0) )
+                buf.append(": ").append(info.getName());
+            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
+                buf.append(": ").append(info.getDescription());
+
+            final String summary = buf.toString();
+            _browser.getUI().debugMessage("summary: " + summary);
+
+            if (_author == null) {
+                _author = info.getChannelHash();
+                authorId = info.getChannelId();
+                authorSummary = summary;
+            } else if (_author.equals(info.getChannelHash())) {
+                authorId = info.getChannelId();
+                authorSummary = summary;
+            }
+
+            MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
+            item.setText(summary);
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
+            });
+            if ( (_author != null) && (_author.equals(info.getChannelHash())))
+                authorFound = true;            
+        }
+        
+        redrawAuthorAvatar(_author, authorId, authorSummary);
+    }
+    private void pickAuthor(Hash author, long channelId, String summary) {
+        _browser.getUI().debugMessage("pick author " + author + " / " + summary);
+        _author = author;
+        redrawAuthorAvatar(author, channelId, summary);
+    }
+    private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
+        _authorButton.setRedraw(false);
+        ImageUtil.dispose(_authorButton.getImage());
+        _authorButton.setImage(null);
+        byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
+        if (avatar != null) {
+            Image img = ImageUtil.createImage(avatar);
+            _authorButton.setImage(img);
+        }
+        _authorButton.setToolTipText(summary);
+        _authorButton.setRedraw(true);
+    }    
     
     private void initAuthorControl() {
         _authorGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
+        _authorGroup.setLayoutData(new RowData(50, 50));
         _authorGroup.setLayout(new FillLayout());
         
         _authorButton = new Button(_authorGroup, SWT.PUSH);
@@ -828,9 +1034,6 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             public void widgetSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
         });
         
-        _authorMenuOther = new MenuItem(_authorMenu, SWT.PUSH);
-        _authorMenuOther.setText("other...");
-        
         _authorGroup.setText("Author:");
         _authorGroup.setToolTipText("Who do you want to sign the post as?");
     }
@@ -840,7 +1043,6 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _privGroup.setLayout(new FillLayout());
         
         _privButton = new Button(_privGroup, SWT.PUSH);
-        _privButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
         
         _privMenu = new Menu(_privButton);
         _privGroup.setMenu(_privMenu);
@@ -870,6 +1072,9 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY); }
             public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY); }
         });
+        
+        _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED); 
+        _privAuthorized.setSelection(true);
         
         _privPublic.setText("Anyone can read the post");
         _privAuthorized.setText("Authorized readers of the forum can read the post");
@@ -988,15 +1193,55 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _linkAttach.setEnabled(false);
         
         _linkWeb.setImage(ImageUtil.ICON_REF_URL);
+        _linkWeb.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(true, false, false, false, false, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(true, false, false, false, false, false, false, false, false, false); }
+        });
         _linkPage.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkPage.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, true, false, false, false, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, true, false, false, false, false, false, false, false, false); }
+        });
         _linkAttach.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkAttach.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, true, false, false, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, true, false, false, false, false, false, false, false); }
+        });
         _linkForum.setImage(ImageUtil.ICON_REF_FORUM);
+        _linkForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
+        });
         _linkMsg.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkMsg.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
+        });
         _linkEepsite.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkEepsite.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, true, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, true, false, false, false); }
+        });
         _linkI2P.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkI2P.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, true, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, true, false, false); }
+        });
         _linkFreenet.setImage(ImageUtil.ICON_REF_FREENET);
+        _linkFreenet.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, true, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, true, false); }
+        });
         _linkArchive.setImage(ImageUtil.ICON_REF_ARCHIVE);
+        _linkArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, false, true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, false, true); }
+        });
         _linkOther.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkOther.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
+        });
         
         _linkWeb.setText("Link to a website");
         _linkPage.setText("Link to a page in this message");
@@ -1243,6 +1488,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _attachmentConfig.add(cfg);
         _attachmentData.add(data);
         rebuildAttachmentSummaries();
+        updateToolbar();
     }
     public int addAttachment(String contentType, String name, byte[] data) {
         saveState();
@@ -1255,6 +1501,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _attachmentData.add(data);
         rv = _attachmentData.size();
         rebuildAttachmentSummaries();
+        updateToolbar();
         return rv;
     }
     private void removeAttachment(int idx) {
@@ -1271,6 +1518,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         PageEditorNew editor = getPageEditor();
         if (editor != null)
             editor.updated();
+        updateToolbar();
     }
 
     public List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
@@ -1338,6 +1586,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
                 cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
                 _attachmentConfig.set(cur, data);
                 rebuildAttachmentSummaries();
+                updateToolbar();
                 return;
             }
             cur++;
@@ -1612,7 +1861,7 @@ class MessageEditorFind implements Translatable, Themeable {
     private static final String T_FIND_REPLACE_ALL_ACTION_TOOLTIP = "syndie.gui.messageeditorfind.replaceall.actiontooltip";
     
     public void translate(TranslationRegistry registry) {
-        _findShell.setText(registry.getText(T_FIND_ROOT, "Search and replace"));
+        _findShell.setText(registry.getText(T_FIND_ROOT, "Find"));
         _findTextLabel.setText(registry.getText(T_FIND_TEXT, "Find what: "));
         _findReplaceLabel.setText(registry.getText(T_FIND_REPLACE, "Replace with: "));
         _findMatchCase.setText(registry.getText(T_FIND_MATCH, "match case"));

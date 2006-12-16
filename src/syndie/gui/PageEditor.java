@@ -787,7 +787,13 @@ public class PageEditor implements Translatable, Themeable, ImageBuilderPopup.Im
     private void showStyleChooser() { resetTextStyle(); _txtShell.open(); }
     private void showLinkPopup() { 
         if (_linkPopup == null)
-            _linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), this);
+            _linkPopup = new LinkBuilderPopup(_messageEditor.getBrowser(), _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
+                public void uriBuilt(SyndieURI uri, String text) {
+                    insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
+                }
+                public int getPageCount() { return _messageEditor.getPageCount(); }
+                public List getAttachmentDescriptions() { return _messageEditor.getAttachmentDescriptions(); }
+            });
         _linkPopup.showPopup();
     }
     private void showImagePopup(boolean forBodyBackground) { 

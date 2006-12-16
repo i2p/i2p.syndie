@@ -52,8 +52,10 @@ public class PageEditorNew {
     public void setContent(String body) { _text.setText(body); }
     
     public void dispose() {
-        _preview.dispose();
-        _root.dispose();
+        if (_preview != null)
+            _preview.dispose();
+        if (!_root.isDisposed())
+            _root.dispose();
     }
     
     private void initComponents() {
