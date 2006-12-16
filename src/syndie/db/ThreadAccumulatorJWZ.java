@@ -248,7 +248,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
         // filter by date and scope only
         Set matchingMsgIds = getMatchingMsgIds();
-        
         _ui.debugMessage("matching msgIds: " + matchingMsgIds);
         
         if (_unreadOnly) {
@@ -306,7 +305,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         // prune like a motherfucker,
         // and store the results in the accumulator's vars
-        storePruned(prune(threads));
+        ThreadReferenceNode pruned[] = prune(threads);
+        _ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
+        storePruned(pruned);
            
         _ui.debugMessage("gather threads trace: " + _client.completeTrace());
         //_ui.debugMessage("threads: " + _roots);
@@ -409,7 +410,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
             
-            
             // build up hierarchy relationships, jwz-threading style (though without
             // the rough missing-references/etc stuff, since syndie doesn't have backwards compatability)
             ThreadMsgId child = msg;
@@ -424,40 +424,68 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             } else {
                 _ui.debugMessage("container exists for current node " + msg);
             }
-            
+
             if (msgAncestors.size() > 0)
-                _ui.debugMessage("building ancestor containers for " + msgAncestors);
+                _ui.debugMessage("building ancestor containers for " + msgAncestors + " above " + msg);
             for (int i = 0; i < msgAncestors.size(); i++) {
                 ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
                 ThreadContainer container = (ThreadContainer)msgContainers.get(ancestorId);
                 _ui.debugMessage("ancestor: " + ancestorId + " container: " + container);
                 
+                if (childContainer.contains(ancestorId)) {
+                    _ui.errorMessage("loop detected under child " + childContainer + " --> parent would be " + ancestorId);
+                    continue;
+                }
+                
                 if (container == null) {
                     _ui.debugMessage("building new container for " + ancestorId + " w/ child " + child);
                     container = new ThreadContainer();
                     container.msg = ancestorId;
-                    container.child = (ThreadContainer)msgContainers.get(child);
-                    if ( (container.child != null) && (container.child.parent == null) )
-                        container.child.parent = container;
+                    if ( (childContainer != null) && (childContainer.parent == null) )
+                        childContainer.parent = container;
+                    container.child = childContainer;
                     msgContainers.put(ancestorId, container);
                 } else if (container.child != null) {
                     ThreadContainer curChild = container.child;
                     _ui.debugMessage("building siblings for " + curChild + " under " + container.msg);
+                    boolean alreadyContained = false;
                     while (curChild.nextSibling != null) {
-                        _ui.debugMessage("building siblings... next sibling is " + curChild.nextSibling);
+                        _ui.debugMessage("building siblings... container is " + container + ", curChild is " + curChild + ": next sibling is " + curChild.nextSibling);
+                        if (curChild.contains(childContainer.msg)) {
+                            _ui.debugMessage("loop avoided: child already contains the new branch");
+                            alreadyContained = true;
+                            break;
+                        }
                         curChild = curChild.nextSibling;
                     }
-                    if (!container.contains(child)) {
-                        _ui.debugMessage("building siblings... set the last sibling to the new child: " + child);
-                        curChild.nextSibling = (ThreadContainer)msgContainers.get(child);
+                    _ui.debugMessage("done building siblings for " + curChild + " under " + container.msg);
+                    if (alreadyContained)
+                        continue;
+                    //??
+                    _ui.debugMessage("ancestor container: " + container);
+                    _ui.debugMessage("last child under the ancestor: " + curChild);
+                    _ui.debugMessage("new child container: " + childContainer);
+                    if (!curChild.contains(childContainer.msg)) {
+                        curChild.nextSibling = childContainer;
+                        _ui.debugMessage("next sibling set...");
+                        _ui.debugMessage("set the last sibling to the new child: " + child);
                     } else {
-                        _ui.debugMessage("building siblings, but the child " + child + " is already in the tree: " + container);
+                        _ui.debugMessage("loop found and avoided, but should have been detected");
+                        _ui.debugMessage("loop curChild: " + curChild);
+                        _ui.debugMessage("loop childContainer: " + childContainer);
+                        _ui.debugMessage("loop container: " + container);
+                        continue;
                     }
+                    //    curChild.nextSibling = (ThreadContainer)msgContainers.get(child);
+                    //} else {
+                    //    _ui.debugMessage("building siblings, but the child " + child + " is already in the tree: " + container);
+                    //}
                 } else {
                     _ui.debugMessage("existing container has no children, setting their child to " + child);
-                    container.child = (ThreadContainer)msgContainers.get(child);
+                    container.child = childContainer;
                 }
                 child = ancestorId;
+                childContainer = container;
             }
         }
 
@@ -467,7 +495,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         _ui.debugMessage("roots: " + rootMsgs);
         for (int i = 0; i < rootMsgs.size(); i++) {
             ThreadMsgId root = (ThreadMsgId)rootMsgs.get(i);
+            _ui.debugMessage("building thread root " + i + ": " + root + " --> " + ancestors.get(root));
             ThreadReferenceNode thread = buildThread(root, msgContainers, rootMsgs, fakeRoots);
+            _ui.debugMessage("done building thread root " + i + ": " + thread);
             if (thread != null)
                 roots.add(thread);
         }
@@ -516,17 +546,29 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if ( (container != null) && (container.child != null) ) {
             ThreadContainer child = container.child;
             while (child != null) {
+                if (child.parent == null) {
+                    _ui.debugMessage("child of " + container.msg + " did not have a parent link from " + child.msg);
+                    child.parent = container;
+                }
                 // fake roots happen w/ incomplete ancestry is listed in a message, so
                 // simply make sure all children in a thread are not marked as roots for
                 // some other thread
-                if (rootMsgs.contains(child.msg))
+                if (rootMsgs.contains(child.msg)) {
+                    _ui.debugMessage("fake root under container " + rootMsg + "/" + child.msg);
                     fakeRoots.add(child.msg);
+                } else {
+                    _ui.debugMessage("no fake root under container " + rootMsg + "/" + child.msg + ", building their subthread (parent: " + child.parent + ")");
+                }
                 // now build that child's thread
+                _ui.debugMessage("building child of " + rootMsg + ": " + child.msg);
                 ThreadReferenceNode childNode = buildThread(child.msg, msgContainers, rootMsgs, fakeRoots);
+                _ui.debugMessage("child of " + rootMsg + ": " + child.msg + " built");
                 node.addChild(childNode);
                 child = child.nextSibling;
             }
         }
+
+        _ui.debugMessage("buildThread: done with msg: " + rootMsg);
         return node;
     }
     
@@ -982,7 +1024,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         ThreadContainer child;
         ThreadContainer nextSibling;
         
-        public String toString() { return "C:" + msg + "_" + nextSibling + "-" + child; }
+        public String toString() { 
+            StringBuffer buf = new StringBuffer();
+            buf.append("C:").append(msg);
+            buf.append("_");
+            if (nextSibling == this)
+                buf.append("**SELF**");
+            buf.append("-");
+            if (child == this)
+                buf.append("**SELF**");
+            return "C:" + msg + "_" + nextSibling + "-" + child; 
+        }
         
         public boolean contains(ThreadMsgId query) {
             ThreadContainer cur = this;
