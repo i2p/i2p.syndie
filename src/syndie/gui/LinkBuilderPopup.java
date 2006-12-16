@@ -49,6 +49,9 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private Shell _shell;
     private LinkBuilderSource _target;
     
+    private Label _textLabel;
+    private Text _text;
+    
     private Group _linkTypeGroup;
     private Button _linkTypeWeb;
     private Text _linkTypeWebText;
@@ -132,15 +135,12 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     /** archives (SyndieURI) populating the archiveCombo */
     private List _archives;
     
-    private String _text;
-    
     public LinkBuilderPopup(BrowserControl browser, Shell parent, LinkBuilderSource src) {
         _browser = browser;
         _client = browser.getClient();
         _parentShell = parent;
         _target = src;
         _archives = new ArrayList();
-        _text = "LINK TEXT";
         initComponents();
     }
     
@@ -161,6 +161,13 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         gd.grabExcessVerticalSpace = true;
         gd.grabExcessHorizontalSpace = true;
         _linkTypeGroup.setLayoutData(gd);
+        
+        _textLabel = new Label(_linkTypeGroup, SWT.NONE);
+        _textLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _textLabel.setText("Link text:");
+        _text = new Text(_linkTypeGroup, SWT.SINGLE | SWT.BORDER);
+        _text.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _text.setText("TEXT");
         
         _linkTypeWeb = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeWeb.setText("Website:");
@@ -496,7 +503,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             _browser.getUI().debugMessage("uri is null: " + uri);
         }
         
-        _text = linkText;
+        _text.setText(linkText);
     }
 
     private class UpdateURIListener implements SelectionListener {
@@ -504,7 +511,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         public void widgetDefaultSelected(SelectionEvent selectionEvent) { updateSyndieURI(); }
     }
     private void updateSyndieURI() {
-        System.out.println("firing the update uri selection event");
+        //System.out.println("firing the update uri selection event");
         try {
             SyndieURI uri = new SyndieURI(_linkTypeSyndieText.getText());
             uri = updateURIWithOptions(uri);
@@ -649,7 +656,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     protected void uriBuilt(SyndieURI uri) {
         if (_target != null)
-            _target.uriBuilt(uri, _text);
+            _target.uriBuilt(uri, _text.getText());
     }
     
     private void onCancel() {
@@ -800,7 +807,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     public void showPopup() { showPopup(null); }
     public void showPopup(SyndieURI uri) {
         if (uri != null) {
-            setURI(uri, _text);
+            setURI(uri, _text.getText());
         } else {
             blankSettings();
             if (_target == null) {
@@ -846,6 +853,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _postKeys = null;
         _manageKeys = null;
         
+        _text.setText("TEXT");
         _linkTypeWeb.setSelection(false);
         _linkTypeWebText.setText("");
         _linkTypeFreenet.setSelection(false);

@@ -113,6 +113,8 @@ public class ImageUtil {
     public static final Image ICON_EDITOR_PRIVACY_PBE = resize(ImageUtil.ICON_ERROR, 48, 48, false);
     public static final Image ICON_EDITOR_PRIVACY_AUTHORIZED = resize(ImageUtil.ICON_INFORMATION, 48, 48, false);
     public static final Image ICON_EDITOR_PRIVACY_REPLY = resize(ImageUtil.ICON_QUESTION, 48, 48, false);
+    public static final Image ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
+    public static final Image ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
     
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
@@ -185,7 +187,9 @@ public class ImageUtil {
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PUBLIC);
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PBE);
         _indisposableImages.add(ICON_EDITOR_PRIVACY_AUTHORIZED);
-        _indisposableImages.add(ICON_EDITOR_PRIVACY_REPLY);    
+        _indisposableImages.add(ICON_EDITOR_PRIVACY_REPLY);
+        _indisposableImages.add(ICON_EDITOR_BOOKMARKED_NOAVATAR);
+        _indisposableImages.add(ICON_EDITOR_NOT_BOOKMARKED);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

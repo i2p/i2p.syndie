@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -45,6 +48,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.DBClient;
@@ -141,6 +145,9 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private Button _resourcesButton;
     private Menu _resourcesMenu;
     private MenuItem _resourcesAdd;
+    private MenuItem _resourcesImport;
+    private MenuItem _resourcesImportAll;
+    private Menu _resourcesImportMenu;
     // spellcheck control
     private Group _spellGroup;
     private Button _spellButton;
@@ -153,6 +160,10 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private List _pageTypes;
     private int _currentPage;
     private String _currentPageType;
+    /** list of ReferenceNode roots */
+    private List _referenceNodes;
+    /** SyndieURI that generate the reference to the ReferenceNode added into referenceNodes */
+    private Map _referenceNodeSource;
     
     private List _attachmentConfig;
     private List _attachmentData;
@@ -178,6 +189,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
     private ImageBuilderPopup _imagePopup;
     private ReferenceChooserPopup _refChooser;
     private LinkBuilderPopup _linkPopup;
+    private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
     public MessageEditorNew(BrowserControl browser, Composite parent) {
@@ -190,14 +202,21 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         _attachmentConfig = new ArrayList();
         _attachmentData = new ArrayList();
         _attachmentSummary = new ArrayList();
+        _referenceNodes = new ArrayList();
+        _referenceNodeSource = new HashMap();
         _modified = true;
         initComponents();
     }
     
     public void dispose() {
-        _styler.dispose();
-        _spellchecker.dispose();
-        _finder.dispose();
+        if (_refAddPopup != null) _refAddPopup.dispose();
+        if (_linkPopup != null) _linkPopup.dispose();
+        if (_refChooser != null) _refChooser.dispose();
+        if (_imagePopup != null) _imagePopup.dispose();
+        if (_styler != null) _styler.dispose();
+        if (_spellchecker != null) _spellchecker.dispose();
+        if (_finder != null) _finder.dispose();
+        
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
@@ -495,6 +514,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
      * go through the toolbar to adjust the available options for the current page
      */
     private void updateToolbar() {
+        rebuildRefs();
         int pages = _pageEditors.size();
         int attachments = _attachmentData.size();
         boolean isHTML = TYPE_HTML.equals(_currentPageType);
@@ -888,10 +908,15 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
                 if (avatar != null) {
                     Image img = ImageUtil.createImage(avatar);
                     _forumButton.setImage(img);
+                } else {
+                    _forumButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
                 }
+            } else {
+                _forumButton.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
             }
             _forumButton.setToolTipText(summary);
         } else {
+            _forumButton.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
             _forumButton.setToolTipText("");
         }
         _forumButton.setRedraw(true);
@@ -1013,6 +1038,8 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         if (avatar != null) {
             Image img = ImageUtil.createImage(avatar);
             _authorButton.setImage(img);
+        } else {
+            _authorButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
         }
         _authorButton.setToolTipText(summary);
         _authorButton.setRedraw(true);
@@ -1179,14 +1206,18 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         });
         
         _linkWeb = new MenuItem(_linkMenu, SWT.PUSH);
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
         _linkPage = new MenuItem(_linkMenu, SWT.PUSH);
         _linkAttach = new MenuItem(_linkMenu, SWT.PUSH);
         _linkForum = new MenuItem(_linkMenu, SWT.PUSH);
         _linkMsg = new MenuItem(_linkMenu, SWT.PUSH);
+        _linkArchive = new MenuItem(_linkMenu, SWT.PUSH);
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
         _linkEepsite = new MenuItem(_linkMenu, SWT.PUSH);
         _linkI2P = new MenuItem(_linkMenu, SWT.PUSH);
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
         _linkFreenet = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkArchive = new MenuItem(_linkMenu, SWT.PUSH);
+        new MenuItem(_linkMenu, SWT.SEPARATOR);
         _linkOther = new MenuItem(_linkMenu, SWT.PUSH);
         
         _linkPage.setEnabled(false);
@@ -1212,7 +1243,7 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
             public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
         });
-        _linkMsg.setImage(ImageUtil.ICON_REF_SYNDIE);
+        _linkMsg.setImage(ImageUtil.ICON_REF_MSG);
         _linkMsg.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
             public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
@@ -1370,22 +1401,25 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
         });
         
         _resourcesAdd = new MenuItem(_resourcesMenu, SWT.PUSH);
-        
-        MenuItem item0 = new MenuItem(_resourcesMenu, SWT.CASCADE);
-        item0.setImage(ImageUtil.ICON_REF_URL);
-        item0.setText("www.i2p.net");
-        Menu sub = new Menu(item0);
-        item0.setMenu(sub);
-        MenuItem view = new MenuItem(sub, SWT.PUSH);
-        view.setText("view");
-        MenuItem edit = new MenuItem(sub, SWT.PUSH);
-        edit.setText("edit");
-        MenuItem delete = new MenuItem(sub, SWT.PUSH);
-        delete.setText("delete");
-        
+        _resourcesAdd.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addReference(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addReference(); }
+        });
+        _resourcesImport = new MenuItem(_resourcesMenu, SWT.CASCADE);
+        _resourcesImportMenu = new Menu(_resourcesImport);
+        _resourcesImport.setMenu(_resourcesImportMenu);
+        _resourcesImportAll = new MenuItem(_resourcesImportMenu, SWT.PUSH);
+        _resourcesImportAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addReferencesAll(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addReferencesAll(); }
+        });
+        new MenuItem(_resourcesImportMenu, SWT.SEPARATOR);
+
         _resourcesGroup.setText("Refs:");
         _resourcesGroup.setToolTipText("Manage references to other resources");
         _resourcesAdd.setText("Add a new resource");
+        _resourcesImport.setText("Add some of your bookmarks as resources...");
+        _resourcesImportAll.setText("Add all of your bookmarks");
     }
     
     private void initSpellControl() {
@@ -1673,6 +1707,180 @@ public class MessageEditorNew implements Themeable, Translatable, ImageBuilderPo
                 public void widgetSelected(SelectionEvent selectionEvent) { removePage(pageNum); }
             });
         }
+    }
+    
+    private void rebuildRefs() {
+        MenuItem items[] = _resourcesMenu.getItems();
+        for (int i = 0; i < items.length; i++)
+            if ( (items[i] != _resourcesAdd) && (items[i] != _resourcesImport) && (items[i] != _resourcesImportAll) )
+                items[i].dispose();
+
+        rebuildRefImport();
+        rebuildRefExisting();
+    }
+    private void rebuildRefImport() {
+        new MenuItem(_resourcesImportMenu, SWT.SEPARATOR);
+        // add new refs for all of our bookmarks
+        List nodes = _browser.getBookmarks();
+        for (int i = 0; i < nodes.size(); i++) {
+            ReferenceNode node = (ReferenceNode)nodes.get(i);
+            rebuildRefImport(node, _resourcesImportMenu);
+        }
+    }
+    
+    private static final String T_REF_IMPORT_BOOKMARKED_ADD = "syndie.gui.messageeditor.refimportbookmarkedadd";
+    private static final String T_REF_IMPORT_BOOKMARKED_ADDALL = "syndie.gui.messageeditor.refimportbookmarkedaddall";
+    private static final String T_REF_EXISTING_VIEW = "syndie.gui.messageeditor.refexistingview";
+    private static final String T_REF_EXISTING_DELETE = "syndie.gui.messageeditor.refexistingdelete";
+    
+    private void rebuildRefImport(final ReferenceNode node, Menu parent) {
+        final SyndieURI uri = node.getURI();
+        final String name = node.getName();
+        String itemName = name;
+        if (itemName == null)
+            itemName = "";
+        final String desc = node.getDescription();
+        
+        if ( (itemName.length() > 0) && (desc != null) && (desc.length() > 0) )
+            itemName = itemName + " - " + desc;
+        else if (itemName.length() <= 0)
+            itemName = desc;
+        
+        MenuItem item = null;
+        if (node.getChildCount() == 0) {
+            item = new MenuItem(parent, SWT.PUSH);
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addReference(name, desc, uri, false); }
+                public void widgetSelected(SelectionEvent selectionEvent) { addReference(name, desc, uri, false); }
+            });
+        } else {
+            item = new MenuItem(parent, SWT.CASCADE);
+            Menu sub = new Menu(item);
+            item.setMenu(sub);
+            MenuItem add = new MenuItem(sub, SWT.PUSH);
+            add.setText(_browser.getTranslationRegistry().getText(T_REF_IMPORT_BOOKMARKED_ADD, "Add"));
+            add.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addReference(name, desc, uri, false); }
+                public void widgetSelected(SelectionEvent selectionEvent) { addReference(name, desc, uri, false); }
+            });
+            MenuItem addAll = new MenuItem(sub, SWT.PUSH);
+            addAll.setText(_browser.getTranslationRegistry().getText(T_REF_IMPORT_BOOKMARKED_ADDALL, "Add all"));
+            addAll.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addReference(node); }
+                public void widgetSelected(SelectionEvent selectionEvent) { addReference(node); }
+            });
+                        
+            new MenuItem(sub, SWT.SEPARATOR);
+            for (int i = 0; i < node.getChildCount(); i++)
+                rebuildRefImport(node.getChild(i), sub);
+        }
+        item.setText(itemName);
+        item.setImage(ImageUtil.getTypeIcon(uri));
+    }
+    
+    private void rebuildRefExisting() {
+        if (_referenceNodes.size() > 0) {
+            new MenuItem(_resourcesMenu, SWT.SEPARATOR);
+            // add new refs for those already added to the message
+            for (int i = 0; i < _referenceNodes.size(); i++) {
+                ReferenceNode node = (ReferenceNode)_referenceNodes.get(i);
+                rebuildRefExisting(node, _resourcesMenu);
+            }
+        }
+    }
+    
+    private void rebuildRefExisting(ReferenceNode node, Menu parent) {
+        final SyndieURI uri = node.getURI();
+        final String name = node.getName();
+        String itemName = name;
+        if (itemName == null)
+            itemName = "";
+        final String desc = node.getDescription();
+        
+        if ( (itemName.length() > 0) && (desc != null) && (desc.length() > 0) )
+            itemName = itemName + " - " + desc;
+        else if (itemName.length() <= 0)
+            itemName = desc;
+        
+        MenuItem item = new MenuItem(parent, SWT.CASCADE);
+        item.setText(itemName);
+        item.setImage(ImageUtil.getTypeIcon(uri));
+        
+        Menu sub = new Menu(item);
+        item.setMenu(sub);
+        MenuItem view = new MenuItem(sub, SWT.PUSH);
+        view.setText(_browser.getTranslationRegistry().getText(T_REF_EXISTING_VIEW, "View"));
+        view.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+            public void widgetSelected(SelectionEvent selectionEvent) {  _browser.view(uri); }
+        });
+        MenuItem delete = new MenuItem(sub, SWT.PUSH);
+        delete.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeReference(uri, name, desc); }
+            public void widgetSelected(SelectionEvent selectionEvent) {  removeReference(uri, name, desc); }
+        });
+        delete.setText(_browser.getTranslationRegistry().getText(T_REF_EXISTING_DELETE, "Delete"));
+        if (node.getChildCount() > 0)
+            new MenuItem(sub, SWT.SEPARATOR);
+            for (int i = 0; i < node.getChildCount(); i++)
+                rebuildRefExisting(node.getChild(i), sub);
+    }
+    private void addReference() {
+        if (_refAddPopup == null)
+            _refAddPopup = new LinkBuilderPopup(_browser, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
+                public void uriBuilt(SyndieURI uri, String text) { addReference(text, "", uri, true); }
+                public int getPageCount() { return 0; }
+                public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
+            });
+        _refAddPopup.limitOptions(true, false, false, true, true, true, true, true, true, true);
+        _refAddPopup.showPopup();
+    }
+    private void addReferencesAll() {
+        List nodes = _browser.getBookmarks();
+        for (int i = 0; i < nodes.size(); i++) {
+            ReferenceNode node = (ReferenceNode)nodes.get(i);
+            addReference(node);
+        }
+    }
+    private void addReference(ReferenceNode node) {
+        addReference(node.getName(), node.getDescription(), node.getURI(), false);
+        for (int i = 0; i < node.getChildCount(); i++)
+            addReference(node.getChild(i));
+    }
+    private void addReference(String name, String description, SyndieURI uri, boolean includeKeys) {
+        if (_referenceNodeSource.containsKey(uri)) {
+            _browser.getUI().debugMessage("not adding already existing reference [" + name + "]/[" + description + "] to " + uri);
+            return;
+        }
+        _browser.getUI().debugMessage("add reference [" + name + "]/[" + description + "] to " + uri);
+        SyndieURI toShare = null;
+        if (includeKeys) {
+            toShare = uri;
+        } else {
+            // if we are just simply trying to share our bookmarks, lets make sure we don't
+            // unintentionally share private keys attached to them
+            String type = uri.getType();
+            Map attribs = uri.getAttributes();
+            Map newAttribs = new HashMap(attribs.size());
+            for (Iterator iter = attribs.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry cur = (Map.Entry)iter.next();
+                String curName = (String)cur.getKey();
+                if (!SyndieURI.isSensitiveAttribute(curName))
+                    newAttribs.put(curName, cur.getValue());
+            }
+            toShare = new SyndieURI(type, newAttribs);
+        }
+        ReferenceNode ref = new ReferenceNode(name, toShare, description, null);
+        _referenceNodes.add(ref);
+        _referenceNodeSource.put(uri, ref);
+        rebuildRefs();
+    }
+    private void removeReference(SyndieURI uri, String name, String description) {
+        _browser.getUI().debugMessage("remove reference [" + name + "]/[" + description + "] to " + uri);
+        ReferenceNode ref = (ReferenceNode)_referenceNodeSource.remove(uri);
+        if (ref != null)
+            _referenceNodes.remove(ref);
+        rebuildRefs();
     }
 
     public void insertAtCaret(String html) {

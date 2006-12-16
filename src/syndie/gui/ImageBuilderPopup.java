@@ -92,6 +92,12 @@ public class ImageBuilderPopup {
         initComponents();
     }
     
+    public void dispose() {
+        _configPreviewCanvas.disposeImage();
+        if (!_shell.isDisposed())
+            _shell.dispose();
+    }
+    
     public interface ImageBuilderSource {
         public List getAttachmentDescriptions(boolean imagesOnly);
         public int addAttachment(String type, String name, byte data[]);

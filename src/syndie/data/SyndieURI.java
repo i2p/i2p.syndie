@@ -419,6 +419,19 @@ public class SyndieURI {
         return _stringified;
     }
     
+    private static final Set SENSITIVE_ATTRIBUTES = new HashSet();
+    static {
+        SENSITIVE_ATTRIBUTES.add("readKey");
+        SENSITIVE_ATTRIBUTES.add("postKey");
+        SENSITIVE_ATTRIBUTES.add("replyKey");
+        SENSITIVE_ATTRIBUTES.add("manageKey");
+        SENSITIVE_ATTRIBUTES.add("identKey");
+    }
+    /** true if the given uri attribute is one carrying private key information */
+    public static boolean isSensitiveAttribute(String name) {
+        return (name != null) && SENSITIVE_ATTRIBUTES.contains(name);
+    }
+    
     public boolean equals(Object obj) { return (obj != null) && toString().equals(obj.toString()); }
     public int hashCode() { return toString().hashCode(); }
 
