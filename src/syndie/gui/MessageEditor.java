@@ -75,7 +75,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  MessageCreator.MessageCreatorSource, Translatable, Themeable {
+public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, MessageReferenceEditorPopup.PopupListener,  MessageCreator.MessageCreatorSource, Translatable, Themeable, LinkBuilderPopup.LinkBuilderSource {
     private BrowserControl _browser;
     private DBClient _client;
     /** list of (byte[]) instances */
@@ -1609,5 +1609,14 @@ public class MessageEditor implements ReferenceChooserTree.AcceptanceListener, M
             }
         }
         return cfg;
+    }
+
+    public void uriBuilt(SyndieURI uri, String text) {
+        if (_pages.size() > 0) {
+            int idx = _controlPageCombo.getSelectionIndex();
+            PageEditor editor = (PageEditor)_pages.remove(idx);
+            editor.insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
+            editor.dispose();
+        }
     }
 }
