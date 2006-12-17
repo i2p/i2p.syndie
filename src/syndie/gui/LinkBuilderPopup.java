@@ -135,12 +135,16 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     /** archives (SyndieURI) populating the archiveCombo */
     private List _archives;
     
+    /** has limitOptions been called */
+    private boolean _fieldsLimited;
+    
     public LinkBuilderPopup(BrowserControl browser, Shell parent, LinkBuilderSource src) {
         _browser = browser;
         _client = browser.getClient();
         _parentShell = parent;
         _target = src;
         _archives = new ArrayList();
+        _fieldsLimited = false;
         initComponents();
     }
     
@@ -669,6 +673,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
 
     /** limit what type of link can be built */
     public void limitOptions(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+        _fieldsLimited = true;
         _shell.setRedraw(false);
         // web
         ((GridData)_linkTypeWeb.getLayoutData()).exclude = !web;
@@ -796,6 +801,24 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         adjustVisibility(_linkTypeI2PRow);
         adjustVisibility(_linkTypeArchive);
         adjustVisibility(_linkTypeArchiveCombo);
+    
+        _linkTypeWeb.setSelection(false);
+        _linkTypePage.setSelection(false);
+        _linkTypeAttachment.setSelection(false);
+        _linkTypeSyndie.setSelection(false);
+        _linkTypeFreenet.setSelection(false);
+        _linkTypeEepsite.setSelection(false);
+        _linkTypeI2P.setSelection(false);
+        _linkTypeArchive.setSelection(false);
+    
+        if (web) _linkTypeWeb.setSelection(true);
+        else if (page) _linkTypePage.setSelection(true);
+        else if (attach) _linkTypeAttachment.setSelection(true);
+        else if (forum||message||submessage) _linkTypeSyndie.setSelection(true);
+        else if (freenet) _linkTypeFreenet.setSelection(true);
+        else if (eepsite) _linkTypeEepsite.setSelection(true);
+        else if (i2p) _linkTypeI2P.setSelection(true);
+        else if (archive) _linkTypeArchive.setSelection(true);
         
         _shell.setRedraw(true);
         _shell.layout(true, true);
@@ -846,7 +869,8 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _shell.open();
     }
     
-    private void blankSettings() {        
+    private void blankSettings() { blankSettings(!_fieldsLimited); }
+    private void blankSettings(boolean unselectType) {
         _selectedURI = null;
         _readKeys = null;
         _replyKeys = null;
@@ -854,15 +878,15 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _manageKeys = null;
         
         _text.setText("TEXT");
-        _linkTypeWeb.setSelection(false);
+        if (unselectType) _linkTypeWeb.setSelection(false);
         _linkTypeWebText.setText("");
-        _linkTypeFreenet.setSelection(false);
+        if (unselectType) _linkTypeFreenet.setSelection(false);
         _linkTypeFreenetText.setText("");
-        _linkTypePage.setSelection(false);
+        if (unselectType) _linkTypePage.setSelection(false);
         _linkTypeAttachment.setSelection(false);
-        _linkTypeSyndie.setSelection(false);
+        if (unselectType) _linkTypeSyndie.setSelection(false);
         _linkTypeSyndieText.setText("");
-        _linkTypeArchive.setSelection(false);
+        if (unselectType) _linkTypeArchive.setSelection(false);
         
         _linkTypeArchiveCombo.setRedraw(false);
         _linkTypeArchiveCombo.setText("");

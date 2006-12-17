@@ -672,6 +672,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             viewPage(0);
         updateAuthor();
         updateForum();
+        updateToolbar();
     }
     
     private static final String SER_AUTHOR = "author";
@@ -1130,8 +1131,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         rebuildRefs();
         int pages = _pageEditors.size();
         int attachments = _attachmentData.size();
-        boolean isHTML = TYPE_HTML.equals(_currentPageType);
-        boolean pageLoaded = (_currentPage >= 0);
+        boolean pageLoaded = (_currentPage >= 0) && (pages > 0);
+        boolean isHTML = TYPE_HTML.equals(_currentPageType) && pageLoaded;
         
         _browser.getUI().debugMessage("updateToolbar: pages=" + pages + " attachments=" + attachments + " isHTML? " + isHTML + " pageLoaded? " + pageLoaded);
        
@@ -1540,6 +1541,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     _forum = uri.getScope();
                     _browser.getUI().debugMessage("other forum picked: " + uri);
                     updateForum();
+                    validateAuthorForum();
                 }
 
                 public void referenceChoiceAborted() {
@@ -1555,6 +1557,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _browser.getUI().debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
         redrawForumAvatar(forum, channelId, summary, isManaged);
+        validateAuthorForum();
     }
     private void redrawForumAvatar(Hash forum, long channelId, String summary, boolean isManaged) {
         _forumButton.setRedraw(false);
@@ -1690,6 +1693,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _browser.getUI().debugMessage("pick author " + author + " / " + summary);
         _author = author;
         redrawAuthorAvatar(author, channelId, summary);
+        validateAuthorForum();
     }
     private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
         _authorButton.setRedraw(false);
@@ -1725,6 +1729,71 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _authorGroup.setText("Author:");
         _authorGroup.setToolTipText("Who do you want to sign the post as?");
     }
+    
+    /** 
+     * make sure the author selected has the authority to post to the forum selected (or to
+     * reply to an existing message, if we are replying)
+     */
+    private void validateAuthorForum() {
+        Hash author = _author;
+        ChannelInfo forum = null;
+        if (_forum != null)
+            forum = _browser.getClient().getChannel(_browser.getClient().getChannelId(_forum));
+        
+        boolean ok = true;
+        
+        _browser.getUI().debugMessage("validating author forum: author=" + _author + " forum=" + _forum);
+        
+        if ( (author != null) && (forum != null) ) {
+            if (author.equals(forum.getChannelHash())) {
+                // ok
+                _browser.getUI().debugMessage("forum == author");
+            } else if (forum.getAllowPublicPosts()) {
+                // ok too
+                _browser.getUI().debugMessage("forum allows public posts");
+            } else if (forum.getAuthorizedManagerHashes().contains(author)) {
+                // yep
+                _browser.getUI().debugMessage("forum explicitly allowes the author to manage the forum");
+            } else if (forum.getAuthorizedPosterHashes().contains(author)) {
+                // again
+                _browser.getUI().debugMessage("forum explicitly allows the author to post in the forum");
+            } else if (_privReply.getSelection()) {
+                // sure... though it won't go in the forum's scope
+                _browser.getUI().debugMessage("post is a private reply");
+            } else if (forum.getAllowPublicReplies() && (_parents.size() > 0) ) {
+                // maybe... check to make sure the parent is allowed
+                _browser.getUI().debugMessage("forum allows public replies, and our parents: " + _parents);
+                boolean allowed = false;
+                for (int i = _parents.size()-1; !allowed && i >= 0; i--) {
+                    SyndieURI uri = (SyndieURI)_parents.get(i);
+                    Hash scope = uri.getScope();
+                    if (forum.getChannelHash().equals(scope) ||
+                        forum.getAuthorizedManagerHashes().contains(scope) ||
+                        forum.getAuthorizedPosterHashes().contains(scope))
+                        allowed = true;
+                }
+                if (!allowed) {
+                    // none of the ancestors were allowed, so reject
+                    _browser.getUI().debugMessage("forum allows public replies but the parents are not authorized");
+                    ok = false;
+                }
+            } else {
+                // not allowed
+                _browser.getUI().debugMessage("forum not allowed");
+                ok = false;
+            }
+        }
+        
+        if (!ok) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
+            box.setText(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
+            box.open();
+        }
+    }
+    
+    private static final String T_NOT_AUTHORIZED_MSG = "syndie.gui.messageeditor.notauthorized.msg";
+    private static final String T_NOT_AUTHORIZED_TITLE = "syndie.gui.messageeditor.notauthorized.title";
     
     private void initPrivacyControl() {
         _privGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
@@ -2394,6 +2463,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         rebuildRefExisting();
     }
     private void rebuildRefImport() {
+        MenuItem items[] = _resourcesImportMenu.getItems();
+        for (int i = 0; i < items.length; i++)
+            if ( (items[i] != _resourcesImport) && (items[i] != _resourcesImportAll) )
+                items[i].dispose();
         new MenuItem(_resourcesImportMenu, SWT.SEPARATOR);
         // add new refs for all of our bookmarks
         List nodes = _browser.getBookmarks();
