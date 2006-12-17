@@ -111,6 +111,11 @@ public class MessageTree implements Translatable, Themeable {
     /** item to MessageFlagBar */
     private Map _itemToMsgFlags;
     
+    /** column we are sorting on */
+    private TreeColumn _currentSortColumn;
+    /** SWT.UP or SWT.DOWN */
+    private int _currentSortDirection;
+    
     /** list of FilterBar instances added to this tree */
     private List _bars;
     private boolean _hideFilter;
@@ -161,7 +166,7 @@ public class MessageTree implements Translatable, Themeable {
             SyndieURI cur = (SyndieURI)_itemToURI.get(item);
             if (cur.equals(uri)) {
                 _tree.setSelection(item);
-                _tree.setTopItem(item);
+                //_tree.setTopItem(item);
                 return;
             }
         }
@@ -712,10 +717,7 @@ public class MessageTree implements Translatable, Themeable {
             public void handleEvent(Event evt) {
                 if (evt.index == 1) {
                     if (true) {
-                        // to avoid a bunch of messageflagbar calcs, lets just assume 8 flags
-                        int width = _tree.getGridLineWidth() * 2;
-                        width += 8 * (ImageUtil.ICON_MSG_FLAG_AUTHENTICATED.getBounds().width + FLAG_SPACING);
-                        evt.width = width;
+                        evt.width = getMessageFlagBarWidth(_tree);
                     } else {
                         MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
                         if (bar == null) {
@@ -761,6 +763,16 @@ public class MessageTree implements Translatable, Themeable {
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
+        
+        _currentSortColumn = _colDate;
+        _currentSortDirection = SWT.DOWN;
+        _tree.setSortColumn(_colDate);
+        _tree.setSortDirection(SWT.DOWN);
+        
+        _colSubject.addListener(SWT.Selection, new Listener() { public void handleEvent(Event evt) { toggleSort(_colSubject); } });
+        _colDate.addListener(SWT.Selection, new Listener() { public void handleEvent(Event evt) { toggleSort(_colDate); } });
+        _colAuthor.addListener(SWT.Selection, new Listener() { public void handleEvent(Event evt) { toggleSort(_colAuthor); } });
+        _colChannel.addListener(SWT.Selection, new Listener() { public void handleEvent(Event evt) { toggleSort(_colChannel); } });
     
         _menu = new Menu(_tree);
         _tree.setMenu(_menu);
@@ -802,6 +814,29 @@ public class MessageTree implements Translatable, Themeable {
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+
+    
+    private static final int getMessageFlagBarWidth(Tree tree) {
+        // to avoid a bunch of messageflagbar calcs, lets just assume 8 flags
+        int width = tree.getGridLineWidth() * 2;
+        width += 8 * (ImageUtil.ICON_MSG_FLAG_AUTHENTICATED.getBounds().width + FLAG_SPACING);
+        return width;
+    }
+    
+    private void toggleSort(TreeColumn column) {
+        if (column == _currentSortColumn) {
+            _currentSortDirection = (_currentSortDirection == SWT.UP ? SWT.DOWN : SWT.UP);
+            _browser.getUI().debugMessage("toggleSort direction on " + column.getText());
+        } else {
+            _browser.getUI().debugMessage("toggleSort column on " + column.getText());
+            _currentSortColumn = column;
+            _currentSortDirection = SWT.DOWN;
+        }
+        
+        _tree.setSortColumn(_currentSortColumn);
+        _tree.setSortDirection(_currentSortDirection);
+        applyFilter();
     }
     
     private void createFilterEditor() {
@@ -921,6 +956,16 @@ public class MessageTree implements Translatable, Themeable {
         ThreadAccumulator acc = new ThreadAccumulatorJWZ(_client, _browser.getUI());
         _browser.getUI().debugMessage("setting the filter: " + uri.toString());
         acc.setFilter(uri);
+        int sort = ThreadAccumulator.SORT_DEFAULT;
+        if (_currentSortColumn == _colSubject)
+            sort = ThreadAccumulator.SORT_SUBJECT;
+        else if (_currentSortColumn == _colChannel)
+            sort = ThreadAccumulator.SORT_FORUM;
+        else if (_currentSortColumn == _colDate)
+            sort = ThreadAccumulator.SORT_DATE;
+        else if (_currentSortColumn == _colAuthor)
+            sort = ThreadAccumulator.SORT_AUTHOR;
+        acc.setSort(sort, _currentSortDirection == SWT.UP);
         _browser.getUI().debugMessage("gathering the threads");
         acc.gatherThreads();
         // now sort it...
@@ -952,17 +997,22 @@ public class MessageTree implements Translatable, Themeable {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
             add(node, null);
         }
+        
+        /*
         _colType.pack();
         _colSubject.pack();
         _colDate.pack();
         _colChannel.pack();
         _colAuthor.pack();
         _colTags.pack();
+         */
         
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).populateTagCombo();
         
         resizeCols();
+        _tree.setSortColumn(_currentSortColumn);
+        _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
     }
     
@@ -1083,20 +1133,17 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void resizeCols() {
-        int total = _tree.getClientArea().width;
-        int subjWidth = 100;
+        int total = _tree.getClientArea().width - getMessageFlagBarWidth(_tree);
+        int subjWidth = total / 2;
         
-        int chanWidth = 100;
+        int chanWidth = total / 10;
         if (!_showChannel) chanWidth = 0;
-        int authWidth = 100;
+        int authWidth = total / 15;
         if (!_showAuthor) authWidth = 0;
-        int dateWidth = 100;
+        int dateWidth = total / 10;
         if (!_showDate) dateWidth = 0;
-        int tagsWidth = 100;
+        int tagsWidth = total / 15;
         if (!_showTags) tagsWidth = 0;
-        
-        if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
-            subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
         
         ////_colType.setWidth(24);
         _colSubject.setWidth(subjWidth);
@@ -1104,6 +1151,7 @@ public class MessageTree implements Translatable, Themeable {
         _colAuthor.setWidth(authWidth);
         _colDate.setWidth(dateWidth);
         _colTags.setWidth(tagsWidth);
+        _colType.pack();
         
         /*
         _colSubject.pack();

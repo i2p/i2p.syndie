@@ -2403,7 +2403,7 @@ public class DBClient {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TARGET);
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_SUBJECT);
             stmt.setLong(1, msgId);
             rs = stmt.executeQuery();
             if (rs.next()) {

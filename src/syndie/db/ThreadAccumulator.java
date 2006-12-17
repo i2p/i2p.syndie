@@ -64,6 +64,14 @@ public class ThreadAccumulator {
         _client = client;
         _ui = ui;
     }
+
+    public static final int SORT_SUBJECT = 1;
+    public static final int SORT_FORUM = 2;
+    public static final int SORT_DATE = 3;
+    public static final int SORT_AUTHOR = 4;
+    public static final int SORT_DEFAULT = SORT_DATE;
+    
+    public void setSort(int sortField, boolean ascending) {}
     
     public void setFilter(SyndieURI criteria) {
         // split up the individual attributes. see doc/web/spec.html#uri_search

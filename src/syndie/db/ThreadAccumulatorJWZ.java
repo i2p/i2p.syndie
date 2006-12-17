@@ -66,12 +66,22 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private Set _requiredTags;
     private Set _wantedTags;
     private Set _rejectedTags;
+    
+    private int _sortField;
+    private boolean _sortOrderAscending;
         
     public ThreadAccumulatorJWZ(DBClient client, UI ui) {
         super(client, ui);
         _client = client;
         _ui = ui;
+        _sortField = SORT_DEFAULT;
+        _sortOrderAscending = false;
         //_ui = new NullUI(true);
+    }
+    
+    public void setSort(int sortField, boolean ascending) {
+        _sortField = sortField;
+        _sortOrderAscending = ascending;
     }
     
     public void setFilter(SyndieURI criteria) {
@@ -299,7 +309,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < threads.length; i++) {
                 threads[i].getThreadTags(tagBuf);
                 if (!tagFilterPassed(tagBuf)) {
-                    _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + "\n" + threads[i]);
+                    _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
                     threads[i] = null;
                 }
                 tagBuf.clear();
@@ -311,7 +321,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (threads[i] != null) {
                 boolean empty = filterAuthorizationStatus(threads[i]);
                 if (empty) {
-                    _ui.debugMessage("reject because authorization status failed: \n" + threads[i]);
+                    _ui.debugMessage("reject because authorization status failed: " + threads[i]);
                     threads[i] = null;
                 }
             }
@@ -323,7 +333,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (threads[i] != null) {
                     boolean empty = filterPrivacy(threads[i]);
                     if (empty) {
-                        _ui.debugMessage("reject because privacy failed: \n" + threads[i]);
+                        _ui.debugMessage("reject because privacy failed: " + threads[i]);
                         threads[i] = null;
                     }
                 }
@@ -337,7 +347,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (threads[i] != null) {
                     boolean empty = filterKeyword(threads[i]);
                     if (empty) {
-                        _ui.debugMessage("reject because keyword search failed: \n" + threads[i]);
+                        _ui.debugMessage("reject because keyword search failed: " + threads[i]);
                         threads[i] = null;
                     }
                 }
@@ -348,7 +358,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads);
         _ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
-        storePruned(pruned);
+        ThreadReferenceNode sorted[] = sort(pruned);
+        _ui.debugMessage("threads sorted: " + (pruned != null ? pruned.length +"" : "none"));
+        storePruned(sorted);
            
         _ui.debugMessage("gather threads trace: " + _client.completeTrace());
         //_ui.debugMessage("threads: " + _roots);
@@ -503,14 +515,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             ThreadMsgId child = msg;
             ThreadContainer childContainer = (ThreadContainer)msgContainers.get(child);
             if (childContainer == null) {
-                _ui.debugMessage("building new container for current node " + msg);
+                //_ui.debugMessage("building new container for current node " + msg);
                 childContainer = new ThreadContainer();
                 childContainer.msg = msg;
                 childContainer.parent = null;
                 childContainer.child = null;
                 msgContainers.put(msg, childContainer);
             } else {
-                _ui.debugMessage("container exists for current node " + msg);
+                //_ui.debugMessage("container exists for current node " + msg);
             }
 
             if (msgAncestors.size() > 0)
@@ -518,15 +530,15 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < msgAncestors.size(); i++) {
                 ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
                 ThreadContainer container = (ThreadContainer)msgContainers.get(ancestorId);
-                _ui.debugMessage("ancestor: " + ancestorId + " container: " + container);
+                //_ui.debugMessage("ancestor: " + ancestorId + " container: " + container);
                 
                 if (childContainer.contains(ancestorId)) {
-                    _ui.errorMessage("loop detected under child " + childContainer + " --> parent would be " + ancestorId);
+                    _ui.debugMessage("loop detected under child " + childContainer + " --> parent would be " + ancestorId);
                     continue;
                 }
                 
                 if (container == null) {
-                    _ui.debugMessage("building new container for " + ancestorId + " w/ child " + child);
+                    //_ui.debugMessage("building new container for " + ancestorId + " w/ child " + child);
                     container = new ThreadContainer();
                     container.msg = ancestorId;
                     if ( (childContainer != null) && (childContainer.parent == null) )
@@ -535,10 +547,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     msgContainers.put(ancestorId, container);
                 } else if (container.child != null) {
                     ThreadContainer curChild = container.child;
-                    _ui.debugMessage("building siblings for " + curChild + " under " + container.msg);
+                    //_ui.debugMessage("building siblings for " + curChild + " under " + container.msg);
                     boolean alreadyContained = false;
                     while (curChild.nextSibling != null) {
-                        _ui.debugMessage("building siblings... container is " + container + ", curChild is " + curChild + ": next sibling is " + curChild.nextSibling);
+                        //_ui.debugMessage("building siblings... container is " + container + ", curChild is " + curChild + ": next sibling is " + curChild.nextSibling);
                         if (curChild.contains(childContainer.msg)) {
                             _ui.debugMessage("loop avoided: child already contains the new branch");
                             alreadyContained = true;
@@ -546,22 +558,15 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         }
                         curChild = curChild.nextSibling;
                     }
-                    _ui.debugMessage("done building siblings for " + curChild + " under " + container.msg);
+                    //_ui.debugMessage("done building siblings for " + curChild + " under " + container.msg);
                     if (alreadyContained)
                         continue;
                     //??
-                    _ui.debugMessage("ancestor container: " + container);
-                    _ui.debugMessage("last child under the ancestor: " + curChild);
-                    _ui.debugMessage("new child container: " + childContainer);
                     if (!curChild.contains(childContainer.msg)) {
                         curChild.nextSibling = childContainer;
-                        _ui.debugMessage("next sibling set...");
                         _ui.debugMessage("set the last sibling to the new child: " + child);
                     } else {
                         _ui.debugMessage("loop found and avoided, but should have been detected");
-                        _ui.debugMessage("loop curChild: " + curChild);
-                        _ui.debugMessage("loop childContainer: " + childContainer);
-                        _ui.debugMessage("loop container: " + container);
                         continue;
                     }
                     //    curChild.nextSibling = (ThreadContainer)msgContainers.get(child);
@@ -569,7 +574,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     //    _ui.debugMessage("building siblings, but the child " + child + " is already in the tree: " + container);
                     //}
                 } else {
-                    _ui.debugMessage("existing container has no children, setting their child to " + child);
+                    //_ui.debugMessage("existing container has no children, setting their child to " + child);
                     container.child = childContainer;
                 }
                 child = ancestorId;
@@ -580,12 +585,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // now we can build the ThreadReferenceNode instances out of these
         List roots = new ArrayList(rootMsgs.size());
         Set fakeRoots = new HashSet();
-        _ui.debugMessage("roots: " + rootMsgs);
+        //_ui.debugMessage("roots: " + rootMsgs);
         for (int i = 0; i < rootMsgs.size(); i++) {
             ThreadMsgId root = (ThreadMsgId)rootMsgs.get(i);
-            _ui.debugMessage("building thread root " + i + ": " + root + " --> " + ancestors.get(root));
+            //_ui.debugMessage("building thread root " + i + ": " + root + " --> " + ancestors.get(root));
             ThreadReferenceNode thread = buildThread(root, msgContainers, rootMsgs, fakeRoots);
-            _ui.debugMessage("done building thread root " + i + ": " + thread);
+            //_ui.debugMessage("done building thread root " + i + ": " + thread);
             if (thread != null)
                 roots.add(thread);
         }
@@ -616,7 +621,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             node.setThreadTarget(target);
             
             List tags = new ArrayList(); node.getThreadTags(tags);
-            _ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName + " tags: " + tags);
+            //_ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName + " tags: " + tags);
            
             // to mirror the MessageThreadBuilder, fill the node in per:
             //
@@ -627,7 +632,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             node.setName(authorName);
             node.setDescription(node.getThreadSubject());
         } else {
-            _ui.debugMessage("node is a dummy: " + rootMsg);
+            //_ui.debugMessage("node is a dummy: " + rootMsg);
             node.setIsDummy(true);
         }
         ThreadContainer container = (ThreadContainer)msgContainers.get(rootMsg);
@@ -635,28 +640,28 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             ThreadContainer child = container.child;
             while (child != null) {
                 if (child.parent == null) {
-                    _ui.debugMessage("child of " + container.msg + " did not have a parent link from " + child.msg);
+                    //_ui.debugMessage("child of " + container.msg + " did not have a parent link from " + child.msg);
                     child.parent = container;
                 }
                 // fake roots happen w/ incomplete ancestry is listed in a message, so
                 // simply make sure all children in a thread are not marked as roots for
                 // some other thread
                 if (rootMsgs.contains(child.msg)) {
-                    _ui.debugMessage("fake root under container " + rootMsg + "/" + child.msg);
+                    //_ui.debugMessage("fake root under container " + rootMsg + "/" + child.msg);
                     fakeRoots.add(child.msg);
                 } else {
-                    _ui.debugMessage("no fake root under container " + rootMsg + "/" + child.msg + ", building their subthread (parent: " + child.parent + ")");
+                    //_ui.debugMessage("no fake root under container " + rootMsg + "/" + child.msg + ", building their subthread (parent: " + child.parent + ")");
                 }
                 // now build that child's thread
-                _ui.debugMessage("building child of " + rootMsg + ": " + child.msg);
+                //_ui.debugMessage("building child of " + rootMsg + ": " + child.msg);
                 ThreadReferenceNode childNode = buildThread(child.msg, msgContainers, rootMsgs, fakeRoots);
-                _ui.debugMessage("child of " + rootMsg + ": " + child.msg + " built");
+                //_ui.debugMessage("child of " + rootMsg + ": " + child.msg + " built");
                 node.addChild(childNode);
                 child = child.nextSibling;
             }
         }
 
-        _ui.debugMessage("buildThread: done with msg: " + rootMsg);
+        //_ui.debugMessage("buildThread: done with msg: " + rootMsg);
         return node;
     }
     
@@ -842,7 +847,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
-        _ui.debugMessage("filter thread status: allowedAuthorIds: " + allowedAuthorIds + " allowPubReplues to " + targetChannelId + ": " + allowPublicReplies + " root: " + root.getURI().toString());
+        //_ui.debugMessage("filter thread status: allowedAuthorIds: " + allowedAuthorIds + " allowPubReplues to " + targetChannelId + ": " + allowPublicReplies + " root: " + root.getURI().toString());
         return filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
     }
     
@@ -859,7 +864,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
             if (!nodeIsAuthorized) {
                 _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI().toString() + " parentAuth?" + parentIsAuthorized);
-                _ui.debugMessage("parent: " + node.getParent());                
+                //_ui.debugMessage("parent: " + node.getParent());                
                 node.setIsDummy(true);
             }
         } else {
@@ -871,7 +876,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterAuthorizationStatus((ThreadReferenceNode)node.getChild(i), authorIds, authorizeReplies, allowAnyone, nodeIsAuthorized || parentIsAuthorized);
             rv = rv && childIsEmpty;
         }
-        _ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
+        //_ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
     }
     
@@ -945,6 +950,122 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
+    }
+    
+    private ThreadReferenceNode[] sort(ThreadReferenceNode roots[]) {
+        return sort(roots, null);
+    }
+    private ThreadReferenceNode[] sort(ThreadReferenceNode peers[], ThreadReferenceNode parent) {
+        ThreadReferenceNode sorted[] = sortSiblings(peers);
+        if (parent != null)
+            parent.setChildren(sorted);
+        for (int i = 0; i < sorted.length; i++)
+            sort(sorted[i].getChildren(), sorted[i]);
+        return sorted;
+    }
+    private ThreadReferenceNode[] sortSiblings(ThreadReferenceNode peers[]) {
+        if ( (peers == null) || (peers.length <= 1) ) return peers;
+        switch (_sortField) {
+            case SORT_AUTHOR: return sortAuthor(peers);
+            case SORT_FORUM: return sortForum(peers);
+            case SORT_SUBJECT: return sortSubject(peers);
+            case SORT_DATE: 
+            default:
+                return sortDate(peers);
+        }
+    }
+    private ThreadReferenceNode[] sortAuthor(ThreadReferenceNode peers[]) {
+        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap keyToNode = new HashMap();
+        for (int i = 0; i < peers.length; i++) {
+            String author = peers[i].getName();
+            if (author == null) author = "";
+            author = author.toLowerCase();
+            while (keyToNode.containsKey(author))
+                author = author + " ";
+            keyToNode.put(author, peers[i]);
+            sorted.add(author);
+        }
+        _ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
+        int i = 0;
+        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
+            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        return rv;
+    }
+    private ThreadReferenceNode[] sortForum(ThreadReferenceNode peers[]) { 
+        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap keyToNode = new HashMap();
+        for (int i = 0; i < peers.length; i++) {
+            // todo: make this sort on the forum name, not its local internal channelId
+            String target = peers[i].getThreadTarget() + "";
+            // sorting with spaces at the end instead of numerically keeps all threads in the same channel together
+            while (keyToNode.containsKey(target)) 
+                target = target + " ";
+            keyToNode.put(target, peers[i]);
+            sorted.add(target);
+        }
+        _ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
+        int i = 0;
+        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
+            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        return rv;
+    }
+    private ThreadReferenceNode[] sortSubject(ThreadReferenceNode peers[]) { 
+        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap keyToNode = new HashMap();
+        for (int i = 0; i < peers.length; i++) {
+            String subject = peers[i].getSubject();
+            if (subject == null) subject = "";
+            subject = subject.toLowerCase();
+            _ui.debugMessage("sorting subject [" + subject + "], for message " + peers[i].getMsgId() + "/" + i);
+            while (keyToNode.containsKey(subject))
+                subject = subject + " ";
+            keyToNode.put(subject, peers[i]);
+            sorted.add(subject);
+        }
+        _ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
+        int i = 0;
+        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
+            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        return rv;
+    }
+    /** sort by *(sub)thread* date, not by message date */
+    private ThreadReferenceNode[] sortDate(ThreadReferenceNode peers[]) {
+        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap keyToNode = new HashMap();
+        for (int i = 0; i < peers.length; i++) {
+            long when = peers[i].getLatestMessageId();
+            while (keyToNode.containsKey(new Long(when)))
+                when++;
+            keyToNode.put(new Long(when), peers[i]);
+            sorted.add(new Long(when));
+        }
+        _ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
+        int i = 0;
+        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
+            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        return rv;
+    }
+    
+    private static final Comparator ASCENDING_COMPARATOR = new Comparator() {
+        public int compare(Object lhs, Object rhs) { return compareObj(lhs, rhs); }
+        public boolean equals(Object obj) { return obj == this; }
+    };
+    private static final Comparator DESCENDING_COMPARATOR = new Comparator() {
+        public int compare(Object lhs, Object rhs) { return compareObj(rhs, lhs); } // note order
+        public boolean equals(Object obj) { return obj == this; }
+    };
+    private static final int compareObj(Object lhs, Object rhs) {
+        if ( (lhs == null) && (rhs == null) ) return 0;
+        if (lhs == null) return 1;
+        if (rhs == null) return -1;
+        if (lhs instanceof Comparable)
+            return ((Comparable)lhs).compareTo(rhs);
+        else
+            return lhs.toString().compareTo(rhs.toString());
     }
     
     private ThreadReferenceNode[] prune(ThreadReferenceNode roots[]) {
@@ -1228,6 +1349,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         public ThreadMsgId getMsgId() { return _msg; }
         public void setAuthorId(long authorId) { _authorId = authorId; }
         public void setSubject(String subject) { _subject = subject; }
+        public String getSubject() { return _subject; }
         public void setThreadTarget(long channelId) { _targetChannelId = channelId; }
         /** this node represents something we do not have locally, or is filtered */
         public boolean isDummy() { return _dummy || getUniqueId() < 0; }
@@ -1291,6 +1413,19 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     return subject;
             }
             return "";
+        }
+        
+        public void setChildren(ThreadReferenceNode children[]) {
+            clearChildren();
+            if (children != null)
+                for (int i = 0; i < children.length; i++)
+                    addChild(children[i]);
+        }
+        public ThreadReferenceNode[] getChildren() {
+            ThreadReferenceNode rv[] = new ThreadReferenceNode[getChildCount()];
+            for (int i = 0; i < rv.length; i++)
+                rv[i] = (ThreadReferenceNode)getChild(i);
+            return rv;
         }
     }
 }
