@@ -1365,7 +1365,7 @@ public class DBClient {
             if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
                 continue;
             ChannelInfo info = getChannel(chanId.longValue());
-            if ( (name != null) && (!info.getName().startsWith(name)) )
+            if ( (name != null) && (!info.getName().toLowerCase().startsWith(name.toLowerCase())) )
                 continue;
             Set pub = info.getPublicTags();
             Set priv= info.getPrivateTags();
@@ -2415,6 +2415,32 @@ public class DBClient {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the message's subject", se);
             return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_MATCH_MESSAGE_KEYWORD = "SELECT msgId FROM channelMessage WHERE msgId = ? AND subject LIKE ?" +
+                                                            " UNION " +
+                                                            "SELECT msgId FROM messagePageData WHERE msgId = ? AND dataString LIKE ?";
+    public boolean messageKeywordMatch(long msgId, String keyword) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_MATCH_MESSAGE_KEYWORD);
+            stmt.setLong(1, msgId);
+            stmt.setString(2, "%" + keyword + "%");
+            stmt.setLong(3, msgId);
+            stmt.setString(4, "%" + keyword + "%");
+            rs = stmt.executeQuery();
+            boolean match = rs.next();
+            return match;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error searching for the keyword", se);
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}

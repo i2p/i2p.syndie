@@ -59,6 +59,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private boolean _pbe;
     private boolean _privateMessage;
     private boolean _unreadOnly;
+    private String _keyword;
     private Set _channelHashes;
     private Set _requiredTags;
     private Set _wantedTags;
@@ -135,6 +136,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         _privateMessage = criteria.getBoolean("private", false);
         _showThreaded = criteria.getBoolean("threaded", true);
         _unreadOnly = criteria.getBoolean("unreadonly", false);
+        
+        _keyword = criteria.getString("keyword");
     }
     
     private static final Set getTags(String tags[]) {
@@ -215,6 +218,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         _wantedTags = wanted;
         _rejectedTags = rejected;
     }
+    public void setKeyword(String keyword) { _keyword = keyword; }
         
     public int getThreadCount() { return _rootURIs.size(); }
     public SyndieURI getRootURI(int index) { return (SyndieURI)_rootURIs.get(index); }
@@ -303,6 +307,20 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
+        // filter the messages in the threads by keyword (we do this so late in the game in the
+        // hopes that the above will minimize how much we have to filter w/ fulltext searches..)
+        if ( (_keyword != null) && (_keyword.length() > 0) ) {
+            for (int i = 0; i < threads.length; i++) {    
+                if (threads[i] != null) {
+                    boolean empty = filterKeyword(threads[i]);
+                    if (empty) {
+                        _ui.debugMessage("reject because keyword search failed: \n" + threads[i]);
+                        threads[i] = null;
+                    }
+                }
+            }
+        }
+        
         // prune like a motherfucker,
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads);
@@ -783,6 +801,34 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             rv = rv && childIsEmpty;
         }
         _ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
+        return rv;
+    }
+    
+    /**
+     * null out any messages in the thread who do not have the keyword,
+     * returning true if the entire thread was nulled out
+     */
+    private boolean filterKeyword(ThreadReferenceNode node) {
+        boolean rv = true;
+        if (!node.isDummy()) {
+            ThreadMsgId id = node.getMsgId();
+            if (id != null) {
+                boolean match = _client.messageKeywordMatch(id.msgId, _keyword);
+                if (!match) {
+                    _ui.debugMessage("reject " + id + " because it didn't match the keyword");
+                    node.setIsDummy(true);
+                }
+            }
+        } else {
+            //_ui.debugMessage("node is a dummy: " + node.getMsgId());
+        }
+        if (!node.isDummy())
+            rv = false;
+        for (int i = 0; i < node.getChildCount(); i++) {
+            boolean childIsEmpty = filterKeyword((ThreadReferenceNode)node.getChild(i));
+            rv = rv && childIsEmpty;
+        }
+        _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
     }
     

@@ -247,7 +247,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         
         _filterRow = new Composite(_root, SWT.BORDER);
         _filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _filterRow.setLayout(new GridLayout(6, false));
+        _filterRow.setLayout(new GridLayout(8, false));
         
         // the tree keeps track of the components, updating 'em, etc, and disposing on tree disposal
         _tree.createFilterBar(_filterRow);
@@ -269,8 +269,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         Hash scope = null;
         if (uri.isChannel())
             scope = uri.getScope();
-        else if (uri.isSearch())
-            scope = uri.getHash("scope");
+        else if (uri.isSearch()) {
+            String scopes[] = uri.getStringArray("scope");
+            if ( (scopes != null) && (scopes.length == 1) )
+                scope = uri.getHash("scope");
+            else
+                scope = null;
+        }
         
         _browser.getUI().debugMessage("Update metadata for " + scope + " / " + uri);
         

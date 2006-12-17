@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
+import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
@@ -189,12 +190,26 @@ public class MessageTree implements Translatable, Themeable {
         private MessageTree _msgTree;
         private Label _filterLabel;
         private Combo _filterAge;
+        private Label _filterKeywordLabel;
+        private Text _filterKeyword;
         private Label _filterTagLabel;
         private Combo _filterTag;
         private Button _filterUnreadOnly;
         private Button _filterAdvanced;
+        private Menu _advancedMenu;
+        private MenuItem _advancedScopeAll;
+        private MenuItem _advancedScopeBookmarked;
+        private MenuItem _advancedScopeOther;
+        private MenuItem _advancedPrivacyPublic;
+        private MenuItem _advancedPrivacyAuthorized;
+        private MenuItem _advancedPrivacyPBE;
+        private MenuItem _advancedPrivacyPrivate;
+        private MenuItem _advancedThreadResults;
+        private MenuItem _advancedPassphraseRequired;
+        private ReferenceChooserPopup _forumChooser;
         /** if > 0, the custom date being filtered */
         private long _customDate;
+        private Hash _forumScopeOther;
         
         public FilterBar(BrowserControl browser, MessageTree msgTree, Composite bar) {
             _ctl = browser;
@@ -224,6 +239,16 @@ public class MessageTree implements Translatable, Themeable {
                 }
             });
 
+            
+            _filterKeywordLabel = new Label(_filterRow, SWT.NONE);
+            _filterKeywordLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+
+            _filterKeyword = new Text(_filterRow, SWT.BORDER | SWT.SINGLE);
+            _filterKeyword.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+            _filterKeyword.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) { _msgTree.applyFilter(); }
+            });
+            
             _filterTagLabel = new Label(_filterRow, SWT.NONE);
             _filterTagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
 
@@ -248,8 +273,56 @@ public class MessageTree implements Translatable, Themeable {
             _filterAdvanced = new Button(_filterRow, SWT.PUSH);
             _filterAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
             _filterAdvanced.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _advancedMenu.setVisible(true); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _advancedMenu.setVisible(true); }
+            });
+            /*
+            _filterAdvanced.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
+            });
+             */
+
+            _advancedMenu = new Menu(_filterAdvanced);
+            _filterAdvanced.setMenu(_advancedMenu);
+            
+            _advancedScopeAll = new MenuItem(_advancedMenu, SWT.RADIO);
+            _advancedScopeBookmarked = new MenuItem(_advancedMenu, SWT.RADIO);
+            _advancedScopeOther = new MenuItem(_advancedMenu, SWT.RADIO);
+            new MenuItem(_advancedMenu, SWT.SEPARATOR);
+            _advancedPrivacyPublic = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedPrivacyAuthorized = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedPrivacyPBE = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedPrivacyPrivate = new MenuItem(_advancedMenu, SWT.CHECK);
+            new MenuItem(_advancedMenu, SWT.SEPARATOR);
+            _advancedThreadResults = new MenuItem(_advancedMenu, SWT.CHECK);
+            new MenuItem(_advancedMenu, SWT.SEPARATOR);
+            _advancedPassphraseRequired = new MenuItem(_advancedMenu, SWT.CHECK);
+            
+            _advancedScopeAll.setSelection(true);
+            _advancedPrivacyPublic.setSelection(true);
+            _advancedPrivacyAuthorized.setSelection(true);
+            _advancedPrivacyPBE.setSelection(true);
+            _advancedPrivacyPrivate.setSelection(true);
+            _advancedThreadResults.setSelection(true);
+            
+            SelectionListener lsnr = new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
+            };
+            
+            _advancedScopeAll.addSelectionListener(lsnr);
+            _advancedScopeBookmarked.addSelectionListener(lsnr);
+            _advancedPrivacyPublic.addSelectionListener(lsnr);
+            _advancedPrivacyAuthorized.addSelectionListener(lsnr);
+            _advancedPrivacyPBE.addSelectionListener(lsnr);
+            _advancedPrivacyPrivate.addSelectionListener(lsnr);
+            _advancedThreadResults.addSelectionListener(lsnr);
+            _advancedPassphraseRequired.addSelectionListener(lsnr);
+            
+            _advancedScopeOther.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(); }
             });
             
             _ctl.getTranslationRegistry().register(this);
@@ -259,6 +332,20 @@ public class MessageTree implements Translatable, Themeable {
         public void dispose() {
             _ctl.getTranslationRegistry().unregister(this);
             _ctl.getThemeRegistry().unregister(this);
+        }
+        
+        private void pickForum() {
+            if (_forumChooser == null) {
+                _forumChooser = new ReferenceChooserPopup(_filterRow.getShell(), _ctl, new ReferenceChooserTree.AcceptanceListener () {
+                    public void referenceAccepted(SyndieURI uri) {
+                        Hash scope = uri.getScope();
+                        _forumScopeOther = scope;
+                        _msgTree.applyFilter();
+                    }
+                    public void referenceChoiceAborted() {}
+                });
+            }
+            _forumChooser.show();
         }
         
         public void pickDate() {
@@ -300,6 +387,15 @@ public class MessageTree implements Translatable, Themeable {
             } else {
                 _filterTag.setText(tags[0]);
             }
+            
+            _forumScopeOther = uri.getScope();
+            _advancedScopeAll.setSelection(false);
+            _advancedScopeBookmarked.setSelection(false);
+            _advancedScopeOther.setSelection(false);
+            if (_forumScopeOther != null)
+                _advancedScopeOther.setSelection(true);
+            else
+                _advancedScopeAll.setSelection(true);
         }
         
         
@@ -446,18 +542,93 @@ public class MessageTree implements Translatable, Themeable {
                 attributes.put("unreadonly", Boolean.TRUE.toString());
             else
                 attributes.remove("unreadonly");
+            
+            String keyword = _filterKeyword.getText();
+            keyword = keyword.trim();
+            if (keyword.length() > 0)
+                attributes.put("keyword", keyword);
+            else
+                attributes.remove("keyword");
+            
+            if (_advancedScopeAll.getSelection()) {
+                attributes.put("scope", new String[] { "all" });
+            } else if (_advancedScopeOther.getSelection() && (_forumScopeOther != null)) {
+                attributes.put("scope", new String[] { _forumScopeOther.toBase64() } );
+            } else {
+                attributes.put("scope", getBookmarkedScopes());
+            }
+            
+            if (_advancedPrivacyPBE.getSelection())
+                attributes.put("pbe", "true");
+            else
+                attributes.remove("pbe");
+            if (_advancedPrivacyPrivate.getSelection())
+                attributes.put("private", "true");
+            else
+                attributes.remove("private");
 
+            if (_advancedPassphraseRequired.getSelection()) {
+                attributes.put("encrypted", "true");
+                attributes.put("pbe", "true");
+            } else {
+                attributes.remove("encrypted");
+            }
+            
+            if (_advancedThreadResults.getSelection())
+                attributes.put("threaded", "true");
+            else
+                attributes.put("threaded", "false");
+            
             String rv = new SyndieURI(uri.getType(), attributes).toString();
             _ctl.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
             return rv;
+        }
+        
+        private String[] getBookmarkedScopes() {
+            List scopes = new ArrayList();
+            List nodes = _ctl.getBookmarks();
+            for (int i = 0; i < nodes.size(); i++)
+                getBookmarkedScopes((NymReferenceNode)nodes.get(i), scopes);
+            _ctl.getUI().debugMessage("bookmarked scopes: " + scopes);
+            return (String[])scopes.toArray(new String[0]);
+        }
+        private void getBookmarkedScopes(NymReferenceNode node, List scopes) {
+            if (!node.getIsBanned() && !node.getIsIgnored()) {
+                SyndieURI uri = node.getURI();
+                Hash scope = null;
+                if (uri.isChannel())
+                    scope = uri.getScope();
+                else if (uri.isSearch())
+                    scope = uri.getHash("scope");
+                if ( (scope != null) && (!scopes.contains(scope.toBase64())) )
+                    scopes.add(scope.toBase64());
+            } else {
+               _ctl.getUI().debugMessage("scope isbanned/ignored: " + node.getIsBanned() +"/"+ node.getIsIgnored() + " " + node.getURI());
+            }
+            for (int i = 0; i < node.getChildCount(); i++)
+                getBookmarkedScopes((NymReferenceNode)node.getChild(i), scopes);
         }
         
         public void translate(TranslationRegistry registry) {
             _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filters:"));
 
             _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
+            _filterKeywordLabel.setText(registry.getText(T_FILTER_KEYWORD, "Text:"));
             _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
             _filterUnreadOnly.setText(registry.getText(T_FILTER_UNREAD, "Unread only"));
+            _filterKeyword.setToolTipText(registry.getText(T_FILTER_KEYWORD_TOOLTIP, "Search pages and subjects for the phrase"));
+            
+            _advancedScopeAll.setText(registry.getText(T_ADVANCED_SCOPE_ALL, "All forums"));
+            _advancedScopeBookmarked.setText(registry.getText(T_ADVANCED_SCOPE_BOOKMARKED, "Bookmarked forums"));
+            _advancedScopeOther.setText(registry.getText(T_ADVANCED_SCOPE_OTHER, "Specific forum..."));
+            
+            _advancedPrivacyPublic.setText(registry.getText(T_ADVANCED_PRIVACY_PUBLIC, "Readable by: anyone"));
+            _advancedPrivacyAuthorized.setText(registry.getText(T_ADVANCED_PRIVACY_AUTHORIZED, "Readable by: authorized readers"));
+            _advancedPrivacyPBE.setText(registry.getText(T_ADVANCED_PRIVACY_PBE, "Readable by: those with a passphrase"));
+            _advancedPrivacyPrivate.setText(registry.getText(T_ADVANCED_PRIVACY_PRIVATE, "Readable by: forum administrators"));
+            _advancedThreadResults.setText(registry.getText(T_ADVANCED_THREAD, "Organize results in threads"));
+            _advancedPassphraseRequired.setText(registry.getText(T_ADVANCED_PASSPHRASE_REQUIRED, "Messages requiring a new passphrase"));
+            
             populateAgeCombo();
             populateTagCombo();
         }
@@ -466,6 +637,8 @@ public class MessageTree implements Translatable, Themeable {
             _filterAdvanced.setFont(theme.BUTTON_FONT);
             _filterLabel.setFont(theme.DEFAULT_FONT);
             _filterAge.setFont(theme.DEFAULT_FONT);
+            _filterKeywordLabel.setFont(theme.DEFAULT_FONT);
+            _filterKeyword.setFont(theme.DEFAULT_FONT);
             _filterTagLabel.setFont(theme.DEFAULT_FONT);
             _filterTag.setFont(theme.DEFAULT_FONT);
             _filterUnreadOnly.setFont(theme.DEFAULT_FONT);
@@ -570,7 +743,7 @@ public class MessageTree implements Translatable, Themeable {
         if (!_hideFilter) {
             Composite filterRow = new Composite(_root, SWT.BORDER);
             filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            filterRow.setLayout(new GridLayout(6, false));
+            filterRow.setLayout(new GridLayout(8, false));
             createFilterBar(filterRow);
         }
         
@@ -1006,6 +1179,18 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_FILTER_ADVANCED = "syndie.gui.messagetree.filter.advanced";
     private static final String T_FILTER_EDIT_SHELL = "syndie.gui.messagetree.filter.edit.shell";
     private static final String T_FILTER_TAG = "syndie.gui.messagetree.filter.tag";
+    private static final String T_FILTER_KEYWORD = "syndie.gui.messagetree.filter.keyword";
+    private static final String T_FILTER_KEYWORD_TOOLTIP = "syndie.gui.messagetree.filter.keywordtooltip";
+    
+    private static final String T_ADVANCED_SCOPE_ALL = "syndie.gui.messagetree.filteradvanced.scope.all";
+    private static final String T_ADVANCED_SCOPE_BOOKMARKED = "syndie.gui.messagetree.filteradvanced.scope.bookmarked";
+    private static final String T_ADVANCED_SCOPE_OTHER = "syndie.gui.messagetree.filteradvanced.scope.other";
+    private static final String T_ADVANCED_PRIVACY_PUBLIC = "syndie.gui.messagetree.filteradvanced.priv.public";
+    private static final String T_ADVANCED_PRIVACY_AUTHORIZED = "syndie.gui.messagetree.filteradvanced.priv.auth";
+    private static final String T_ADVANCED_PRIVACY_PBE = "syndie.gui.messagetree.filteradvanced.priv.pbe";
+    private static final String T_ADVANCED_PRIVACY_PRIVATE = "syndie.gui.messagetree.filteradvanced.priv.private";
+    private static final String T_ADVANCED_THREAD = "syndie.gui.messagetree.filteradvanced.thread";
+    private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     
     private static final String T_VIEW = "syndie.gui.messagetree.view";
     private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
