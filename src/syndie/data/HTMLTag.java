@@ -99,10 +99,12 @@ public class HTMLTag {
                 // name not known, and we haven't reached whitespace yet.  keep going
             }
         } // end looping over the tag body
-        if ((this.name == null) || (this.name.trim().length() <= 0)) {
+        if ((name == null) || (name.trim().length() <= 0)) {
             //System.out.println("name is empty for tag [" + tagBody + "] @ " + startIndex);
-            this.name = Constants.lowercase(tagBody);
+            name = Constants.lowercase(tagBody);
         }
+        if ( (name != null) && name.endsWith("/") && (name.length() > 1) )
+            name = name.substring(0, name.length()-1);
     }
     
     public String getAttribValue(String name) { return attributes.getProperty(Constants.lowercase(name)); }

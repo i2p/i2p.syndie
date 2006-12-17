@@ -667,11 +667,6 @@ public class PageRenderer implements Themeable {
             //if (defFound)
             //    _browser.getUI().debugMessage("def found on line " + line + ", indentLevel: " + indentLevel + " tags: " + lineTags + "\n content: " + _text.getText(lineStart, lineEnd));
 
-            
-            //System.out.println("line " + line + " [" + lineStart + ":" + lineEnd + "]: quote? " + quoteFound + " tags: " + tags 
-            //                   + " (align: " + (alignment==SWT.LEFT ? "left" : alignment == SWT.CENTER ? "center" : "right")
-            //                   + " indent: " + indentLevel + ")");
-            
             timesPrepare[line] = System.currentTimeMillis();
             
             // we could optimize the line settings to deal with sequential lines w/ == settings,
@@ -689,8 +684,11 @@ public class PageRenderer implements Themeable {
             }
 
             if (bullet != null) {
-                bullet.style.metrics.width = indentLevel * 4 * charWidth;
+                int width = bullet.style.metrics.width;
+                if (width <= 0)
+                    bullet.style.metrics.width = indentLevel * 4 * charWidth;
                 _text.setLineBullet(line, 1, bullet);
+                //_text.setLineIndent(line, 1, indentLevel * 4 * charWidth);
                 long t3 = System.currentTimeMillis();
                 bulletTime += (t3-t2);
             } else if (indentLevel > 0) {
