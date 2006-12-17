@@ -62,7 +62,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     private MenuItem _importAllToLocal;
     private ArrayList _refs;
     private EditPopup _editPopup;
-    private MessageEditor _editor;
+    //private MessageEditor _editor;
     
     /** TreeItem to ReferenceNode */
     private Map _itemToRefNode;
@@ -70,16 +70,18 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     private boolean _editable;
     
     public ManageReferenceChooser(Composite parent, BrowserControl browser, boolean editable) {
+        /*
         this(parent, browser, editable, null);
     }
     public ManageReferenceChooser(Composite parent, BrowserControl browser, MessageEditor editor) {
         this(parent, browser, true, editor);
     }
     public ManageReferenceChooser(Composite parent, BrowserControl browser, boolean editable, MessageEditor editor) {
+         */
         _browser = browser;
         _parent = parent;
         _editable = editable;
-        _editor = editor;
+        //_editor = editor;
         _refs = new ArrayList();
         _itemToRefNode = new HashMap();
         initComponents();
@@ -636,7 +638,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     private class EditPopup extends LinkBuilderPopup {
         private ReferenceNode _parentNode;
         private ReferenceNode _currentNode;
-        public EditPopup() { super(_browser, _parent.getShell(), _editor); }
+        public EditPopup() { super(_browser, _parent.getShell(), null); }//_editor); }
         protected void uriBuilt(SyndieURI uri) {
             if (_currentNode == null) {
                 add(uri, _parentNode);

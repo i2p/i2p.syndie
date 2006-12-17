@@ -50,7 +50,7 @@ abstract class BrowserTab implements Themeable {
             Long postponeId = uri.getLong("postponeid");
             Long postponeVer = uri.getLong("postponever");
             if ( (postponeId != null) && (postponeVer != null) ) {
-                return new MessageEditorNewTab(browser, uri);
+                return new MessageEditorTab(browser, uri);
                 //return new EditMessageTab(browser, uri);
             } else {
                 Hash forum = uri.getScope();
@@ -62,7 +62,7 @@ abstract class BrowserTab implements Themeable {
                 boolean asReply = uri.getBoolean("reply", false);
                 // create a new editor tab
                 //return new EditMessageTab(browser, uri, scope, parent, asReply);
-                return new MessageEditorNewTab(browser, uri, forum, parent, asReply);
+                return new MessageEditorTab(browser, uri, forum, parent, asReply);
             }
         } else if (uri.isChannel()) {
             if (uri.getScope() != null) {
@@ -108,7 +108,7 @@ abstract class BrowserTab implements Themeable {
         } else if (uri.isSearch()) {
             return new BrowseForumTab(browser, uri);
         } else if ("x-postnew".equals(uri.getType())) {
-            return new MessageEditorNewTab(browser, uri);
+            return new MessageEditorTab(browser, uri);
         }
         
         return null;
