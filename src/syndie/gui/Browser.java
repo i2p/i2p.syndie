@@ -270,6 +270,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _sash.setWeights(new int[] { 20, 80 });
         _shell.setMinimumSize(_shell.computeSize(600, 300));
+        // bah, default to hiding the bookmark tree
+        _sash.setMaximizedControl(_tabs);
         
         debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         

@@ -408,7 +408,12 @@ public class MessageTree implements Translatable, Themeable {
                 _filterTag.setText(tags[0]);
             }
             
-            _forumScopeOther = uri.getScope();
+            if (uri.isChannel())
+                _forumScopeOther = uri.getScope();
+            else if (uri.isSearch()) {
+                // there may be more than one, but atm, the gui only supports one 'other' at a time
+                _forumScopeOther = uri.getHash("scope");
+            }
             _advancedScopeAll.setSelection(false);
             _advancedScopeBookmarked.setSelection(false);
             _advancedScopeOther.setSelection(false);
@@ -484,15 +489,20 @@ public class MessageTree implements Translatable, Themeable {
         private String buildFilter() {
             SyndieURI uri = null;
             String filter = _msgTree.getFilter();
+            _ctl.getUI().debugMessage("build filter, tree has [" + filter + "]");
             try {
                 if ( (filter == null) || (filter.trim().length() <= 0) )
                     filter = SyndieURI.DEFAULT_SEARCH_URI.toString();
                 uri = new SyndieURI(filter);
             } catch (URISyntaxException use) {
+                _ctl.getUI().debugMessage("build filter, tree is invalid [" + filter + "]", use);
                 uri = SyndieURI.DEFAULT_SEARCH_URI;
             }
 
             Map attributes = uri.getAttributes();
+            
+            _ctl.getUI().debugMessage("build filter w/ base attributes: " + attributes);
+            
             int days = 1;
             switch (_filterAge.getSelectionIndex()) {
                 case AGE_CUSTOM:
@@ -577,6 +587,8 @@ public class MessageTree implements Translatable, Themeable {
             } else {
                 attributes.put("scope", getBookmarkedScopes());
             }
+            
+            _ctl.getUI().debugMessage("buildFilter scope: " + attributes.get("scope") + " otherScope: " + _forumScopeOther);
             
             if (_advancedPrivacyPBE.getSelection())
                 attributes.put("pbe", Boolean.TRUE.toString());
@@ -842,11 +854,14 @@ public class MessageTree implements Translatable, Themeable {
             try {
                 uri = new SyndieURI(filter);
                 _filter = uri.toString();
+                _browser.getUI().debugMessage("Good filter set [" + filter + "]");
             } catch (URISyntaxException use) {
+                _browser.getUI().debugMessage("Bad filter set [" + filter + "]", use);
                 uri = new SyndieURI("search", new HashMap());
                 _filter = "";
             }
         } else {
+            _browser.getUI().debugMessage("Blank filter set");
             _filter = "";
         }
     
@@ -869,7 +884,7 @@ public class MessageTree implements Translatable, Themeable {
                 final SyndieURI uri = new SyndieURI(txt);
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
-                        _browser.getUI().debugMessage("begin async calculating nodes in the tree");
+                        _browser.getUI().debugMessage("begin async calculating nodes in the tree: " + uri.toString());
                         //try { Thread.sleep(200); } catch (InterruptedException ie) {}
                         applyFilter(txt, uri, calculateNodes(uri)); 
                         _browser.getUI().debugMessage("end async calculating nodes in the tree");
