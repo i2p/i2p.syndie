@@ -468,6 +468,8 @@ public class SyndieURI {
             throw new RuntimeException("failed on strings");
         if (!test(createList()))
             throw new RuntimeException("failed on list");
+        if (!test(createEmptyList()))
+            throw new RuntimeException("failed on empty list");
         if (!test(createMixed()))
             throw new RuntimeException("failed on mixed");
         if (!test(createMultiMixed()))
@@ -485,6 +487,14 @@ public class SyndieURI {
         for (int i = 0; i < 8; i++)
             m.put("key" + i, "val" + i);
         String str[] = new String[] { "stringElement1", "stringElement2", "stringElement3" };
+        m.put("stringList", str);
+        return m;
+    }
+    private static TreeMap createEmptyList() {
+        TreeMap m = new TreeMap();
+        for (int i = 0; i < 8; i++)
+            m.put("key" + i, "val" + i);
+        String str[] = new String[0];
         m.put("stringList", str);
         return m;
     }
@@ -593,19 +603,27 @@ public class SyndieURI {
                     List l = new ArrayList();
                     boolean ok = true;
                     remaining.deleteCharAt(0);
-                    while (bdecodeNext(remaining, l)) {
-                        if (remaining.charAt(0) == 'e') {
-                            String str[] = new String[l.size()];
-                            for (int i = 0; i < str.length; i++)
-                                str[i] = (String)l.get(i);
-                            target.put(key, str);
-                            key = null;
-                            remaining.deleteCharAt(0);
-                            return;
+                    if (remaining.charAt(0) == 'e') {
+                        // 0 element list
+                        remaining.deleteCharAt(0);
+                        target.put(key, new String[0]);
+                        key = null;
+                        return;
+                    } else {
+                        while (bdecodeNext(remaining, l)) {
+                            if (remaining.charAt(0) == 'e') {
+                                String str[] = new String[l.size()];
+                                for (int i = 0; i < str.length; i++)
+                                    str[i] = (String)l.get(i);
+                                target.put(key, str);
+                                key = null;
+                                remaining.deleteCharAt(0);
+                                return;
+                            }
                         }
+                        // decode failed
+                        throw new URISyntaxException(remaining.toString(), "Unterminated list");
                     }
-                    // decode failed
-                    throw new URISyntaxException(remaining.toString(), "Unterminated list");
                 case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
                     String str = bdecodeNext(remaining);
                     if (str == null) {

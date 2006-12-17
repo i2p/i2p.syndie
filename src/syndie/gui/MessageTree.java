@@ -1134,23 +1134,24 @@ public class MessageTree implements Translatable, Themeable {
     
     private void resizeCols() {
         int total = _tree.getClientArea().width - getMessageFlagBarWidth(_tree);
-        int subjWidth = total / 2;
+        int subjWidth = total / 3;
         
-        int chanWidth = total / 10;
+        int chanWidth = total / 5;
         if (!_showChannel) chanWidth = 0;
-        int authWidth = total / 15;
+        int authWidth = total / 5;
         if (!_showAuthor) authWidth = 0;
-        int dateWidth = total / 10;
-        if (!_showDate) dateWidth = 0;
-        int tagsWidth = total / 15;
-        if (!_showTags) tagsWidth = 0;
+        //int dateWidth = total * 1 / 10;
+        //if (!_showDate) dateWidth = 0;
+        //int tagsWidth = total / 5;
+        //if (!_showTags) tagsWidth = 0;
         
         ////_colType.setWidth(24);
         _colSubject.setWidth(subjWidth);
         _colChannel.setWidth(chanWidth);
         _colAuthor.setWidth(authWidth);
-        _colDate.setWidth(dateWidth);
-        _colTags.setWidth(tagsWidth);
+        _colDate.pack();
+        //_colTags.setWidth(tagsWidth);
+        _colTags.pack();
         _colType.pack();
         
         /*
