@@ -57,7 +57,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private int _maxKeys;
     private boolean _alreadyDecrypted;
     private boolean _pbe;
+    private boolean _publicMessage;
     private boolean _privateMessage;
+    private boolean _authorizedMessage;
     private boolean _unreadOnly;
     private String _keyword;
     private Set _channelHashes;
@@ -132,8 +134,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         _maxKeys = getInt(criteria.getLong("keymax"));
     
         _alreadyDecrypted = !criteria.getBoolean("encrypted", false);
-        _pbe = criteria.getBoolean("pbe", false);
-        _privateMessage = criteria.getBoolean("private", false);
+        _pbe = criteria.getBoolean("pbe", true);
+        _publicMessage = criteria.getBoolean("public", true);
+        _privateMessage = criteria.getBoolean("private", true);
+        _authorizedMessage = criteria.getBoolean("authorized", true);
         _showThreaded = criteria.getBoolean("threaded", true);
         _unreadOnly = criteria.getBoolean("unreadonly", false);
         
@@ -250,6 +254,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         
         _client.beginTrace();
     
+        if (!_alreadyDecrypted && _pbe) {
+            gatherPBEPendingDecryption();
+            return;
+        }
+        
         // filter by date and scope only
         Set matchingMsgIds = getMatchingMsgIds();
         _ui.debugMessage("matching msgIds: " + matchingMsgIds);
@@ -307,6 +316,20 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
+
+        // filter the messages in the threads by type (pbe/private/public/authorized)
+        if ( !_pbe || !_privateMessage || !_publicMessage || !_authorizedMessage) {
+            for (int i = 0; i < threads.length; i++) {    
+                if (threads[i] != null) {
+                    boolean empty = filterPrivacy(threads[i]);
+                    if (empty) {
+                        _ui.debugMessage("reject because privacy failed: \n" + threads[i]);
+                        threads[i] = null;
+                    }
+                }
+            }
+        }
+        
         // filter the messages in the threads by keyword (we do this so late in the game in the
         // hopes that the above will minimize how much we have to filter w/ fulltext searches..)
         if ( (_keyword != null) && (_keyword.length() > 0) ) {
@@ -340,7 +363,16 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "WHERE importDate > ? AND messageId > ? " +
                 "AND isCancelled = FALSE AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
-    private Set getMatchingMsgIds() {
+    
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId FROM channelMessage " +
+                "JOIN channel ON targetChannelId = channelId " +
+                "WHERE channelHash = ? AND importDate > ? AND messageId > ? " +
+                "AND pbePrompt IS NOT NULL";
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId FROM channelMessage " +
+                "WHERE importDate > ? AND messageId > ? " +
+                "AND pbePrompt IS NOT NULL";
+    private Set getMatchingMsgIds() { return getMatchingMsgIds(false); }
+    private Set getMatchingMsgIds(boolean pbePending) {
         long minImportDate = _earliestReceiveDate;
         long minMsgId = _earliestPostDate;
         
@@ -352,7 +384,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         
         try {
             if (_channelHashes != null) {
-                stmt = _client.con().prepareStatement(SQL_GET_BASE_MSGS_BY_TARGET);
+                String query = SQL_GET_BASE_MSGS_BY_TARGET;
+                if (pbePending)
+                    query = SQL_GET_BASE_MSGS_BY_TARGET_PBE;
+                stmt = _client.con().prepareStatement(query);
                 
                 for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
@@ -372,7 +407,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 stmt.close();
                 stmt = null;
             } else {
-                stmt = _client.con().prepareStatement(SQL_GET_BASE_MSGS_ALLCHANS);
+                String query = SQL_GET_BASE_MSGS_ALLCHANS;
+                if (pbePending)
+                    query = SQL_GET_BASE_MSGS_ALLCHANS_PBE;
+                stmt = _client.con().prepareStatement(query);
                 stmt.setDate(1, new java.sql.Date(minImportDate));
                 stmt.setLong(2, minMsgId);
                     
@@ -394,6 +432,38 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         return matchingMsgIds;
+    }
+    
+    private void gatherPBEPendingDecryption() {
+        Set matchingMsgIds = getMatchingMsgIds(true);
+        _ui.debugMessage("PBE pending matching msgIds: " + matchingMsgIds);
+        
+        // the messages are still encrypted, so we dont know too much.  fake
+        // what we do know though
+        for (Iterator iter = matchingMsgIds.iterator(); iter.hasNext(); ) {
+            Long msgId = (Long)iter.next();
+            ThreadMsgId tmi = new ThreadMsgId(msgId.longValue());
+            tmi.scope = _client.getMessageScope(tmi.msgId);
+            tmi.messageId = _client.getMessageId(tmi.msgId);
+
+            long chanId = _client.getChannelId(tmi.scope);
+
+            ThreadReferenceNode node = new ThreadReferenceNode(tmi);
+            node.setURI(SyndieURI.createMessage(tmi.scope, tmi.messageId));
+            node.setAuthorId(chanId);
+            node.setName("");
+            node.setDescription("");
+            node.setThreadTarget(chanId);
+
+            _roots.add(node);
+            _rootURIs.add(node.getURI());
+            _threadLatestAuthorId.add(new Long(chanId));
+            _threadLatestPostDate.add(new Long(tmi.messageId));
+            _threadMessages.add(new Integer(1));
+            _threadRootAuthorId.add(new Long(chanId));
+            _threadSubject.add("");
+            _threadTags.add(new ArrayList(0));
+        }
     }
     
     private ThreadReferenceNode[] buildThreads(Set matchingMsgIds) {
@@ -605,7 +675,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 // this effectively runs recursively to populate entries in rv for
                 // the ancestors of the message and any of its ancestors, that we
                 // know of
-                buildAncestors(_client, _ui, tmi, rv);
+                if (_showThreaded)
+                    buildAncestors(_client, _ui, tmi, rv);
             }
         }
         return rv;
@@ -801,6 +872,50 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             rv = rv && childIsEmpty;
         }
         _ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
+        return rv;
+    }
+    
+    /**
+     * null out any messages in the thread who do not meet the privacy requirements,
+     * returning true if the entire thread was nulled out
+     */
+    private boolean filterPrivacy(ThreadReferenceNode node) {
+        boolean rv = true;
+        if (!node.isDummy()) {
+            ThreadMsgId id = node.getMsgId();
+            if (id != null) {
+                int privacy = _client.getMessagePrivacy(id.msgId);
+                switch (privacy) {
+                    case DBClient.PRIVACY_AUTHORIZEDONLY:
+                        if (!_authorizedMessage)
+                            node.setIsDummy(true);
+                        break;
+                    case DBClient.PRIVACY_PBE:
+                        if (!_pbe)
+                            node.setIsDummy(true);
+                        break;
+                    case DBClient.PRIVACY_PRIVREPLY:
+                        if (!_privateMessage)
+                            node.setIsDummy(true);
+                        break;
+                    case DBClient.PRIVACY_PUBLIC:
+                        if (!_publicMessage)
+                            node.setIsDummy(true);
+                        break;
+                }
+                if (node.isDummy())
+                    _ui.debugMessage("rejecting a node because of the privacy needs: " + privacy + ": " + id.msgId);
+            }
+        } else {
+            //_ui.debugMessage("node is a dummy: " + node.getMsgId());
+        }
+        if (!node.isDummy())
+            rv = false;
+        for (int i = 0; i < node.getChildCount(); i++) {
+            boolean childIsEmpty = filterPrivacy((ThreadReferenceNode)node.getChild(i));
+            rv = rv && childIsEmpty;
+        }
+        _ui.debugMessage("filter privacy rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
     }
     

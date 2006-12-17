@@ -286,6 +286,10 @@ public class PageRenderer implements Themeable {
             showNoPage();
             return;
         }
+        //if (msg.getPassphrasePrompt() != null) {
+        //    showNoPage();
+        //    return;
+        //}
         Long page = null;
         page = uri.getLong("page");
         if (page != null) {

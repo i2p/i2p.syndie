@@ -2447,6 +2447,79 @@ public class DBClient {
         }
     }
     
+    public static final int PRIVACY_UNKNOWN = -1;
+    public static final int PRIVACY_PBE = 0;
+    public static final int PRIVACY_PRIVREPLY = 1;
+    public static final int PRIVACY_AUTHORIZEDONLY = 2;
+    public static final int PRIVACY_PUBLIC = 3;
+    private static final String SQL_GET_MESSAGE_PRIVACY = "SELECT wasEncrypted, wasPBE, wasPrivate, wasAuthorized FROM channelMessage WHERE msgId = ? AND readKeyMissing = FALSE AND pbePrompt IS NULL AND replyKeyMissing = FALSE";
+    public int getMessagePrivacy(long msgId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PRIVACY);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean encrypted = rs.getBoolean(1);
+                if (rs.wasNull()) encrypted = false;
+                boolean pbe = rs.getBoolean(2);
+                if (rs.wasNull()) pbe = false;
+                boolean privReply = rs.getBoolean(3);
+                if (rs.wasNull()) privReply = false;
+                boolean authorized = rs.getBoolean(4);
+                if (rs.wasNull()) authorized = false;
+                
+                if (!encrypted)
+                    return PRIVACY_PUBLIC;
+                else if (pbe)
+                    return PRIVACY_PBE;
+                else if (privReply)
+                    return PRIVACY_PRIVREPLY;
+                else
+                    return PRIVACY_AUTHORIZEDONLY;
+            } else {
+                return PRIVACY_UNKNOWN;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting message privacy", se);
+            return PRIVACY_UNKNOWN;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_PASSPHRASE_PROMPT = "SELECT pbePrompt FROM channelMessage WHERE msgId = ?";
+    /**
+     * return the passphrase prompt required to decrypt the pbe encrypted message, 
+     * or null if the message is already decrypted or does not require a passphrase
+     */
+    public String getMessagePassphrasePrompt(long msgId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PASSPHRASE_PROMPT);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting message passphrase prompt", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }        
+    }
+    
     /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageData(long internalMessageId, int pageNum) {

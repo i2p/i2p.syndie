@@ -318,7 +318,27 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.addSelectionListener(lsnr);
             _advancedPrivacyPrivate.addSelectionListener(lsnr);
             _advancedThreadResults.addSelectionListener(lsnr);
-            _advancedPassphraseRequired.addSelectionListener(lsnr);
+            
+            _advancedPassphraseRequired.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent evt) {
+                    if (_advancedPassphraseRequired.getSelection()) {
+                        _advancedPrivacyPublic.setSelection(false);
+                        _advancedPrivacyAuthorized.setSelection(false);
+                        _advancedPrivacyPrivate.setSelection(false);
+                        _advancedPrivacyPBE.setSelection(true);
+                    }
+                    _msgTree.applyFilter();
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    if (_advancedPassphraseRequired.getSelection()) {
+                        _advancedPrivacyPublic.setSelection(false);
+                        _advancedPrivacyAuthorized.setSelection(false);
+                        _advancedPrivacyPrivate.setSelection(false);
+                        _advancedPrivacyPBE.setSelection(true);
+                    }
+                    _msgTree.applyFilter();
+                }
+            });
             
             _advancedScopeOther.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
@@ -559,25 +579,33 @@ public class MessageTree implements Translatable, Themeable {
             }
             
             if (_advancedPrivacyPBE.getSelection())
-                attributes.put("pbe", "true");
+                attributes.put("pbe", Boolean.TRUE.toString());
             else
-                attributes.remove("pbe");
+                attributes.put("pbe", Boolean.FALSE.toString());
             if (_advancedPrivacyPrivate.getSelection())
-                attributes.put("private", "true");
+                attributes.put("private", Boolean.TRUE.toString());
             else
-                attributes.remove("private");
+                attributes.put("private", Boolean.FALSE.toString());
+            if (_advancedPrivacyPublic.getSelection())
+                attributes.put("public", Boolean.TRUE.toString());
+            else
+                attributes.put("public", Boolean.FALSE.toString());
+            if (_advancedPrivacyAuthorized.getSelection())
+                attributes.put("authorized", Boolean.TRUE.toString());
+            else
+                attributes.put("authorized", Boolean.FALSE.toString());
 
             if (_advancedPassphraseRequired.getSelection()) {
-                attributes.put("encrypted", "true");
-                attributes.put("pbe", "true");
+                attributes.put("encrypted", Boolean.TRUE.toString());
+                attributes.put("pbe", Boolean.TRUE.toString());
             } else {
                 attributes.remove("encrypted");
             }
             
             if (_advancedThreadResults.getSelection())
-                attributes.put("threaded", "true");
+                attributes.put("threaded", Boolean.TRUE.toString());
             else
-                attributes.put("threaded", "false");
+                attributes.put("threaded", Boolean.FALSE.toString());
             
             String rv = new SyndieURI(uri.getType(), attributes).toString();
             _ctl.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
