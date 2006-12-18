@@ -1,5 +1,6 @@
 package syndie.db;
 
+import gnu.crypto.hash.Sha256Standalone;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -21,17 +23,16 @@ import net.i2p.data.SessionKey;
  * CLI parameters: ([--port $num] [--listeners $num] [--writable true] | [--kill true])
  */
 public class HTTPServ implements CLI.Command {
-    private ServerSocket _ssocket;
+    private static ServerSocket _ssocket;
     private List _runners;
     /** accepted Socket instances that haven't run yet */
     private static List _pendingSockets = new ArrayList();
     private DBClient _client;
-    private UI _ui;
+    private static UI _ui;
     private static boolean _alive;
     private boolean _allowPost;
     
     public HTTPServ() {
-        _ssocket = null;
         _runners = new ArrayList();
         _client = null;
         _allowPost = false;
@@ -39,10 +40,21 @@ public class HTTPServ implements CLI.Command {
     
     public static void killAll() { 
         _alive = false; 
+        _ui.debugMessage("Marking server as dead");
         synchronized (_pendingSockets) { 
             _pendingSockets.notifyAll(); 
-        } 
+        }
+        try {
+            if (_ssocket != null) {
+                _ui.debugMessage("Closing server socket");
+                _ssocket.close();
+            }
+        } catch (IOException ioe) {
+            _ui.debugMessage("Problem closing server socket", ioe);
+        }
+        _ssocket = null;
     }
+    public static boolean isAlive() { return _alive; }
 
     public DBClient runCommand(Opts opts, UI ui, DBClient client) {
         _client = client;
@@ -60,6 +72,7 @@ public class HTTPServ implements CLI.Command {
         try {
             _ssocket = new ServerSocket(port);
             _alive = true;
+            _ui.debugMessage("Set server socket to " + _ssocket);
             for (int i = 0; i < listeners; i++) {
                 Thread t = new Thread(new Runner(), "HTTPServ run " + i);
                 t.setDaemon(true);
@@ -81,9 +94,10 @@ public class HTTPServ implements CLI.Command {
     
     private class AcceptRunner implements Runnable {
         public void run() {
-            while (_alive) {
+            while (_alive && _ssocket != null) {
                 try {
                     Socket socket = _ssocket.accept();
+                    _ui.debugMessage("Connection accepted");
                     boolean added = false;
                     synchronized (_pendingSockets) {
                         if (_pendingSockets.size() < MAX_PENDING) {
@@ -95,9 +109,11 @@ public class HTTPServ implements CLI.Command {
                     if (!added)
                         tooBusy(socket);
                 } catch (IOException ioe) {
-                    _alive = false;
+                    if (_alive)
+                        _ui.debugMessage("Error accepting", ioe);
                 }
             }
+            _ui.debugMessage("Accept runner terminated");
         }
     }
     
@@ -118,6 +134,7 @@ public class HTTPServ implements CLI.Command {
                     _ui.debugMessage("Error handing socket", ioe);
                 } catch (InterruptedException ie) {}
             }
+            _ui.debugMessage("Terminating runner " + Thread.currentThread().getName());
         }
     }
     
@@ -234,22 +251,49 @@ public class HTTPServ implements CLI.Command {
         buf.append("Connection: close\r\n");
         buf.append("\r\n");
         out.write(DataHelper.getUTF8(buf.toString()));
+        
+        int len = 0;
+        Sha256Standalone hash = new Sha256Standalone();
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(file);
             byte dbuf[] = new byte[4096];
             int read = 0;
-            while ( (read = fin.read(dbuf)) != -1)
+            while ( (read = fin.read(dbuf)) != -1) {
                 out.write(dbuf, 0, read);
-            out.flush();
-            try { Thread.sleep(500); } catch (InterruptedException ie) {}
-            out.close();
-            in.close();
-            socket.close();
+                hash.update(dbuf, 0, read);
+                len += read;
+            }
+            
             fin.close();
             fin = null;
+            
+            out.flush();
+            
+            _ui.debugMessage("Sent " + file.getPath() + ": " + len + "/" + file.length() +", sha256 = " + Base64.encode(hash.digest()));
         } finally {
-            if (fin != null) fin.close();
+            if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+            close(socket, in, out);
+        }
+    }
+    
+    private static void close(Socket socket, InputStream in, OutputStream out) throws IOException {
+        try {
+            socket.setSoTimeout(5000);
+            try {
+                in.read(); // block until the other side gets the data
+            } catch (IOException ioe) {}
+            in.close();
+            in = null;
+            out.close();
+            out = null;
+            socket.close();
+            socket = null;
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
+            if (out != null) try { in.close(); } catch (IOException ioe) {}
+            if (out != null) try { out.close(); } catch (IOException ioe) {}
+            if (socket != null) try { socket.close(); } catch (IOException ioe) {}
         }
     }
     
@@ -341,9 +385,7 @@ public class HTTPServ implements CLI.Command {
             
             _ui.debugMessage(msgNum + ": handlePost: read complete " + contentLength + " to " + importDir.getPath());
             out.write(DataHelper.getUTF8("HTTP/1.0 200 OK\r\nConnection: close\r\n\r\n"));
-            out.close();
-            in.close();
-            socket.close();
+            close(socket, in, out);
             if (msgNum > 0) {
                 _ui.statusMessage("HTTP server received " + msgNum + " messages, scheduling bulk import");
                 _ui.insertCommand("menu syndicate");
@@ -385,12 +427,7 @@ public class HTTPServ implements CLI.Command {
     }
     private void fail(Socket socket, InputStream in, OutputStream out) throws IOException {
         _ui.debugMessage("failing socket", new Exception("source"));
-        try {
-            in.close();
-            out.close();
-        } finally {
-            socket.close();
-        }
+        close(socket, in, out);
     }
     
     private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n");
@@ -400,7 +437,6 @@ public class HTTPServ implements CLI.Command {
     private static final void tooBusy(Socket socket) throws IOException {
         OutputStream out = socket.getOutputStream();
         out.write(TOO_BUSY);
-        out.close();
-        socket.close();
+        close(socket, socket.getInputStream(), out);
     }
 }

@@ -66,6 +66,7 @@ import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.db.ArchiveDiff;
 import syndie.db.ArchiveIndex;
+import syndie.db.HTTPServ;
 import syndie.db.Importer;
 import syndie.db.JobRunner;
 import syndie.db.SyndicationManager;
@@ -598,6 +599,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_SYNDICATE_PULLINDEXES = "syndie.gui.browser.syndicate.pullindexes";
     private static final String T_SYNDICATE_PUSHDIFF = "syndie.gui.browser.syndicate.pushdiff";
     
+    private static final String T_SYNDICATE_HTTPSERV_START = "syndie.gui.browser.syndicate.httpserv.start";
+    private static final String T_SYNDICATE_HTTPSERV_STOP = "syndie.gui.browser.syndicate.httpserv.stop";
+    private static final String T_SYNDICATE_HTTPSERV_CONFIG = "syndie.gui.browser.syndicate.httpserv.config";
+    
+    private static final String T_HTTPSERV_WRITABLE = "syndie.gui.browser.httpserv.writable";
+    private static final String T_HTTPSERV_PORT = "syndie.gui.browser.httpserv.port";
+    private static final String T_HTTPSERV_OK = "syndie.gui.browser.httpserv.ok";
+    
     private void refreshSyndicationMenu() {
         _syndicationManager.loadArchives();
         _shell.getDisplay().asyncExec(new Runnable() {
@@ -762,6 +771,140 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 view(createSyndicationDiffURI());
             }
         });
+        
+        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
+
+        MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        startServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_START, "Start HTTP archive server"));
+        MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        stopServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_STOP, "Stop HTTP archive server"));
+        MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        configServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_CONFIG, "Configure HTTP archive server"));
+        
+        stopServer.setEnabled(false);
+        new ServerConfig(startServer, stopServer, configServer);
+    }
+    
+    private class ServerConfig {
+        private MenuItem _start;
+        private MenuItem _stop;
+        private MenuItem _cfg;
+        
+        public ServerConfig(MenuItem start, MenuItem stop, MenuItem cfg) {
+            _start = start;
+            _stop = stop;
+            _cfg = cfg;
+            
+            configListeners();
+        }
+        
+        private void configListeners() {
+            _start.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { start(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { start(); }
+            });
+            _stop.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { stop(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { stop(); }
+            });
+            _cfg.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { config(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { config(); }
+            });
+            
+            if (HTTPServ.isAlive()) {
+                _start.setEnabled(false);
+                _stop.setEnabled(true);
+                _cfg.setEnabled(false);
+            } else {
+                _start.setEnabled(true);
+                _stop.setEnabled(false);
+                _cfg.setEnabled(true);
+            }
+        }
+        
+        private void start() {
+            _start.setEnabled(false);
+            _stop.setEnabled(true);
+            _cfg.setEnabled(false);
+
+            int port = getPort();
+            boolean writable = getWritable();
+            
+            getUI().insertCommand("httpserv --port " + port + " --writable " + writable);
+        }
+        
+        private int getPort() {
+            Properties prefs = _client.getNymPrefs();
+            String portStr = prefs.getProperty("httpserv.port");
+            if (portStr != null) {
+                try {
+                    return Integer.parseInt(portStr);
+                } catch (NumberFormatException nfe) {}
+            }
+            return 8080;
+        }
+        private boolean getWritable() {
+            Properties prefs = _client.getNymPrefs();
+            boolean writable = false;
+            String writableStr = prefs.getProperty("httpserv.writable");
+            if (writableStr != null)
+                writable = Boolean.valueOf(writableStr).booleanValue();
+            return writable;
+        }
+        
+        private void stop() {
+            _start.setEnabled(true);
+            _stop.setEnabled(false);
+            _cfg.setEnabled(true);
+            getUI().insertCommand("httpserv --kill true");
+        }
+        private void config() {
+            final Shell s = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+            s.setLayout(new GridLayout(2, false));
+            Label portLabel = new Label(s, SWT.NONE);
+            portLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+            final Text port = new Text(s, SWT.SINGLE | SWT.BORDER);
+            GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 100;
+            port.setLayoutData(gd);
+            
+            final Button writable = new Button(s, SWT.CHECK);
+            writable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+            
+            Button ok = new Button(s, SWT.PUSH);
+            ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+            
+            port.setText(getPort() + "");
+            writable.setSelection(getWritable());
+            
+            ok.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection()); s.dispose(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection()); s.dispose(); }
+            });
+            
+            portLabel.setText(getTranslationRegistry().getText(T_HTTPSERV_PORT, "HTTP listen port:"));
+            writable.setText(getTranslationRegistry().getText(T_HTTPSERV_WRITABLE, "Others can post new messages to this server"));
+            ok.setText(getTranslationRegistry().getText(T_HTTPSERV_OK, "OK"));
+            
+            portLabel.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+            port.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+            writable.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+            ok.setFont(getThemeRegistry().getTheme().BUTTON_FONT);
+            
+            s.pack();
+            s.open();
+        }
+        private void saveConfig(String portStr, boolean writable) {
+            int port = 8080;
+            try {
+                port = Integer.parseInt(portStr);
+            } catch (NumberFormatException nfe) {}
+            Properties prefs = _client.getNymPrefs();
+            prefs.setProperty("httpserv.writable", "" + writable);
+            prefs.setProperty("httpserv.port", "" + port);
+            _client.setNymPrefs(prefs);
+        }
     }
     
     private void initSystray() {
