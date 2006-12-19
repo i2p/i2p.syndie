@@ -20,8 +20,8 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
-import syndie.db.ArchiveIndex;
 import syndie.db.JobRunner;
+import syndie.db.SharedArchive;
 import syndie.db.SyndicationManager;
 
 /**
@@ -158,7 +158,7 @@ public class SyndicationConfigView implements Translatable, Themeable {
         _size.setIncrement(1);
         _size.setMinimum(4);
         _size.setMaximum(-1);
-        _size.setSelection((int)(ArchiveIndex.DEFAULT_MAX_SIZE/1024));
+        _size.setSelection(SharedArchive.DEFAULT_MAX_SIZE_KB);
         
         _concurrencyLabel = new Label(_root, SWT.NONE);
         _concurrencyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));

@@ -2019,6 +2019,40 @@ public class DBClient {
             return -1;
     }
     
+    public long getMessageImportDate(Hash scope, long messageId) {
+        long msgId = getMessageId(scope, messageId);
+        if (msgId >= 0)
+            return getMessageImportDate(msgId);
+        else
+            return -1;
+    }
+    private static final String SQL_GET_MESSAGE_IMPORT_DATE = "SELECT importDate FROM channelMessage WHERE msgId = ?";
+    public long getMessageImportDate(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_IMPORT_DATE);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return when.getTime();
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's import date", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_MESSAGE_SCOPE = "SELECT channelHash FROM channel JOIN channelMessage ON scopeChannelId = channelId WHERE msgId = ?";
     public Hash getMessageScope(long msgId) {
         PreparedStatement stmt = null;
@@ -2099,6 +2133,40 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the message's id", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }   
+    }
+    
+    private static final String SQL_GET_CHANNEL_IMPORT_DATE = "SELECT importDate FROM channel WHERE channelId = ?";
+    /** when we imported the scope, or -1 if never */
+    public long getChannelImportDate(Hash scope) {        
+        if ( (scope == null) || (scope.getData() == null) ) return -1;
+        long channelId = getChannelId(scope);
+        if (channelId < 0) return -1;
+        return getChannelImportDate(channelId);
+    }
+    public long getChannelImportDate(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_IMPORT_DATE);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return when.getTime();
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel's import date", se);
             return -1;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
@@ -2884,6 +2952,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
+    public Properties getNymPrefs() { return getNymPrefs(_nymId); }
     public Properties getNymPrefs(long nymId) {
         ensureLoggedIn();
         Properties rv = new Properties();
@@ -2909,6 +2978,7 @@ public class DBClient {
     }
     private static final String SQL_SET_NYMPREFS = "INSERT INTO nymPref (nymId, prefName, prefValue) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_NYMPREFS = "DELETE FROM nymPref WHERE nymId = ?";
+    public void setNymPrefs(Properties prefs) { setNymPrefs(_nymId, prefs); }
     public void setNymPrefs(long nymId, Properties prefs) {
         ensureLoggedIn();
         PreparedStatement stmt = null;

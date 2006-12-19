@@ -17,7 +17,9 @@ import java.util.List;
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
+import syndie.Constants;
 
 /**
  * CLI parameters: ([--port $num] [--listeners $num] [--writable true] | [--kill true])
@@ -31,6 +33,7 @@ public class HTTPServ implements CLI.Command {
     private static UI _ui;
     private static boolean _alive;
     private boolean _allowPost;
+    private static SharedArchive _archive;
     
     public HTTPServ() {
         _runners = new ArrayList();
@@ -206,34 +209,89 @@ public class HTTPServ implements CLI.Command {
         if ( (chan.length() <= 0) && (sub == null) )
             sub = "index.html";
         
-        // overzealous file read control - pick out of known ok files, rather than parse the requested dir/file
-        File chans[] = _client.getArchiveDir().listFiles();
-        for (int i = 0; i < chans.length; i++) {
-            _ui.debugMessage("chans[" + i + "]: " + chans[i].getName());
-            if (chan.length() <= 0) {
-                if ( (chans[i].isFile()) && (chans[i].getName().equals(sub)) ) {
-                    // index file
-                    _ui.debugMessage("index file selected: " + chans[i].getName());
-                    send(socket, in, out, chans[i]);
-                    return;
-                }
-            } else {
-                if (chans[i].getName().equals(chan)) {
-                    File subs[] = chans[i].listFiles();
-                    for (int j = 0; j < subs.length; j++) {
-                        if (subs[j].getName().equals(sub)) {
-                            _ui.debugMessage("data file selected: " + chans[i].getName() + "/" + subs[j].getName());
-                            send(socket, in, out, subs[j]);
-                            return;
-                        }
-                    }
-                    fail404(socket, in, out);
-                }
-            }
+        if ( (chan.length() <= 0) && (SyndicationManager.SHARED_INDEX_FILE.equals(sub)) ) {
+            send(socket, in, out, new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE));
+            return;
+        } else if ("index.html".equals(sub)) {
+            send(socket, in, out, new File(_client.getArchiveDir(), "index.html"));
+            return;
+        } else {
+            sendIfAllowed(chan, sub, socket, in, out);
         }
-        fail404(socket, in, out);
     }
     
+    private SharedArchive getSharedArchive() {
+        File indexFile = new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE);
+        boolean needsLoad = false;
+        if (_archive == null)
+            needsLoad = true;
+        else if (_archive.getLoadDate() < indexFile.lastModified())
+            needsLoad = true;
+        
+        if (needsLoad && indexFile.exists()) {
+            FileInputStream fin = null;
+            try {
+                fin = new FileInputStream(indexFile);
+                SharedArchive archive = new SharedArchive();
+                archive.read(fin);
+                fin.close();
+                fin = null;
+                _archive = archive;
+            } catch (IOException ioe) {
+                _ui.errorMessage("Error loading the archive index", ioe);
+            } finally {
+                if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+            }
+        }
+        return _archive;
+    }
+    
+    private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out) throws IOException {
+        // we only send a file if it is in our published shared archive index, which
+        // doesn't necessarily contain everything we have (for anonymity reasons)
+        SharedArchive archive = getSharedArchive();
+        if (archive == null) {
+            fail404(socket, in, out);
+            return;
+        }
+        
+        if (("meta" + Constants.FILENAME_SUFFIX).equals(sub)) {
+            byte hash[] = Base64.decode(chan);
+            if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
+                Hash chanHash = new Hash(hash);
+                if (archive.getChannel(chanHash) != null) {
+                    // ok, metadata is published, allow the send
+                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), "meta" + Constants.FILENAME_SUFFIX));
+                    return;
+                } else {
+                    // we may even have it, but its not in our published index, so dont give it to them
+                    fail404(socket, in, out);
+                }
+            } else {
+                // bad channel name
+                fail404(socket, in, out);
+            }
+        } else {
+            byte hash[] = Base64.decode(chan);
+            if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
+                Hash chanHash = new Hash(hash);
+                long messageId = SharedArchiveBuilder.getMessageId(sub);
+                if (messageId < 0) {
+                    fail404(socket, in, out);
+                } else if (archive.isKnown(chanHash, messageId)) {
+                    // ok, message is published, allow the send
+                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), messageId + Constants.FILENAME_SUFFIX));
+                    return;
+                } else {
+                    // we may even have it, but its not in our published index, so dont give it to them
+                    fail404(socket, in, out);
+                }
+            } else {
+                // bad channel name
+                fail404(socket, in, out);
+            }
+        }
+    }
     
     private void send(Socket socket, InputStream in, OutputStream out, File file) throws IOException {
         String type = "application/octet-stream";
@@ -279,10 +337,15 @@ public class HTTPServ implements CLI.Command {
     
     private static void close(Socket socket, InputStream in, OutputStream out) throws IOException {
         try {
-            socket.setSoTimeout(5000);
+            long dieAfter = System.currentTimeMillis() + 10*1000;
+            socket.setSoTimeout(10*1000);
             try {
-                in.read(); // block until the other side gets the data
-            } catch (IOException ioe) {}
+                // we dont care what they send. just give them time to spew at us and then kill 'em
+                while ( (in.read() != -1) && (System.currentTimeMillis() < dieAfter) )
+                    ; // noop
+            } catch (IOException ioe) {
+                _ui.debugMessage("closing socket, error on the read (good)", ioe);
+            }
             in.close();
             in = null;
             out.close();
@@ -368,7 +431,7 @@ public class HTTPServ implements CLI.Command {
                     return;
                 }
                 
-                if (sz > ArchiveIndex.DEFAULT_MAX_SIZE) {
+                if (sz > SharedArchive.DEFAULT_MAX_SIZE_KB*1024) {
                     _ui.debugMessage(msgNum + ": message size is too large: " + sz);
                     // ignore it
                 } else {

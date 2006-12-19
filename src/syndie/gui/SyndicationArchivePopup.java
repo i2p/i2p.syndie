@@ -418,7 +418,7 @@ class SyndicationArchivePopup implements Translatable {
         _proxyCustomPortLabel.setText(registry.getText(T_PROXY_CUSTOM_PORT, "Port: "));
         _ok.setText(registry.getText(T_OK, "Save"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
-        _browse.setMessage(registry.getText(T_BROWSE_MESSAGE, "Pick an archive directory containing an archive index-all.dat"));
+        _browse.setMessage(registry.getText(T_BROWSE_MESSAGE, "Pick an archive directory containing an archive shared-index.dat"));
         _browse.setText(registry.getText(T_BROWSE, "Pick archive"));
     }
 }

@@ -53,7 +53,7 @@ public class HTTPSyndicator implements Cloneable {
     private String _postURLOverride;
     private String _postPassphrase;
     private boolean _postShouldDeleteOutbound;
-    private ArchiveIndex _remoteIndex;
+    private SharedArchive _remoteIndex;
     private List _postToDelete;
     
     private int _missingKeys;
@@ -61,7 +61,7 @@ public class HTTPSyndicator implements Cloneable {
     private boolean _forceReimport;
     private String _error;
     
-    public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, ArchiveIndex index, boolean forceReimport) {
+    public HTTPSyndicator(String archiveURL, String proxyHost, int proxyPort, DBClient client, UI ui, SharedArchive index, boolean forceReimport) {
         _archiveURL = archiveURL;
         _proxyHost = proxyHost;
         _proxyPort = proxyPort;
@@ -572,6 +572,14 @@ public class HTTPSyndicator implements Cloneable {
     
     private void scheduleOutbound(boolean knownChanOnly) { schedule(_client.getOutboundDir(), false, true, knownChanOnly); }
     private void schedule(File rootDir, boolean metaOnly, boolean isOutbound, boolean knownChanOnly) {
+        SharedArchive.PushStrategy strategy = new SharedArchive.PushStrategy();
+        strategy.maxKBPerMessage = 256;
+        strategy.maxKBTotal = -1;
+        strategy.sendHashcashForAll = false;
+        strategy.sendHashcashForLocal = false;
+        strategy.sendLocalNewOnly = false;
+        _postURIs.addAll(_remoteIndex.selectURIsToPush(_client, _ui, strategy));
+        /*
         int numMeta = 0;
         int numPost = 0;
         long numBytes = 0;
@@ -666,9 +674,10 @@ public class HTTPSyndicator implements Cloneable {
                 }
             }
         }
-        _ui.debugMessage("Scheduling post of " + _postURIs);
         _ui.statusMessage("Scheduled upload of " + numPost + " posts and " + numMeta + " channel metadata messages");
         _ui.statusMessage("Total size to be uploaded: " + ((numBytes+1023)/1024) + " kilobytes");
+         */
+        _ui.debugMessage("Scheduling post of " + _postURIs);
     }
     private void scheduleOutboundMeta(boolean knownChanOnly) { schedule(_client.getOutboundDir(), true, true, knownChanOnly); }
     private void scheduleArchive(boolean knownChanOnly) { schedule(_client.getArchiveDir(), false, false, knownChanOnly); }

@@ -1,6 +1,7 @@
 package syndie.db;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,8 +36,6 @@ public class SyndicationManager {
     private List _listeners;
     private List _fetchRecords;
     private List _fetchMetaRecords;
-    private MergedArchiveIndex _mergedIndex;
-    private ArchiveDiff _mergedDiff;
     private int _concurrent;
     private String _httpProxyHost;
     private int _httpProxyPort;
@@ -81,7 +80,6 @@ public class SyndicationManager {
         _listeners = new ArrayList();
         _fetchRecords = new ArrayList();
         _fetchMetaRecords = new ArrayList();
-        _mergedIndex = null;
         _archivesLoaded = false;
     }
     
@@ -131,17 +129,10 @@ public class SyndicationManager {
         else
             return -1;
     }
-    public ArchiveIndex getArchiveIndex(int index) {
+    public SharedArchive getArchiveIndex(int index) {
         NymArchive archive = getArchive(index);
         if (archive != null)
             return archive.getIndex();
-        else
-            return null;
-    }
-    public ArchiveDiff getArchiveDiff(int index) {
-        NymArchive archive = getArchive(index);
-        if (archive != null)
-            return archive.getDiff();
         else
             return null;
     }
@@ -158,29 +149,6 @@ public class SyndicationManager {
             return archive.getCustomProxyPort();
         else
             return -1;
-    }
-    /** get an index summarizing across all of the fetched archive indexes */
-    public MergedArchiveIndex getMergedIndex(boolean forceRemerge) {
-        if ((_mergedIndex == null) || (forceRemerge)) {
-            MergedArchiveIndex merged = new MergedArchiveIndex();
-            for (int i = 0; i < _archives.size(); i++) {
-                ArchiveIndex index = getArchiveIndex(i);
-                if (index != null)
-                    merged.merge(index, getArchiveName(i));
-            }
-            _mergedDiff = null;
-            _mergedIndex = merged;
-        }
-        return _mergedIndex;
-    }
-    /** diff of the local archive vs all of the fetched archives combined */
-    public ArchiveDiff getMergedDiff(boolean forceRediff) {
-        if ((_mergedDiff == null) || (forceRediff)) {
-            ArchiveIndex index = getMergedIndex(false);
-            ArchiveDiff diff = index.diff(_client, _ui, new Opts());
-            _mergedDiff = diff;
-        }
-        return _mergedDiff;
     }
     
     public void setProxies(String httpHost, int httpPort, String fcpHost, int fcpPort) {
@@ -281,6 +249,8 @@ public class SyndicationManager {
             scope = "all";
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
+        url = baseUrl + SHARED_INDEX_FILE;
+        /*
         if ("new".equalsIgnoreCase(scope)) {
             url = baseUrl + "index-new.dat";
         } else if ("meta".equalsIgnoreCase(scope)) {
@@ -294,8 +264,9 @@ public class SyndicationManager {
                 url = baseUrl + "index-unauthorized.dat";
             }
         } else { //if ("all".equalsIgnoreCase(scope))
-            url = baseUrl + "index-all.dat";
+            url = baseUrl + SHARED_INDEX_FILE; //"index-all.dat";
         }
+         */
 	if (includeForceDownload) url = url + "?forcedownload";
 
         _ui.debugMessage("fetchIndex: fetching: " + url);
@@ -364,27 +335,27 @@ public class SyndicationManager {
                 if (archiveWasRemote && out != null) out.delete(); 
                 return;
             }
-            ArchiveIndex index = ArchiveIndex.loadIndex(out, _ui, unauth);
-            if (index != null) {
-                archive.setIndex(index);
-                HTTPSyndicator syndicator = new HTTPSyndicator(baseUrl, proxyHost, proxyPort, _client, _ui, index, false); //opts.getOptBoolean("reimport", false));
-                archive.setSyndicator(syndicator);
-                _ui.debugMessage("fetchIndex: index loaded");
-                record.setStatus(FETCH_INDEX_LOAD_OK);
-                fireIndexStatus(record);
-                //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
-                ArchiveDiff diff = index.diff(_client, _ui, new Opts());
-                archive.setDiff(diff);
-                _ui.debugMessage("fetchIndex: diff loaded");
-                record.setStatus(FETCH_INDEX_DIFF_OK);
-                fireIndexStatus(record);
-                //fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
-            } else {
-                _ui.debugMessage("fetchIndex: load error");
-                record.setStatus(FETCH_INDEX_LOAD_ERROR);
-                fireIndexStatus(record);
-                //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, "index was not valid");
-            }
+            SharedArchive index = new SharedArchive();
+            FileInputStream fin = new FileInputStream(out);
+            index.read(fin);
+            fin.close();
+            fin = null;
+            _ui.debugMessage("Read index: \n" + index.toString());
+            //ArchiveIndex index = ArchiveIndex.loadIndex(out, _ui, unauth);
+            archive.setIndex(index);
+            HTTPSyndicator syndicator = new HTTPSyndicator(baseUrl, proxyHost, proxyPort, _client, _ui, index, false); //opts.getOptBoolean("reimport", false));
+            archive.setSyndicator(syndicator);
+            _ui.debugMessage("fetchIndex: index loaded");
+            record.setStatus(FETCH_INDEX_LOAD_OK);
+            fireIndexStatus(record);
+            //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
+            //archive.calculateDiffs(_client, _ui);
+            //ArchiveDiff diff = index.diff(_client, _ui, new Opts());
+            //archive.setDiff(diff);
+            _ui.debugMessage("fetchIndex: diff loaded");
+            record.setStatus(FETCH_INDEX_DIFF_OK);
+            fireIndexStatus(record);
+            //fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
         } catch (IOException ioe) {
             _ui.errorMessage("Error loading the index", ioe);
             record.setStatus(FETCH_INDEX_LOAD_ERROR);
@@ -427,13 +398,20 @@ public class SyndicationManager {
         HashSet uris = new HashSet();
         switch (pullStrategy) {
             case PULL_STRATEGY_DELTAKNOWN:
+            case PULL_STRATEGY_DELTABOOKMARKED: //todo: actually honor this
                 for (int i = 0; i < _archives.size(); i++) {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
                         continue;
-                    ArchiveDiff diff = archive.getDiff();
-                    if (diff != null) {
-                        List toFetch = diff.getFetchKnownURIs(true);
+                    if (archive.getIndex() != null) {
+                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        strategy.includeDupForPIR = false;
+                        strategy.includePBEMessages = true;
+                        strategy.includePrivateMessages = true;
+                        strategy.includeRecentMessagesOnly = false;
+                        strategy.knownChannelsOnly = true;
+                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
+                        //List toFetch = diff.getFetchKnownURIs(true);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
                             if (uris.add(uri)) {
@@ -450,9 +428,10 @@ public class SyndicationManager {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
                         continue;
-                    ArchiveDiff diff = archive.getDiff();
-                    if (diff != null) {
-                        List toFetch = diff.getFetchPIRURIs();
+                    if (archive.getIndex() != null) {
+                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        strategy.includeDupForPIR = true;
+                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
                             if (uris.add(uri)) {
@@ -467,9 +446,14 @@ public class SyndicationManager {
                     NymArchive archive = (NymArchive)_archives.get(i);
                     if (!archiveNames.contains(archive.getName()))
                         continue;
-                    ArchiveDiff diff = archive.getDiff();
-                    if (diff != null) {
-                        List toFetch = diff.getFetchNewURIs(true);
+                    if (archive.getIndex() != null) {
+                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        strategy.includeDupForPIR = false;
+                        strategy.includePBEMessages = true;
+                        strategy.includePrivateMessages = true;
+                        strategy.includeRecentMessagesOnly = false;
+                        strategy.knownChannelsOnly = false;
+                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
                             if (uris.add(uri)) {
@@ -654,8 +638,29 @@ public class SyndicationManager {
         KeyImport.importKey(_ui, _client, Constants.KEY_FUNCTION_SSKPRIV, pubSSKHash, padded, true);
     }
     
-    public void buildIndex(long maxSize) { buildIndex(_client, _ui, maxSize); }
-    public static void buildIndex(DBClient client, UI ui, long maxSize) {
+    public static final String SHARED_INDEX_FILE = "shared-index.dat";
+    
+    public void buildIndex(long maxSize) { buildIndex(_client, _ui); }
+    public static void buildIndex(DBClient client, UI ui) {
+        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
+        builder.setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
+        builder.setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
+        builder.setShareDelayHours(12); // tell people that we only build our index once every 12 hours, so dont bug us too much
+        builder.setShareReceivedOnly(false); // sometimes
+        SharedArchive archive = builder.buildSharedArchive();
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(new File(client.getArchiveDir(), SHARED_INDEX_FILE));
+            archive.write(fos);
+            fos.close();
+            fos = null;
+        } catch (IOException ioe) {
+            ui.errorMessage("Error writing the shared index", ioe);
+        } finally {
+            if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+        }
+        return;
+        /*
         File archiveDir = client.getArchiveDir();
         ArchiveIndex index;
         try {
@@ -692,19 +697,7 @@ public class SyndicationManager {
         } catch (IOException ioe) {
             ui.errorMessage("Error building the index", ioe);
         }
-    }
-    
-    private static void write(OutputStream out, ArchiveChannel chan) throws IOException {
-        write(out, chan, false, true);
-    }
-    private static void write(OutputStream out, ArchiveChannel chan, boolean newOnly) throws IOException {
-        write(out, chan, newOnly, false);
-    }
-    private static void write(OutputStream out, ArchiveChannel chan, boolean newOnly, boolean chanOnly) throws IOException {
-        chan.write(out, newOnly, chanOnly, false);
-    }
-    private static void writeUnauth(OutputStream out, ArchiveChannel chan) throws IOException {
-        chan.write(out, true, false, true);
+         */
     }
     
     /** returns a new list containing the actual fetch records (which can be updated asynchronously) */
@@ -1032,6 +1025,7 @@ public class SyndicationManager {
             _ui.debugMessage("not loading archives, as they are already loaded");
             return;
         }
+        buildIndex(_client, _ui);
         _archivesLoaded = true;
         
         _ui.debugMessage("Loading archives");
@@ -1109,8 +1103,7 @@ public class SyndicationManager {
         private long _lastSyncDate;
         private SessionKey _postKey;
         private SessionKey _readKey;
-        private ArchiveIndex _index;
-        private ArchiveDiff _diff;
+        private SharedArchive _index;
         private HTTPSyndicator _syndicator;
         
         public NymArchive(String name, SyndieURI uri, String host, int port, long when, byte[] post, byte[] read) {
@@ -1147,10 +1140,8 @@ public class SyndicationManager {
         public long getLastSyncDate() { return _lastSyncDate; }
         public SessionKey getReadKey() { return _readKey; }
         public SessionKey getPostKey() { return _postKey; }
-        public ArchiveIndex getIndex() { return _index; }
-        public ArchiveDiff getDiff() { return _diff; }
-        public void setIndex(ArchiveIndex index) { _index = index; }
-        public void setDiff(ArchiveDiff diff) { _diff = diff; }
+        public SharedArchive getIndex() { return _index; }
+        public void setIndex(SharedArchive index) { _index = index; }
         public HTTPSyndicator getSyndicator() { return _syndicator; }
         public void setSyndicator(HTTPSyndicator syndicator) { _syndicator = syndicator; }
     }
@@ -1220,8 +1211,9 @@ public class SyndicationManager {
         private int _id;
         public Fetcher(int id) { _id = id; }
         public void run() {
-            if (_id == 0)
-                buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
+            // make the index building an explict (or scheduled) task
+            //if (_id == 0)
+            //    buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
             StatusRecord cur = null;
             for (;;) {
                 int nonterminalRemaining = 0;
@@ -1268,7 +1260,7 @@ public class SyndicationManager {
                 }
                 if (nonterminalRemaining == 0) {
                     _ui.debugMessage("All of the records are terminal, rebuilding our local archive index");
-                    buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
+                    //buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
                     fireSyndicationComplete();
                 }
                 cur = null;

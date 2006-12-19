@@ -36,7 +36,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.db.ArchiveIndex;
+import syndie.db.SharedArchive;
 import syndie.db.SyndicationManager;
 
 /**
@@ -211,21 +211,19 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         int recentlySynced = 0;
         for (int i = 0; i < archives; i++) {
             String name = mgr.getArchiveName(i);
-            ArchiveIndex index = mgr.getArchiveIndex(i);
-            long syncAge = -1;
-            long builtOn = -1;
+            SharedArchive index = mgr.getArchiveIndex(i);
+            boolean refreshable = true;
             if (index != null) {
-                builtOn = index.getBuiltOn();
-                syncAge = System.currentTimeMillis() - builtOn;
-                if (syncAge < 3*60*60*1000L)
+                refreshable = index.getRefreshable();
+                if (!refreshable)
                     recentlySynced++;
             }
             TreeItem item = new TreeItem(_itemArchives, SWT.NONE);
             item.setText(0, name);
-            if (syncAge > 0)
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Last sync: ") + getDateTime(builtOn));
+            if (!refreshable)
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Recently synced"));
             else
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NEVERSYNCED, "Last sync: never"));
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NEVERSYNCED, "Pending sync"));
         }
         _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + (archives-recentlySynced));
         rethemeArchives(_browser.getThemeRegistry().getTheme());

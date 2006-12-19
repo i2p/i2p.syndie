@@ -42,56 +42,65 @@ created but not yet distributed messages in the
 functionality, though doing so prevents the Syndie instance from sharing
 the authenticated messages with other people.</p>
 
-<p>Within the <code>$dataRoot/archive/</code> directory, each channel
-has its own subdirectory containing the channel's metadata (in <code>meta.syndie</code>)
-and posts (in <code>$messageId.syndie</code>).  In addition, there are three
-index files for each channel (<code>index-all.dat, index-new.dat,
-index-unauthorized.dat</code>) as well as four index files for the
-entire archive itself (<code>index-all.dat, index-meta.dat, index-new.dat,
-index-unauthorized.dat</code>).  These indexes are rebuilt with the
-<a href="manual.html#syndicate_buildindex">buildindex</a> command, summarizing all posts
-in the channel/archive (<code>index-all.dat</code>
-and <code>$channelHash/index-all.dat</code>), all posts received or published
-in the last few days (<code>index-new.dat</code> and
-<code>$channelHash/index-new.dat</code>),
-the metadata editions of all known channels (<code>index-meta.dat</code>),
-and all posts for individual
-channels that are not authorized (<code>index-unauthorized.dat</code> and
-<code>$channelHash/index-unauthorized.dat</code>).</p>
+<p>Within the <code>$dataRoot/archive/</code> directory is a periodically
+rebuilt file <code>shared-index.dat</code>, containing a listing of files
+in the archive that should be reachable, some metadata surrounding each of
+those channel and message files, and some general metadata for the archive
+itself.  This file is only accessed when serving up the archive on the web -
+never for those not publishing an archive.  In general, it contain a subset
+of the available files underneath the archive directory, so as to hide some
+anonymity-related facts (such as delaying the listing of locally created
+messages until they have been published elsewhere, etc).</p>
 
-<p>The index files all use the following format:</p><pre>
-    $channelHash        // 32 byte SHA256 value
-    $channelEdition     // 4 byte unsigned integer
-    $reciveDate         // 4 byte unsigned integer - days since 1970/1/1
-    $metaFileSize       // 4 byte unsigned integer - size of the meta.syndie file
-    $numMessages        // 4 byte unsigned integer - how many messages are known
-    $indexedMessages    // 4 byte unsigned integer - # messages following
-    for (i = 0; i < $indexedMessages; i++)
-       $messageId       // 8 byte unsigned integer
-       $receiveDate     // 4 byte unsigned integer - days since 1970/1/1
-       $entryFileSize   // 4 byte unsigned integer - size of $messageId.syndie
-       $flags           // 1 byte.
-                        // 1<<7: authorized
-                        // 1<<6: private reply
-                        // 1<<5: password based encrypted
-                        // 1<<4: archive considers the post "new"
-    // external chan refs in index-all and index-new refer to posts that
-    // are in another scope but both target this $channelHash scope and
-    // are authorized.  unsigned chan refs in index-unauthorized are the
-    // same, but not authorized
-    $externalChanRefs   // 4 byte unsigned integer - # channels following
-    for (i = 0; i < $externalChanRefs; i++)
-       $scopeHash       // 32 byte SHA256 value that the post is in
-       $posts           // 4 byte unsigned integer - messages following
-       for (j = 0; j < $posts;  j++
-           $messageId       // 8 byte unsigned integer
-           $receiveDate     // 4 byte unsigned integer - days since 1970/1/1
-           $entrySize       // 4 byte unsigned integer - sizeof .syndie file
-           $flags           // 1 byte.
-                            // 1<<7: authorized
-                            // 1<<6: private reply
-                            // 1<<5: password based encrypted
-                            // 1<<4: archive considers the post "new"
+<p>The <code>shared-index.dat</code> file uses the following format:</p><pre>
+    $archiveFlags       // 2 bytes - see below for meaning
+    $archiveAdminChannel// 4 bytes - index into the channels where the archive admin posts
+    $numAltURIs         // 1 byte
+    for (i = 0; i &lt; $numAltURIs; i++)
+      $url              // UTF-8 encoded SyndieURI of some other archives
+    $numChannels        // 4 bytes
+    for (i = 0; i &lt; $numChannels; i++)
+      $channelHash      // 32 byte SHA256 value
+      $channelEdition   // 8 byte unsigned integer
+      $channelFlags     // 1 byte - see below
+    $numMessages        // 4 bytes
+    for (i = 0; i &lt; $numMessages; i++)
+      $messageId        // 8 byte unsigned integer
+      $scopeChannel     // 4 byte unsigned integer - index into $numChannels above
+      $targetChannel    // 4 byte unsigned integer - index into $numChannels above
+      $msgFlags         // 1 byte - see below
+
+$archiveFlags:
+  first byte:
+    high bit: if true, the archive wants to receive only recent messages 
+    bit 6   : if true, the archive wants to receive only messages in known channels
+    bit 5   : if true, the archive will accept passphrase encrypted messages
+    bit 4   : if true, the archive will accept private reply messages
+    bit 3   : if true, the archive requires a passphrase to post to it
+    bit 2-0 : along with bits 7 and 6 of the second byte, configures the hashcash requirements to post
+  second byte:
+    high bit: see above
+    bit 6   : see above
+    bits 5-4: index rebuild frequency
+              0 = hourly, 1 = every 6 hours, 2 = every 12 hours, 3 = every 24 hours
+    bits 3-0: maximum message size the archive will receive, in kilobytes, bitshifted
+              0 = 1KB, 1 = 2KB, 2 = 4KB, ..., 14 = 8MB, 15 = 16MB
+
+$channelFlags:
+  high bit: if true, the channel info is passphrase encrypted
+  bit    6: if true, the channel info publishes its read key
+  bit    5: if true, the channel info has been updated "recently"
+  bit    4: if true, the archive wants to receive updates to this channel's metadata
+  bit    3: if true, the archive wants to receive new messages in this channel
+  bits 2-0: undefined
+
+$messageFlags:
+  high bit: if true, the message is passphrase encrypted
+  bit    6: if true, the message is encrypted to the forum owner
+  bit    5: if true, the message publishes its read key
+  bit    4: if true, the archive considers this message "new"
+  bits 3-0: message size shift, in kilobytes, starting at 4KB
+            0 = 4KB, 1 = 8KB, 2 = 16KB, ..., 14 = 32MB, 15 = 64MB
 </pre>
 
 <p>Individual posts are found under
@@ -101,11 +110,6 @@ posts are found under their original scope path, not the targetted channel
 path - <code>$dataRoot/archive/$scopeHash/$messageId.syndie</code> and not
 <code>$dataRoot/archive/$channelHash/$messageId.syndie</code></p>
 
-<p>The <code>$dataRoot/archive/index-*dat</code> files simply concatenate the
-<code>$dataRoot/archive/$channelHash/index-*.dat</code> files together.
-These file formats are implemented in the <code>syndie.db.ArchiveIndex</code>
-class, and are subject to change.</p>
-
 <p>Given the simple file-based archive hierarchy and index, running a public
 Syndie archive is trivial - simply publish your <code>$dataRoot/archive/</code>
 in a webserver and tell people the URL.  They will then be able to load up
@@ -114,7 +118,9 @@ commands to pull posts from the archive into their local Syndie instance.</p>
 
 <p>Syndie also includes a built-in HTTP server (run with the
 <a href="manual.html#httpserv">httpserv</a> command), which both serves up the
-content and accepts HTTP posts from others (if allowed).</p>
+content and accepts HTTP posts from others (if allowed), limiting the data accessible
+to those messages and channel metadata files published in the
+<code>shared-index.dat</code> file.</p>
 
 <p>The server accepts posts (uploaded through
 <a href="manual.html">schedule and put</a>), writing them to a temporary directory

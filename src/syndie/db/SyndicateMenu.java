@@ -21,8 +21,8 @@ import syndie.data.SyndieURI;
  */
 class SyndicateMenu implements TextEngine.Menu {
     private TextEngine _engine;
-    private ArchiveIndex _currentIndex;
-    private ArchiveDiff _diff;
+    private SharedArchive _currentIndex;
+    //private ArchiveDiff _diff;
     private HTTPSyndicator _syndicator;
     private String _baseUrl;
     private String _proxyHost;
@@ -92,6 +92,8 @@ class SyndicateMenu implements TextEngine.Menu {
             processListBan(client, ui, opts);
         } else if ("unban".equalsIgnoreCase(cmd)) {
             processUnban(client, ui, opts);
+        } else if ("buildsharedindex".equalsIgnoreCase(cmd)) {
+            processBuildSharedIndex(client, ui, opts);
         } else {
             return false;
         }
@@ -108,7 +110,7 @@ class SyndicateMenu implements TextEngine.Menu {
      *          [--scope (all|new|meta)]
      */
     private void processGetIndex(DBClient client, UI ui, Opts opts) {
-        _diff = null;
+        //_diff = null;
         _syndicator = null; // delete files?
         _baseUrl = opts.getOptValue("archive");
         if (_baseUrl == null)
@@ -157,6 +159,7 @@ class SyndicateMenu implements TextEngine.Menu {
             scope = "all";
         if (!_baseUrl.endsWith("/"))
             _baseUrl = _baseUrl + "/";
+        /*
         if ("new".equalsIgnoreCase(scope)) {
             url = _baseUrl + "index-new.dat";
         } else if ("meta".equalsIgnoreCase(scope)) {
@@ -170,8 +173,8 @@ class SyndicateMenu implements TextEngine.Menu {
                 url = _baseUrl + "index-unauthorized.dat";
             }
         } else { //if ("all".equalsIgnoreCase(scope))
-            url = _baseUrl + "index-all.dat";
-        }
+        */
+        url = _baseUrl + SyndicationManager.SHARED_INDEX_FILE; //"index-all.dat";
 	if (includeForceDownload) url = url + "?forcedownload";
 
         _shouldProxy = (_proxyHost != null) && (_proxyPort > 0);
@@ -201,6 +204,13 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         }
         try {
+            SharedArchive index = new SharedArchive();
+            FileInputStream fin = new FileInputStream(out);
+            index.read(fin);
+            fin.close();
+            ui.statusMessage("Fetched shared archive index");
+            _currentIndex = index;
+            /*
             ArchiveIndex index = ArchiveIndex.loadIndex(out, ui, unauth);
             if (index != null) {
                 ui.statusMessage("Fetched archive loaded with " + index.getChannelCount() + " channels");
@@ -210,6 +220,7 @@ class SyndicateMenu implements TextEngine.Menu {
             } else {
                 ui.errorMessage("Unable to load the fetched archive");
             }
+             */
             ui.commandComplete(0, null);
         } catch (IOException ioe) {
             ui.errorMessage("Error loading the index", ioe);
@@ -248,6 +259,25 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
+        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+        strategy.includeDupForPIR = false;
+        strategy.includePBEMessages = true;
+        strategy.includePrivateMessages = true;
+        strategy.includeRecentMessagesOnly = true;
+        strategy.maxKBPerMessage = 512;
+        strategy.maxKBTotal = 4096;
+        List uris = _currentIndex.selectURIsToPull(client, ui, strategy);
+        int msgs = 0;
+        int meta = 0;
+        for (int i = 0; i < uris.size(); i++) {
+            if (((SyndieURI)uris.get(i)).getMessageId() == null)
+                meta++;
+            else
+                msgs++;
+        }
+        ui.statusMessage("New messages in the remote archive: " + msgs);
+        ui.statusMessage("New or updated forums in the remote archive: " + meta);
+        /*
         long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
         if ( (_diff == null) || (maxSize != _diff.maxSizeUsed) ) {
             _diff = _currentIndex.diff(client, ui, opts);
@@ -296,11 +326,12 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         }
         ui.statusMessage(buf.toString());
+         */
         ui.commandComplete(0, null);
     }
     
     private void processFetch(DBClient client, UI ui, Opts opts) {
-        if (_diff == null) {
+        if (_currentIndex == null) {
             ui.errorMessage("No archive fetched");
             ui.commandComplete(-1, null);
             return;
@@ -310,18 +341,30 @@ class SyndicateMenu implements TextEngine.Menu {
         String style = opts.getOptValue("style");
         if (style == null)
             style = "diff";
+        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
         List uris = null;
-        if ("known".equalsIgnoreCase(style))
-            uris = _diff.getFetchKnownURIs(includeReplies);
-        else if ("metaonly".equalsIgnoreCase(style))
-            uris = _diff.getFetchMetaURIs();
-        else if ("pir".equalsIgnoreCase(style))
-            uris = _diff.getFetchPIRURIs();
-        else if ("unauth".equalsIgnoreCase(style))
-            uris = _diff.getFetchNewUnauthorizedURIs(includeReplies);
-        else // "diff" as the default
-            uris = _diff.getFetchNewURIs(includeReplies);
+        if ("known".equalsIgnoreCase(style)) {
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = true;
+            strategy.knownChannelsOnly = true;
+        } else if ("metaonly".equalsIgnoreCase(style)) {
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = false;
+            strategy.knownChannelsOnly = false;
+        } else if ("pir".equalsIgnoreCase(style)) {
+            strategy.includeDupForPIR = true;
+        //} else if ("unauth".equalsIgnoreCase(style)) {
+        //    uris = _diff.getFetchNewUnauthorizedURIs(includeReplies);
+        } else { // "diff" as the default
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = true;
+            strategy.knownChannelsOnly = false;
+        }
         
+        uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         ui.debugMessage("Fetching " + uris.size() + " entries: " + uris);
         
         boolean ok = _syndicator.fetch(uris);
@@ -402,7 +445,6 @@ class SyndicateMenu implements TextEngine.Menu {
             _syndicator.setPostPassphrase(pass);
         _syndicator.post();
         _syndicator = null;
-        _diff = null;
     }
     
     /** bulkimport --dir $directory --delete $boolean */
@@ -574,8 +616,33 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processBuildIndex(DBClient client, UI ui, Opts opts) {
-        long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
-        SyndicationManager.buildIndex(client, ui, maxSize);
+        //long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
+        SyndicationManager.buildIndex(client, ui); //, maxSize);
+        ui.commandComplete(0, null);
+    }
+    private void processBuildSharedIndex(DBClient client, UI ui, Opts opts) {
+        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
+        SharedArchive archive = builder.buildSharedArchive();
+        String orig = archive.toString();
+        ui.statusMessage("shared archive built: \n" + orig);
+        /*
+        try {
+            File tmp = File.createTempFile("shared", "dat", client.getTempDir());
+            FileOutputStream fos = new FileOutputStream(tmp);
+            archive.write(fos);
+            fos.close();
+            FileInputStream fis = new FileInputStream(tmp);
+            SharedArchive loaded = new SharedArchive();
+            loaded.read(fis);
+            String reload = loaded.toString();
+            if (reload.equals(orig))
+                ui.statusMessage("Persistance is roundtrip");
+            else
+                ui.errorMessage("Persistance fails.  reloaded:\n" + reload);
+        } catch (Exception e) {
+            ui.errorMessage("error persisting", e);
+        }
+         */
         ui.commandComplete(0, null);
     }
 }

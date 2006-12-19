@@ -29,10 +29,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
-import syndie.db.ArchiveChannel;
-import syndie.db.ArchiveDiff;
-import syndie.db.ArchiveIndex;
-import syndie.db.ArchiveMessage;
+import syndie.db.SharedArchive;
 import syndie.db.SyndicationManager;
 
 /**
@@ -169,23 +166,27 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         int count = mgr.getArchiveCount();
         for (int i = 0; i < mgr.getArchiveCount(); i++) {
             String name = mgr.getArchiveName(i);
-            ArchiveIndex index = mgr.getArchiveIndex(i);
+            SharedArchive index = mgr.getArchiveIndex(i);
             _browser.getUI().debugMessage("displaying archive " + name + (index == null ? " [no index]" : ""));
             if (index == null) continue;
             
             _archiveURIs.put(name, new HashSet());
             
+            // todo: build this tree of channel-->message out of the data
+            /*
             for (int j = 0; j < index.getChannelCount(); j++) {
                 ArchiveChannel chan = index.getChannel(j);
                 if (!banned.contains(new Hash(chan.getScope())))
                     displayDiff(index.getChannel(j), name, banned, prevSelected, expanded);
             }
+             */
         }
         _tree.setEnabled(_tree.getItemCount() > 0);
         _treeGroup.setEnabled(_tree.getItemCount() > 0);
         _tree.setRedraw(true);
     }
-    
+
+    /*
     private void displayDiff(ArchiveChannel channel, String archive, List banned, Set toSelectURIs, Set expanded) {
         Hash scope = new Hash(channel.getScope());
         long channelId = _browser.getClient().getChannelId(scope);
@@ -301,6 +302,7 @@ public class SyndicationDiff implements Translatable, Themeable, SyndicationMana
         setMinWidth(_colSize, item.getText(2));
         setMinWidth(_colRecvDate, item.getText(3));
     }
+     */
     
     private void setMinWidth(TreeColumn col, String text) { setMinWidth(col, text, 0); }
     private void setMinWidth(TreeColumn col, String text, int extraWidth) {

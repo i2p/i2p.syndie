@@ -25,7 +25,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
-import syndie.db.ArchiveDiff;
+import syndie.db.SharedArchive;
 import syndie.db.SyndicationManager;
 
 /**
@@ -104,7 +104,7 @@ public class SyndicationArchiveView implements Translatable, Themeable, Syndicat
         _table.removeAll();
         _names.clear();
         for (int i = 0; i < _manager.getArchiveCount(); i++) {
-            ArchiveDiff diff = _manager.getArchiveDiff(i);
+            SharedArchive index = _manager.getArchiveIndex(i);
             SyndieURI uri = _manager.getArchiveURI(i);
             String name = _manager.getArchiveName(i);
             String proxyHost = _manager.getCustomProxyHost(i);
@@ -128,10 +128,10 @@ public class SyndicationArchiveView implements Translatable, Themeable, Syndicat
                 }
             }
             
-            String numForums = (diff == null ? "?" : diff.totalChannels+"");
-            String numMsgs = (diff == null ? "?" : diff.totalMessages+"");
-            String numNewForums = (diff == null ? "?" : diff.totalNewChannels+"");
-            String numNewMsgs = (diff == null ? "?" : diff.totalNewMessages+"");
+            String numForums = (index == null ? "?" : index.countTotalChannels()+"");
+            String numMsgs = (index == null ? "?" : index.countTotalMessages()+"");
+            String numNewForums = (index == null ? "?" : index.countNewChannels()+"");
+            String numNewMsgs = (index == null ? "?" : index.countNewMessages()+"");
             String lastSyncStr = (lastSync > 0 ? Constants.getDate(lastSync) : "");
             String proxy = (proxyHost != null && proxyHost.trim().length() > 0 ? proxyHost + ":" + proxyPort : "");
             String error = (String)_errors.get(name);
