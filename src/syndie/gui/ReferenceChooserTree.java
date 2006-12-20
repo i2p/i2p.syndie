@@ -293,11 +293,12 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                         _viewOnStartup = false;
                         _nymRefs.notifyAll();
                     }
+                    _ui.debugMessage("view? " + view);
                     if (view)
                         viewStartupItems(getBookmarkRoot());
                     _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
-                    System.out.println("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
+                    _ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
                 }
             });
         }
@@ -305,27 +306,30 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     
     /** run from any thread */
     public void viewStartupItems() { 
+        boolean rebuild = false;
         boolean scheduled = false;
         synchronized (_nymRefs) {
-            if (_rebuilding) {
-                _viewOnStartup = true;
-                scheduled = true;
+            if (!_rebuilding) {
+                rebuild = true;
             }
+            _viewOnStartup = true;
         }
-        System.out.println("view startup items - scheduled? " + scheduled);
-        if (!scheduled) { // already built
-            Display.getDefault().asyncExec(new Runnable() { 
-                public void run() { viewStartupItems(getBookmarkRoot()); }
-            });
-        }
-        //viewStartupItems(getBookmarkRoot()); 
+        if (rebuild)
+            rebuildBookmarks();
     }
     // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
     private void viewStartupItems(TreeItem item) {
-        if (item == null) return;
+        if (item == null) {
+            _ui.debugMessage("view startup items - no root? " + item);
+            return;
+        }
         NymReferenceNode node = getBookmark(item);
-        if ( (node != null) && node.getLoadOnStart())
+        if (node == null)
+            _ui.debugMessage("no node for the root? " + item);
+        if ( (node != null) && node.getLoadOnStart()) {
+            _ui.debugMessage("viewing node on startup: " + node.getURI());
             getBrowser().view(node.getURI());
+        }
         for (int i = 0; i < item.getItemCount(); i++)
             viewStartupItems(item.getItem(i));
     }

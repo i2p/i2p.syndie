@@ -550,6 +550,7 @@ public class SharedArchive {
                 if (strategy.knownChannelsOnly && (knownVersion < 0))
                     continue;
                 if (_channels[i].getVersion() > knownVersion) {
+                    ui.debugMessage("shared archive has a newer version than we do for " + scope.toBase64() + " [them: " + _channels[i].getVersion() + ", us: " + knownVersion + "]");
                     uris.add(SyndieURI.createScope(scope));
                 } else {
                     // already known.  no need
@@ -577,6 +578,11 @@ public class SharedArchive {
                     continue;
                 if (_messages[i].isNew() && !strategy.includeRecentMessagesOnly)
                     continue;
+                
+                // already known
+                if (!strategy.includeDupForPIR && (client.getMessageId(scope, _messages[i].getMessageId()) >= 0))
+                    continue;
+                
                 long targetChanId = client.getChannelId(target);
                 long scopeChanId = client.getChannelId(scope);
                 if ( ( (scopeChanId < 0) || (targetChanId < 0) ) && (strategy.knownChannelsOnly) )
@@ -587,11 +593,12 @@ public class SharedArchive {
                 
                 SyndieURI scopeURI = SyndieURI.createScope(scope);
                 SyndieURI targetURI = SyndieURI.createScope(target);
-                if (!uris.contains(scopeURI))
+                if (!uris.contains(scopeURI) && (client.getChannelId(scope) < 0))
                     uris.add(scopeURI);
-                if (!uris.contains(targetURI))
+                if (!uris.contains(targetURI) && (client.getChannelId(target) < 0))
                     uris.add(targetURI);
                 totalAllocatedKB += _messages[i].getMaxSizeKB();
+                ui.debugMessage("message meets our criteria: " + scope.toBase64() + ":" + _messages[i]);
                 uris.add(SyndieURI.createMessage(scope, _messages[i].getMessageId()));
             }
         }
@@ -647,13 +654,13 @@ public class SharedArchive {
             scheduleNew(client, ui, rv, dependencies, client.getOutboundDir(), strategy);
         else // otherwise, push new (etc) from our ./archive/*/ directories
             scheduleNew(client, ui, rv, dependencies, client.getArchiveDir(), strategy);
-        resolveDependencies(client, rv, dependencies);
+        resolveDependencies(client, ui, rv, dependencies);
         
         ui.debugMessage("Push: strategy=" + strategy + " URIs: " + rv);
         return rv;
     }
     
-    private void resolveDependencies(DBClient client, List rv, Map dependencies) {
+    private void resolveDependencies(DBClient client, UI ui, List rv, Map dependencies) {
         for (Iterator iter = dependencies.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             SyndieURI msgURI = (SyndieURI)entry.getKey();
@@ -666,6 +673,7 @@ public class SharedArchive {
             
             if (_about.wantKnownChannelsOnly()) {
                 // boo.  dependency failed because they are no fun.
+                ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and they don't want new channels");
                 rv.remove(msgURI);
                 continue;
             }
@@ -675,6 +683,7 @@ public class SharedArchive {
                 rv.add(chanURI);
             } else {
                 // dependency failed because we don't keep full archives
+                ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and we don't have that channel's signed metadata anymore");
                 rv.remove(msgURI);
                 continue;
             }
@@ -694,6 +703,7 @@ public class SharedArchive {
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
             long version = client.getChannelVersion(scope);
+            ui.debugMessage("Scheduling push from " + scope.toBase64());
 
             Channel remChan = getChannel(scope);
             if (_about.wantKnownChannelsOnly() && (remChan == null))
@@ -703,12 +713,16 @@ public class SharedArchive {
             if ( (remChan == null) || (remChan.getVersion() < version) )
                 sendMeta = true;
 
+            SyndieURI metaURI = SyndieURI.createScope(scope);
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
             if (sendMeta) {
-                if (metaFile.exists())
-                    rv.add(SyndieURI.createScope(scope));
-                else // we need to send them meta, but don't have it.  boo, hiss
+                if (metaFile.exists()) {
+                    ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
+                    rv.add(metaURI);
+                } else {
+                    ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
                     continue;
+                }
             }
 
             File files[] = dirs[i].listFiles(new FileFilter() {
@@ -720,6 +734,7 @@ public class SharedArchive {
 
             SharedArchiveBuilder.sortFiles(files);
             
+            boolean added = false;
             for (int j = 0; j < files.length; j++) {
                 long messageId = SharedArchiveBuilder.getMessageId(files[j]);
                 if (messageId < 0)
@@ -729,26 +744,38 @@ public class SharedArchive {
                     continue;
 
                 long lenKB = (files[j].length()+1023)/1024;
-                if (lenKB > _about.maxMessageSize())
+                if (lenKB > _about.maxMessageSize()) {
+                    ui.debugMessage("Don't send them " + messageId + " because it is too large for them to receive (" + lenKB + "KB)");
                     continue;
-                if ( (strategy.maxKBPerMessage > 0) && (lenKB > strategy.maxKBPerMessage) )
+                }
+                if ( (strategy.maxKBPerMessage > 0) && (lenKB > strategy.maxKBPerMessage) ) {
+                    ui.debugMessage("Don't send them " + messageId + " because it is too large for us to send (" + lenKB + "KB)");
                     continue;
+                }
 
                 long msgId = client.getMessageId(scope, messageId);
                 int privacy = client.getMessagePrivacy(msgId);
-                if (!_about.wantPBE() && (privacy == DBClient.PRIVACY_PBE))
+                if (!_about.wantPBE() && (privacy == DBClient.PRIVACY_PBE)) {
+                    ui.debugMessage("Don't send them " + messageId + " because it they don't want PBE'd messages");
                     continue;
-                if (!_about.wantPrivate() && (privacy == DBClient.PRIVACY_PRIVREPLY))
+                }
+                if (!_about.wantPrivate() && (privacy == DBClient.PRIVACY_PRIVREPLY)) {
+                    ui.debugMessage("Don't send them " + messageId + " because it they don't want private reply messages");
                     continue;
-
-                if (_about.wantRecentOnly()) {
-                    long when = client.getMessageImportDate(msgId);
-                    if (when + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis())
-                        continue;
                 }
 
-                if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal))
+                long importDate = client.getMessageImportDate(msgId);
+                if (_about.wantRecentOnly()) {
+                    if (importDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
+                        ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
+                        continue;
+                    }
+                }
+
+                if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal)) {
+                    ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
                     continue;
+                }
 
                 long authorId = client.getMessageAuthor(msgId);
                 long targetId = client.getMessageTarget(msgId);
@@ -766,6 +793,15 @@ public class SharedArchive {
                     Hash author = client.getChannelHash(authorId);
                     SyndieURI uri = SyndieURI.createScope(author);
                     dependencies.put(msgURI, uri);
+                }
+                added = true;
+            }
+            if (!added) {
+                if ( (remChan != null) && (remChan.getVersion() > version) ) {
+                    // ok, they want this new version
+                } else {
+                    ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, so we don't need to send them the metadata");
+                    rv.remove(metaURI);
                 }
             }
         }

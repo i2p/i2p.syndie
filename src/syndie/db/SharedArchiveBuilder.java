@@ -70,13 +70,13 @@ public class SharedArchiveBuilder {
         rv.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
         rv.setAlternativeArchives(null);
         rv.setPublishRebuildFrequencyHours(_shareDelayHours);
-        rv.setMaxMessageSize(4096);
-        rv.setMinMessageSizeKBRequiringHashcash(512);
-        rv.setPostingRequiresPassphrase(true);
-        rv.setWantKnownChannelsOnly(false);
-        rv.setWantPBE(true);
-        rv.setWantPrivate(true);
-        rv.setWantRecentOnly(false);
+        rv.setMaxMessageSize(4096); // 4MB messages!  craziness.
+        rv.setMinMessageSizeKBRequiringHashcash(512); 
+        rv.setPostingRequiresPassphrase(false); // we're nice
+        rv.setWantKnownChannelsOnly(false); // give us new stuff too
+        rv.setWantPBE(true); // we may not be able to read it, but someone pulling from us may
+        rv.setWantPrivate(true); // ditto
+        rv.setWantRecentOnly(true); // only things posted in the last 3 days
         return rv;
     }
 

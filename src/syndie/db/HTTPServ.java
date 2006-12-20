@@ -337,14 +337,14 @@ public class HTTPServ implements CLI.Command {
     
     private static void close(Socket socket, InputStream in, OutputStream out) throws IOException {
         try {
-            long dieAfter = System.currentTimeMillis() + 10*1000;
+            long dieAfter = System.currentTimeMillis() + 30*1000;
             socket.setSoTimeout(10*1000);
             try {
                 // we dont care what they send. just give them time to spew at us and then kill 'em
                 while ( (in.read() != -1) && (System.currentTimeMillis() < dieAfter) )
                     ; // noop
             } catch (IOException ioe) {
-                _ui.debugMessage("closing socket, error on the read (good)", ioe);
+                //_ui.debugMessage("closing socket, error on the read (good)");
             }
             in.close();
             in = null;
@@ -452,7 +452,7 @@ public class HTTPServ implements CLI.Command {
             if (msgNum > 0) {
                 _ui.statusMessage("HTTP server received " + msgNum + " messages, scheduling bulk import");
                 _ui.insertCommand("menu syndicate");
-                _ui.insertCommand("bulkimport --dir '" + importDir.getPath() + "' --delete true");
+                _ui.insertCommand("bulkimport --dir '" + importDir.getPath() + "' --delete true --rmdir true");
                 _ui.insertCommand("buildindex");
             }
         } catch (DataFormatException dfe) {

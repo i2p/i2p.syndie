@@ -56,7 +56,7 @@ class SyndicateMenu implements TextEngine.Menu {
         ui.statusMessage(" schedule --put (outbound|outboundmeta|archive|archivemeta) [--deleteOutbound $boolean] [--knownChanOnly $boolean]");
         ui.statusMessage("                    : schedule a set of messages to be posted");
         ui.statusMessage(" put                : send up the scheduled posts/replies/metadata to the archive");
-        ui.statusMessage(" bulkimport --dir $directory --delete $boolean");
+        ui.statusMessage(" bulkimport --dir $directory --delete $boolean --rmdir $boolean");
         ui.statusMessage("                    : import all of the " + Constants.FILENAME_SUFFIX + " files in the given directory, deleting them on completion");
         ui.statusMessage(" freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481]");
         ui.statusMessage("                    : post the entire local archive into Freenet, storing the data either in the");
@@ -447,13 +447,14 @@ class SyndicateMenu implements TextEngine.Menu {
         _syndicator = null;
     }
     
-    /** bulkimport --dir $directory --delete $boolean */
+    /** bulkimport --dir $directory --delete $boolean --rmdir $boolean*/
     private void processBulkImport(DBClient client, UI ui, Opts opts) {
         String dir = opts.getOptValue("dir");
         boolean del = opts.getOptBoolean("delete", true);
+        boolean rmdir = opts.getOptBoolean("rmdir", false);
         
         if (dir == null) {
-            ui.errorMessage("Usage: bulkimport --dir $directory --delete $boolean");
+            ui.errorMessage("Usage: bulkimport --dir $directory --delete $boolean --rmdir $boolean");
             ui.commandComplete(-1, null);
             return;
         }
@@ -488,6 +489,8 @@ class SyndicateMenu implements TextEngine.Menu {
             postImported++;
         }
         
+        if (del && rmdir)
+            f.delete();
         ui.statusMessage("Imported " + metaImported + " metadata and " + postImported + " posts");
         ui.commandComplete(0, null);
     }
