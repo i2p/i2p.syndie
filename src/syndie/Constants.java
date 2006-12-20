@@ -177,6 +177,12 @@ public class Constants {
             return _dayFmt.format(new Date(msgId)); 
         } 
     }
+    private static final SimpleDateFormat _dateTimeFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.UK);
+    public static final String getDateTime(long when) {
+        synchronized (_dateTimeFmt) { 
+            return _dateTimeFmt.format(new Date(when)); 
+        }
+    }
     
     /** lowercase that is not dependent upon the user's locale */
     public static final String lowercase(String orig) {

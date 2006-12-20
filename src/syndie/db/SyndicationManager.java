@@ -9,6 +9,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,6 +127,13 @@ public class SyndicationManager {
         NymArchive archive = getArchive(index);
         if (archive != null)
             return archive.getLastSyncDate();
+        else
+            return -1;
+    }
+    public long getNextSyncDate(int index) {
+        NymArchive archive = getArchive(index);
+        if (archive != null)
+            return archive.getNextSyncDate();
         else
             return -1;
     }
@@ -831,7 +839,7 @@ public class SyndicationManager {
                 stmt.close();
                 stmt = null;
 
-                _archives.add(new NymArchive(name, uri, customProxyHost, customProxyPort, -1, postKey, readKey));
+                _archives.add(new NymArchive(name, uri, customProxyHost, customProxyPort, -1, postKey, readKey, -1));
                 
                 for (int i = 0; i < _listeners.size(); i++) {
                     SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
@@ -1011,6 +1019,52 @@ public class SyndicationManager {
         }
         return -1;
     }
+
+    public void setNextSync(String name, long when) {
+        if ( (name == null) || (name.length() <= 0) ) return;
+        NymArchive archive = getArchive(name);
+        archive.setNextSyncDate(when);
+        if (when > 0)
+            scheduleSync(name, when);
+        else
+            cancelSync(name);
+    }
+    private static final String SQL_SYNC_SCHEDULE = "UPDATE nymArchive SET nextSyncDate = ? WHERE nymId = ? AND name = ?";
+    private void scheduleSync(String name, long when) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_SYNC_SCHEDULE);
+            stmt.setTimestamp(1, new Timestamp(when));
+            stmt.setLong(2, _client.getLoggedInNymId());
+            stmt.setString(3, name);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            startFetching(1);
+        } catch (SQLException se) {
+            _ui.errorMessage("Error scheduling sync", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_SYNC_CANCEL = "UPDATE nymArchive SET nextSyncDate = NULL WHERE nymId = ? AND name = ?";
+    private void cancelSync(String name) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_SYNC_CANCEL);
+            stmt.setLong(1, _client.getLoggedInNymId());
+            stmt.setString(2, name);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error cancelling sync", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
     
     public void stopFetching(SyndieURI uri) {
         synchronized (_fetchRecords) {
@@ -1025,7 +1079,7 @@ public class SyndicationManager {
         }
     }
     
-    private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt FROM nymArchive WHERE nymId = ? ORDER BY name";
+    private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
         if (_archivesLoaded) {
             _ui.debugMessage("not loading archives, as they are already loaded");
@@ -1063,6 +1117,7 @@ public class SyndicationManager {
                 byte[] postKeySalt = rs.getBytes(7);
                 byte[] readKeyEncr = rs.getBytes(8);
                 byte[] readKeySalt = rs.getBytes(9);
+                Timestamp nextSync = rs.getTimestamp(10);
                 
                 byte[] postKey = null;
                 if ( (postKeyEncr != null) && (postKeySalt != null) ) {
@@ -1084,7 +1139,7 @@ public class SyndicationManager {
                     continue;
                 }
                 
-                _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey));
+                _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey, (nextSync == null ? -1L : nextSync.getTime())));
             }
             rs.close();
             rs = null;
@@ -1107,20 +1162,22 @@ public class SyndicationManager {
         private String _customProxyHost;
         private int _customProxyPort;
         private long _lastSyncDate;
+        private long _nextSyncDate;
         private SessionKey _postKey;
         private SessionKey _readKey;
         private SharedArchive _index;
         private HTTPSyndicator _syndicator;
         
-        public NymArchive(String name, SyndieURI uri, String host, int port, long when, byte[] post, byte[] read) {
-            this(name, uri, host, port, when, (post != null ? new SessionKey(post) : null), (read != null ? new SessionKey(read) : null));
+        public NymArchive(String name, SyndieURI uri, String host, int port, long when, byte[] post, byte[] read, long nextSync) {
+            this(name, uri, host, port, when, (post != null ? new SessionKey(post) : null), (read != null ? new SessionKey(read) : null), nextSync);
         }
-        public NymArchive(String name, SyndieURI uri, String host, int port, long when, SessionKey post, SessionKey read) {
+        public NymArchive(String name, SyndieURI uri, String host, int port, long when, SessionKey post, SessionKey read, long nextSync) {
             _name = name;
             _uri = uri;
             _customProxyHost = host;
             _customProxyPort = port;
             _lastSyncDate = when;
+            _nextSyncDate = nextSync;
             _postKey = post;
             _readKey = read;
         }
@@ -1144,6 +1201,8 @@ public class SyndicationManager {
         public String getCustomProxyHost() { return _customProxyHost; }
         public int getCustomProxyPort() { return _customProxyPort; }
         public long getLastSyncDate() { return _lastSyncDate; }
+        public long getNextSyncDate() { return _nextSyncDate; }
+        void setNextSyncDate(long when) { _nextSyncDate = when; }
         public SessionKey getReadKey() { return _readKey; }
         public SessionKey getPostKey() { return _postKey; }
         public SharedArchive getIndex() { return _index; }

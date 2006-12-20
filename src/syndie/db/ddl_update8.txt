@@ -1,0 +1,21 @@
+-- update the database from schema version 8
+-- this version 9 ties in the syndication scheduling data
+--
+
+UPDATE appVersion SET versionNum = 9, visibleVersion = 'Syndication scheduling';
+
+CREATE CACHED TABLE nymSyncLog (
+	nymId		INTEGER
+	, archiveName	VARCHAR(256)
+	-- 0/1/2/3/4/5: fetchIndexOK/fetchIndexError/importOK/pbe/privMsg/noKey
+	, eventStatus	INTEGER
+	-- msgId/channelId refer to what was imported (if known)
+	, msgId		BIGINT
+	, channelId	BIGINT
+	, detail	VARCHAR(256)
+	, eventTime	TIMESTAMP
+);
+
+-- when we next want to pull an index and potentially pull/push messages
+-- a null value means we do not want scheduled sync to occur
+ALTER TABLE nymArchive ADD nextSyncDate TIMESTAMP DEFAULT NULL;
