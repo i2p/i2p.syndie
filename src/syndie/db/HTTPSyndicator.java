@@ -572,13 +572,15 @@ public class HTTPSyndicator implements Cloneable {
     
     private void scheduleOutbound(boolean knownChanOnly) { schedule(_client.getOutboundDir(), false, true, knownChanOnly); }
     private void schedule(File rootDir, boolean metaOnly, boolean isOutbound, boolean knownChanOnly) {
-        SharedArchive.PushStrategy strategy = new SharedArchive.PushStrategy();
+        SharedArchiveEngine.PushStrategy strategy = new SharedArchiveEngine.PushStrategy();
         strategy.maxKBPerMessage = 256;
         strategy.maxKBTotal = -1;
         strategy.sendHashcashForAll = false;
         strategy.sendHashcashForLocal = false;
         strategy.sendLocalNewOnly = false;
-        _postURIs.addAll(_remoteIndex.selectURIsToPush(_client, _ui, strategy));
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        _postURIs.addAll(engine.selectURIsToPush(_client, _ui, _remoteIndex, strategy));
+        //_postURIs.addAll(_remoteIndex.selectURIsToPush(_client, _ui, strategy));
         /*
         int numMeta = 0;
         int numPost = 0;

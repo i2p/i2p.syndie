@@ -177,9 +177,9 @@ public class Theme {
     }
     
     public void store(Properties props) {
-        Font sys = Display.getDefault().getSystemFont();
-        String face = getFace(sys);
-        int size = getSize(sys);
+        //Font sys = Display.getDefault().getSystemFont();
+        String face = getFace(SYSFONT);
+        int size = getSize(SYSFONT);
         store(props, TAB_FONT, face, size, "theme.tabfont");
         store(props, MENU_FONT, face, size, "theme.menufont");
         store(props, SHELL_FONT, face, size, "theme.shellfont");
@@ -236,11 +236,11 @@ public class Theme {
             if (props == null) return old;
 
             String defaultFace = getFace(old);
-            int baselineSize = getSize(old);
+            int baselineSize = getSize(SYSFONT); //getSize(old);
 
             String face = props.getProperty(prefPrefix + ".face");
             String szModStr = props.getProperty(prefPrefix + ".size");
-            int szMod = baselineSize;
+            int szMod = 0; //baselineSize;
             if (szModStr != null) {
                 try {
                     szMod = Integer.parseInt(szModStr);
@@ -251,8 +251,8 @@ public class Theme {
             Boolean bold = str != null ? Boolean.valueOf(str) : null;
             str = props.getProperty(prefPrefix + ".italic");
             Boolean italic = str != null ? Boolean.valueOf(str) : null;
-
-            return adjustHeight(prefPrefix, old, szMod, bold, italic, face);
+            
+            return adjustHeight(prefPrefix, old, szMod, bold, italic, face, true);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error loading " + prefPrefix + ", props: " + props);
@@ -264,15 +264,23 @@ public class Theme {
     private Font decreaseFont(String src, Font old) { return adjustHeight(src, old, -2); }
     private Font adjustHeight(String src, Font old, int mod) { return adjustHeight(src, old, mod, null, null); }
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic) {
-        return adjustHeight(src, old, mod, bold, italic, null);
+        return adjustHeight(src, old, mod, bold, italic, null, false);
     }
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace) {
+        return adjustHeight(src, old, mod, bold, italic, newFace, false);
+    }
+    private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace, boolean modFromSys) {
         FontData oldData[] = old.getFontData();
         dispose(old);
+        int sysHeight = getSize(SYSFONT);
         FontData newData[] = new FontData[oldData.length];
         for (int i = 0; i < newData.length; i++) {
             newData[i] = new FontData(oldData[i].toString());
-            int height = oldData[i].getHeight() + mod;
+            int height = -1;
+            if (modFromSys)
+                height = sysHeight + mod;
+            else
+                height = oldData[i].getHeight() + mod;
             if (height < 6)
                 height = 6;
             newData[i].setHeight(height);

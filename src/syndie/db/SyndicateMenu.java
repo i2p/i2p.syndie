@@ -259,14 +259,16 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
-        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
         strategy.includeDupForPIR = false;
         strategy.includePBEMessages = true;
         strategy.includePrivateMessages = true;
         strategy.includeRecentMessagesOnly = true;
         strategy.maxKBPerMessage = 512;
         strategy.maxKBTotal = 4096;
-        List uris = _currentIndex.selectURIsToPull(client, ui, strategy);
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        List uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        //List uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         int msgs = 0;
         int meta = 0;
         for (int i = 0; i < uris.size(); i++) {
@@ -341,7 +343,7 @@ class SyndicateMenu implements TextEngine.Menu {
         String style = opts.getOptValue("style");
         if (style == null)
             style = "diff";
-        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
         List uris = null;
         if ("known".equalsIgnoreCase(style)) {
             strategy.includePrivateMessages = includeReplies;
@@ -364,7 +366,10 @@ class SyndicateMenu implements TextEngine.Menu {
             strategy.knownChannelsOnly = false;
         }
         
-        uris = _currentIndex.selectURIsToPull(client, ui, strategy);
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        
+        uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        //uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         ui.debugMessage("Fetching " + uris.size() + " entries: " + uris);
         
         boolean ok = _syndicator.fetch(uris);

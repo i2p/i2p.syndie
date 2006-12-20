@@ -380,7 +380,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _bookmarkMenu = new Menu(_bookmarkMenuRoot);
         _bookmarkMenuRoot.setMenu(_bookmarkMenu);
         _bookmarkMenuShow = new MenuItem(_bookmarkMenu, SWT.CHECK);
-        _bookmarkMenuShow.setSelection(true);
+        _bookmarkMenuShow.setSelection(false);
         _bookmarkMenuShow.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);

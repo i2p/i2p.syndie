@@ -404,13 +404,15 @@ public class SyndicationManager {
                     if (!archiveNames.contains(archive.getName()))
                         continue;
                     if (archive.getIndex() != null) {
-                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
                         strategy.includeDupForPIR = false;
                         strategy.includePBEMessages = true;
                         strategy.includePrivateMessages = true;
                         strategy.includeRecentMessagesOnly = false;
                         strategy.knownChannelsOnly = true;
-                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
+                        SharedArchiveEngine engine = new SharedArchiveEngine();
+                        List toFetch = engine.selectURIsToPull(_client, _ui, archive.getIndex(), strategy);
+                        //List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
                         //List toFetch = diff.getFetchKnownURIs(true);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
@@ -429,9 +431,11 @@ public class SyndicationManager {
                     if (!archiveNames.contains(archive.getName()))
                         continue;
                     if (archive.getIndex() != null) {
-                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
                         strategy.includeDupForPIR = true;
-                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
+                        SharedArchiveEngine engine = new SharedArchiveEngine();
+                        List toFetch = engine.selectURIsToPull(_client, _ui, archive.getIndex(), strategy);
+                        //List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
                             if (uris.add(uri)) {
@@ -447,13 +451,15 @@ public class SyndicationManager {
                     if (!archiveNames.contains(archive.getName()))
                         continue;
                     if (archive.getIndex() != null) {
-                        SharedArchive.PullStrategy strategy = new SharedArchive.PullStrategy();
+                        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
                         strategy.includeDupForPIR = false;
                         strategy.includePBEMessages = true;
                         strategy.includePrivateMessages = true;
                         strategy.includeRecentMessagesOnly = false;
                         strategy.knownChannelsOnly = false;
-                        List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
+                        SharedArchiveEngine engine = new SharedArchiveEngine();
+                        List toFetch = engine.selectURIsToPull(_client, _ui, archive.getIndex(), strategy);
+                        //List toFetch = archive.getIndex().selectURIsToPull(_client, _ui, strategy);
                         for (int j = 0; j < toFetch.size(); j++) {
                             SyndieURI uri = (SyndieURI)toFetch.get(j);
                             if (uris.add(uri)) {
