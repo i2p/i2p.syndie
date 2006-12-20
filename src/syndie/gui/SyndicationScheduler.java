@@ -1,6 +1,8 @@
 package syndie.gui;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
@@ -17,9 +19,11 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import syndie.db.SharedArchiveEngine;
 import syndie.db.SyndicationManager;
 
 /**
@@ -62,6 +66,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private MenuItem _pullRecentDelta;
     private MenuItem _pullAllDelta;
     private MenuItem _pullRecentKnown;
+    private MenuItem _pullAllKnown;
     private MenuItem _pullPIR;
     private MenuItem _pullNothing;
     private MenuItem _pullPrivate;
@@ -79,7 +84,6 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private Button _pushPolicy;
     private Menu _pushMenu;
     private MenuItem _pushAllDelta;
-    private MenuItem _pushNewDelta;
     private MenuItem _pushLocalDelta;
     private MenuItem _pushNothing;
     private Group _eventGroup;
@@ -89,6 +93,10 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private TableColumn _colScope;
     private TableColumn _colEvent;
     private TableColumn _colDetail;
+    private Menu _eventMenu;
+    private MenuItem _eventView;
+    private MenuItem _eventClearSelected;
+    private MenuItem _eventClearAll;
     private Button _eventClear;
     
     public SyndicationScheduler(BrowserControl browser, Composite parent) {
@@ -103,20 +111,23 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _browser.getThemeRegistry().unregister(this);
     }
     
-    private void refreshView() {
+    private void refreshView() { refreshView(null); }
+    private void refreshView(String forceSelection) {
         SyndicationManager mgr = _browser.getSyndicationManager();
-        _archives.setRedraw(false);
-        String sel = null;
-        String selection[] = _archives.getSelection();
-        if ( (selection != null) && (selection.length > 0) )
-            sel = selection[0];
+        _root.setRedraw(false);
+        String sel = forceSelection;
+        if (sel == null) {
+            String selection[] = _archives.getSelection();
+            if ( (selection != null) && (selection.length > 0) )
+                sel = selection[0];
+        }
         _archives.removeAll();
         int archives = mgr.getArchiveCount();
         for (int i = 0; i < archives; i++)
             _archives.add(mgr.getArchiveName(i));
         _archives.setSelection(new String[] { sel });
-        if (sel != null) showArchive(sel);
-        _archives.setRedraw(true);
+        showArchive(sel);
+        _root.setRedraw(true);
     }
     
     private void showArchive() {
@@ -137,7 +148,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
 
             _archiveName.setText(name);
             _url.setText(uri.getURL());
-            String pass = uri.getString("passphrase");
+            String pass = uri.getArchivePassphrase();
             if (pass != null)
                 _passphrase.setText(pass);
             else
@@ -161,6 +172,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
                 _proxyCustomPort.setText(port+"");
             } else {
                 _proxyDefault.setSelection(true);
+                _proxyCustomHost.setText("");
+                _proxyCustomPort.setText("");
             }
         } else {
             _archiveName.setText("");
@@ -172,6 +185,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _proxyCustom.setSelection(false);
             _proxyDefault.setSelection(true);
             _proxyNone.setSelection(false);
+            _proxyCustomHost.setText("");
+            _proxyCustomPort.setText("");
         }
         
         _lastSync.getParent().layout(true);
@@ -184,6 +199,206 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             mgr.setNextSync(names[0], when);
             refreshView();
         }
+    }
+    
+    private void saveArchive() {
+        String oldName = null;
+        String names[] = _archives.getSelection();
+        if ( (names != null) && (names.length > 0) )
+            oldName = names[0];
+        String name = _archiveName.getText();
+        String url = _url.getText();
+        String pass = _passphrase.getText();
+        boolean proxyNone = _proxyNone.getSelection();
+        String customHost = _proxyCustomHost.getText();
+        String customPortStr = _proxyCustomPort.getText();
+        int customPort = -1;
+        if ( (customPortStr.length() > 0) && (_proxyCustom.getSelection()) ) {
+            try { 
+                customPort = Integer.parseInt(customPortStr);
+            } catch (NumberFormatException nfe) {}
+        }
+        if ( !_proxyCustom.getSelection() || (customPort <= 0) || (customHost.trim().length() <= 0) ) {
+            customHost = null;
+            customPort = -1;
+        }
+        if (oldName == null) {
+            _browser.getSyndicationManager().add(name, SyndieURI.createArchive(url, pass), customHost, customPort, null, null);
+            refreshView(name);
+        } else {
+            _browser.getSyndicationManager().update(oldName, name, SyndieURI.createArchive(url, pass), customHost, customPort, null, null);
+            refreshView(name);
+        }
+    }
+    private void deleteArchive() {
+        String names[] = _archives.getSelection();
+        if ( (names != null) && (names.length > 0) ) {
+            SyndicationManager mgr = _browser.getSyndicationManager();
+            mgr.delete(names[0]);
+            _archives.setSelection(new int[0]);
+            refreshView();
+        }
+    }
+    
+    private void loadPullPolicy() {
+        SharedArchiveEngine.PullStrategy strategy = _browser.getSyndicationManager().getPullStrategy();
+        _pullAllDelta.setSelection(false);
+        _pullAllKnown.setSelection(false);
+        _pullNothing.setSelection(false);
+        _pullPBE.setSelection(false);
+        _pullPIR.setSelection(false);
+        _pullPrivate.setSelection(false);
+        _pullRecentDelta.setSelection(false);
+        _pullRecentKnown.setSelection(false);
+        _pullSizePer1024.setSelection(false);
+        _pullSizePer128.setSelection(false);
+        _pullSizePer2048.setSelection(false);
+        _pullSizePer256.setSelection(false);
+        _pullSizePer32.setSelection(false);
+        _pullSizePer4096.setSelection(false);
+        _pullSizePer512.setSelection(false);
+        _pullSizePer64.setSelection(false);
+        if (strategy.includeDupForPIR) {
+            _pullPIR.setSelection(true);
+        } else {
+            if (strategy.includePBEMessages)
+                _pullPBE.setSelection(true);
+            if (strategy.includePrivateMessages)
+                _pullPrivate.setSelection(true);
+            
+            if (strategy.includeRecentMessagesOnly && strategy.knownChannelsOnly)
+                _pullRecentKnown.setSelection(true);
+            else if (strategy.includeRecentMessagesOnly)
+                _pullRecentDelta.setSelection(true);
+            else if (strategy.knownChannelsOnly)
+                _pullAllKnown.setSelection(true);
+            else if (strategy.pullNothing)
+                _pullNothing.setSelection(true);
+            else
+                _pullAllDelta.setSelection(true);
+            
+            if (strategy.maxKBPerMessage <= 32)
+                _pullSizePer32.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 64)
+                _pullSizePer64.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 128)
+                _pullSizePer128.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 256)
+                _pullSizePer256.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 512)
+                _pullSizePer512.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 1024)
+                _pullSizePer1024.setSelection(true);
+            else if (strategy.maxKBPerMessage <= 2048)
+                _pullSizePer2048.setSelection(true);
+            else
+                _pullSizePer4096.setSelection(true);
+        }
+    }
+    private void savePullPolicy() {
+        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
+        if (_pullPIR.getSelection()) {
+            strategy.includeDupForPIR = true;
+        } else {
+            strategy.includeDupForPIR = false;
+            if (_pullAllDelta.getSelection()) {
+                strategy.knownChannelsOnly = false;
+                strategy.includeRecentMessagesOnly = false;
+            } else if (_pullAllKnown.getSelection()) {
+                strategy.knownChannelsOnly = true;
+                strategy.includeRecentMessagesOnly = false;
+            } else if (_pullRecentDelta.getSelection()) {
+                strategy.knownChannelsOnly = false;
+                strategy.includeRecentMessagesOnly = true;
+            } else if (_pullRecentKnown.getSelection()) {
+                strategy.knownChannelsOnly = true;
+                strategy.includeRecentMessagesOnly = true;
+            } else {
+                strategy.pullNothing = true;
+            }
+            
+            strategy.includePBEMessages = _pullPBE.getSelection();
+            strategy.includePrivateMessages = _pullPrivate.getSelection();
+            
+            if (_pullSizePer32.getSelection()) strategy.maxKBPerMessage = 32;
+            else if (_pullSizePer64.getSelection()) strategy.maxKBPerMessage = 64;
+            else if (_pullSizePer128.getSelection()) strategy.maxKBPerMessage = 128;
+            else if (_pullSizePer256.getSelection()) strategy.maxKBPerMessage = 256;
+            else if (_pullSizePer512.getSelection()) strategy.maxKBPerMessage = 512;
+            else if (_pullSizePer1024.getSelection()) strategy.maxKBPerMessage = 1024;
+            else if (_pullSizePer2048.getSelection()) strategy.maxKBPerMessage = 2048;
+            else if (_pullSizePer4096.getSelection()) strategy.maxKBPerMessage = 4096;
+        }
+        _browser.getSyndicationManager().setPullStrategy(strategy);
+    }
+    
+    private void loadPushPolicy() {
+        SharedArchiveEngine.PushStrategy strategy = _browser.getSyndicationManager().getPushStrategy();
+        _pushAllDelta.setSelection(false);
+        _pushLocalDelta.setSelection(false);
+        _pushNothing.setSelection(false);
+        if (strategy.sendNothing)
+            _pushNothing.setSelection(true);
+        else if (strategy.sendLocalNewOnly)
+            _pushLocalDelta.setSelection(true);
+        else
+            _pushAllDelta.setSelection(true);
+    }
+    private void savePushPolicy() {
+        SharedArchiveEngine.PushStrategy strategy = new SharedArchiveEngine.PushStrategy();
+        strategy.sendHashcashForAll = false;
+        strategy.sendHashcashForLocal = false;
+        if (_pushNothing.getSelection())
+            strategy.sendNothing = true;
+        else if (_pushLocalDelta.getSelection())
+            strategy.sendLocalNewOnly = true;
+        _browser.getSyndicationManager().setPushStrategy(strategy);
+    }
+    
+    /** this only gets terminal events, so just append new records, no need to track status */
+    private void addEvent(SyndicationManager.StatusRecord record) {
+        TableItem item = new TableItem(_eventTable, SWT.NONE);
+        item.setText(0, Constants.getDateTime(record.getEventTime()));
+        String src = record.getSource();
+        if (src == null) src = "";
+        item.setText(1, src);
+        SyndieURI uri = record.getURI();
+        if ( (uri == null) || (uri.getScope() == null) ) {
+            item.setText(2, "");
+        } else {
+            if (uri.getMessageId() == null) {
+                item.setImage(2, ImageUtil.ICON_MSG_TYPE_META);
+            } else {
+                item.setImage(2, ImageUtil.ICON_MSG_TYPE_NORMAL);
+            }
+            item.setData("uri", uri);
+        }
+        switch (record.getStatus()) {
+            case SyndicationManager.PUSH_SENT: // push
+            case SyndicationManager.FETCH_IMPORT_OK: // import msg/meta
+            case SyndicationManager.FETCH_INDEX_DIFF_OK: // index fetch
+                item.setImage(3, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                break;
+            case SyndicationManager.FETCH_IMPORT_PBE:
+                item.setImage(3, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
+                break;
+            case SyndicationManager.FETCH_IMPORT_NOKEY:
+                item.setImage(3, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
+                break;
+            default:
+                _browser.getUI().debugMessage("record is another status: " + record.getStatus() + ": " + record);
+                item.setImage(3, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+                break;
+        }
+        String detail = record.getDetail();
+        if (detail == null) detail = "";
+        item.setText(4, detail);
+        
+        _colWhen.pack();
+        _colArchive.pack();
+        _colScope.pack();
+        _colEvent.pack();
+        _colDetail.pack();
     }
     
     private void initComponents() {
@@ -316,8 +531,20 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         row.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 2, 1));
         
         _saveArchive = new Button(row, SWT.PUSH);
+        _saveArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveArchive(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { saveArchive(); }
+        });
         _revertArchive = new Button(row, SWT.PUSH);
+        _revertArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showArchive(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showArchive(); }
+        });
         _deleteArchive = new Button(row, SWT.PUSH);
+        _deleteArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { deleteArchive(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { deleteArchive(); }
+        });
         
         _eventGroup = new Group(_root, SWT.NONE);
         _eventGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 4));
@@ -334,8 +561,53 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _colEvent = new TableColumn(_eventTable, SWT.CENTER);
         _colDetail = new TableColumn(_eventTable, SWT.LEFT);
         
+        _eventMenu = new Menu(_eventTable);
+        _eventTable.setMenu(_eventMenu);
+        _eventView = new MenuItem(_eventMenu, SWT.PUSH);
+        _eventView.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) {
+                TableItem items[] = _eventTable.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    SyndieURI uri = (SyndieURI)items[i].getData("uri");
+                    if (uri != null)
+                        _browser.view(uri);
+                }
+            }
+            public void widgetSelected(SelectionEvent evt) {
+                TableItem items[] = _eventTable.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    SyndieURI uri = (SyndieURI)items[i].getData("uri");
+                    if (uri != null)
+                        _browser.view(uri);
+                }
+            }
+        });
+        new MenuItem(_eventMenu, SWT.SEPARATOR);
+        _eventClearSelected = new MenuItem(_eventMenu, SWT.PUSH);
+        _eventClearSelected.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) {
+                TableItem items[] = _eventTable.getSelection();
+                for (int i = 0; i < items.length; i++)
+                    items[i].dispose();
+            }
+            public void widgetSelected(SelectionEvent evt) {
+                TableItem items[] = _eventTable.getSelection();
+                for (int i = 0; i < items.length; i++)
+                    items[i].dispose();
+            }
+        });
+        _eventClearAll = new MenuItem(_eventMenu, SWT.PUSH);
+        _eventClearAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _eventTable.removeAll(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _eventTable.removeAll(); }
+        });
+        
         _eventClear = new Button(_eventGroup, SWT.PUSH);
         _eventClear.setLayoutData(new GridData(GridData.BEGINNING, GridData.END, false, false));
+        _eventClear.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _eventTable.removeAll(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _eventTable.removeAll(); }
+        });
         
         _pullPolicy = new Button(_root, SWT.PUSH);
         _pullPolicy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -350,6 +622,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullRecentDelta = new MenuItem(_pullMenu, SWT.RADIO);
         _pullAllDelta = new MenuItem(_pullMenu, SWT.RADIO);
         _pullRecentKnown = new MenuItem(_pullMenu, SWT.RADIO);
+        _pullAllKnown = new MenuItem(_pullMenu, SWT.RADIO);
         _pullPIR = new MenuItem(_pullMenu, SWT.RADIO);
         _pullNothing = new MenuItem(_pullMenu, SWT.RADIO);
         _pullRecentDelta.setSelection(true);
@@ -371,6 +644,35 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer4096 = new MenuItem(_pullSizePerMenu, SWT.RADIO);
         _pullSizePer512.setSelection(true);
         
+        _pullMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) { }
+            public void menuShown(MenuEvent menuEvent) { loadPullPolicy(); }
+        });
+        
+        SelectionListener savePull = new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { savePullPolicy(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { savePullPolicy(); }
+        };
+        
+        _pullRecentDelta.addSelectionListener(savePull);
+        _pullAllDelta.addSelectionListener(savePull);
+        _pullRecentKnown.addSelectionListener(savePull);
+        _pullAllKnown.addSelectionListener(savePull);
+        _pullPIR.addSelectionListener(savePull);
+        _pullNothing.addSelectionListener(savePull);
+        _pullPrivate.addSelectionListener(savePull);
+        _pullPBE.addSelectionListener(savePull);
+        _pullPrivate.addSelectionListener(savePull);
+        _pullPBE.addSelectionListener(savePull);
+        _pullSizePer32.addSelectionListener(savePull);
+        _pullSizePer64.addSelectionListener(savePull);
+        _pullSizePer128.addSelectionListener(savePull);
+        _pullSizePer256.addSelectionListener(savePull);
+        _pullSizePer512.addSelectionListener(savePull);
+        _pullSizePer1024.addSelectionListener(savePull);
+        _pullSizePer2048.addSelectionListener(savePull);
+        _pullSizePer4096.addSelectionListener(savePull);
+        
         _pushPolicy = new Button(_root, SWT.PUSH);
         _pushPolicy.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
         _pushPolicy.addSelectionListener(new SelectionListener() {
@@ -382,10 +684,20 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pushPolicy.setMenu(_pushMenu);
 
         _pushAllDelta = new MenuItem(_pushMenu, SWT.RADIO);
-        _pushNewDelta = new MenuItem(_pushMenu, SWT.RADIO);
         _pushLocalDelta = new MenuItem(_pushMenu, SWT.RADIO);
         _pushNothing = new MenuItem(_pushMenu, SWT.RADIO);
-        _pushNewDelta.setSelection(true);
+        
+        _pushMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) { loadPushPolicy(); }
+        });
+        SelectionListener savePush = new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { savePushPolicy(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { savePushPolicy(); }
+        };
+        _pushAllDelta.addSelectionListener(savePush);
+        _pushLocalDelta.addSelectionListener(savePush);
+        _pushNothing.addSelectionListener(savePush);
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -437,6 +749,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private static final String T_PULLRECENTDELTA = "syndie.gui.syndicationscheduler.pullrecentdelta";
     private static final String T_PULLALLDELTA = "syndie.gui.syndicationscheduler.pullalldelta";
     private static final String T_PULLRECENTKNOWN = "syndie.gui.syndicationscheduler.pullrecentknown";
+    private static final String T_PULLALLKNOWN = "syndie.gui.syndicationscheduler.pullallknown";
     private static final String T_PULLPIR = "syndie.gui.syndicationscheduler.pullpir";
     private static final String T_PULLNOTHING = "syndie.gui.syndicationscheduler.pullnothing";
     private static final String T_PULLPRIVATE = "syndie.gui.syndicationscheduler.pullprivate";
@@ -482,18 +795,21 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private static final String T_EVENTS = "syndie.gui.syndicationscheduler.events";
 
     private static final String T_PUSHALLDELTA = "syndie.gui.syndicationscheduler.pushalldelta";
-    private static final String T_PUSHNEWDELTA = "syndie.gui.syndicationscheduler.pushnewdelta";
     private static final String T_PUSHLOCALDELTA = "syndie.gui.syndicationscheduler.pushlocaldelta";
     private static final String T_PUSHNOTHING = "syndie.gui.syndicationscheduler.pushnothing";
 
     private static final String T_SYNC_NEVER = "syndie.gui.syndicationscheduler.sync.never";
+    
+    private static final String T_EVENT_CLEARALL = "syndie.gui.syndicationscheduler.event.clearall";
+    private static final String T_EVENT_CLEARSELECTED = "syndie.gui.syndicationscheduler.event.clearselected";
+    private static final String T_EVENT_VIEW = "syndie.gui.syndicationscheduler.event.view";
     
     public void translate(TranslationRegistry registry) {
         _archiveGroup.setText(registry.getText(T_ARCHIVES, "Archives"));
         _archiveAdd.setText(registry.getText(T_ARCHIVEADD, "Add"));
         _archiveNameLabel.setText(registry.getText(T_NAME, "Name:"));
         _urlLabel.setText(registry.getText(T_URL, "URL:"));
-        _passphraseLabel.setText(registry.getText(T_PASS, "Passphrase:"));
+        _passphraseLabel.setText(registry.getText(T_PASS, "Posting key:"));
         _lastSyncLabel.setText(registry.getText(T_LASTSYNC, "Last sync:"));
         _nextSyncLabel.setText(registry.getText(T_NEXTSYNC, "Next sync:"));
         _nextSyncAdjust.setText(registry.getText(T_NEXTSYNCADJUST, "Adjust next sync..."));
@@ -513,6 +829,10 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pushPolicy.setText(registry.getText(T_PUSH, "Push policy..."));
         _eventGroup.setText(registry.getText(T_EVENTS, "Event log:"));
         
+        _eventClearAll.setText(registry.getText(T_EVENT_CLEARALL, "Clear all records"));
+        _eventClearSelected.setText(registry.getText(T_EVENT_CLEARSELECTED, "Clear selected record"));
+        _eventView.setText(registry.getText(T_EVENT_VIEW, "View selected scope"));
+        
         _colWhen.setText(registry.getText(T_COLWHEN, "When"));
         _colArchive.setText(registry.getText(T_COLARCHIVE, "Archive"));
         _colScope.setText(registry.getText(T_COLSCOPE, "Scope"));
@@ -522,6 +842,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullRecentDelta.setText(registry.getText(T_PULLRECENTDELTA, "Recent messages we don't have"));
         _pullAllDelta.setText(registry.getText(T_PULLALLDELTA, "All messages we don't have"));
         _pullRecentKnown.setText(registry.getText(T_PULLRECENTKNOWN, "Recent messages in forums we know"));
+        _pullAllKnown.setText(registry.getText(T_PULLALLKNOWN, "All messages in forums we know"));
         _pullPIR.setText(registry.getText(T_PULLPIR, "Everything the archive considers 'new' (PIR)"));
         _pullNothing.setText(registry.getText(T_PULLNOTHING, "Nothing"));
         _pullPrivate.setText(registry.getText(T_PULLPRIVATE, "Include private messages"));
@@ -537,7 +858,6 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer4096.setText(registry.getText(T_PULLSIZEPER4096, "4096KB"));
         
         _pushAllDelta.setText(registry.getText(T_PUSHALLDELTA, "Send all differences"));
-        _pushNewDelta.setText(registry.getText(T_PUSHNEWDELTA, "Send new differences"));
         _pushLocalDelta.setText(registry.getText(T_PUSHLOCALDELTA, "Send locally generated differences only"));
         _pushNothing.setText(registry.getText(T_PUSHNOTHING, "Send nothing"));
     }
@@ -554,7 +874,14 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     public void archivesLoaded(SyndicationManager mgr) {
         Display.getDefault().asyncExec(new Runnable() { public void run() { refreshView(); } });
     }
-    public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
-    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+    public void archiveIndexStatus(SyndicationManager mgr, final SyndicationManager.StatusRecord record) {
+        if (record.isTerminal())
+            Display.getDefault().asyncExec(new Runnable() { public void run() { addEvent(record); } });
+    }
+    public void fetchStatusUpdated(SyndicationManager mgr, final SyndicationManager.StatusRecord record) {
+        if (record.isTerminal()) {
+            Display.getDefault().asyncExec(new Runnable() { public void run() { addEvent(record); } });
+        }
+    }
     public void syndicationComplete(SyndicationManager mgr) {}
 }

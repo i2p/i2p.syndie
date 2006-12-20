@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -170,6 +171,43 @@ public class SyndicationManager {
         _client.setDefaultFreenetHost(fcpHost);
         _client.setDefaultFreenetPort(fcpPort);
         _client.saveProxyConfig();
+    }
+    
+    public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) {
+        Properties prefs = _client.getNymPrefs();
+        if (strategy != null)
+            prefs.setProperty("syndicate.pullStrategy", strategy.serialize());
+        else
+            prefs.remove("syndicate.pullStrategy");
+        _client.setNymPrefs(prefs);
+    }
+    public SharedArchiveEngine.PullStrategy getPullStrategy() {
+        Properties prefs = _client.getNymPrefs();
+        String strat = prefs.getProperty("syndicate.pullStrategy");
+        SharedArchiveEngine.PullStrategy rv = new SharedArchiveEngine.PullStrategy(strat);
+        String ser = rv.serialize();
+        if (strat != null)
+            _ui.debugMessage("db pull strategy: [" + strat + "] eq parsed? " + strat.equals(ser) + ": [" + ser + "]");
+        return rv;
+    }
+    
+    
+    public void setPushStrategy(SharedArchiveEngine.PushStrategy strategy) {
+        Properties prefs = _client.getNymPrefs();
+        if (strategy != null)
+            prefs.setProperty("syndicate.pushStrategy", strategy.serialize());
+        else
+            prefs.remove("syndicate.pushStrategy");
+        _client.setNymPrefs(prefs);
+    }
+    public SharedArchiveEngine.PushStrategy getPushStrategy() {
+        Properties prefs = _client.getNymPrefs();
+        String strat = prefs.getProperty("syndicate.pushStrategy");
+        SharedArchiveEngine.PushStrategy rv = new SharedArchiveEngine.PushStrategy(strat);
+        String ser = rv.serialize();
+        if (strat != null)
+            _ui.debugMessage("db push strategy: [" + strat + "] eq parsed? " + strat.equals(ser) + ": [" + ser + "]");
+        return rv;
     }
     
     /**
@@ -1216,6 +1254,7 @@ public class SyndicationManager {
         private SyndieURI _uri;
         private int _status;
         private String _detail;
+        private long _timestamp;
         private FreenetArchivePusher _freenetPusher;
         private HTTPSyndicator _httpSyndicator;
         
@@ -1223,12 +1262,14 @@ public class SyndicationManager {
             _archiveName = name;
             _uri = uri;
             _status = FETCH_SCHEDULED;
+            _timestamp = System.currentTimeMillis();
         }
         public StatusRecord(String name, SyndieURI uri, FreenetArchivePusher pusher) {
             _archiveName = name;
             _uri = uri;
             _freenetPusher = pusher;
             _status = PUSH_SCHEDULED;
+            _timestamp = System.currentTimeMillis();
         }
         public StatusRecord(String name, SyndieURI uri, HTTPSyndicator syndicator) {
             _archiveName = name;
@@ -1236,6 +1277,7 @@ public class SyndicationManager {
             _freenetPusher = null;
             _httpSyndicator = syndicator;
             _status = PUSH_SCHEDULED;
+            _timestamp = System.currentTimeMillis();
         }
         
         NymArchive getArchive() { return SyndicationManager.this.getArchive(_archiveName); }
@@ -1244,6 +1286,7 @@ public class SyndicationManager {
         public SyndieURI getURI() { return _uri; }
         public int getStatus() { return _status; }
         public String getSource() { return _archiveName; }
+        public long getEventTime() { return _timestamp; }
         public boolean isTerminal() {
             switch (_status) {
                 case FETCH_FAILED:

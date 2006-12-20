@@ -26,6 +26,37 @@ public class SharedArchiveEngine {
         public PullStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
         }
+        public PullStrategy(String serialized) {
+            this();
+            if (serialized != null) {
+                includeDupForPIR = (serialized.indexOf("PIR") != -1);
+                if (!includeDupForPIR) {
+                    includeRecentMessagesOnly = (serialized.indexOf("RecentMessagesOnly") != -1);
+                    includePBEMessages = (serialized.indexOf("DontIncludePBE") == -1);
+                    includePrivateMessages = (serialized.indexOf("DontIncludePrivate") == -1);
+                    knownChannelsOnly = (serialized.indexOf("KnownChannelsOnly") != -1);
+                    pullNothing = (serialized.indexOf("PullNothing") != -1);
+                    int maxPerIdx = serialized.indexOf("MaxPerMsg");
+                    if (maxPerIdx >= 0) {
+                        int end = serialized.indexOf(' ', maxPerIdx);
+                        if (end > 0) {
+                            try {
+                                maxKBPerMessage = Integer.parseInt(serialized.substring(maxPerIdx + "MaxPerMsg".length(), end));
+                            } catch (NumberFormatException nfe) {}
+                        }
+                    }
+                    int maxTotIdx = serialized.indexOf("MaxTotal");
+                    if (maxTotIdx >= 0) {
+                        int end = serialized.indexOf(' ', maxTotIdx);
+                        if (end > 0) {
+                            try {
+                                maxKBTotal = Integer.parseInt(serialized.substring(maxTotIdx + "MaxTotal".length(), end));
+                            } catch (NumberFormatException nfe) {}
+                        }
+                    }
+                }
+            }
+        }
         /**
          * if a message exceeds this size, do not pull it
          */
@@ -63,6 +94,9 @@ public class SharedArchiveEngine {
          */
         public boolean includeDupForPIR;
         
+        /** noop strategy - dont pull anything */
+        public boolean pullNothing;
+        
         public String toString() {
             StringBuffer buf = new StringBuffer();
             if (includeDupForPIR) {
@@ -81,14 +115,49 @@ public class SharedArchiveEngine {
                     buf.append("KnownChannelsOnly ");
                 else
                     buf.append("AllChannels ");
+                if (pullNothing)
+                    buf.append("PullNothing ");
+                if (maxKBPerMessage >= 0)
+                    buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
+                if (maxKBTotal >= 0)
+                    buf.append("MaxTotal").append(maxKBTotal).append(" ");
             }
             return buf.toString();
         }
+        public String serialize() { return toString(); }
     }
 
     public static class PushStrategy {
         public PushStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
+        }
+        public PushStrategy(String serialized) {
+            this();
+            if (serialized != null) {
+                sendNothing = (serialized.indexOf("SendNothing") != -1);
+                sendLocalNewOnly = (serialized.indexOf("LocalNewOnly") != -1);
+                sendHashcashForAll = (serialized.indexOf("HCForAll") != -1);
+                sendHashcashForLocal = (serialized.indexOf("HCForLocal") != -1);
+                
+                int maxPerIdx = serialized.indexOf("MaxPerMsg");
+                if (maxPerIdx >= 0) {
+                    int end = serialized.indexOf(' ', maxPerIdx);
+                    if (end > 0) {
+                        try {
+                            maxKBPerMessage = Integer.parseInt(serialized.substring(maxPerIdx + "MaxPerMsg".length(), end));
+                        } catch (NumberFormatException nfe) {}
+                    }
+                }
+                int maxTotIdx = serialized.indexOf("MaxTotal");
+                if (maxTotIdx >= 0) {
+                    int end = serialized.indexOf(' ', maxTotIdx);
+                    if (end > 0) {
+                        try {
+                            maxKBTotal = Integer.parseInt(serialized.substring(maxTotIdx + "MaxTotal".length(), end));
+                        } catch (NumberFormatException nfe) {}
+                    }
+                }
+            }
         }
         /**
          * if a message exceeds this size, do not push it
@@ -114,6 +183,9 @@ public class SharedArchiveEngine {
          * the archive doesnt have yet.  this has obvious anonymity attributes
          */
         public boolean sendLocalNewOnly;
+        /** noop strategy - dont send anything */
+        public boolean sendNothing;
+        
         public String toString() {
             StringBuffer buf = new StringBuffer();
             if (sendHashcashForLocal) buf.append("HCForLocal ");
@@ -122,8 +194,15 @@ public class SharedArchiveEngine {
                 buf.append("LocalNewOnly ");
             else
                 buf.append("AllDiff ");
+            if (sendNothing)
+                buf.append("SendNothing ");
+            if (maxKBPerMessage >= 0)
+                    buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
+            if (maxKBTotal >= 0)
+                buf.append("MaxTotal").append(maxKBTotal).append(" ");
             return buf.toString();
         }
+        public String serialize() { return toString(); }
     }
     
     /** 

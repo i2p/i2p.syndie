@@ -378,6 +378,22 @@ public class SyndieURI {
         else
             return null;
     }
+    public byte[] getPostKeyData() {
+        String str = getString("postKeyData");
+        if (str != null)
+            return Base64.decode(str);
+        else
+            return null;
+    }
+    public String getArchivePassphrase() {
+        String str = getString("postKeyData");
+        if (str != null) {
+            byte data[] = Base64.decode(str);
+            if (data != null)
+                return DataHelper.getUTF8(data);
+        }
+        return null;
+    }
     public SigningPrivateKey getManageKey() {
         byte val[] = decodeKey(getString("manageKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
