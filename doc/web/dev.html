@@ -90,6 +90,26 @@ write to the database), you can build native Syndie executables.  On *nix/osx,
 syndie-$version.bin.zip, except bin/syndie is the native executable instead
 of a shell script launching java.  Work is ongoing for GCJ/MinGW support, but
 the Makefile.mingw should work with a viable MinGW install of GCJ 4.x</p>
+
+<p>Coding conventions are fairly standard for java projects, though the guideline
+is to follow whatever standards are in use within the particular file you are
+working in.  Wider guidelines across the whole codebase for new code:<ul>
+ <li>Prefix class level variables with <code>_</code></li>
+ <li>Translation constants should be
+     <code>private static final String T_<i>$name</i></code></li>
+ <li>standardJavaCamelCase should be used.  long words are better thnShrt1sUCntUndrstnd. </li>
+ <li>Variable names/comments/etc, should be in English, unless the comments relate
+     to internationalization/translation issues, of course.</li>
+ <li>Put your braces on the same line as the method:<pre>
+void foo() {
+}</pre> not <pre>void foo()
+{
+}</pre></li>
+ <li>If a method is short enough, fit it in one line: <pre>
+    private int getFoo() { return _foo; }</pre></li>
+ <li>No tabs, ever - we do not all use the same IDE/editor, and the code should be
+     readable to all of the coders.  Indent with 4 spaces.</li>
+</ul>
 </div>
 </body>
 </html>
