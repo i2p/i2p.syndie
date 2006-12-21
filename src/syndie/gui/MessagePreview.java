@@ -68,11 +68,13 @@ public class MessagePreview implements Themeable, Translatable {
     
     public void preview(SyndieURI uri) {
         _uri = uri;
-        Long page = uri.getPage();
-        if (page == null)
-            _page = 1;
-        else
-            _page = page.intValue();
+        if (uri != null) {
+            Long page = uri.getPage();
+            if (page == null)
+                _page = 1;
+            else
+                _page = page.intValue();
+        }
         updatePreview();
     }
     

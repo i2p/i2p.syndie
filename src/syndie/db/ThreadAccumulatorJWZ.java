@@ -1017,12 +1017,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             String author = peers[i].getName();
             if (author == null) author = "";
             author = author.toLowerCase();
-            while (keyToNode.containsKey(author))
-                author = author + " ";
-            keyToNode.put(author, peers[i]);
-            sorted.add(author);
+            int dup = 0;
+            String key = author;
+            while (keyToNode.containsKey(key)) {
+                key = author + " " + dup;
+                dup++;
+            }
+            keyToNode.put(key, peers[i]);
+            sorted.add(key);
         }
-        _ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
+        _ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers");
+        ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
             rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
@@ -1035,12 +1040,16 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             // todo: make this sort on the forum name, not its local internal channelId
             String target = peers[i].getThreadTarget() + "";
             // sorting with spaces at the end instead of numerically keeps all threads in the same channel together
-            while (keyToNode.containsKey(target)) 
-                target = target + " ";
-            keyToNode.put(target, peers[i]);
-            sorted.add(target);
+            int dup = 0;
+            String key = target;
+            while (keyToNode.containsKey(key)) {
+                key = target + " " + dup;
+                dup++;
+            }
+            keyToNode.put(key, peers[i]);
+            sorted.add(key);
         }
-        _ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        _ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1054,13 +1063,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             String subject = peers[i].getSubject();
             if (subject == null) subject = "";
             subject = subject.toLowerCase();
-            _ui.debugMessage("sorting subject [" + subject + "], for message " + peers[i].getMsgId() + "/" + i);
-            while (keyToNode.containsKey(subject))
-                subject = subject + " ";
-            keyToNode.put(subject, peers[i]);
-            sorted.add(subject);
+            //_ui.debugMessage("sorting subject [" + subject + "], for message " + peers[i].getMsgId() + "/" + i);
+            String key = subject;
+            int dup = 0;
+            while (keyToNode.containsKey(key)) {
+                key = subject + " " + dup;
+                dup++;
+            }
+            keyToNode.put(key, peers[i]);
+            sorted.add(key);
         }
-        _ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        _ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1078,7 +1091,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             keyToNode.put(new Long(when), peers[i]);
             sorted.add(new Long(when));
         }
-        _ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers: sorted=" + sorted);
+        _ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1463,5 +1476,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 rv[i] = (ThreadReferenceNode)getChild(i);
             return rv;
         }
+        public long getUniqueId() { return _msg.msgId; }
     }
 }

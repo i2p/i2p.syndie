@@ -70,7 +70,7 @@ public class MessageFlagBar implements Translatable {
     
     private void rebuildFlags() {
         if (_realized) {
-            _browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
+            //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
             _root.setRedraw(false);
             disposeImages();
             Control ctl[] = _root.getChildren();
@@ -87,7 +87,7 @@ public class MessageFlagBar implements Translatable {
             _root.layout(true, true);
             _root.setRedraw(true);
         } else {
-            _browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
+            //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
             disposeImages();
             buildImages();
         }

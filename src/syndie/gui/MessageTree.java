@@ -111,6 +111,10 @@ public class MessageTree implements Translatable, Themeable {
     private Map _itemToMsgId;
     /** item to MessageFlagBar */
     private Map _itemToMsgFlags;
+    /** ordered list of ReferenceNode instances describing the tree */
+    private List _threadReferenceNodes;
+    /** TreeItem to ReferenceNode */
+    private Map _itemToNode;
     
     /** column we are sorting on */
     private TreeColumn _currentSortColumn;
@@ -141,6 +145,7 @@ public class MessageTree implements Translatable, Themeable {
         _itemsNewUnread = new HashSet();
         _itemToMsgId = new HashMap();
         _itemToMsgFlags = new HashMap();
+        _itemToNode = new HashMap();
         _tags = new HashSet();
         _bars = new ArrayList();
         initComponents();
@@ -705,8 +710,28 @@ public class MessageTree implements Translatable, Themeable {
         gl.marginWidth = 0;
         gl.verticalSpacing = 0;
         _root.setLayout(gl);
-        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
+        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION | SWT.VIRTUAL);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _tree.addListener(SWT.SetData, new Listener() {
+            public void handleEvent(Event evt) {
+                TreeItem item = (TreeItem)evt.item;
+                TreeItem parent = item.getParentItem();
+                ReferenceNode itemNode = null;
+                if (parent != null) {
+                    ReferenceNode parentNode = (ReferenceNode)_itemToNode.get(parent);
+                    int childNum = parent.indexOf(item);
+                    itemNode = parentNode.getChild(childNum);
+                } else {
+                    itemNode = (ReferenceNode)_threadReferenceNodes.get(_tree.indexOf(item));
+                }
+                _itemToNode.put(item, itemNode);
+                _itemToURI.put(item, itemNode.getURI());
+                _itemToMsgId.put(item, new Long(itemNode.getUniqueId()));
+                renderNode(itemNode, item);
+                item.setItemCount(itemNode.getChildCount());
+                initColSize(); // only adjusts the first time
+            }
+        });
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
         _colType = new TreeColumn(_tree, SWT.LEFT);
@@ -714,11 +739,13 @@ public class MessageTree implements Translatable, Themeable {
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
         _colDate = new TreeColumn(_tree, SWT.LEFT);
         _colTags = new TreeColumn(_tree, SWT.LEFT);
-        _tree.addListener(SWT.MeasureItem, new Listener() {
-            public void handleEvent(Event evt) {
-                if (evt.index == 1) evt.width = getMessageFlagBarWidth(_tree);
-            }
-        });
+        
+        _colType.setWidth(getMessageFlagBarWidth(_tree));
+        //_tree.addListener(SWT.MeasureItem, new Listener() {
+        //    public void handleEvent(Event evt) {
+        //        if (evt.index == 1) evt.width = getMessageFlagBarWidth(_tree);
+        //    }
+        //});
         _tree.addListener(SWT.PaintItem, new Listener() {
             public void handleEvent(Event evt) {
                 if (evt.index == 1) {
@@ -984,12 +1011,18 @@ public class MessageTree implements Translatable, Themeable {
         _itemsNewRead.clear();
         _itemsNewUnread.clear();
         _tags.clear();
+        _itemToNode.clear();
+        _threadReferenceNodes = referenceNodes;
         long totalDBTime = 0;
         long before = System.currentTimeMillis();
+        _tree.setItemCount(referenceNodes != null ? referenceNodes.size() : 0);
+        // done on-demand via the virtual tree
+        /*
         for (int i = 0; i < referenceNodes.size(); i++) {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
             totalDBTime += add(node, null);
         }
+         */
         long after = System.currentTimeMillis();
         _browser.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
@@ -1005,15 +1038,14 @@ public class MessageTree implements Translatable, Themeable {
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).populateTagCombo();
         
-        resizeCols();
+        //resizeCols();
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
     }
     
     private long add(ReferenceNode node, TreeItem parent) {
-        long dbStart = 0;
-        long dbEnd = 0;
+        long dbTime = 0;
         TreeItem item = null;
         SyndieURI uri = node.getURI();
         if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) ) {
@@ -1024,129 +1056,142 @@ public class MessageTree implements Translatable, Themeable {
 
             _itemToURI.put(item, uri);
             
-            String subj = "";
-            String auth = "";
-            String chan = "";
-            String date = "";
-            String tags = "";
-            int status = DBClient.MSG_STATUS_NEW_UNREAD;
-            
-            dbStart = System.currentTimeMillis();
-            
-            long chanId = _client.getChannelId(uri.getScope());
-            String scopeName = _client.getChannelName(chanId);
-            //ChannelInfo scopeInfo = _client.getChannel(chanId);
-            //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
-            
-            // simple optimization: use the fact that these ReferenceNode instances are really
-            // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
-            
-            long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
-            if (msgId >= 0) {
-                _itemToMsgId.put(item, new Long(msgId));
-                subj = _client.getMessageSubject(msgId);
-                long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
-                if (authorId != chanId) {
-                    String authorName = _client.getChannelName(authorId);
-                    Hash authorHash = _client.getChannelHash(authorId);
-                    //ChannelInfo authInfo = _client.getChannel(authorId);
-                    if (authorName != null) {
-                        auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
-                    } else {
-                        auth = "";
-                    }
-                    //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
-                } else {
-                    //System.out.println("author is the scope chan for " + uri.toString());
-                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-                }
-                //ChannelInfo chanInfo = scopeInfo;
-                long targetChanId = _client.getMessageTarget(msgId);
-                if (targetChanId != chanId) {
-                    //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
-                    //System.out.println("msg: " + uri.toString());
-                    String targetName = _client.getChannelName(targetChanId);
-                    Hash targetHash = _client.getChannelHash(targetChanId);
-                    //chanInfo = _client.getChannel(msg.getTargetChannelId());
-                    chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
-                    //if (chanInfo == null) {
-                    //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
-                    //} else {
-                    //    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
-                    //}
-                } else {
-                    //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
-                    //System.out.println("msg: " + uri.toString());
-                    chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-                }
-                
-                if (auth.length() <= 0) {
-                     auth = chan;
-                }
-                Set msgTags = _client.getMessageTags(msgId, true, true);
-                StringBuffer buf = new StringBuffer();
-                for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
-                    String tag = (String)iter.next();
-                    tag = tag.trim();
-                    buf.append(tag).append(" ");
-                    _tags.add(tag);
-                }
-                tags = buf.toString().trim();
-                date = Constants.getDate(uri.getMessageId().longValue());
-                item.setGrayed(false);
-                
-                status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
-            } else {
-                // message is not locally known
-                subj = "";
-                if (scopeName != null)
-                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-                else
-                    auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
-                chan = "";
-                date = Constants.getDate(uri.getMessageId().longValue());
-                tags = "";
-            }
-            
-            dbEnd = System.currentTimeMillis();
-            
-            item.setText(0, subj);
-            // msgbar stuff
-            // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
-            //MessageFlagBar bar = new MessageFlagBar(_browser, _tree, false);
-            //bar.setMessage(msg);
-            //_itemToMsgFlags.put(item, bar);
-            //if ( (msg != null) && (msg.getWasPrivate()) )
-            //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
-            //else
-            //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
-            item.setText(2, auth);
-            item.setText(3, chan);
-            item.setText(4, date);
-            item.setText(5, tags);
-            if (status == DBClient.MSG_STATUS_OLD) {
-                _itemsOld.add(item);
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
-            } else if (status == DBClient.MSG_STATUS_NEW_READ) {
-                _itemsNewRead.add(item);
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
-            } else {
-                _itemsNewUnread.add(item);
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
-            }
-            //_browser.getUI().debugMessage("message status: " + status);
+            dbTime += renderNode(node, item);
         } else {
             // reference node does not point to a uri, so don't build a row
             item = parent;
         }
-        long dbTime = dbEnd-dbStart;
         for (int i = 0; i < node.getChildCount(); i++)
             dbTime += add(node.getChild(i), item);
         return dbTime;
     }
     
+    private long renderNode(ReferenceNode node, TreeItem item) {
+        SyndieURI uri = node.getURI();
+        String subj = "";
+        String auth = "";
+        String chan = "";
+        String date = "";
+        String tags = "";
+        int status = DBClient.MSG_STATUS_NEW_UNREAD;
+
+        long dbStart = System.currentTimeMillis();
+
+        long chanId = _client.getChannelId(uri.getScope());
+        String scopeName = _client.getChannelName(chanId);
+        //ChannelInfo scopeInfo = _client.getChannel(chanId);
+        //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+
+        // simple optimization: use the fact that these ReferenceNode instances are really
+        // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
+
+        long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+        if (msgId >= 0) {
+            _itemToMsgId.put(item, new Long(msgId));
+            subj = _client.getMessageSubject(msgId);
+            long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
+            if (authorId != chanId) {
+                String authorName = _client.getChannelName(authorId);
+                Hash authorHash = _client.getChannelHash(authorId);
+                //ChannelInfo authInfo = _client.getChannel(authorId);
+                if (authorName != null) {
+                    auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
+                } else {
+                    auth = "";
+                }
+                //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
+            } else {
+                //System.out.println("author is the scope chan for " + uri.toString());
+                auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+            }
+            //ChannelInfo chanInfo = scopeInfo;
+            long targetChanId = _client.getMessageTarget(msgId);
+            if (targetChanId != chanId) {
+                //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
+                //System.out.println("msg: " + uri.toString());
+                String targetName = _client.getChannelName(targetChanId);
+                Hash targetHash = _client.getChannelHash(targetChanId);
+                //chanInfo = _client.getChannel(msg.getTargetChannelId());
+                chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
+                //if (chanInfo == null) {
+                //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
+                //} else {
+                //    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                //}
+            } else {
+                //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
+                //System.out.println("msg: " + uri.toString());
+                chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+            }
+
+            if (auth.length() <= 0) {
+                 auth = chan;
+            }
+            Set msgTags = _client.getMessageTags(msgId, true, true);
+            StringBuffer buf = new StringBuffer();
+            for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
+                String tag = (String)iter.next();
+                tag = tag.trim();
+                buf.append(tag).append(" ");
+                _tags.add(tag);
+            }
+            tags = buf.toString().trim();
+            date = Constants.getDate(uri.getMessageId().longValue());
+            item.setGrayed(false);
+
+            status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
+        } else {
+            // message is not locally known
+            subj = "";
+            if (scopeName != null)
+                auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+            else
+                auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
+            chan = "";
+            date = Constants.getDate(uri.getMessageId().longValue());
+            tags = "";
+        }
+
+        long dbEnd = System.currentTimeMillis();
+
+        item.setText(0, subj);
+        // msgbar stuff
+        // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
+        //MessageFlagBar bar = new MessageFlagBar(_browser, _tree, false);
+        //bar.setMessage(msg);
+        //_itemToMsgFlags.put(item, bar);
+        //if ( (msg != null) && (msg.getWasPrivate()) )
+        //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
+        //else
+        //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
+        item.setText(2, auth);
+        item.setText(3, chan);
+        item.setText(4, date);
+        item.setText(5, tags);
+        if (status == DBClient.MSG_STATUS_OLD) {
+            _itemsOld.add(item);
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+        } else if (status == DBClient.MSG_STATUS_NEW_READ) {
+            _itemsNewRead.add(item);
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+        } else {
+            _itemsNewUnread.add(item);
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+        }
+        //_browser.getUI().debugMessage("message status: " + status);
+        return dbEnd-dbStart;
+    }
+    
+    private boolean _colsResized = false;
+    private void initColSize() {
+        if (_colsResized) return;
+        _colsResized = true;
+        resizeCols();
+    }
+    
     private void resizeCols() {
-        int total = _tree.getClientArea().width - getMessageFlagBarWidth(_tree);
+        int total = _tree.getClientArea().width - _colType.getWidth();
+        int dateWidth = ImageUtil.getWidth("0000/00/00  ", _tree) + _tree.getGridLineWidth()*2;
         int subjWidth = total / 3;
         
         int chanWidth = total / 5;
@@ -1162,10 +1207,11 @@ public class MessageTree implements Translatable, Themeable {
         _colSubject.setWidth(subjWidth);
         _colChannel.setWidth(chanWidth);
         _colAuthor.setWidth(authWidth);
-        _colDate.pack();
+        //_colDate.pack();
+        _colDate.setWidth(dateWidth);
         //_colTags.setWidth(tagsWidth);
         _colTags.pack();
-        _colType.pack();
+        //_colType.pack();
         
         /*
         _colSubject.pack();

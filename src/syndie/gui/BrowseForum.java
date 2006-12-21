@@ -406,6 +406,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private static final int PREVIEW_DELAY = 500;
     // only actually preview if 500ms passes w/out trying to preview something else
     void preview(final SyndieURI uri, final boolean fullscreen) {
+        if (uri == null) return;
         _browser.getUI().debugMessage("preview request for " + uri);
         _toPreview = uri;
         _root.getDisplay().timerExec(PREVIEW_DELAY, new Runnable() { 
