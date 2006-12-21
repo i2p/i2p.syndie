@@ -270,53 +270,65 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         
         // filter by date and scope only
-        Set matchingMsgIds = getMatchingMsgIds();
-        _ui.debugMessage("matching msgIds: " + matchingMsgIds);
+        Set matchingThreadMsgIds = getMatchingThreadMsgIds();
+        _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds);
         
         if (_unreadOnly) {
-            for (Iterator iter = matchingMsgIds.iterator(); iter.hasNext(); ) {
-                Long msgId = (Long)iter.next();
-                int status = _client.getMessageStatus(msgId.longValue());
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+                //Long msgId = (Long)iter.next();
+                int status = _client.getMessageStatus(tmi.msgId); //msgId.longValue());
                 if (DBClient.MSG_STATUS_NEW_UNREAD != status) {
-                    _ui.debugMessage("reject " + msgId + " because status=" + status);
+                    _ui.debugMessage("reject " + tmi + " because status=" + status);
                     iter.remove();
                 }
             }
         }
         
+        boolean tagFilter = true;
+        if ( ( (_rejectedTags == null) || (_rejectedTags.size() <= 0) ) &&
+             ( (_requiredTags == null) || (_requiredTags.size() <= 0) ) &&
+             ( (_wantedTags == null) || (_wantedTags.size() <= 0) ) )
+            tagFilter = false;
+        
         _msgTags = new HashMap();
-        // todo: skip this if there isn't a tag filter
-        for (Iterator iter = matchingMsgIds.iterator(); iter.hasNext(); ) {
-            Long msgId = (Long)iter.next();
-            Set tags = _client.getMessageTags(msgId.longValue(), true, true);
-            if (_applyTagFilterToMessages) {
-                if (!tagFilterPassed(tags)) {
-                    _ui.debugMessage("reject " + msgId + " because msg tag filters failed: " + tags);
-                    iter.remove();
+        
+        if (tagFilter) {
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+                //Long msgId = (Long)iter.next();
+                Set tags = _client.getMessageTags(tmi.msgId, true, true);
+                if (_applyTagFilterToMessages) {
+                    if (!tagFilterPassed(tags)) {
+                        _ui.debugMessage("reject " + tmi + " because msg tag filters failed: " + tags);
+                        iter.remove();
+                    } else {
+                        _msgTags.put(new Long(tmi.msgId), tags);
+                    }
                 } else {
-                    _msgTags.put(msgId, tags);
+                    _msgTags.put(new Long(tmi.msgId), tags);
+                    //_ui.debugMessage("tags for msg " + msgId + ": " + tags);
                 }
-            } else {
-                _msgTags.put(msgId, tags);
-                //_ui.debugMessage("tags for msg " + msgId + ": " + tags);
             }
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
         long beforeGather = System.currentTimeMillis();
-        ThreadReferenceNode threads[] = buildThreads(matchingMsgIds);
+        ThreadReferenceNode threads[] = buildThreads(matchingThreadMsgIds);
         long afterGather = System.currentTimeMillis();
         _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
         
         // then drop the threads who do not match the tags (if !_applyTagFilterToMessages)
-        if (!_applyTagFilterToMessages) {
-            List tagBuf = new ArrayList();
-            for (int i = 0; i < threads.length; i++) {
-                threads[i].getThreadTags(tagBuf);
-                if (!tagFilterPassed(tagBuf)) {
-                    _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
-                    threads[i] = null;
+        if (tagFilter) {
+            if (!_applyTagFilterToMessages) {
+                List tagBuf = new ArrayList();
+                for (int i = 0; i < threads.length; i++) {
+                    threads[i].getThreadTags(tagBuf);
+                    if (!tagFilterPassed(tagBuf)) {
+                        _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
+                        threads[i] = null;
+                    }
+                    tagBuf.clear();
                 }
-                tagBuf.clear();
             }
         }
         long afterThreadTagFilter = System.currentTimeMillis();
@@ -385,29 +397,31 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("threads: " + _roots);
     }
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId FROM channelMessage " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, messageId FROM channelMessage m " +
                 "JOIN channel ON targetChannelId = channelId " +
-                "WHERE channelHash = ? AND importDate > ? AND messageId > ? " +
-                "AND isCancelled = FALSE AND readKeyMissing = false " +
-                "AND pbePrompt IS NULL AND replyKeyMissing = false";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId FROM channelMessage " +
+                "WHERE channelHash = ? AND m.importDate > ? AND messageId > ? " +
+                "AND m.isCancelled = FALSE AND m.readKeyMissing = false " +
+                "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId FROM channelMessage " +
+                "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE importDate > ? AND messageId > ? " +
                 "AND isCancelled = FALSE AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId FROM channelMessage " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, messageId FROM channelMessage m " +
                 "JOIN channel ON targetChannelId = channelId " +
-                "WHERE channelHash = ? AND importDate > ? AND messageId > ? " +
-                "AND pbePrompt IS NOT NULL";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId FROM channelMessage " +
-                "WHERE importDate > ? AND messageId > ? " +
-                "AND pbePrompt IS NOT NULL";
-    private Set getMatchingMsgIds() { return getMatchingMsgIds(false); }
-    private Set getMatchingMsgIds(boolean pbePending) {
+                "WHERE channelHash = ? AND m.importDate > ? AND messageId > ? " +
+                "AND m.pbePrompt IS NOT NULL";
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId FROM channelMessage m " +
+                "JOIN channel ON scopeChannelId = channelId " +
+                "WHERE m.importDate > ? AND messageId > ? " +
+                "AND m.pbePrompt IS NOT NULL";
+    private Set getMatchingThreadMsgIds() { return getMatchingThreadMsgIds(false); }
+    private Set getMatchingThreadMsgIds(boolean pbePending) {
         long minImportDate = _earliestReceiveDate;
         long minMsgId = _earliestPostDate;
         
-        Set matchingMsgIds = new HashSet();
+        Set matchingThreadMsgIds = new HashSet();
         
         // do gather threads
         PreparedStatement stmt = null;
@@ -429,8 +443,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     rs = stmt.executeQuery();
                     while (rs.next()) {
                         long msgId = rs.getLong(1);
-                        if (!rs.wasNull())
-                            matchingMsgIds.add(new Long(msgId));
+                        if (rs.wasNull()) continue;
+                        long messageId = rs.getLong(2);
+                        if (rs.wasNull()) continue;
+                        
+                        ThreadMsgId tmi = new ThreadMsgId(msgId);
+                        tmi.scope = chan;
+                        tmi.messageId = messageId;
+                        matchingThreadMsgIds.add(tmi);
                     }
                     rs.close();
                     rs = null;
@@ -448,8 +468,16 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 rs = stmt.executeQuery();
                 while (rs.next()) {
                     long msgId = rs.getLong(1);
-                    if (!rs.wasNull())
-                        matchingMsgIds.add(new Long(msgId));
+                    if (rs.wasNull()) continue;
+                    byte scope[] = rs.getBytes(2);
+                    if ( (scope == null) || (scope.length != Hash.HASH_LENGTH) ) continue;
+                    long messageId = rs.getLong(3);
+                    if (rs.wasNull()) continue;
+
+                    ThreadMsgId tmi = new ThreadMsgId(msgId);
+                    tmi.scope = new Hash(scope);
+                    tmi.messageId = messageId;
+                    matchingThreadMsgIds.add(tmi);
                 }
                 rs.close();
                 rs = null;
@@ -462,21 +490,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        return matchingMsgIds;
+        return matchingThreadMsgIds;
     }
     
     private void gatherPBEPendingDecryption() {
-        Set matchingMsgIds = getMatchingMsgIds(true);
-        _ui.debugMessage("PBE pending matching msgIds: " + matchingMsgIds);
+        Set matchingThreadMsgIds = getMatchingThreadMsgIds(true);
+        _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds);
         
         // the messages are still encrypted, so we dont know too much.  fake
         // what we do know though
-        for (Iterator iter = matchingMsgIds.iterator(); iter.hasNext(); ) {
-            Long msgId = (Long)iter.next();
-            ThreadMsgId tmi = new ThreadMsgId(msgId.longValue());
-            tmi.scope = _client.getMessageScope(tmi.msgId);
-            tmi.messageId = _client.getMessageId(tmi.msgId);
-
+        for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+            ThreadMsgId tmi = (ThreadMsgId)iter.next();
             long chanId = _client.getChannelId(tmi.scope);
 
             ThreadReferenceNode node = new ThreadReferenceNode(tmi);
@@ -497,12 +521,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
     }
     
-    private ThreadReferenceNode[] buildThreads(Set matchingMsgIds) {
-        _ui.debugMessage("building threads w/ matching msgIds: " + matchingMsgIds);
+    private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
+        _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
         long beforeAncestors = System.currentTimeMillis();
-        Map ancestors = buildAncestors(matchingMsgIds);
+        Map ancestors = buildAncestors(matchingThreadMsgIds);
         long afterAncestors = System.currentTimeMillis();
-        _ui.debugMessage("finding ancestors for " + matchingMsgIds.size() + " took " + (afterAncestors-beforeAncestors));
+        _ui.debugMessage("finding ancestors for " + matchingThreadMsgIds.size() + " took " + (afterAncestors-beforeAncestors));
         List rootMsgs = new ArrayList(ancestors.size());
         Map msgContainers = new HashMap();
         for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
@@ -685,13 +709,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     /** build a map of ThreadMsgId to a List of ThreadMsgId instances, most recent first */
-    private Map buildAncestors(Set msgIds) {
+    private Map buildAncestors(Set threadMsgIds) {
         Map rv = new HashMap();
-        for (Iterator iter = msgIds.iterator(); iter.hasNext(); ) {
-            Long msgId = (Long)iter.next();
-            ThreadMsgId tmi = new ThreadMsgId(msgId.longValue());
-            tmi.scope = _client.getMessageScope(tmi.msgId);
-            tmi.messageId = _client.getMessageId(tmi.msgId);
+        for (Iterator iter = threadMsgIds.iterator(); iter.hasNext(); ) {
+            ThreadMsgId tmi = (ThreadMsgId)iter.next();
             List ancestors = (List)rv.get(tmi);
             if (ancestors == null) {
                 ancestors = new ArrayList();
@@ -750,25 +771,22 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         
-        List pendingMsgIds = new ArrayList();
-        pendingMsgIds.add(new Long(tmi.msgId));
+        List pendingThreadMsgIds = new ArrayList();
+        pendingThreadMsgIds.add(tmi);
         
         int queryRuns = 0;
         long queryTime = 0;
         int queryMatches = 0;
         try {
             stmt = client.con().prepareStatement(SQL_BUILD_ANCESTORS);
-            while (pendingMsgIds.size() > 0) {
-                Long msgId = (Long)pendingMsgIds.remove(0);
-                List rv = (List)existingAncestors.get(msgId);
+            while (pendingThreadMsgIds.size() > 0) {
+                tmi = (ThreadMsgId)pendingThreadMsgIds.remove(0);
+                List rv = (List)existingAncestors.get(tmi);
                 if (rv == null) {
                     rv = new ArrayList();
-                    tmi = new ThreadMsgId(msgId.longValue());
-                    tmi.scope = client.getMessageScope(tmi.msgId);
-                    tmi.messageId = client.getMessageId(tmi.msgId);
                     existingAncestors.put(tmi, rv);
                 }
-                stmt.setLong(1, msgId.longValue());
+                stmt.setLong(1, tmi.messageId);
                 queryRuns++;
                 long before = System.currentTimeMillis();
                 rs = stmt.executeQuery();
@@ -798,8 +816,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     rv.add(ancestor);
                     if (ancestorMsgId >= 0) {
                         Long aMsgId = new Long(ancestorMsgId);
-                        if (!existingAncestors.containsKey(aMsgId) && !pendingMsgIds.contains(aMsgId))
-                            pendingMsgIds.add(aMsgId);
+                        if (!existingAncestors.containsKey(aMsgId) && !pendingThreadMsgIds.contains(ancestor))
+                            pendingThreadMsgIds.add(ancestor);
                     }
                 }
                 
@@ -816,7 +834,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
         //_ui.debugMessage("building ancestors, query " + queryRuns + " in " + queryTime + " w/ " + queryMatches + " matches");
         return queryMatches;
     }

@@ -1037,6 +1037,10 @@ public class MessageTree implements Translatable, Themeable {
             String scopeName = _client.getChannelName(chanId);
             //ChannelInfo scopeInfo = _client.getChannel(chanId);
             //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+            
+            // simple optimization: use the fact that these ReferenceNode instances are really
+            // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
+            
             long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
             if (msgId >= 0) {
                 _itemToMsgId.put(item, new Long(msgId));
