@@ -308,7 +308,7 @@ public class SharedArchiveEngine {
             
             if (archive.getAbout().wantKnownChannelsOnly()) {
                 // boo.  dependency failed because they are no fun.
-                ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and they don't want new channels");
+                //ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and they don't want new channels");
                 rv.remove(msgURI);
                 continue;
             }
@@ -318,7 +318,7 @@ public class SharedArchiveEngine {
                 rv.add(chanURI);
             } else {
                 // dependency failed because we don't keep full archives
-                ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and we don't have that channel's signed metadata anymore");
+                //ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and we don't have that channel's signed metadata anymore");
                 rv.remove(msgURI);
                 continue;
             }
@@ -352,10 +352,10 @@ public class SharedArchiveEngine {
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
             if (sendMeta) {
                 if (metaFile.exists()) {
-                    ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
+                    //ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
                     rv.add(metaURI);
                 } else {
-                    ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
+                    //ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
                     continue;
                 }
             }
@@ -380,35 +380,35 @@ public class SharedArchiveEngine {
 
                 long lenKB = (files[j].length()+1023)/1024;
                 if (lenKB > archive.getAbout().maxMessageSize()) {
-                    ui.debugMessage("Don't send them " + messageId + " because it is too large for them to receive (" + lenKB + "KB)");
+                    //ui.debugMessage("Don't send them " + messageId + " because it is too large for them to receive (" + lenKB + "KB)");
                     continue;
                 }
                 if ( (strategy.maxKBPerMessage > 0) && (lenKB > strategy.maxKBPerMessage) ) {
-                    ui.debugMessage("Don't send them " + messageId + " because it is too large for us to send (" + lenKB + "KB)");
+                    //ui.debugMessage("Don't send them " + messageId + " because it is too large for us to send (" + lenKB + "KB)");
                     continue;
                 }
 
                 long msgId = client.getMessageId(scope, messageId);
                 int privacy = client.getMessagePrivacy(msgId);
                 if (!archive.getAbout().wantPBE() && (privacy == DBClient.PRIVACY_PBE)) {
-                    ui.debugMessage("Don't send them " + messageId + " because it they don't want PBE'd messages");
+                    //ui.debugMessage("Don't send them " + messageId + " because it they don't want PBE'd messages");
                     continue;
                 }
                 if (!archive.getAbout().wantPrivate() && (privacy == DBClient.PRIVACY_PRIVREPLY)) {
-                    ui.debugMessage("Don't send them " + messageId + " because it they don't want private reply messages");
+                    //ui.debugMessage("Don't send them " + messageId + " because it they don't want private reply messages");
                     continue;
                 }
 
                 long importDate = client.getMessageImportDate(msgId);
                 if (archive.getAbout().wantRecentOnly()) {
                     if (importDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
-                        ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
+                        //ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
                         continue;
                     }
                 }
 
                 if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal)) {
-                    ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
+                    //ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
                     continue;
                 }
 
@@ -435,7 +435,7 @@ public class SharedArchiveEngine {
                 if ( (remChan != null) && (remChan.getVersion() > version) ) {
                     // ok, they want this new version
                 } else {
-                    ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, so we don't need to send them the metadata");
+                    //ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, so we don't need to send them the metadata");
                     rv.remove(metaURI);
                 }
             }

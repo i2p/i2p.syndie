@@ -447,6 +447,11 @@ public class ImportPost {
                 _ui.debugMessage("Existing message: " + msg.getInternalId());
                 _alreadyImported = true;
                 return false;
+            } else if ( ( (msg.getPassphrasePrompt() != null) || msg.getReadKeyUnknown() || msg.getReplyKeyUnknown()) && 
+                        (_body instanceof UnreadableEnclosureBody) ) {
+                _ui.debugMessage("Existing message: " + msg.getInternalId() + " still cannot be decrypted.");
+                _alreadyImported = true;
+                return false;
             } else {
                 _ui.debugMessage("Existing message: " + msg.getInternalId());
                 // we have the post, but don't have the passphrase or keys.  So...

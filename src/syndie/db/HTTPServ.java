@@ -453,7 +453,8 @@ public class HTTPServ implements CLI.Command {
                 _ui.statusMessage("HTTP server received " + msgNum + " messages, scheduling bulk import");
                 _ui.insertCommand("menu syndicate");
                 _ui.insertCommand("bulkimport --dir '" + importDir.getPath() + "' --delete true --rmdir true");
-                _ui.insertCommand("buildindex");
+                // the SyndicationManagerScheduler rebuilds our published index when its safe to do so
+                //_ui.insertCommand("buildindex");
             }
         } catch (DataFormatException dfe) {
             delete(importDir);

@@ -569,6 +569,10 @@ public class HTTPSyndicator implements Cloneable {
             _ui.commandComplete(-1, null);
         }
     }
+    public void schedulePut(SharedArchiveEngine.PushStrategy strategy) {
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        _postURIs.addAll(engine.selectURIsToPush(_client, _ui, _remoteIndex, strategy));
+    }
     
     private void scheduleOutbound(boolean knownChanOnly) { schedule(_client.getOutboundDir(), false, true, knownChanOnly); }
     private void schedule(File rootDir, boolean metaOnly, boolean isOutbound, boolean knownChanOnly) {

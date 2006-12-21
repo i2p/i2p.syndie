@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -43,6 +44,9 @@ public class SyndicationManager {
     private int _httpProxyPort;
     private String _fcpHost;
     private int _fcpPort;
+    private SyndicationManagerScheduler _scheduler;
+    /** map of archive name to Runnable that should be run when an archive's pulls are complete */
+    private Map _onPullSuccess;
     
     private boolean _archivesLoaded;
     
@@ -82,6 +86,7 @@ public class SyndicationManager {
         _listeners = new ArrayList();
         _fetchRecords = new ArrayList();
         _fetchMetaRecords = new ArrayList();
+        _onPullSuccess = new HashMap();
         _archivesLoaded = false;
     }
     
@@ -209,6 +214,9 @@ public class SyndicationManager {
             _ui.debugMessage("db push strategy: [" + strat + "] eq parsed? " + strat.equals(ser) + ": [" + ser + "]");
         return rv;
     }
+
+    /** rebuild our shared-index.dat every hour */
+    public int getLocalRebuildDelayHours() { return 1; }
     
     /**
      * run this many concurrent http fetches/imports at a time
@@ -250,13 +258,22 @@ public class SyndicationManager {
     
     private void fetchIndex(StatusRecord record) {
         NymArchive archive = record.getArchive();
-        if (archive == null) return;
+        if (archive == null) {
+            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            return;
+        }
         
         String baseUrl = archive.getURI().getURL();
-        if (baseUrl == null) return;
-        if (record.getStatus() == FETCH_STOPPED) return;
+        if (baseUrl == null) {
+            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            return;
+        }
+        if (record.getStatus() == FETCH_STOPPED) {
+            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            return;
+        }
 
-        _ui.debugMessage("fetchIndex: started");
+        _ui.debugMessage("fetchIndex: " + record.getSource() + " started");
 
         String proxyHost = archive.getCustomProxyHost();
         int proxyPort = archive.getCustomProxyPort();
@@ -315,7 +332,7 @@ public class SyndicationManager {
          */
 	if (includeForceDownload) url = url + "?forcedownload";
 
-        _ui.debugMessage("fetchIndex: fetching: " + url);
+        _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetching: " + url);
         //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCHING, null);
         
         if (record.getStatus() == FETCH_STOPPED) return;
@@ -325,22 +342,24 @@ public class SyndicationManager {
         File out = null;
         if (baseUrl.startsWith("/")) {
             out = new File(url);
-            _ui.debugMessage("fetchIndex: fetch complete: " + url);
+            _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch complete: " + url);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             record.setStatus(FETCH_COMPLETE);
             fireIndexStatus(record);
             archiveWasRemote = false;
         } else if (baseUrl.startsWith("file://")) {
             out = new File(baseUrl.substring("file://".length()));
-            _ui.debugMessage("fetchIndex: fetch complete: " + url);
+            _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch complete: " + url);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             record.setStatus(FETCH_COMPLETE);
             fireIndexStatus(record);
             archiveWasRemote = false;
         } else {
             try {
-                if (record.getStatus() == FETCH_STOPPED)
+                if (record.getStatus() == FETCH_STOPPED) {
+                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
                     return;
+                }
                 out = File.createTempFile("syndicate", ".index", _client.getTempDir());
                 EepGet get = new EepGet(_client.ctx(), shouldProxy, proxyHost, (int)proxyPort, 0, out.getPath(), url, false, null, null);
                 UIStatusListener lsnr = new UIStatusListener();
@@ -348,11 +367,12 @@ public class SyndicationManager {
                 boolean fetched = get.fetch();
                 if (record.getStatus() == FETCH_STOPPED) {
                     if (archiveWasRemote) out.delete(); 
+                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
                     return;
                 }
                 if (!fetched) {
                     _ui.errorMessage("Fetch failed of " + url);
-                    _ui.debugMessage("fetchIndex: fetch error: " + url);
+                    _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch error: " + url);
                     //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
                     record.setStatus(FETCH_FAILED);
                     record.setDetail(lsnr.getError());
@@ -360,9 +380,10 @@ public class SyndicationManager {
                     fireIndexStatus(record);
                     if (archiveWasRemote)
                         out.delete();
+                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
                     return;
                 }
-                _ui.debugMessage("fetchIndex: fetch complete: " + url);
+                _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch complete: " + url);
                 record.setStatus(FETCH_COMPLETE);
                 fireIndexStatus(record);
                 //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
@@ -373,12 +394,14 @@ public class SyndicationManager {
                 fireIndexStatus(record);
                 if (archiveWasRemote && out != null)
                     out.delete();
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
                 return;
             }
         }
         try {
             if (record.getStatus() == FETCH_STOPPED) {
-                if (archiveWasRemote && out != null) out.delete(); 
+                if (archiveWasRemote && out != null) out.delete();
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
                 return;
             }
             SharedArchive index = new SharedArchive();
@@ -386,26 +409,27 @@ public class SyndicationManager {
             index.read(fin);
             fin.close();
             fin = null;
-            _ui.debugMessage("Read index: \n" + index.toString());
+            //_ui.debugMessage("Read index: \n" + index.toString());
             //ArchiveIndex index = ArchiveIndex.loadIndex(out, _ui, unauth);
             archive.setIndex(index);
             HTTPSyndicator syndicator = new HTTPSyndicator(baseUrl, proxyHost, proxyPort, _client, _ui, index, false); //opts.getOptBoolean("reimport", false));
             archive.setSyndicator(syndicator);
-            _ui.debugMessage("fetchIndex: index loaded");
+            _ui.debugMessage("fetchIndex: " + record.getSource() + " - index loaded");
             record.setStatus(FETCH_INDEX_LOAD_OK);
             fireIndexStatus(record);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_OK, null);
             //archive.calculateDiffs(_client, _ui);
             //ArchiveDiff diff = index.diff(_client, _ui, new Opts());
             //archive.setDiff(diff);
-            _ui.debugMessage("fetchIndex: diff loaded");
+            _ui.debugMessage("fetchIndex: " + record.getSource() + " - diff loaded");
             record.setStatus(FETCH_INDEX_DIFF_OK);
             fireIndexStatus(record);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
         } catch (IOException ioe) {
-            _ui.errorMessage("Error loading the index", ioe);
+            _ui.errorMessage("fetchIndex: " + record.getSource() + " - Error loading the index", ioe);
             record.setStatus(FETCH_INDEX_LOAD_ERROR);
             record.setDetail(ioe.getMessage());
+            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
             fireIndexStatus(record);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, ioe.getMessage());
         }
@@ -528,108 +552,130 @@ public class SyndicationManager {
     }
     private void push(int maxkb, int pushStrategy, Set archiveNames) {
         if (pushStrategy == -1) return;
-        for (int i = 0; i < _archives.size(); i++) {
-            NymArchive archive = (NymArchive)_archives.get(i);
-            if (!archiveNames.contains(archive.getName()))
-                continue;
-            String url = archive.getURI().getURL();
-            
-            _ui.debugMessage("push to " + archive.getName() + " @ " + url);
-            
-            int keyStart = -1;
-            keyStart = url.indexOf("CHK@");
-            if (keyStart == -1)
-                keyStart = url.indexOf("SSK@");
-            if (keyStart == -1)
-                keyStart = url.indexOf("USK@");
+        for (Iterator iter = archiveNames.iterator(); iter.hasNext(); )
+            push((String)iter.next(), getPushStrategy());
+    }
+    private void push(String archiveName, SharedArchiveEngine.PushStrategy strategy) {
+        NymArchive archive = getArchive(archiveName);
+        if (archive == null) return;
+        String url = archive.getURI().getURL();
 
-            if (keyStart != -1) {
-                String fcpHost = archive.getCustomProxyHost();
-                int fcpPort = archive.getCustomProxyPort();
-                if ( (fcpHost == null) || (fcpHost.length() <= 0) || (fcpPort <= 0) ) {
-                    fcpHost = _fcpHost;
-                    fcpPort = _fcpPort;
-                }
-                FreenetArchivePusher pusher = new FreenetArchivePusher(_ui, fcpHost, fcpPort);
+        _ui.debugMessage("push to " + archive.getName() + " @ " + url);
 
-                String pubSSK = getPublicSSK(archive.getURI(), url, keyStart);
-                String privSSK = getPrivateSSK(archive, pubSSK);
-                if (privSSK == null) {
-                    // we don't have the private key
-                    if ("CHK@".equals(pubSSK)) {
-                        // post it under a CHK
-                        // todo: eventually support this
-                        _ui.debugMessage("post under a CHK isn't yet implemented");
-                        continue;
-                    } else if ("USK@".equals(pubSSK) || "SSK@".equals(pubSSK)) {
-                        // create a new SSK keypair, save our privkey, update the archive, and post it
-                        pusher.generateSSK();
-                        String error = pusher.getError();
-                        if ( (error != null) && (error.length() > 0) ) {
-                            _ui.errorMessage("Cannot create a new SSK: "+ error);
-                            continue;
-                        }
-                        pubSSK = pusher.getPublicSSK();
-                        privSSK = pusher.getPrivateSSK();
-                        if ( (pubSSK == null) || (privSSK == null) ) {
-                            _ui.errorMessage("Error creating a new SSK");
-                            continue;
-                        }
-                        String type = "USK@".equals(pubSSK) ? "USK@" : "SSK@";
-                        _ui.debugMessage("new SSK keypair created w/ pub=" + pubSSK);
-                        savePrivateSSK(archive, pubSSK, privSSK, type);
-                    } else {
-                        // cannot post
-                        _ui.debugMessage("cannot post to the SSK, as no private key is known for " + pubSSK);
-                        continue;
+        int keyStart = -1;
+        keyStart = url.indexOf("CHK@");
+        if (keyStart == -1)
+            keyStart = url.indexOf("SSK@");
+        if (keyStart == -1)
+            keyStart = url.indexOf("USK@");
+
+        if (keyStart != -1) {
+            String fcpHost = archive.getCustomProxyHost();
+            int fcpPort = archive.getCustomProxyPort();
+            if ( (fcpHost == null) || (fcpHost.length() <= 0) || (fcpPort <= 0) ) {
+                fcpHost = _fcpHost;
+                fcpPort = _fcpPort;
+            }
+            FreenetArchivePusher pusher = new FreenetArchivePusher(_ui, fcpHost, fcpPort);
+
+            String pubSSK = getPublicSSK(archive.getURI(), url, keyStart);
+            String privSSK = getPrivateSSK(archive, pubSSK);
+            if (privSSK == null) {
+                // we don't have the private key
+                if ("CHK@".equals(pubSSK)) {
+                    // post it under a CHK
+                    // todo: eventually support this
+                    _ui.debugMessage("post under a CHK isn't yet implemented");
+                    return;
+                } else if ("USK@".equals(pubSSK) || "SSK@".equals(pubSSK)) {
+                    // create a new SSK keypair, save our privkey, update the archive, and post it
+                    pusher.generateSSK();
+                    String error = pusher.getError();
+                    if ( (error != null) && (error.length() > 0) ) {
+                        _ui.errorMessage("Cannot create a new SSK: "+ error);
+                        return;
                     }
-                }
-
-                _ui.debugMessage("scheduling fcp post under " + pubSSK);
-                
-                pusher.setPrivateSSK(privSSK);
-                pusher.setPublicSSK(pubSSK);
-                
-                // add a record so the putArchive can occur in one of the worker threads,
-                // even though it just contacts the fcp host & sends them the data without
-                // waiting for the data to be fully inserted into the network
-                //pusher.putArchive(_client.getArchiveDir());
-                StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), pusher);
-                synchronized (_fetchRecords) {
-                    _fetchRecords.add(rec);
-                    _fetchRecords.notifyAll();
-                }
-            } else {
-                HTTPSyndicator template = archive.getSyndicator();
-                // the syndicator was built with sequential operation in mind, not multithreaded/reused,
-                // so just make another copy for our current sequence
-                if (template == null) {
-                    // no index fetched yet. noop
+                    pubSSK = pusher.getPublicSSK();
+                    privSSK = pusher.getPrivateSSK();
+                    if ( (pubSSK == null) || (privSSK == null) ) {
+                        _ui.errorMessage("Error creating a new SSK");
+                        return;
+                    }
+                    String type = "USK@".equals(pubSSK) ? "USK@" : "SSK@";
+                    _ui.debugMessage("new SSK keypair created w/ pub=" + pubSSK);
+                    savePrivateSSK(archive, pubSSK, privSSK, type);
+                } else {
+                    // cannot post
+                    _ui.debugMessage("cannot post to the SSK, as no private key is known for " + pubSSK);
                     return;
                 }
-                HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
-                syndicator.setDeleteOutboundAfterSend(false);
-                //syndicator.setPostPassphrase(archive.getURI().getString(""))
+            }
 
-                _ui.debugMessage("http push strategy: " + pushStrategy);
-                switch (pushStrategy) {
-                    case PUSH_STRATEGY_DELTAKNOWN:
-                        syndicator.schedulePut("archive", true);
-                        break;
-                    case PUSH_STRATEGY_DELTA:
-                        syndicator.schedulePut("archive", false);
-                        break;
-                    default:
-                        _ui.debugMessage("http push strategy unknown: " + pushStrategy);
-                }
-                // add a record so the post() can occur in one of the worker threads
-                StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), syndicator);
-                synchronized (_fetchRecords) {
-                    _fetchRecords.add(rec);
-                    _fetchRecords.notifyAll();
-                }
-            } // end if(freenet) { } else (http) {}
-        } // end looping over archives
+            _ui.debugMessage("scheduling fcp post under " + pubSSK);
+
+            pusher.setPrivateSSK(privSSK);
+            pusher.setPublicSSK(pubSSK);
+
+            // add a record so the putArchive can occur in one of the worker threads,
+            // even though it just contacts the fcp host & sends them the data without
+            // waiting for the data to be fully inserted into the network
+            //pusher.putArchive(_client.getArchiveDir());
+            StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), pusher);
+            synchronized (_fetchRecords) {
+                _fetchRecords.add(rec);
+                _fetchRecords.notifyAll();
+            }
+        } else {
+            HTTPSyndicator template = archive.getSyndicator();
+            // the syndicator was built with sequential operation in mind, not multithreaded/reused,
+            // so just make another copy for our current sequence
+            if (template == null) {
+                // no index fetched yet. noop
+                return;
+            }
+            HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
+            syndicator.setDeleteOutboundAfterSend(false);
+            //syndicator.setPostPassphrase(archive.getURI().getString(""))
+
+            syndicator.schedulePut(strategy);
+            /*
+            _ui.debugMessage("http push strategy: " + pushStrategy);
+            switch (pushStrategy) {
+                case PUSH_STRATEGY_DELTAKNOWN:
+                    syndicator.schedulePut("archive", true);
+                    break;
+                case PUSH_STRATEGY_DELTA:
+                    syndicator.schedulePut("archive", false);
+                    break;
+                default:
+                    _ui.debugMessage("http push strategy unknown: " + pushStrategy);
+            }
+             */
+            // add a record so the post() can occur in one of the worker threads
+            StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), syndicator);
+            synchronized (_fetchRecords) {
+                _fetchRecords.add(rec);
+                _fetchRecords.notifyAll();
+            }
+        } // end if(freenet) { } else (http) {}
+    }
+    
+
+    void push(String archiveName) { push(archiveName, getPushStrategy()); }
+    void pull(String archiveName, Runnable onSuccess) {
+        NymArchive archive = getArchive(archiveName);
+        if ( (archive == null) || (archive.getIndex() == null) ) return;
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        List toPull = engine.selectURIsToPull(_client, _ui, archive.getIndex(), getPullStrategy());
+        if (toPull.size() > 0) {
+            if (onSuccess != null)
+                _onPullSuccess.put(archiveName, onSuccess);
+            for (int i = 0; i < toPull.size(); i++)
+                fetch(archiveName, (SyndieURI)toPull.get(i));
+        } else {
+            if (onSuccess != null)
+                JobRunner.instance().enqueue(onSuccess);
+        }
     }
     
     private String getPublicSSK(SyndieURI uri, String url, int keyStart) {
@@ -692,7 +738,6 @@ public class SyndicationManager {
     
     public static final String SHARED_INDEX_FILE = "shared-index.dat";
     
-    public void buildIndex(long maxSize) { buildIndex(_client, _ui); }
     public static void buildIndex(DBClient client, UI ui) {
         SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
         builder.setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
@@ -793,6 +838,14 @@ public class SyndicationManager {
             lsnr.syndicationComplete(this);
         }
         synchronized (_fetchRecords) { _fetchRecords.notifyAll(); }
+        
+        List toRun = new ArrayList();
+        synchronized (_onPullSuccess) {
+            toRun.addAll(_onPullSuccess.values());
+            _onPullSuccess.clear();
+        }
+        for (int i = 0; i < toRun.size(); i++)
+            JobRunner.instance().enqueue((Runnable)toRun.get(i));
     }
     
     public void addListener(SyndicationListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
@@ -1085,6 +1138,7 @@ public class SyndicationManager {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        _scheduler.scheduleUpdated();
     }
     
     private static final String SQL_SYNC_CANCEL = "UPDATE nymArchive SET nextSyncDate = NULL WHERE nymId = ? AND name = ?";
@@ -1123,7 +1177,7 @@ public class SyndicationManager {
             _ui.debugMessage("not loading archives, as they are already loaded");
             return;
         }
-        buildIndex(_client, _ui);
+        //buildIndex(_client, _ui);
         _archivesLoaded = true;
         
         _ui.debugMessage("Loading archives");
@@ -1192,6 +1246,9 @@ public class SyndicationManager {
         _ui.debugMessage("archives loaded");
         for (int i = 0; i < _listeners.size(); i++)
             ((SyndicationManager.SyndicationListener)_listeners.get(i)).archivesLoaded(this);
+        
+        _scheduler = new SyndicationManagerScheduler(_client, _ui, this);
+        _scheduler.startScheduling();
     }
     
     private static class NymArchive {
@@ -1367,7 +1424,7 @@ public class SyndicationManager {
                     fetch(cur);
                 }
                 if (nonterminalRemaining == 0) {
-                    _ui.debugMessage("All of the records are terminal, rebuilding our local archive index");
+                    _ui.debugMessage("All of the records are terminal");
                     //buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
                     fireSyndicationComplete();
                 }
@@ -1430,6 +1487,7 @@ public class SyndicationManager {
             if (template == null) {
                 rec.setStatus(FETCH_FAILED);
                 rec.setDetail("fetch index first");
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
                 fireFetchStatusUpdated(rec);
                 return;
             }
@@ -1438,24 +1496,39 @@ public class SyndicationManager {
             HTTPSyndicator syndicator = (HTTPSyndicator)template.clone();
             ArrayList uris = new ArrayList(1);
             uris.add(rec.getURI());
-            if (rec.getStatus() == FETCH_STOPPED) return;
+            if (rec.getStatus() == FETCH_STOPPED) {
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
+                return;
+            }
             boolean fetchComplete = syndicator.fetch(uris);
-            if (rec.getStatus() == FETCH_STOPPED) return;
+            if (rec.getStatus() == FETCH_STOPPED) {
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
+                return;
+            }
             if (fetchComplete) {
                 rec.setStatus(FETCH_COMPLETE);
             } else {
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
                 rec.setStatus(FETCH_FAILED);
                 rec.setDetail(syndicator.getError());
             }
             fireFetchStatusUpdated(rec);
 
-            if (!fetchComplete)
+            if (!fetchComplete) {
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
                 return;
+            }
 
-            if (rec.getStatus() == FETCH_STOPPED) return;
+            if (rec.getStatus() == FETCH_STOPPED) {
+                synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
+                return;
+            }
             int importCount = syndicator.importFetched();
             if (importCount == 1) {
-                if (rec.getStatus() == FETCH_STOPPED) return;
+                if (rec.getStatus() == FETCH_STOPPED) {
+                    synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
+                    return;
+                }
                 if (syndicator.countMissingKeys() >= 1) {
                     rec.setStatus(FETCH_IMPORT_NOKEY);
                 } else {
@@ -1465,7 +1538,10 @@ public class SyndicationManager {
                 rec.setDetail(syndicator.getMissingPrompt(0));
                 rec.setStatus(FETCH_IMPORT_PBE);
             } else {
-                if (rec.getStatus() == FETCH_STOPPED) return;
+                if (rec.getStatus() == FETCH_STOPPED) {
+                    synchronized (_onPullSuccess) { _onPullSuccess.remove(rec.getSource()); }
+                    return;
+                }
                 rec.setStatus(FETCH_IMPORT_CORRUPT);
             }
             fireFetchStatusUpdated(rec);

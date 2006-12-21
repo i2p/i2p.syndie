@@ -110,7 +110,7 @@ public class SharedArchiveBuilder {
             
             int scopeChannel = getChannelIndex(channels, scope);
             if (scopeChannel < 0) {
-                _ui.debugMessage("Could not share the metadata for " + scope.toBase64() + ", so we cannot share any of its messages");
+                //_ui.debugMessage("Could not share the metadata for " + scope.toBase64() + ", so we cannot share any of its messages");
                 continue;
             }
             File msgFiles[] = dirs[i].listFiles(new FileFilter() {
@@ -119,7 +119,7 @@ public class SharedArchiveBuilder {
                     return name.endsWith(Constants.FILENAME_SUFFIX) && !name.startsWith("meta") && !name.startsWith(".");
                 }
             });
-            _ui.debugMessage("# message files in " + scope.toBase64() + ": " + msgFiles.length);
+            //_ui.debugMessage("# message files in " + scope.toBase64() + ": " + msgFiles.length);
             sortFiles(msgFiles);
             for (int j = 0; j < msgFiles.length; j++) {
                 long messageId = getMessageId(msgFiles[j]);
@@ -128,7 +128,7 @@ public class SharedArchiveBuilder {
                     continue;
                 }
                 
-                _ui.debugMessage("parsing message " + messageId + " in " + scope.toBase64());
+                //_ui.debugMessage("parsing message " + messageId + " in " + scope.toBase64());
                 
                 FileInputStream fin = null;
                 try {
@@ -146,7 +146,7 @@ public class SharedArchiveBuilder {
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
                         targetChannel = getChannelIndex(channels, new Hash(target));
                         if (targetChannel == -1) {
-                            _ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
+                            //_ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
                             continue;
                         }
                     } else {
@@ -159,7 +159,7 @@ public class SharedArchiveBuilder {
                         isNew = true;
                     
                     if (isLocal(scope, messageId) && (when + _hideLocalHours*60*1000L >= System.currentTimeMillis())) {
-                        _ui.debugMessage("Message is in a local channel and was imported very recently, not sharing it: " + scope.toBase64() + ":" + messageId);
+                        //_ui.debugMessage("Message is in a local channel and was imported very recently, not sharing it: " + scope.toBase64() + ":" + messageId);
                         continue;
                     }
                     
