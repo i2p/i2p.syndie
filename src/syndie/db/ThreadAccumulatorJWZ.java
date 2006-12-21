@@ -397,9 +397,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("threads: " + _roots);
     }
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, messageId FROM channelMessage m " +
-                "JOIN channel ON targetChannelId = channelId " +
-                "WHERE channelHash = ? AND m.importDate > ? AND messageId > ? " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId FROM channelMessage m " +
+                "JOIN channel c ON targetChannelId = c.channelId " +
+                "JOIN channel cs ON scopeChannelId = cs.channelId " +
+                "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.isCancelled = FALSE AND m.readKeyMissing = false " +
                 "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
     private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId FROM channelMessage " +
@@ -408,9 +409,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "AND isCancelled = FALSE AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, messageId FROM channelMessage m " +
-                "JOIN channel ON targetChannelId = channelId " +
-                "WHERE channelHash = ? AND m.importDate > ? AND messageId > ? " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId FROM channelMessage m " +
+                "JOIN channel c ON targetChannelId = c.channelId " +
+                "JOIN channel cs ON scopeChannelId = cs.channelId " +
+                "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL";
     private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId FROM channelMessage m " +
                 "JOIN channel ON scopeChannelId = channelId " +
@@ -444,11 +446,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     while (rs.next()) {
                         long msgId = rs.getLong(1);
                         if (rs.wasNull()) continue;
-                        long messageId = rs.getLong(2);
+                        byte scope[] = rs.getBytes(2);
+                        if ( (scope == null) || (scope.length != Hash.HASH_LENGTH) )
+                            continue;
+                        long messageId = rs.getLong(3);
                         if (rs.wasNull()) continue;
                         
                         ThreadMsgId tmi = new ThreadMsgId(msgId);
-                        tmi.scope = chan;
+                        tmi.scope = new Hash(scope);
                         tmi.messageId = messageId;
                         matchingThreadMsgIds.add(tmi);
                     }
@@ -663,7 +668,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             node.setSubject(subject);
             node.setThreadTarget(target);
             
-            List tags = new ArrayList(); node.getThreadTags(tags);
+            //List tags = new ArrayList(); node.getThreadTags(tags);
             //_ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName + " tags: " + tags);
            
             // to mirror the MessageThreadBuilder, fill the node in per:
@@ -786,7 +791,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     rv = new ArrayList();
                     existingAncestors.put(tmi, rv);
                 }
-                stmt.setLong(1, tmi.messageId);
+                stmt.setLong(1, tmi.msgId);
                 queryRuns++;
                 long before = System.currentTimeMillis();
                 rs = stmt.executeQuery();
@@ -883,7 +888,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
-        //_ui.debugMessage("filter thread status: allowedAuthorIds: " + allowedAuthorIds + " allowPubReplues to " + targetChannelId + ": " + allowPublicReplies + " root: " + root.getURI().toString());
         return filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
     }
     
@@ -912,7 +916,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterAuthorizationStatus((ThreadReferenceNode)node.getChild(i), authorIds, authorizeReplies, allowAnyone, nodeIsAuthorized || parentIsAuthorized);
             rv = rv && childIsEmpty;
         }
-        //_ui.debugMessage("filter rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
         return rv;
     }
     
