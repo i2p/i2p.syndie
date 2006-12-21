@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,8 +46,10 @@ public class SyndicationManager {
     private String _fcpHost;
     private int _fcpPort;
     private SyndicationManagerScheduler _scheduler;
-    /** map of archive name to Runnable that should be run when an archive's pulls are complete */
+    /** map of archive name to Runnable that should be run when an archive's pulls succeed */
     private Map _onPullSuccess;
+    /** map of archive name to Runnable that should be run when all of an archive's pulls failed */
+    private Map _onPullFailure;
     
     private boolean _archivesLoaded;
     
@@ -86,7 +89,8 @@ public class SyndicationManager {
         _listeners = new ArrayList();
         _fetchRecords = new ArrayList();
         _fetchMetaRecords = new ArrayList();
-        _onPullSuccess = new HashMap();
+        _onPullSuccess = Collections.synchronizedMap(new HashMap());
+        _onPullFailure = Collections.synchronizedMap(new HashMap());
         _archivesLoaded = false;
     }
     
@@ -259,17 +263,23 @@ public class SyndicationManager {
     private void fetchIndex(StatusRecord record) {
         NymArchive archive = record.getArchive();
         if (archive == null) {
-            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+            if (fail != null) JobRunner.instance().enqueue(fail);
+            _onPullSuccess.remove(record.getSource());
             return;
         }
         
         String baseUrl = archive.getURI().getURL();
         if (baseUrl == null) {
-            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+            if (fail != null) JobRunner.instance().enqueue(fail);
+            _onPullSuccess.remove(record.getSource());
             return;
         }
         if (record.getStatus() == FETCH_STOPPED) {
-            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+            Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+            if (fail != null) JobRunner.instance().enqueue(fail);
+            _onPullSuccess.remove(record.getSource());
             return;
         }
 
@@ -313,29 +323,18 @@ public class SyndicationManager {
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
         url = baseUrl + SHARED_INDEX_FILE;
-        /*
-        if ("new".equalsIgnoreCase(scope)) {
-            url = baseUrl + "index-new.dat";
-        } else if ("meta".equalsIgnoreCase(scope)) {
-            url = baseUrl + "index-meta.dat";
-        } else if ("unauth".equalsIgnoreCase(scope)) {
-            unauth = true;
-            String chan = null; //opts.getOptValue("channel");
-            if (chan != null) {
-                url = baseUrl + chan + "/index-unauthorized.dat";
-            } else {
-                url = baseUrl + "index-unauthorized.dat";
-            }
-        } else { //if ("all".equalsIgnoreCase(scope))
-            url = baseUrl + SHARED_INDEX_FILE; //"index-all.dat";
-        }
-         */
+        
 	if (includeForceDownload) url = url + "?forcedownload";
 
         _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetching: " + url);
         //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCHING, null);
         
-        if (record.getStatus() == FETCH_STOPPED) return;
+        if (record.getStatus() == FETCH_STOPPED) {
+            Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+            if (fail != null) JobRunner.instance().enqueue(fail);
+            _onPullSuccess.remove(record.getSource());
+            return;
+        }
 
         boolean shouldProxy = (proxyHost != null) && (proxyPort > 0);
         boolean archiveWasRemote = true;
@@ -357,7 +356,9 @@ public class SyndicationManager {
         } else {
             try {
                 if (record.getStatus() == FETCH_STOPPED) {
-                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+                    Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+                    if (fail != null) JobRunner.instance().enqueue(fail);
+                    _onPullSuccess.remove(record.getSource());
                     return;
                 }
                 out = File.createTempFile("syndicate", ".index", _client.getTempDir());
@@ -366,12 +367,14 @@ public class SyndicationManager {
                 get.addStatusListener(lsnr);
                 boolean fetched = get.fetch();
                 if (record.getStatus() == FETCH_STOPPED) {
-                    if (archiveWasRemote) out.delete(); 
-                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+                    if (archiveWasRemote) out.delete();
+                    Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+                    if (fail != null) JobRunner.instance().enqueue(fail);
+                    _onPullSuccess.remove(record.getSource());
                     return;
                 }
                 if (!fetched) {
-                    _ui.errorMessage("Fetch failed of " + url);
+                    _ui.debugMessage("Fetch failed of " + url);
                     _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch error: " + url);
                     //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_ERROR, "fetch failed");
                     record.setStatus(FETCH_FAILED);
@@ -380,7 +383,9 @@ public class SyndicationManager {
                     fireIndexStatus(record);
                     if (archiveWasRemote)
                         out.delete();
-                    synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+                    Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+                    if (fail != null) JobRunner.instance().enqueue(fail);
+                    _onPullSuccess.remove(record.getSource());
                     return;
                 }
                 _ui.debugMessage("fetchIndex: " + record.getSource() + " - fetch complete: " + url);
@@ -388,20 +393,24 @@ public class SyndicationManager {
                 fireIndexStatus(record);
                 //fireIndexStatus(archive.getName(), INDEX_STATUS_FETCH_COMPLETE, null);
             } catch (IOException ioe) {
-                _ui.errorMessage("Error pulling the index", ioe);
+                _ui.debugMessage("Error pulling the index", ioe);
                 record.setStatus(FETCH_FAILED);
                 record.setDetail(ioe.getMessage());
                 fireIndexStatus(record);
                 if (archiveWasRemote && out != null)
                     out.delete();
-                synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+                Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+                if (fail != null) JobRunner.instance().enqueue(fail);
+                _onPullSuccess.remove(record.getSource());
                 return;
             }
         }
         try {
             if (record.getStatus() == FETCH_STOPPED) {
                 if (archiveWasRemote && out != null) out.delete();
-                synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
+                Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+                if (fail != null) JobRunner.instance().enqueue(fail);
+                _onPullSuccess.remove(record.getSource());
                 return;
             }
             SharedArchive index = new SharedArchive();
@@ -424,14 +433,20 @@ public class SyndicationManager {
             _ui.debugMessage("fetchIndex: " + record.getSource() + " - diff loaded");
             record.setStatus(FETCH_INDEX_DIFF_OK);
             fireIndexStatus(record);
+
+            Runnable success = (Runnable)_onPullSuccess.remove(record.getSource());
+            if (success != null) JobRunner.instance().enqueue(success);
+            _onPullFailure.remove(record.getSource());
             //fireIndexStatus(archive.getName(), INDEX_STATUS_DIFF_OK, null);
         } catch (IOException ioe) {
-            _ui.errorMessage("fetchIndex: " + record.getSource() + " - Error loading the index", ioe);
+            _ui.debugMessage("fetchIndex: " + record.getSource() + " - Error loading the index", ioe);
             record.setStatus(FETCH_INDEX_LOAD_ERROR);
             record.setDetail(ioe.getMessage());
-            synchronized (_onPullSuccess) { _onPullSuccess.remove(record.getSource()); }
             fireIndexStatus(record);
             //fireIndexStatus(archive.getName(), INDEX_STATUS_LOAD_ERROR, ioe.getMessage());
+            Runnable fail = (Runnable)_onPullFailure.remove(record.getSource());
+            if (fail != null) JobRunner.instance().enqueue(fail);
+            _onPullSuccess.remove(record.getSource());
         }
         if (archiveWasRemote && out != null)
             out.delete();
@@ -638,19 +653,6 @@ public class SyndicationManager {
             //syndicator.setPostPassphrase(archive.getURI().getString(""))
 
             syndicator.schedulePut(strategy);
-            /*
-            _ui.debugMessage("http push strategy: " + pushStrategy);
-            switch (pushStrategy) {
-                case PUSH_STRATEGY_DELTAKNOWN:
-                    syndicator.schedulePut("archive", true);
-                    break;
-                case PUSH_STRATEGY_DELTA:
-                    syndicator.schedulePut("archive", false);
-                    break;
-                default:
-                    _ui.debugMessage("http push strategy unknown: " + pushStrategy);
-            }
-             */
             // add a record so the post() can occur in one of the worker threads
             StatusRecord rec = new StatusRecord(archive.getName(), archive.getURI(), syndicator);
             synchronized (_fetchRecords) {
@@ -662,17 +664,29 @@ public class SyndicationManager {
     
 
     void push(String archiveName) { push(archiveName, getPushStrategy()); }
-    void pull(String archiveName, Runnable onSuccess) {
+    void pull(String archiveName, Runnable onSuccess, Runnable onFailure) {
         NymArchive archive = getArchive(archiveName);
-        if ( (archive == null) || (archive.getIndex() == null) ) return;
+        if ( (archive == null) || (archive.getIndex() == null) ) {
+            if (onFailure != null) JobRunner.instance().enqueue(onFailure);
+            return;
+        }
         SharedArchiveEngine engine = new SharedArchiveEngine();
         List toPull = engine.selectURIsToPull(_client, _ui, archive.getIndex(), getPullStrategy());
         if (toPull.size() > 0) {
+            _onPullFailure.clear();
+            _onPullSuccess.clear();
+            Runnable oldSuccess = null;
+            Runnable oldFailure = null;
             if (onSuccess != null)
-                _onPullSuccess.put(archiveName, onSuccess);
+                oldSuccess = (Runnable)_onPullSuccess.put(archiveName, onSuccess);
+            if (onFailure != null)
+                oldFailure = (Runnable)_onPullFailure.put(archiveName, onFailure);
             for (int i = 0; i < toPull.size(); i++)
                 fetch(archiveName, (SyndieURI)toPull.get(i));
+            if ( (oldSuccess != null) || (oldFailure != null) )
+                _ui.errorMessage("dup pull - oldSuccess=" + oldSuccess + " oldFailure=" + oldFailure + " success=" + onSuccess + " failure=" + onFailure);
         } else {
+            _ui.debugMessage("nothing to pull, firing success: " + onSuccess);
             if (onSuccess != null)
                 JobRunner.instance().enqueue(onSuccess);
         }
@@ -742,7 +756,7 @@ public class SyndicationManager {
         SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
         builder.setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
         builder.setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
-        builder.setShareDelayHours(12); // tell people that we only build our index once every 12 hours, so dont bug us too much
+        builder.setShareDelayHours(1); // tell people that we only build our index once an hour, so dont bug us too much
         builder.setShareReceivedOnly(false); // sometimes
         SharedArchive archive = builder.buildSharedArchive();
         FileOutputStream fos = null;
@@ -757,44 +771,6 @@ public class SyndicationManager {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
         }
         return;
-        /*
-        File archiveDir = client.getArchiveDir();
-        ArchiveIndex index;
-        try {
-            // load the whole index into memory
-            index = ArchiveIndex.buildIndex(client, ui, archiveDir, maxSize);
-            // iterate across each channel, building their index-all and index-new files
-            // as well as pushing data into the overall index-all, index-new, and index-meta files
-            FileOutputStream outFullAll = new FileOutputStream(new File(archiveDir, "index-all.dat"));
-            FileOutputStream outFullNew = new FileOutputStream(new File(archiveDir, "index-new.dat"));
-            FileOutputStream outFullMeta = new FileOutputStream(new File(archiveDir, "index-meta.dat"));
-            FileOutputStream outFullUnauth = new FileOutputStream(new File(archiveDir, "index-unauthorized.dat"));
-            for (int i = 0; i < index.getChannelCount(); i++) {
-                ArchiveChannel chan = index.getChannel(i);
-                File chanDir = new File(archiveDir, Base64.encode(chan.getScope()));
-                FileOutputStream outAll = new FileOutputStream(new File(chanDir, "index-all.dat"));
-                FileOutputStream outNew = new FileOutputStream(new File(chanDir, "index-new.dat"));
-                FileOutputStream outUnauth = new FileOutputStream(new File(chanDir, "index-unauthorized.dat"));
-                write(outAll, chan, false);
-                write(outNew, chan, true);
-                write(outFullAll, chan, false);
-                write(outFullNew, chan, true);
-                write(outFullMeta, chan);
-                writeUnauth(outUnauth, chan);
-                writeUnauth(outFullUnauth, chan);
-                outAll.close();
-                outNew.close();
-                outUnauth.close();
-            }
-            outFullMeta.close();
-            outFullNew.close();
-            outFullAll.close();
-            outFullUnauth.close();
-            ui.statusMessage("Index rebuilt");
-        } catch (IOException ioe) {
-            ui.errorMessage("Error building the index", ioe);
-        }
-         */
     }
     
     /** returns a new list containing the actual fetch records (which can be updated asynchronously) */
@@ -838,14 +814,6 @@ public class SyndicationManager {
             lsnr.syndicationComplete(this);
         }
         synchronized (_fetchRecords) { _fetchRecords.notifyAll(); }
-        
-        List toRun = new ArrayList();
-        synchronized (_onPullSuccess) {
-            toRun.addAll(_onPullSuccess.values());
-            _onPullSuccess.clear();
-        }
-        for (int i = 0; i < toRun.size(); i++)
-            JobRunner.instance().enqueue((Runnable)toRun.get(i));
     }
     
     public void addListener(SyndicationListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
@@ -930,7 +898,7 @@ public class SyndicationManager {
                 stmt.close();
                 stmt = null;
 
-                _archives.add(new NymArchive(name, uri, customProxyHost, customProxyPort, -1, postKey, readKey, -1));
+                _archives.add(new NymArchive(name, uri, customProxyHost, customProxyPort, -1, postKey, readKey, -1, 0));
                 
                 for (int i = 0; i < _listeners.size(); i++) {
                     SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
@@ -1141,6 +1109,43 @@ public class SyndicationManager {
         _scheduler.scheduleUpdated();
     }
     
+    int incrementConsecutiveFailures(String name) {
+        NymArchive archive = getArchive(name);
+        if (archive != null) {
+            archive.incrementConsecutiveFailures();
+            int failures = archive.getConsecutiveFailures();
+            setConsecutiveFailures(name, failures);
+            return failures;
+        } else {
+            return 0;
+        }
+    }
+    int getConsecutiveFailures(String name) {
+        NymArchive archive = getArchive(name);
+        if (archive != null)
+            return archive.getConsecutiveFailures();
+        else
+            return 0;
+    }
+    
+    private static final String SQL_SET_CONSECUTIVE_FAILURES = "UPDATE nymArchive SET consecutiveFailures = ? WHERE nymId = ? AND name = ?";
+    private void setConsecutiveFailures(String name, int num) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_SET_CONSECUTIVE_FAILURES);
+            stmt.setInt(1, num);
+            stmt.setLong(2, _client.getLoggedInNymId());
+            stmt.setString(3, name);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error setting consecutive failures", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_SYNC_CANCEL = "UPDATE nymArchive SET nextSyncDate = NULL WHERE nymId = ? AND name = ?";
     private void cancelSync(String name) {
         PreparedStatement stmt = null;
@@ -1171,7 +1176,7 @@ public class SyndicationManager {
         }
     }
     
-    private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate FROM nymArchive WHERE nymId = ? ORDER BY name";
+    private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate, consecutiveFailures FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
         if (_archivesLoaded) {
             _ui.debugMessage("not loading archives, as they are already loaded");
@@ -1210,6 +1215,8 @@ public class SyndicationManager {
                 byte[] readKeyEncr = rs.getBytes(8);
                 byte[] readKeySalt = rs.getBytes(9);
                 Timestamp nextSync = rs.getTimestamp(10);
+                int consecutiveFailures = rs.getInt(11);
+                if (rs.wasNull()) consecutiveFailures = 0;
                 
                 byte[] postKey = null;
                 if ( (postKeyEncr != null) && (postKeySalt != null) ) {
@@ -1231,7 +1238,7 @@ public class SyndicationManager {
                     continue;
                 }
                 
-                _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey, (nextSync == null ? -1L : nextSync.getTime())));
+                _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey, (nextSync == null ? -1L : nextSync.getTime()), consecutiveFailures));
             }
             rs.close();
             rs = null;
@@ -1251,6 +1258,38 @@ public class SyndicationManager {
         _scheduler.startScheduling();
     }
     
+    private void recordTerminated(String archive) {
+        if (archive == null) return;
+        int fetchRecords = 0;
+        boolean nonterminalRemaining = false;
+        int negative = 0;
+        int positive = 0;
+        List records = getFetchRecords();
+        for (int i = 0; i < records.size(); i++) {
+            StatusRecord rec = (StatusRecord)records.get(i);
+            if (archive.equals(rec.getSource())) {
+                if (!rec.isTerminal()) {
+                    nonterminalRemaining = true;
+                    break;
+                } else {
+                    if (rec.isError())
+                        negative++;
+                    else
+                        positive++;
+                }
+            }
+        }
+        if (!nonterminalRemaining) {
+            Runnable failure = (Runnable)_onPullFailure.remove(archive);
+            Runnable success = (Runnable)_onPullSuccess.remove(archive);
+            if (positive == 0) {
+                if (failure != null) JobRunner.instance().enqueue(failure);
+            } else {
+                if (success != null) JobRunner.instance().enqueue(success);
+            }
+        }
+    }
+    
     private static class NymArchive {
         private String _name;
         private SyndieURI _uri;
@@ -1258,15 +1297,16 @@ public class SyndicationManager {
         private int _customProxyPort;
         private long _lastSyncDate;
         private long _nextSyncDate;
+        private int _consecutiveFailures;
         private SessionKey _postKey;
         private SessionKey _readKey;
         private SharedArchive _index;
         private HTTPSyndicator _syndicator;
         
-        public NymArchive(String name, SyndieURI uri, String host, int port, long when, byte[] post, byte[] read, long nextSync) {
-            this(name, uri, host, port, when, (post != null ? new SessionKey(post) : null), (read != null ? new SessionKey(read) : null), nextSync);
+        public NymArchive(String name, SyndieURI uri, String host, int port, long when, byte[] post, byte[] read, long nextSync, int consecutiveFailures) {
+            this(name, uri, host, port, when, (post != null ? new SessionKey(post) : null), (read != null ? new SessionKey(read) : null), nextSync, consecutiveFailures);
         }
-        public NymArchive(String name, SyndieURI uri, String host, int port, long when, SessionKey post, SessionKey read, long nextSync) {
+        public NymArchive(String name, SyndieURI uri, String host, int port, long when, SessionKey post, SessionKey read, long nextSync, int consecutiveFailures) {
             _name = name;
             _uri = uri;
             _customProxyHost = host;
@@ -1275,6 +1315,7 @@ public class SyndicationManager {
             _nextSyncDate = nextSync;
             _postKey = post;
             _readKey = read;
+            _consecutiveFailures = consecutiveFailures;
         }
 
         public void update(String newName, SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey postKey, SessionKey readKey) {
@@ -1304,6 +1345,8 @@ public class SyndicationManager {
         public void setIndex(SharedArchive index) { _index = index; }
         public HTTPSyndicator getSyndicator() { return _syndicator; }
         public void setSyndicator(HTTPSyndicator syndicator) { _syndicator = syndicator; }
+        public int getConsecutiveFailures() { return _consecutiveFailures; }
+        public void incrementConsecutiveFailures() { _consecutiveFailures++; }
     }
 
     public class StatusRecord {
@@ -1354,17 +1397,36 @@ public class SyndicationManager {
                 case FETCH_INDEX_DIFF_OK:
                 case FETCH_INDEX_LOAD_ERROR:
                 case FETCH_STOPPED:
+                case PUSH_SENT: 
+                case PUSH_ERROR:
                     return true;
                 case FETCH_COMPLETE:
                 case FETCH_SCHEDULED:
                 case FETCH_STARTED:
+                case PUSH_SCHEDULED:
+                case PUSH_STARTED:
+                default:
+                    return false;
+            }
+        }
+        public boolean isError() {
+            switch (_status) {
+                case FETCH_FAILED:
+                case FETCH_IMPORT_CORRUPT:
+                case FETCH_INDEX_LOAD_ERROR:
+                case FETCH_STOPPED:
+                case PUSH_ERROR:
+                    return true;
                 default:
                     return false;
             }
         }
         public void setStatus(int status) {
-            if (!isTerminal())
+            if (!isTerminal()) {
                 _status = status;
+                if (isTerminal())
+                    recordTerminated(getSource());
+            }
         }
         /** status message detail */
         public String getDetail() { return _detail; }
@@ -1380,55 +1442,62 @@ public class SyndicationManager {
             //if (_id == 0)
             //    buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
             StatusRecord cur = null;
+            boolean addedSinceComplete = false;
             for (;;) {
                 int nonterminalRemaining = 0;
-                synchronized (_fetchRecords) {
-                    // fetch all metadata records before fetching any other records
-                    int nonterminalMeta = 0;
-                    for (int i = 0; i < _fetchMetaRecords.size(); i++) {
-                        StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
-                        if (rec.getStatus() == FETCH_SCHEDULED) {
-                            rec.setStatus(FETCH_STARTED);
-                            cur = rec;
-                            nonterminalMeta++;
-                            break;
-                        }
-                        if (!rec.isTerminal()) {
-                            nonterminalRemaining++;
-                            nonterminalMeta++;
-                        }
-                    }
-                    if ( (cur == null) && (nonterminalMeta == 0) ) {
-                        for (int i = 0; i < _fetchRecords.size(); i++) {
+                cur = null;
+                try {
+                    synchronized (_fetchRecords) {
+                        // fetch all metadata records before fetching any other records
+                        int nonterminalMeta = 0;
+                        for (int i = 0; i < _fetchMetaRecords.size(); i++) {
                             StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                             if (rec.getStatus() == FETCH_SCHEDULED) {
                                 rec.setStatus(FETCH_STARTED);
                                 cur = rec;
-                                break;
-                            } else if (rec.getStatus() == PUSH_SCHEDULED) {
-                                rec.setStatus(PUSH_STARTED);
-                                cur = rec;
+                                nonterminalMeta++;
                                 break;
                             }
-                            if (!rec.isTerminal())
+                            if (!rec.isTerminal()) {
                                 nonterminalRemaining++;
+                                nonterminalMeta++;
+                            }
+                        }
+                        if ( (cur == null) && (nonterminalMeta == 0) ) {
+                            for (int i = 0; i < _fetchRecords.size(); i++) {
+                                StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
+                                if (rec.getStatus() == FETCH_SCHEDULED) {
+                                    rec.setStatus(FETCH_STARTED);
+                                    cur = rec;
+                                    break;
+                                } else if (rec.getStatus() == PUSH_SCHEDULED) {
+                                    rec.setStatus(PUSH_STARTED);
+                                    cur = rec;
+                                    break;
+                                }
+                                if (!rec.isTerminal())
+                                    nonterminalRemaining++;
+                            }
+                        }
+                        if (cur == null) {
+                            try {
+                                _fetchRecords.wait(30*1000);
+                            } catch (InterruptedException ie) {}
                         }
                     }
-                    if (cur == null) {
-                        try {
-                            _fetchRecords.wait();
-                        } catch (InterruptedException ie) {}
+                    if (cur != null) {
+                        fetch(cur);
+                        addedSinceComplete = true;
                     }
+                    if ( (nonterminalRemaining == 0) && (addedSinceComplete) ) {
+                        _ui.debugMessage("All of the records are terminal");
+                        //buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
+                        fireSyndicationComplete();
+                        addedSinceComplete = false;
+                    }
+                } catch (Exception e) {
+                    _ui.errorMessage("Internal syndication error", e);
                 }
-                if (cur != null) {
-                    fetch(cur);
-                }
-                if (nonterminalRemaining == 0) {
-                    _ui.debugMessage("All of the records are terminal");
-                    //buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
-                    fireSyndicationComplete();
-                }
-                cur = null;
             }
         }
         private void fetch(StatusRecord rec) {

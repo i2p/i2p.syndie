@@ -33,7 +33,7 @@ public class SharedArchiveBuilder {
     public SharedArchiveBuilder(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
-        _shareDelayHours = 24;
+        _shareDelayHours = 1;
         _hideLocalHours = 6;
         _shareBanned = true;
         _shareReceivedOnly = true;

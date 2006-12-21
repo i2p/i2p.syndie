@@ -61,7 +61,7 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
                     _ui.debugMessage("No archives due for sync.  waiting...");
                     try { 
                         synchronized (SyndicationManagerScheduler.this) {
-                            SyndicationManagerScheduler.this.wait(30*1000);
+                            SyndicationManagerScheduler.this.wait(_client.ctx().random().nextLong(60*1000));
                         }
                     } catch (InterruptedException ie) {}
                 }
@@ -97,10 +97,20 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
     private void sync(final String archiveName) {
         int idx = _manager.getArchiveNum(archiveName);
         final SharedArchive archive = _manager.getArchiveIndex(idx);
+        if (archive == null) return;
+        _ui.debugMessage("attempting sync for " + archiveName);
         _manager.push(archiveName);
         _manager.pull(archiveName, new Runnable() { 
             public void run() { 
+                _ui.debugMessage("Archive sync successful for " + archiveName);
                 rescheduleSync(archiveName, archive.getAbout().getPublishRebuildFrequencyHours());
+            }
+        }, new Runnable() {
+            public void run() {
+                int failures = _manager.getConsecutiveFailures(archiveName);
+                int delayHours = (failures + 1) * archive.getAbout().getPublishRebuildFrequencyHours();
+                _ui.debugMessage("Archive sync failed for " + archiveName);
+                rescheduleSync(archiveName, delayHours);
             }
         });
     }
@@ -108,26 +118,30 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
     private void rescheduleSync(String archiveName, int minDelayHours) {
         long delay = minDelayHours*60*60*1000L;
         delay += _client.ctx().random().nextLong(delay*2);
-        _ui.debugMessage("Rescheduling sync after pull complete of " + archiveName + ": time to next sync: " + DataHelper.formatDuration(delay));
+        if (delay > 36*60*60*1000L)
+            delay = 12*60*60*1000L + _client.ctx().random().nextLong(24*60*60*1000L);
+        _ui.debugMessage("Rescheduling sync for " + archiveName + ": time to next sync: " + DataHelper.formatDuration(delay));
         _manager.setNextSync(archiveName, delay+System.currentTimeMillis());
     }
     
     public void archiveIndexStatus(SyndicationManager mgr, final SyndicationManager.StatusRecord record) {
         if (record.isTerminal()) {
-            switch (record.getStatus()) {
-                case SyndicationManager.FETCH_INDEX_DIFF_OK:
-                    JobRunner.instance().enqueue(new Runnable() {
-                        public void run() { sync(record.getSource()); }
-                    });
-                    break;
-                case SyndicationManager.FETCH_INDEX_LOAD_ERROR:
-                    _ui.statusMessage("Error fetching the index from " + record.getSource() + ", cancelling further sync");
-                    // next sync has already been cancelled... should we schedule one for 1/6/24h?
-                    break;
-                default:
-                    _ui.debugMessage("Unknown terminal index status: " + record.getStatus() + ": " + record);
-                    // next sync has already been cancelled, dont do anything else
-                    break;
+            if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK) {
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() { sync(record.getSource()); }
+                });
+            } else if (record.isError()) {
+                int failures = _manager.incrementConsecutiveFailures(record.getSource());
+                int freqHours = 24;
+                SharedArchive archive = _manager.getArchiveIndex(_manager.getArchiveNum(record.getSource()));
+                if (archive != null)
+                    freqHours = archive.getAbout().getPublishRebuildFrequencyHours();
+                int numHours = (failures+1) * freqHours;
+                _ui.statusMessage("Error fetching the index from " + record.getSource() + " (" + failures + " consecutive failure)");
+                if (failures > 12)
+                    _manager.setNextSync(record.getSource(), -1);
+                else
+                    rescheduleSync(record.getSource(), numHours);
             }
         }
     }
@@ -136,6 +150,10 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
     public void archiveRemoved(SyndicationManager mgr, String name) { synchronized (this) { notifyAll(); } }
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) { synchronized (this) { notifyAll(); } }
     public void archivesLoaded(SyndicationManager mgr) { synchronized (this) { notifyAll(); } }
-    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
+    public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
+        if (record.isTerminal() && record.isError() && record.getURI().isArchive()) {
+            _ui.statusMessage("fetch status error / " + record.getSource() + " / " + record.getDetail() + " / " + record.getStatus());    
+        }
+    }
     public void syndicationComplete(SyndicationManager mgr) {}
 }

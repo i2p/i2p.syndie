@@ -375,6 +375,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         }
         switch (record.getStatus()) {
             case SyndicationManager.PUSH_SENT: // push
+                item.setImage(3, ImageUtil.ICON_SYNDICATE_PUSH);
+                break;
             case SyndicationManager.FETCH_IMPORT_OK: // import msg/meta
             case SyndicationManager.FETCH_INDEX_DIFF_OK: // index fetch
                 item.setImage(3, ImageUtil.ICON_SYNDICATE_STATUS_OK);
