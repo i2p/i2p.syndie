@@ -15,7 +15,7 @@ public class SyndicationSchedulerTab extends BrowserTab {
     
     protected void disposeDetails() { _scheduler.dispose(); }
     
-    public Image getIcon() { return ImageUtil.ICON_TAB_PAGE; }
+    public Image getIcon() { return ImageUtil.ICON_TAB_SYNDICATE; }
     public String getName() { return "Syndication"; }
     public String getDescription() { return "Schedule syndication events"; }
 }

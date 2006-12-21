@@ -3698,7 +3698,115 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
-    
+
+    private static final String SQL_GET_REMARK_MESSAGES = "SELECT msgId FROM channelMessage WHERE importDate >= ? AND importDate <= ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    public void markMessageUnread(long msgId) { markMessageUnread(_nymId, msgId); }
+    public void markMessageUnread(long nymId, long msgId) {
+        // if it is > the high water mark in nymChannelReadThrough, this simply means delete from nymChannelReadMsg
+        // otherwise, select the msgIds imported after the given message who are < the high water mark, reduce the
+        // high water mark, and insert those msgIds into nymChannelReadMsg
+        long targetId = getMessageTarget(msgId);
+        long readThrough = getChannelReadThrough(nymId, targetId);
+        long msgImportDate = getMessageImportDate(msgId);
+        _ui.debugMessage("Marking message " + msgId + " unread: target channel: " + targetId + " readThrough: " + readThrough + " msgImportDate: " + msgImportDate);
+        if (msgImportDate > readThrough) {
+            _ui.debugMessage("Simple mark-unread strategy, since the message was imported after the watermark by " + (msgImportDate-readThrough)/(24*60*60*1000L) + " day(s)");
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
+                stmt.setLong(1, nymId);
+                stmt.setLong(2, msgId);
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error marking message unread", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        } else {
+            List msgIds = new ArrayList();
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = _con.prepareStatement(SQL_GET_REMARK_MESSAGES);
+                stmt.setDate(1, new Date(msgImportDate));
+                stmt.setDate(2, new Date(readThrough));
+                stmt.setLong(3, nymId);
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    long id = rs.getLong(1);
+                    if (!rs.wasNull())
+                        msgIds.add(new Long(id));
+                }
+                rs.close();
+                rs = null;
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error marking message unread", se);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+
+            _ui.debugMessage("Messages to remark as read in channel: " + targetId + ": " + msgIds);
+
+            markChannelReadThrough(_nymId, targetId, msgImportDate-1);
+            
+            stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
+                for (int i = 0; i < msgIds.size(); i++) {
+                    long curId = ((Long)msgIds.get(i)).longValue();
+                    if (curId == msgId) 
+                        continue; // that'd defeat the whole point, 'eh?
+                    stmt.setLong(1, nymId);
+                    stmt.setLong(2, curId);
+                    stmt.executeUpdate();
+                }
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error remarking message read", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+    }
+
+    private static final String SQL_GET_CHANNEL_READTHROUGH = "SELECT readThrough FROM nymChannelReadThrough WHERE nymId = ? AND scope = ?";
+    public long getChannelReadThrough(long nymId, long scopeId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_READTHROUGH);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, scopeId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                _ui.debugMessage("channelReadThrough: " + scopeId + ": " + when);
+                if (when != null)
+                    return when.getTime();
+            }
+            _ui.debugMessage("No channel read through for scopeId=" + scopeId);
+            return -1;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting channel read through", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+
     private static final String SQL_DELETE_CHANNEL_READ_THROUGH = "DELETE FROM nymChannelReadThrough WHERE scope = ? AND nymId = ?";
     private static final String SQL_INSERT_CHANNEL_READ_THROUGH = "INSERT INTO nymChannelReadThrough (scope, nymId, readThrough) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_CHANNEL_READ_MSG = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ? AND importDate <= ?)";

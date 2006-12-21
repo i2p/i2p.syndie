@@ -88,6 +88,7 @@ public class MessageTree implements Translatable, Themeable {
     private Menu _menu;
     private MenuItem _view;
     private MenuItem _markRead;
+    private MenuItem _markUnread;
     private MenuItem _markAllRead;
     
     private boolean _showAuthor;
@@ -786,6 +787,11 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markRead(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markRead(); }
         });
+        _markUnread = new MenuItem(_menu, SWT.PUSH);
+        _markUnread.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { markUnread(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { markUnread(); }
+        });
         _markAllRead = new MenuItem(_menu, SWT.PUSH);
         _markAllRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
@@ -1229,6 +1235,21 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    private void markUnread() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
+                if (msg != null) {
+                    _browser.getClient().markMessageUnread(msg.getInternalId());
+                    selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+                    _itemsNewUnread.add(selected[i]);
+                    _itemsOld.remove(selected[i]);
+                    _itemsNewRead.remove(selected[i]);
+                }
+            }
+        }
+    }
     private void markAllRead() {
         TreeItem selected[] = _tree.getSelection();
         if ( (selected != null) && (selected.length > 0) ) {
@@ -1286,6 +1307,7 @@ public class MessageTree implements Translatable, Themeable {
     
     private static final String T_VIEW = "syndie.gui.messagetree.view";
     private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
+    private static final String T_MARKUNREAD = "syndie.gui.messagetree.markunread";
     private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
     
     public void translate(TranslationRegistry registry) {
@@ -1300,6 +1322,7 @@ public class MessageTree implements Translatable, Themeable {
 
         _view.setText(registry.getText(T_VIEW, "View the messages"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
+        _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
     }
     

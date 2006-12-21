@@ -58,7 +58,7 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
                     _ui.debugMessage("fireSync(" + archive + ")");
                     _manager.fetchIndex(archive);
                 } else {
-                    _ui.debugMessage("No archives due for sync.  waiting...");
+                    //_ui.debugMessage("No archives due for sync.  waiting...");
                     try { 
                         synchronized (SyndicationManagerScheduler.this) {
                             SyndicationManagerScheduler.this.wait(_client.ctx().random().nextLong(60*1000));
