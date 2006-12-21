@@ -130,9 +130,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private Menu _postMenuPublicMenu;
     private MenuItem _syndicateMenuRoot;
     private Menu _syndicateMenu;
-    private MenuItem _syndicateMenuArchives;
     private MenuItem _syndicateMenuConfig;
-    private MenuItem _syndicateMenuStatus;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
@@ -462,16 +460,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
         });
-        _syndicateMenuArchives = new MenuItem(_syndicateMenu, SWT.PUSH);
-        _syndicateMenuArchives.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationArchiveURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationArchiveURI()); }
-        });
-        _syndicateMenuStatus = new MenuItem(_syndicateMenu, SWT.PUSH);
-        _syndicateMenuStatus.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationStatusURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationStatusURI()); }
-        });
         
         _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _languageMenu = new Menu(_languageMenuRoot);
@@ -615,161 +603,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void doRefreshSyndicationMenu() {
         MenuItem item[] = _syndicateMenu.getItems();
         for (int i = 0; i < item.length; i++) {
-            if ( (item[i] != _syndicateMenuArchives) && (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuStatus) && (item[i] != _syndicateMenuRoot) )
+            if ( (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuRoot) )
                 item[i].dispose();
         }
-        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
-        // todo: rework this in light of the new sharedArchive scheme and scheduler
-        final Set pendingDiff = new HashSet();
-        int numDiffs = 0;
-        long totalDiffBytes = 0;
-        for (int i = 0; i < _syndicationManager.getArchiveCount(); i++) {
-            final String name = _syndicationManager.getArchiveName(i);
-            SharedArchive index = _syndicationManager.getArchiveIndex(i);
-            boolean archiveIsOld = false;
-            if ( (index != null) && (index.getRefreshable()) )
-                archiveIsOld = true;
-            MenuItem base = new MenuItem(_syndicateMenu, SWT.CASCADE);
-            Menu menu = new Menu(base);
-            base.setMenu(menu);
-            base.setText(name);
-            MenuItem fetchDiff = new MenuItem(menu, SWT.PUSH);
-            if (index == null || archiveIsOld)
-                pendingDiff.add(name);
-            fetchDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_FETCHDIFF, "Refetch index"));
-            fetchDiff.setEnabled(index == null || archiveIsOld);
-            fetchDiff.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    _syndicationManager.fetchIndex(name);
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    _syndicationManager.fetchIndex(name);
-                }
-            });
-            
-            MenuItem pullDiff = new MenuItem(menu, SWT.PUSH);
-            pullDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_PULLDIFF, "Pull all differences"));
-            pullDiff.setEnabled(index != null); // && diff.fetchNewBytes > 0);
-            pullDiff.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTA, -1, names);
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTA, -1, names);
-                }
-            });
-            
-            MenuItem pullKnown = new MenuItem(menu, SWT.PUSH);
-            pullKnown.setText(getTranslationRegistry().getText(T_SYNDICATE_PULLKNOWN, "Pull known forums"));
-            pullKnown.setEnabled(index != null); // && diff.fetchKnownBytes > 0);
-            pullKnown.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTAKNOWN, -1, names);
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTAKNOWN, -1, names);
-                }
-            });
-            
-            MenuItem pullBookmarked = new MenuItem(menu, SWT.PUSH);
-            pullBookmarked.setText(getTranslationRegistry().getText(T_SYNDICATE_PULLBOOKMARKED, "Pull bookmarked forums"));
-            pullBookmarked.setEnabled(index != null); // && diff.fetchKnownBytes > 0);
-            pullBookmarked.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTABOOKMARKED, -1, names);
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, SyndicationManager.PULL_STRATEGY_DELTABOOKMARKED, -1, names);
-                }
-            });
-            
-            new MenuItem(menu, SWT.SEPARATOR);
-            
-            MenuItem pushDiff = new MenuItem(menu, SWT.PUSH);
-            pushDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_PUSHDIFF, "Push differences"));
-            pushDiff.setEnabled(index != null);
-            pushDiff.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, -1, SyndicationManager.PUSH_STRATEGY_DELTA, names);
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createSyndicationStatusURI());
-                    _syndicationManager.startFetching(1);
-                    Set names = new HashSet(1);
-                    names.add(name);
-                    _syndicationManager.sync(-1, -1, SyndicationManager.PUSH_STRATEGY_DELTA, names);
-                }
-            });
-            
-            if (index != null) {
-                numDiffs++;
-                //totalDiffBytes += diff.fetchNewBytes;
-            }
-        }
-
-        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
-
-        MenuItem pullIndexes = new MenuItem(_syndicateMenu, SWT.PUSH);
-        pullIndexes.setText(getTranslationRegistry().getText(T_SYNDICATE_PULLINDEXES, "Refetch all pending indexes"));
-        pullIndexes.setEnabled(pendingDiff.size() > 0);
-        pullIndexes.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                view(createSyndicationStatusURI());
-                _syndicationManager.startFetching(1);
-                for (Iterator iter = pendingDiff.iterator(); iter.hasNext(); ) 
-                    _syndicationManager.fetchIndex((String)iter.next());
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                view(createSyndicationStatusURI());
-                _syndicationManager.startFetching(1);
-                for (Iterator iter = pendingDiff.iterator(); iter.hasNext(); ) 
-                    _syndicationManager.fetchIndex((String)iter.next());
-            }
-        });
-        
-        MenuItem manualDiff = new MenuItem(_syndicateMenu, SWT.PUSH);
-        manualDiff.setText(getTranslationRegistry().getText(T_SYNDICATE_SELECTEXPLICIT, "Select items to pull explicitly"));
-        manualDiff.setEnabled(numDiffs != 0 && totalDiffBytes > 0);
-        manualDiff.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                view(createSyndicationDiffURI());
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                view(createSyndicationDiffURI());
-            }
-        });
         
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
 
@@ -2067,9 +1903,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuPublicRoot.setText(registry.getText(T_POST_MENU_PUBLIC, "&Publically postable forums"));
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
-        _syndicateMenuArchives.setText(registry.getText(T_SYNDICATE_MENU_ARCHIVES, "&Manage archives"));
         _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
-        _syndicateMenuStatus.setText(registry.getText(T_SYNDICATE_MENU_STATUS, "View &status"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));

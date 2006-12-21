@@ -37,9 +37,9 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_LOGS = "logs";
     static final String TYPE_META = "meta";
     static final String TYPE_MANAGE = "manage";
-    static final String TYPE_SYNDICATE_ARCHIVES = "syndicatearchive";
-    static final String TYPE_SYNDICATE_CONFIG = "syndicateconfig";
-    static final String TYPE_SYNDICATE_STATUS = "syndicatestatus";
+    static final String TYPE_SYNDICATE_ARCHIVES = "syndicate";
+    static final String TYPE_SYNDICATE_CONFIG = TYPE_SYNDICATE_ARCHIVES;
+    static final String TYPE_SYNDICATE_STATUS = TYPE_SYNDICATE_ARCHIVES;
     static final String TYPE_SQL = "sql";
     static final String TYPE_TRANSLATE = "translate";
     static final String TYPE_HIGHLIGHT = "highlight";
@@ -92,13 +92,16 @@ abstract class BrowserTab implements Themeable {
         } else if (TYPE_LOGS.equals(uri.getType())) {
             return new LogTab(browser, uri);
         } else if (uri.isArchive()) {
-            return new SyndicationArchiveTab(browser, uri);
+            return new SyndicationSchedulerTab(browser, uri);
         } else if (TYPE_SYNDICATE_ARCHIVES.equals(uri.getType())) {
-            return new SyndicationArchiveTab(browser, uri);
+            //return new SyndicationArchiveTab(browser, uri);
+            return new SyndicationSchedulerTab(browser, uri);
         } else if (TYPE_SYNDICATE_CONFIG.equals(uri.getType())) {
-            return new SyndicationConfigTab(browser, uri);
+            //return new SyndicationConfigTab(browser, uri);
+            return new SyndicationSchedulerTab(browser, uri);
         } else if (TYPE_SYNDICATE_STATUS.equals(uri.getType())) {
-            return new SyndicationStatusTab(browser, uri);
+            //return new SyndicationStatusTab(browser, uri);
+            return new SyndicationSchedulerTab(browser, uri);
         } else if (TYPE_SQL.equals(uri.getType())) {
             return new SQLTab(browser, uri);
         } else if (uri.isText()) {
@@ -107,10 +110,6 @@ abstract class BrowserTab implements Themeable {
             return new HighlightViewTab(browser, uri);
         } else if (uri.isSearch()) {
             return new BrowseForumTab(browser, uri);
-        } else if ("x-postnew".equals(uri.getType())) {
-            return new MessageEditorTab(browser, uri);
-        } else if ("x-scheduler".equals(uri.getType())) {
-            return new SyndicationSchedulerTab(browser, uri);
         }
         
         return null;
