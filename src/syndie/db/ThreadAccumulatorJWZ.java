@@ -285,6 +285,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         
         _msgTags = new HashMap();
+        // todo: skip this if there isn't a tag filter
         for (Iterator iter = matchingMsgIds.iterator(); iter.hasNext(); ) {
             Long msgId = (Long)iter.next();
             Set tags = _client.getMessageTags(msgId.longValue(), true, true);
@@ -301,7 +302,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
+        long beforeGather = System.currentTimeMillis();
         ThreadReferenceNode threads[] = buildThreads(matchingMsgIds);
+        long afterGather = System.currentTimeMillis();
+        _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
         
         // then drop the threads who do not match the tags (if !_applyTagFilterToMessages)
         if (!_applyTagFilterToMessages) {
@@ -315,6 +319,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 tagBuf.clear();
             }
         }
+        long afterThreadTagFilter = System.currentTimeMillis();
         // now filter the remaining threads by authorization status (owner/manager/authPoster/authReply/unauth)
         // (done against the thread so as to allow simple authReply)
         for (int i = 0; i < threads.length; i++) {
@@ -326,6 +331,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
+        long afterAuthorizationFilter = System.currentTimeMillis();
 
         // filter the messages in the threads by type (pbe/private/public/authorized)
         if ( !_pbe || !_privateMessage || !_publicMessage || !_authorizedMessage) {
@@ -339,6 +345,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
+        long afterThreadPrivacyFilter = System.currentTimeMillis();
         
         // filter the messages in the threads by keyword (we do this so late in the game in the
         // hopes that the above will minimize how much we have to filter w/ fulltext searches..)
@@ -353,16 +360,28 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
+        long afterThreadKeywordFilter = System.currentTimeMillis();
         
         // prune like a motherfucker,
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads);
+        long afterPrune = System.currentTimeMillis();
         _ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
         ThreadReferenceNode sorted[] = sort(pruned);
+        long afterSort = System.currentTimeMillis();
         _ui.debugMessage("threads sorted: " + (pruned != null ? pruned.length +"" : "none"));
         storePruned(sorted);
+        long afterStore = System.currentTimeMillis();
            
         _ui.debugMessage("gather threads trace: " + _client.completeTrace());
+        _ui.debugMessage("gather: " + (afterGather-beforeGather));
+        _ui.debugMessage("threadTagFilter: " + (afterThreadTagFilter-afterGather));
+        _ui.debugMessage("authorizationFilter: " + (afterAuthorizationFilter-afterThreadTagFilter));
+        _ui.debugMessage("privacyFilter: " + (afterThreadPrivacyFilter-afterAuthorizationFilter));
+        _ui.debugMessage("keywordFilter: " + (afterThreadKeywordFilter-afterThreadPrivacyFilter));
+        _ui.debugMessage("prune: " + (afterPrune-afterThreadKeywordFilter));
+        _ui.debugMessage("sort: " + (afterSort-afterPrune));
+        _ui.debugMessage("store: " + (afterStore-afterSort));
         //_ui.debugMessage("threads: " + _roots);
     }
     

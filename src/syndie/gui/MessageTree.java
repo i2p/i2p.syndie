@@ -107,8 +107,8 @@ public class MessageTree implements Translatable, Themeable {
     private Set _itemsNewRead;
     /** items for messages that are new and unread */
     private Set _itemsNewUnread;
-    /** item to MessageInfo */
-    private Map _itemToMsg;
+    /** item to msgId (Long) */
+    private Map _itemToMsgId;
     /** item to MessageFlagBar */
     private Map _itemToMsgFlags;
     
@@ -139,7 +139,7 @@ public class MessageTree implements Translatable, Themeable {
         _itemsOld = new HashSet();
         _itemsNewRead = new HashSet();
         _itemsNewUnread = new HashSet();
-        _itemToMsg = new HashMap();
+        _itemToMsgId = new HashMap();
         _itemToMsgFlags = new HashMap();
         _tags = new HashSet();
         _bars = new ArrayList();
@@ -716,24 +716,7 @@ public class MessageTree implements Translatable, Themeable {
         _colTags = new TreeColumn(_tree, SWT.LEFT);
         _tree.addListener(SWT.MeasureItem, new Listener() {
             public void handleEvent(Event evt) {
-                if (evt.index == 1) {
-                    if (true) {
-                        evt.width = getMessageFlagBarWidth(_tree);
-                    } else {
-                        MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
-                        if (bar == null) {
-                            bar = new MessageFlagBar(_browser, _tree, false);
-                            bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
-                            _itemToMsgFlags.put(evt.item, bar);
-                        }
-                        Image imgs[] = bar.getFlags();
-                        int width = _tree.getGridLineWidth() * 2;
-                        for (int i = 0; i < imgs.length; i++)
-                            width += imgs[i].getBounds().width + FLAG_SPACING;
-                        evt.width = width;
-                        //evt.height = sz.y;
-                    }
-                }
+                if (evt.index == 1) evt.width = getMessageFlagBarWidth(_tree);
             }
         });
         _tree.addListener(SWT.PaintItem, new Listener() {
@@ -741,8 +724,10 @@ public class MessageTree implements Translatable, Themeable {
                 if (evt.index == 1) {
                     MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
                     if (bar == null) {
+                        Long msgId = (Long)_itemToMsgId.get(evt.item);
+                        MessageInfo msg = _client.getMessage(msgId.longValue());
                         bar = new MessageFlagBar(_browser, _tree, false);
-                        bar.setMessage((MessageInfo)_itemToMsg.get(evt.item));
+                        bar.setMessage(msg);
                         _itemToMsgFlags.put(evt.item, bar);
                     }
                     Image imgs[] = bar.getFlags();
@@ -990,7 +975,7 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
-        _itemToMsg.clear();
+        _itemToMsgId.clear();
         // MessageFlagBar instances may allocate icons
         for (Iterator iter = _itemToMsgFlags.values().iterator(); iter.hasNext(); )
             ((MessageFlagBar)iter.next()).dispose();
@@ -999,10 +984,14 @@ public class MessageTree implements Translatable, Themeable {
         _itemsNewRead.clear();
         _itemsNewUnread.clear();
         _tags.clear();
+        long totalDBTime = 0;
+        long before = System.currentTimeMillis();
         for (int i = 0; i < referenceNodes.size(); i++) {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
-            add(node, null);
+            totalDBTime += add(node, null);
         }
+        long after = System.currentTimeMillis();
+        _browser.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
         /*
         _colType.pack();
@@ -1022,7 +1011,9 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setRedraw(true);
     }
     
-    private void add(ReferenceNode node, TreeItem parent) {
+    private long add(ReferenceNode node, TreeItem parent) {
+        long dbStart = 0;
+        long dbEnd = 0;
         TreeItem item = null;
         SyndieURI uri = node.getURI();
         if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) ) {
@@ -1040,48 +1031,55 @@ public class MessageTree implements Translatable, Themeable {
             String tags = "";
             int status = DBClient.MSG_STATUS_NEW_UNREAD;
             
+            dbStart = System.currentTimeMillis();
+            
             long chanId = _client.getChannelId(uri.getScope());
-            ChannelInfo scopeInfo = _client.getChannel(chanId);
-            MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
-            if (msg != null) {
-                _itemToMsg.put(item, msg);
-                if (msg.getSubject() != null)
-                    subj = msg.getSubject();
-                long authorId = msg.getAuthorChannelId();
+            String scopeName = _client.getChannelName(chanId);
+            //ChannelInfo scopeInfo = _client.getChannel(chanId);
+            //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+            long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+            if (msgId >= 0) {
+                _itemToMsgId.put(item, new Long(msgId));
+                subj = _client.getMessageSubject(msgId);
+                long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
                 if (authorId != chanId) {
-                    ChannelInfo authInfo = _client.getChannel(authorId);
-                    if (authInfo != null) {
-                        auth = authInfo.getName() + " [" + authInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    String authorName = _client.getChannelName(authorId);
+                    Hash authorHash = _client.getChannelHash(authorId);
+                    //ChannelInfo authInfo = _client.getChannel(authorId);
+                    if (authorName != null) {
+                        auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
                     } else {
                         auth = "";
                     }
                     //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
                 } else {
                     //System.out.println("author is the scope chan for " + uri.toString());
-                    auth = scopeInfo.getName() + " [" + scopeInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 }
-                ChannelInfo chanInfo = scopeInfo;
-                if (msg.getTargetChannelId() != scopeInfo.getChannelId()) {
+                //ChannelInfo chanInfo = scopeInfo;
+                long targetChanId = _client.getMessageTarget(msgId);
+                if (targetChanId != chanId) {
                     //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
                     //System.out.println("msg: " + uri.toString());
-                    chanInfo = _client.getChannel(msg.getTargetChannelId());
-                    if (chanInfo == null) {
-                        chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
-                    } else {
-                        chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
-                    }
+                    String targetName = _client.getChannelName(targetChanId);
+                    Hash targetHash = _client.getChannelHash(targetChanId);
+                    //chanInfo = _client.getChannel(msg.getTargetChannelId());
+                    chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
+                    //if (chanInfo == null) {
+                    //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
+                    //} else {
+                    //    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    //}
                 } else {
                     //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
                     //System.out.println("msg: " + uri.toString());
-                    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 }
                 
                 if (auth.length() <= 0) {
                      auth = chan;
                 }
-                Set msgTags = new TreeSet();
-                msgTags.addAll(msg.getPublicTags());
-                msgTags.addAll(msg.getPrivateTags());
+                Set msgTags = _client.getMessageTags(msgId, true, true);
                 StringBuffer buf = new StringBuffer();
                 for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
                     String tag = (String)iter.next();
@@ -1090,21 +1088,24 @@ public class MessageTree implements Translatable, Themeable {
                     _tags.add(tag);
                 }
                 tags = buf.toString().trim();
-                date = Constants.getDate(msg.getMessageId());
+                date = Constants.getDate(uri.getMessageId().longValue());
                 item.setGrayed(false);
                 
-                status = _client.getMessageStatus(_client.getLoggedInNymId(), msg.getInternalId(), msg.getTargetChannelId());
+                status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
                 subj = "";
-                if (scopeInfo != null)
-                    auth = scopeInfo.getName() + " [" + scopeInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                if (scopeName != null)
+                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 else
                     auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
                 chan = "";
                 date = Constants.getDate(uri.getMessageId().longValue());
                 tags = "";
             }
+            
+            dbEnd = System.currentTimeMillis();
+            
             item.setText(0, subj);
             // msgbar stuff
             // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
@@ -1134,8 +1135,10 @@ public class MessageTree implements Translatable, Themeable {
             // reference node does not point to a uri, so don't build a row
             item = parent;
         }
+        long dbTime = dbEnd-dbStart;
         for (int i = 0; i < node.getChildCount(); i++)
-            add(node.getChild(i), item);
+            dbTime += add(node.getChild(i), item);
+        return dbTime;
     }
     
     private void resizeCols() {
@@ -1220,12 +1223,12 @@ public class MessageTree implements Translatable, Themeable {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
-                if (msg != null) {
+                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                if (msgId != null) {
                     if (_itemsOld.contains(selected[i])) {
                         // noop
                     } else {
-                        _browser.getClient().markMessageRead(msg.getInternalId());
+                        _browser.getClient().markMessageRead(msgId.longValue());
                         selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
                         _itemsNewUnread.remove(selected[i]);
                         _itemsOld.remove(selected[i]);
@@ -1239,9 +1242,9 @@ public class MessageTree implements Translatable, Themeable {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
-                if (msg != null) {
-                    _browser.getClient().markMessageUnread(msg.getInternalId());
+                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                if (msgId != null) {
+                    _browser.getClient().markMessageUnread(msgId.longValue());
                     selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
                     _itemsNewUnread.add(selected[i]);
                     _itemsOld.remove(selected[i]);
@@ -1254,9 +1257,10 @@ public class MessageTree implements Translatable, Themeable {
         TreeItem selected[] = _tree.getSelection();
         if ( (selected != null) && (selected.length > 0) ) {
             for (int i = 0; i < selected.length; i++) {
-                MessageInfo msg = (MessageInfo)_itemToMsg.get(selected[i]);
-                if (msg != null) {
-                    _browser.getClient().markChannelRead(msg.getTargetChannelId());
+                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                if (msgId != null) {
+                    long target = _client.getMessageTarget(msgId.longValue());
+                    _browser.getClient().markChannelRead(target);
                 }
             }
             _itemsNewRead.clear();
