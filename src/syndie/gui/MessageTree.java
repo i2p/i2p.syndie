@@ -1035,6 +1035,11 @@ public class MessageTree implements Translatable, Themeable {
         _colTags.pack();
          */
         
+        long beforeGetTags = System.currentTimeMillis();
+        _tags.addAll(getTags(referenceNodes));
+        long afterGetTags = System.currentTimeMillis();
+        _browser.getUI().debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
+        
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).populateTagCombo();
         
@@ -1042,6 +1047,20 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
+    }
+    
+    private Set getTags(List nodes) {
+        IDGatherer idGatherer = new IDGatherer();
+        ReferenceNode.walk(nodes, idGatherer);
+        return _client.getMessageTags(idGatherer.getIds(), true, true);
+    }
+    private static class IDGatherer implements ReferenceNode.Visitor {
+        private Set _ids;
+        public IDGatherer() { _ids = new HashSet(); }
+        public Set getIds() { return _ids; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            _ids.add(new Long(node.getUniqueId()));
+        }
     }
     
     private long add(ReferenceNode node, TreeItem parent) {
@@ -1133,7 +1152,7 @@ public class MessageTree implements Translatable, Themeable {
                 String tag = (String)iter.next();
                 tag = tag.trim();
                 buf.append(tag).append(" ");
-                _tags.add(tag);
+                //_tags.add(tag);
             }
             tags = buf.toString().trim();
             date = Constants.getDate(uri.getMessageId().longValue());

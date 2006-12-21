@@ -2431,6 +2431,49 @@ public class DBClient {
         }        
         return rv;
     }
+    public Set getMessageTags(Set msgIds, boolean includePublic, boolean includePrivate) {
+        ensureLoggedIn();
+        Set rv = new HashSet();
+        if ( (msgIds == null) || (msgIds.size() <= 0) ) return rv;
+        
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            // i hate writing dynamic SQL - its ugly and bad for databases.  but,
+            // putting this all in as a single sql statement has substantial performance benefits,
+            // so...
+            StringBuffer query = new StringBuffer("SELECT DISTINCT tag, isPublic FROM messageTag WHERE msgId IN (");
+            for (Iterator iter = msgIds.iterator(); iter.hasNext(); ) {
+                Long id = (Long)iter.next();
+                query.append(id.longValue());
+                if (iter.hasNext())
+                    query.append(", ");
+                else
+                    query.append(")");
+            }
+            stmt = _con.createStatement();
+            rs = stmt.executeQuery(query.toString());
+            while (rs.next()) {
+                // tag, wasEncrypted
+                String tag = rs.getString(1);
+                boolean isPublic = rs.getBoolean(2);
+                if (rs.wasNull())
+                    isPublic = false;
+                if (isPublic && includePublic)
+                    rv.add(tag);
+                else if (!isPublic && includePrivate)
+                    rv.add(tag);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the group of message's tags", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
     
     private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
     public long getMessageAuthor(long chanId, long messageId) { 
