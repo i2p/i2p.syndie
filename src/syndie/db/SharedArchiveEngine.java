@@ -25,6 +25,13 @@ public class SharedArchiveEngine {
     public static class PullStrategy {
         public PullStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
+            maxKBTotal = -1;
+            knownChannelsOnly = false;
+            includePrivateMessages = true;
+            includePBEMessages = true;
+            includeRecentMessagesOnly = true;
+            includeDupForPIR = false;
+            pullNothing = false;
         }
         public PullStrategy(String serialized) {
             this();
@@ -130,6 +137,11 @@ public class SharedArchiveEngine {
     public static class PushStrategy {
         public PushStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
+            maxKBTotal = -1;
+            sendHashcashForLocal = false;
+            sendHashcashForAll = false;
+            sendLocalNewOnly = false;
+            sendNothing = false;
         }
         public PushStrategy(String serialized) {
             this();
@@ -338,7 +350,7 @@ public class SharedArchiveEngine {
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
             long version = client.getChannelVersion(scope);
-            ui.debugMessage("Scheduling push from " + scope.toBase64());
+            //ui.debugMessage("Scheduling push from " + scope.toBase64());
 
             SharedArchive.Channel remChan = archive.getChannel(scope);
             if (archive.getAbout().wantKnownChannelsOnly() && (remChan == null))

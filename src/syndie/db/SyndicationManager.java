@@ -194,9 +194,7 @@ public class SyndicationManager {
         Properties prefs = _client.getNymPrefs();
         String strat = prefs.getProperty("syndicate.pullStrategy");
         SharedArchiveEngine.PullStrategy rv = new SharedArchiveEngine.PullStrategy(strat);
-        String ser = rv.serialize();
-        if (strat != null)
-            _ui.debugMessage("db pull strategy: [" + strat + "] eq parsed? " + strat.equals(ser) + ": [" + ser + "]");
+        _ui.debugMessage("db pull strategy: " + rv);
         return rv;
     }
     
@@ -213,9 +211,7 @@ public class SyndicationManager {
         Properties prefs = _client.getNymPrefs();
         String strat = prefs.getProperty("syndicate.pushStrategy");
         SharedArchiveEngine.PushStrategy rv = new SharedArchiveEngine.PushStrategy(strat);
-        String ser = rv.serialize();
-        if (strat != null)
-            _ui.debugMessage("db push strategy: [" + strat + "] eq parsed? " + strat.equals(ser) + ": [" + ser + "]");
+        _ui.debugMessage("db push strategy: " + rv);
         return rv;
     }
 
@@ -1088,6 +1084,12 @@ public class SyndicationManager {
         else
             cancelSync(name);
     }
+    public void setLastSync(String name, long when) {
+        if ( (name == null) || (name.length() <= 0) ) return;
+        NymArchive archive = getArchive(name);
+        archive.setLastSyncDate(when);
+        noteSync(name, when);
+    }
     private static final String SQL_SYNC_SCHEDULE = "UPDATE nymArchive SET nextSyncDate = ? WHERE nymId = ? AND name = ?";
     private void scheduleSync(String name, long when) {
         PreparedStatement stmt = null;
@@ -1158,6 +1160,24 @@ public class SyndicationManager {
             stmt = null;
         } catch (SQLException se) {
             _ui.errorMessage("Error cancelling sync", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_SYNC_NOTE = "UPDATE nymArchive SET lastSyncDate = ? WHERE nymId = ? AND name = ?";
+    private void noteSync(String name, long when) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_SYNC_NOTE);
+            stmt.setDate(1, new Date(when));
+            stmt.setLong(2, _client.getLoggedInNymId());
+            stmt.setString(3, name);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error noting sync time", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
@@ -1339,6 +1359,7 @@ public class SyndicationManager {
         public long getLastSyncDate() { return _lastSyncDate; }
         public long getNextSyncDate() { return _nextSyncDate; }
         void setNextSyncDate(long when) { _nextSyncDate = when; }
+        void setLastSyncDate(long when) { _lastSyncDate = when; }
         public SessionKey getReadKey() { return _readKey; }
         public SessionKey getPostKey() { return _postKey; }
         public SharedArchive getIndex() { return _index; }

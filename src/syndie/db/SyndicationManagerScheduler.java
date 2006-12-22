@@ -102,6 +102,7 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
         _manager.push(archiveName);
         _manager.pull(archiveName, new Runnable() { 
             public void run() { 
+                _manager.setLastSync(archiveName, System.currentTimeMillis());
                 _ui.debugMessage("Archive sync successful for " + archiveName);
                 rescheduleSync(archiveName, archive.getAbout().getPublishRebuildFrequencyHours());
             }

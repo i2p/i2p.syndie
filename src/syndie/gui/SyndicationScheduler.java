@@ -10,6 +10,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -17,6 +18,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -45,11 +47,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private Label _lastSyncLabel;
     private Label _lastSync;
     private Label _nextSyncLabel;
-    private Label _nextSync;
-    private Button _nextSyncAdjust;
-    private Menu _nextSyncAdjustMenu;
-    private MenuItem _nextSyncAdjustNow;
-    private MenuItem _nextSyncAdjustCancel;
+    private Combo _nextSyncCombo;
     private Label _proxyLabel;
     private Button _proxyDefault;
     private Button _proxyNone;
@@ -157,11 +155,9 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             if (lastSync < 0)
                 _lastSync.setText(_browser.getTranslationRegistry().getText(T_SYNC_NEVER, "Never"));
             else
-                _lastSync.setText(Constants.getDateTime(lastSync));
-            if (nextSync < 0)
-                _nextSync.setText(_browser.getTranslationRegistry().getText(T_SYNC_NEVER, "Never"));
-            else
-                _nextSync.setText(Constants.getDateTime(nextSync));
+                _lastSync.setText(Constants.getDate(lastSync));
+            
+            populateNextSyncCombo(_browser.getTranslationRegistry(), nextSync);
 
             _proxyCustom.setSelection(false);
             _proxyDefault.setSelection(false);
@@ -180,7 +176,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _url.setText("");
             _passphrase.setText("");
             _lastSync.setText("");
-            _nextSync.setText("");
+            populateNextSyncCombo(_browser.getTranslationRegistry(), -1);
 
             _proxyCustom.setSelection(false);
             _proxyDefault.setSelection(true);
@@ -222,21 +218,44 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             customHost = null;
             customPort = -1;
         }
-        if (oldName == null) {
+        if (oldName == null)
             _browser.getSyndicationManager().add(name, SyndieURI.createArchive(url, pass), customHost, customPort, null, null);
-            refreshView(name);
-        } else {
+        else
             _browser.getSyndicationManager().update(oldName, name, SyndieURI.createArchive(url, pass), customHost, customPort, null, null);
-            refreshView(name);
+
+        switch (_nextSyncCombo.getSelectionIndex()) {
+            case NEXT_SYNC_NEVER:
+                _browser.getSyndicationManager().setNextSync(name, -1);
+                break;
+            case NEXT_SYNC_NOW:
+                _browser.getSyndicationManager().setNextSync(name, System.currentTimeMillis());
+                break;
+            case NEXT_SYNC_CUSTOM:
+            default:
+                //_browser.getSyndicationManager().setNextSync(name, -1);
+                // noop.  the custom value came from the syndication manager's scheduler, not the
+                // user
+                break;
         }
+        refreshView(name);
     }
+    
+    private static final String T_DELETE_CONFIRM_MSG = "syndie.gui.syndicationscheduler.deleteconfirmmsg";
+    private static final String T_DELETE_CONFIRM_TITLE = "syndie.gui.syndicationscheduler.deleteconfirmtitle";
+    
     private void deleteArchive() {
         String names[] = _archives.getSelection();
         if ( (names != null) && (names.length > 0) ) {
-            SyndicationManager mgr = _browser.getSyndicationManager();
-            mgr.delete(names[0]);
-            _archives.setSelection(new int[0]);
-            refreshView();
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_DELETE_CONFIRM_MSG, "Are you sure you want to delete the archive?"));
+            box.setText(_browser.getTranslationRegistry().getText(T_DELETE_CONFIRM_TITLE, "Confirm"));
+            int rc = box.open();
+            if (rc == SWT.YES) {
+                SyndicationManager mgr = _browser.getSyndicationManager();
+                mgr.delete(names[0]);
+                _archives.setSelection(new int[0]);
+                refreshView();
+            }
         }
     }
     
@@ -403,6 +422,27 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _colDetail.pack();
     }
     
+    private static final int NEXT_SYNC_NEVER = 0;
+    private static final int NEXT_SYNC_NOW = 1;
+    private static final int NEXT_SYNC_CUSTOM = 2;
+    
+    private static final String T_NEXTSYNC_NEVER = "syndie.gui.syndicationscheduler.nextsync.never";
+    private static final String T_NEXTSYNC_NOW = "syndie.gui.syndicationscheduler.nextsync.now";
+    
+    private void populateNextSyncCombo(TranslationRegistry registry, long when) {
+        _nextSyncCombo.setRedraw(false);
+        _nextSyncCombo.removeAll();
+        _nextSyncCombo.add(registry.getText(T_NEXTSYNC_NEVER, "Never"));
+        _nextSyncCombo.add(registry.getText(T_NEXTSYNC_NOW, "Now"));
+        if (when > 0) {
+            _nextSyncCombo.add(Constants.getDateTime(when));
+            _nextSyncCombo.select(NEXT_SYNC_CUSTOM);
+        } else {
+            _nextSyncCombo.select(NEXT_SYNC_NEVER);
+        }
+        _nextSyncCombo.setRedraw(true);
+    }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(3, false));
@@ -462,7 +502,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _lastSyncLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         row = new Composite(_root, SWT.NONE);
-        row.setLayout(new GridLayout(4, false));
+        row.setLayout(new GridLayout(3, false));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _lastSync = new Label(row, SWT.NONE);
@@ -472,29 +512,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _nextSyncLabel = new Label(row, SWT.NONE);
         _nextSyncLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _nextSync = new Label(row, SWT.NONE);
-        gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
-        _nextSync.setLayoutData(gd);
-        
-        _nextSyncAdjust = new Button(row, SWT.PUSH);
-        _nextSyncAdjust.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _nextSyncAdjust.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _nextSyncAdjustMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _nextSyncAdjustMenu.setVisible(true); }
-        });
-        
-        _nextSyncAdjustMenu = new Menu(_nextSyncAdjust);
-        _nextSyncAdjust.setMenu(_nextSyncAdjustMenu);
-        _nextSyncAdjustNow = new MenuItem(_nextSyncAdjustMenu, SWT.PUSH);
-        _nextSyncAdjustNow.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { scheduleSync(System.currentTimeMillis()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { scheduleSync(System.currentTimeMillis()); }
-        });
-        _nextSyncAdjustCancel = new MenuItem(_nextSyncAdjustMenu, SWT.PUSH);
-        _nextSyncAdjustCancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { scheduleSync(-1); }
-            public void widgetSelected(SelectionEvent selectionEvent) { scheduleSync(-1); }
-        });
+        _nextSyncCombo = new Combo(row, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+        _nextSyncCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         // proxy row
         _proxyLabel = new Label(_root, SWT.NONE);
@@ -722,8 +741,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _lastSyncLabel.setFont(theme.DEFAULT_FONT);
         _lastSync.setFont(theme.DEFAULT_FONT);
         _nextSyncLabel.setFont(theme.DEFAULT_FONT);
-        _nextSync.setFont(theme.DEFAULT_FONT);
-        _nextSyncAdjust.setFont(theme.BUTTON_FONT);
+        _nextSyncCombo.setFont(theme.DEFAULT_FONT);
         _proxyLabel.setFont(theme.DEFAULT_FONT);
         _proxyDefault.setFont(theme.DEFAULT_FONT);
         _proxyNone.setFont(theme.DEFAULT_FONT);
@@ -779,9 +797,6 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private static final String T_PASS = "syndie.gui.syndicationscheduler.pass";
     private static final String T_LASTSYNC = "syndie.gui.syndicationscheduler.lastsync";
     private static final String T_NEXTSYNC = "syndie.gui.syndicationscheduler.nextsync";
-    private static final String T_NEXTSYNCADJUST = "syndie.gui.syndicationscheduler.nextsyncadjust";
-    private static final String T_NEXTSYNCNOW = "syndie.gui.syndicationscheduler.nextsyncnow";
-    private static final String T_NEXTSYNCNEVER = "syndie.gui.syndicationscheduler.nextsyncnever";
     private static final String T_PROXY = "syndie.gui.syndicationscheduler.proxy";
     private static final String T_PROXYDEFAULT = "syndie.gui.syndicationscheduler.proxydefault";
     private static final String T_PROXYNONE = "syndie.gui.syndicationscheduler.proxynone";
@@ -808,15 +823,12 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     
     public void translate(TranslationRegistry registry) {
         _archiveGroup.setText(registry.getText(T_ARCHIVES, "Archives"));
-        _archiveAdd.setText(registry.getText(T_ARCHIVEADD, "Add"));
+        _archiveAdd.setText(registry.getText(T_ARCHIVEADD, "New"));
         _archiveNameLabel.setText(registry.getText(T_NAME, "Name:"));
         _urlLabel.setText(registry.getText(T_URL, "URL:"));
         _passphraseLabel.setText(registry.getText(T_PASS, "Posting key:"));
         _lastSyncLabel.setText(registry.getText(T_LASTSYNC, "Last sync:"));
         _nextSyncLabel.setText(registry.getText(T_NEXTSYNC, "Next sync:"));
-        _nextSyncAdjust.setText(registry.getText(T_NEXTSYNCADJUST, "Adjust next sync..."));
-        _nextSyncAdjustNow.setText(registry.getText(T_NEXTSYNCNOW, "Schedule for sync ASAP"));
-        _nextSyncAdjustCancel.setText(registry.getText(T_NEXTSYNCNEVER, "Cancel sync until further notice"));
         _proxyLabel.setText(registry.getText(T_PROXY, "Proxy:"));
         _proxyDefault.setText(registry.getText(T_PROXYDEFAULT, "Default"));
         _proxyNone.setText(registry.getText(T_PROXYNONE, "None"));
@@ -824,7 +836,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _proxyCustomHostLabel.setText(registry.getText(T_PROXYCUSTOMHOST, "Host:"));
         _proxyCustomPortLabel.setText(registry.getText(T_PROXYCUSTOMPORT, "Port:"));
         _saveArchive.setText(registry.getText(T_SAVE, "Save"));
-        _revertArchive.setText(registry.getText(T_REVERT, "Revert"));
+        _revertArchive.setText(registry.getText(T_REVERT, "Cancel"));
         _deleteArchive.setText(registry.getText(T_DELETE, "Delete"));
         _pullPolicy.setText(registry.getText(T_PULL, "Pull policy..."));
         _eventClear.setText(registry.getText(T_CLEAREVENTS, "Clear event log"));
@@ -862,6 +874,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pushAllDelta.setText(registry.getText(T_PUSHALLDELTA, "Send all differences"));
         _pushLocalDelta.setText(registry.getText(T_PUSHLOCALDELTA, "Send locally generated differences only"));
         _pushNothing.setText(registry.getText(T_PUSHNOTHING, "Send nothing"));
+        
+        populateNextSyncCombo(registry, -1);
     }
 
     public void archiveAdded(SyndicationManager mgr, String name) {
