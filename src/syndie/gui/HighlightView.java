@@ -101,6 +101,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         updateArchives();
         updateNewForums();
         updatePostponed();
+        resizeCols();
         _tree.setRedraw(true);
     }
     
@@ -515,6 +516,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _tree.setRedraw(false);
                     updateNewForums();
                     _itemNewForums.setExpanded(true);
+                    resizeCols();
                     _tree.setRedraw(true);
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) { 
@@ -522,6 +524,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _tree.setRedraw(false);
                     updateNewForums();
                     _itemNewForums.setExpanded(true);
+                    resizeCols();
                     _tree.setRedraw(true);
                 }
             });
@@ -577,6 +580,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _tree.setRedraw(false);
                             updatePrivateMessages();
                             _itemPrivateMessages.setExpanded(true);
+                            resizeCols();
                             _tree.setRedraw(true);
                         }
                         public void widgetSelected(SelectionEvent selectionEvent) { 
@@ -584,6 +588,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _tree.setRedraw(false);
                             updatePrivateMessages();
                             _itemPrivateMessages.setExpanded(true);
+                            resizeCols();
                             _tree.setRedraw(true);
                         }
                     });
@@ -596,6 +601,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _tree.setRedraw(false);
                             updatePrivateMessages();
                             _itemPrivateMessages.setExpanded(true);
+                            resizeCols();
                             _tree.setRedraw(true);
                         }
                         public void widgetSelected(SelectionEvent selectionEvent) { 
@@ -603,6 +609,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _tree.setRedraw(false);
                             updatePrivateMessages();
                             _itemPrivateMessages.setExpanded(true);
+                            resizeCols();
                             _tree.setRedraw(true);
                         }
                     });
@@ -635,6 +642,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _tree.setRedraw(false);
                     updateWatchedForums();
                     _itemWatchedForums.setExpanded(true);
+                    resizeCols();
                     _tree.setRedraw(true);
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) { 
@@ -642,6 +650,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _tree.setRedraw(false);
                     updateWatchedForums();
                     _itemWatchedForums.setExpanded(true);
+                    resizeCols();
                     _tree.setRedraw(true);
                 }
             });
@@ -661,11 +670,19 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         rethemePostponed(theme);
         
         // font sizes may change, so expand as necessary
-        setMinWidth(_colSummary, _itemPrivateMessages.getText(0), 50);
-        setMinWidth(_colSummary, _itemWatchedForums.getText(0), 50);
-        setMinWidth(_colSummary, _itemArchives.getText(0), 50);
-        setMinWidth(_colSummary, _itemNewForums.getText(0), 50);
-        setMinWidth(_colSummary, _itemPostponed.getText(0), 50);
+        resizeCols();
+    }
+    private void resizeCols() {
+        TreeItem items[] = _tree.getItems();
+        for (int i = 0; i < items.length; i++)
+            resizeCols(items[i]);
+    }
+    private void resizeCols(TreeItem item) {
+        setMinWidth(_colSummary, item.getText(0));
+        setMinWidth(_colDetail, item.getText(1));
+        TreeItem items[] = item.getItems();
+        for (int i = 0; i < items.length; i++)
+            resizeCols(items[i]);
     }
     
     private void rethemePrivateMessages(Theme theme) {
@@ -790,28 +807,28 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
 
     public void archivesLoaded(SyndicationManager mgr) { 
         _tree.getDisplay().asyncExec(new Runnable() { 
-            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+            public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
         });
     }
     public void archiveAdded(SyndicationManager mgr, String name) { 
         _tree.getDisplay().asyncExec(new Runnable() { 
-            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+            public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
         });
     }
     public void archiveRemoved(SyndicationManager mgr, String name) {
         _tree.getDisplay().asyncExec(new Runnable() { 
-            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+            public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
         });
     }
     public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {
         _tree.getDisplay().asyncExec(new Runnable() { 
-            public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+            public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
         });
     }
     public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
         if (record.getStatus() == SyndicationManager.FETCH_INDEX_DIFF_OK) {
             _tree.getDisplay().asyncExec(new Runnable() { 
-                public void run() { _tree.setRedraw(false); updateArchives(); _tree.setRedraw(true); }
+                public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
             });
         }
     }

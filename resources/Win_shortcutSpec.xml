@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <shortcuts>
  <programGroup defaultName="Syndie" location="applications" />
- <shortcut name="Syndie (text interface)"
+ <shortcut name="Syndie"
            programGroup="yes"
            desktop="yes"
 	   applications="no"
            target="$INSTALL_PATH\bin\syndie.exe" 
-           description="Main text interface to Syndie">
+           iconFile="$INSTALL_PATH\doc\web\favicon.ico"
+           description="Launch Syndie">
      <createForPack name="Base" />
  </shortcut>
  <shortcut name="Syndie documentation"

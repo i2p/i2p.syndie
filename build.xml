@@ -371,16 +371,7 @@ public class Version {
         <pack name="Base" required="yes">
             <description>Base installation files</description>
             <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
-            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"></executable>
         </pack>
     </packs>
 
@@ -434,16 +425,7 @@ public class Version {
         <pack name="Base" required="yes">
             <description>Base installation files</description>
             <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
-            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"></executable>
         </pack>
     </packs>
 
@@ -497,16 +479,7 @@ public class Version {
         <pack name="Base" required="yes">
             <description>Base installation files</description>
             <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
-            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"></executable>
         </pack>
     </packs>
 
@@ -562,17 +535,8 @@ public class Version {
     <packs>
         <pack name="Base" required="yes">
             <description>Base installation files</description>
-            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
-            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
-            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
         </pack>
     </packs>
 

@@ -3,8 +3,8 @@
  <skipIfNotSupported />
  <programGroup defaultName="Syndie" location="applications" />
  <shortcut name="Syndie"
-           target="$INSTALL_PATH/bin/syndie" 
-           commandLine=""
+           target="java"
+           commandLine="-jar $INSTALL_PATH/bin/syndie.exe"
            workingDirectory="$INSTALL_PATH"
            initialState="normal"
            programGroup="yes"
@@ -12,7 +12,8 @@
            desktop="yes"
            startup="no"
            encoding="UTF-8"
-           terminal="true"
+           terminal="false"
+           iconFile="$INSTALL_PATH/doc/web/favicon.ico"
            type="Application" />
  <!--
  <shortcut name="Syndie documentation"
