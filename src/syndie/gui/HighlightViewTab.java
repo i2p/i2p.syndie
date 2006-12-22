@@ -31,6 +31,7 @@ public class HighlightViewTab extends BrowserTab implements Translatable, Themea
     }
     
     protected void disposeDetails() { 
+        _view.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);
     }

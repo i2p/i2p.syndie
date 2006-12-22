@@ -42,6 +42,7 @@ public class DummyBrowserControl implements BrowserControl {
     public void bookmark(NymReferenceNode node) {}
     public List getBookmarks() { return null; }
 
+    public List getPrivateMsgIds(boolean alreadyRead) { return null; }
     
     public void showWaitCursor(boolean show) {}
     public TranslationRegistry getTranslationRegistry() { return null; }
@@ -50,6 +51,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createSyndicationConfigURI() { return null; }
     public SyndieURI createSyndicationDiffURI() { return null; }
     public SyndieURI createSyndicationStatusURI() { return null; }
+    public SyndieURI createHighlightURI() { return null; }
 
     public SyndicationManager getSyndicationManager() { return null; }
 
@@ -63,6 +65,8 @@ public class DummyBrowserControl implements BrowserControl {
     public ThemeRegistry getThemeRegistry() { return null; } 
 
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
+    public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {}
+    public void removeMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {}
 
     public boolean isBookmarked(SyndieURI syndieURI) { return false; }
 

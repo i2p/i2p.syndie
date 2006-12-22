@@ -815,6 +815,16 @@ public class SyndicationManager {
     public void addListener(SyndicationListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
     public void removeListener(SyndicationListener lsnr) { _listeners.remove(lsnr); }
     
+    public void importDefaultArchives() {
+        // todo: make this, erm, a little more dynamic ;)
+        for (Iterator iter = Constants.DEFAULT_ARCHIVES.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            String name = (String)entry.getKey();
+            String url = (String)entry.getValue();
+            add(name, SyndieURI.createArchive(url, null), null, -1, null, null);
+        }
+    }
+    
     private static final String SQL_ADD_NYM_ARCHIVE = "INSERT INTO nymArchive (name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     public boolean add(SyndieURI uri, String customProxyHost, int customProxyPort, SessionKey readKey, SessionKey postKey) {
         return add(uri.getString("name"), uri, customProxyHost, customProxyPort, readKey, postKey);

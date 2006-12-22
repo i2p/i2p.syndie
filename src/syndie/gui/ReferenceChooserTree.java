@@ -294,8 +294,11 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                         _nymRefs.notifyAll();
                     }
                     _ui.debugMessage("view? " + view);
-                    if (view)
-                        viewStartupItems(getBookmarkRoot());
+                    if (view) {
+                        int started = viewStartupItems(getBookmarkRoot());
+                        if (started == 0)
+                            _browser.view(_browser.createHighlightURI());
+                    }
                     _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
                     _ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
@@ -318,20 +321,23 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             rebuildBookmarks();
     }
     // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
-    private void viewStartupItems(TreeItem item) {
+    private int viewStartupItems(TreeItem item) {
         if (item == null) {
             _ui.debugMessage("view startup items - no root? " + item);
-            return;
+            return 0;
         }
+        int rv = 0;
         NymReferenceNode node = getBookmark(item);
         if (node == null)
             _ui.debugMessage("no node for the root? " + item);
         if ( (node != null) && node.getLoadOnStart()) {
             _ui.debugMessage("viewing node on startup: " + node.getURI());
             getBrowser().view(node.getURI());
+            rv++;
         }
         for (int i = 0; i < item.getItemCount(); i++)
-            viewStartupItems(item.getItem(i));
+            rv += viewStartupItems(item.getItem(i));
+        return rv;
     }
     
     private void refetchNymChannels() {

@@ -26,8 +26,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
@@ -42,7 +44,7 @@ import syndie.db.SyndicationManager;
 /**
  *
  */
-public class HighlightView implements Themeable, Translatable, SyndicationManager.SyndicationListener {
+public class HighlightView implements Themeable, Translatable, SyndicationManager.SyndicationListener, MessageEditor.MessageEditorListener {
     private Composite _parent;
     private BrowserControl _browser;
     private Composite _root;
@@ -66,6 +68,12 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private List _newForums;
     private List _postponedId;
     private List _postponedVersion;
+    /** ordered list of msgIds (Long) underneath the _itemPrivateMessages */
+    private List _privateMessages;
+    /** read (Boolean) for each of the _privateMessages */
+    private List _privateMessagesReadStatus;
+    /** if there are no archives, ask the user once if they want to import the default ones */
+    private boolean _alreadyAskedToImportArchives;
     
     private TreeItem _selected;
     
@@ -76,8 +84,12 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _newForums = new ArrayList();
         _postponedId = new ArrayList();
         _postponedVersion = new ArrayList();
+        _privateMessages = new ArrayList();
+        _privateMessagesReadStatus = new ArrayList();
+        _alreadyAskedToImportArchives = false;
         initComponents();
         refreshHighlights();
+        _browser.addMessageEditorListener(this);
         _browser.getSyndicationManager().addListener(this);
         browser.getSyndicationManager().loadArchives();
     }
@@ -92,8 +104,53 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _tree.setRedraw(true);
     }
     
+    public void dispose() {
+        _browser.removeMessageEditorListener(this);
+        _browser.getSyndicationManager().removeListener(this);
+        _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
+    }
+
+    private static final String T_PRIVATE_PREFIX = "syndie.gui.highlightview.private";
+    
     private void updatePrivateMessages() {
-        _itemPrivateMessages.setText(1, 0+"");
+        TreeItem items[] = _itemPrivateMessages.getItems();
+        for (int i = 0; i < items.length; i++) items[i].dispose();
+        _privateMessages.clear();
+        _privateMessagesReadStatus.clear();
+        List unreadMsgIds = _browser.getPrivateMsgIds(false);
+        List readMsgIds = _browser.getPrivateMsgIds(true);
+        _itemPrivateMessages.setText(1, _browser.getTranslationRegistry().getText(T_PRIVATE_PREFIX, "Unread/read: ") + unreadMsgIds.size() + "/" + readMsgIds.size());
+        for (int i = 0; i < unreadMsgIds.size(); i++) {
+            long msgId = ((Long)unreadMsgIds.get(i)).longValue();
+            long authorId = _browser.getClient().getMessageAuthor(msgId);
+            String author = _browser.getClient().getChannelName(authorId);
+            if (author == null) author = "";
+            long when = _browser.getClient().getMessageImportDate(msgId);
+            String subject = _browser.getClient().getMessageSubject(msgId);
+            if (subject == null) subject = "";
+            TreeItem item = new TreeItem(_itemPrivateMessages, SWT.NONE);
+            item.setText(0, Constants.getDate(when) + ": " + author);
+            item.setText(1, subject);
+            _privateMessages.add(new Long(msgId));
+            _privateMessagesReadStatus.add(Boolean.FALSE);
+        }
+    
+        for (int i = 0; i < readMsgIds.size(); i++) {
+            long msgId = ((Long)readMsgIds.get(i)).longValue();
+            long authorId = _browser.getClient().getMessageAuthor(msgId);
+            String author = _browser.getClient().getChannelName(authorId);
+            if (author == null) author = "";
+            long when = _browser.getClient().getMessageImportDate(msgId);
+            String subject = _browser.getClient().getMessageSubject(msgId);
+            if (subject == null) subject = "";
+            TreeItem item = new TreeItem(_itemPrivateMessages, SWT.NONE);
+            item.setText(0, Constants.getDate(when) + ": " + author);
+            item.setText(1, subject);
+            _privateMessages.add(new Long(msgId));
+            _privateMessagesReadStatus.add(Boolean.TRUE);
+        }
+    
         rethemePrivateMessages(_browser.getThemeRegistry().getTheme());
     }
     private void updateWatchedForums() {
@@ -208,26 +265,50 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         SyndicationManager mgr = _browser.getSyndicationManager();
         int archives = mgr.getArchiveCount();
         _browser.getUI().debugMessage("known archives: " + archives);
-        int recentlySynced = 0;
+        int scheduled = 0;
         for (int i = 0; i < archives; i++) {
             String name = mgr.getArchiveName(i);
-            SharedArchive index = mgr.getArchiveIndex(i);
-            boolean refreshable = true;
-            if (index != null) {
-                refreshable = index.getRefreshable();
-                if (!refreshable)
-                    recentlySynced++;
-            }
+            long nextSync = mgr.getNextSyncDate(i);
+            long lastSync = mgr.getLastSyncDate(i);
+            if (nextSync > 0)
+                scheduled++;
             TreeItem item = new TreeItem(_itemArchives, SWT.NONE);
             item.setText(0, name);
-            if (!refreshable)
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Recently synced"));
+            if (nextSync > 0)
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_PREFIX, "Next sync: ") + Constants.getDateTime(nextSync));
+            else if (lastSync > 0)
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NONE_PREFIX, "No sync scheduled.  Last sync: ") + Constants.getDateTime(nextSync));
             else
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NEVERSYNCED, "Pending sync"));
+                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_NEVER_PREFIX, "Never synced"));
         }
-        _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + (archives-recentlySynced));
+        _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + scheduled);
         rethemeArchives(_browser.getThemeRegistry().getTheme());
+        
+        if ( (archives == 0) && (!_alreadyAskedToImportArchives) ) 
+            askImportDefaultArchives();
     }
+    
+    private static final String T_IMPORT_MESSAGE = "syndie.gui.highlightview.import.message";
+    private static final String T_IMPORT_TITLE = "syndie.gui.highlightview.import.title";
+    
+    private void askImportDefaultArchives() {
+        _alreadyAskedToImportArchives = true;
+        _root.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+                box.setMessage(_browser.getTranslationRegistry().getText(T_IMPORT_MESSAGE, "To use Syndie, you will need to tell it about some 'archives' to share messages with.  Would you like to add the standard archives to your list now?"));
+                box.setText(_browser.getTranslationRegistry().getText(T_IMPORT_TITLE, "Import archives?"));
+                int rc = box.open();
+                if (rc == SWT.YES) {
+                    _browser.getSyndicationManager().importDefaultArchives();
+                    _browser.view(_browser.createSyndicationConfigURI());
+                }
+            }
+        });
+    }
+    
+    private static final String T_ARCHIVE_DETAIL_NONE_PREFIX = "syndie.gui.highlightview.archive.detail.none";
+    private static final String T_ARCHIVE_DETAIL_NEVER_PREFIX = "syndie.gui.highlightview.archive.detail.never";
     
     private void updateNewForums() {
         TreeItem items[] = _itemNewForums.getItems();
@@ -289,6 +370,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         rethemePostponed(_browser.getThemeRegistry().getTheme());
     }
     
+    private void sync() { _browser.view(_browser.createSyndicationArchiveURI()); }
+    
     private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
     private static final String getDateTime(long ts) {
         synchronized (_fmt) { return _fmt.format(new Date(ts)); }
@@ -319,7 +402,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                 TreeItem items[] = _tree.getSelection();
                 if ( (items != null) && (items.length == 1) )
                     _selected = items[0];
-                _tree.setSelection(new TreeItem[0]);
+                //_tree.setSelection(new TreeItem[0]);
                 super.selectionUpdated();
             }
         };
@@ -401,10 +484,10 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     }
     private void reconfigArchiveMenu(Menu menu, TreeItem selected) {
         MenuItem sync = new MenuItem(menu, SWT.PUSH);
-        sync.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_MENU_SYNC, "Syndicate"));
+        sync.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_MENU_SYNC, "Coordinate syndication"));
         sync.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationArchiveURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createSyndicationArchiveURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { sync(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { sync(); }
         });
     }
     private void reconfigNewForumMenu(Menu menu, final TreeItem selected) {
@@ -462,7 +545,71 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             });
         }
     }
-    private void reconfigPrivateMessagesMenu(Menu menu, TreeItem selected) {}
+    private static final String T_PRIVATE_MENU_VIEW = "syndie.gui.highlightview.private.view";
+    private static final String T_PRIVATE_MENU_MARK_READ = "syndie.gui.highlightview.private.markread";
+    private static final String T_PRIVATE_MENU_MARK_UNREAD = "syndie.gui.highlightview.private.markunread";
+    private void reconfigPrivateMessagesMenu(Menu menu, TreeItem selected) {
+        if (selected != null) {
+            TreeItem parent = selected.getParentItem();
+            final int idx = parent.indexOf(selected);
+            if (idx == -1)
+                return;
+            
+            final long msgId = ((Long)_privateMessages.get(idx)).longValue();
+            long messageId = _browser.getClient().getMessageId(msgId);
+            Hash scope = _browser.getClient().getMessageScope(msgId);
+            if ( (messageId >= 0) && (scope != null) ) {
+                MenuItem view = new MenuItem(menu, SWT.PUSH);
+                final SyndieURI uri = SyndieURI.createMessage(scope, messageId);
+                view.setText(_browser.getTranslationRegistry().getText(T_PRIVATE_MENU_VIEW, "View"));
+                view.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                });
+                
+                Boolean isRead = (Boolean)_privateMessagesReadStatus.get(idx);
+                if (!isRead.booleanValue()) {
+                    MenuItem markRead = new MenuItem(menu, SWT.PUSH);
+                    markRead.setText(_browser.getTranslationRegistry().getText(T_PRIVATE_MENU_MARK_READ, "Mark as read"));
+                    markRead.addSelectionListener(new SelectionListener() {
+                        public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                            _browser.getClient().markMessageRead(msgId);
+                            _tree.setRedraw(false);
+                            updatePrivateMessages();
+                            _itemPrivateMessages.setExpanded(true);
+                            _tree.setRedraw(true);
+                        }
+                        public void widgetSelected(SelectionEvent selectionEvent) { 
+                            _browser.getClient().markMessageRead(msgId);
+                            _tree.setRedraw(false);
+                            updatePrivateMessages();
+                            _itemPrivateMessages.setExpanded(true);
+                            _tree.setRedraw(true);
+                        }
+                    });
+                } else {
+                    MenuItem markUnread = new MenuItem(menu, SWT.PUSH);
+                    markUnread.setText(_browser.getTranslationRegistry().getText(T_PRIVATE_MENU_MARK_UNREAD, "Mark as unread"));
+                    markUnread.addSelectionListener(new SelectionListener() {
+                        public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                            _browser.getClient().markMessageUnread(msgId);
+                            _tree.setRedraw(false);
+                            updatePrivateMessages();
+                            _itemPrivateMessages.setExpanded(true);
+                            _tree.setRedraw(true);
+                        }
+                        public void widgetSelected(SelectionEvent selectionEvent) { 
+                            _browser.getClient().markMessageUnread(msgId);
+                            _tree.setRedraw(false);
+                            updatePrivateMessages();
+                            _itemPrivateMessages.setExpanded(true);
+                            _tree.setRedraw(true);
+                        }
+                    });
+                }
+            }
+        }
+    }
     private void reconfigWatchedForumsMenu(Menu menu, final TreeItem selected) {
         if (selected != null) {
             TreeItem parent = selected.getParentItem();
@@ -524,9 +671,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private void rethemePrivateMessages(Theme theme) {
         if (_itemPrivateMessages.getItemCount() > 0) {
             _itemPrivateMessages.setFont(theme.HIGHLIGHT_ACTIVE_FONT);
-            //TreeItem items[] = _itemPrivateMessages.getItems();
-            //for (int i = 0; i < items.length; i++)
-            //    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            TreeItem items[] = _itemPrivateMessages.getItems();
+            for (int i = 0; i < items.length; i++) {
+                Boolean read = (Boolean)_privateMessagesReadStatus.get(i);
+                if (read.booleanValue())
+                    items[i].setFont(theme.HIGHLIGHT_INACTIVE_FONT);
+                else
+                    items[i].setFont(theme.HIGHLIGHT_ACTIVE_FONT);
+            }
         } else {
             _itemPrivateMessages.setFont(theme.HIGHLIGHT_INACTIVE_FONT);
         }
@@ -664,5 +816,18 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         }
     }
     public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
-    public void syndicationComplete(SyndicationManager mgr) {}
+    public void syndicationComplete(SyndicationManager mgr) {
+        // we may have pulled in new messages/etc
+        Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
+    }
+
+    public void messageCreated(SyndieURI postedURI) {
+        Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
+    }
+    public void messagePostponed(long postponementId) {
+        Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
+    }
+    public void messageCancelled() {
+        Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
+    }
 }

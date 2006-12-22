@@ -22,7 +22,9 @@ public interface BrowserControl {
     public void updateBookmark(NymReferenceNode bookmark);
     /** get the bookmarks (NymReferenceNode) currently loaded */
     public List getBookmarks();
-    
+
+    public List getPrivateMsgIds(boolean alreadyRead);
+
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
@@ -46,7 +48,7 @@ public interface BrowserControl {
     public SyndieURI createSyndicationConfigURI();
     public SyndieURI createSyndicationDiffURI();
     public SyndieURI createSyndicationStatusURI();
-
+    public SyndieURI createHighlightURI();
     public void showWaitCursor(boolean wait);
     
     public UI getUI();
@@ -62,6 +64,8 @@ public interface BrowserControl {
     public void removeUIListener(Browser.UIListener lsnr);
     
     public MessageEditor.MessageEditorListener getMessageEditorListener();
+    public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr);
+    public void removeMessageEditorListener(MessageEditor.MessageEditorListener lsnr);
 
     public boolean isBookmarked(SyndieURI syndieURI);
     

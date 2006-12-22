@@ -8,6 +8,10 @@ import java.util.*;
  * ugly centralized place to put shared constants.  who needs ooad?
  */
 public class Constants {
+    /** name (String) to url (String) for some default archives that can be offered to users when they have none */
+    public static final Map DEFAULT_ARCHIVES = new TreeMap();
+    static { DEFAULT_ARCHIVES.put("Standard archive", "http://syndie.i2p.net:8080/"); }
+    
     /** header line in the enclosure before the body specifying the body size */
     public static final String MSG_HEADER_SIZE = "Size";
     

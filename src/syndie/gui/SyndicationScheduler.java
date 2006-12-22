@@ -3,6 +3,8 @@ package syndie.gui;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
@@ -123,6 +125,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         int archives = mgr.getArchiveCount();
         for (int i = 0; i < archives; i++)
             _archives.add(mgr.getArchiveName(i));
+        if ( (sel == null) && (archives > 0) )
+            sel = _archives.getItem(0);
         _archives.setSelection(new String[] { sel });
         showArchive(sel);
         _root.setRedraw(true);
@@ -132,10 +136,14 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         String names[] = _archives.getSelection();
         if ( (names != null) && (names.length > 0) ) {
             showArchive(names[0]);
+        } else {
+            showArchive(null);
         }
     }
     private void showArchive(String name) {
+        boolean enable = false;
         if ( (name != null) && (name.length() > 0) ) {
+            enable = true;
             SyndicationManager mgr = _browser.getSyndicationManager();
             int index = mgr.getArchiveNum(name);
             SyndieURI uri = mgr.getArchiveURI(index);
@@ -171,6 +179,19 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
                 _proxyCustomHost.setText("");
                 _proxyCustomPort.setText("");
             }
+        } else if ( (name != null) && (name.length() == 0) ) {
+            enable = true;
+            _archiveName.setText("");
+            _url.setText("");
+            _passphrase.setText("");
+            _lastSync.setText("");
+            populateNextSyncCombo(_browser.getTranslationRegistry(), -1);
+
+            _proxyCustom.setSelection(false);
+            _proxyDefault.setSelection(true);
+            _proxyNone.setSelection(false);
+            _proxyCustomHost.setText("");
+            _proxyCustomPort.setText("");
         } else {
             _archiveName.setText("");
             _url.setText("");
@@ -184,6 +205,28 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _proxyCustomHost.setText("");
             _proxyCustomPort.setText("");
         }
+        
+        _archiveNameLabel.setEnabled(enable);
+        _archiveName.setEnabled(enable);
+        _urlLabel.setEnabled(enable);
+        _url.setEnabled(enable);
+        _passphraseLabel.setEnabled(enable);
+        _passphrase.setEnabled(enable);
+        _lastSyncLabel.setEnabled(enable);
+        _lastSync.setEnabled(enable);
+        _nextSyncLabel.setEnabled(enable);
+        _nextSyncCombo.setEnabled(enable);
+        _proxyLabel.setEnabled(enable);
+        _proxyDefault.setEnabled(enable);
+        _proxyNone.setEnabled(enable);
+        _proxyCustom.setEnabled(enable);
+        _proxyCustomHostLabel.setEnabled(enable);
+        _proxyCustomHost.setEnabled(enable);
+        _proxyCustomPortLabel.setEnabled(enable);
+        _proxyCustomPort.setEnabled(enable);
+        _saveArchive.setEnabled(false);
+        _revertArchive.setEnabled(false);
+        _deleteArchive.setEnabled(enable && (name.length() > 0));
         
         _lastSync.getParent().layout(true);
     }
@@ -443,6 +486,12 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _nextSyncCombo.setRedraw(true);
     }
     
+    private void addArchive() {
+        _archives.setSelection(new int[0]);
+        showArchive("");
+        _archiveName.forceFocus(); 
+    }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(3, false));
@@ -463,9 +512,17 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _archiveAdd = new Button(_archiveGroup, SWT.PUSH);
         _archiveAdd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _archiveAdd.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _archives.setSelection(new int[0]); showArchive(""); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _archives.setSelection(new int[0]); showArchive(""); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addArchive(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addArchive(); }
         });
+        
+        _deleteArchive = new Button(_archiveGroup, SWT.PUSH);
+        _deleteArchive.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _deleteArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { deleteArchive(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { deleteArchive(); }
+        });
+        
         
         _archiveNameLabel = new Label(_root, SWT.NONE);
         _archiveNameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -561,11 +618,17 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showArchive(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showArchive(); }
         });
-        _deleteArchive = new Button(row, SWT.PUSH);
-        _deleteArchive.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { deleteArchive(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { deleteArchive(); }
-        });
+        
+        ModListener lsnr = new ModListener();
+        _archiveName.addModifyListener(lsnr);
+        _url.addModifyListener(lsnr);
+        _passphrase.addModifyListener(lsnr);
+        _nextSyncCombo.addSelectionListener(lsnr);
+        _proxyDefault.addSelectionListener(lsnr);
+        _proxyNone.addSelectionListener(lsnr);
+        _proxyCustom.addSelectionListener(lsnr);
+        _proxyCustomHost.addModifyListener(lsnr);
+        _proxyCustomPort.addModifyListener(lsnr);
         
         _eventGroup = new Group(_root, SWT.NONE);
         _eventGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 4));
@@ -728,6 +791,16 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         refreshView();
     }
     
+    private class ModListener implements SelectionListener, ModifyListener {
+        private void modified() {
+            _saveArchive.setEnabled(true);
+            _revertArchive.setEnabled(true);
+        }
+        public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+        public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
+        public void modifyText(ModifyEvent modifyEvent) { modified(); }
+    }
+    
     public void applyTheme(Theme theme) {
         _archiveGroup.setFont(theme.DEFAULT_FONT);
         _archives.setFont(theme.DEFAULT_FONT);
@@ -823,7 +896,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     
     public void translate(TranslationRegistry registry) {
         _archiveGroup.setText(registry.getText(T_ARCHIVES, "Archives"));
-        _archiveAdd.setText(registry.getText(T_ARCHIVEADD, "New"));
+        _archiveAdd.setText(registry.getText(T_ARCHIVEADD, "Add"));
         _archiveNameLabel.setText(registry.getText(T_NAME, "Name:"));
         _urlLabel.setText(registry.getText(T_URL, "URL:"));
         _passphraseLabel.setText(registry.getText(T_PASS, "Posting key:"));

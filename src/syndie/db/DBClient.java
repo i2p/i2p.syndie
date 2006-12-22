@@ -1878,6 +1878,51 @@ public class DBClient {
         }
         return rv;
     }
+
+    // the order here (targetChannelId ASC, importDate DESC) shows messages targetting
+    // the local ident first (since channelId 0 is the one created on install), then
+    // sorts newest first
+    private static final String SQL_GET_PRIVATE_ALL = "SELECT msgId FROM channelMessage cm WHERE wasPrivate = TRUE AND wasAuthenticated = TRUE AND replyKeyMissing = FALSE AND readKeyMissing = FALSE AND pbePrompt IS NULL ORDER BY targetChannelId ASC, importDate DESC";
+    public List getPrivateMsgIds(boolean alreadyRead) { return getPrivateMsgIds(_nymId, alreadyRead); }
+    public List getPrivateMsgIds(long nymId, boolean alreadyRead) {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_PRIVATE_ALL);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // msgId
+                long msgId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(msgId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the private messages", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now filter
+        for (int i = 0; i < rv.size(); i++) {
+            Long msgId = (Long)rv.get(i);
+            int status = getMessageStatus(msgId.longValue());
+            if (status == MSG_STATUS_NEW_UNREAD) {
+                if (alreadyRead) {
+                    rv.remove(i);
+                    i--;
+                }
+            } else {
+                if (!alreadyRead) {
+                    rv.remove(i);
+                    i--;
+                }
+            }   
+        }
+        return rv;
+    }
     
     private static final String SQL_GET_MESSAGES_AUTHORIZED = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND wasAuthorized = TRUE ORDER BY messageId ASC";
     public List getMessageIdsAuthorized(Hash chan) {

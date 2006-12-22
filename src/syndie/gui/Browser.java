@@ -89,7 +89,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TranslationRegistry _translation;
     private ThemeRegistry _themes;
     private SyndicationManager _syndicationManager;
-    private MessageEditor.MessageEditorListener _editorListener;
+    private MsgEditorListener _editorListener;
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
@@ -973,11 +973,33 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return _editorListener; }
+    public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {
+        _editorListener.add(lsnr);
+    }
+    public void removeMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {
+        _editorListener.remove(lsnr);
+    }
     
     private class MsgEditorListener implements MessageEditor.MessageEditorListener {
-        public void messageCreated(SyndieURI postedURI) { Browser.this.populateResumeable(); }
-        public void messagePostponed(long postponementId) { Browser.this.populateResumeable(); }
-        public void messageCancelled() { Browser.this.populateResumeable(); }
+        private Set _listeners;
+        public MsgEditorListener() { _listeners = new HashSet(); }
+        public void messageCreated(SyndieURI postedURI) { 
+            Browser.this.populateResumeable();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
+                ((MessageEditor.MessageEditorListener)iter.next()).messageCreated(postedURI);
+        }
+        public void messagePostponed(long postponementId) {
+            Browser.this.populateResumeable();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
+                ((MessageEditor.MessageEditorListener)iter.next()).messagePostponed(postponementId);
+        }
+        public void messageCancelled() {
+            Browser.this.populateResumeable();
+            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
+                ((MessageEditor.MessageEditorListener)iter.next()).messageCancelled();
+        }
+        private void add(MessageEditor.MessageEditorListener lsnr) { _listeners.add(lsnr); }
+        private void remove(MessageEditor.MessageEditorListener lsnr) { _listeners.remove(lsnr); }
     }
     
     private static final Comparator INVERSE_COMPARATOR = new Comparator() {
@@ -1236,6 +1258,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public UI getUI() { return this; }
     public TranslationRegistry getTranslationRegistry() { return _translation; }
+
+    public List getPrivateMsgIds(boolean alreadyRead) { return _client.getPrivateMsgIds(alreadyRead); }
     
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
@@ -1627,6 +1651,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createSyndicationConfigURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_CONFIG, new HashMap()); }
     public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
+    public SyndieURI createHighlightURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
