@@ -203,11 +203,12 @@ public class Version {
         <delete file="launchinstall.xml" />
         <echo file="launchinstall.xml"><![CDATA[
 <launch4jConfig>
- <headerType>gui</headerType>
+ <headerType>0</headerType>
  <jar>syndie-${syndie.version}.bin.win32.jar</jar>
  <outfile>doc/web/dist/syndie-${syndie.version}.bin.win32.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>.</chdir>
+ <icon>doc/web/favicon.ico</icon>
  <jre><minVersion>1.4.0</minVersion></jre>
  <versionInfo>
   <fileVersion>0.0.0.0</fileVersion>
@@ -230,11 +231,12 @@ public class Version {
         <delete file="launchinstall.xml" />
         <echo file="launchinstall.xml"><![CDATA[
 <launch4jConfig>
- <headerType>gui</headerType>
+ <headerType>0</headerType>
  <jar>syndie-${syndie.version}.bin.linux32.jar</jar>
  <outfile>doc/web/dist/syndie-${syndie.version}.bin.linux32.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>.</chdir>
+ <icon>doc/web/favicon.ico</icon>
  <jre><minVersion>1.4.0</minVersion></jre>
  <versionInfo>
   <fileVersion>0.0.0.0</fileVersion>
@@ -257,11 +259,12 @@ public class Version {
         <delete file="launchinstall.xml" />
         <echo file="launchinstall.xml"><![CDATA[
 <launch4jConfig>
- <headerType>gui</headerType>
+ <headerType>0</headerType>
  <jar>syndie-${syndie.version}.bin.osx.jar</jar>
  <outfile>doc/web/dist/syndie-${syndie.version}.bin.osx.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>.</chdir>
+ <icon>doc/web/favicon.ico</icon>
  <jre><minVersion>1.4.0</minVersion></jre>
  <versionInfo>
   <fileVersion>0.0.0.0</fileVersion>
@@ -284,11 +287,12 @@ public class Version {
         <delete file="launchinstall.xml" />
         <echo file="launchinstall.xml"><![CDATA[
 <launch4jConfig>
- <headerType>gui</headerType>
+ <headerType>0</headerType>
  <jar>syndie-${syndie.version}.bin.nodeps.jar</jar>
  <outfile>doc/web/dist/syndie-${syndie.version}.bin.nodeps.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>.</chdir>
+ <icon>doc/web/favicon.ico</icon>
  <jre><minVersion>1.4.0</minVersion></jre>
  <versionInfo>
   <fileVersion>0.0.0.0</fileVersion>
@@ -570,11 +574,12 @@ public class Version {
         </jar>
         <echo file="launchsyndie.xml"><![CDATA[
 <launch4jConfig>
- <headerType>gui</headerType>
+ <headerType>0</headerType>
  <jar>syndie-${syndie.version}.jar</jar>
  <outfile>syndie-${syndie.version}.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>..</chdir>
+ <icon>doc/web/favicon.ico</icon>
  <jre>
   <minVersion>1.4.0</minVersion>
   <args>-Djava.library.path=.</args>
