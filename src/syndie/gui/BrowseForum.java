@@ -238,7 +238,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _browser.getUI().debugMessage("browseForum.initialize: creating preview");
         _preview = new MessagePreview(_browser, _sash);
         _browser.getUI().debugMessage("browseForum.initialize: preview created");
-        _sash.setWeights(new int[] { 75, 25 });
+        _sash.setWeights(new int[] { 50, 50 });
         
         if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
             _sash.setMaximizedControl(_preview.getControl());

@@ -368,7 +368,7 @@ public class PageRenderer implements Themeable {
         });
     }
     private int getCharsPerLine() {
-        if (true) {
+        if (false) {
             // have the HTMLStateBuilder inject fake line wrapping, even though
             // the wrapping won't be right all of the time.  this lets wrapped
             // lines have the right indentation.  however, it can cause problems
