@@ -98,6 +98,19 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
         int idx = _manager.getArchiveNum(archiveName);
         final SharedArchive archive = _manager.getArchiveIndex(idx);
         if (archive == null) return;
+        if (_manager.getPullStrategy().discoverArchives) {
+            SyndieURI uris[] = archive.getAbout().getAlternateArchives();
+            if (uris != null) {
+                for (int i = 0; i < uris.length; i++) {
+                    if (uris[i].isArchive() && !(_manager.isArchiveKnown(uris[i]))) {
+                        int num = 1;
+                        while (_manager.getArchiveNum(archiveName + "-" + num) >= 0)
+                            num++;
+                        _manager.add(archiveName + "-" + num, uris[i], null, -1, null, null);
+                    }
+                }
+            }
+        }
         _ui.debugMessage("attempting sync for " + archiveName);
         _manager.push(archiveName);
         _manager.pull(archiveName, new Runnable() { 

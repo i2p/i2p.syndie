@@ -81,6 +81,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private MenuItem _pullSizePer1024;
     private MenuItem _pullSizePer2048;
     private MenuItem _pullSizePer4096;
+    private MenuItem _pullDiscover;
     private Button _pushPolicy;
     private Menu _pushMenu;
     private MenuItem _pushAllDelta;
@@ -320,6 +321,9 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer4096.setSelection(false);
         _pullSizePer512.setSelection(false);
         _pullSizePer64.setSelection(false);
+        
+        _pullDiscover.setSelection(strategy.discoverArchives);
+        
         if (strategy.includeDupForPIR) {
             _pullPIR.setSelection(true);
         } else {
@@ -359,6 +363,9 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     }
     private void savePullPolicy() {
         SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
+        
+        strategy.discoverArchives = _pullDiscover.getSelection();
+        
         if (_pullPIR.getSelection()) {
             strategy.includeDupForPIR = true;
         } else {
@@ -727,6 +734,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer2048 = new MenuItem(_pullSizePerMenu, SWT.RADIO);
         _pullSizePer4096 = new MenuItem(_pullSizePerMenu, SWT.RADIO);
         _pullSizePer512.setSelection(true);
+        new MenuItem(_pullMenu, SWT.SEPARATOR);
+        _pullDiscover = new MenuItem(_pullMenu, SWT.CHECK);
         
         _pullMenu.addMenuListener(new MenuListener() {
             public void menuHidden(MenuEvent menuEvent) { }
@@ -756,6 +765,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer1024.addSelectionListener(savePull);
         _pullSizePer2048.addSelectionListener(savePull);
         _pullSizePer4096.addSelectionListener(savePull);
+        _pullDiscover.addSelectionListener(savePull);
         
         _pushPolicy = new Button(_root, SWT.PUSH);
         _pushPolicy.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
@@ -856,6 +866,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     private static final String T_PULLSIZEPER1024 = "syndie.gui.syndicationscheduler.pullsizeper1024";
     private static final String T_PULLSIZEPER2048 = "syndie.gui.syndicationscheduler.pullsizeper2048";
     private static final String T_PULLSIZEPER4096 = "syndie.gui.syndicationscheduler.pullsizeper4096";
+    private static final String T_PULLDISCOVER = "syndie.gui.syndicationscheduler.pulldiscover";
     
     private static final String T_COLWHEN = "syndie.gui.syndicationscheduler.colwhen";
     private static final String T_COLARCHIVE = "syndie.gui.syndicationscheduler.colarchive";
@@ -943,6 +954,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _pullSizePer1024.setText(registry.getText(T_PULLSIZEPER1024, "1024KB"));
         _pullSizePer2048.setText(registry.getText(T_PULLSIZEPER2048, "2048KB"));
         _pullSizePer4096.setText(registry.getText(T_PULLSIZEPER4096, "4096KB"));
+        _pullDiscover.setText(registry.getText(T_PULLDISCOVER, "Discover new archives"));
         
         _pushAllDelta.setText(registry.getText(T_PUSHALLDELTA, "Send all differences"));
         _pushLocalDelta.setText(registry.getText(T_PUSHLOCALDELTA, "Send locally generated differences only"));

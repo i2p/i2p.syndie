@@ -133,6 +133,14 @@ public class SyndicationManager {
         else
             return null;
     }
+    public boolean isArchiveKnown(SyndieURI uri) {
+        if (uri == null) return false;
+        for (int i = 0; i < getArchiveCount(); i++) {
+            if (uri.equals(getArchiveURI(i)))
+                return true;
+        }
+        return false;
+    }
     public long getLastSyncDate(int index) {
         NymArchive archive = getArchive(index);
         if (archive != null)

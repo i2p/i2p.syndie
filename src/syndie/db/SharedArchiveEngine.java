@@ -32,11 +32,13 @@ public class SharedArchiveEngine {
             includeRecentMessagesOnly = true;
             includeDupForPIR = false;
             pullNothing = false;
+            discoverArchives = true;
         }
         public PullStrategy(String serialized) {
             this();
             if (serialized != null) {
                 includeDupForPIR = (serialized.indexOf("PIR") != -1);
+                discoverArchives = (serialized.indexOf("DontDiscoverArchives") == -1);
                 if (!includeDupForPIR) {
                     includeRecentMessagesOnly = (serialized.indexOf("RecentMessagesOnly") != -1);
                     includePBEMessages = (serialized.indexOf("DontIncludePBE") == -1);
@@ -104,6 +106,13 @@ public class SharedArchiveEngine {
         /** noop strategy - dont pull anything */
         public boolean pullNothing;
         
+        /** 
+         * when we talk to an archive, they may tell us about other archives, and if this
+         * flag is set, we will add those other archives to our list (though we will NOT
+         * schedule them up for syndication, and WILL track what archive told us about it)
+         */
+        public boolean discoverArchives;
+        
         public String toString() {
             StringBuffer buf = new StringBuffer();
             if (includeDupForPIR) {
@@ -129,6 +138,10 @@ public class SharedArchiveEngine {
                 if (maxKBTotal >= 0)
                     buf.append("MaxTotal").append(maxKBTotal).append(" ");
             }
+            if (discoverArchives)
+                buf.append("DiscoverArchives ");
+            else
+                buf.append("DontDiscoverArchives ");
             return buf.toString();
         }
         public String serialize() { return toString(); }
