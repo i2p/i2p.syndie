@@ -1,9 +1,0 @@
-#!/bin/sh
-JAVA=java
-#JAVA=/opt/kaffe/bin/kaffe
-#JAVA=/usr/local/kaffe117/bin/kaffe
-#JAVA=/u1/gcc-4.2-20060520-x86_64/bin/gij
-LOC=`which $0`
-SYNDIEBINDIR=`dirname ${LOC}`
-SYNDIELIBDIR=${SYNDIEBINDIR}/../lib
-$JAVA -cp ${SYNDIELIBDIR}/syndie.jar:${SYNDIELIBDIR}/hsqldb.jar syndie.db.TextUI $@

@@ -59,7 +59,7 @@ at <code>mtn.i2p.net</code>, as described on the
 
 <p>Installation packages for <a href="download.html">download</a> are
 built with various ant targets:<ul>
-<li><b><code>syndie-$version.bin.exe</code></b><br />
+<li><b><code>syndie-$version.bin.$platform.exe</code></b><br />
     <i>(java installer, includes bin/syndie.exe java launcher)</i><br />
     built with the "installer-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" and
@@ -70,17 +70,26 @@ built with various ant targets:<ul>
     built with the "java-package-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" (e.g.
     <code>ant -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
+    <!--
 <li><b><code>syndie-$version.bin-noexe.zip</code></b><br />
     <i>(no java installer, without bin/syndie.exe java launcher)</i><br />
     built with the "java-package" target</li>
+    -->
+<li><b><code>syndie-$version.src.nodeps.tar.bz2</code></b><br />
+    <i>(source package without hsqldb)</i><br />
+    built with the "source-nodeps-package" target</li>
 <li><b><code>syndie-$version.src.tar.bz2</code></b><br />
-    <i>(source package)</i><br />
+    <i>(source package with hsqldb)</i><br />
     built with the "source-package" target</li>
 </ul></p>
 
 <p>All of the packages can be built into <code>doc/web/dist/</code> with
 "<code>ant dist</code>", though you need to include the settings required for
-<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code></p>
+<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code>.  Note that it bundles
+the swt.jar from several platforms - to run "ant dist", you will need to
+<a href="http://www.eclipse.org/swt/">download</a> those files and set the
+<code>swt.linux32</code>, <code>swt.win32</code>, <code>swt.osx</code> properties
+to point at the correct swt.jar files.  Additional targets will likely be added.</p>
 
 <p>With a modern GCC/GCJ (releases prior to 4.0 will fail when they try to
 write to the database), you can build native Syndie executables.  On *nix/osx, 

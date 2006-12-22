@@ -23,6 +23,14 @@ public class SWTUI {
     }
     
     public static void main(final String args[]) {
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if ("--cli".equals(args[i])) {
+                    TextUI.main(args);
+                    return;
+                }
+            }
+        }
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
         long start = System.currentTimeMillis();
@@ -50,6 +58,9 @@ public class SWTUI {
         String root = TextEngine.getRootPath();
         if (args.length > 0)
             root = args[0];
+        // this way the logs won't go to ./logs/log-#.txt (i2p's default)
+        // (this has to be set before the I2PAppContext instantiates the LogManager)
+        System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");
         StartupListener lsnr = new StartupListener();
         long t3 = System.currentTimeMillis();
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));

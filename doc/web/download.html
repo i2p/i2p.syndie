@@ -35,19 +35,37 @@ Windows binaries:<ul>
 </ul>
 -->
 
-Binaries:<ul>
-<li><a href="dist/syndie-0.917b.bin.exe">syndie-0.917b.bin.exe</a>
-   (<a href="dist/syndie-0.917b.bin.exe.sig">GPG signature</a>)</li>
-<li>Download and run the executable installer.<br />
-    <i>(*nix and OS X users, run the executable by typing
-    "<code>java -jar syndie-0.917b.bin.exe</code>".  
-    yes, really, you want the .exe)</i></li>
-<li>Alternately, <a href="dist/syndie-0.917b.bin.zip">syndie-0.917b.bin.zip</a>
-   (<a href="dist/syndie-0.917b.bin.zip.sig">GPG signature</a>)
-   can be used instead - it unzips to ./syndie-0.917b/.  This method is
-   necessary when installing without a graphical interface, but does not
-   create desktop or start menu shortcuts, and does not include an uninstaller.
-   </li>
+<h4>Standalone installers: <font size="-3">grab <i>one</i></font></h3>
+<ul>
+<li><b><a href="dist/syndie-0.918a.bin.win32.exe">Windows - syndie-0.918a.bin.win32.exe</a></b>
+   (<a href="dist/syndie-0.918a.bin.win32.exe.sig">GPG signature</a>) - 4.4MB<br />
+   Download and run the installer.  Launch Syndie with the desktop or start
+   menu icons, or with <code>syndie.exe</code></li>
+<li><b><a href="dist/syndie-0.918a.bin.linux32.exe">Linux - syndie-0.918a.bin.linux32.exe</a></b>
+   (<a href="dist/syndie-0.918a.bin.linux32.exe.sig">GPG signature</a>) - 4.3MB<br />
+   Download and run the installer via
+   "<code>java -jar syndie-0.918a.bin.linux32.exe</code>" (<i>yes, really</i>).
+   Launch Syndie with the desktop or KDE menu icons, or with
+   "<code>java -jar bin/syndie.exe</code>".</li>
+<li><b><a href="dist/syndie-0.918a.bin.osx.exe">OSX - syndie-0.918a.bin.osx.exe</a></b>
+   (<a href="dist/syndie-0.918a.bin.osx.exe.sig">GPG signature</a>) - 4.4MB<br />
+   Download and run the installer via
+   "<code>java -jar syndie-0.918a.bin.osx.exe</code>" (<i>yes, really</i>).
+   Launch Syndie with the icon, or with
+   "<code>java -jar bin/syndie.exe</code>".</li>
+<li><a href="dist/syndie-0.918a.bin.nodeps.exe">Any platform - syndie-0.918a.bin.nodeps.exe</a>
+   (<a href="dist/syndie-0.918a.bin.nodeps.exe.sig">GPG signature</a>) - 2.1MB<br />
+   does not include <a href="http://eclipse.org/swt/">SWT</a> or
+      <a href="http://www.hsqldb.org/">HSQLDB</a>, so <b>only use this if
+      upgrading</b> or can otherwise arrange to have <code>swt.jar</code> and
+      <code>hsqldb.jar</code> in your Syndie <code>lib/</code> directory.</li>
+<li><a href="dist/syndie-0.918a.bin.zip">Headless - syndie-0.918a.bin.zip</a>
+   (<a href="dist/syndie-0.918a.bin.zip.sig">GPG signature</a>) - 2.2MB<br />
+   This unzips into <code>./syndie-0.918a</code> and does not create any
+   desktop or start menu shortcuts, but can be used on computers without a
+   graphical interface.<br />
+   To run Syndie without a GUI, launch it as above, but with the parameter
+   <code>--cli</code>.</li>
 <li>Prerequisites:
     <a href="http://java.sun.com/javase/downloads/index.jsp">jre1.4+</a>,
     <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
@@ -55,39 +73,23 @@ Binaries:<ul>
     (other JVMs may suffice)</li>
 </ul>
 
-Source:<ul>
-<li><a href="dist/syndie-0.917b.src.tar.bz2">syndie-0.917b.src.tar.bz2</a>
-  (<a href="dist/syndie-0.917b.src.tar.bz2.sig">GPG signature</a>)</li>
+<h4>Source:</h4>
+<ul>
+<li><a href="dist/syndie-0.918a.src.tar.bz2">syndie-0.918a.src.tar.bz2</a>
+  (<a href="dist/syndie-0.918a.src.tar.bz2.sig">GPG signature</a>) - 1.2MB</li>
+<li><a href="dist/syndie-0.918a.src.nodeps.tar.bz2">syndie-0.918a.src.nodeps.tar.bz2</a>
+  (<a href="dist/syndie-0.918a.src.nodeps.tar.bz2.sig">GPG signature</a>) - 0.5MB</li>
 <li>Download and extract the archive, then read the INSTALL file</li>
 <li>Prerequisites:
-    <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
-    <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>,
-    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
+   <a href="http://ant.apache.org/">ant 1.6.5</a>, 
+   <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>/
+    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>/ or
     <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
-    (other JDKs may suffice)</li>
-</ul>
-
-<p>The GPG public key used to sign the distributed files is <code>393F2DF9</code> (fingerprint <code>AE89 D080 0E85 72F0 B777  B2ED C2FA 68C0 393F 2DF9</code>)</p>
-
-Unreleased development source:<ul>
-<li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
-    syndie code is available on the netsync server <code>mtn.i2p.net</code>
-    in the <code>syndie</code> branch.<br />
-    <i>Not familiar with monotone?  See this <a href="monotone_howto.html">howto</a></i></li>
-<li>Developers are granted write permission to that repository, and everyone
-    is granted read permission.</li>
-<li>The list of authorized committers can be found in the mtn-committers
-    file, which includes their monotone public keys, ready to be imported
-    with <code>cat mtn-committers | monotone read</code>.  That file can be
-    verified against the above GPG public key with
-    <code>gpg --verify mtn-committers.sig</code>.</li>
-<li>Read the included INSTALL and related documentation</li>
-<li>Prerequisites:
-    <a href="http://ant.apache.org/">ant 1.6.5</a>, plus
-    <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>,
-    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
-    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
-    (other JDKs may suffice)</li>
+    (other JDKs may suffice),
+   <a href="http://www.eclipse.org/swt/">SWT 3.2+</a> (3.3M4 or newer includes
+   useful features),
+   <a href="http://www.hsqldb.org/">HSQLDB 1.8.0.7+</a> (older releases may
+   work)</li>
 </ul>
 
 <p>Older releases are <a href="dist/">archived</a></p>
@@ -100,27 +102,38 @@ Debian:<ul>
 <li><code>apt-get syndie</code></li>
 -->
 
-<p>To uninstall, if you used the <code>.exe</code> installer, simply
-launch the included uninstaller.  Otherwise, just remove the directory you
-installed Syndie into (<code>$HOME/syndie</code> or <code>C:\syndie</code>).
-The Syndie content is stored in <code>$HOME/.syndie</code> by default, so
-you should delete that directory as well if you want to remove the
-content (and keys).</p>
+<p>The GPG public key used to sign the distributed files is <code>393F2DF9</code> (fingerprint <code>AE89 D080 0E85 72F0 B777  B2ED C2FA 68C0 393F 2DF9</code>)</p>
 
-<p>To upgrade or reinstall, simply install Syndie again on top of itself.
+<h4>Unreleased development source:</h4>
+<ul>
+<li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
+    syndie code is available on the netsync server <code>mtn.i2p.net</code>
+    in the <code>syndie</code> branch.<br />
+    <i>Not familiar with monotone?  See this <a href="monotone_howto.html">howto</a></i></li>
+<li>Developers are granted write permission to that repository, and everyone
+    is granted read permission.</li>
+<li>The list of authorized committers can be found in the mtn-committers
+    file, which includes their monotone public keys, ready to be imported
+    with <code>cat mtn-committers | monotone read</code>.  That file can be
+    verified against the above GPG public key with
+    <code>gpg --verify mtn-committers.sig</code>.</li>
+</ul>
+
+<p><b>To upgrade or reinstall</b>, simply install Syndie again on top of itself.
 Upgrading or reinstalling does not affect your content or keys, just the
 software.  To completely wipe any old data, identities, or keys, delete the
 <code>$HOME/.syndie</code> directory.</p>
 
-<p>To run multiple separate Syndie instances, you can specify an alternate
-data root directory on the Syndie command line 
-(<code>$HOME/syndie/bin/syndie /another/path</code>).  In addition, you can have
-many different Syndie nyms within a single Syndie instance (see the "<code>login</code>"
-and "<code>register</code>" <a href="manual.html">commands</a>).</p>
+<p><b>To uninstall</b>, if you used the installer and created desktop icons or
+start menu shortcuts, simply launch the included uninstaller.  Otherwise, just
+remove the directory you installed Syndie into (e.g. <code>$HOME/syndie</code> or
+<code>C:\Documents and Settings\User\syndie</code>).</p>
 
-<p>These packages include the default HSQLDB 1.8.0.7 - you can
-replace the included lib/hsqldb.jar with newer versions, or remove it and
-adjust the <code>bin/syndie</code> script to reference the local hsqldb.jar.</p>
+<p>The Syndie content is stored in <code>$HOME/.syndie</code> or
+<code>%HOME%\.syndie</code> by default, so you should delete that directory as
+well if you want to remove the content (and private keys!).  To use another
+location (or to run multiple instances at once), simply pass another root
+directory on the command line (e.g. <code>syndie.exe C:\nym1</code>)</p>
 </div>
 </body>
 </html>

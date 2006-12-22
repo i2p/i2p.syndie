@@ -69,7 +69,11 @@
     -->
 
     <!-- override the default so we don't build the javadoc unless requested -->
-    <target name="default" depends="jar" description="Build the whole project."/>
+    <target name="default" depends="-warnswt, jar" description="Compile Syndie"/>
+    <target name="-warnswt">
+        <fail unless="swt.dir">Specify the location of your swt.jar with -Dswt.dir=/some/directory/</fail>
+    </target>
+
     <target name="-pre-compile">
         <loadproperties srcfile="VERSION" />
         <echo file="src/syndie/Version.java">package syndie;
@@ -92,18 +96,24 @@ public class Version {
         <delete file="lib/syndie.jar" />
         <delete dir="syndie-${syndie.version}" />
         <delete file="syndie-${syndie.version}.bin.zip" />
-        <delete file="syndie-${syndie.version}.bin-noexe.zip" />
         <delete file="syndie-${syndie.version}.src.tar.bz2" />
         <delete file="src/syndie/Version.java" />
         <delete file="debug.log" />
-        <delete file="syndie-${syndie.version}.bin.jar" />
-        <delete file="syndie-${syndie.version}.bin.exe" />
+        <delete file="syndie-${syndie.version}.bin.nodeps.jar" />
+        <delete file="syndie-${syndie.version}.bin.win32.jar" />
+        <delete file="syndie-${syndie.version}.bin.linux32.jar" />
+        <delete file="syndie-${syndie.version}.bin.osx.jar" />
+        <delete file="syndie-${syndie.version}.bin.nodeps.exe" />
+        <delete file="syndie-${syndie.version}.bin.win32.exe" />
+        <delete file="syndie-${syndie.version}.bin.linux32.exe" />
+        <delete file="syndie-${syndie.version}.bin.osx.exe" />
         <delete file="syndie-${syndie.version}.exe" />
         <delete file="syndie-${syndie.version}.jar" />
         <delete dir="logs" />
         <delete dir="build" />
     </target>
 
+<!--
     <target name="java-package" depends="clean, prep-java" description="Package up syndie-$version.bin.zip, without including bin/syndie.exe">
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
@@ -113,6 +123,7 @@ public class Version {
         <delete dir="syndie-${syndie.version}" />
         <ant target="clean" />
     </target>
+-->
     <target name="java-package-exe" depends="clean, prep-java, syndie-exe" description="Package up syndie-$version.bin.zip, including bin/syndie.exe">
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
@@ -148,22 +159,53 @@ public class Version {
     <target name="source-package" depends="clean" description="Package up syndie-$version.src.tar.bz2">
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
+        <delete dir="syndie-${syndie.version}" />
         <tar compression="bzip2" destfile="doc/web/dist/syndie-${syndie.version}.src.tar.bz2">
-               <tarfileset dir="." includes="**" excludes=".svn, _MTN, _MTN/**, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
+               <tarfileset dir="." includes="**" excludes=".svn, _MTN, _MTN/**, lib/swt.jar, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
         </tar>
     </target>
-    <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer" description="Package up syndie-$version.bin.exe">
+    <target name="source-nodeps-package" depends="clean" description="Package up syndie-$version.src.nodeps.tar.bz2">
+        <loadproperties srcfile="VERSION" />
+        <mkdir dir="doc/web/dist" />
+        <delete dir="syndie-${syndie.version}" />
+        <tar compression="bzip2" destfile="doc/web/dist/syndie-${syndie.version}.src.nodeps.tar.bz2">
+               <tarfileset dir="." includes="**" excludes=".svn, _MTN, _MTN/**, lib/**, *.bz2, *.exe, doc/web/dist/**, nbproject/private/**" prefix="syndie-${syndie.version}" />
+        </tar>
+    </target>
+
+    <!--
+      ** the following swt.$osArch libs are from SWT-3.3M4, which includes support for
+      ** extracting the native libraries from the .jar file itself.  this means
+      ** switching the lib/swt.jar changes the supported OS.  so, the installers 
+      ** quite simply do just that - copy in the right swt.jar, package up the 
+      ** installer, and go on to the next OS.
+      ** The "nodeps" files are like the other files, except they contain neither the
+      ** swt.jar nor the hsqldb.jar (or servlet.jar, of course).  This is useful for
+      ** downloading syndie updates where the dependencies have not changed.
+      -->
+    <property name="swt.linux32" value="../swt-I20061214-1445-gtk-linux-x86/swt.jar" />
+    <property name="swt.win32" value="../swt-I20061214-1445-win32-win32-x86/swt.jar" />
+    <!-- todo: download the osx swt.jar -->
+    <property name="swt.osx" value="../swt-I20061214-1445-win32-win32-x86/swt.jar" />
+
+    <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer, -do-installer-exe" />
+
+    <target name="-do-installer-exe" description="Package up syndie-$version.bin.exe">
         <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
 (If located elsewhere, run "ant -Dlaunch4jdir=/some/path installer-exe")</echo>
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
         <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
                  classname="net.sf.launch4j.ant.Launch4jTask" />
+
+        <!-- once for win32, linux32, osx x86, and finally for nodeps -->
+
+        <delete file="launchinstall.xml" />
         <echo file="launchinstall.xml"><![CDATA[
 <launch4jConfig>
  <headerType>gui</headerType>
- <jar>syndie-${syndie.version}.bin.jar</jar>
- <outfile>doc/web/dist/syndie-${syndie.version}.bin.exe</outfile>
+ <jar>syndie-${syndie.version}.bin.win32.jar</jar>
+ <outfile>doc/web/dist/syndie-${syndie.version}.bin.win32.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>.</chdir>
  <jre><minVersion>1.4.0</minVersion></jre>
@@ -176,22 +218,118 @@ public class Version {
   <copyright>copyright is theft</copyright>
   <productName>Syndie ${syndie.version}</productName>
   <internalName>syndie</internalName>
-  <originalFilename>syndie-${syndie.version}.bin.exe</originalFilename>
+  <originalFilename>syndie-${syndie.version}.bin.win32.exe</originalFilename>
  </versionInfo>
 </launch4jConfig>
 ]]></echo>
         <launch4j configFile="launchinstall.xml" />
         <delete file="launchinstall.xml" />
-        <delete file="syndie-${syndie.version}.bin.jar" />
+        <delete file="syndie-${syndie.version}.bin.win32.jar" />
+
+        <!-- linux32 rev -->
+        <delete file="launchinstall.xml" />
+        <echo file="launchinstall.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>gui</headerType>
+ <jar>syndie-${syndie.version}.bin.linux32.jar</jar>
+ <outfile>doc/web/dist/syndie-${syndie.version}.bin.linux32.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>.</chdir>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} installer</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.bin.linux32.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchinstall.xml" />
+        <delete file="launchinstall.xml" />
+        <delete file="syndie-${syndie.version}.bin.linux32.jar" />
+
+        <!-- osx x86 rev -->
+        <delete file="launchinstall.xml" />
+        <echo file="launchinstall.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>gui</headerType>
+ <jar>syndie-${syndie.version}.bin.osx.jar</jar>
+ <outfile>doc/web/dist/syndie-${syndie.version}.bin.osx.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>.</chdir>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} installer</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.bin.osx.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchinstall.xml" />
+        <delete file="launchinstall.xml" />
+        <delete file="syndie-${syndie.version}.bin.osx.jar" />
+
+        <!-- nodeps (pure java) -->
+        <delete file="launchinstall.xml" />
+        <echo file="launchinstall.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>gui</headerType>
+ <jar>syndie-${syndie.version}.bin.nodeps.jar</jar>
+ <outfile>doc/web/dist/syndie-${syndie.version}.bin.nodeps.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>.</chdir>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} installer</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.bin.nodeps.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchinstall.xml" />
+        <delete file="launchinstall.xml" />
+       <delete file="syndie-${syndie.version}.bin.nodeps.jar" />
+
     </target>
-    <target name="installer" depends="prep-java, -do-installer" description="Package up syndie-$version.bin.jar" />
-    <target name="-do-installer" description="Package up syndie-$version.bin.jar">
+
+
+
+    <target name="installer" depends="prep-java, -do-installer" description="Package up syndie-$version.bin.$os.jar" />
+    <target name="-do-installer">
         <echo>Using IzPack installer in ${izpackdir}/lib/compiler.jar
 (If located elsewhere, run "ant -Dizpackdir=/some/path installer")</echo>
         <loadproperties srcfile="VERSION" />
         <taskdef name="izpack" classpath="${izpackdir}/lib/standalone-compiler.jar"
                  classname="com.izforge.izpack.ant.IzPackTask" />
-        <izpack output="syndie-${syndie.version}.bin.jar"
+
+        <!--
+          create syndie-${syndie.version}.bin.{win32,linux32,osx,nodeps}.jar,
+          containing the correct OS's swt.jar (which includes the necessary native libs)
+        -->
+
+
+        <!-- win32 -->
+
+        <delete file="syndie-${syndie.version}/lib/swt.jar" />
+        <copy todir="syndie-${syndie.version}/lib/" file="${swt.win32}" />
+        <izpack output="syndie-${syndie.version}.bin.win32.jar"
                 installerType="standard"
                 basedir="."
                 izPackDir="${izpackdir}/">
@@ -217,8 +355,8 @@ public class Version {
     </locale>
     <native type="izpack" name="ShellLink.dll" />
     <resources>
-	<res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
-	<res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
     </resources>
 
     <panels>
@@ -239,8 +377,198 @@ public class Version {
             <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
             <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
             <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
-            <!-- postinstall stuff for *nix -->
-            <!-- stage=never means chmod a+x -->
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+
+        <!-- linux 32 -->
+
+        <delete file="syndie-${syndie.version}/lib/swt.jar" />
+        <copy todir="syndie-${syndie.version}/lib/" file="${swt.linux32}" />
+        <izpack output="syndie-${syndie.version}.bin.linux32.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpackdir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <appname>Syndie</appname>
+        <appversion>@{syndie.version}</appversion>
+        <appsubpath>syndie-@{syndie.version}</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="syndie-inst@i2p.net"/>
+        </authors>
+        <url>http://syndie.i2p.net</url>
+        <javaversion>1.4</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="700" height="500" resizable="yes" />
+    <locale>
+        <langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <resources>
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
+            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+
+        <!-- osx x86 -->
+
+        <delete file="syndie-${syndie.version}/lib/swt.jar" />
+        <copy todir="syndie-${syndie.version}/lib/" file="${swt.osx}" />
+        <izpack output="syndie-${syndie.version}.bin.osx.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpackdir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <appname>Syndie</appname>
+        <appversion>@{syndie.version}</appversion>
+        <appsubpath>syndie-@{syndie.version}</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="syndie-inst@i2p.net"/>
+        </authors>
+        <url>http://syndie.i2p.net</url>
+        <javaversion>1.4</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="700" height="500" resizable="yes" />
+    <locale>
+        <langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <resources>
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
+            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="mac" /></executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+
+        <!-- nodeps -->
+
+        <delete file="syndie-${syndie.version}/lib/swt.jar" />
+        <delete file="syndie-${syndie.version}/lib/hsqldb.jar" />
+        <delete file="syndie-${syndie.version}/lib/servlet.jar" />
+        <delete file="syndie-${syndie.version}/lib/hsqldb_changes.txt" />
+        <delete file="syndie-${syndie.version}/lib/hsqldb_lic.txt" />
+        <izpack output="syndie-${syndie.version}.bin.nodeps.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpackdir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <appname>Syndie</appname>
+        <appversion>@{syndie.version}</appversion>
+        <appsubpath>syndie-@{syndie.version}</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="syndie-inst@i2p.net"/>
+        </authors>
+        <url>http://syndie.i2p.net</url>
+        <javaversion>1.4</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="700" height="500" resizable="yes" />
+    <locale>
+        <langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <resources>
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="syndie-@{syndie.version}" includes="**/*" excludes="bin/syndie.bat,bin/syndie" targetdir="$INSTALL_PATH"/>
+            <singlefile src="resources/syndie.bat" target="$INSTALL_PATH/bin/syndie.bat" os="windows" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="unix" override="true" />
+            <singlefile src="resources/syndie" target="$INSTALL_PATH/bin/syndie" os="mac" override="true" />
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="unix" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.bat"><os family="windows" /></parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie"><os family="mac" /></parsable>
             <executable targetfile="$INSTALL_PATH/bin/syndie" type="bin" stage="never" keep="true" failure="warn"><os family="unix" /></executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie.bat" type="bin" stage="never" keep="true" failure="warn"><os family="windows" /></executable>
@@ -253,6 +581,15 @@ public class Version {
         </izpack>
         <delete dir="syndie-${syndie.version}" />
     </target>
+
+
+
+
+
+
+
+
+
     <target name="syndie-exe" depends="jar" description="build a syndie.exe">
         <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
 (If located elsewhere, run "ant -Dlaunch4jdir=/some/path syndie-exe")</echo>
@@ -261,26 +598,29 @@ public class Version {
         <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
                  classname="net.sf.launch4j.ant.Launch4jTask" />
         <jar jarfile="syndie-${syndie.version}.jar">
-	 <manifest>
-	  <attribute name="Main-Class" value="syndie.db.TextUI" />
-	  <!-- relative to the exe/jar file -->
-	  <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar" />
-         </manifest>
+          <manifest>
+            <attribute name="Main-Class" value="syndie.gui.SWTUI" />
+            <!-- relative to the exe/jar file -->
+            <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar ../lib/swt.jar" />
+          </manifest>
         </jar>
         <echo file="launchsyndie.xml"><![CDATA[
 <launch4jConfig>
- <headerType>console</headerType>
+ <headerType>gui</headerType>
  <jar>syndie-${syndie.version}.jar</jar>
  <outfile>syndie-${syndie.version}.exe</outfile>
  <errTitle>Syndie</errTitle>
  <chdir>..</chdir>
- <jre><minVersion>1.4.0</minVersion></jre>
+ <jre>
+  <minVersion>1.4.0</minVersion>
+  <args>-Djava.library.path=.</args>
+ </jre>
  <versionInfo>
   <fileVersion>0.0.0.0</fileVersion>
   <productVersion>0.0.0.0</productVersion>
   <txtFileVersion>${syndie.version}</txtFileVersion>
   <txtProductVersion>${syndie.version}</txtProductVersion>
-  <fileDescription>Syndie ${syndie.version} text interface</fileDescription>
+  <fileDescription>Syndie ${syndie.version} graphical interface</fileDescription>
   <copyright>copyright is theft</copyright>
   <productName>Syndie ${syndie.version}</productName>
   <internalName>syndie</internalName>
@@ -292,12 +632,14 @@ public class Version {
         <delete file="launchsyndie.xml" />
         <delete file="syndie-${syndie.version}.jar" />
         <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie-${syndie.version}.exe" />
+        <delete file="syndie-${syndie.version}.exe" />
     </target>
     <target name="dist">
       <ant target="distclean" />
       <ant target="source-package" />
+      <ant target="source-nodeps-package" />
       <ant target="installer-exe" />
       <ant target="java-package-exe" />
-      <ant target="java-package" />
+<!--      <ant target="java-package" /> -->
     </target>
 </project>

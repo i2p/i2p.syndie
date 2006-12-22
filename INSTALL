@@ -1,11 +1,22 @@
 Syndie can be built from source with a modern (1.4+) java development
 kit, or with a new GCJ (4.0+).  You must have ant (1.6.5+), and the
-source release includes HSQLDB (1.8.0.5), though newer revisions
-should work.
+source release includes HSQLDB (1.8.0.7), though newer revisions
+should work.  You will needs SWT as well - grab the latest version for
+your OS and architecture from http://www.eclipse.org/swt/ (or from
+your favorite package manager).
 
-To build a normal java instance, run "ant".
+First, you need to tell ant where to find SWT - add a line to the
+file nbproject/private/private.properies (creating a new directory or
+file if necessary):
+  swt.dir=../swt-I20061214-1445-gtk-linux-x86
+(or whatever the path to the directory containing swt.jar is)
 
-To run it without any installation, run "sh bin/syndie".
+To build a normal java instance, run "ant"
+
+To run it without any installation, run "ant run"
+
+To deploy your modifications into an existing Syndie install, copy
+the new ./lib/syndie.jar to the Syndie install's lib/ directory
 
 To build various packages, see the targets and instructions in
 doc/web/dev.html
