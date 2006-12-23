@@ -592,6 +592,8 @@ class HTMLStyleBuilder {
         try {
             return new SyndieURI(src);
         } catch (URISyntaxException use) {
+            //System.out.println("parse error with [" + src + "]");
+            //use.printStackTrace();
         }
         // not a syndie uri directly, lets try for some variants...
         if (src.startsWith("attachment") && (src.length() > "attachment".length())) {

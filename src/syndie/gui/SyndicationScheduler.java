@@ -111,6 +111,19 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
+
+    public void show(SyndieURI uri) {
+        if (uri != null) {
+            if (uri.isArchive()) {
+                SyndicationManager mgr = _browser.getSyndicationManager();
+                String name = mgr.getArchiveName(uri);
+                if (name != null)
+                    refreshView(name);
+                else if (uri.getURL() != null)
+                    showNewArchive(uri.getString("name"), uri.getURL());
+            }
+        }
+    }
     
     private void refreshView() { refreshView(null); }
     private void refreshView(String forceSelection) {
@@ -207,6 +220,31 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _proxyCustomPort.setText("");
         }
         
+        showArchiveEnable(enable, name);
+    }
+    
+    private void showNewArchive(String name, String url) {
+        _archives.setSelection(new int[0]);
+        boolean enable = true;
+        if ( (name == null) || (name.trim().length() <= 0) )
+            name = ""+System.currentTimeMillis();
+        _archiveName.setText(name);
+        _url.setText(url);
+        _passphrase.setText("");
+        _lastSync.setText("");
+        populateNextSyncCombo(_browser.getTranslationRegistry(), -1);
+
+        _proxyCustom.setSelection(false);
+        _proxyDefault.setSelection(true);
+        _proxyNone.setSelection(false);
+        _proxyCustomHost.setText("");
+        _proxyCustomPort.setText("");
+        showArchiveEnable(enable, name);
+        _saveArchive.setEnabled(true);
+        _revertArchive.setEnabled(true);
+    }
+    
+    private void showArchiveEnable(boolean enable, String name) {
         _archiveNameLabel.setEnabled(enable);
         _archiveName.setEnabled(enable);
         _urlLabel.setEnabled(enable);

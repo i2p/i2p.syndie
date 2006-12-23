@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import net.i2p.data.Hash;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.SWT;
@@ -76,6 +77,31 @@ public class BrowseForumTab extends BrowserTab {
         getRoot().setLayout(new FillLayout());
         getBrowser().getThemeRegistry().register(this);
         debug("browseforumtab.initComponents: complete");
+    }
+    
+    public boolean canShow(SyndieURI uri) {
+        if (super.canShow(uri)) return true;
+        if (!uri.isSearch() && !uri.isChannel()) return false;
+        // now check for search vs. browse
+        SyndieURI localURI = getURI();
+        Hash scope = null;
+        if (localURI.isChannel())
+            scope = localURI.getScope();
+        else if (localURI.isSearch())
+            scope = localURI.getSearchScope();
+        
+        Hash newScope = null;
+        if (uri.isChannel())
+            newScope = uri.getScope();
+        else if (uri.isSearch())
+            newScope = uri.getSearchScope();
+        
+        return ( ( (newScope == null) && (scope == null) ) ||
+                 ( (scope != null) && scope.equals(newScope) ) );
+    }
+    
+    public void show(SyndieURI uri) {
+        setFilter(uri);
     }
     
     private static class ForumListener implements MessageTree.MessageTreeListener {

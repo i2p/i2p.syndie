@@ -424,7 +424,13 @@ public class SyndieURI {
             throw new URISyntaxException(bencodedURI, "No bencoded attributes");
         _type = bencodedURI.substring(0, endType);
         bencodedURI = bencodedURI.substring(endType+1);
-        _attributes = bdecode(bencodedURI);
+        try { 
+            _attributes = bdecode(bencodedURI);
+        } catch (IllegalArgumentException iae) {
+            throw new URISyntaxException(bencodedURI, "Error bencoding: " + iae.getMessage());
+        } catch (IndexOutOfBoundsException ioobe) {
+            throw new URISyntaxException(bencodedURI, "Error bencoding: " + ioobe.getMessage());
+        }
         if (_attributes == null) {
             throw new URISyntaxException(bencodedURI, "Invalid bencoded attributes");
         }
@@ -684,10 +690,14 @@ public class SyndieURI {
         int br = remaining.indexOf(":");
         if (br <= 0)
             return null;
+        if (br >= remaining.length())
+            return null;
         String len = remaining.substring(0, br);
         try {
             int sz = Integer.parseInt(len);
             remaining.delete(0, br+1);
+            if (sz > remaining.length())
+                throw new IllegalArgumentException("bad length (" + len + ") with " + remaining.length() + " left");;
             String val = remaining.substring(0, sz);
             remaining.delete(0, sz);
             return val;

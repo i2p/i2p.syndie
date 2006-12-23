@@ -200,6 +200,13 @@ abstract class BrowserTab implements Themeable {
     }
     protected abstract void disposeDetails();
     
+    public boolean canShow(SyndieURI uri) { 
+        if (uri == null) return false;
+        return getURI().equals(uri);
+    }
+    
+    public void show(SyndieURI uri) {}
+    
     protected void debug(String msg) { _browser.getUI().debugMessage(msg); }
     protected void debug(String msg, Exception e) { _browser.getUI().debugMessage(msg, e); }
     protected void status(String msg) { _browser.getUI().statusMessage(msg); }

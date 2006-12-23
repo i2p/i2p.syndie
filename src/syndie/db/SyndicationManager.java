@@ -126,6 +126,16 @@ public class SyndicationManager {
         else
             return null;
     }
+    public String getArchiveName(SyndieURI uri) {
+        String url = uri.getURL();
+        if (url == null) return null;
+        for (int i = 0; i < _archives.size(); i++) {
+            NymArchive archive = (NymArchive)_archives.get(i);
+            if (url.equals(archive.getURI().getURL()))
+                return archive.getName();
+        }
+        return null;
+    }
     public SyndieURI getArchiveURI(int index) {
         NymArchive archive = getArchive(index);
         if (archive != null)

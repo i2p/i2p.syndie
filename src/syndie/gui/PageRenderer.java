@@ -1120,7 +1120,10 @@ public class PageRenderer implements Themeable {
         public abstract void fireEvent();
     }
     private abstract class FireLinkEventListener extends FireEventListener {
-        public void fireEvent() { fireEvent(_currentEventLinkTag, _currentEventURI); }
+        public void fireEvent() { 
+            _browser.getUI().debugMessage("fireLinkEvent for uri: " + _currentEventURI + " tag: " + _currentEventLinkTag);
+            fireEvent(_currentEventLinkTag, _currentEventURI);
+        }
         public abstract void fireEvent(HTMLTag tag, SyndieURI uri);
     }
     

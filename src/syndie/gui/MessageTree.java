@@ -1173,6 +1173,7 @@ public class MessageTree implements Translatable, Themeable {
 
         long dbEnd = System.currentTimeMillis();
 
+        if (subj == null) subj = "";
         item.setText(0, subj);
         // msgbar stuff
         // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)

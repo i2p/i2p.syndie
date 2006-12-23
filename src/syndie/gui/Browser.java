@@ -1120,6 +1120,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         BrowserTab tab = null;
         Hash scope = uri.getHash("scope");
         Long msgId = uri.getMessageId();
+        /*
         SyndieURI browseURI = null;
         if (uri.isSearch()) {
             if ( (scope != null) && (msgId != null) )
@@ -1127,33 +1128,32 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             else if (scope != null)
                 browseURI = SyndieURI.createScope(scope);
         }
+         */
         synchronized (_openTabs) {
-            tab = (BrowserTab)_openTabs.get(uri);
-            if ( (tab == null) && (browseURI != null) )
-                tab = (BrowserTab)_openTabs.get(browseURI);
+            for (Iterator iter = _openTabs.values().iterator(); iter.hasNext(); ) {
+                BrowserTab bt = (BrowserTab)iter.next();
+                if (bt.canShow(uri)) {
+                    tab = bt;
+                    break;
+                }
+            }
+            if (tab == null)
+                tab = (BrowserTab)_openTabs.get(uri);
+            //if ( (tab == null) && (browseURI != null) )
+            //    tab = (BrowserTab)_openTabs.get(browseURI);
             if (tab == null) {
                 debugMessage("building tab");
-                if (browseURI == null) {
-                    debugMessage("building normal URI: " + uri);
-                    tab = BrowserTab.build(this, uri);
-                    if (tab != null) {
-                        _openTabs.put(uri, tab);
-                        _openTabURIs.put(tab.getTabItem(), uri);
-                    }
-                } else {
-                    debugMessage("building browseURI: " + browseURI);
-                    tab = BrowserTab.build(this, browseURI);
-                    if (tab != null) {
-                        _openTabs.put(browseURI, tab);
-                        _openTabURIs.put(tab.getTabItem(), browseURI);
-                    }
+                debugMessage("building normal URI: " + uri);
+                tab = BrowserTab.build(this, uri);
+                if (tab != null) {
+                    _openTabs.put(uri, tab);
+                    _openTabURIs.put(tab.getTabItem(), uri);
                 }
                 debugMessage("tab built: " + tab);
             }
         }
         if (tab != null) {
-            if ( (browseURI != null) && (tab instanceof BrowseForumTab) )
-                ((BrowseForumTab)tab).setFilter(uri);
+            tab.show(uri);
             debugMessage("showing tab");
             _tabs.showItem(tab.getTabItem());
             debugMessage("tab shown");

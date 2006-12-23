@@ -93,6 +93,32 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         t.start();
     }
     
+    public boolean canShow(SyndieURI uri) {
+        boolean rv = false;
+        if (super.canShow(uri)) {
+            rv = true;
+        } else {
+            if (BrowserTab.TYPE_LOGS.equals(uri.getType()))
+                rv = true;
+            else
+                rv = false;
+        }
+        System.out.println("logTab: canShow(" + uri + "): " + rv);
+        return rv;
+    }
+    
+    public void show(SyndieURI uri) { updateFlags(uri); }
+    
+    private void updateFlags(SyndieURI uri) {
+        _debug = uri.getBoolean("debug", false);
+        _error = uri.getBoolean("error", true);
+        _status = uri.getBoolean("status", true);
+        
+        _levelError.setSelection(_error);
+        _levelStatus.setSelection(_status);
+        _levelDebug.setSelection(_debug);
+    }
+    
     protected void initComponents() {
         _pendingMessages = new ArrayList();
         getRoot().setLayout(new GridLayout(1, true));
@@ -127,13 +153,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
             public void widgetSelected(SelectionEvent selectionEvent) { _debug = _levelDebug.getSelection(); }
         });
         
-        _debug = super.getURI().getBoolean("debug", false);
-        _error = super.getURI().getBoolean("error", true);
-        _status = super.getURI().getBoolean("status", true);
-        
-        _levelError.setSelection(_error);
-        _levelStatus.setSelection(_status);
-        _levelDebug.setSelection(_debug);
+        updateFlags(super.getURI());
         
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);
