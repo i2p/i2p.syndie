@@ -52,6 +52,7 @@ public class SyndicationManager {
     private Map _onPullFailure;
     
     private boolean _archivesLoaded;
+    private boolean _online;
     
     public static final int FETCH_SCHEDULED = 0;
     public static final int FETCH_STARTED = 1;
@@ -92,6 +93,7 @@ public class SyndicationManager {
         _onPullSuccess = Collections.synchronizedMap(new HashMap());
         _onPullFailure = Collections.synchronizedMap(new HashMap());
         _archivesLoaded = false;
+        _online = false;
     }
     
     /** 
@@ -116,6 +118,8 @@ public class SyndicationManager {
         
         /** all syndication tasks are terminal */
         public void syndicationComplete(SyndicationManager mgr);
+        
+        public void onlineStateAdjusted(boolean nowOnline);
     }
     
     public int getArchiveCount() { return _archives.size(); }
@@ -164,6 +168,17 @@ public class SyndicationManager {
             return archive.getNextSyncDate();
         else
             return -1;
+    }
+    public long getNextSyncDate() {
+        long earliest = -1;
+        for (int i = 0; i < _archives.size(); i++) {
+            long when = ((NymArchive)_archives.get(i)).getNextSyncDate();
+            if (when > 0) {
+                if ( (earliest <= 0) || (when < earliest) )
+                    earliest = when;
+            }
+        }
+        return earliest;
     }
     public SharedArchive getArchiveIndex(int index) {
         NymArchive archive = getArchive(index);
@@ -1107,10 +1122,16 @@ public class SyndicationManager {
         if ( (name == null) || (name.length() <= 0) ) return;
         NymArchive archive = getArchive(name);
         archive.setNextSyncDate(when);
+        noteSync(name, archive.getLastSyncDate());
         if (when > 0)
             scheduleSync(name, when);
         else
             cancelSync(name);
+        
+        for (int i = 0; i < _listeners.size(); i++) {
+            SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
+            lsnr.archiveUpdated(this, name, name);
+        }
     }
     public void setLastSync(String name, long when) {
         if ( (name == null) || (name.length() <= 0) ) return;
@@ -1224,6 +1245,33 @@ public class SyndicationManager {
         }
     }
     
+    /** 
+     * when the syndication manager is online, scheduled syndications will occur,
+     * but if the manager is not online, no syndications will occur
+     */
+    public boolean isOnline() { return _online; }
+    public void setOnlineStatus(boolean online) { 
+        _online = online; 
+        storeOnlineStatus(); 
+        fireOnlineStatus();
+    }
+    private void fireOnlineStatus() {
+        for (int i = 0; i < _listeners.size(); i++)
+            ((SyndicationListener)_listeners.get(i)).onlineStateAdjusted(_online);
+    }
+    
+    private boolean loadOnlineStatus() {
+        startFetching(1);
+        Properties prefs = _client.getNymPrefs();
+        String val = prefs.getProperty("syndication.online", "false");
+        return Boolean.valueOf(val).booleanValue();
+    }
+    private void storeOnlineStatus() {
+        Properties prefs = _client.getNymPrefs();
+        prefs.setProperty("syndication.online", _online ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+        _client.setNymPrefs(prefs);
+    }
+    
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate, consecutiveFailures FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
         if (_archivesLoaded) {
@@ -1232,6 +1280,8 @@ public class SyndicationManager {
         }
         //buildIndex(_client, _ui);
         _archivesLoaded = true;
+        _online = loadOnlineStatus();
+        fireOnlineStatus();
         
         _ui.debugMessage("Loading archives");
         _archives.clear();

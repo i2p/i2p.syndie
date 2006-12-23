@@ -116,6 +116,9 @@ public class ImageUtil {
     public static final Image ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
     public static final Image ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
     
+    public static final Image ICON_ONLINE = createImageFromResource("iconOnline.png");
+    public static final Image ICON_OFFLINE = createImageFromResource("iconOffline.png");
+    
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     public static void init() {
@@ -190,6 +193,9 @@ public class ImageUtil {
         _indisposableImages.add(ICON_EDITOR_PRIVACY_REPLY);
         _indisposableImages.add(ICON_EDITOR_BOOKMARKED_NOAVATAR);
         _indisposableImages.add(ICON_EDITOR_NOT_BOOKMARKED);
+        
+        _indisposableImages.add(ICON_ONLINE);
+        _indisposableImages.add(ICON_OFFLINE);
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

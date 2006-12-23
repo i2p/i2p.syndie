@@ -71,6 +71,11 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
     
     private static final String SQL_GET_NEXT_ARCHIVE = "SELECT name FROM nymArchive WHERE nymId = ? AND nextSyncDate IS NOT NULL AND nextSyncDate <= NOW() AND inProgress = FALSE ORDER BY nextSyncDate ASC";
     private String getNextArchive() {
+        if (!_manager.isOnline()) {
+            _ui.debugMessage("Manager is offline, don't sync");
+            return null;
+        }
+        
         String rv = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -190,4 +195,5 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
         }
     }
     public void syndicationComplete(SyndicationManager mgr) {}
+    public void onlineStateAdjusted(boolean online) {}
 }

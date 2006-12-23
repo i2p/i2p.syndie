@@ -1029,4 +1029,5 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         }
     }
     public void syndicationComplete(SyndicationManager mgr) {}
+    public void onlineStateAdjusted(boolean online) {}
 }

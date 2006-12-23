@@ -837,6 +837,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         // we may have pulled in new messages/etc
         Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
     }
+    public void onlineStateAdjusted(boolean online) {}
 
     public void messageCreated(SyndieURI postedURI) {
         Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });

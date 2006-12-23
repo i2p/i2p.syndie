@@ -131,6 +131,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _syndicateMenuRoot;
     private Menu _syndicateMenu;
     private MenuItem _syndicateMenuConfig;
+    private MenuItem _syndicateMenuOnline;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
@@ -158,7 +159,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private FileDialog _importFileDialog;
     
-    private Composite _statusRow;
+    private StatusBar _statusBar;
     private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
     private Map _openTabs;
@@ -243,10 +244,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         long t6 = System.currentTimeMillis();
         
-        _statusRow = new Composite(_shell, SWT.BORDER);
-        _statusRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _statusRow.setLayout(new FillLayout(SWT.HORIZONTAL));
-        new Text(_statusRow, SWT.SINGLE|SWT.READ_ONLY|SWT.BORDER).setText("this is the status bar");
+        _statusBar = new StatusBar(this, _shell);
+        _statusBar.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         long t7 = System.currentTimeMillis();
         
@@ -460,6 +459,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
         });
+        _syndicateMenuOnline = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuOnline.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { toggleOnline(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { toggleOnline(); }
+        });
         
         _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _languageMenu = new Menu(_languageMenuRoot);
@@ -572,6 +576,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     populatePostMenus(); // might have fetched a new publically postable forum's meta
             }
             public void syndicationComplete(SyndicationManager mgr) {}
+            public void onlineStateAdjusted(boolean online) {}
         });
         
         JobRunner.instance().enqueue(new Runnable() {
@@ -593,6 +598,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_HTTPSERV_WRITABLE = "syndie.gui.browser.httpserv.writable";
     private static final String T_HTTPSERV_PORT = "syndie.gui.browser.httpserv.port";
     private static final String T_HTTPSERV_OK = "syndie.gui.browser.httpserv.ok";
+
+    private void toggleOnline() {
+        getSyndicationManager().setOnlineStatus(!getSyndicationManager().isOnline());
+    }
     
     private void refreshSyndicationMenu() {
         _syndicationManager.loadArchives();
@@ -603,7 +612,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void doRefreshSyndicationMenu() {
         MenuItem item[] = _syndicateMenu.getItems();
         for (int i = 0; i < item.length; i++) {
-            if ( (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuRoot) )
+            if ( (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuRoot) && (item[i] != _syndicateMenuOnline) )
                 item[i].dispose();
         }
         
@@ -1854,6 +1863,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
     private static final String T_SYNDICATE_MENU_ARCHIVES = "syndie.gui.browser.syndicatemenu.archives";
     private static final String T_SYNDICATE_MENU_CONFIG = "syndie.gui.browser.syndicatemenu.config";
+    private static final String T_SYNDICATE_MENU_ONLINE = "syndie.gui.browser.syndicatemenu.online";
     private static final String T_SYNDICATE_MENU_STATUS = "syndie.gui.browser.syndicatemenu.status";
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
     private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
@@ -1929,6 +1939,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
         _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
+        _syndicateMenuOnline.setText(registry.getText(T_SYNDICATE_MENU_ONLINE, "Toggle &online state"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
@@ -1961,7 +1972,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         long t1 = System.currentTimeMillis();
         _shell.setFont(theme.SHELL_FONT);
         _tabs.setFont(theme.TAB_FONT);
-        _statusRow.setFont(theme.DEFAULT_FONT);
         long t2 = System.currentTimeMillis();
         // recursive layout of syndie is bloody heavy duty, so avoid the flicker
         showWaitCursor(true);
