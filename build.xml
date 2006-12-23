@@ -185,8 +185,7 @@ public class Version {
       -->
     <property name="swt.linux32" value="../swt-I20061214-1445-gtk-linux-x86/swt.jar" />
     <property name="swt.win32" value="../swt-I20061214-1445-win32-win32-x86/swt.jar" />
-    <!-- todo: download the osx swt.jar -->
-    <property name="swt.osx" value="../swt-I20061214-1445-win32-win32-x86/swt.jar" />
+    <property name="swt.osx" value="../swt-I20061214-1445-carbon-macosx/swt.jar" />
 
     <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer, -do-installer-exe" />
 
