@@ -126,7 +126,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
     }
     
     private void refreshView() { refreshView(null); }
-    private void refreshView(String forceSelection) {
+    private void refreshView(String forceSelection) { refreshView(forceSelection, false); }
+    private void refreshView(String forceSelection, boolean forceAsNow) {
         SyndicationManager mgr = _browser.getSyndicationManager();
         _root.setRedraw(false);
         String sel = forceSelection;
@@ -142,7 +143,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         if ( (sel == null) && (archives > 0) )
             sel = _archives.getItem(0);
         _archives.setSelection(new String[] { sel });
-        showArchive(sel);
+        showArchive(sel, forceAsNow);
         _root.setRedraw(true);
     }
     
@@ -154,7 +155,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             showArchive(null);
         }
     }
-    private void showArchive(String name) {
+    private void showArchive(String name) { showArchive(name, false); }
+    private void showArchive(String name, boolean forceAsNow) {
         boolean enable = false;
         if ( (name != null) && (name.length() > 0) ) {
             enable = true;
@@ -179,7 +181,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             else
                 _lastSync.setText(Constants.getDate(lastSync));
             
-            populateNextSyncCombo(_browser.getTranslationRegistry(), nextSync);
+            populateNextSyncCombo(_browser.getTranslationRegistry(), forceAsNow ? System.currentTimeMillis() : nextSync);
 
             _proxyCustom.setSelection(false);
             _proxyDefault.setSelection(false);
@@ -199,6 +201,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _url.setText("");
             _passphrase.setText("");
             _lastSync.setText("");
+            
             populateNextSyncCombo(_browser.getTranslationRegistry(), -1);
 
             _proxyCustom.setSelection(false);
@@ -211,6 +214,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
             _url.setText("");
             _passphrase.setText("");
             _lastSync.setText("");
+            
             populateNextSyncCombo(_browser.getTranslationRegistry(), -1);
 
             _proxyCustom.setSelection(false);
@@ -305,12 +309,14 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         else
             _browser.getSyndicationManager().update(oldName, name, SyndieURI.createArchive(url, pass), customHost, customPort, null, null);
 
+        boolean forceNow = false;
         switch (_nextSyncCombo.getSelectionIndex()) {
             case NEXT_SYNC_NEVER:
                 _browser.getSyndicationManager().setNextSync(name, -1);
                 break;
             case NEXT_SYNC_NOW:
                 _browser.getSyndicationManager().setNextSync(name, System.currentTimeMillis());
+                forceNow = true;
                 break;
             case NEXT_SYNC_CUSTOM:
             default:
@@ -319,7 +325,7 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
                 // user
                 break;
         }
-        refreshView(name);
+        refreshView(name, forceNow);
     }
     
     private static final String T_DELETE_CONFIRM_MSG = "syndie.gui.syndicationscheduler.deleteconfirmmsg";

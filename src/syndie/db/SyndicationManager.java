@@ -1118,7 +1118,7 @@ public class SyndicationManager {
         archive.setLastSyncDate(when);
         noteSync(name, when);
     }
-    private static final String SQL_SYNC_SCHEDULE = "UPDATE nymArchive SET nextSyncDate = ? WHERE nymId = ? AND name = ?";
+    private static final String SQL_SYNC_SCHEDULE = "UPDATE nymArchive SET nextSyncDate = ?, inProgress = FALSE WHERE nymId = ? AND name = ?";
     private void scheduleSync(String name, long when) {
         PreparedStatement stmt = null;
         try {
@@ -1158,7 +1158,7 @@ public class SyndicationManager {
             return 0;
     }
     
-    private static final String SQL_SET_CONSECUTIVE_FAILURES = "UPDATE nymArchive SET consecutiveFailures = ? WHERE nymId = ? AND name = ?";
+    private static final String SQL_SET_CONSECUTIVE_FAILURES = "UPDATE nymArchive SET consecutiveFailures = ?, inProgress = FALSE WHERE nymId = ? AND name = ?";
     private void setConsecutiveFailures(String name, int num) {
         PreparedStatement stmt = null;
         try {
@@ -1176,7 +1176,7 @@ public class SyndicationManager {
         }
     }
     
-    private static final String SQL_SYNC_CANCEL = "UPDATE nymArchive SET nextSyncDate = NULL WHERE nymId = ? AND name = ?";
+    private static final String SQL_SYNC_CANCEL = "UPDATE nymArchive SET nextSyncDate = NULL, inProgress = FALSE WHERE nymId = ? AND name = ?";
     private void cancelSync(String name) {
         PreparedStatement stmt = null;
         try {
@@ -1193,7 +1193,7 @@ public class SyndicationManager {
         }
     }
     
-    private static final String SQL_SYNC_NOTE = "UPDATE nymArchive SET lastSyncDate = ? WHERE nymId = ? AND name = ?";
+    private static final String SQL_SYNC_NOTE = "UPDATE nymArchive SET lastSyncDate = ?, inProgress = FALSE WHERE nymId = ? AND name = ?";
     private void noteSync(String name, long when) {
         PreparedStatement stmt = null;
         try {

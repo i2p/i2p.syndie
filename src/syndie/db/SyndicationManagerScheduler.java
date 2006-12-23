@@ -69,7 +69,7 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
         }
     }
     
-    private static final String SQL_GET_NEXT_ARCHIVE = "SELECT name FROM nymArchive WHERE nymId = ? AND nextSyncDate IS NOT NULL AND nextSyncDate <= NOW() ORDER BY nextSyncDate ASC";
+    private static final String SQL_GET_NEXT_ARCHIVE = "SELECT name FROM nymArchive WHERE nymId = ? AND nextSyncDate IS NOT NULL AND nextSyncDate <= NOW() AND inProgress = FALSE ORDER BY nextSyncDate ASC";
     private String getNextArchive() {
         String rv = null;
         PreparedStatement stmt = null;
@@ -90,8 +90,28 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        if (rv != null) _manager.setNextSync(rv, -1); // so we dont try it again until sync completion
+        if (rv != null) {
+            syncInProgress(rv);
+            //_manager.setSyncInProgress(rv); // so we dont try it again until sync completion
+        }
         return rv;
+    }
+    
+    private static final String SQL_SET_IN_PROGRESS = "UPDATE nymArchive SET inProgress = TRUE WHERE name = ? AND nymId = ?";
+    private void syncInProgress(String name) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_SET_IN_PROGRESS);
+            stmt.setString(1, name);
+            stmt.setLong(2, _client.getLoggedInNymId());
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error settign progress", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
     }
     
     private void sync(final String archiveName) {

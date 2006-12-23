@@ -1,0 +1,7 @@
+-- update the database from schema version 10
+-- this version 11 helps deal with syndication schedule concurrency
+--
+
+UPDATE appVersion SET versionNum = 11, visibleVersion = 'Syndication concurrency';
+
+ALTER TABLE nymArchive ADD inProgress BOOLEAN DEFAULT FALSE;
