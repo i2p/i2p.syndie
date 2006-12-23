@@ -25,65 +25,89 @@
 	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a>
 </div>
 <div id="Content">
-<h1>Syndie use cases (aka "why you would use Syndie")</h1>
-<ul id="menu">
-<li><a href="#decentralizedforum">Decentralized forum</a></li>
-<li><a href="#privateforum">Private forum</a></li>
-<li><a href="#offlineforum">Offline forum participation</a></li>
-<li><a href="#offlinebrowsing">Offline browsing</a></li>
-<li><a href="#securereader">Secure reader</a></li>
-</ul>
+<h1>Why use Syndie?</h1>
 
-<b id="decentralizedforum">Decentralized forum</b> (<a href="#menu">up</a>)
+<div class="scenario_quote" id="dos">
+"Racists, fascists, and lawyers continually harass the operator of my community's
+website, causing us to lose access and find another provider."
+</div>
+<div class="scenario_solution">
+Syndie lets your community seamlessly use many different resources at once,
+such as individual websites, mailing lists, Freenet keys, and file sharing
+networks, so there is no one place the lawyers/fascists/racists can attack.
+Anyone in your community can exploit whatever resources they find to share
+data without needing anyone's permission.
+</div>
 
-<p>While many different groups often want to organize discussions into an
-online forum, the centralized nature of traditional forums (websites, BBSes,
-etc) can be a problem.  For instance, the site hosting the forum can be
-taken offline through <b>denial of service attacks</b> or administrative action.
-In addition, the single host offers a simple point to <b>monitor the group's
-activity</b>, so that even if a forum is pseudonymous, those pseudonyms can be
-tied to the IP that posted or read individual messages.</p>
+<div class="scenario_quote" id="monitor">
+"When they don't take down the server we're using, they passively monitor
+everything we do - who says what, who they say it to, and when they say it,
+invading the privacy and violating the security of my community's members."
+</div>
+<div class="scenario_solution">
+By distributing your community across many different servers and networks,
+<i>they</i> lose their single point where they can monitor your activities.
+Syndie also lets your community take whatever steps are necessary to
+compartmentalize your organization, limiting the exposure from any individual
+leaks - for instance, one group of users could use Syndie through a shared
+wiki, while another group uses Syndie through a mailing list, a third group
+uses Syndie through Freenet, and a fourth group through Gnutella, and as long
+as one member of each knew about one of the other group's resources, everyone
+can talk to each other.  Of course, Syndie's data is automatically protected
+with strong cryptography, even when sharing information with the public, so
+simple passive monitoring - even across a global scale - will not expose
+your data.
+</div>
 
-<p>In addition, not only are the forums decentralized, they are organized
-in an ad-hoc manner yet fully compatible with other organization techniques.
-This means that some small group of people can run their forum using one
-technique (distributing the messages by pasting them on a wiki site),
-another can run their forum using another technique (posting their messages
-in a distributed hashtable like <a href="http://www.opendht.org/">OpenDHT</a>,
-yet if one person is aware of both techniques, they can synchronize the two
-forums together.  This lets the people who were only aware of the wiki site
-talk to people who were only aware of the OpenDHT service without knowing
-anything about each other.  Extended further, <b>Syndie allows individual
-cells to control their own exposure while communicating across the whole
-organization</b>.</p>
+<div class="scenario_quote" id="secure">
+"I'd like to learn more about some topics or share my experiences with others,
+but all the places I find are full of sketchy popups, viruses, and scams."
+</div>
+<div class="scenario_solution">
+Syndie has been designed from the ground up with the understanding that
+the Internet is full of scammers, crackers, and other bad guys who are trying
+to violate your privacy.  Syndie treats all identifying information as
+sensitive - unlike most software, Syndie includes the simple fact that you are
+communicating, as well as who you're communicating with, as part of that
+identifying information.
+</div>
 
-<b id="privateforum">Private forum</b> (<a href="#menu">up</a>)
+<div class="scenario_quote" id="phishing">
+"I'm about ready to give up on email and blogging, and I gave up on Usenet
+years ago, because of spam and phishing"
+</div>
+<div class="scenario_solution">
+Syndie uses best practices in secure interface design along side strong cryptography
+to give you control of your inbox, your forum, and your blog.  You decide who
+can be a part of your community, and in what way, and no one can pretend to be
+someone you know.
+</div>
 
-<p>Forums can be configured so that only authorized people can read the
-content, or even know what pseudonyms are posting the messages, even if an
-adversary confiscates the servers distributing the posts.  In addition,
-authorized users can prevent any unauthorized posts from being made entirely,
-or only allow them under limited circumstances.</p>
+<div class="scenario_quote" id="pseudonymous">
+"I'd like to join a community, but I don't necessarily want them to know who I am,
+or even for people to know I'm even interested in that community"
+</div>
+<div class="scenario_solution">
+Syndie pays particular attention to identifying information and does its best to
+keep you "pseudonymous" - people in your community can tell you apart from someone
+else claiming to be you, but cannot tie your "pseudonym" to your real life identity.
+Depending on how dedicated your adversary is, Syndie can use tools like
+<a href="http://www.i2p.net/">I2P</a>, <a href="http://tor.eff.org/">Tor</a>,
+<a href="http://www.mixminion.net/">Mixminion</a>, and
+<a href="http://www.freenetproject.org/">Freenet</a> to enhance your privacy.
+</div>
 
-<b id="offlineforum">Offline forum participation</b> (<a href="#menu">up</a>)
-
-<p>Unlike traditional forums, with Syndie you can particpate even when you
-are not online, "syncing up" any accumulated changes with the forum later
-on when it is convenient, perhaps days, weeks, or even months later.</p>
-
-<b id="offlinebrowsing">Offline browsing</b> (<a href="#menu">up</a>)
-
-<p>Syndie is not limited to simple text messages - individual web pages or
-full web sites can be packaged up into a single Syndie post, and using the
-<a href="#offlineforum">offline forum</a> functionality, you can browse that
-web site through Syndie without an active internet connection.</p>
-
-<b id="securereader">Secure reader</b> (<a href="#menu">up</a>)
-
-<p>All applications strive for security, but most do not consider
-identity or traffic pattern related information sensitive, so they do not
-bother trying to control their exposure.  Syndie however is designed with
-the needs of people demanding strong anonymity and security in mind.</p>
+<div class="scenario_quote" id="layers">
+"My community has been looking at using anonymity tools like I2P, Tor, Freenet,
+and Mixminion, but I'm not sure if they're strong enough to protect us"
+</div>
+<div class="scenario_solution">
+Tools like those listed are great for what they do, but they're only a piece
+of the picture.  Syndie works at a higher level - at the content and application
+layers, rather than the transport layer - so as to protect your content and
+computer rather than to protect your content in transit.  Both are important, 
+and for strong pseudonymity, both are necessary.
+</div>
 
 </div>
 </body>
