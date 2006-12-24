@@ -1263,7 +1263,7 @@ public class SyndicationManager {
     private boolean loadOnlineStatus() {
         startFetching(1);
         Properties prefs = _client.getNymPrefs();
-        String val = prefs.getProperty("syndication.online", "false");
+        String val = prefs.getProperty("syndication.online", "true");
         return Boolean.valueOf(val).booleanValue();
     }
     private void storeOnlineStatus() {
