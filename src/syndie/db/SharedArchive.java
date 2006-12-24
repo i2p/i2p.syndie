@@ -59,7 +59,7 @@ public class SharedArchive {
     
     Channel[] getChannels() { return _channels; }
     Message[] getMessages() { return _messages; }
-    About getAbout() { return _about; }
+    public About getAbout() { return _about; }
     
     /** very inefficient, O(N) search */
     Channel getChannel(Hash chan) {

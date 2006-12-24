@@ -132,6 +132,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private Menu _syndicateMenu;
     private MenuItem _syndicateMenuConfig;
     private MenuItem _syndicateMenuOnline;
+    private MenuItem _syndicateMenuArchive;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
     private MenuItem _languageMenuEdit;
@@ -464,6 +465,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { toggleOnline(); }
             public void widgetSelected(SelectionEvent selectionEvent) { toggleOnline(); }
         });
+        _syndicateMenuArchive = new MenuItem(_syndicateMenu, SWT.PUSH);
+        _syndicateMenuArchive.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
+        });
         
         _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _languageMenu = new Menu(_languageMenuRoot);
@@ -612,7 +618,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void doRefreshSyndicationMenu() {
         MenuItem item[] = _syndicateMenu.getItems();
         for (int i = 0; i < item.length; i++) {
-            if ( (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuRoot) && (item[i] != _syndicateMenuOnline) )
+            if ( (item[i] != _syndicateMenuConfig) && (item[i] != _syndicateMenuRoot) && (item[i] != _syndicateMenuOnline) && (item[i] != _syndicateMenuArchive) )
                 item[i].dispose();
         }
         
@@ -1267,6 +1273,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public UI getUI() { return this; }
     public TranslationRegistry getTranslationRegistry() { return _translation; }
+    
+    private static final String T_BAN_TITLE = "syndie.gui.browser.ban.title";
+    private static final String T_BAN_MSG = "syndie.gui.browser.ban.msg";
+    public void ban(Hash scope) { 
+        _client.ban(scope, getUI(), true, false); 
+        MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+        box.setText(getTranslationRegistry().getText(T_BAN_TITLE, "Banned"));
+        box.setMessage(getTranslationRegistry().getText(T_BAN_MSG, "Selected forum/author banned"));
+        box.open();
+    }
 
     public List getPrivateMsgIds(boolean alreadyRead) { return _client.getPrivateMsgIds(alreadyRead); }
     
@@ -1861,10 +1877,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_POST_MENU_POSTABLE = "syndie.gui.browser.postmenu.postable";
     private static final String T_POST_MENU_PUBLIC = "syndie.gui.browser.postmenu.public";
     private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
-    private static final String T_SYNDICATE_MENU_ARCHIVES = "syndie.gui.browser.syndicatemenu.archives";
     private static final String T_SYNDICATE_MENU_CONFIG = "syndie.gui.browser.syndicatemenu.config";
     private static final String T_SYNDICATE_MENU_ONLINE = "syndie.gui.browser.syndicatemenu.online";
     private static final String T_SYNDICATE_MENU_STATUS = "syndie.gui.browser.syndicatemenu.status";
+    private static final String T_SYNDICATE_MENU_ARCHIVE = "syndie.gui.browser.syndicatemenu.archive";
     private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
     private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
     private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
@@ -1940,6 +1956,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
         _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
         _syndicateMenuOnline.setText(registry.getText(T_SYNDICATE_MENU_ONLINE, "Toggle &online state"));
+        _syndicateMenuArchive.setText(registry.getText(T_SYNDICATE_MENU_ARCHIVE, "Manage &archive"));
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));

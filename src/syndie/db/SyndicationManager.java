@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -779,14 +780,71 @@ public class SyndicationManager {
         KeyImport.importKey(_ui, _client, Constants.KEY_FUNCTION_SSKPRIV, pubSSKHash, padded, true);
     }
     
+    public SharedArchive.About getLocalAbout() { return getLocalAbout(_client); }
+    private static SharedArchive.About getLocalAbout(DBClient client) {
+        SharedArchive.About about = new SharedArchive.About();
+        about.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
+        
+        Properties prefs = client.getNymPrefs();
+        int maxSize = getInt(prefs, "archive.maxMsgSizeKB", -1);
+        
+        int archiveCount = 0;
+        while (prefs.containsKey("archive.altURI" + archiveCount))
+            archiveCount++;
+        
+        SyndieURI archives[] = new SyndieURI[archiveCount];
+        for (int i = 0; i < archiveCount; i++) {
+            String val = prefs.getProperty("archive.altURI" + i);
+            try {
+                archives[i] = new SyndieURI(val);
+            } catch (URISyntaxException use) {}
+        }
+        
+        int republishFrequencyHours = getInt(prefs, "archive.republishFrequencyHours", 1);
+        
+        about.setPublishRebuildFrequencyHours(republishFrequencyHours);
+        about.setAlternativeArchives(archives);
+        about.setMaxMessageSize(maxSize);
+        about.setPostingRequiresPassphrase(false);
+        about.setWantKnownChannelsOnly(false);
+        about.setWantPBE(true);
+        about.setWantPrivate(true);
+        about.setWantRecentOnly(true);
+        return about;
+    }
+    
+    public void setLocalAbout(SharedArchive.About about) {
+        Properties prefs = _client.getNymPrefs();
+        prefs.setProperty("archive.maxMsgSizeKB", about.maxMessageSize()+"");
+        SyndieURI uris[] = about.getAlternateArchives();
+        
+        int old = 0;
+        while (prefs.remove("archive.altURI" + old) != null)
+            old++;
+        
+        if (uris != null)
+            for (int i = 0; i < uris.length; i++)
+                prefs.setProperty("archive.altURI" + i, uris[i].toString());
+
+        prefs.setProperty("archive.republishFrequencyHours", about.getPublishRebuildFrequencyHours()+"");
+        
+        _client.setNymPrefs(prefs);
+    }
+    
+    private static int getInt(Properties prefs, String key, int def) {
+        String val = prefs.getProperty(key);
+        if (val == null) return def;
+        try {
+            return Integer.parseInt(val);
+        } catch (NumberFormatException nfe) {
+            return def;
+        }
+    }
+    
     public static final String SHARED_INDEX_FILE = "shared-index.dat";
     
     public static void buildIndex(DBClient client, UI ui) {
-        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
-        builder.setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
-        builder.setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
-        builder.setShareDelayHours(1); // tell people that we only build our index once an hour, so dont bug us too much
-        builder.setShareReceivedOnly(false); // sometimes
+        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client));
         SharedArchive archive = builder.buildSharedArchive();
         FileOutputStream fos = null;
         try {

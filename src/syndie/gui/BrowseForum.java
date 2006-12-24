@@ -166,6 +166,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
         });
         
+        _metaNameMenuBan.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
+        });
+        
         _metaName.setMenu(_metaNameMenu);
         _metaName.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
@@ -330,7 +335,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
-            _metaDesc.setText(desc);
+            _metaDesc.setText(" - " + desc);
             boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
             _metaIconManageable.setVisible(manage);
             boolean post = manage || info.getAllowPublicPosts() || (_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);

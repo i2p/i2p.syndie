@@ -74,4 +74,6 @@ public class DummyBrowserControl implements BrowserControl {
     public void resumePost(long postponeId, int postponeVersion) {}
 
     public boolean reimport(SyndieURI uri, String passphrase) { return false; }
+    
+    public void ban(Hash scope) {}
 }

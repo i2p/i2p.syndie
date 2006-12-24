@@ -108,6 +108,7 @@ public class ImageUtil {
     public static final Image ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, 16, 16, false);
+    public static final Image ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, 16, 16, false);
 
     public static final Image ICON_EDITOR_PRIVACY_PUBLIC = resize(ImageUtil.ICON_WARNING, 48, 48, false);
     public static final Image ICON_EDITOR_PRIVACY_PBE = resize(ImageUtil.ICON_ERROR, 48, 48, false);
@@ -186,6 +187,7 @@ public class ImageUtil {
         _indisposableImages.add(ICON_TAB_PAGE);
         _indisposableImages.add(ICON_TAB_HIGHLIGHTS);
         _indisposableImages.add(ICON_TAB_MSG);
+        _indisposableImages.add(ICON_TAB_ARCHIVE);
         
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PUBLIC);
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PBE);

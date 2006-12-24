@@ -29,14 +29,17 @@ public class SharedArchiveBuilder {
     private int _hideLocalHours;
     private boolean _shareBanned;
     private boolean _shareReceivedOnly;
+    private SharedArchive.About _about;
     
-    public SharedArchiveBuilder(DBClient client, UI ui) {
+    public SharedArchiveBuilder(DBClient client, UI ui, SharedArchive.About about) {
         _client = client;
         _ui = ui;
-        _shareDelayHours = 1;
-        _hideLocalHours = 6;
-        _shareBanned = true;
-        _shareReceivedOnly = true;
+        _about = about;
+        
+        setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
+        setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
+        setShareDelayHours(_about.getPublishRebuildFrequencyHours());
+        setShareReceivedOnly(false);
     }
     
     /** if it arrived in the last 3 days, its "new" */
@@ -66,9 +69,10 @@ public class SharedArchiveBuilder {
     }
     
     private SharedArchive.About buildAbout() {
+        /*
         SharedArchive.About rv = new SharedArchive.About();
         rv.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
-        rv.setAlternativeArchives(null);
+        rv.setAlternativeArchives(_about.getA);
         rv.setPublishRebuildFrequencyHours(_shareDelayHours);
         rv.setMaxMessageSize(4096); // 4MB messages!  craziness.
         rv.setMinMessageSizeKBRequiringHashcash(512); 
@@ -78,6 +82,8 @@ public class SharedArchiveBuilder {
         rv.setWantPrivate(true); // ditto
         rv.setWantRecentOnly(true); // only things posted in the last 3 days
         return rv;
+         */
+        return _about;
     }
 
     /**

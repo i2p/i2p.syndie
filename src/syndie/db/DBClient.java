@@ -2866,11 +2866,12 @@ public class DBClient {
      * Syndie archive.  If delete is specified, the messages themselves
      * will be removed from the archive as well as the database
      */
-    public void ban(Hash bannedChannel, UI ui, boolean delete) {
+    public void ban(Hash bannedChannel, UI ui, boolean deleteMessages) { ban(bannedChannel, ui, deleteMessages, deleteMessages); }
+    public void ban(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
         ensureLoggedIn();
         addBan(bannedChannel, ui);
-        if (delete)
-            executeDelete(bannedChannel, ui);
+        if (deleteMessages || deleteMeta)
+            executeDelete(bannedChannel, ui, deleteMessages || deleteMeta, deleteMeta);
     }
     private static final String SQL_BAN = "INSERT INTO banned (channelHash) VALUES (?)";
     private void addBan(Hash bannedChannel, UI ui) {
@@ -2913,12 +2914,12 @@ public class DBClient {
         }
     }
     
-    private void executeDelete(Hash bannedChannel, UI ui) {
+    private void executeDelete(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
         // delete the banned channel itself from the archive
         // then list any messages posted by that author in other channels and
         // delete them too
         // (implicit index regen?)
-        List urisToDelete = getURIsToDelete(bannedChannel);
+        List urisToDelete = getURIsToDelete(bannedChannel, deleteMessages, deleteMeta);
         ui.debugMessage("Delete the following URIs: " + urisToDelete);
         for (int i = 0; i < urisToDelete.size(); i++) {
             SyndieURI uri = (SyndieURI)urisToDelete.get(i);
@@ -2930,6 +2931,11 @@ public class DBClient {
         File archiveDir = getArchiveDir();
         File chanDir = new File(archiveDir, uri.getScope().toBase64());
         if (uri.getMessageId() == null) {
+            File metaFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
+            metaFile.delete();
+            ui.debugMessage("Deleted metadata file " + metaFile.getPath());
+            ui.statusMessage("Deleted the channel metadata " + uri.getScope().toBase64() + " from the archive");
+            /*
             // delete the whole channel - all posts, metadata, and even the dir
             File f[] = chanDir.listFiles();
             for (int i = 0; i < f.length; i++) {
@@ -2939,6 +2945,7 @@ public class DBClient {
             chanDir.delete();
             ui.debugMessage("Deleted channel dir " + chanDir.getPath());
             ui.statusMessage("Deleted " + (f.length-1) + " messages and the metadata for channel " + uri.getScope().toBase64() + " from the archive");
+             */
         } else {
             // delete just the given message
             File msgFile = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
@@ -2946,6 +2953,8 @@ public class DBClient {
             ui.debugMessage("Deleted message file " + msgFile.getPath());
             ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + " from the archive");
         }
+        if (chanDir.listFiles().length <= 0)
+            chanDir.delete();
     }
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
@@ -2995,48 +3004,50 @@ public class DBClient {
     }
     
     private static final String SQL_GET_SCOPE_MESSAGES = "SELECT msgId, scopeChannelId, messageId FROM channelMessage WHERE scopeChannelId = ? OR authorChannelId = ? OR targetChannelId = ?";
-    private List getURIsToDelete(Hash bannedChannel) {
+    private List getURIsToDelete(Hash bannedChannel, boolean deleteMessages, boolean deleteMeta) {
         List urisToDelete = new ArrayList();
-        urisToDelete.add(SyndieURI.createScope(bannedChannel));
-        long scopeId = getChannelId(bannedChannel);
-        if (scopeId >= 0) {
-            PreparedStatement stmt = null;
-            ResultSet rs = null;
-            try {
-                stmt = _con.prepareStatement(SQL_GET_SCOPE_MESSAGES);
-                stmt.setLong(1, scopeId);
-                stmt.setLong(2, scopeId);
-                stmt.setLong(3, scopeId);
-                rs = stmt.executeQuery();
-                while (rs.next()) {
-                    //long msgId = rs.getLong(1);
-                    //if (rs.wasNull())
-                    //    msgId = -1;
-                    long scopeChanId = rs.getLong(2);
-                    if (rs.wasNull())
-                        scopeChanId = -1;
-                    long messageId = rs.getLong(3);
-                    if (rs.wasNull())
-                        messageId = -1;
-                    if ( (messageId >= 0) && (scopeChanId >= 0) ) {
-                        ChannelInfo chanInfo = getChannel(scopeChanId);
-                        if (chanInfo != null)
-                            urisToDelete.add(SyndieURI.createMessage(chanInfo.getChannelHash(), messageId));
+        if (deleteMeta)
+            urisToDelete.add(SyndieURI.createScope(bannedChannel));
+        if (deleteMessages) {
+            long scopeId = getChannelId(bannedChannel);
+            if (scopeId >= 0) {
+                PreparedStatement stmt = null;
+                ResultSet rs = null;
+                try {
+                    stmt = _con.prepareStatement(SQL_GET_SCOPE_MESSAGES);
+                    stmt.setLong(1, scopeId);
+                    stmt.setLong(2, scopeId);
+                    stmt.setLong(3, scopeId);
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        //long msgId = rs.getLong(1);
+                        //if (rs.wasNull())
+                        //    msgId = -1;
+                        long scopeChanId = rs.getLong(2);
+                        if (rs.wasNull())
+                            scopeChanId = -1;
+                        long messageId = rs.getLong(3);
+                        if (rs.wasNull())
+                            messageId = -1;
+                        if ( (messageId >= 0) && (scopeChanId >= 0) ) {
+                            ChannelInfo chanInfo = getChannel(scopeChanId);
+                            if (chanInfo != null)
+                                urisToDelete.add(SyndieURI.createMessage(chanInfo.getChannelHash(), messageId));
+                        }
                     }
+                } catch (SQLException se) {
+                    if (_log.shouldLog(Log.ERROR))
+                        _log.error("Error retrieving the messages to delete", se);
+                    return Collections.EMPTY_LIST;
+                } finally {
+                    if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                    if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
                 }
-            } catch (SQLException se) {
-                if (_log.shouldLog(Log.ERROR))
-                    _log.error("Error retrieving the messages to delete", se);
-                return Collections.EMPTY_LIST;
-            } finally {
-                if (rs != null) try { rs.close(); } catch (SQLException se) {}
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            } else {
+                // not known.  noop
             }
-            return urisToDelete;
-        } else {
-            // not known.  noop
-            return urisToDelete;
         }
+        return urisToDelete;
     }
 
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
