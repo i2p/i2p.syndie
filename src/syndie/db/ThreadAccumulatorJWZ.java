@@ -272,8 +272,31 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // filter by date and scope only
         Set matchingThreadMsgIds = getMatchingThreadMsgIds();
         _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds);
+        long beforeFilterStatus = System.currentTimeMillis();
         
-        if (_unreadOnly) {
+        if (_unreadOnly && matchingThreadMsgIds.size() > 0) {
+            long beforePrep = System.currentTimeMillis();
+            long msgIds[] = new long[matchingThreadMsgIds.size()];
+            int i = 0;
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); i++) {
+                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+                msgIds[i] = tmi.msgId;
+            }
+            long afterPrep = System.currentTimeMillis();
+            List read = _client.getRead(msgIds);
+            long beforeStrip = System.currentTimeMillis();
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+                if (read.contains(new Long(tmi.msgId))) {
+                    _ui.debugMessage("reject " + tmi + " because it was already read");
+                    iter.remove();
+                }
+            }
+            long afterStrip = System.currentTimeMillis();
+            _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
+                             " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip));
+            /* 
+            
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 //Long msgId = (Long)iter.next();
@@ -283,7 +306,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     iter.remove();
                 }
             }
+            */
         }
+        long afterFilterStatus = System.currentTimeMillis();
+        _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
         
         boolean tagFilter = true;
         if ( ( (_rejectedTags == null) || (_rejectedTags.size() <= 0) ) &&
@@ -313,6 +339,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
         long beforeGather = System.currentTimeMillis();
+        _ui.debugMessage("filter individual messages by thread took " + (beforeGather-afterFilterStatus));
         ThreadReferenceNode threads[] = buildThreads(matchingThreadMsgIds);
         long afterGather = System.currentTimeMillis();
         _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");

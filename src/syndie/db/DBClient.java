@@ -3742,6 +3742,62 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_GET_MSG_READ = 
+            "SELECT importDate, readThrough, ncrm.msgId " +
+            "FROM channelMessage cm, nymChannelReadThrough ncrt " +
+            "JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope " +
+            "LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? " +
+            "WHERE ncrt.nymId = ? " +
+            "AND cm.msgId IN (";
+    /** get a list of msgIds (Long) from the given set who have already been read */
+    public List getRead(long msgIds[]) { return getRead(_nymId, msgIds); }
+    public List getRead(long nymId, long msgIds[]) {
+        long begin = System.currentTimeMillis();
+        List rv = new ArrayList();
+        StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ + 6*msgIds.length);
+        for (int i = 0; i < msgIds.length; i++) {
+            buf.append(msgIds[i]);
+            if (i+1 < msgIds.length)
+                buf.append(", ");
+        }
+        
+        buf.append(") AND (readThrough > importDate OR ncrm.msgId IS NOT NULL)");
+        String query = buf.toString();
+        _ui.debugMessage("query: " + query);
+        
+        long beforePrep = System.currentTimeMillis();
+        long afterPrep = -1;
+        long afterExec = -1;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(query);
+            afterPrep = System.currentTimeMillis();
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            afterExec = System.currentTimeMillis();
+            
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(msgId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting read messages from the list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        long afterMatch = System.currentTimeMillis();
+        _ui.debugMessage("getRead in bulk took " + (afterMatch-begin) + "/" +(afterMatch-afterExec)
+                         + "/" + (afterExec-afterPrep) + "/" + (afterPrep-beforePrep) 
+                         + ": found matches: " + rv.size() + "/" + msgIds.length);
+        return rv;
+    }
     
     private static final String SQL_GET_MESSAGE_TARGET = "SELECT targetChannelId FROM channelMessage WHERE msgId = ?";
     public long getMessageTarget(long msgId) {

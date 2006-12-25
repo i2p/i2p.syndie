@@ -27,10 +27,12 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -940,7 +942,20 @@ public class MessageTree implements Translatable, Themeable {
             filter = ((FilterBar)_bars.get(i)).buildFilter();
         applyFilter(filter);
     }
+    private transient boolean _filtering;
     public void applyFilter(String filter) {
+        boolean alreadyFiltering = false;
+        synchronized (MessageTree.this) {
+            if (_filtering)
+                alreadyFiltering = true;
+            _filtering = true;
+        }
+        if (alreadyFiltering) {
+            _browser.getUI().debugMessage("filter already in progress, not applying...");
+            return;
+        }
+        final Shell s = showFilteringWidget();
+        _tree.setEnabled(false);
         _filter = filter;
         final String txt = _filter;
         if (txt.trim().length() > 0) {
@@ -948,18 +963,79 @@ public class MessageTree implements Translatable, Themeable {
                 final SyndieURI uri = new SyndieURI(txt);
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
-                        _browser.getUI().debugMessage("begin async calculating nodes in the tree: " + uri.toString());
-                        //try { Thread.sleep(200); } catch (InterruptedException ie) {}
-                        applyFilter(txt, uri, calculateNodes(uri)); 
-                        _browser.getUI().debugMessage("end async calculating nodes in the tree");
+                        try {
+                            _browser.getUI().debugMessage("begin async calculating nodes in the tree: " + uri.toString());
+                            //try { Thread.sleep(200); } catch (InterruptedException ie) {}
+                            applyFilter(txt, uri, calculateNodes(uri)); 
+                            _browser.getUI().debugMessage("end async calculating nodes in the tree");
+                        } finally {
+                            synchronized (MessageTree.this) {
+                                _filtering = false;
+                            }
+                            s.getDisplay().asyncExec(new Runnable() { 
+                                public void run() { 
+                                    s.dispose(); 
+                                    _tree.setEnabled(true);
+                                } });
+                        }   
                     }
                 });
             } catch (URISyntaxException use) {
                 // noop
                 //System.out.println("filter applied was not valid, noop [" + use.getMessage() + "]");
+                s.dispose();
+                _tree.setEnabled(true);
             }
         }
     }
+    
+    private static final String T_FILTERING_LABEL = "syndie.gui.messagetree.filtering";
+    private Shell showFilteringWidget() {
+        Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP);
+        s.setLayout(new FillLayout());
+        Composite c = new Composite(s, SWT.BORDER);
+        c.setLayout(new RowLayout(SWT.HORIZONTAL));
+        Label label = new Label(c, SWT.NONE);
+        label.setText(_browser.getTranslationRegistry().getText(T_FILTERING_LABEL, "Message filtering in progress"));
+        final Label filler = new Label(c, SWT.NONE);
+        label.setFont(_browser.getThemeRegistry().getTheme().SHELL_FONT);
+        filler.setFont(_browser.getThemeRegistry().getTheme().SHELL_FONT);
+        filler.setText("\\");
+        LivelinessIndicator liv = new LivelinessIndicator(filler);
+        liv.run();
+        s.pack();
+        Point sz = s.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point src = _root.getShell().getSize();
+        //if (src.x + src.y <= 0)
+        //    src = _root.getParent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        _browser.getUI().debugMessage("show liveliness: sz=" + sz + " src=" + src);
+        Rectangle rect = Display.getDefault().map(_root.getShell(), null, src.x/2-sz.x/2, src.y/2-sz.y/2, sz.x, sz.y);
+        s.setBounds(rect);
+        s.open();
+        return s;
+    }
+    private class LivelinessIndicator implements Runnable {
+        private Label _label;
+        private int _index;
+        public LivelinessIndicator(Label label) { _label = label; _index = 0; }
+        public void run() {
+            char c = ' ';
+            switch (_index % 4) {
+                case 0: c = '\\'; break;
+                case 1: c = '|'; break;
+                case 2: c = '/'; break;
+                case 3: c = '-'; break;
+            }
+            _index++;
+            String str = "" + c;
+            if (!_label.isDisposed()) {
+                // race condition between that and this
+                _label.setText(str);
+                Display.getDefault().timerExec(100, LivelinessIndicator.this);
+            }
+        }
+    }
+    
     private void applyFilter(final String txt, final SyndieURI uri, final List nodes) {
         _tree.getDisplay().asyncExec(new Runnable() {
             public void run() { 

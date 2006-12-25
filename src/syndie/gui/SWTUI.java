@@ -46,6 +46,7 @@ public class SWTUI {
         }
         
         long t1 = System.currentTimeMillis();
+        Splash.show(d);
         
         /*
         ColorUtil.init();

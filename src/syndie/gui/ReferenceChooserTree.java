@@ -298,6 +298,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                         int started = viewStartupItems(getBookmarkRoot());
                         if (started == 0)
                             _browser.view(_browser.createHighlightURI());
+                        Splash.dispose();
                     }
                     _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
