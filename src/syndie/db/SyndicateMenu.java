@@ -92,8 +92,6 @@ class SyndicateMenu implements TextEngine.Menu {
             processListBan(client, ui, opts);
         } else if ("unban".equalsIgnoreCase(cmd)) {
             processUnban(client, ui, opts);
-        } else if ("buildsharedindex".equalsIgnoreCase(cmd)) {
-            processBuildSharedIndex(client, ui, opts);
         } else {
             return false;
         }
@@ -626,31 +624,6 @@ class SyndicateMenu implements TextEngine.Menu {
     private void processBuildIndex(DBClient client, UI ui, Opts opts) {
         //long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
         SyndicationManager.buildIndex(client, ui); //, maxSize);
-        ui.commandComplete(0, null);
-    }
-    private void processBuildSharedIndex(DBClient client, UI ui, Opts opts) {
-        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui);
-        SharedArchive archive = builder.buildSharedArchive();
-        String orig = archive.toString();
-        ui.statusMessage("shared archive built: \n" + orig);
-        /*
-        try {
-            File tmp = File.createTempFile("shared", "dat", client.getTempDir());
-            FileOutputStream fos = new FileOutputStream(tmp);
-            archive.write(fos);
-            fos.close();
-            FileInputStream fis = new FileInputStream(tmp);
-            SharedArchive loaded = new SharedArchive();
-            loaded.read(fis);
-            String reload = loaded.toString();
-            if (reload.equals(orig))
-                ui.statusMessage("Persistance is roundtrip");
-            else
-                ui.errorMessage("Persistance fails.  reloaded:\n" + reload);
-        } catch (Exception e) {
-            ui.errorMessage("error persisting", e);
-        }
-         */
         ui.commandComplete(0, null);
     }
 }

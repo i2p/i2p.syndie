@@ -602,12 +602,19 @@ public class Version {
         <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie-${syndie.version}.exe" />
         <delete file="syndie-${syndie.version}.exe" />
     </target>
+    <target name="jar-package" depends="jar">
+        <mkdir dir="doc/web/dist" />
+        <zip destfile="doc/web/dist/syndie-${syndie.version}.bin.jar-only.zip">
+            <zipfileset dir="." includes="lib/syndie.jar" />
+        </zip>
+    </target>
     <target name="dist">
       <ant target="distclean" />
       <ant target="source-package" />
       <ant target="source-nodeps-package" />
       <ant target="installer-exe" />
       <ant target="java-package-exe" />
+      <ant target="jar-package" />
 <!--      <ant target="java-package" /> -->
     </target>
 </project>

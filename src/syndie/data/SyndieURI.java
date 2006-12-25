@@ -323,7 +323,13 @@ public class SyndieURI {
     public String getType() { return _type; }
     public Map getAttributes() { return _attributes; }
     
-    public String getString(String key) { return (String)_attributes.get(key); }
+    public String getString(String key) { 
+        Object o = _attributes.get(key);
+        if (o == null)
+            return null;
+        else
+            return o.toString();
+    }
     public Long getLong(String key) { return (Long)_attributes.get(key); }
     public String[] getStringArray(String key) { return (String[])_attributes.get(key); }
     public boolean getBoolean(String key, boolean defaultVal) {

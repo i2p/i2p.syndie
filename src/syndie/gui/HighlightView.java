@@ -264,6 +264,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
         
         SyndicationManager mgr = _browser.getSyndicationManager();
+        mgr.loadArchives();
         int archives = mgr.getArchiveCount();
         _browser.getUI().debugMessage("known archives: " + archives);
         int scheduled = 0;

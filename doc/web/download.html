@@ -53,13 +53,16 @@ Windows binaries:<ul>
    "<code>java -jar syndie-0.920a.bin.osx.exe</code>" (<i>yes, really</i>).
    Launch Syndie with the icon, or with
    "<code>java -jar bin/syndie.exe</code>".</li>
-<li><a href="dist/syndie-0.920a.bin.nodeps.exe">Any platform - syndie-0.920a.bin.nodeps.exe</a>
+<li><a href="dist/syndie-0.920a.bin.nodeps.exe">Any platform (new install) - syndie-0.920a.bin.nodeps.exe</a>
    (<a href="dist/syndie-0.920a.bin.nodeps.exe.sig">GPG signature</a>) - 2.1MB<br />
    does not include <a href="http://eclipse.org/swt/">SWT</a> or
-      <a href="http://www.hsqldb.org/">HSQLDB</a>, so <b>only use this if
-      upgrading</b> or can otherwise arrange to have <code>swt.jar</code> and
-      <code>hsqldb.jar</code> in your Syndie <code>lib/</code> directory.</li>
-<li><a href="dist/syndie-0.920a.bin.zip">Headless - syndie-0.920a.bin.zip</a>
+   <a href="http://www.hsqldb.org/">HSQLDB</a>, so only use this if
+   you can arrange to have <code>swt.jar</code> and
+   <code>hsqldb.jar</code> in your Syndie <code>lib/</code> directory.</li>
+<li><a href="dist/syndie-0.920a.bin.jar-only.zip">Any platform (upgrade) - syndie-0.920a.bin.jar-only.zip</a>
+   (<a href="dist/syndie-0.920a.bin.jar-only.zip.sig">GPG signature</a>) - 1.5MB<br />
+   Extracts ./lib/syndie.jar to replace an earlier syndie.jar.  This should be <b>used for upgrades</b>.</li>
+<li><a href="dist/syndie-0.920a.bin.zip">Text only - syndie-0.920a.bin.zip</a>
    (<a href="dist/syndie-0.920a.bin.zip.sig">GPG signature</a>) - 2.2MB<br />
    This unzips into <code>./syndie-0.920a</code> and does not create any
    desktop or start menu shortcuts, but can be used on computers without a

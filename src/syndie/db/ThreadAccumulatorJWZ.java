@@ -1088,7 +1088,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
         HashMap keyToNode = new HashMap();
         for (int i = 0; i < peers.length; i++) {
-            long when = peers[i].getLatestMessageId();
+            long when = -1;
+            if (_earliestReceiveDate > 0) {
+                // we are filtering by import date, not post date
+                when = peers[i].getLatestImportDate();
+            } else {
+                // filtering by post date, not import date
+                when = peers[i].getLatestMessageId();
+            }
             while (keyToNode.containsKey(new Long(when)))
                 when++;
             keyToNode.put(new Long(when), peers[i]);
@@ -1390,6 +1397,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         private long _targetChannelId;
         private boolean _dummy;
         private ThreadMsgId _msg;
+        private long _importDate;
         public ThreadReferenceNode(ThreadMsgId id) {
             super(null, null, null, null);
             _msg = id;
@@ -1397,6 +1405,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             _subject = null;
             _targetChannelId = -1;
             _dummy = false;
+            _importDate = -1;
         }
         public ThreadMsgId getMsgId() { return _msg; }
         public void setAuthorId(long authorId) { _authorId = authorId; }
@@ -1433,6 +1442,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < getChildCount(); i++)
                 latestMessageId = Math.max(latestMessageId, ((ThreadReferenceNode)getChild(i)).getLatestMessageId());
             return latestMessageId;
+        }
+        public long getLatestImportDate() {
+            long latest = _importDate;
+            if (!isDummy() && (_msg != null) && (_msg.msgId >= 0) && (latest < 0))
+                latest = _importDate = _client.getMessageImportDate(_msg.msgId);
+            for (int i = 0; i < getChildCount(); i++)
+                latest = Math.max(latest, ((ThreadReferenceNode)getChild(i)).getLatestImportDate());
+            return latest;
         }
         public long getLatestAuthorId() { return getLatestAuthorId(getLatestMessageId()); }
         private long getLatestAuthorId(long latestMessageId) {

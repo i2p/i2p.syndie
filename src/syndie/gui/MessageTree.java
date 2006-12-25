@@ -215,6 +215,7 @@ public class MessageTree implements Translatable, Themeable {
         private MenuItem _advancedPrivacyAuthorized;
         private MenuItem _advancedPrivacyPBE;
         private MenuItem _advancedPrivacyPrivate;
+        private MenuItem _advancedDateImport;
         private MenuItem _advancedThreadResults;
         private MenuItem _advancedPassphraseRequired;
         private ReferenceChooserPopup _forumChooser;
@@ -308,6 +309,8 @@ public class MessageTree implements Translatable, Themeable {
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedThreadResults = new MenuItem(_advancedMenu, SWT.CHECK);
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
+            _advancedDateImport = new MenuItem(_advancedMenu, SWT.CHECK);
+            new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedPassphraseRequired = new MenuItem(_advancedMenu, SWT.CHECK);
             
             _advancedScopeAll.setSelection(true);
@@ -316,6 +319,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.setSelection(true);
             _advancedPrivacyPrivate.setSelection(true);
             _advancedThreadResults.setSelection(true);
+            _advancedDateImport.setSelection(true);
             
             SelectionListener lsnr = new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
@@ -329,6 +333,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.addSelectionListener(lsnr);
             _advancedPrivacyPrivate.addSelectionListener(lsnr);
             _advancedThreadResults.addSelectionListener(lsnr);
+            _advancedDateImport.addSelectionListener(lsnr);
             
             _advancedPassphraseRequired.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent evt) {
@@ -532,8 +537,13 @@ public class MessageTree implements Translatable, Themeable {
                     days = 1; 
                     break;
             }
-            attributes.put("age", new Integer(days));
-            attributes.put("agelocal", new Integer(days));
+            if (_advancedDateImport.getSelection()) {
+                attributes.put("agelocal", new Integer(days));
+                attributes.remove("age");
+            } else {
+                attributes.put("age", new Integer(days));
+                attributes.remove("agelocal");
+            }
 
             String tag = _filterTag.getText().trim();
             if ( (_filterTag.getSelectionIndex() == 0) || 
@@ -677,6 +687,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyAuthorized.setText(registry.getText(T_ADVANCED_PRIVACY_AUTHORIZED, "Readable by: authorized readers"));
             _advancedPrivacyPBE.setText(registry.getText(T_ADVANCED_PRIVACY_PBE, "Readable by: those with a passphrase"));
             _advancedPrivacyPrivate.setText(registry.getText(T_ADVANCED_PRIVACY_PRIVATE, "Readable by: forum administrators"));
+            _advancedDateImport.setText(registry.getText(T_ADVANCED_DATEIMPORT, "Use local import date instead of (unreliable) message creation date"));
             _advancedThreadResults.setText(registry.getText(T_ADVANCED_THREAD, "Organize results in threads"));
             _advancedPassphraseRequired.setText(registry.getText(T_ADVANCED_PASSPHRASE_REQUIRED, "Messages requiring a new passphrase"));
             
@@ -986,15 +997,9 @@ public class MessageTree implements Translatable, Themeable {
         acc.setSort(sort, _currentSortDirection == SWT.UP);
         _browser.getUI().debugMessage("gathering the threads");
         acc.gatherThreads();
-        // now sort it...
-        _browser.getUI().debugMessage("sorting the threads");
         List threads = new ArrayList();
         for (int i = 0; i < acc.getThreadCount(); i++)
             threads.add(acc.getRootThread(i));
-        
-        // now sort...
-        // (or not...)
-        
         return threads;
     }
     
@@ -1155,9 +1160,16 @@ public class MessageTree implements Translatable, Themeable {
                 //_tags.add(tag);
             }
             tags = buf.toString().trim();
-            date = Constants.getDate(uri.getMessageId().longValue());
             item.setGrayed(false);
-
+            long importDate = _client.getMessageImportDate(msgId);
+            long postDate = uri.getMessageId().longValue();
+            if ( (_appliedFilter == null) || (_appliedFilter.getString("agelocal") != null) ) {
+                date = Constants.getDate(importDate);
+                _browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
+            } else {
+                date = Constants.getDate(postDate);
+                _browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
+            }
             status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
         } else {
             // message is not locally known
@@ -1210,8 +1222,8 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void resizeCols() {
-        int total = _tree.getClientArea().width - _colType.getWidth();
-        int dateWidth = ImageUtil.getWidth("0000/00/00  ", _tree) + _tree.getGridLineWidth()*2;
+        int dateWidth = ImageUtil.getWidth("0000/00/00XXXXXXXX", _tree) + _tree.getGridLineWidth()*2;
+        int total = _tree.getClientArea().width - _colType.getWidth() - dateWidth;
         int subjWidth = total / 3;
         
         int chanWidth = total / 5;
@@ -1376,6 +1388,7 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_ADVANCED_PRIVACY_AUTHORIZED = "syndie.gui.messagetree.filteradvanced.priv.auth";
     private static final String T_ADVANCED_PRIVACY_PBE = "syndie.gui.messagetree.filteradvanced.priv.pbe";
     private static final String T_ADVANCED_PRIVACY_PRIVATE = "syndie.gui.messagetree.filteradvanced.priv.private";
+    private static final String T_ADVANCED_DATEIMPORT = "syndie.gui.messagetree.filteradvanced.dateimport";
     private static final String T_ADVANCED_THREAD = "syndie.gui.messagetree.filteradvanced.thread";
     private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     

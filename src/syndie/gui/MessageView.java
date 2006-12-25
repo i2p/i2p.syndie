@@ -236,7 +236,8 @@ public class MessageView implements Translatable, Themeable {
             _headerAuthorAction.setVisible(showAuthor);
             
             String date = Constants.getDate(msg.getMessageId());
-            _headerDate.setText(date);
+            String impDate = Constants.getDate(_client.getMessageImportDate(msg.getInternalId()));
+            _headerDate.setText(date + " [" + impDate + "]");
             
             Set tags = new TreeSet(msg.getPublicTags());
             tags.addAll(msg.getPrivateTags());
