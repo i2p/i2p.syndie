@@ -13,18 +13,20 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import syndie.Version;
 import syndie.db.SyndicationManager;
 
 /**
  *
  */
-public class StatusBar implements Translatable {
+public class StatusBar implements Translatable, Themeable {
     private BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
     private Label _onlineState;
     private Label _nextSyncLabel;
     private Label _nextSyncDate;
+    private Label _version;
     
     public StatusBar(BrowserControl browser, Composite parent) {
         _browser = browser;
@@ -36,7 +38,7 @@ public class StatusBar implements Translatable {
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        GridLayout gl = new GridLayout(3, false);
+        GridLayout gl = new GridLayout(4, false);
         _root.setLayout(gl);
         
         _onlineState = new Label(_root, SWT.SHADOW_OUT | SWT.BORDER);
@@ -46,6 +48,10 @@ public class StatusBar implements Translatable {
         _nextSyncLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _nextSyncDate = new Label(_root, SWT.NONE);
         _nextSyncDate.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        
+        _version = new Label(_root, SWT.NONE);
+        _version.setText("Syndie " + Version.VERSION);
+        _version.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false));
 
         _onlineState.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
@@ -83,6 +89,7 @@ public class StatusBar implements Translatable {
 
         displayOnlineState(_browser.getSyndicationManager().isOnline());
         _browser.getTranslationRegistry().register(this);
+        _browser.getThemeRegistry().register(this);
     }
     private class Refresh implements Runnable {
         public void run() {
@@ -135,5 +142,12 @@ public class StatusBar implements Translatable {
     public void translate(TranslationRegistry registry) {
         _nextSyncLabel.setText(registry.getText(T_NEXT_SYNC, "Next sync:"));
         _root.layout(true);
+    }
+    
+    public void applyTheme(Theme theme) {
+        _nextSyncDate.setFont(theme.DEFAULT_FONT);
+        _nextSyncLabel.setFont(theme.DEFAULT_FONT);
+        _onlineState.setFont(theme.DEFAULT_FONT);
+        _version.setFont(theme.DEFAULT_FONT);
     }
 }

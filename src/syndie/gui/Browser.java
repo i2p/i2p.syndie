@@ -48,11 +48,14 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
@@ -63,6 +66,7 @@ import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
+import syndie.Version;
 import syndie.data.NymKey;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
@@ -558,7 +562,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Menu helpMenu = new Menu(_helpMenuRoot);
         _helpMenuRoot.setMenu(helpMenu);
         _helpMenuAbout = new MenuItem(helpMenu, SWT.PUSH);
-        _helpMenuAbout.setEnabled(false);
+        _helpMenuAbout.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showAbout(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { showAbout(); }
+        });
         _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuFAQ.setEnabled(false);
         _helpMenuGUIManual = new MenuItem(helpMenu, SWT.PUSH);
@@ -756,6 +763,67 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _client.setNymPrefs(prefs);
         }
     }
+    
+    private void showAbout() {
+        final Shell s = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        s.setLayout(new GridLayout(2, false));
+        s.setText(getTranslationRegistry().getText(T_ABOUT_TITLE, "About"));
+        
+        Label l = new Label(s, SWT.NONE);
+        l.setText("Syndie " + Version.VERSION);
+        l.setFont(getThemeRegistry().getTheme().SHELL_FONT);
+        l.setLayoutData(new GridData(GridData.CENTER, GridData.FILL, true, false, 2, 1));
+        
+        Link link = new Link(s, SWT.NONE);
+        link.setText("<a>http://syndie.i2p.net/</a>");
+        link.setFont(getThemeRegistry().getTheme().LINK_FONT);
+        link.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        link.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p.net/")); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p.net/")); }
+        });
+        
+        l = new Label(s, SWT.NONE);
+        l.setText("JVM:");
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l = new Label(s, SWT.NONE);
+        l.setText(System.getProperty("java.version"));
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        
+        l = new Label(s, SWT.NONE);
+        l.setText("OS:");
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l = new Label(s, SWT.NONE);
+        l.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch"));
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        
+        l = new Label(s, SWT.NONE);
+        l.setText("SWT:");
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l = new Label(s, SWT.NONE);
+        l.setText(SWT.getPlatform() + " " + SWT.getVersion());
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+
+        Button b = new Button(s, SWT.PUSH);
+        b.setText(getTranslationRegistry().getText(T_ABOUT_CLOSE, "Close"));
+        b.setFont(getThemeRegistry().getTheme().BUTTON_FONT);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        b.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { s.dispose(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { s.dispose(); }
+        });
+        
+        s.pack();
+        s.open();
+    }
+    private static final String T_ABOUT_CLOSE = "syndie.gui.browser.about.close";
+    private static final String T_ABOUT_TITLE = "syndie.gui.browser.about.title";
     
     private void initSystray() {
         _systray = _shell.getDisplay().getSystemTray();
@@ -1177,12 +1245,53 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             tab.tabShown();
         } 
         if (tab == null) {
+            uriUnhandled(uri);
+        }
+    }
+    private void uriUnhandled(SyndieURI uri) {
+        if (uri.isURL()) {
+            final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+            GridLayout gl = new GridLayout(1, true);
+            shell.setLayout(gl);
+            shell.setText(getTranslationRegistry().getText(T_EXTERNAL_TITLE, "External URL selected"));
+            
+            Text msg = new Text(shell, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
+            msg.setText(getTranslationRegistry().getText(T_EXTERNAL_MSG, "The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
+            GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            msg.setLayoutData(gd);
+            
+            Text url = new Text(shell, SWT.BORDER | SWT.SINGLE);
+            url.setText(uri.getURL());
+            gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            url.setLayoutData(gd);
+            
+            Button b = new Button(shell, SWT.PUSH);
+            b.setText(getTranslationRegistry().getText(T_EXTERNAL_OK, "Close"));
+            gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            b.setLayoutData(gd);
+            b.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { shell.dispose(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { shell.dispose(); }
+            });
+            
+            //shell.setSize(shell.computeSize(400, SWT.DEFAULT));
+            shell.pack(true);
+            shell.open();
+            //url.selectAll()
+            url.forceFocus();
+        } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(getTranslationRegistry().getText(T_BADURI_TITLE, "Invalid URI"));
             box.setMessage(getTranslationRegistry().getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri.toString());
             box.open();
         }
     }
+    private static final String T_EXTERNAL_TITLE = "syndie.gui.browser.external.title";
+    private static final String T_EXTERNAL_MSG = "syndie.gui.browser.external.msg";
+    private static final String T_EXTERNAL_OK = "syndie.gui.browser.external.ok";
     
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;

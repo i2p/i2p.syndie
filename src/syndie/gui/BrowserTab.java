@@ -160,7 +160,7 @@ abstract class BrowserTab implements Themeable {
         debug("reconfiguring item: begin");
         Image old = _item.getImage();
         Image icon = getIcon();
-        if (icon != null) {
+        if ( (icon != null) && (!icon.isDisposed()) ) {
             Rectangle bounds = icon.getBounds();
             if ( (bounds.width > TAB_ICON_SIZE) || (bounds.height > TAB_ICON_SIZE) )
                 icon = ImageUtil.resize(icon, TAB_ICON_SIZE, TAB_ICON_SIZE, true);
