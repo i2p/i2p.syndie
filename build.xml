@@ -107,6 +107,9 @@ public class Version {
         <delete file="syndie-${syndie.version}.bin.win32.exe" />
         <delete file="syndie-${syndie.version}.bin.linux32.exe" />
         <delete file="syndie-${syndie.version}.bin.osx.exe" />
+        <delete file="syndie.exe.osx" />
+        <delete file="syndie.exe.w32" />
+        <delete file="syndie.exe.l32" />
         <delete file="syndie-${syndie.version}.exe" />
         <delete file="syndie-${syndie.version}.jar" />
         <delete dir="logs" />
@@ -332,6 +335,7 @@ public class Version {
 
         <delete file="syndie-${syndie.version}/lib/swt.jar" />
         <copy todir="syndie-${syndie.version}/lib/" file="${swt.win32}" />
+        <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie.exe.w32" />
         <izpack output="syndie-${syndie.version}.bin.win32.jar"
                 installerType="standard"
                 basedir="."
@@ -386,6 +390,7 @@ public class Version {
 
         <delete file="syndie-${syndie.version}/lib/swt.jar" />
         <copy todir="syndie-${syndie.version}/lib/" file="${swt.linux32}" />
+        <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie.exe.l32" />
         <izpack output="syndie-${syndie.version}.bin.linux32.jar"
                 installerType="standard"
                 basedir="."
@@ -440,6 +445,7 @@ public class Version {
 
         <delete file="syndie-${syndie.version}/lib/swt.jar" />
         <copy todir="syndie-${syndie.version}/lib/" file="${swt.osx}" />
+        <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie.exe.osx" />
         <izpack output="syndie-${syndie.version}.bin.osx.jar"
                 installerType="standard"
                 basedir="."
@@ -571,6 +577,8 @@ public class Version {
             <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar ../lib/swt.jar" />
           </manifest>
         </jar>
+
+        <!-- build the linux and win32 launchers -->
         <echo file="launchsyndie.xml"><![CDATA[
 <launch4jConfig>
  <headerType>0</headerType>
@@ -598,9 +606,41 @@ public class Version {
 ]]></echo>
         <launch4j configFile="launchsyndie.xml" />
         <delete file="launchsyndie.xml" />
-        <delete file="syndie-${syndie.version}.jar" />
-        <copy tofile="syndie-${syndie.version}/bin/syndie.exe" file="syndie-${syndie.version}.exe" />
+        <copy tofile="syndie.exe.w32" file="syndie-${syndie.version}.exe" />
+        <copy tofile="syndie.exe.l32" file="syndie-${syndie.version}.exe" />
         <delete file="syndie-${syndie.version}.exe" />
+
+        <!-- build the osx launcher [needs -XstartOnFirstThread] -->
+        <echo file="launchsyndie.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>0</headerType>
+ <jar>syndie-${syndie.version}.jar</jar>
+ <outfile>syndie-${syndie.version}.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>..</chdir>
+ <icon>doc/web/favicon.ico</icon>
+ <jre>
+  <minVersion>1.4.0</minVersion>
+  <args>-XstartOnFirstThread -Djava.library.path=.</args>
+ </jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} graphical interface</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchsyndie.xml" />
+        <delete file="launchsyndie.xml" />
+        <copy tofile="syndie.exe.osx" file="syndie-${syndie.version}.exe" />
+        <delete file="syndie-${syndie.version}.exe" />
+        <delete file="syndie-${syndie.version}.jar" />
     </target>
     <target name="jar-package" depends="jar">
         <mkdir dir="doc/web/dist" />
