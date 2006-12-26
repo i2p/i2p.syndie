@@ -21,8 +21,8 @@ import syndie.data.SyndieURI;
  */
 class SyndicateMenu implements TextEngine.Menu {
     private TextEngine _engine;
-    private ArchiveIndex _currentIndex;
-    private ArchiveDiff _diff;
+    private SharedArchive _currentIndex;
+    //private ArchiveDiff _diff;
     private HTTPSyndicator _syndicator;
     private String _baseUrl;
     private String _proxyHost;
@@ -56,7 +56,7 @@ class SyndicateMenu implements TextEngine.Menu {
         ui.statusMessage(" schedule --put (outbound|outboundmeta|archive|archivemeta) [--deleteOutbound $boolean] [--knownChanOnly $boolean]");
         ui.statusMessage("                    : schedule a set of messages to be posted");
         ui.statusMessage(" put                : send up the scheduled posts/replies/metadata to the archive");
-        ui.statusMessage(" bulkimport --dir $directory --delete $boolean");
+        ui.statusMessage(" bulkimport --dir $directory --delete $boolean --rmdir $boolean");
         ui.statusMessage("                    : import all of the " + Constants.FILENAME_SUFFIX + " files in the given directory, deleting them on completion");
         ui.statusMessage(" freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481]");
         ui.statusMessage("                    : post the entire local archive into Freenet, storing the data either in the");
@@ -108,7 +108,7 @@ class SyndicateMenu implements TextEngine.Menu {
      *          [--scope (all|new|meta)]
      */
     private void processGetIndex(DBClient client, UI ui, Opts opts) {
-        _diff = null;
+        //_diff = null;
         _syndicator = null; // delete files?
         _baseUrl = opts.getOptValue("archive");
         if (_baseUrl == null)
@@ -157,6 +157,7 @@ class SyndicateMenu implements TextEngine.Menu {
             scope = "all";
         if (!_baseUrl.endsWith("/"))
             _baseUrl = _baseUrl + "/";
+        /*
         if ("new".equalsIgnoreCase(scope)) {
             url = _baseUrl + "index-new.dat";
         } else if ("meta".equalsIgnoreCase(scope)) {
@@ -170,8 +171,8 @@ class SyndicateMenu implements TextEngine.Menu {
                 url = _baseUrl + "index-unauthorized.dat";
             }
         } else { //if ("all".equalsIgnoreCase(scope))
-            url = _baseUrl + "index-all.dat";
-        }
+        */
+        url = _baseUrl + SyndicationManager.SHARED_INDEX_FILE; //"index-all.dat";
 	if (includeForceDownload) url = url + "?forcedownload";
 
         _shouldProxy = (_proxyHost != null) && (_proxyPort > 0);
@@ -201,15 +202,23 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         }
         try {
+            SharedArchive index = new SharedArchive();
+            FileInputStream fin = new FileInputStream(out);
+            index.read(fin);
+            fin.close();
+            ui.statusMessage("Fetched shared archive index");
+            _currentIndex = index;
+            /*
             ArchiveIndex index = ArchiveIndex.loadIndex(out, ui, unauth);
             if (index != null) {
                 ui.statusMessage("Fetched archive loaded with " + index.getChannelCount() + " channels");
                 _currentIndex = index;
-                _syndicator = new HTTPSyndicator(_baseUrl, _proxyHost, _proxyPort, client, ui, _currentIndex);
+                _syndicator = new HTTPSyndicator(_baseUrl, _proxyHost, _proxyPort, client, ui, _currentIndex, opts.getOptBoolean("reimport", false));
                 processDiff(client, ui, opts);
             } else {
                 ui.errorMessage("Unable to load the fetched archive");
             }
+             */
             ui.commandComplete(0, null);
         } catch (IOException ioe) {
             ui.errorMessage("Error loading the index", ioe);
@@ -219,7 +228,7 @@ class SyndicateMenu implements TextEngine.Menu {
             out.delete();
     }
     
-    private class UIStatusListener implements EepGet.StatusListener {
+    private static class UIStatusListener implements EepGet.StatusListener {
         private UI _ui;
         public UIStatusListener(UI ui) { _ui = ui; }
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {
@@ -248,6 +257,27 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
+        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
+        strategy.includeDupForPIR = false;
+        strategy.includePBEMessages = true;
+        strategy.includePrivateMessages = true;
+        strategy.includeRecentMessagesOnly = true;
+        strategy.maxKBPerMessage = 512;
+        strategy.maxKBTotal = 4096;
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        List uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        //List uris = _currentIndex.selectURIsToPull(client, ui, strategy);
+        int msgs = 0;
+        int meta = 0;
+        for (int i = 0; i < uris.size(); i++) {
+            if (((SyndieURI)uris.get(i)).getMessageId() == null)
+                meta++;
+            else
+                msgs++;
+        }
+        ui.statusMessage("New messages in the remote archive: " + msgs);
+        ui.statusMessage("New or updated forums in the remote archive: " + meta);
+        /*
         long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
         if ( (_diff == null) || (maxSize != _diff.maxSizeUsed) ) {
             _diff = _currentIndex.diff(client, ui, opts);
@@ -296,11 +326,12 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         }
         ui.statusMessage(buf.toString());
+         */
         ui.commandComplete(0, null);
     }
     
     private void processFetch(DBClient client, UI ui, Opts opts) {
-        if (_diff == null) {
+        if (_currentIndex == null) {
             ui.errorMessage("No archive fetched");
             ui.commandComplete(-1, null);
             return;
@@ -310,18 +341,33 @@ class SyndicateMenu implements TextEngine.Menu {
         String style = opts.getOptValue("style");
         if (style == null)
             style = "diff";
+        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
         List uris = null;
-        if ("known".equalsIgnoreCase(style))
-            uris = _diff.getFetchKnownURIs(includeReplies);
-        else if ("metaonly".equalsIgnoreCase(style))
-            uris = _diff.getFetchMetaURIs();
-        else if ("pir".equalsIgnoreCase(style))
-            uris = _diff.getFetchPIRURIs();
-        else if ("unauth".equalsIgnoreCase(style))
-            uris = _diff.getFetchNewUnauthorizedURIs(includeReplies);
-        else // "diff" as the default
-            uris = _diff.getFetchNewURIs(includeReplies);
+        if ("known".equalsIgnoreCase(style)) {
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = true;
+            strategy.knownChannelsOnly = true;
+        } else if ("metaonly".equalsIgnoreCase(style)) {
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = false;
+            strategy.knownChannelsOnly = false;
+        } else if ("pir".equalsIgnoreCase(style)) {
+            strategy.includeDupForPIR = true;
+        //} else if ("unauth".equalsIgnoreCase(style)) {
+        //    uris = _diff.getFetchNewUnauthorizedURIs(includeReplies);
+        } else { // "diff" as the default
+            strategy.includePrivateMessages = includeReplies;
+            strategy.includeRecentMessagesOnly = true;
+            strategy.includePBEMessages = true;
+            strategy.knownChannelsOnly = false;
+        }
         
+        SharedArchiveEngine engine = new SharedArchiveEngine();
+        
+        uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        //uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         ui.debugMessage("Fetching " + uris.size() + " entries: " + uris);
         
         boolean ok = _syndicator.fetch(uris);
@@ -402,16 +448,16 @@ class SyndicateMenu implements TextEngine.Menu {
             _syndicator.setPostPassphrase(pass);
         _syndicator.post();
         _syndicator = null;
-        _diff = null;
     }
     
-    /** bulkimport --dir $directory --delete $boolean */
+    /** bulkimport --dir $directory --delete $boolean --rmdir $boolean*/
     private void processBulkImport(DBClient client, UI ui, Opts opts) {
         String dir = opts.getOptValue("dir");
         boolean del = opts.getOptBoolean("delete", true);
+        boolean rmdir = opts.getOptBoolean("rmdir", false);
         
         if (dir == null) {
-            ui.errorMessage("Usage: bulkimport --dir $directory --delete $boolean");
+            ui.errorMessage("Usage: bulkimport --dir $directory --delete $boolean --rmdir $boolean");
             ui.commandComplete(-1, null);
             return;
         }
@@ -422,7 +468,7 @@ class SyndicateMenu implements TextEngine.Menu {
         File f = new File(dir);
         File files[] = f.listFiles(_metafilter);
         for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i]);
+            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {
                 boolean deleted = files[i].delete();
                 if (!deleted)
@@ -435,7 +481,7 @@ class SyndicateMenu implements TextEngine.Menu {
         
         files = f.listFiles(_postfilter);
         for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i]);
+            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {
                 boolean deleted = files[i].delete();
                 if (!deleted)
@@ -446,17 +492,19 @@ class SyndicateMenu implements TextEngine.Menu {
             postImported++;
         }
         
+        if (del && rmdir)
+            f.delete();
         ui.statusMessage("Imported " + metaImported + " metadata and " + postImported + " posts");
         ui.commandComplete(0, null);
     }
     
-    private void importMsg(DBClient client, UI ui, File f) {
+    private void importMsg(DBClient client, UI ui, File f, boolean forceReimport) {
         Importer imp = new Importer(client, client.getPass());
         ui.debugMessage("Importing from " + f.getPath());
         boolean ok;
         try {
             NestedUI nested = new NestedUI(ui);
-            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null);
+            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null, forceReimport);
             if (ok && (nested.getExitCode() >= 0) ) {
                 if (nested.getExitCode() == 1) {
                     ui.errorMessage("Imported but could not decrypt " + f.getPath());
@@ -480,7 +528,7 @@ class SyndicateMenu implements TextEngine.Menu {
     private static PostFilter _postfilter = new PostFilter();
     private static class PostFilter implements FilenameFilter {
         public boolean accept(File dir, String name) {
-            return name.startsWith("post") && name.endsWith(Constants.FILENAME_SUFFIX);
+            return (!name.startsWith("post")) && name.endsWith(Constants.FILENAME_SUFFIX);
         }
     }
 
@@ -574,61 +622,8 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processBuildIndex(DBClient client, UI ui, Opts opts) {
-        File archiveDir = client.getArchiveDir();
-        ArchiveIndex index;
-        try {
-            // load the whole index into memory
-            index = ArchiveIndex.buildIndex(client, ui, archiveDir, opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE));
-            // iterate across each channel, building their index-all and index-new files
-            // as well as pushing data into the overall index-all, index-new, and index-meta files
-            FileOutputStream outFullAll = new FileOutputStream(new File(archiveDir, "index-all.dat"));
-            FileOutputStream outFullNew = new FileOutputStream(new File(archiveDir, "index-new.dat"));
-            FileOutputStream outFullMeta = new FileOutputStream(new File(archiveDir, "index-meta.dat"));
-            FileOutputStream outFullUnauth = new FileOutputStream(new File(archiveDir, "index-unauthorized.dat"));
-            for (int i = 0; i < index.getChannelCount(); i++) {
-                ArchiveChannel chan = index.getChannel(i);
-                File chanDir = new File(archiveDir, Base64.encode(chan.getScope()));
-                FileOutputStream outAll = new FileOutputStream(new File(chanDir, "index-all.dat"));
-                FileOutputStream outNew = new FileOutputStream(new File(chanDir, "index-new.dat"));
-                FileOutputStream outUnauth = new FileOutputStream(new File(chanDir, "index-unauthorized.dat"));
-                write(outAll, chan, false);
-                write(outNew, chan, true);
-                write(outFullAll, chan, false);
-                write(outFullNew, chan, true);
-                write(outFullMeta, chan);
-                writeUnauth(outUnauth, chan);
-                writeUnauth(outFullUnauth, chan);
-                outAll.close();
-                outNew.close();
-            }
-            outFullMeta.close();
-            outFullNew.close();
-            outFullAll.close();
-            outFullUnauth.close();
-            ui.statusMessage("Index rebuilt");
-        } catch (IOException ioe) {
-            ui.errorMessage("Error building the index", ioe);
-        }
+        //long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
+        SyndicationManager.buildIndex(client, ui); //, maxSize);
         ui.commandComplete(0, null);
-    }
-    
-    private void write(OutputStream out, ArchiveChannel chan) throws IOException {
-        write(out, chan, false, true);
-    }
-    private void write(OutputStream out, ArchiveChannel chan, boolean newOnly) throws IOException {
-        write(out, chan, newOnly, false);
-    }
-    private void write(OutputStream out, ArchiveChannel chan, boolean newOnly, boolean chanOnly) throws IOException {
-        chan.write(out, newOnly, chanOnly, false);
-    }
-    private void writeUnauth(OutputStream out, ArchiveChannel chan) throws IOException {
-        chan.write(out, true, false, true);
-    }
-    
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
-    private static final String when(long when) {
-        synchronized (_fmt) {
-            return _fmt.format(new Date(when));
-        }
     }
 }

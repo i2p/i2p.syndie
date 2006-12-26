@@ -169,7 +169,7 @@ public class LoginManager extends CommandImpl {
             ui.debugMessage("Blog channel metadata imported");
 
             KeyImport imp = new KeyImport();
-            Opts impOpts = new Opts(args);
+            Opts impOpts = new Opts(); //args);
             impOpts.setOptValue("keyfile", manageOutFile.getPath());
             impOpts.setOptValue("authentic", "true");
             impOpts.setCommand("keyimport");
@@ -184,7 +184,7 @@ public class LoginManager extends CommandImpl {
             }
             ui.debugMessage("Blog channel management key imported");
 
-            impOpts = new Opts(args);
+            impOpts = new Opts(); //args);
             impOpts.setOptValue("keyfile", replyOutFile.getPath());
             impOpts.setOptValue("authentic", "true");
             impOpts.setCommand("keyimport");

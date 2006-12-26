@@ -240,8 +240,6 @@ class PostMenu implements TextEngine.Menu {
     }
     
     private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
-    private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
-    private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
     /** channels */
     private void processChannels(DBClient client, UI ui, Opts opts) {
         _itemIteratorIndex = 0;
@@ -258,117 +256,44 @@ class PostMenu implements TextEngine.Menu {
             manageOnly = true;
         }
         
-        List manageKeys = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), null, Constants.KEY_FUNCTION_MANAGE);
-        ui.debugMessage("nym has access to " + manageKeys.size() + " management keys");
-        List pubKeys = new ArrayList();
+        boolean includeManage = true;
+        boolean includeIdent = true;
+        boolean includePost = !manageOnly;
+        boolean includePublicPost = !manageOnly;
+        DBClient.ChannelCollector channels = client.getChannels(includeManage, includeIdent, includePost, includePublicPost);
+        
         // first, go through and find all the 'identity' channels - those that we have
         // the actual channel signing key for
-        for (int i = 0; i < manageKeys.size(); i++) {
-            NymKey key = (NymKey)manageKeys.get(i);
-            if (key.getAuthenticated()) {
-                SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
-                pubKeys.add(pub);
-                Hash chan = pub.calculateHash();
-                long chanId = client.getChannelId(chan);
-                if (chanId >= 0) {
-                    ui.debugMessage("nym has the identity key for " + chan.toBase64());
-                    ChannelInfo info = client.getChannel(chanId);
-                    _itemKeys.add(new Long(chanId));
-                    _itemText.add("Identity channel " + CommandImpl.strip(info.getName()) + " (" + chan.toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                } else {
-                    ui.debugMessage("nym has a key that is not an identity key (" + chan.toBase64() + ")");
-                }
-            }
+        for (int i = 0; i < channels.getIdentityChannelCount(); i++) {
+            ChannelInfo info = channels.getIdentityChannel(i);
+            ui.debugMessage("nym has the identity key for " + info.getChannelHash().toBase64());
+            _itemKeys.add(new Long(info.getChannelId()));
+            _itemText.add("Identity channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
         
         // now, go through and see what other channels our management keys are
         // authorized to manage (beyond their identity channels)
-        Connection con = client.con();
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = con.prepareStatement(SQL_LIST_MANAGED_CHANNELS);
-            for (int i = 0; i < pubKeys.size(); i++) {
-                SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
-                stmt.setBytes(1, key.getData());
-                rs = stmt.executeQuery();
-                while (rs.next()) {
-                    // channelId
-                    long chanId = rs.getLong(1);
-                    if (!rs.wasNull()) {
-                        Long id = new Long(chanId);
-                        if (!_itemKeys.contains(id)) {
-                            ChannelInfo info = client.getChannel(chanId);
-                            if (info != null) {
-                                ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
-                                _itemKeys.add(id);
-                                _itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                            } else {
-                                ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
-                            }
-                        }
-                    }
-                }
-                rs.close();
-            }
-        } catch (SQLException se) {
-            ui.errorMessage("Internal error listing channels", se);
-            ui.commandComplete(-1, null);
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        for (int i = 0; i < channels.getManagedChannelCount(); i++) {
+            ChannelInfo info = channels.getManagedChannel(i);
+            ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
+            _itemKeys.add(new Long(info.getChannelId()));
+            _itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
-        
+
         // continue on to see what channels our management keys are
         // authorized to post in (beyond their identity and manageable channels)
-        stmt = null;
-        rs = null;
-        if (!manageOnly) {
-            try {
-                stmt = con.prepareStatement(SQL_LIST_POST_CHANNELS);
-                for (int i = 0; i < pubKeys.size(); i++) {
-                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
-                    stmt.setBytes(1, key.getData());
-                    rs = stmt.executeQuery();
-                    while (rs.next()) {
-                        // channelId
-                        long chanId = rs.getLong(1);
-                        if (!rs.wasNull()) {
-                            Long id = new Long(chanId);
-                            if (!_itemKeys.contains(id)) {
-                                ChannelInfo info = client.getChannel(chanId);
-                                if (info != null) {
-                                    ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
-                                    _itemKeys.add(id);
-                                    _itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                                } else {
-                                    ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
-                                }
-                            }
-                        }
-                    }
-                    rs.close();
-                }
-            } catch (SQLException se) {
-                ui.errorMessage("Internal error listing channels", se);
-                ui.commandComplete(-1, null);
-            } finally {
-                if (rs != null) try { rs.close(); } catch (SQLException se) {}
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-            }
+        for (int i = 0; i < channels.getPostChannelCount(); i++) {
+            ChannelInfo info = channels.getPostChannel(i);
+            ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
+            _itemKeys.add(new Long(info.getChannelId()));
+            _itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+        }
 
-            List channelIds = client.getPublicPostingChannelIds();
-            for (int i = 0; i < channelIds.size(); i++) {
-                Long id = (Long)channelIds.get(i);
-                if (!_itemKeys.contains(id)) {
-                    ChannelInfo info = client.getChannel(id.longValue());
-                    if (info != null) {
-                        _itemKeys.add(id);
-                        _itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                    }
-                }            
-            }
+        // now for channels anyone can post to
+        for (int i = 0; i < channels.getPublicPostChannelCount(); i++) {
+            ChannelInfo info = channels.getPublicPostChannel(i);
+            _itemKeys.add(new Long(info.getChannelId()));
+            _itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
         
         ui.statusMessage(_itemKeys.size() + " channels matched - use 'next' to view them");
@@ -616,13 +541,18 @@ class PostMenu implements TextEngine.Menu {
             ui.statusMessage("Page " + page + " (loaded from " + CommandImpl.strip(filename) + " (type: " + CommandImpl.strip(type) + ")");
             
             File f = new File(filename);
+            BufferedReader in = null;
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null)
                     ui.statusMessage(line);
+                in.close();
+                in = null;
             } catch (IOException ioe) {
                 ui.errorMessage("Error previewing the page", ioe);
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         }
         
@@ -705,17 +635,21 @@ class PostMenu implements TextEngine.Menu {
         File f = null;
         if ("stdin".equalsIgnoreCase(in)) {
             String content = ui.readStdIn();
+            FileWriter out = null;
             try {
                 f = File.createTempFile("stdin", ".txt", client.getTempDir());
-                FileWriter out = new FileWriter(f);
+                out = new FileWriter(f);
                 out.write(content);
                 out.close();
+                out = null;
                 in = f.getPath();
                 deleteAfterPost = true;
             } catch (IOException ioe) {
                 ui.errorMessage("Error buffering the new page", ioe);
                 ui.commandComplete(-1, null);
                 return;
+            } finally {
+                if (out != null) try { out.close(); } catch (IOException ioe) {}
             }
         }
         f = new File(in);
@@ -1298,7 +1232,7 @@ class PostMenu implements TextEngine.Menu {
         ui.statusMessage("Reference added");
     }
     
-    private class Walker implements ReferenceNode.Visitor {
+    private static class Walker implements ReferenceNode.Visitor {
         private int _nodes;
         public Walker() { _nodes = 0; }
         public void visit(ReferenceNode node, int depth, int siblingOrder) { _nodes++; }
@@ -1319,7 +1253,7 @@ class PostMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     
-    private class ListWalker implements ReferenceNode.Visitor {
+    private static class ListWalker implements ReferenceNode.Visitor {
         private UI _ui;
         private int _nodes;
         public ListWalker(UI ui) { _ui = ui; _nodes = 0; }

@@ -34,8 +34,13 @@ public class TextEngine {
     private NestedGobbleUI _gobbleUI;
     private UI _realUI;
     private List _commandHistory;
+    private List _scriptListeners;
         
-    public TextEngine(String rootDir, UI ui) {
+    public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
+    public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
+        _scriptListeners = new ArrayList();
+        if (lsnr != null)
+            _scriptListeners.add(lsnr);
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
@@ -45,6 +50,35 @@ public class TextEngine {
         rebuildMenus();
         buildInstallDir();
         _client.runScript(_ui, "startup");
+    }
+
+    public TextEngine(DBClient client, UI ui) { this(client, ui, null); }
+    public TextEngine(DBClient client, UI ui, ScriptListener lsnr) {
+        _scriptListeners = new ArrayList();
+        if (lsnr != null)
+            _scriptListeners.add(lsnr);
+        _client = client;
+        _realUI = new MenuUI(ui);
+        _ui = _realUI;
+        _gobbleUI = new NestedGobbleUI(_realUI);
+        _exit = false;
+        _rootFile = client.getRootDir().getAbsolutePath();
+        _commandHistory = new ArrayList();
+        _ui.debugMessage("intantiating textengine");
+        rebuildMenus();
+        buildInstallDir();
+        if ( (_client != null) && (_client.isLoggedIn()) ) {
+            _ui.statusMessage("Already logged in");
+            _currentMenu = LoggedInMenu.NAME;
+            processPrefs(new Opts());
+        } else {
+            _ui.statusMessage("Custom text engine is not yet logged in");
+        }
+        _client.runScript(_ui, "startup");
+    }
+    
+    public interface ScriptListener {
+        public void scriptComplete(String script);
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -72,11 +106,11 @@ public class TextEngine {
 
     public boolean runStep() {
         try {
-	    return doRunStep();
-	} catch (RuntimeException re) {
-	    _ui.errorMessage("Internal error", re);
-	    return true;
-	}
+            return doRunStep();
+        } catch (RuntimeException re) {
+            _ui.errorMessage("Internal error", re);
+            return true;
+        }
     }
 
     private boolean doRunStep() {
@@ -85,6 +119,7 @@ public class TextEngine {
         String cmdStr = opts.getCommand();
         boolean ignored = true;
         String origLine = opts.getOrigLine();
+        _ui.debugMessage("read command: " + origLine);
         if ( (cmdStr == null) || (cmdStr.trim().startsWith("--")) ) {
             // noop
         } else if (processMeta(opts) || processMenu(opts)) {
@@ -153,7 +188,8 @@ public class TextEngine {
         if (!archiveIntro.exists())
             installResource("/defaultarchiveindex", archiveIntro);
         
-        _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
+        if (_client == null)
+            _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
         
         if (dbDirCreated) {
             // so it doesn't gather 'command completed'/etc messages on the screen
@@ -182,7 +218,7 @@ public class TextEngine {
         InputStream in = null;
         FileOutputStream fos = null;
         try {
-            in = getClass().getResourceAsStream(name);
+            in = TextEngine.class.getResourceAsStream(name);
             fos = new FileOutputStream(toFile);
             if (in != null) {
                 byte buf[] = new byte[1024];
@@ -247,10 +283,15 @@ public class TextEngine {
             pass = DEFAULT_PASS;
         }
         
-        if (_client == null)
+        if (_client == null) {
             _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
-        else
-            _client.close();
+        } else if (_client.isLoggedIn()) {
+            if (_client.getLogin().equals(login)) {
+                _ui.statusMessage("Login successful (already logged in)");
+                _client.runScript(_ui, "login");
+                return;
+            }
+        }
         try {
             if (pass == null)
                 pass = "";
@@ -438,9 +479,22 @@ public class TextEngine {
         } else if ("alias".equalsIgnoreCase(cmd)) {
             processAlias(opts);
             return true;
+        } else if ("definecmd".equalsIgnoreCase(cmd)) {
+            processDefineCommand(opts);
+            return true;
         } else if ("?".equalsIgnoreCase(cmd) || "help".equalsIgnoreCase(cmd)) {
             help();
             _ui.commandComplete(0, null);
+            return true;
+        } else if ("notifyscriptend".equals(cmd)) {
+            List args = opts.getArgs();
+            _ui.debugMessage("notifyscriptend found: " + args);
+            if (args.size() > 0) {
+                String script = (String)args.get(0);
+                _ui.debugMessage("notifying for " + script);
+                for (int i = 0; i < _scriptListeners.size(); i++)
+                    ((ScriptListener)_scriptListeners.get(i)).scriptComplete(script);
+            }
             return true;
         } else {
             return false;
@@ -499,7 +553,7 @@ public class TextEngine {
                 orig = cmd.substring(1, searchEnd);
                 replacement = cmd.substring(searchEnd+1);
             }
-            String newVal = replace(prev, orig, replacement, 1);
+            String newVal = Constants.replace(prev, orig, replacement, 1);
             _ui.insertCommand(newVal);
         } else {
             _ui.errorMessage("No history to mangle");
@@ -507,31 +561,28 @@ public class TextEngine {
         }
     }
     
-    private static final String replace(String orig, String oldval, String newval, int howManyReplacements) {
-        if ( (orig == null) || (oldval == null) || (oldval.length() <= 0) ) return orig;
-        
-        StringBuffer rv = new StringBuffer();
-        char origChars[] = orig.toCharArray();
-        char search[] = oldval.toCharArray();
-        int numReplaced = 0;
-        for (int i = 0; i < origChars.length; i++) {
-            boolean match = true;
-            if (howManyReplacements <= numReplaced)
-                match = false; // matched enough, stop
-            for (int j = 0; match && j < search.length && (j + i < origChars.length); j++) {
-                if (search[j] != origChars[i+j])
-                    match = false;
+    private void processDefineCommand(Opts opts) {
+        String cmdName = opts.getOptValue("name");
+        String className = opts.getOptValue("class");
+        if ( (cmdName != null) && (className != null) ) {
+            try {
+                Class cls = Class.forName(className);
+                if (CLI.Command.class.isAssignableFrom(cls)) {
+                    CLI.setCommand(cmdName, cls);
+                    _ui.statusMessage("Defined [" + cmdName + "] to run the command [" + cls.getName() + "]");
+                    _ui.commandComplete(0, null);
+                } else {
+                    _ui.errorMessage("Specified command [" + cls.getName() + "] is not a valid CLI.Command");
+                    _ui.commandComplete(-1, null);
+                }
+            } catch (ClassNotFoundException cnfe) {
+                _ui.errorMessage("Specified command [" + className + "] was not found");
+                _ui.commandComplete(-1, null);
             }
-            if (match) {
-                if (newval != null)
-                    rv.append(newval);
-                i += search.length-1;
-                numReplaced++;
-            } else {
-                rv.append(origChars[i]);
-            }
+        } else {
+            _ui.errorMessage("Usage: definecmd --name $commandName --class javaClassName");
+            _ui.commandComplete(-1, null);
         }
-        return rv.toString();
     }
     
     private void processAlias(Opts opts) {
@@ -622,12 +673,14 @@ public class TextEngine {
     }
     
     private void processInit(Opts opts) {
+        if ( (_client != null) && (_client.isLoggedIn()) ) return;
         List args = opts.getArgs();
         String url = getDefaultURL();
         if (args.size() == 1)
             url = (String)args.get(0);
         try {
-            _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
+            if (_client == null)
+                _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
             _client.connect(url);
             //_client.close();
             _ui.statusMessage("Database created at " + url);
@@ -764,36 +817,8 @@ public class TextEngine {
             }
             _ui.statusMessage("Preference: paginate output? " + paginate);
         }
-        _client.setDefaultHTTPProxyHost(prefs.getProperty("httpproxyhost"));
-        String port = prefs.getProperty("httpproxyport");
-        if (port != null) {
-            try {
-                int num = Integer.parseInt(port);
-                _client.setDefaultHTTPProxyPort(num);
-            } catch (NumberFormatException nfe) {
-                _ui.errorMessage("HTTP proyx port preference is invalid", nfe);
-                _client.setDefaultHTTPProxyPort(-1);
-            }
-        } else {
-            _client.setDefaultHTTPProxyPort(-1);
-        }
+        _client.loadProxyConfig(prefs);
         _client.setDefaultHTTPArchive(prefs.getProperty("archive"));
-        
-        _client.setDefaultFreenetPrivateKey(prefs.getProperty("freenetPrivateKey"));
-        _client.setDefaultFreenetPublicKey(prefs.getProperty("freenetPublicKey"));
-        _client.setDefaultFreenetHost(prefs.getProperty("fcpHost"));
-        port = prefs.getProperty("fcpPort");
-        if (port != null) {
-            try {
-                int num = Integer.parseInt(port);
-                _client.setDefaultFreenetPort(num);
-            } catch (NumberFormatException nfe) {
-                _ui.errorMessage("Freenet port preference is invalid", nfe);
-                _client.setDefaultFreenetPort(-1);
-            }
-        } else {
-            _client.setDefaultFreenetPort(-1);
-        }
         
         if ( (_client.getDefaultHTTPProxyHost() != null) && (_client.getDefaultHTTPProxyPort() > 0) )
             _ui.statusMessage("Preference: default HTTP proxy: " + _client.getDefaultHTTPProxyHost() + ":" + _client.getDefaultHTTPProxyPort());
@@ -848,9 +873,8 @@ public class TextEngine {
                 String db = opts.getOptValue("db");
                 if (db == null)
                     db = getDefaultURL();
-                if (client == null) {
+                if (client == null)
                     client = new DBClient(I2PAppContext.getGlobalContext(), new File(_rootFile));
-                }
                 client.restore(ui, in, db);
                 return true;
             } else {

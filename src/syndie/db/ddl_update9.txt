@@ -1,0 +1,9 @@
+-- update the database from schema version 9
+-- this version 10 helps deal with syndication schedule failures
+--
+
+UPDATE appVersion SET versionNum = 10, visibleVersion = 'Syndication scheduling';
+
+-- how many consecutive failed syncs have we had (used to exponentially
+-- decrease the attempt frequency)
+ALTER TABLE nymArchive ADD consecutiveFailures INTEGER DEFAULT 0;

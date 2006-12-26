@@ -128,14 +128,19 @@ public class Enclosure {
         }
     }
     
-    public String[] getHeaderStrings(String key) {
-        return toStrings(_publicHeaders.getProperty(key));
+    public String[] getHeaderStrings(String key) { return getHeaderStrings(key, false); }
+    public String[] getHeaderStrings(String key, boolean splitByCommaToo) { 
+        return toStrings(_publicHeaders.getProperty(key), splitByCommaToo);
     }
-    public static String[] toStrings(String val) {
+    public static String[] toStrings(String val) { return toStrings(val, false); }
+    public static String[] toStrings(String val, boolean splitByCommaToo) {
         if (val == null)
             return null;
-        else
-            return Constants.split('\t', val); //val.split("\t");
+        else if (!splitByCommaToo)
+            return Constants.split("\t", val); //val.split("\t");
+        else {
+            return Constants.split("\t,", val);
+        }
     }
     public Boolean getHeaderBoolean(String key) {
         return toBoolean(_publicHeaders.getProperty(key));

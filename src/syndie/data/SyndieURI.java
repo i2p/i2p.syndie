@@ -28,7 +28,39 @@ public class SyndieURI {
     public SyndieURI(String type, Map attributes) {
         this(type, new TreeMap(attributes));
     }
-    
+    /** 
+     * populate the new URI with the given primary URI's settings, falling back on the given
+     * default values for attriutes that aren't in the primary URI
+     */
+    public SyndieURI(SyndieURI primary, SyndieURI defaultValues) {
+        if (defaultValues != null) {
+            _attributes = new TreeMap(defaultValues.getAttributes());
+            _type = defaultValues.getType();
+        }
+        if (primary != null) {
+            if (primary.getType() != null)
+                _type = primary.getType();
+            if (primary.getAttributes() != null)
+                _attributes.putAll(primary.getAttributes());
+        }
+    }
+
+    public static SyndieURI createRelativePage(int pageNum) {
+        String uri = "urn:syndie:channel:d4:pagei" + pageNum + "ee";
+        try {
+            return new SyndieURI(uri);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Hmm, encoded URI is not valid: " + use.getMessage() + " [" + uri + "]");
+        }
+    }
+    public static SyndieURI createRelativeAttachment(int attachmentNum) {
+        String uri = "urn:syndie:channel:d10:attachmenti" + attachmentNum + "ee";
+        try {
+            return new SyndieURI(uri);
+        } catch (URISyntaxException use) {
+            throw new RuntimeException("Hmm, encoded URI is not valid: " + use.getMessage() + " [" + uri + "]");
+        }
+    }
     public static SyndieURI createSearch(String searchString) {
         String searchURI = "urn:syndie:search:d7:keyword" + searchString.length() + ":" + searchString + "e";
         try {
@@ -38,6 +70,66 @@ public class SyndieURI {
         }
     }
 
+    public SyndieURI createSearch() { return createSearch(getScope()); }
+    
+    public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch((Hash)null);
+    public static SyndieURI createSearch(Hash channel) {
+        String scopes[] = null;
+        if (channel != null)
+            scopes = new String[] { channel.toBase64() };
+        return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
+                            null, null, null, null, null, null, null, null, false, false, false, true);
+    }
+    
+    /**
+     * parameters here map to the fields @ doc/web/spec.html#uri_search
+     */
+    public static SyndieURI createSearch(String scopes[], String author, Long postDays, Long recvDays,
+                                         String inc[], String req[], String excl[], boolean msgs,
+                                         Long pageMin, Long pageMax, Long attachMin, Long attachMax,
+                                         Long refMin, Long refMax, Long keyMin, Long keyMax,
+                                         boolean encrypted, boolean pbe, boolean priv, boolean threaded) {
+        HashMap attributes = new HashMap();
+        if ( (scopes != null) && (scopes.length > 0) )
+            attributes.put("scope", scopes);
+        if (author != null)
+            attributes.put("author", author);
+        if (recvDays != null)
+            attributes.put("agelocal", recvDays);
+        if (postDays != null)
+            attributes.put("age", postDays);
+        if ( (inc != null) && (inc.length > 0) )
+            attributes.put("taginclude", inc);
+        if ( (excl != null) && (excl.length > 0) )
+            attributes.put("tagexclude", excl);
+        if ( (req != null) && (req.length > 0) )
+            attributes.put("tagrequire", req);
+        if ( (pageMin != null) && (pageMin.intValue() >= 0) )
+            attributes.put("pagemin", pageMin);
+        if ( (pageMax != null) && (pageMax.intValue() >= 0) )
+            attributes.put("pagemax", pageMax);
+        if ( (attachMin != null) && (attachMin.intValue() >= 0) )
+            attributes.put("attachmin", attachMin);
+        if ( (attachMax != null) && (attachMax.intValue() >= 0) )
+            attributes.put("attachmax", attachMax);
+        if ( (refMin != null) && (refMin.intValue() >= 0) )
+            attributes.put("refmin", refMin);
+        if ( (refMax != null) && (refMax.intValue() >= 0) )
+            attributes.put("refmax", refMax);
+        if ( (keyMin != null) && (keyMin.intValue() >= 0) )
+            attributes.put("keymin", keyMin);
+        if ( (keyMax != null) && (keyMax.intValue() >= 0) )
+            attributes.put("keymax", keyMax);
+        
+        attributes.put("tagmessages", msgs ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("encrypted", encrypted ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("pbe", pbe ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("private", priv ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("threaded", threaded ? Boolean.TRUE : Boolean.FALSE);
+        
+        return new SyndieURI("search", attributes);
+    }
+    
     public static SyndieURI createURL(String url) {
         StringBuffer buf = new StringBuffer();
         buf.append("urn:syndie:url:d");
@@ -71,6 +163,24 @@ public class SyndieURI {
             return null;
         }
     }
+    public static SyndieURI createArchive(String url, String name, String description) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("urn:syndie:archive:d");
+        if (url != null)
+            buf.append("3:url").append(url.length()).append(':').append(url);
+        if (name != null)
+            buf.append("4:name").append(name.length()).append(':').append(name);
+        if (description != null)
+            buf.append("4:desc").append(description.length()).append(':').append(description);
+        buf.append("e");
+        try {
+            return new SyndieURI(buf.toString());
+        } catch (URISyntaxException use) {
+            System.err.println("attempted: " + buf.toString());
+            use.printStackTrace();
+            return null;
+        }
+    }
     public static SyndieURI createScope(Hash scope) { return createMessage(scope, -1, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId) { return createMessage(scope, msgId, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId, int pageNum) {
@@ -84,6 +194,28 @@ public class SyndieURI {
                 buf.append("9:messageIdi").append(msgId).append("e");
                 if (pageNum >= 0)
                     buf.append("4:pagei").append(pageNum).append("e");
+            }
+        }
+        buf.append('e');
+        try {
+            return new SyndieURI(buf.toString());
+        } catch (URISyntaxException use) {
+            System.err.println("attempted: " + buf.toString());
+            use.printStackTrace();
+            return null;
+        }
+    }
+    public static SyndieURI createAttachment(Hash scope, long msgId, int attachmentNum) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("urn:syndie:channel:d");
+        if (scope != null) {
+            buf.append("7:channel");
+            String ch = scope.toBase64();
+            buf.append(ch.length()).append(':').append(ch);
+            if (msgId >= 0) {
+                buf.append("9:messageIdi").append(msgId).append("e");
+                if (attachmentNum >= 0)
+                    buf.append("10:attachmenti").append(attachmentNum).append("e");
             }
         }
         buf.append('e');
@@ -176,6 +308,7 @@ public class SyndieURI {
     private static final String TYPE_CHANNEL = "channel";
     private static final String TYPE_ARCHIVE = "archive";
     private static final String TYPE_TEXT = "text";
+    private static final String TYPE_SEARCH = "search";
     
     /** does this this URI maintain a reference to a URL? */
     public boolean isURL() { return TYPE_URL.equals(_type); }
@@ -185,11 +318,18 @@ public class SyndieURI {
     public boolean isArchive() { return TYPE_ARCHIVE.equals(_type); }
     /** does this this URI maintain a reference to a URL? */
     public boolean isText() { return TYPE_TEXT.equals(_type); }
+    public boolean isSearch() { return TYPE_SEARCH.equals(_type); }
     
     public String getType() { return _type; }
     public Map getAttributes() { return _attributes; }
     
-    public String getString(String key) { return (String)_attributes.get(key); }
+    public String getString(String key) { 
+        Object o = _attributes.get(key);
+        if (o == null)
+            return null;
+        else
+            return o.toString();
+    }
     public Long getLong(String key) { return (Long)_attributes.get(key); }
     public String[] getStringArray(String key) { return (String[])_attributes.get(key); }
     public boolean getBoolean(String key, boolean defaultVal) {
@@ -203,9 +343,19 @@ public class SyndieURI {
         else
             return Boolean.valueOf(str).booleanValue();
     }
+    public String getURL() { return getString("url"); }
     public Hash getScope() { return getHash("channel"); }
-    private Hash getHash(String key) {
-        String val = (String)_attributes.get(key);
+    public Hash getHash(String key) {
+        Object obj = _attributes.get(key);
+        if (obj == null) return null;
+        String val = null;
+        if (obj.getClass().isArray()) {
+            String vals[] = (String[])obj;
+            if (vals.length == 0) return null;
+            val = vals[0];
+        } else {
+            val = obj.toString();
+        }
         if (val != null) {
             byte b[] = Base64.decode(val);
             if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
@@ -214,41 +364,60 @@ public class SyndieURI {
         return null;
     }
     public SessionKey getReadKey() {
-        byte val[] = getBytes("readKey");
+        byte val[] = decodeKey(getString("readKey"), SessionKey.KEYSIZE_BYTES);
+        if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
+            return new SessionKey(val);
+        else
+            return null;
+    }
+    public SessionKey getArchiveKey() {
+        byte val[] = decodeKey(getString(Constants.URI_ARCHIVE_PASSPHRASE), SessionKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
             return new SessionKey(val);
         else
             return null;
     }
     public SigningPrivateKey getPostKey() {
-        byte val[] = getBytes("postKey");
+        byte val[] = decodeKey(getString("postKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
             return new SigningPrivateKey(val);
         else
             return null;
     }
+    public byte[] getPostKeyData() {
+        String str = getString("postKeyData");
+        if (str != null)
+            return Base64.decode(str);
+        else
+            return null;
+    }
+    public String getArchivePassphrase() {
+        String str = getString("postKeyData");
+        if (str != null) {
+            byte data[] = Base64.decode(str);
+            if (data != null)
+                return DataHelper.getUTF8(data);
+        }
+        return null;
+    }
     public SigningPrivateKey getManageKey() {
-        byte val[] = getBytes("manageKey");
+        byte val[] = decodeKey(getString("manageKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
             return new SigningPrivateKey(val);
         else
             return null;
     }
     public PrivateKey getReplyKey() {
-        byte val[] = getBytes("replyKey");
+        byte val[] = decodeKey(getString("replyKey"), PrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == PrivateKey.KEYSIZE_BYTES) )
             return new PrivateKey(val);
         else
             return null;
     }
-    private byte[] getBytes(String key) {
-        String val = (String)_attributes.get(key);
-        if (val != null)
-            return Base64.decode(val);
-        else
-            return null;
-    }
     public Long getMessageId() { return getLong("messageId"); }
+    public Long getAttachment() { return getLong("attachment"); }
+    public Long getPage() { return getLong("page"); }
+    public Hash getSearchScope() { return getHash("scope"); }
     
     public void fromString(String bencodedURI) throws URISyntaxException {
         if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");
@@ -261,7 +430,13 @@ public class SyndieURI {
             throw new URISyntaxException(bencodedURI, "No bencoded attributes");
         _type = bencodedURI.substring(0, endType);
         bencodedURI = bencodedURI.substring(endType+1);
-        _attributes = bdecode(bencodedURI);
+        try { 
+            _attributes = bdecode(bencodedURI);
+        } catch (IllegalArgumentException iae) {
+            throw new URISyntaxException(bencodedURI, "Error bencoding: " + iae.getMessage());
+        } catch (IndexOutOfBoundsException ioobe) {
+            throw new URISyntaxException(bencodedURI, "Error bencoding: " + ioobe.getMessage());
+        }
         if (_attributes == null) {
             throw new URISyntaxException(bencodedURI, "Invalid bencoded attributes");
         }
@@ -272,8 +447,40 @@ public class SyndieURI {
         return _stringified;
     }
     
-    public boolean equals(Object obj) { return toString().equals(obj.toString()); }
+    private static final Set SENSITIVE_ATTRIBUTES = new HashSet();
+    static {
+        SENSITIVE_ATTRIBUTES.add("readKey");
+        SENSITIVE_ATTRIBUTES.add("postKey");
+        SENSITIVE_ATTRIBUTES.add("replyKey");
+        SENSITIVE_ATTRIBUTES.add("manageKey");
+        SENSITIVE_ATTRIBUTES.add("identKey");
+    }
+    /** true if the given uri attribute is one carrying private key information */
+    public static boolean isSensitiveAttribute(String name) {
+        return (name != null) && SENSITIVE_ATTRIBUTES.contains(name);
+    }
+    
+    public boolean equals(Object obj) { return (obj != null) && toString().equals(obj.toString()); }
     public int hashCode() { return toString().hashCode(); }
+
+    public static String encodeKey(byte orig[]) {
+        int remaining = orig.length;
+        int start = 0;
+        while ( (remaining > 0) && (orig[start] == 0x00) ) {
+            remaining--;
+            start++;
+        }
+        return Base64.encode(orig, start, remaining);
+    }
+    public static byte[] decodeKey(String orig, int size) {
+        byte rv[] = new byte[size];
+        byte decoded[] = Base64.decode(orig);
+        if (decoded == null) return null;
+        if (decoded.length > size) return null;
+        for (int i = 0; i < decoded.length; i++)
+            rv[size-i-1] = decoded[decoded.length-1-i];
+        return rv;
+    }
     
     public static void main(String args[]) { test(); }
     private static void test() {
@@ -289,6 +496,8 @@ public class SyndieURI {
             throw new RuntimeException("failed on strings");
         if (!test(createList()))
             throw new RuntimeException("failed on list");
+        if (!test(createEmptyList()))
+            throw new RuntimeException("failed on empty list");
         if (!test(createMixed()))
             throw new RuntimeException("failed on mixed");
         if (!test(createMultiMixed()))
@@ -306,6 +515,14 @@ public class SyndieURI {
         for (int i = 0; i < 8; i++)
             m.put("key" + i, "val" + i);
         String str[] = new String[] { "stringElement1", "stringElement2", "stringElement3" };
+        m.put("stringList", str);
+        return m;
+    }
+    private static TreeMap createEmptyList() {
+        TreeMap m = new TreeMap();
+        for (int i = 0; i < 8; i++)
+            m.put("key" + i, "val" + i);
+        String str[] = new String[0];
         m.put("stringList", str);
         return m;
     }
@@ -379,10 +596,11 @@ public class SyndieURI {
     private static final String bencode(TreeMap attributes) {
         StringBuffer buf = new StringBuffer(64);
         buf.append('d');
-        for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
+        for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            String key = (String)entry.getKey();
             buf.append(key.length()).append(':').append(key);
-            buf.append(bencode(attributes.get(key)));
+            buf.append(bencode(entry.getValue()));
         }
         buf.append('e');
         return buf.toString();
@@ -413,19 +631,27 @@ public class SyndieURI {
                     List l = new ArrayList();
                     boolean ok = true;
                     remaining.deleteCharAt(0);
-                    while (bdecodeNext(remaining, l)) {
-                        if (remaining.charAt(0) == 'e') {
-                            String str[] = new String[l.size()];
-                            for (int i = 0; i < str.length; i++)
-                                str[i] = (String)l.get(i);
-                            target.put(key, str);
-                            key = null;
-                            remaining.deleteCharAt(0);
-                            return;
+                    if (remaining.charAt(0) == 'e') {
+                        // 0 element list
+                        remaining.deleteCharAt(0);
+                        target.put(key, new String[0]);
+                        key = null;
+                        return;
+                    } else {
+                        while (bdecodeNext(remaining, l)) {
+                            if (remaining.charAt(0) == 'e') {
+                                String str[] = new String[l.size()];
+                                for (int i = 0; i < str.length; i++)
+                                    str[i] = (String)l.get(i);
+                                target.put(key, str);
+                                key = null;
+                                remaining.deleteCharAt(0);
+                                return;
+                            }
                         }
+                        // decode failed
+                        throw new URISyntaxException(remaining.toString(), "Unterminated list");
                     }
-                    // decode failed
-                    throw new URISyntaxException(remaining.toString(), "Unterminated list");
                 case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
                     String str = bdecodeNext(remaining);
                     if (str == null) {
@@ -470,10 +696,14 @@ public class SyndieURI {
         int br = remaining.indexOf(":");
         if (br <= 0)
             return null;
+        if (br >= remaining.length())
+            return null;
         String len = remaining.substring(0, br);
         try {
             int sz = Integer.parseInt(len);
             remaining.delete(0, br+1);
+            if (sz > remaining.length())
+                throw new IllegalArgumentException("bad length (" + len + ") with " + remaining.length() + " left");;
             String val = remaining.substring(0, sz);
             remaining.delete(0, sz);
             return val;

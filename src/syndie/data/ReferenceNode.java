@@ -47,6 +47,7 @@ public class ReferenceNode {
     public ReferenceNode getParent() { return _parent; }
     public String getTreeIndex() { return _treeIndex; }
     public int getTreeIndexNum() { return _treeIndexNum; }
+    public long getUniqueId() { return hashCode(); }
     
     public void setName(String name) { _name = name; }
     public void setURI(SyndieURI uri) { _uri = uri; }
@@ -77,6 +78,21 @@ public class ReferenceNode {
         _children.remove(child);
         // does not reindex!
         child._parent = null;
+    }
+    public void clearChildren() { _children.clear(); }
+    
+    public ReferenceNode getByUniqueId(long id) {
+        if (getUniqueId() == id) {
+            return this;
+        } else {
+            for (int i = 0; i < getChildCount(); i++) {
+                ReferenceNode child = getChild(i);
+                ReferenceNode found = child.getByUniqueId(id);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
     }
     
     /** 
@@ -210,6 +226,23 @@ public class ReferenceNode {
             ReferenceNode child = (ReferenceNode)_children.get(i);
             child.walk(visitor, depth+1, i);
         }
+    }
+    
+    public static ArrayList deepCopy(List orig) {
+        if (orig == null) return new ArrayList();;
+        ArrayList rv = new ArrayList(orig.size());
+        for (int i = 0; i < orig.size(); i++) {
+            ReferenceNode node = (ReferenceNode)orig.get(i);
+            rv.add(deepCopy(node));
+        }
+        return rv;
+    }
+    public static ReferenceNode deepCopy(ReferenceNode node) {
+        if (node == null) return null;
+        ReferenceNode copy = new ReferenceNode(node.getName(), node.getURI(), node.getDescription(), node.getReferenceType());
+        for (int i = 0; i < node.getChildCount(); i++)
+            copy.addChild(deepCopy(node.getChild(i)));
+        return copy;
     }
     
     public interface Visitor {

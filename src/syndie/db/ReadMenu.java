@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -614,23 +615,29 @@ class ReadMenu implements TextEngine.Menu {
             }
 
             Set tagsRequired = new HashSet();
+            Set tagsWanted = new HashSet();
             Set tagsRejected = new HashSet();
             if (tags != null) {
                 for (int i = 0; i < tags.size(); i++) {
                     String tag = (String)tags.get(i);
-                    if (tag.startsWith("-"))
+                    if (tag.startsWith("-") && (tag.length() > 1))
                         tagsRejected.add(tag.substring(1));
+                    else if (tag.startsWith("+") && (tag.length() > 1))
+                        tagsRequired.add(tag.substring(1));
                     else
-                        tagsRequired.add(tag);
+                        tagsWanted.add(tag);
                 }
             }
 
             ui.debugMessage("Channels: " + (channelHashes == null ? "ALL" : channelHashes.toString()));
             ui.debugMessage("Required tags: " + tagsRequired.toString());
+            ui.debugMessage("Wanted tags:   " + tagsWanted.toString());
             ui.debugMessage("Rejected tags: " + tagsRejected.toString());
 
             ThreadAccumulator accumulator = new ThreadAccumulator(client, ui);
-            accumulator.gatherThreads(channelHashes, tagsRequired, tagsRejected);
+            accumulator.setTags(tagsRequired, tagsWanted, tagsRejected);
+            accumulator.setScope(channelHashes);
+            accumulator.gatherThreads();
             Map order = new TreeMap(new HighestFirstComparator());
             for (int i = 0; i < accumulator.getThreadCount(); i++) {
                 long mostRecentDate = accumulator.getMostRecentDate(i);
@@ -717,7 +724,7 @@ class ReadMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     
-    private static final class HighestFirstComparator implements Comparator {
+    private static final class HighestFirstComparator implements Comparator, Serializable {
         public int compare(Object lhs, Object rhs) {
             if (lhs instanceof Long)
                 return -1*((Long)lhs).compareTo((Long)rhs);
@@ -1639,7 +1646,7 @@ class ReadMenu implements TextEngine.Menu {
         NestedUI nestedUI = new NestedUI(ui);
         try {
             ui.debugMessage("Importing from " + archivedFile.getPath());
-            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(), client.getPass(), passphrase);
+            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(), client.getPass(), passphrase, false);
             if (ok) {
                 if (nestedUI.getExitCode() == 0) {
                     ui.statusMessage("Decrypted successfully");

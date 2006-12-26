@@ -15,6 +15,10 @@ public class ArchiveInfo {
         _readAllowed = false;
         _uri = null;
     }
+    public ArchiveInfo(SyndieURI uri) {
+        this();
+        _uri = uri;
+    }
     
     public long getArchiveId() { return _archiveId; }
     public void setArchiveId(long id) { _archiveId = id; }
@@ -25,7 +29,7 @@ public class ArchiveInfo {
     public SyndieURI getURI() { return _uri; }
     public void setURI(SyndieURI uri) { _uri = uri; }
     
-    public boolean equals(Object o) { return ((ArchiveInfo)o)._archiveId == _archiveId; }
+    public boolean equals(Object o) { return (o instanceof ArchiveInfo) ? ((ArchiveInfo)o)._archiveId == _archiveId : false; }
     public int hashCode() { return (int)_archiveId; }
     public String toString() { return "Archive " + _archiveId + ": " + _uri; }
 }

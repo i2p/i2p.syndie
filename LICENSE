@@ -17,3 +17,10 @@ as documented (removing other BouncyCastle dependencies).  These
 files are located under src/org/bouncycastle/ and are licensed
 according to the BouncyCastle license (an MIT-style license).
 
+The jazzy 0.5.2 spellchecking engine (under src/com/swabunga) is
+LGPL licensed.
+
+SWT is used for the GUI, and is either bundled with various installers
+or is linked by the end user.  The bundled releases are distributed
+under SWT's terms (the Eclipse Public License) - see the EPL for more
+details at http://www.eclipse.org/legal/epl-v10.html.

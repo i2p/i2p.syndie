@@ -59,7 +59,7 @@ at <code>mtn.i2p.net</code>, as described on the
 
 <p>Installation packages for <a href="download.html">download</a> are
 built with various ant targets:<ul>
-<li><b><code>syndie-$version.bin.exe</code></b><br />
+<li><b><code>syndie-$version.bin.$platform.exe</code></b><br />
     <i>(java installer, includes bin/syndie.exe java launcher)</i><br />
     built with the "installer-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" and
@@ -70,17 +70,26 @@ built with various ant targets:<ul>
     built with the "java-package-exe" target, but requires
     "-Dlaunch4jdir=/path/to/launch4j" (e.g.
     <code>ant -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
+    <!--
 <li><b><code>syndie-$version.bin-noexe.zip</code></b><br />
     <i>(no java installer, without bin/syndie.exe java launcher)</i><br />
     built with the "java-package" target</li>
+    -->
+<li><b><code>syndie-$version.src.nodeps.tar.bz2</code></b><br />
+    <i>(source package without hsqldb)</i><br />
+    built with the "source-nodeps-package" target</li>
 <li><b><code>syndie-$version.src.tar.bz2</code></b><br />
-    <i>(source package)</i><br />
+    <i>(source package with hsqldb)</i><br />
     built with the "source-package" target</li>
 </ul></p>
 
 <p>All of the packages can be built into <code>doc/web/dist/</code> with
 "<code>ant dist</code>", though you need to include the settings required for
-<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code></p>
+<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code>.  Note that it bundles
+the swt.jar from several platforms - to run "ant dist", you will need to
+<a href="http://www.eclipse.org/swt/">download</a> those files and set the
+<code>swt.linux32</code>, <code>swt.win32</code>, <code>swt.osx</code> properties
+to point at the correct swt.jar files.  Additional targets will likely be added.</p>
 
 <p>With a modern GCC/GCJ (releases prior to 4.0 will fail when they try to
 write to the database), you can build native Syndie executables.  On *nix/osx, 
@@ -90,6 +99,26 @@ write to the database), you can build native Syndie executables.  On *nix/osx,
 syndie-$version.bin.zip, except bin/syndie is the native executable instead
 of a shell script launching java.  Work is ongoing for GCJ/MinGW support, but
 the Makefile.mingw should work with a viable MinGW install of GCJ 4.x</p>
+
+<p>Coding conventions are fairly standard for java projects, though the guideline
+is to follow whatever standards are in use within the particular file you are
+working in.  Wider guidelines across the whole codebase for new code:<ul>
+ <li>Prefix class level variables with <code>_</code></li>
+ <li>Translation constants should be
+     <code>private static final String T_<i>$name</i></code></li>
+ <li>standardJavaCamelCase should be used.  long words are better thnShrt1sUCntUndrstnd. </li>
+ <li>Variable names/comments/etc, should be in English, unless the comments relate
+     to internationalization/translation issues, of course.</li>
+ <li>Put your braces on the same line as the method:<pre>
+void foo() {
+}</pre> not <pre>void foo()
+{
+}</pre></li>
+ <li>If a method is short enough, fit it in one line: <pre>
+    private int getFoo() { return _foo; }</pre></li>
+ <li>No tabs, ever - we do not all use the same IDE/editor, and the code should be
+     readable to all of the coders.  Indent with 4 spaces.</li>
+</ul>
 </div>
 </body>
 </html>

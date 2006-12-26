@@ -19,6 +19,7 @@ public class SyndieURIDAO {
     
     private static final String SQL_FETCH = "SELECT attribKey, attribValString, attribValLong, attribValBool, attribValStrings FROM uriAttribute WHERE uriId = ?";
     public SyndieURI fetch(long uriId) {
+        if (uriId < 0) return null;
         PreparedStatement stmt = null;
         Map attribs = new TreeMap();
         String type = null;
@@ -41,7 +42,7 @@ public class SyndieURIDAO {
                     } else {
                         boolean valBool = rs.getBoolean(4);
                         if (!rs.wasNull()) {
-                            attribs.put(key, new Boolean(valBool));
+                            attribs.put(key, Boolean.valueOf(valBool));
                         } else {
                             String valStrings = rs.getString(5);
                             if (!rs.wasNull()) {
@@ -61,6 +62,7 @@ public class SyndieURIDAO {
         }
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("URI found for " + uriId + ": " + type + ":" + attribs);
+        if (type == null) return null;
         return new SyndieURI(type, attribs);
     }
     
@@ -103,9 +105,12 @@ public class SyndieURIDAO {
             if (_log.shouldLog(Log.DEBUG))
                 _log.debug("URI " + id + " added with type " + type);
             Map attributes = uri.getAttributes();
-            for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
-                String key = (String)iter.next();
-                Object val = attributes.get(key);
+            for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry entry = (Map.Entry)iter.next();
+                String key = (String)entry.getKey();
+                Object val = entry.getValue();
+                if (val == null)
+                    continue;
                 if (val.getClass().isArray()) {
                     String vals[] = (String[])val;
                     insertAttrib(stmt, key, null, null, null, vals, id, false);

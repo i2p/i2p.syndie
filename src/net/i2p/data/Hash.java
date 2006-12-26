@@ -26,7 +26,7 @@ import net.i2p.util.Log;
  *
  * @author jrandom
  */
-public class Hash extends DataStructureImpl {
+public class Hash extends DataStructureImpl implements Comparable {
     private final static Log _log = new Log(Hash.class);
     private byte[] _data;
     private volatile String _stringified;
@@ -145,6 +145,8 @@ public class Hash extends DataStructureImpl {
         if ((obj == null) || !(obj instanceof Hash)) return false;
         return DataHelper.eq(_data, ((Hash) obj)._data);
     }
+
+    public int compareTo(Object o) { return DataHelper.compareTo(_data, ((Hash)o).getData()); }
 
     public int hashCode() {
         return DataHelper.hashCode(_data);

@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-12-26  0.920a released
+    - merged in the GUI
+
 * 2006-10-27  0.919b released
     - another EepGet fix (thanks burl!)
 

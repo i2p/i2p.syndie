@@ -4,6 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,6 +22,7 @@ import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
+import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 
 import syndie.data.SyndieURI;
@@ -34,6 +36,7 @@ public class DBClient {
         , org.hsqldb.persist.GCJKludge.class
     };
     private I2PAppContext _context;
+    private UI _ui;
     private Log _log;
     
     private Connection _con;
@@ -55,22 +58,30 @@ public class DBClient {
         
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
+        // we are probably safe with the small exponent size, but asym 
+        // encryption and decryption is rare enough in syndie that its reasonable
+        // to go up to the full 2048bits
+        ctx.keyGenerator().PUBKEY_EXPONENT_SIZE = ctx.keyGenerator().PUBKEY_EXPONENT_SIZE_FULL;
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
-        _shutdownHook = new Thread(new Thread(new Runnable() {
-            public void run() {
-                _shutdownInProgress = true;
-                close();
-            }
-        }, "DB shutdown"));
     }
     
     public void connect(String url) throws SQLException { 
         //System.out.println("Connecting to " + url);
         _url = url;
         _con = DriverManager.getConnection(url);
-        Runtime.getRuntime().addShutdownHook(_shutdownHook);
+        if (_shutdownHook == null) {
+            _shutdownHook = new Thread(new Runnable() {
+                public void run() {
+                    _shutdownInProgress = true;
+                    close();
+                }
+            }, "DB shutdown");
+            Runtime.getRuntime().addShutdownHook(_shutdownHook);
+        } else {
+            throw new RuntimeException("already connected");
+        }
         
         initDB();
         _uriDAO = new SyndieURIDAO(this);
@@ -83,35 +94,38 @@ public class DBClient {
         return getNymId(login, passphrase);
     }
     I2PAppContext ctx() { return _context; }
-    Connection con() { return _con; }
+    public Connection con() { return _con; }
+    public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
+    public void setDefaultUI(UI ui) { _ui = ui; }
     
     /** if logged in, the login used is returned here */
     String getLogin() { return _login; }
     /** if logged in, the password authenticating it is returned here */
     String getPass() { return _pass; }
-    boolean isLoggedIn() { return _login != null; }
+    public boolean isLoggedIn() { return _login != null; }
     /** if logged in, the internal nymId associated with that login */
-    long getLoggedInNymId() { return _nymId; }
+    public long getLoggedInNymId() { return _nymId; }
     
-    File getTempDir() { return new File(_rootDir, "tmp"); }
-    File getOutboundDir() { return new File(_rootDir, "outbound"); }
-    File getArchiveDir() { return new File(_rootDir, "archive"); }
+    public File getRootDir() { return _rootDir; }
+    public File getTempDir() { return new File(_rootDir, "tmp"); }
+    public File getOutboundDir() { return new File(_rootDir, "outbound"); }
+    public File getArchiveDir() { return new File(_rootDir, "archive"); }
     
-    String getDefaultHTTPProxyHost() { return _httpProxyHost; }
-    void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
-    int getDefaultHTTPProxyPort() { return _httpProxyPort; }
-    void setDefaultHTTPProxyPort(int port) { _httpProxyPort = port; }
-    String getDefaultHTTPArchive() { return _defaultArchive; }
-    void setDefaultHTTPArchive(String archive) { _defaultArchive = archive; }
+    public String getDefaultHTTPProxyHost() { return _httpProxyHost; }
+    public void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
+    public int getDefaultHTTPProxyPort() { return _httpProxyPort; }
+    public void setDefaultHTTPProxyPort(int port) { _httpProxyPort = port; }
+    public String getDefaultHTTPArchive() { return _defaultArchive; }
+    public void setDefaultHTTPArchive(String archive) { _defaultArchive = archive; }
     
-    String getDefaultFreenetHost() { return _fcpHost; }
-    void setDefaultFreenetHost(String host) { _fcpHost = host; }
-    int getDefaultFreenetPort() { return _fcpPort; }
-    void setDefaultFreenetPort(int port) { _fcpPort = port; }
-    String getDefaultFreenetPrivateKey() { return _freenetPrivateKey; }
-    void setDefaultFreenetPrivateKey(String privateSSK) { _freenetPrivateKey = privateSSK; }
-    String getDefaultFreenetPublicKey() { return _freenetPublicKey; }
-    void setDefaultFreenetPublicKey(String publicSSK) { _freenetPublicKey = publicSSK; }
+    public String getDefaultFreenetHost() { return _fcpHost; }
+    public void setDefaultFreenetHost(String host) { _fcpHost = host; }
+    public int getDefaultFreenetPort() { return _fcpPort; }
+    public void setDefaultFreenetPort(int port) { _fcpPort = port; }
+    public String getDefaultFreenetPrivateKey() { return _freenetPrivateKey; }
+    public void setDefaultFreenetPrivateKey(String privateSSK) { _freenetPrivateKey = privateSSK; }
+    public String getDefaultFreenetPublicKey() { return _freenetPublicKey; }
+    public void setDefaultFreenetPublicKey(String publicSSK) { _freenetPublicKey = publicSSK; }
     
     public void close() {
         _login = null;
@@ -124,21 +138,27 @@ public class DBClient {
         _fcpPort = -1;
         _freenetPrivateKey = null;
         _freenetPublicKey = null;
+        PreparedStatement stmt = null;
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            PreparedStatement stmt = _con.prepareStatement("SHUTDOWN");
+            stmt = _con.prepareStatement("SHUTDOWN");
             stmt.execute();
             if (_log.shouldLog(Log.INFO))
-                _log.info("Database shutdown");
+                _log.info("Database shutdown", new Exception("shutdown by"));
             stmt.close();
+            stmt = null;
             _con.close();
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error closing the connection and shutting down the database", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        if (!_shutdownInProgress)
-            Runtime.getRuntime().removeShutdownHook(_shutdownHook);
+        Thread hook = _shutdownHook;
+        _shutdownHook = null;
+        if (!_shutdownInProgress && (hook != null))
+            Runtime.getRuntime().removeShutdownHook(hook);
     }
     
     String getString(String query, int column, long keyVal) {
@@ -194,6 +214,9 @@ public class DBClient {
                         _login = login;
                         _pass = passphrase;
                         _nymId = nymId;
+                        
+                        Properties prefs = getNymPrefs(nymId);
+                        loadProxyConfig(prefs);
                         return nymId;
                     } else {
                         return NYM_ID_PASSPHRASE_INVALID;
@@ -243,6 +266,7 @@ public class DBClient {
     }
     
     public long nextId(String seq) {
+        if (_con == null) throw new IllegalStateException("not connected");
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -283,6 +307,73 @@ public class DBClient {
             client.close();
         } catch (SQLException se) {
             se.printStackTrace();
+        }
+    }
+    
+    public void saveProxyConfig() {
+        Properties props = getNymPrefs(_nymId);
+        if (props == null)
+            props = new Properties();
+        if ( (getDefaultFreenetHost() == null) || (getDefaultFreenetPort() <= 0) ) {
+            props.remove("fcpHost");
+            props.remove("fcpPort");
+        } else {
+            props.setProperty("fcpHost", getDefaultFreenetHost());
+            props.setProperty("fcpPort", getDefaultFreenetPort()+"");
+        }
+        
+        if ( (getDefaultFreenetPrivateKey() == null) || (getDefaultFreenetPublicKey() == null) ) {
+            props.remove("freenetPrivateKey");
+            props.remove("freenetPublicKey");
+        } else {
+            props.setProperty("freenetPrivateKey", getDefaultFreenetPrivateKey());
+            props.setProperty("freenetPublicKey", getDefaultFreenetPublicKey());
+        }
+        
+        if ( (getDefaultHTTPProxyHost() == null) || (getDefaultHTTPProxyPort() <= 0) ) {
+            props.remove("httpproxyhost");
+            props.remove("httpproxyport");
+        } else {
+            props.setProperty("httpproxyhost", getDefaultHTTPProxyHost());
+            props.setProperty("httpproxyport", getDefaultHTTPProxyPort()+"");
+        }
+        
+        _ui.debugMessage("saveProxyConfig [" + getDefaultHTTPProxyHost() +'/' + getDefaultHTTPProxyPort() + "]: " + props);
+        setNymPrefs(_nymId, props);
+    }
+    
+    public void loadProxyConfig(Properties prefs) {
+        if (prefs == null) prefs = new Properties();
+        setDefaultHTTPProxyHost(prefs.getProperty("httpproxyhost"));
+        String port = prefs.getProperty("httpproxyport");
+        if (port != null) {
+            try {
+                int num = Integer.parseInt(port);
+                setDefaultHTTPProxyPort(num);
+            } catch (NumberFormatException nfe) {
+                _ui.errorMessage("HTTP proxy port preference is invalid", nfe);
+                setDefaultHTTPProxyPort(-1);
+                setDefaultHTTPProxyHost(null);
+            }
+        } else {
+            setDefaultHTTPProxyPort(-1);
+            setDefaultHTTPProxyHost(null);
+        }
+        
+        setDefaultFreenetPrivateKey(prefs.getProperty("freenetPrivateKey"));
+        setDefaultFreenetPublicKey(prefs.getProperty("freenetPublicKey"));
+        setDefaultFreenetHost(prefs.getProperty("fcpHost"));
+        port = prefs.getProperty("fcpPort");
+        if (port != null) {
+            try {
+                int num = Integer.parseInt(port);
+                setDefaultFreenetPort(num);
+            } catch (NumberFormatException nfe) {
+                _ui.errorMessage("Freenet port preference is invalid", nfe);
+                setDefaultFreenetPort(-1);
+            }
+        } else {
+            setDefaultFreenetPort(-1);
         }
     }
     
@@ -328,10 +419,11 @@ public class DBClient {
     private void buildDB() {
         if (_log.shouldLog(Log.INFO))
             _log.info("Building the database...");
+        BufferedReader r = null;
         try {
-            InputStream in = getClass().getResourceAsStream("ddl.txt");
+            InputStream in = DBClient.class.getResourceAsStream("ddl.txt");
             if (in != null) {
-                BufferedReader r = new BufferedReader(new InputStreamReader(in));
+                r = new BufferedReader(new InputStreamReader(in));
                 StringBuffer cmdBuf = new StringBuffer();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
@@ -344,6 +436,8 @@ public class DBClient {
                         cmdBuf.setLength(0);
                     }
                 }
+                r.close();
+                r = null;
             }
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
@@ -351,32 +445,30 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error building the db", se);
+        } finally {
+            if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
     private int getDBUpdateCount() {
         int updates = 0;
         while (true) {
-            try {
-                InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
-                if (in != null) {
-                    in.close();
-                    updates++;
-                } else {
-                    if (_log.shouldLog(Log.DEBUG))
-                        _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
-                    return updates;
-                }
-            } catch (IOException ioe) {
-                if (_log.shouldLog(Log.WARN))
-                    _log.warn("problem listing the updates", ioe);
+            InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
+            if (in != null) {
+                updates++;
+                try { in.close(); } catch (IOException ioe) {}
+            } else {
+                if (_log.shouldLog(Log.DEBUG))
+                    _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
+                return updates;
             }
         }
     }
     private void updateDB(int oldVersion) {
+        BufferedReader r = null;
         try {
             InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
             if (in != null) {
-                BufferedReader r = new BufferedReader(new InputStreamReader(in));
+                r = new BufferedReader(new InputStreamReader(in));
                 StringBuffer cmdBuf = new StringBuffer();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
@@ -389,6 +481,8 @@ public class DBClient {
                         cmdBuf.setLength(0);
                     }
                 }
+                r.close();
+                r = null;
             }
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
@@ -396,6 +490,8 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error building the db", se);
+        } finally {
+            if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
     private void exec(String cmd) throws SQLException {
@@ -427,8 +523,8 @@ public class DBClient {
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(query);
-            String up = query.toUpperCase();
-            if (!up.startsWith("SELECT") && !up.startsWith("CALL")) {
+            String lc = Constants.lowercase(query);
+            if (!lc.startsWith("select") && !lc.startsWith("call")) {
                 int rows = stmt.executeUpdate();
                 ui.statusMessage("Command completed, updating " + rows + " rows");
                 ui.commandComplete(rows, null);
@@ -481,7 +577,6 @@ public class DBClient {
      */
     public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
         List rv = new ArrayList(1);
-        byte pass[] = DataHelper.getUTF8(nymPassphrase);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -494,18 +589,20 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 
                 if (Constants.KEY_TYPE_AES256.equals(type)) {
                     if (salt != null) {
-                        byte readKey[] = new byte[SessionKey.KEYSIZE_BYTES];
-                        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
-                        _context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
-                        int pad = (int)readKey[readKey.length-1];
-                        byte key[] = new byte[readKey.length-pad];
-                        System.arraycopy(readKey, 0, key, 0, key.length);
-                        rv.add(new SessionKey(key));
+                        byte decr[] = pbeDecrypt(data, salt);
+                        rv.add(new SessionKey(decr));
+                        //byte readKey[] = new byte[SessionKey.KEYSIZE_BYTES];
+                        //SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
+                        //_context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
+                        //int pad = (int)readKey[readKey.length-1];
+                        //byte key[] = new byte[readKey.length-pad];
+                        //System.arraycopy(readKey, 0, key, 0, key.length);
+                        //rv.add(new SessionKey(key));
                     } else {
                         rv.add(new SessionKey(data));
                     }
@@ -605,6 +702,33 @@ public class DBClient {
         return rv;
     }
     
+    private static final String SQL_GET_CHANNEL_HASH = "SELECT channelHash FROM channel WHERE channelId = ?";
+    public Hash getChannelHash(long channelId) {
+        if (channelId < 0) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_HASH);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte chanHash[] = rs.getBytes(1);
+                if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
+                    return new Hash(chanHash);
+                return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel hash", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_ID = "SELECT channelId FROM channel WHERE channelHash = ?";
     public long getChannelId(Hash channel) {
         if (channel == null) return -1;
@@ -633,6 +757,55 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_NAME = "SELECT name FROM channel WHERE channelHash = ?";
+    public String getChannelName(Hash channel) {
+        if (channel == null) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME);
+            stmt.setBytes(1, channel.getData());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String name = rs.getString(1);
+                return name;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel name", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_CHANNEL_NAME_ID = "SELECT name FROM channel WHERE channelId = ?";
+    public String getChannelName(long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME_ID);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String name = rs.getString(1);
+                return name;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel name", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND "+
@@ -645,7 +818,6 @@ public class DBClient {
         ensureLoggedIn();
         if (identHash == null) throw new IllegalArgumentException("you need an identHash (or you should use getNymKeys())");
         List rv = new ArrayList(1);
-        byte pass[] = DataHelper.getUTF8(nymPassphrase);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -658,18 +830,20 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 
                 if (Constants.KEY_TYPE_DSA.equals(type)) {
                     if (salt != null) {
-                        byte readKey[] = new byte[data.length];
-                        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
-                        _context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
-                        int pad = (int)readKey[readKey.length-1];
-                        byte key[] = new byte[readKey.length-pad];
-                        System.arraycopy(readKey, 0, key, 0, key.length);
-                        rv.add(new SigningPrivateKey(key));
+                        byte decr[] = pbeDecrypt(data, salt);
+                        rv.add(new SigningPrivateKey(decr));
+                        //byte readKey[] = new byte[data.length];
+                        //SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, pass);
+                        //_context.aes().decrypt(data, 0, readKey, 0, saltedKey, salt, data.length);
+                        //int pad = (int)readKey[readKey.length-1];
+                        //byte key[] = new byte[readKey.length-pad];
+                        //System.arraycopy(readKey, 0, key, 0, key.length);
+                        //rv.add(new SigningPrivateKey(key));
                     } else {
                         rv.add(new SigningPrivateKey(data));
                     }
@@ -714,6 +888,8 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    public List getNymKeys(Hash channel, String keyFunction) { return getNymKeys(getLoggedInNymId(), getPass(), channel, keyFunction); }
     
     private static final String SQL_GET_NYMKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel " +
                                                    "FROM nymKey WHERE nymId = ?";
@@ -721,7 +897,6 @@ public class DBClient {
     public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
         ensureLoggedIn();
         List rv = new ArrayList(1);
-        byte passB[] = DataHelper.getUTF8(pass);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -746,12 +921,15 @@ public class DBClient {
                 byte data[] = rs.getBytes(2);
                 byte salt[] = rs.getBytes(3);
                 boolean auth= rs.getBoolean(4);
-                Date begin  = rs.getDate(5);
-                Date end    = rs.getDate(6);
+                //Date begin  = rs.getDate(5);
+                //Date end    = rs.getDate(6);
                 String function = rs.getString(7);
                 byte chan[] = rs.getBytes(8);
                 
                 if (salt != null) {
+                    byte key[] = pbeDecrypt(data, salt);
+                    data = key;
+                    /*
                     SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, passB);
                     //_log.debug("salt: " + Base64.encode(salt));
                     //_log.debug("passB: " + Base64.encode(passB));
@@ -764,6 +942,7 @@ public class DBClient {
                     System.arraycopy(decr, 0, key, 0, key.length);
                     //_log.debug("key: " + Base64.encode(key));
                     data = key;
+                     */
                 }
                 
                 rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
@@ -786,22 +965,32 @@ public class DBClient {
         return rv;
     }
 
-    private static final String SQL_GET_AUTHORIZED_POSTERS = "SELECT identKey FROM channel WHERE channelId = ?" +
-                                                             " UNION " +
-                                                             "SELECT authPubKey FROM channelPostKey WHERE channelId = ?" +
-                                                             " UNION " +
-                                                             "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     public List getAuthorizedPosters(Hash channel) {
+        return getAuthorizedPosters(getChannelId(channel), true, true, true);
+    }
+    private static final String SQL_GET_AUTHORIZED_OWNER = "SELECT identKey FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_AUTHORIZED_POSTER = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
+    private static final String SQL_GET_AUTHORIZED_MANAGER = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
+    /**
+     * @param owner include the owner's identity 
+     * @param manager include the identity of anyone allowed to manage the channel
+     * @param authorizedPoster include the identity of anyone explicitly allowed to post in the channel
+     * @return list of SigningPublicKey instances
+     */
+    public List getAuthorizedPosters(long channelId, boolean owner, boolean manager, boolean authorizedPoster) {
         ensureLoggedIn();
-        long channelId = getChannelId(channel);
         List rv = new ArrayList();
+        if (owner) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_OWNER);
+        if (manager) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_MANAGER);
+        if (authorizedPoster) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_POSTER);
+        return rv;
+    }
+    private void getAuthorizedPosters(long channelId, List rv, String query) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement(SQL_GET_AUTHORIZED_POSTERS);
+            stmt = _con.prepareStatement(query);
             stmt.setLong(1, channelId);
-            stmt.setLong(2, channelId);
-            stmt.setLong(3, channelId);
             rs = stmt.executeQuery();
             while (rs.next()) {
                 byte key[] = rs.getBytes(1);
@@ -817,12 +1006,10 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's authorized posting keys", se);
-            return null;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        return rv;
     }
 
     private static final String SQL_GET_IDENT_KEY = "SELECT identKey FROM channel WHERE channelHash = ?";
@@ -847,6 +1034,61 @@ public class DBClient {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's ident key", se);
             return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_ALLOW_PUB_REPLIES = "SELECT allowPubPost, allowPubReply FROM channel WHERE channelId = ?";
+    public boolean getChannelAllowPublicReplies(long targetChannelId) {        
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ALLOW_PUB_REPLIES);
+            stmt.setLong(1, targetChannelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean pubPost = rs.getBoolean(1);
+                if (rs.wasNull()) pubPost = false;
+                boolean pubReply = rs.getBoolean(2);
+                if (rs.wasNull()) pubReply = false;
+                return pubPost || pubReply;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error seeing if the channel allows public replies", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    public boolean getChannelAllowPublicPosts(long targetChannelId) {        
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ALLOW_PUB_REPLIES);
+            stmt.setLong(1, targetChannelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean pubPost = rs.getBoolean(1);
+                if (rs.wasNull()) pubPost = false;
+                boolean pubReply = rs.getBoolean(2);
+                if (rs.wasNull()) pubReply = false;
+                return pubPost;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error seeing if the channel allows public posts", se);
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -898,7 +1140,286 @@ public class DBClient {
     }
      */
 
-    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt FROM channel WHERE channelId = ?";
+
+    /** gather a bunch of nym-scoped channel details */
+    public static class ChannelCollector {
+        /** list of ChannelInfo for matching channels */
+        List _identityChannels;
+        List _managedChannels;
+        List _postChannels;
+        List _publicPostChannels;
+        List _internalIds;
+        public ChannelCollector() {
+            _identityChannels = new ArrayList();
+            _managedChannels = new ArrayList();
+            _postChannels = new ArrayList();
+            _publicPostChannels = new ArrayList();
+            _internalIds = new ArrayList();
+        }
+        public int getIdentityChannelCount() { return _identityChannels.size(); }
+        public ChannelInfo getIdentityChannel(int idx) { return (ChannelInfo)_identityChannels.get(idx); }
+        public int getManagedChannelCount() { return _managedChannels.size(); }
+        public ChannelInfo getManagedChannel(int idx) { return (ChannelInfo)_managedChannels.get(idx); }
+        public int getPostChannelCount() { return _postChannels.size(); }
+        public ChannelInfo getPostChannel(int idx) { return (ChannelInfo)_postChannels.get(idx); }
+        public int getPublicPostChannelCount() { return _publicPostChannels.size(); }
+        public ChannelInfo getPublicPostChannel(int idx) { return (ChannelInfo)_publicPostChannels.get(idx); }
+    }
+    
+    
+    private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
+    private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
+    /** channels */
+    public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
+        ChannelCollector rv = new ChannelCollector();
+        
+        List pubKeys = new ArrayList();
+        
+        List manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
+        // first, go through and find all the 'identity' channels - those that we have
+        // the actual channel signing key for
+        for (int i = 0; i < manageKeys.size(); i++) {
+            NymKey key = (NymKey)manageKeys.get(i);
+            if (key.getAuthenticated()) {
+                SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                SigningPublicKey pub = ctx().keyGenerator().getSigningPublicKey(priv);
+                pubKeys.add(pub);
+                if (includeIdent) {
+                    Hash chan = pub.calculateHash();
+                    long chanId = getChannelId(chan);
+                    if (chanId >= 0) {
+                        //ui.debugMessage("nym has the identity key for " + chan.toBase64());
+                        ChannelInfo info = getChannel(chanId);
+                        rv._identityChannels.add(info);
+                        rv._internalIds.add(new Long(chanId));
+                    } else {
+                        //ui.debugMessage("nym has a key that is not an identity key (" + chan.toBase64() + ")");
+                    }
+                }
+            }
+        }
+
+        Connection con = con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        if (includeManage) {
+            // now, go through and see what other channels our management keys are
+            // authorized to manage (beyond their identity channels)
+            try {
+                stmt = con.prepareStatement(SQL_LIST_MANAGED_CHANNELS);
+                for (int i = 0; i < pubKeys.size(); i++) {
+                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    stmt.setBytes(1, key.getData());
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        // channelId
+                        long chanId = rs.getLong(1);
+                        if (!rs.wasNull()) {
+                            Long id = new Long(chanId);
+                            if (!rv._internalIds.contains(id)) {
+                                ChannelInfo info = getChannel(chanId);
+                                if (info != null) {
+                                    //ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
+                                    rv._managedChannels.add(info);
+                                    rv._internalIds.add(id);
+                                    //_itemKeys.add(id);
+                                    //_itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                                } else {
+                                    //ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
+                                }
+                            }
+                        }
+                    }
+                    rs.close();
+                }
+            } catch (SQLException se) {
+                //ui.errorMessage("Internal error listing channels", se);
+                //ui.commandComplete(-1, null);
+                log(se);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+        
+        if (includePost) {
+            // continue on to see what channels our management keys are
+            // authorized to post in (beyond their identity and manageable channels)
+            stmt = null;
+            rs = null;
+            try {
+                stmt = con.prepareStatement(SQL_LIST_POST_CHANNELS);
+                for (int i = 0; i < pubKeys.size(); i++) {
+                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    stmt.setBytes(1, key.getData());
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        // channelId
+                        long chanId = rs.getLong(1);
+                        if (!rs.wasNull()) {
+                            Long id = new Long(chanId);
+                            if (!rv._internalIds.contains(id)) {
+                                ChannelInfo info = getChannel(chanId);
+                                if (info != null) {
+                                    //ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
+                                    rv._postChannels.add(info);
+                                    rv._internalIds.add(id);
+                                    //_itemKeys.add(id);
+                                    //_itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                                } else {
+                                    //ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
+                                }
+                            }
+                        }
+                    }
+                    rs.close();
+                }
+            } catch (SQLException se) {
+                //ui.errorMessage("Internal error listing channels", se);
+                //ui.commandComplete(-1, null);
+                log(se);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+            
+        if (includePublicPost) {
+            List channelIds = getPublicPostingChannelIds();
+            for (int i = 0; i < channelIds.size(); i++) {
+                Long id = (Long)channelIds.get(i);
+                if (!rv._internalIds.contains(id)) {
+                    ChannelInfo info = getChannel(id.longValue());
+                    if (info != null) {
+                        rv._publicPostChannels.add(info);
+                        rv._internalIds.add(id);
+                        //_itemKeys.add(id);
+                        //_itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
+                    }
+                }            
+            }
+        }
+        
+        return rv;
+    }
+
+    public static class ChannelSearchCriteria {
+        private String _name;
+        private Set _tagsInclude;
+        private Set _tagsRequire;
+        private Set _tagsExclude;
+        private String _hashPrefix;
+        
+        public ChannelSearchCriteria() {
+            _name = null;
+            _tagsInclude = new HashSet();
+            _tagsRequire = new HashSet();
+            _tagsExclude = new HashSet();
+            _hashPrefix = null;
+        }
+        
+        public String getName() { return _name; }
+        public String getHashPrefix() { return _hashPrefix; }
+        public void setName(String name) { _name = name; }
+        public void setHashPrefix(String prefix) { _hashPrefix = prefix; }
+        public void requireTag(String tag) { _tagsRequire.add(tag); }
+        public void includeTag(String tag) { _tagsInclude.add(tag); }
+        public void excludeTag(String tag) { _tagsExclude.add(tag); }
+        
+        public Set getInclude() { return _tagsInclude; }
+        public Set getExclude() { return _tagsExclude; }
+        public Set getRequire() { return _tagsRequire; }
+    }
+    
+    /**
+     * search through the channels for those matching the given criteria
+     * @param name channel name must start with this
+     * @param tagsInclude channel tags should include one or more of these
+     * @param tagsRequire channel tags must include all of these
+     * @param tagsExclude channel tags must not include any of these
+     * @param hashPrefix channel hash must start with this base64 value
+     * @return list of matching channels (ChannelInfo)
+     */
+    public List getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
+        String name = criteria.getName();
+        String hashPrefix = criteria.getHashPrefix();
+        Set tagsInclude = criteria.getInclude();
+        Set tagsExclude = criteria.getExclude();
+        Set tagsRequire = criteria.getRequire();
+
+        if ( (name != null) && (name.trim().length() <= 0) ) name = null;
+        if ( (hashPrefix != null) && (hashPrefix.trim().length() <= 0) ) hashPrefix = null;
+        if ( (tagsInclude != null) && (tagsInclude.size() <= 0) ) tagsInclude = null;
+        if ( (tagsRequire != null) && (tagsRequire.size() <= 0) ) tagsRequire = null;
+        if ( (tagsExclude != null) && (tagsExclude.size() <= 0) ) tagsExclude = null;
+        
+        // this could of course be optimized to do the work in the db, saving some memory churn
+        // instead of all these getChannel calls.  but this'll do the trick for now
+        List rv = new ArrayList();
+        Map allIds = getChannelIds();
+        for (Iterator iter = allIds.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Long chanId = (Long)entry.getKey();
+            Hash chan = (Hash)entry.getValue();
+            if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
+                continue;
+            ChannelInfo info = getChannel(chanId.longValue());
+            if ( (name != null) && (!info.getName().toLowerCase().startsWith(name.toLowerCase())) )
+                continue;
+            Set pub = info.getPublicTags();
+            Set priv= info.getPrivateTags();
+            if (tagsExclude != null) {
+                boolean found = false;
+                for (Iterator titer = tagsExclude.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if (pub.contains(tag) || priv.contains(tag)) { 
+                        //System.out.println("Not including " + info.getChannelHash().toBase64() + " found tag [" + tag + "]");
+                        found = true;
+                        break; 
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+            }
+            if (tagsRequire != null) {
+                boolean foundAll = true;
+                for (Iterator titer = tagsRequire.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if ( (!pub.contains(tag)) && (!priv.contains(tag)) ) {
+                        foundAll = false;
+                        //System.out.println("Not including " + info.getChannelHash().toBase64() + " missing tag [" + tag + "]");
+                        break;
+                    }
+                }
+                if (!foundAll) {
+                    continue;
+                }
+            }
+            if (tagsInclude != null) {
+                boolean found = false;
+                for (Iterator titer = tagsInclude.iterator(); titer.hasNext(); ) {
+                    String tag = (String)titer.next();
+                    if ( (pub.contains(tag)) || (priv.contains(tag)) ) {
+                        found = true;
+                        break;
+                    } else {
+                        //System.out.println("tag '" + tag + "' was not found in " + pub + " or " + priv);
+                    }
+                }
+                if (!found) {
+                    //System.out.println("Not including " + info.getChannelHash().toBase64() + " pub: " + pub + "/" + pub.size() + " priv: " + priv);
+                    continue;
+                }
+            }
+            
+            rv.add(info);
+        }
+        return rv;
+    }
+    
+    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt, importDate FROM channel WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
@@ -908,6 +1429,8 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
         ensureLoggedIn();
+        long start = System.currentTimeMillis();
+        if (_trace) _getChanCount++;
         ChannelInfo info = new ChannelInfo();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -933,6 +1456,7 @@ public class DBClient {
                 boolean readKeyMissing = rs.getBoolean(11);
                 if (rs.wasNull()) readKeyMissing = false;
                 String pbePrompt = rs.getString(12);
+                Date importDate = rs.getDate(13);
                 
                 info.setChannelId(channelId);
                 info.setChannelHash(new Hash(chanHash));
@@ -949,6 +1473,7 @@ public class DBClient {
                     info.setExpiration(-1);
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
+                info.setReceiveDate(importDate.getTime());
             } else {
                 return null;
             }
@@ -1143,14 +1668,13 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
-
         stmt = null;
         rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_REFERENCES);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            List refs = new ArrayList();
+            HashMap groupIdToNode = new HashMap();
             while (rs.next()) {
                 // groupId, parentGroupId, siblingOrder, name, description, 
                 // uriId, referenceType, wasEncrypted 
@@ -1172,18 +1696,43 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 DBReferenceNode ref = new DBReferenceNode(name, uri, desc, type, uriId, groupId, parentGroupId, order, enc);
-                boolean parentFound = false;
-                for (int i = 0; i < refs.size(); i++) {
-                    DBReferenceNode cur = (DBReferenceNode)refs.get(i);
-                    if (cur.getGroupId() == parentGroupId) {
-                        cur.addChild(ref);
-                        parentFound = true;
-                    }
-                }
-                if (!parentFound)
-                    refs.add(ref); // rewt
+                groupIdToNode.put(new Long(groupId), ref);
             }
-            info.setReferences(refs);
+            
+            // now build the tree out of the nodes
+            List roots = new ArrayList();
+            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode cur = (DBReferenceNode)iter.next();
+                long parentId = cur.getParentGroupId();
+                if (parentId >= 0) {
+                    DBReferenceNode parent = (DBReferenceNode)groupIdToNode.get(new Long(parentId));
+                    if (parent != null)
+                        parent.addChild(cur);
+                    else
+                        roots.add(cur);
+                } else {
+                    roots.add(cur);
+                }
+            }
+            // another pass to sort the children
+            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode cur = (DBReferenceNode)iter.next();
+                cur.sortChildren();
+            }
+            // sort the roots
+            TreeMap sorted = new TreeMap();
+            for (int i = 0; i < roots.size(); i++) {
+                DBReferenceNode cur = (DBReferenceNode)roots.get(i);
+                int off = 0;
+                while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+                    off++;
+                sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+            }
+            roots.clear();
+            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
+                roots.add(iter.next());
+
+            info.setReferences(roots);
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
@@ -1193,10 +1742,13 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getChanTime += (end-start);
         return info;
     }
     
-    private class DBReferenceNode extends ReferenceNode {
+    private static class DBReferenceNode extends ReferenceNode {
         private long _uriId;
         private long _groupId;
         private long _parentGroupId;
@@ -1216,6 +1768,47 @@ public class DBClient {
         public long getParentGroupId() { return _parentGroupId; }
         public int getSiblingOrder() { return _siblingOrder; }
         public boolean getEncrypted() { return _encrypted; }
+        public long getUniqueId() { return _groupId; }
+        
+        public void sortChildren() {
+            TreeMap sorted = new TreeMap();
+            for (int i = 0; i < _children.size(); i++) {
+                DBReferenceNode child = (DBReferenceNode)_children.get(i);
+                int off = 0;
+                while (sorted.containsKey(new Long(child.getSiblingOrder()+off)))
+                    off++;
+                sorted.put(new Long(child.getSiblingOrder()+off), child);
+            }
+            _children.clear();
+            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {
+                DBReferenceNode child = (DBReferenceNode)iter.next();
+                _children.add(child);
+            }
+        }
+    }
+    
+    private static final String SQL_GET_CHANNEL_AVATAR = "SELECT avatarData FROM channelAvatar WHERE channelId = ?";
+    public byte[] getChannelAvatar(long channelId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_AVATAR);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                return data;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the avatar", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
     }
     
     private static final String SQL_GET_ARCHIVE = "SELECT postAllowed, readAllowed, uriId FROM archive WHERE archiveId = ?";
@@ -1228,8 +1821,6 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_GET_ARCHIVE);
             stmt.setLong(1, archiveId);
             rs = stmt.executeQuery();
-            Set encrypted = new HashSet();
-            Set unencrypted = new HashSet();
             while (rs.next()) {
                 // postAllowed, readAllowed, uriId
                 boolean post = rs.getBoolean(1);
@@ -1284,6 +1875,51 @@ public class DBClient {
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
 
+        }
+        return rv;
+    }
+
+    // the order here (targetChannelId ASC, importDate DESC) shows messages targetting
+    // the local ident first (since channelId 0 is the one created on install), then
+    // sorts newest first
+    private static final String SQL_GET_PRIVATE_ALL = "SELECT msgId FROM channelMessage cm WHERE wasPrivate = TRUE AND wasAuthenticated = TRUE AND replyKeyMissing = FALSE AND readKeyMissing = FALSE AND pbePrompt IS NULL ORDER BY targetChannelId ASC, importDate DESC";
+    public List getPrivateMsgIds(boolean alreadyRead) { return getPrivateMsgIds(_nymId, alreadyRead); }
+    public List getPrivateMsgIds(long nymId, boolean alreadyRead) {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_PRIVATE_ALL);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // msgId
+                long msgId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(msgId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the private messages", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now filter
+        for (int i = 0; i < rv.size(); i++) {
+            Long msgId = (Long)rv.get(i);
+            int status = getMessageStatus(msgId.longValue());
+            if (status == MSG_STATUS_NEW_UNREAD) {
+                if (alreadyRead) {
+                    rv.remove(i);
+                    i--;
+                }
+            } else {
+                if (!alreadyRead) {
+                    rv.remove(i);
+                    i--;
+                }
+            }   
         }
         return rv;
     }
@@ -1414,9 +2050,177 @@ public class DBClient {
         }
         return msgId;
     }
+    public long getMessageId(Hash scope, Long messageId) {
+        if (messageId == null)
+            return -1;
+        else
+            return getMessageId(scope, messageId.longValue());
+    }
+    public long getMessageId(Hash scope, long messageId) {
+        long chanId = getChannelId(scope);
+        if (chanId >= 0)
+            return getMessageId(chanId, messageId);
+        else
+            return -1;
+    }
+    
+    public long getMessageImportDate(Hash scope, long messageId) {
+        long msgId = getMessageId(scope, messageId);
+        if (msgId >= 0)
+            return getMessageImportDate(msgId);
+        else
+            return -1;
+    }
+    private static final String SQL_GET_MESSAGE_IMPORT_DATE = "SELECT importDate FROM channelMessage WHERE msgId = ?";
+    public long getMessageImportDate(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_IMPORT_DATE);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return when.getTime();
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's import date", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_SCOPE = "SELECT channelHash FROM channel JOIN channelMessage ON scopeChannelId = channelId WHERE msgId = ?";
+    public Hash getMessageScope(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_SCOPE);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte hash[] = rs.getBytes(1);
+                if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
+                    return new Hash(hash);
+                else
+                    return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's scope", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_ID = "SELECT messageId FROM channelMessage WHERE msgId = ?";
+    public long getMessageId(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ID);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long messageId = rs.getLong(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return messageId;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's id", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_CHANNEL_VERSION = "SELECT edition FROM channel WHERE channelId = ?";
+    /** locally known edition of the given scope, or -1 if not known */
+    public long getChannelVersion(Hash scope) {        
+        if ( (scope == null) || (scope.getData() == null) ) return -1;
+        long channelId = getChannelId(scope);
+        if (channelId < 0) return -1;
+        return getChannelVersion(channelId);
+    }
+    public long getChannelVersion(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_VERSION);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long edition = rs.getLong(1);
+                if (rs.wasNull())
+                    edition = -1;
+                return edition;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's id", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }   
+    }
+    
+    private static final String SQL_GET_CHANNEL_IMPORT_DATE = "SELECT importDate FROM channel WHERE channelId = ?";
+    /** when we imported the scope, or -1 if never */
+    public long getChannelImportDate(Hash scope) {        
+        if ( (scope == null) || (scope.getData() == null) ) return -1;
+        long channelId = getChannelId(scope);
+        if (channelId < 0) return -1;
+        return getChannelImportDate(channelId);
+    }
+    public long getChannelImportDate(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_IMPORT_DATE);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return when.getTime();
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel's import date", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }   
+    }
     
     private static final String SQL_GET_MESSAGE_INFO = "SELECT authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId, " +
-                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt " +
+                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt, importDate " +
                                                        "FROM channelMessage WHERE msgId = ?";
     private static final String SQL_GET_MESSAGE_HIERARCHY = "SELECT referencedChannelHash, referencedMessageId FROM messageHierarchy WHERE msgId = ? ORDER BY referencedCloseness ASC";
     private static final String SQL_GET_MESSAGE_TAG = "SELECT tag, isPublic FROM messageTag WHERE msgId = ?";
@@ -1424,6 +2228,8 @@ public class DBClient {
     private static final String SQL_GET_MESSAGE_ATTACHMENT_COUNT = "SELECT COUNT(*) FROM messageAttachment WHERE msgId = ?";
     public MessageInfo getMessage(long internalMessageId) {
         ensureLoggedIn();
+        long start = System.currentTimeMillis();
+        if (_trace) _getMsgCount++;
         MessageInfo info = new MessageInfo();
         info.setInternalId(internalMessageId);
         PreparedStatement stmt = null;
@@ -1435,7 +2241,7 @@ public class DBClient {
             if (rs.next()) {
                 // authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId,
                 // forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, 
-                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE
+                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, importDate
                 long authorId = rs.getLong(1);
                 if (rs.wasNull()) authorId = -1;
                 //byte author[] = rs.getBytes(1);
@@ -1471,6 +2277,7 @@ public class DBClient {
                 boolean replyKeyMissing = rs.getBoolean(18);
                 if (rs.wasNull()) replyKeyMissing = false;
                 String pbePrompt = rs.getString(19);
+                Date importDate = rs.getDate(20);
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setReplyKeyUnknown(replyKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
@@ -1479,13 +2286,15 @@ public class DBClient {
                 //if (author != null) info.setAuthorChannel(new Hash(author));
                 info.setMessageId(messageId);
                 info.setScopeChannelId(scopeChannelId);
-                ChannelInfo scope = getChannel(scopeChannelId);
+                Hash scope = getChannelHash(scopeChannelId);
+                //ChannelInfo scope = getChannel(scopeChannelId);
                 if (scope != null)
-                    info.setURI(SyndieURI.createMessage(scope.getChannelHash(), messageId));
+                    info.setURI(SyndieURI.createMessage(scope, messageId));
                 info.setTargetChannelId(targetChannelId);
-                ChannelInfo chan = getChannel(targetChannelId);
+                Hash chan = getChannelHash(targetChannelId);
+                //ChannelInfo chan = getChannel(targetChannelId);
                 if (chan != null)
-                    info.setTargetChannel(chan.getChannelHash());
+                    info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
                     info.setOverwriteChannel(new Hash(overwriteChannel));
@@ -1503,6 +2312,8 @@ public class DBClient {
                     info.setExpiration(exp.getTime());
                 else
                     info.setExpiration(-1);
+                if (importDate != null)
+                    info.setReceiveDate(importDate.getTime());
             } else {
                 return null;
             }
@@ -1622,9 +2433,250 @@ public class DBClient {
             return null;
         }
         
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getMsgTime += (end-start);
         return info;
     }
 
+    public Set getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {
+        return getMessageTags(getMessageId(chanId, messageId), includePrivate, includePublic);
+    }
+        
+    public Set getMessageTags(long msgId, boolean includePrivate, boolean includePublic) {
+        ensureLoggedIn();
+        Set rv = new HashSet();
+        if (msgId < 0) 
+            return null;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TAG);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // tag, wasEncrypted
+                String tag = rs.getString(1);
+                boolean isPublic = rs.getBoolean(2);
+                if (rs.wasNull())
+                    isPublic = false;
+                if (isPublic && includePublic)
+                    rv.add(tag);
+                else if (!isPublic && includePrivate)
+                    rv.add(tag);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's tags", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }        
+        return rv;
+    }
+    public Set getMessageTags(Set msgIds, boolean includePublic, boolean includePrivate) {
+        ensureLoggedIn();
+        Set rv = new HashSet();
+        if ( (msgIds == null) || (msgIds.size() <= 0) ) return rv;
+        
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            // i hate writing dynamic SQL - its ugly and bad for databases.  but,
+            // putting this all in as a single sql statement has substantial performance benefits,
+            // so...
+            StringBuffer query = new StringBuffer("SELECT DISTINCT tag, isPublic FROM messageTag WHERE msgId IN (");
+            for (Iterator iter = msgIds.iterator(); iter.hasNext(); ) {
+                Long id = (Long)iter.next();
+                query.append(id.longValue());
+                if (iter.hasNext())
+                    query.append(", ");
+                else
+                    query.append(")");
+            }
+            stmt = _con.createStatement();
+            rs = stmt.executeQuery(query.toString());
+            while (rs.next()) {
+                // tag, wasEncrypted
+                String tag = rs.getString(1);
+                boolean isPublic = rs.getBoolean(2);
+                if (rs.wasNull())
+                    isPublic = false;
+                if (isPublic && includePublic)
+                    rv.add(tag);
+                else if (!isPublic && includePrivate)
+                    rv.add(tag);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the group of message's tags", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+    
+    private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
+    public long getMessageAuthor(long chanId, long messageId) { 
+        return getMessageAuthor(getMessageId(chanId, messageId));
+    }
+    public long getMessageAuthor(long msgId) {
+        if (msgId < 0) return -1;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_AUTHOR);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long authorChanId = rs.getLong(1);
+                if (rs.wasNull())
+                    return -1;
+                else
+                    return authorChanId;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's authorChanId", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_SUBJECT = "SELECT subject FROM channelMessage WHERE msgId = ?";
+    public String getMessageSubject(long msgId) {
+        if (msgId < 0) return null;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_SUBJECT);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's subject", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_MATCH_MESSAGE_KEYWORD = "SELECT msgId FROM channelMessage WHERE msgId = ? AND subject LIKE ?" +
+                                                            " UNION " +
+                                                            "SELECT msgId FROM messagePageData WHERE msgId = ? AND dataString LIKE ?";
+    public boolean messageKeywordMatch(long msgId, String keyword) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_MATCH_MESSAGE_KEYWORD);
+            stmt.setLong(1, msgId);
+            stmt.setString(2, "%" + keyword + "%");
+            stmt.setLong(3, msgId);
+            stmt.setString(4, "%" + keyword + "%");
+            rs = stmt.executeQuery();
+            boolean match = rs.next();
+            return match;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error searching for the keyword", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    public static final int PRIVACY_UNKNOWN = -1;
+    public static final int PRIVACY_PBE = 0;
+    public static final int PRIVACY_PRIVREPLY = 1;
+    public static final int PRIVACY_AUTHORIZEDONLY = 2;
+    public static final int PRIVACY_PUBLIC = 3;
+    private static final String SQL_GET_MESSAGE_PRIVACY = "SELECT wasEncrypted, wasPBE, wasPrivate, wasAuthorized FROM channelMessage WHERE msgId = ? AND readKeyMissing = FALSE AND pbePrompt IS NULL AND replyKeyMissing = FALSE";
+    public int getMessagePrivacy(long msgId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PRIVACY);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean encrypted = rs.getBoolean(1);
+                if (rs.wasNull()) encrypted = false;
+                boolean pbe = rs.getBoolean(2);
+                if (rs.wasNull()) pbe = false;
+                boolean privReply = rs.getBoolean(3);
+                if (rs.wasNull()) privReply = false;
+                boolean authorized = rs.getBoolean(4);
+                if (rs.wasNull()) authorized = false;
+                
+                if (!encrypted)
+                    return PRIVACY_PUBLIC;
+                else if (pbe)
+                    return PRIVACY_PBE;
+                else if (privReply)
+                    return PRIVACY_PRIVREPLY;
+                else
+                    return PRIVACY_AUTHORIZEDONLY;
+            } else {
+                return PRIVACY_UNKNOWN;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting message privacy", se);
+            return PRIVACY_UNKNOWN;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_MESSAGE_PASSPHRASE_PROMPT = "SELECT pbePrompt FROM channelMessage WHERE msgId = ?";
+    /**
+     * return the passphrase prompt required to decrypt the pbe encrypted message, 
+     * or null if the message is already decrypted or does not require a passphrase
+     */
+    public String getMessagePassphrasePrompt(long msgId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PASSPHRASE_PROMPT);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting message passphrase prompt", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }        
+    }
+    
+    /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageData(long internalMessageId, int pageNum) {
         ensureLoggedIn();
@@ -1648,6 +2700,7 @@ public class DBClient {
         return null;
     }
 
+    /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_CONFIG = "SELECT dataString FROM messagePageConfig WHERE msgId = ? AND pageNum = ?";
     public String getMessagePageConfig(long internalMessageId, int pageNum) {
         ensureLoggedIn();
@@ -1670,7 +2723,8 @@ public class DBClient {
         }
         return null;
     }
-    
+
+    /** attachment number starts at 0 */    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
     public byte[] getMessageAttachmentData(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
@@ -1693,9 +2747,46 @@ public class DBClient {
         }
         return null;
     }
-
+    
+    /** attachment number starts at 0 */
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_SIZE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                int val = rs.getInt(1);
+                val /= 2; // hsqldb HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
+                return val;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return 0;
+    }
+    
+    /** attachment number starts at 0 */
+    public Properties getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
+        String cfg = getMessageAttachmentConfigRaw(internalMessageId, attachmentNum);
+        Properties rv = new Properties();
+        if (cfg != null)
+            CommandImpl.parseProps(cfg, rv);
+        return rv;
+    }
+    
+    /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
-    public String getMessageAttachmentConfig(long internalMessageId, int attachmentNum) {
+    public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1775,11 +2866,12 @@ public class DBClient {
      * Syndie archive.  If delete is specified, the messages themselves
      * will be removed from the archive as well as the database
      */
-    public void ban(Hash bannedChannel, UI ui, boolean delete) {
+    public void ban(Hash bannedChannel, UI ui, boolean deleteMessages) { ban(bannedChannel, ui, deleteMessages, deleteMessages); }
+    public void ban(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
         ensureLoggedIn();
         addBan(bannedChannel, ui);
-        if (delete)
-            executeDelete(bannedChannel, ui);
+        if (deleteMessages || deleteMeta)
+            executeDelete(bannedChannel, ui, deleteMessages || deleteMeta, deleteMeta);
     }
     private static final String SQL_BAN = "INSERT INTO banned (channelHash) VALUES (?)";
     private void addBan(Hash bannedChannel, UI ui) {
@@ -1822,12 +2914,12 @@ public class DBClient {
         }
     }
     
-    private void executeDelete(Hash bannedChannel, UI ui) {
+    private void executeDelete(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
         // delete the banned channel itself from the archive
         // then list any messages posted by that author in other channels and
         // delete them too
         // (implicit index regen?)
-        List urisToDelete = getURIsToDelete(bannedChannel);
+        List urisToDelete = getURIsToDelete(bannedChannel, deleteMessages, deleteMeta);
         ui.debugMessage("Delete the following URIs: " + urisToDelete);
         for (int i = 0; i < urisToDelete.size(); i++) {
             SyndieURI uri = (SyndieURI)urisToDelete.get(i);
@@ -1839,6 +2931,11 @@ public class DBClient {
         File archiveDir = getArchiveDir();
         File chanDir = new File(archiveDir, uri.getScope().toBase64());
         if (uri.getMessageId() == null) {
+            File metaFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
+            metaFile.delete();
+            ui.debugMessage("Deleted metadata file " + metaFile.getPath());
+            ui.statusMessage("Deleted the channel metadata " + uri.getScope().toBase64() + " from the archive");
+            /*
             // delete the whole channel - all posts, metadata, and even the dir
             File f[] = chanDir.listFiles();
             for (int i = 0; i < f.length; i++) {
@@ -1848,6 +2945,7 @@ public class DBClient {
             chanDir.delete();
             ui.debugMessage("Deleted channel dir " + chanDir.getPath());
             ui.statusMessage("Deleted " + (f.length-1) + " messages and the metadata for channel " + uri.getScope().toBase64() + " from the archive");
+             */
         } else {
             // delete just the given message
             File msgFile = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
@@ -1855,6 +2953,8 @@ public class DBClient {
             ui.debugMessage("Deleted message file " + msgFile.getPath());
             ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + " from the archive");
         }
+        if (chanDir.listFiles().length <= 0)
+            chanDir.delete();
     }
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
@@ -1904,51 +3004,54 @@ public class DBClient {
     }
     
     private static final String SQL_GET_SCOPE_MESSAGES = "SELECT msgId, scopeChannelId, messageId FROM channelMessage WHERE scopeChannelId = ? OR authorChannelId = ? OR targetChannelId = ?";
-    private List getURIsToDelete(Hash bannedChannel) {
+    private List getURIsToDelete(Hash bannedChannel, boolean deleteMessages, boolean deleteMeta) {
         List urisToDelete = new ArrayList();
-        urisToDelete.add(SyndieURI.createScope(bannedChannel));
-        long scopeId = getChannelId(bannedChannel);
-        if (scopeId >= 0) {
-            PreparedStatement stmt = null;
-            ResultSet rs = null;
-            try {
-                stmt = _con.prepareStatement(SQL_GET_SCOPE_MESSAGES);
-                stmt.setLong(1, scopeId);
-                stmt.setLong(2, scopeId);
-                stmt.setLong(3, scopeId);
-                rs = stmt.executeQuery();
-                while (rs.next()) {
-                    long msgId = rs.getLong(1);
-                    if (rs.wasNull())
-                        msgId = -1;
-                    long scopeChanId = rs.getLong(2);
-                    if (rs.wasNull())
-                        scopeChanId = -1;
-                    long messageId = rs.getLong(3);
-                    if (rs.wasNull())
-                        messageId = -1;
-                    if ( (messageId >= 0) && (scopeChanId >= 0) ) {
-                        ChannelInfo chanInfo = getChannel(scopeChanId);
-                        if (chanInfo != null)
-                            urisToDelete.add(SyndieURI.createMessage(chanInfo.getChannelHash(), messageId));
+        if (deleteMeta)
+            urisToDelete.add(SyndieURI.createScope(bannedChannel));
+        if (deleteMessages) {
+            long scopeId = getChannelId(bannedChannel);
+            if (scopeId >= 0) {
+                PreparedStatement stmt = null;
+                ResultSet rs = null;
+                try {
+                    stmt = _con.prepareStatement(SQL_GET_SCOPE_MESSAGES);
+                    stmt.setLong(1, scopeId);
+                    stmt.setLong(2, scopeId);
+                    stmt.setLong(3, scopeId);
+                    rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        //long msgId = rs.getLong(1);
+                        //if (rs.wasNull())
+                        //    msgId = -1;
+                        long scopeChanId = rs.getLong(2);
+                        if (rs.wasNull())
+                            scopeChanId = -1;
+                        long messageId = rs.getLong(3);
+                        if (rs.wasNull())
+                            messageId = -1;
+                        if ( (messageId >= 0) && (scopeChanId >= 0) ) {
+                            ChannelInfo chanInfo = getChannel(scopeChanId);
+                            if (chanInfo != null)
+                                urisToDelete.add(SyndieURI.createMessage(chanInfo.getChannelHash(), messageId));
+                        }
                     }
+                } catch (SQLException se) {
+                    if (_log.shouldLog(Log.ERROR))
+                        _log.error("Error retrieving the messages to delete", se);
+                    return Collections.EMPTY_LIST;
+                } finally {
+                    if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                    if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
                 }
-            } catch (SQLException se) {
-                if (_log.shouldLog(Log.ERROR))
-                    _log.error("Error retrieving the messages to delete", se);
-                return Collections.EMPTY_LIST;
-            } finally {
-                if (rs != null) try { rs.close(); } catch (SQLException se) {}
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            } else {
+                // not known.  noop
             }
-            return urisToDelete;
-        } else {
-            // not known.  noop
-            return urisToDelete;
         }
+        return urisToDelete;
     }
 
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
+    public Properties getNymPrefs() { return getNymPrefs(_nymId); }
     public Properties getNymPrefs(long nymId) {
         ensureLoggedIn();
         Properties rv = new Properties();
@@ -1974,6 +3077,7 @@ public class DBClient {
     }
     private static final String SQL_SET_NYMPREFS = "INSERT INTO nymPref (nymId, prefName, prefValue) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_NYMPREFS = "DELETE FROM nymPref WHERE nymId = ?";
+    public void setNymPrefs(Properties prefs) { setNymPrefs(_nymId, prefs); }
     public void setNymPrefs(long nymId, Properties prefs) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -1995,6 +3099,289 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
+    /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
+    public List getNymReferences(long nymId) {
+        ensureLoggedIn();
+        Map groupIdToNode = new TreeMap();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCES);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, 
+                // isBanned, loadOnStartup
+                long groupId = rs.getLong(1);
+                if (rs.wasNull()) groupId = -1;
+                long parentGroupId = rs.getLong(2);
+                if (rs.wasNull()) parentGroupId = -1;
+                int order = rs.getInt(3);
+                if (rs.wasNull()) order = 0;
+                String name = rs.getString(4);
+                String desc = rs.getString(5);
+                long uriId = rs.getLong(6);
+                if (rs.wasNull()) uriId = -1;
+                boolean isIgnored = rs.getBoolean(7);
+                if (rs.wasNull()) isIgnored = false;
+                boolean isBanned = rs.getBoolean(8);
+                if (rs.wasNull()) isBanned = false;
+                boolean onStartup = rs.getBoolean(9);
+                if (rs.wasNull()) onStartup = false;
+                
+                SyndieURI uri = getURI(uriId);
+                NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, isIgnored, isBanned, onStartup);
+                groupIdToNode.put(new Long(groupId), ref);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the nym's references", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        // now build the tree out of the nodes
+        List roots = new ArrayList();
+        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+            NymReferenceNode cur = (NymReferenceNode)iter.next();
+            long parentId = cur.getParentGroupId();
+            if (parentId >= 0) {
+                NymReferenceNode parent = (NymReferenceNode)groupIdToNode.get(new Long(parentId));
+                if (parent != null)
+                    parent.addChild(cur);
+                else
+                    roots.add(cur);
+            } else {
+                roots.add(cur);
+            }
+        }
+        // another pass to sort the children
+        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
+            NymReferenceNode cur = (NymReferenceNode)iter.next();
+            cur.sortChildren();
+        }
+        // sort the roots
+        TreeMap sorted = new TreeMap();
+        for (int i = 0; i < roots.size(); i++) {
+            NymReferenceNode cur = (NymReferenceNode)roots.get(i);
+            int off = 0;
+            while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+                off++;
+            sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+        }
+        roots.clear();
+        for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
+            roots.add(iter.next());
+        
+        return roots;
+    }
+
+    private static final String SQL_EXPAND_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = siblingOrder + 1 WHERE parentGroupId = ? AND nymId = ? AND siblingOrder >= ?";
+    //private static final String SQL_UPDATE_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = ? WHERE groupId = ? AND nymId = ?";
+    /**
+     * make sure the given parent/siblingOrder value is not in use by incrementing the siblingOrder
+     * of all equal or greater siblingOrder values
+     */
+    private void createNymReferenceOrderHole(long nymId, long parentGroupId, int siblingOrder) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_EXPAND_NYM_REFERENCE_ORDER);
+            stmt.setLong(1, parentGroupId);
+            stmt.setLong(2, nymId);
+            stmt.setInt(3, siblingOrder);
+            int rows = stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            if (rows > 0) {
+                // ok, some items were reordered, so we need to know by how much, and then contract them
+                // todo: contract them
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_DELETE_URI = "DELETE FROM uriAttribute WHERE uriId = ?";
+    private static final String SQL_UPDATE_NYM_REFERENCE = "UPDATE resourceGroup SET parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ? WHERE groupId = ?";
+    /** update the reference in the database, keyed off the nymId and newValue's getGroupId() field */
+    public void updateNymReference(long nymId, NymReferenceNode newValue) {
+        ensureLoggedIn();
+        createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
+        
+        long uriId = -1;
+        if (newValue.getURI() != null) {
+            if (newValue.getURIId() >= 0) {
+                // ok, no change
+                uriId = newValue.getURIId();
+            } else {
+                uriId = addURI(newValue.getURI());
+                newValue.updateData(newValue.getGroupId(), newValue.getSiblingOrder(), -1);
+            }
+        } else {
+            if (newValue.getURIId() >= 0) {
+                try {
+                    exec(SQL_DELETE_URI, newValue.getURIId());
+                } catch (SQLException se) {
+                    log(se);
+                }
+                newValue.updateData(newValue.getGroupId(), newValue.getSiblingOrder(), -1);
+            } else {
+                // ok, no change
+            }
+        }
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_UPDATE_NYM_REFERENCE);
+            //"parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, 
+            //uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ?
+            //WHERE groupId = ?";
+            stmt.setLong(1, newValue.getParentGroupId());
+            stmt.setInt(2, newValue.getSiblingOrder());
+            if (newValue.getName() != null)
+                stmt.setString(3, newValue.getName());
+            else
+                stmt.setNull(3, Types.VARCHAR);
+            if (newValue.getDescription() != null)
+                stmt.setString(4, newValue.getDescription());
+            else
+                stmt.setNull(4, Types.VARCHAR);
+            if (uriId >= 0)
+                stmt.setLong(5, uriId);
+            else
+                stmt.setNull(5, Types.INTEGER);
+            stmt.setBoolean(6, newValue.getIsIgnored());
+            stmt.setBoolean(7, newValue.getIsBanned());
+            stmt.setBoolean(8, newValue.getLoadOnStart());
+            stmt.setLong(9, newValue.getGroupId());
+            
+            if (_ui != null)
+                _ui.debugMessage("updating ref w/ parent=" + newValue.getParentGroupId() + ", sibling=" + newValue.getSiblingOrder() + " groupId=" + newValue.getGroupId());
+
+            int rc = stmt.executeUpdate();
+            if (rc == 1) {
+                // whee!
+            } else {
+                // wtf
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    /** add a new reference recursively, then updating the groupId, uriId, and siblingOrder fields in newValue */
+    public void addNymReference(long nymId, NymReferenceNode newValue) {
+        ensureLoggedIn();
+        addNymReferenceDetail(nymId, newValue);
+        for (int i = 0; i < newValue.getChildCount(); i++) {
+            NymReferenceNode child = (NymReferenceNode)newValue.getChild(i);
+            child.setParentGroupId(newValue.getGroupId());
+            child.setSiblingOrder(i);
+            addNymReference(nymId, child);
+        }
+    }
+    private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
+        createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
+        
+        long groupId = nextId("resourceGroupIdSequence");
+        int siblingOrder = newValue.getSiblingOrder();
+        long uriId = -1;
+        if (newValue.getURI() != null)
+            uriId = addURI(newValue.getURI());
+        
+        if (_ui != null)
+            _ui.debugMessage("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ADD_NYM_REFERENCE);
+            // (groupId,parentGroupId,siblingOrder,name,description,uriId,isIgnored,isBanned,loadOnStartup,nymId)
+            stmt.setLong(1, groupId);
+            stmt.setLong(2, newValue.getParentGroupId());
+            stmt.setInt(3, siblingOrder);
+            if (newValue.getName() != null)
+                stmt.setString(4, newValue.getName());
+            else
+                stmt.setNull(4, Types.VARCHAR);
+            if (newValue.getDescription() != null)
+                stmt.setString(5, newValue.getDescription());
+            else
+                stmt.setNull(5, Types.VARCHAR);
+            stmt.setLong(6, uriId);
+            stmt.setBoolean(7, newValue.getIsIgnored());
+            stmt.setBoolean(8, newValue.getIsBanned());
+            stmt.setBoolean(9, newValue.getLoadOnStart());
+            stmt.setLong(10, nymId);
+            
+            int rc = stmt.executeUpdate();
+            if (rc == 1) {
+                newValue.updateData(groupId, siblingOrder, uriId);
+            } else {
+                // wtf
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_DELETE_NYM_REFERENCE = "DELETE FROM resourceGroup WHERE groupId = ?";
+    private static final String SQL_DELETE_NYM_REFERENCE_URI = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE groupId = ?)";
+    /** recursively delete the reference, any children, and any URIs they refer to */
+    public void deleteNymReference(long nymId, long groupId) {
+        ensureLoggedIn();
+        
+        ArrayList groupIdsToDelete = new ArrayList();
+        groupIdsToDelete.add(new Long(groupId));
+        while (groupIdsToDelete.size() > 0) {
+            Long id = (Long)groupIdsToDelete.remove(0);
+            try {
+                exec(SQL_DELETE_NYM_REFERENCE_URI, id.longValue());
+            } catch (SQLException se) {
+                log(se);
+            }
+            try {
+                exec(SQL_DELETE_NYM_REFERENCE, id.longValue());
+            } catch (SQLException se) {
+                log(se);
+            }
+            getNymReferenceChildIds(id.longValue(), groupIdsToDelete);
+        }
+    }
+    
+    private static final String SQL_GET_NYM_REFERENCE_CHILD_IDS = "SELECT groupId FROM resourceGroup WHERE parentGroupId = ?";
+    private void getNymReferenceChildIds(long parentGroupId, ArrayList addTo) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_REFERENCE_CHILD_IDS);
+            stmt.setLong(1, parentGroupId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long group = rs.getLong(1);
+                if (!rs.wasNull()) {
+                    Long grp = new Long(group);
+                    if (!addTo.contains(grp))
+                        addTo.add(grp);
+                }
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
     
     private void ensureLoggedIn() throws IllegalStateException {
         try {
@@ -2002,6 +3389,7 @@ public class DBClient {
                 return;
         } catch (SQLException se) {
             // problem detecting isClosed?
+            log(se);
         }
         throw new IllegalStateException("Not logged in");
     }
@@ -2214,6 +3602,7 @@ public class DBClient {
     /** map of command name (String) to command line (String) */
     public Map getAliases(long nymId) {
         TreeMap rv = new TreeMap();
+        if (!isLoggedIn()) return rv;
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -2275,8 +3664,9 @@ public class DBClient {
         File scriptDir = new File(_rootDir, "scripts");
         File scriptFile = new File(scriptDir, propName);
         if (scriptFile.exists()) {
+            BufferedReader in = null;
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8"));
                 String line = null;
                 while ( (line = in.readLine()) != null) {
                     int split = line.indexOf('=');
@@ -2288,30 +3678,492 @@ public class DBClient {
                     if (name.startsWith("//") || (name.startsWith("--")) || (name.startsWith("#"))) continue;
                     rv.setProperty(name, val);
                 }
+                in.close();
+                in = null;
             } catch (UnsupportedEncodingException uee) {
                 //ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 //ignore
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         }
         return rv;
     }
+
+    /** the nym has previously marked all messages through this one as being read */
+    public static final int MSG_STATUS_OLD = 1;
+    /** the message hasn't previously been marked in bulk as read, but has been read since then */
+    public static final int MSG_STATUS_NEW_READ = 2;
+    /** the message hasn't previously been marked in bulk as read, and has not been read since then */
+    public static final int MSG_STATUS_NEW_UNREAD = 3;
+
+    private static final String SQL_GET_MSG_STATUS = "SELECT importDate, readThrough, ncrm.msgId FROM channelMessage cm, nymChannelReadThrough ncrt  JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? WHERE cm.msgId = ? AND ncrt.nymId = ?";
+    public int getMessageStatus(long msgId) { return getMessageStatus(msgId, -1); }
+    public int getMessageStatus(long msgId, long targetChanId) { return getMessageStatus(_nymId, msgId, targetChanId); }
+    public int getMessageStatus(long nymId, long msgId, long targetChanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MSG_STATUS);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.setLong(3, nymId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                Date importDate = rs.getDate(1);
+                Date readThrough = rs.getDate(2);
+                long curMsgId = rs.getLong(3);
+                if (rs.wasNull())
+                    curMsgId = -1;
+                if (readThrough.getTime() >= importDate.getTime())
+                    return MSG_STATUS_OLD;
+                else if (curMsgId == msgId)
+                    return MSG_STATUS_NEW_READ;
+                else
+                    return MSG_STATUS_NEW_UNREAD;
+            } else {
+                // there weren't any nymChannelReadThrough records at all, so we want to consider
+                // this new & unread
+                
+                // insert a nymChannelReadThrough record for a really old date
+                if (targetChanId < 0)
+                    targetChanId = getMessageTarget(msgId);
+                markChannelReadThrough(nymId, targetChanId, 0);
+                return MSG_STATUS_NEW_UNREAD;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting message status", se);
+            return MSG_STATUS_NEW_UNREAD;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_GET_MSG_READ = 
+            "SELECT importDate, readThrough, ncrm.msgId " +
+            "FROM channelMessage cm, nymChannelReadThrough ncrt " +
+            "JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope " +
+            "LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? " +
+            "WHERE ncrt.nymId = ? " +
+            "AND cm.msgId IN (";
+    /** get a list of msgIds (Long) from the given set who have already been read */
+    public List getRead(long msgIds[]) { return getRead(_nymId, msgIds); }
+    public List getRead(long nymId, long msgIds[]) {
+        long begin = System.currentTimeMillis();
+        List rv = new ArrayList();
+        StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ + 6*msgIds.length);
+        for (int i = 0; i < msgIds.length; i++) {
+            buf.append(msgIds[i]);
+            if (i+1 < msgIds.length)
+                buf.append(", ");
+        }
+        
+        buf.append(") AND (readThrough > importDate OR ncrm.msgId IS NOT NULL)");
+        String query = buf.toString();
+        _ui.debugMessage("query: " + query);
+        
+        long beforePrep = System.currentTimeMillis();
+        long afterPrep = -1;
+        long afterExec = -1;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(query);
+            afterPrep = System.currentTimeMillis();
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            afterExec = System.currentTimeMillis();
+            
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(msgId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting read messages from the list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        long afterMatch = System.currentTimeMillis();
+        _ui.debugMessage("getRead in bulk took " + (afterMatch-begin) + "/" +(afterMatch-afterExec)
+                         + "/" + (afterExec-afterPrep) + "/" + (afterPrep-beforePrep) 
+                         + ": found matches: " + rv.size() + "/" + msgIds.length);
+        return rv;
+    }
     
+    private static final String SQL_GET_MESSAGE_TARGET = "SELECT targetChannelId FROM channelMessage WHERE msgId = ?";
+    public long getMessageTarget(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_TARGET);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                long chanId = rs.getLong(1);
+                if (!rs.wasNull())
+                    return chanId;
+                else
+                    return -1;
+            } else {
+                return -1;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting message target", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_UNMARK_MESSAGE_READ = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId = ?";
+    private static final String SQL_MARK_MESSAGE_READ = "INSERT INTO nymChannelReadMsg (nymId, msgId) VALUES (?, ?)";
+    public void markMessageRead(long msgId) { markMessageRead(_nymId, msgId); }
+    public void markMessageRead(long nymId, long msgId) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+
+            stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, msgId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error marking message read", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_GET_REMARK_MESSAGES = "SELECT msgId FROM channelMessage WHERE importDate >= ? AND importDate <= ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    public void markMessageUnread(long msgId) { markMessageUnread(_nymId, msgId); }
+    public void markMessageUnread(long nymId, long msgId) {
+        // if it is > the high water mark in nymChannelReadThrough, this simply means delete from nymChannelReadMsg
+        // otherwise, select the msgIds imported after the given message who are < the high water mark, reduce the
+        // high water mark, and insert those msgIds into nymChannelReadMsg
+        long targetId = getMessageTarget(msgId);
+        long readThrough = getChannelReadThrough(nymId, targetId);
+        long msgImportDate = getMessageImportDate(msgId);
+        _ui.debugMessage("Marking message " + msgId + " unread: target channel: " + targetId + " readThrough: " + readThrough + " msgImportDate: " + msgImportDate);
+        if (msgImportDate > readThrough) {
+            _ui.debugMessage("Simple mark-unread strategy, since the message was imported after the watermark by " + (msgImportDate-readThrough)/(24*60*60*1000L) + " day(s)");
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
+                stmt.setLong(1, nymId);
+                stmt.setLong(2, msgId);
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error marking message unread", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        } else {
+            List msgIds = new ArrayList();
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = _con.prepareStatement(SQL_GET_REMARK_MESSAGES);
+                stmt.setDate(1, new Date(msgImportDate));
+                stmt.setDate(2, new Date(readThrough));
+                stmt.setLong(3, nymId);
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    long id = rs.getLong(1);
+                    if (!rs.wasNull())
+                        msgIds.add(new Long(id));
+                }
+                rs.close();
+                rs = null;
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error marking message unread", se);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+
+            _ui.debugMessage("Messages to remark as read in channel: " + targetId + ": " + msgIds);
+
+            markChannelReadThrough(_nymId, targetId, msgImportDate-1);
+            
+            stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
+                for (int i = 0; i < msgIds.size(); i++) {
+                    long curId = ((Long)msgIds.get(i)).longValue();
+                    if (curId == msgId) 
+                        continue; // that'd defeat the whole point, 'eh?
+                    stmt.setLong(1, nymId);
+                    stmt.setLong(2, curId);
+                    stmt.executeUpdate();
+                }
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error remarking message read", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+    }
+
+    private static final String SQL_GET_CHANNEL_READTHROUGH = "SELECT readThrough FROM nymChannelReadThrough WHERE nymId = ? AND scope = ?";
+    public long getChannelReadThrough(long nymId, long scopeId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_READTHROUGH);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, scopeId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                _ui.debugMessage("channelReadThrough: " + scopeId + ": " + when);
+                if (when != null)
+                    return when.getTime();
+            }
+            _ui.debugMessage("No channel read through for scopeId=" + scopeId);
+            return -1;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting channel read through", se);
+            return -1;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+
+    private static final String SQL_DELETE_CHANNEL_READ_THROUGH = "DELETE FROM nymChannelReadThrough WHERE scope = ? AND nymId = ?";
+    private static final String SQL_INSERT_CHANNEL_READ_THROUGH = "INSERT INTO nymChannelReadThrough (scope, nymId, readThrough) VALUES (?, ?, ?)";
+    private static final String SQL_DELETE_CHANNEL_READ_MSG = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ? AND importDate <= ?)";
+    public void markChannelRead(long chanId) { markChannelReadThrough(_nymId, chanId, System.currentTimeMillis()); }
+    public void markChannelReadThrough(long chanId, long importDate) { markChannelReadThrough(_nymId, chanId, importDate); }
+    public void markChannelReadThrough(long nymId, long chanId, long importDate) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_THROUGH);
+            stmt.setLong(1, chanId);
+            stmt.setLong(2, nymId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_INSERT_CHANNEL_READ_THROUGH);
+            stmt.setLong(1, chanId);
+            stmt.setLong(2, nymId);
+            stmt.setDate(3, new Date(importDate));
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_MSG);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, chanId);
+            stmt.setDate(3, new Date(importDate));
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error setting channel readThrough", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(messageId) FROM channelMessage LEFT OUTER JOIN nymChannelReadThrough ON scope = targetChannelId AND nymId = ? WHERE (readThrough IS NULL OR importDate > readThrough) AND targetChannelId = ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
+    public int countUnreadMessages(long nymId, Hash scope) {
+        long chan = getChannelId(scope);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_COUNT_UNREAD_MESSAGES);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, chan);
+            stmt.setLong(3, nymId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (rs.wasNull())
+                    return 0;
+                else
+                    return count;
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting unread message count", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM channel WHERE channelId NOT IN (SELECT scope FROM nymChannelReadThrough WHERE nymId = ?)";
+    /** list of forums where the nym hasn't set a nymChannelReadThrough date (not even one in 1970) */
+    public List getNewChannelIds() { return getNewChannelIds(_nymId); }
+    public List getNewChannelIds(long nymId) {
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NEW_CHANNEL_IDS);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                long chanId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(chanId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting new channel ids", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+
     /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */
     public void runScript(UI ui, String scriptName) {
         File scriptDir = new File(_rootDir, "scripts");
         File script = new File(scriptDir, scriptName);
         if (script.exists()) {
+            BufferedReader in = null;
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
+                ui.debugMessage("running script from " + script.getAbsolutePath());
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"));
                 String line = null;
-                while ( (line = in.readLine()) != null)
+                while ( (line = in.readLine()) != null) {
+                    if (line.startsWith("//") || line.startsWith("#") || line.startsWith(";"))
+                        continue;
                     ui.insertCommand(line);
+                }
+                in.close();
+                in = null;
             } catch (UnsupportedEncodingException uee) {
                 ui.errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             } catch (IOException ioe) {
                 ui.errorMessage("Error running the script " + script, ioe);
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
+        } else {
+            ui.debugMessage("script does not exist [" + script.getAbsolutePath() + "]");
         }
+        ui.insertCommand("notifyscriptend " + scriptName);
+        ui.debugMessage("added notifyscriptend " + scriptName);
+    }
+    
+    private void log(SQLException se) {
+        if (_ui != null)
+            _ui.errorMessage("Internal error", se);
+        else
+            se.printStackTrace();
+    }
+    
+    public long createEdition(long lastValue) {
+        long now = System.currentTimeMillis();
+        now -= (now % 24*60*60*1000);
+        while (now < lastValue)
+            now += ctx().random().nextLong(24*60*60*1000);
+        return now;
+    }
+    
+    public void logError(String msg, Exception cause) { 
+        if (_log.shouldLog(Log.ERROR))
+            _log.error(msg, cause);
+    }
+    public void logInfo(String msg) { 
+        if (_log.shouldLog(Log.INFO)) 
+            _log.info(msg); 
+    }
+    public void logDebug(String msg, Exception cause) { 
+        if (_log.shouldLog(Log.DEBUG)) 
+            _log.debug(msg, cause); 
+    }
+    
+    /** 
+     * encrypt the orig data w/ the current passphrase, generating a new salt and
+     * saving it in saltTarget.  The result is the padded encrypted data
+     */
+    public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
+        _context.random().nextBytes(saltTarget);
+        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(_pass));
+        int pad = 16-(orig.length%16);
+        if (pad == 0) pad = 16;
+        byte pre[] = new byte[orig.length+pad];
+        System.arraycopy(orig, 0, pre, 0, orig.length);
+        for (int i = 0; i < pad; i++)
+            pre[pre.length-1-i] = (byte)(pad&0xff);
+        byte encrypted[] = new byte[pre.length];
+        _context.aes().encrypt(pre, 0, encrypted, 0, saltedKey, saltTarget, pre.length);
+        return encrypted;
+    }
+    
+    /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
+    public byte[] pbeDecrypt(byte orig[], byte salt[]) {
+        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(_pass));
+        byte decr[] = new byte[orig.length];
+        _context.aes().decrypt(orig, 0, decr, 0, saltedKey, salt, orig.length);
+        int pad = (int)decr[decr.length-1];
+        byte rv[] = new byte[decr.length-pad];
+        System.arraycopy(decr, 0, rv, 0, rv.length);
+        return rv;
+    }
+    
+    private boolean _trace;
+    private int _getMsgCount;
+    private int _getChanCount;
+    private long _getMsgTime;
+    private long _getChanTime;
+    private long _traceStart;
+    public void beginTrace() { 
+        _trace = true;
+        _traceStart = System.currentTimeMillis();
+        _getMsgCount = 0;
+        _getChanCount = 0;
+        _getMsgTime = 0;
+        _getChanTime = 0;
+    }
+    public String completeTrace() {
+        long end = System.currentTimeMillis();
+        _trace = false;
+        return "time: " + (end-_traceStart) + " getMsg: " + _getMsgCount + "/" + _getMsgTime + " getChan: " + _getChanCount + "/" + _getChanTime;
     }
 }

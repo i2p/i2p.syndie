@@ -159,6 +159,7 @@ class ImportMeta {
             // insert into channelReferenceGroup
             setChannelReferences(client, channelId, body);
             // (plus lots of 'insert into uriAttribute' interspersed)
+            setChannelAvatar(client, channelId, body);
             con.commit();
             ui.statusMessage("committed as channel " + channelId);
             
@@ -421,8 +422,8 @@ class ImportMeta {
             if (stmt != null) stmt.close();
         }
         
-        String unencryptedTags[] = enc.getHeaderStrings(Constants.MSG_META_HEADER_TAGS);
-        String encryptedTags[] = body.getHeaderStrings(Constants.MSG_META_HEADER_TAGS);
+        String unencryptedTags[] = enc.getHeaderStrings(Constants.MSG_META_HEADER_TAGS, true);
+        String encryptedTags[] = body.getHeaderStrings(Constants.MSG_META_HEADER_TAGS, true);
         try {
             stmt = con.prepareStatement(SQL_INSERT_TAG);
             if (unencryptedTags != null) {
@@ -600,9 +601,13 @@ class ImportMeta {
     
     static final String SQL_DEPRECATE_READ_KEYS = "UPDATE channelReadKey SET keyEnd = CURDATE() WHERE channelId = ? AND keyEnd IS NULL";
     private static void setChannelReadKeys(DBClient client, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
-        client.exec(SQL_DEPRECATE_READ_KEYS, channelId);
-        addChannelReadKeys(client, channelId, body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS));
-        addChannelReadKeys(client, channelId, enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS));
+        SessionKey priv[] = body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
+        SessionKey pub[] = enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
+        if ( ( (priv != null) && (priv.length > 0) ) || ( (pub != null) && (pub.length > 0) ) ) {
+            client.exec(SQL_DEPRECATE_READ_KEYS, channelId);
+            addChannelReadKeys(client, channelId, priv);
+            addChannelReadKeys(client, channelId, pub);
+        }
     }
     /*
      * CREATE CACHED TABLE channelReadKey (
@@ -613,20 +618,45 @@ class ImportMeta {
      * );
      */
     private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData) VALUES (?, ?)";
+    private static final String SQL_ENABLE_CHANNEL_READ_KEY = "UPDATE channelReadKey SET keyEnd = NULL WHERE channelId = ? AND keyData = ?";
+    private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*) FROM channelReadKey WHERE channelId = ? AND keyData = ?";
     private static void addChannelReadKeys(DBClient client, long channelId, SessionKey keys[]) throws SQLException {
         if (keys == null) return;
         Connection con = client.con();
-        PreparedStatement stmt = null;
+        PreparedStatement insertStmt = null;
+        PreparedStatement enableStmt = null;
+        PreparedStatement existsStmt = null;
+        ResultSet rs = null;
         try {
-            stmt = con.prepareStatement(SQL_INSERT_CHANNEL_READ_KEY);
+            insertStmt = con.prepareStatement(SQL_INSERT_CHANNEL_READ_KEY);
+            enableStmt = con.prepareStatement(SQL_ENABLE_CHANNEL_READ_KEY);
+            existsStmt = con.prepareStatement(SQL_CHANNEL_READ_KEY_EXISTS);
             for (int i = 0; i < keys.length; i++) {
-                stmt.setLong(1, channelId);
-                stmt.setBytes(2, keys[i].getData());
-                if (stmt.executeUpdate() != 1)
-                    throw new SQLException("Unable to insert the channel read key");
+                existsStmt.setLong(1, channelId);
+                existsStmt.setBytes(2, keys[i].getData());
+                rs = existsStmt.executeQuery();
+                boolean exists = false;
+                if ((rs.next()) && (rs.getLong(1) > 0))
+                    exists = true;
+                rs.close();
+                rs = null;
+                if (exists) {
+                    enableStmt.setLong(1, channelId);
+                    enableStmt.setBytes(2, keys[i].getData());
+                    if (enableStmt.executeUpdate() < 1)
+                        throw new SQLException("Unable to enable the channel read key");
+                } else {
+                    insertStmt.setLong(1, channelId);
+                    insertStmt.setBytes(2, keys[i].getData());
+                    if (insertStmt.executeUpdate() != 1)
+                        throw new SQLException("Unable to insert the channel read key");
+                }
             }
         } finally {
-            if (stmt != null) stmt.close();
+            if (rs != null) rs.close();
+            if (enableStmt != null) enableStmt.close();
+            if (enableStmt != null) insertStmt.close();
+            if (existsStmt != null) existsStmt.close();
         }
     }
     /*
@@ -751,6 +781,26 @@ class ImportMeta {
             _stmt.setBoolean(9, true);
             if (_stmt.executeUpdate() != 1)
                 throw new SQLException("Adding a channel reference did not go through");
+        }
+    }
+    
+    static final String SQL_DELETE_CHANNEL_AVATAR = "DELETE FROM channelAvatar WHERE channelId = ?";
+    static final String SQL_SET_AVATAR = "INSERT INTO channelAvatar (channelId, avatarData) VALUES (?, ?)";
+    private static void setChannelAvatar(DBClient client, long channelId, EnclosureBody body) throws SQLException {
+        client.exec(SQL_DELETE_CHANNEL_AVATAR, channelId);
+        byte avatar[] = body.getAvatarData();
+        if (avatar != null) {
+            PreparedStatement stmt = null;
+            try {
+                stmt = client.con().prepareStatement(SQL_SET_AVATAR);
+                stmt.setLong(1, channelId);
+                stmt.setBytes(2, avatar);
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
         }
     }
     

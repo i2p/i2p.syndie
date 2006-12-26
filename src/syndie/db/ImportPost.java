@@ -34,8 +34,10 @@ public class ImportPost {
     private boolean _authenticated;
     private boolean _authorized;
     private String _bodyPassphrase;
+    private boolean _forceReimport;
+    private boolean _alreadyImported;
     
-    private ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase) {
+    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
         _client = client;
         _ui = ui;
         _enc = enc;
@@ -43,7 +45,12 @@ public class ImportPost {
         _pass = pass;
         _privateMessage = false;
         _bodyPassphrase = bodyPassphrase;
+        _forceReimport = forceReimport;
+        _alreadyImported = false;
     }
+    
+    public boolean getAlreadyImported() { return _alreadyImported; }
+    public boolean getNoKey() { return (_body != null) && (_body instanceof UnreadableEnclosureBody); }
     
     /*
      * The post message is ok if it is either signed by the channel's
@@ -51,11 +58,11 @@ public class ImportPost {
      * or the post's authentication key.  the exit code in ui.commandComplete is
      * -1 if unimportable, 0 if imported fully, or 1 if imported but not decryptable
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase) {
-        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase);
+    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
+        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
         return imp.process();
     }
-    private boolean process() {
+    public boolean process() {
         _uri = _enc.getHeaderURI(Constants.MSG_HEADER_POST_URI);
         if (_uri == null) {
             _ui.errorMessage("No URI in the post");
@@ -101,7 +108,7 @@ public class ImportPost {
                     }
                 }
                 if (_body == null)
-                    _ui.errorMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
+                    _ui.debugMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
             }
 
             if (_body == null) {
@@ -133,7 +140,7 @@ public class ImportPost {
             }
             
             if (_body == null) {
-                _ui.errorMessage("Cannot import a reply that we do not have the private key to read");
+                _ui.debugMessage("Cannot import a reply that we do not have the private key to read");
                 _body = new UnreadableEnclosureBody(_client.ctx());
             }
         } else if (_enc.isPost()) {
@@ -172,10 +179,12 @@ public class ImportPost {
                             // decrypt it with that key
                             _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), key);
                         } catch (DataFormatException dfe) {
-                            _ui.errorMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", dfe);
+                            _ui.errorMessage("Invalid passphrase");
+                            _ui.debugMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", dfe);
                             _body = new UnreadableEnclosureBody(_client.ctx());
                         } catch (IOException ioe) {
-                            _ui.errorMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", ioe);
+                            _ui.errorMessage("Invalid passphrase");
+                            _ui.debugMessage("Invalid passphrase [" + passphrase + "] salt [" + Base64.encode(promptSalt) + "]", ioe);
                             _body = new UnreadableEnclosureBody(_client.ctx());
                         }
                     }
@@ -201,7 +210,7 @@ public class ImportPost {
                             continue;
                         } catch (DataFormatException dfe) {
                             //dfe.printStackTrace();
-                            _ui.debugMessage("Read key attempt failed, continuing...", dfe);
+                            _ui.debugMessage("Read key " + i + "/" + keys.size() + " attempt failed, continuing...");//, dfe);
                             continue;
                         }
                     }
@@ -379,18 +388,26 @@ public class ImportPost {
         
         Long messageId = _uri.getMessageId();
         
+        Boolean forceNewThread = _body.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
+        if (forceNewThread == null)
+            forceNewThread = _enc.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
+        
+        Boolean refuseReplies = _body.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
+        if (refuseReplies == null)
+            refuseReplies = _enc.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
+        
         long scopeChannelId = _client.getChannelId(_channel);
         long targetChannelId = scopeChannelId;
         byte target[] = _body.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
         if (target != null) {
             Hash targetHash = new Hash(target);
             long targetId = _client.getChannelId(targetHash);
-            if (isAuthorizedFor(targetHash, targetId, author)) {
+            if (isAuthorizedFor(targetHash, targetId, author, forceNewThread)) {
                 targetChannelId = targetId;
                 _authorized = true;
             }
         } else {
-            if (isAuthorizedFor(_channel, targetChannelId, author)) {
+            if (isAuthorizedFor(_channel, targetChannelId, author, forceNewThread)) {
                 _authorized = true;
             }
         }
@@ -407,14 +424,6 @@ public class ImportPost {
             overwriteMsg = overwrite.getMessageId();
         }
         
-        Boolean forceNewThread = _body.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
-        if (forceNewThread == null)
-            forceNewThread = _enc.getHeaderBoolean(Constants.MSG_HEADER_FORCE_NEW_THREAD);
-        
-        Boolean refuseReplies = _body.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
-        if (refuseReplies == null)
-            refuseReplies = _enc.getHeaderBoolean(Constants.MSG_HEADER_REFUSE_REPLIES);
-        
         boolean wasEncrypted = !_publishedBodyKey;
         boolean wasPrivate = _privateMessage;
         boolean wasPBE = _enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT) != null;
@@ -430,10 +439,21 @@ public class ImportPost {
         }
         MessageInfo msg = _client.getMessage(channelId, _uri.getMessageId());
         if (msg != null) {
-            _ui.debugMessage("Existing message: " + msg.getInternalId());
-            if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
+            if (_forceReimport) {
+                _ui.debugMessage("Message exists (" + msg.getInternalId() + ") but we want to force reimport, so drop it");
+                _client.deleteFromDB(_uri, _ui);
+                msg = null;
+            } else if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
+                _ui.debugMessage("Existing message: " + msg.getInternalId());
+                _alreadyImported = true;
+                return false;
+            } else if ( ( (msg.getPassphrasePrompt() != null) || msg.getReadKeyUnknown() || msg.getReplyKeyUnknown()) && 
+                        (_body instanceof UnreadableEnclosureBody) ) {
+                _ui.debugMessage("Existing message: " + msg.getInternalId() + " still cannot be decrypted.");
+                _alreadyImported = true;
                 return false;
             } else {
+                _ui.debugMessage("Existing message: " + msg.getInternalId());
                 // we have the post, but don't have the passphrase or keys.  So...
                 // delete it, then import it again clean
                 _ui.debugMessage("Known message was not decrypted, so lets drop it and try again...");
@@ -556,7 +576,7 @@ public class ImportPost {
      * or may allow unauthorized replies (and if we are replying to an authorized
      * post, we are thereby authorized)
      */
-    private boolean isAuthorizedFor(Hash targetHash, long targetId, Hash author) {
+    private boolean isAuthorizedFor(Hash targetHash, long targetId, Hash author, Boolean forceNewThread) {
         if (targetId >= 0) {
             ChannelInfo chanInfo = _client.getChannel(targetId);
             if (chanInfo != null) {
@@ -571,23 +591,57 @@ public class ImportPost {
                     // implicitly allowed to start new threads
                     _ui.debugMessage("Message is an unauthorized post to a chan that doesnt require auth, so allow it");
                     return true;
-                } else if (chanInfo.getAllowPublicReplies()) {
+                } else if (chanInfo.getAllowPublicReplies() && ( (forceNewThread == null) || (!forceNewThread.booleanValue()) )) {
                     SyndieURI parents[] = _body.getHeaderURIs(Constants.MSG_HEADER_REFERENCES);
+                    SyndieURI pubParents[] = _enc.getHeaderURIs(Constants.MSG_HEADER_REFERENCES);
+                    if ((parents == null) || (parents.length == 0)) {
+                        parents = pubParents;
+                        _ui.debugMessage("replacing private parent set with public one");
+                    } else if ( (parents != null) && (pubParents != null) && (parents.length > 0) && (pubParents.length > 0) ) {
+                        SyndieURI merged[] = new SyndieURI[parents.length + pubParents.length];
+                        for (int i = 0; i < parents.length; i++)
+                            merged[i] = parents[i];
+                        for (int i = 0; i < pubParents.length; i++)
+                            merged[i+parents.length] = pubParents[i];
+                        parents = merged;
+                        _ui.debugMessage("Merging parent sets (" + parents.length + "/" + pubParents.length + ")");
+                    }
                     if ( (parents != null) && (parents.length > 0) ) {
                         for (int i = 0; i < parents.length; i++) {
                             Hash scope = parents[i].getScope();
-                            if ( (scope != null) && (scope.equals(targetHash)) ) {
-                                MessageInfo parentMsg = _client.getMessage(targetId, parents[i].getMessageId());
-                                if ( (parentMsg != null) && (parentMsg.getWasAuthorized()) ) {
-                                    // post is a reply to a message in the channel
-                                    _ui.debugMessage("Message is an unauthorized reply to an authorized post, so allow it");
-                                    return true;
-                                }
+                            // problem: if the parent refers to a post whose scope is authorized (implicitly or
+                            // explicitly), how can we tell whether that parent exists and just isn't known locally
+                            // vs. whether that parent does not exist?
+                            // without this differentiation, anyone could create new threads in forums that allow
+                            // public replies but do not allow public posts.  perhaps this could just be addressed
+                            // in a UI fashion though - only show the threads if there is a locally known authorized
+                            // ancestor.
+                            if (scope == null) continue;
+                            if (scope.equals(targetHash)) {
+                                _ui.debugMessage("Message is an unauthorized reply to an implicitly authorized post (which we may not have, and which may not even exist...), so allow it");
+                                return true;
+                            } else if (isAuth(chanInfo.getAuthorizedManagers(), scope) ||
+                                       isAuth(chanInfo.getAuthorizedPosters(), scope)) {
+                                _ui.debugMessage("parent is explicitly authorized: " + parents[i].toString());
+                                return true;
+                            } else {
+                                _ui.debugMessage("parent is neither implicitly nor explicitly authorized: " + parents[i].toString());
                             }
                         }
-                    } // no parents, and !allowPublicPosts
+                        _ui.debugMessage("done iterating over the parents of " + _uri.toString());
+                    } else {
+                        // no parents, and !allowPublicPosts
+                        _ui.debugMessage("no parents for " + _uri);
+                    }
+                } else {
+                    // dont allow public replies or the post tried to force a new thread and the author isn't authorized
+                    _ui.debugMessage("no public replies allowed for unauthorized: " + _uri);
                 }
+            } else {
+                _ui.debugMessage("target channel is unknown: " + targetId);
             }
+        } else {
+            _ui.debugMessage("target channel is unspecified");
         }
         return false;
     }

@@ -18,7 +18,7 @@ import syndie.data.ReferenceNode;
  * [--channelId $internalId]        // if set, try to update the given channel rather than create a new one (only if authorized)
  *  --name $name
  * [--description $desc]
- * [--avatar $filename]             // location of 32x32 PNG formatted avatar
+ * [--avatar $filename|$base64AvatarPNG]             // location of 32x32 PNG formatted avatar
  * [--edition $num]                 // edition to publish, or an automatically chosen value if not specified
  * [--publicPosting $boolean]       // can anyone create new threads?
  * [--publicReplies $boolean]       // can anyone reply to posts?
@@ -26,7 +26,7 @@ import syndie.data.ReferenceNode;
  * [--privTag $tag]*
  * [--postKey $base64PubKey]*       // who is allowed to post to the channel
  * [--manageKey $base64PubKey]*     // who is allowed to manage the channel
- * [--refs $channelRefGroupFile]    // ([\t]*$name\t$uri\t$refType\t$description\n)* lines
+ * [--refs ($channelRefGroupFile|$channelRefGroupContent)]    // ([\t]*$name\t$uri\t$refType\t$description\n)* lines
  * [--pubArchive $archive]*
  * [--privArchive $archive]*
  * [--encryptContent $boolean]      // don't publicize the key encrypting the metadata, and include a session key in the encrypted metadata to read posts with
@@ -177,10 +177,20 @@ public class ChanGen extends CommandImpl {
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
+            } else {
+                refStr = filename;
             }
         }
         
-        byte avatar[] = read(ui, args.getOptValue("avatar"), Constants.MAX_AVATAR_SIZE);
+        String avatarStr = args.getOptValue("avatar");
+        byte avatar[] = null;
+        if (avatarStr != null) {
+            File fname = new File(avatarStr);
+            if (fname.exists())
+                avatar = read(ui, avatarStr, Constants.MAX_AVATAR_SIZE);
+            else
+                avatar = Base64.decode(avatarStr);
+        }
         
         boolean ok = writeMeta(ui, out, refStr, identPublic, identPrivate, bodyKey, pubHeaders, privHeaders, avatar);
         if (ok)

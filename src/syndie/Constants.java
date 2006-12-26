@@ -1,11 +1,17 @@
 package syndie;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * ugly centralized place to put shared constants.  who needs ooad?
  */
 public class Constants {
+    /** name (String) to url (String) for some default archives that can be offered to users when they have none */
+    public static final Map DEFAULT_ARCHIVES = new TreeMap();
+    static { DEFAULT_ARCHIVES.put("Standard archive", "http://syndie.i2p.net:8080/"); }
+    
     /** header line in the enclosure before the body specifying the body size */
     public static final String MSG_HEADER_SIZE = "Size";
     
@@ -83,6 +89,8 @@ public class Constants {
     public static final String KEY_FUNCTION_REPLY = "reply";
     /** key can be used to authorize normal posts without the poster necessarily authenticating themselves */
     public static final String KEY_FUNCTION_POST = "post";
+    /** key can be used to insert under a freenet SSK keyspace.  the scope of the associated nymkeys is the hash of the SSK pubkey */
+    public static final String KEY_FUNCTION_SSKPRIV = "sskpriv";
     public static final String KEY_TYPE_AES256 = "AES256";
     public static final String KEY_TYPE_DSA = "DSA";
     public static final String KEY_TYPE_ELGAMAL2048 = "ELGAMAL2048";
@@ -96,37 +104,129 @@ public class Constants {
     public static final String MSG_ATTACH_DESCRIPTION = "Description";
     public static final String MSG_HEADER_TAGS = "Tags";
 
+    /** max size in bytes */
     public static final int MAX_AVATAR_SIZE = 16*1024;
+    /** max width in pixels */
+    public static final int MAX_AVATAR_WIDTH = 64;
+    /** max height in pixels */
+    public static final int MAX_AVATAR_HEIGHT = 64;
 
     public static final String FILENAME_SUFFIX = ".syndie";
 
+    public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";
 
-    public static final String[] split(char elem, String orig) {
+    public static final long MAX_ATTACHMENT_SIZE = 4*1024*1024;
+
+    /** split on the given character, with the resulting tokens not including that character */
+    public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
+    /** split on all of the characters in splitElements, with the resulting tokens not including that character */
+    public static final String[] split(String splitElements, String orig) { return split(splitElements, orig, true); }
+    public static final String[] split(String splitElements, String orig, boolean includeZeroSizedElem) {
         List vals = new ArrayList();
         int off = 0;
         int start = 0;
         char str[] = orig.toCharArray();
         while (off < str.length) {
-            if (str[off] == elem) {
+            if (splitElements.indexOf(str[off]) != -1) {
+                String val = null;
                 if (off-start > 0) {
-                    vals.add(new String(str, start, off-start));
+                    val = new String(str, start, off-start);
                 } else {
-                    vals.add(new String(""));
+                    val = "";
                 }
+                if ( (val.trim().length() > 0) || (includeZeroSizedElem) )
+                    vals.add(val);
                 start = off+1;
             }
             off++;
         }
+        String val = null;
         if (off-start > 0)
-            vals.add(new String(str, start, off-start));
-        else
-            vals.add(new String(""));
+            val = new String(str, start, off-start);
+        else 
+            val = "";
+        if ( (val.trim().length() > 0) || (includeZeroSizedElem) )
+            vals.add(val);
         String rv[] = new String[vals.size()];
         for (int i = 0; i < rv.length; i++)
             rv[i] = (String)vals.get(i);
         return rv;
     }
+    
+    private static final String ALLOWED_FILENAME = "abcdefghijklmnopqrstuvwxyz" +
+                                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                                   "0123456789" +
+                                                   "._-+";
+    
+    /** incredibly conservative filter, only allowing ascii alphanum and a few symbols */
+    public static String stripFilename(String name, boolean allowPaths) {
+        char rv[] = name.toCharArray();
+        boolean mod = false;
+        for (int i = 0; i < rv.length; i++) {
+            if (allowPaths && ( (rv[i] == '/' || rv[i] == '\\') )) {
+                rv[i] = File.separatorChar;
+                mod = true;
+            } else if (ALLOWED_FILENAME.indexOf(rv[i]) == -1) {
+                rv[i] = '_';
+                mod = true;
+            }
+        }
+        if (!mod) return name;
+        return new String(rv);
+    }
 
+    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
+    public static final String getDate(long msgId) { 
+        synchronized (_dayFmt) { 
+            return _dayFmt.format(new Date(msgId)); 
+        } 
+    }
+    private static final SimpleDateFormat _dateTimeFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.UK);
+    public static final String getDateTime(long when) {
+        synchronized (_dateTimeFmt) { 
+            return _dateTimeFmt.format(new Date(when)); 
+        }
+    }
+    
+    /** lowercase that is not dependent upon the user's locale */
+    public static final String lowercase(String orig) {
+        if (orig == null) return null;
+        // for HTML data, we need to ignore the user's locale, otherwise things
+        // could get b0rked.  the canonical case here is "TITLE".toLowerCase() with
+        // a turkish locale returns "T\u0131tle" (with unicode 0131 being the turkish
+        // dotless-i)
+        return orig.toLowerCase(Locale.UK);
+    }
+    
+    
+    public static final String replace(String orig, String oldval, String newval) { return replace(orig, oldval, newval, 0); }
+    public static final String replace(String orig, String oldval, String newval, int howManyReplacements) {
+        if ( (orig == null) || (oldval == null) || (oldval.length() <= 0) ) return orig;
+        
+        StringBuffer rv = new StringBuffer();
+        char origChars[] = orig.toCharArray();
+        char search[] = oldval.toCharArray();
+        int numReplaced = 0;
+        for (int i = 0; i < origChars.length; i++) {
+            boolean match = true;
+            if ((howManyReplacements > 0) && (howManyReplacements <= numReplaced))
+                match = false; // matched enough, stop
+            for (int j = 0; match && j < search.length && (j + i < origChars.length); j++) {
+                if (search[j] != origChars[i+j])
+                    match = false;
+            }
+            if (match) {
+                if (newval != null)
+                    rv.append(newval);
+                i += search.length-1;
+                numReplaced++;
+            } else {
+                rv.append(origChars[i]);
+            }
+        }
+        return rv.toString();
+    }
+    
     public static void main(String args[]) {
         String split[] = split('\n', "hi\nhow are you?\n\nw3wt\n\nthe above is a blank line");
         for (int i = 0; i < split.length; i++)

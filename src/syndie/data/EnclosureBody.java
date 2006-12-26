@@ -9,6 +9,7 @@ import net.i2p.I2PAppContext;
 import net.i2p.crypto.AESInputStream;
 import net.i2p.data.*;
 import net.i2p.util.Log;
+import syndie.db.CommandImpl;
 
 /**
  *
@@ -176,6 +177,12 @@ public class EnclosureBody {
         else
             return null;
     }
+    public byte[] getAvatarData() {
+        if (_entries.containsKey(ENTRY_AVATAR))
+            return (byte[])_entries.get(ENTRY_AVATAR);
+        else
+            return null;
+    }
     public Set getPageConfigKeys(int pageNum) { return ((Properties)_pageConfig.get(pageNum)).keySet(); }
     public Set getAttachmentConfigKeys(int attachNum) { return ((Properties)_attachConfig.get(attachNum)).keySet(); }
     public Set getHeaderKeys() { return _headers.keySet(); }
@@ -187,7 +194,8 @@ public class EnclosureBody {
     public byte[] getHeaderBytes(String key) { return Enclosure.toBytes(_headers.getProperty(key)); }
     public SyndieURI getHeaderURI(String key) { return Enclosure.toURI(_headers.getProperty(key)); }
     public SyndieURI[] getHeaderURIs(String key) { return Enclosure.toURIs(_headers.getProperty(key)); }
-    public String[] getHeaderStrings(String key) { return Enclosure.toStrings(_headers.getProperty(key)); }
+    public String[] getHeaderStrings(String key) { return getHeaderStrings(key, false); }
+    public String[] getHeaderStrings(String key, boolean splitByCommaToo) { return Enclosure.toStrings(_headers.getProperty(key), splitByCommaToo); }
     public Boolean getHeaderBoolean(String key) { return Enclosure.toBoolean(_headers.getProperty(key)); }
     public Long getHeaderLong(String key) { return Enclosure.toLong(_headers.getProperty(key)); }
     public SessionKey getHeaderSessionKey(String key) { return Enclosure.toSessionKey(_headers.getProperty(key)); }
@@ -292,51 +300,13 @@ public class EnclosureBody {
             //System.out.println("Entry " + entry + " does not exist");
             return new Properties();
         }
-        parseProps(data, rv);
+        CommandImpl.parseProps(data, rv);
         return rv;
-    }
-    private static void parseProps(byte data[], Properties rv) {
-        //System.out.println("parsing props: " + new String(data));
-        int off = 0;
-        int dataStart = off;
-        int valStart = -1;
-        while (off < data.length) {
-            if (data[off] == '\n') {
-                try {
-                    String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
-                    String val = new String(data, valStart, off-valStart, "UTF-8");
-                    //System.out.println("Prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
-                    rv.setProperty(key, val);
-                } catch (UnsupportedEncodingException uee) {
-                    //
-                } catch (RuntimeException re) {
-                    //re.printStackTrace();
-                }
-                dataStart = off+1;
-                valStart = -1;
-            } else if ( (data[off] == '=') && (valStart == -1) ) {
-                valStart = off+1;
-            } else if (off + 1 >= data.length) {
-                if ( ( (valStart-1-dataStart) > 0) && ( (off+1-valStart) > 0) ) {
-                    try {
-                        String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
-                        String val = new String(data, valStart, off+1-valStart, "UTF-8");
-                        //System.out.println("End prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
-                        rv.setProperty(key, val);
-                    } catch (UnsupportedEncodingException uee) {
-                        //
-                    } catch (RuntimeException re) {
-                        //re.printStackTrace();
-                    }
-                }
-            }
-            off++;
-        }
     }
     
     public static void main(String args[]) {
         Properties props = new Properties();
-        parseProps("a=b\nc=d".getBytes(), props);
+        CommandImpl.parseProps("a=b\nc=d".getBytes(), props);
         System.out.println("props: " + props);
     }
 }

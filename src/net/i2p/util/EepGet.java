@@ -86,7 +86,7 @@ public class EepGet {
     public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, String outputFile, String url, boolean allowCaching, String etag, String postData) {
         _context = ctx;
         _log = ctx.logManager().getLog(EepGet.class);
-        _shouldProxy = shouldProxy;
+        _shouldProxy = (proxyHost != null) && (proxyHost.length() > 0) && (proxyPort > 0) && shouldProxy;
         _proxyHost = proxyHost;
         _proxyPort = proxyPort;
         _numRetries = numRetries;
@@ -347,7 +347,9 @@ public class EepGet {
                     ((StatusListener)_listeners.get(i)).attempting(_url);
                 sendRequest();
                 doFetch();
-                return true;
+                if (!_transferFailed)
+                    return true;
+                break;
             } catch (IOException ioe) {
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).attemptFailed(_url, _bytesTransferred, _bytesRemaining, _currentAttempt, _numRetries, ioe);
@@ -495,7 +497,7 @@ public class EepGet {
         _out = null;
         
         if (_log.shouldLog(Log.DEBUG))
-            _log.debug("Done transferring " + _bytesTransferred);
+            _log.debug("Done transferring " + _bytesTransferred + " (ok? " + !_transferFailed + ")");
 
         if (_transferFailed) {
             // 404, etc
@@ -523,6 +525,9 @@ public class EepGet {
         if (!read) throw new IOException("Unable to read the first line");
         int responseCode = handleStatus(buf.toString());
         boolean redirect = false;
+        
+        if (_log.shouldLog(Log.DEBUG))
+            _log.debug("rc: " + responseCode + " for " + _actualURL);
 
         boolean rcOk = false;
         switch (responseCode) {
@@ -727,11 +732,15 @@ public class EepGet {
         } else {
             try {
                 URL url = new URL(_actualURL);
-                String host = url.getHost();
-                int port = url.getPort();
-                if (port == -1)
-                    port = 80;
-                _proxy = new Socket(host, port);
+                if ("http".equals(url.getProtocol())) {
+                    String host = url.getHost();
+                    int port = url.getPort();
+                    if (port == -1)
+                        port = 80;
+                    _proxy = new Socket(host, port);
+                } else {
+                    throw new IOException("URL is not supported:" + _actualURL);
+                }
             } catch (MalformedURLException mue) {
                 throw new IOException("Request URL is invalid");
             }
@@ -765,9 +774,9 @@ public class EepGet {
         else path = proto + "://" + host + ":" + port + path;
         if (_log.shouldLog(Log.DEBUG)) _log.debug("Requesting " + path);
         if (post) {
-            buf.append("POST ").append(path).append(" HTTP/1.1\r\n");
+            buf.append("POST ").append(_actualURL).append(" HTTP/1.1\r\n");
         } else {
-            buf.append("GET ").append(path).append(" HTTP/1.1\r\n");
+            buf.append("GET ").append(_actualURL).append(" HTTP/1.1\r\n");
         }
         buf.append("Host: ").append(url.getHost()).append("\r\n");
         if (_alreadyTransferred > 0) {

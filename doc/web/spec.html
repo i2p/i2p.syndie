@@ -118,13 +118,13 @@ Attributes:
 * desc: [optional] longer description of the resource (string)
 * tag:  [optional] list of tags attached to the reference (string[])
 
-Type: channel
+<a id="uri_channel">Type: channel</a>
 Attributes:
 * channel:     [1] base64 of the SHA256 of the channel's identity public key (string)
 * author:      [1] base64 of the SHA256 of the author's identity public key, if different from the channel (string)
 * msgId:       [1] unique identifier within the channel's scope (or author's scope, if specified) (integer)
-* page:        [optional] page within the message's scope (integer)
-* attachment:  [optional] attachment within the message's scope (integer)
+* page:        [optional] page within the message's scope (integer starting at 1)
+* attachment:  [optional] attachment within the message's scope (integer starting at 1)
 * readKeyType: [optional] describes the readKey, e.g. "AES256" (string)
 * readKeyData: [optional] base64 of the key required to read posts in the channel [string)
 * postKeyType: [optional] describes the postKey, e.g. "DSA1024" (string)
@@ -137,16 +137,36 @@ Attributes:
     For instance, a syndie post may omit the channel and msgId when referring to another
     page or attachment on the current message.
 
-Type: search
+<a id="uri_search">Type: search</a>
 Attributes:
-* channel:      [optional] base64 of the SHA256 of the channel's identity public key (string)
-* author:       [optional] base64 of the SHA256 of the author's identity public key (string)
-* tag:          [optional] list of tags to match (string[])
-* keyword:      [optional] list of keywords to match (string[])
-* age:          [optional] number of days in the past to look back (integer)
-* status:       [optional] channels to look in- "new", "watched", "all" (string)
+* scope:        base64 of the SHA256 of the channel's identity public key, or "all" (string[])
+* author:       "authorized", "manager", "owner", "any" (string)
+* age:          number of days in the past to look back for the post's creation date (integer)
+* agelocal:     like age, but measures when the local archive received the message (integer)
+* unreadonly:   if true, only include unread messages (boolean)
+* taginclude:   matches must include at least one of these tags (string[])
+* tagrequire:   matches must include all of these tags (string[])
+* tagexclude:   matches must not include any of these tags (string[])
+* tagmessages:  the tag filter is applied against individual messages, not threads as a whole (boolean)
+* pagemin:      minimum number of pages in the post (integer)
+* pagemax:      maximum number of pages in the post (integer)
+* attachmin:    minimum number of attachments in the post (integer)
+* attachmax:    maximum number of attachments in the post (integer)
+* refmin:       minimum number of references in the post (integer)
+* refmax:       maximum number of references in the post (integer)
+* keymin:       minimum number of keys in the post (integer)
+* keymax:       maximum number of keys in the post (integer)
+* encrypted:    the message is still encrypted and not readable (boolean)
+* pbe:          the message was encrypted with a passphrase (boolean)
+* private:      the message was encrypted with a channel reply key (boolean)
+* public:       the message was readable by anyone (boolean)
+* authorized:   the message was readable by authorized readers (boolean)
+* threaded:     matches should take threading into consideration (boolean)
+* keyword:      matches messages with the keyword/phrase in the body or subject (string)
 
-Type: archive
+All of the search terms are optional
+
+<a id="uri_archive">Type: archive</a>
 Attributes:
 * net:          what network the URL is on, such as "i2p", "tor", "ip", or "freenet" (string)
 * url:          network-specific URL (string)
@@ -160,7 +180,7 @@ Attributes:
 * desc:         [optional] longer description of the resource (string)
 * tag:          [optional] list of tags attached to the reference (string[])
 
-Type: text
+<a id="uri_text">Type: text</a>
 Attributes:
 * name: [optional] short name of the freeform text reference (string)
 * body: [optional] freeform text reference (string)
@@ -169,7 +189,9 @@ Attributes:
 The canonical encoding is: "urn:syndie:$refType:$bencodedAttributes",
 with $refType being one of the five types above, and $bencodedAttributes
 being the bencoded attributes.  Strings are UTF-8, and the bencoded attributes
-are ordered according to the UK locale (in the canonical form).
+are ordered according to the UK locale (in the canonical form).  Keys have
+leading 0x0 bytes stripped prior to Base64 encoding, which must be expanded
+upon decoding.
 
 Examples:
  urn:syndie:url:d3:url19:http://www.i2p.net/e
@@ -298,7 +320,7 @@ uninterpreted.</p>
   <li><b>Allow on posts?</b> yes</li>
   <li><b>Allow on private messages?</b> yes</li>
   <li><b>Allow on metadata messages?</b> yes</li>
-  <li><b>Content type:</b> tab delimited list of tags</li>
+  <li><b>Content type:</b> tab or comma delimited list of tags</li>
   <li><b>Description:</b> 
   Key phrases describing the message or channel
   </li>

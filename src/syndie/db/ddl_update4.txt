@@ -1,0 +1,20 @@
+-- update the database from schema version 4
+-- this version 5 creates a per-nym archive table
+--
+
+UPDATE appVersion SET versionNum = 5, visibleVersion = 'DB with nym archives';
+
+CREATE CACHED TABLE nymArchive (
+	nymId		INTEGER
+	, name		VARCHAR(64)
+	, uriId		BIGINT
+	, customProxyHost	VARCHAR(256)
+	, customProxyPort	INTEGER
+	, lastSyncDate	DATE
+	, postKey	VARBINARY(32)
+	, postKeySalt	VARBINARY(32)
+	, readKey	VARBINARY(32)
+	, readKeySalt	VARBINARY(32)
+	, PRIMARY KEY(nymId, name)
+);
+

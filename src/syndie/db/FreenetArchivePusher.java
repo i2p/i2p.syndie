@@ -21,6 +21,7 @@ public class FreenetArchivePusher {
     private String _fcpHost;
     private String _privateSSK;
     private String _publicSSK;
+    private String _error;
     
     public FreenetArchivePusher(UI ui, String fcpHost, int fcpPort) {
         _ui = ui;
@@ -28,10 +29,12 @@ public class FreenetArchivePusher {
         _fcpPort = fcpPort;
     }
     
+    public String getPublicTarget() { return getTarget(_publicSSK); }
     public String getPublicSSK() { return _publicSSK; }
     public String getPrivateSSK() { return _privateSSK; }
     public void setPublicSSK(String uri) { _publicSSK = uri; }
     public void setPrivateSSK(String uri) { _privateSSK = uri; }
+    public String getError() { return _error; }
     
     public void generateSSK() {
         try {
@@ -48,7 +51,8 @@ public class FreenetArchivePusher {
                        "EndMessage\r\n"));
             Map rv = readResults(s.getInputStream());
             if (rv == null) {
-                _ui.errorMessage("Error communicating with the Freenet server");
+                _error = "Error communicating with the Freenet server";
+                _ui.errorMessage(_error);
                 //_ui.commandComplete(-1, null);
             } else {
                 _publicSSK = (String)rv.get("RequestURI");
@@ -60,14 +64,16 @@ public class FreenetArchivePusher {
                     _ui.statusMessage("(both will be stored in the current nym's profile)");
                     //_ui.commandComplete(0, null);
                 } else {
-                    _ui.errorMessage("Unable to generate a Freenet keypair");
+                    _error = "Unable to generate a Freenet keypair";
+                    _ui.errorMessage(_error);
                     _ui.debugMessage("FCP response: " + rv);
                     //_ui.commandComplete(-1, null);
                 }
             }
             s.close();
         } catch (IOException ioe) {
-            _ui.errorMessage("Error generating a new Freenet keypair", ioe);
+            _error = "Error generating a new Freenet keypair";
+            _ui.errorMessage(_error, ioe);
             //_ui.commandComplete(-1, null);
         }
     }
@@ -114,13 +120,19 @@ public class FreenetArchivePusher {
             for (int i = 0; i < files.size(); i++) {
                 File f = (File)files.get(i);
                 byte buf[] = new byte[4096];
-                FileInputStream fin = new FileInputStream(f);
-                int read = -1;
-                while ( (read = fin.read(buf)) != -1) {
-                    out.write(buf, 0, read);
-                    bytes += read;
+                FileInputStream fin = null;
+                try {
+                    fin = new FileInputStream(f);
+                    int read = -1;
+                    while ( (read = fin.read(buf)) != -1) {
+                        out.write(buf, 0, read);
+                        bytes += read;
+                    }
+                    fin.close();
+                    fin = null;
+                } finally {
+                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
-                fin.close();
             }
             
             _ui.debugMessage("FCP message written, now reading the response");
@@ -130,12 +142,14 @@ public class FreenetArchivePusher {
             // freenet
             Map rv = readResults(s.getInputStream());
             if (rv == null) {
-                _ui.errorMessage("Error communicating with the Freenet server");
+                _error = "Error communicating with the Freenet server";
+                _ui.errorMessage(_error);
                 _ui.commandComplete(-1, null);
             } else {
                 String code = (String)rv.get("Code");
                 if ( (code != null) && !("0".equals(code))) {
-                    _ui.errorMessage("Error posting the archive");
+                    _error = "Error posting the archive";
+                    _ui.errorMessage(_error);
                     _ui.debugMessage("FCP response: " + rv);
                     _ui.commandComplete(-1, null);
                 } else {
@@ -149,12 +163,14 @@ public class FreenetArchivePusher {
                         _ui.statusMessage(" aka ");
                         _ui.statusMessage(SyndieURI.createArchive(getTarget(_publicSSK), null).toString());
                     }
+                    _error = null;
                     _ui.commandComplete(0, null);
                 }
             }
             s.close();
         } catch (IOException ioe) {
-            _ui.errorMessage("Error posting the archive to Freenet", ioe);
+            _error = "Error posting the archive to Freenet";
+            _ui.errorMessage(_error, ioe);
             _ui.commandComplete(-1, null);
         }
     }

@@ -34,6 +34,7 @@ public class MessageInfo {
     private boolean _replyKeyUnknown;
     private boolean _isCancelled;
     private long _expiration;
+    private long _receiveDate;
     /** list of SyndieURI instances this message replies to, most recent first */
     private List _hierarchy;
     /** set of tags (String) that are hidden in the message */
@@ -69,6 +70,7 @@ public class MessageInfo {
         _replyKeyUnknown = false;
         _isCancelled = false;
         _expiration = -1;
+        _receiveDate = -1;
         _hierarchy = Collections.EMPTY_LIST;
         _privateTags = Collections.EMPTY_SET;
         _publicTags = Collections.EMPTY_SET;
@@ -129,6 +131,8 @@ public class MessageInfo {
     /** when the post should be discarded (or -1 if never) */
     public long getExpiration() { return _expiration; }
     public void setExpiration(long expiration) { _expiration = expiration; }
+    public long getReceiveDate() { return _receiveDate; }
+    public void setReceiveDate(long when) { _receiveDate = when; }
     /** list of SyndieURI instances this message replies to, most recent first */
     public List getHierarchy() { return _hierarchy; }
     public void setHierarchy(List hierarchy) { _hierarchy = hierarchy; }
@@ -153,7 +157,7 @@ public class MessageInfo {
     public boolean getReplyKeyUnknown() { return _replyKeyUnknown; }
     public void setReplyKeyUnknown(boolean isUnknown) { _replyKeyUnknown = isUnknown; }
     
-    public boolean equals(Object o) { return ((MessageInfo)o)._internalId == _internalId; }
+    public boolean equals(Object o) { return (o instanceof MessageInfo) ? ((MessageInfo)o)._internalId == _internalId : false; }
     public int hashCode() { return (int)_internalId; }
     public String toString() {
         StringBuffer buf = new StringBuffer();

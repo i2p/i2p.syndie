@@ -17,7 +17,7 @@ import syndie.data.NymKey;
  * [--authentic $boolean]
  */
 public class KeyImport extends CommandImpl {
-    KeyImport() {}
+    public KeyImport() {}
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "keyfile" });
@@ -88,6 +88,7 @@ public class KeyImport extends CommandImpl {
         return importKey(ui, client, null, null, null, type, scope, raw, authenticated);
     }
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated) {
+        PreparedStatement stmt = null;
         try {
             long nymId = -1;
             if ( (db != null) && (login != null) && (pass != null) ) {
@@ -99,7 +100,6 @@ public class KeyImport extends CommandImpl {
                 nymId = client.getNymId(login, pass);
             } else if (client != null) {
                 nymId = client.getLoggedInNymId();
-                login = client.getLogin();
                 pass = client.getPass();
             }
             if (nymId == -1)
@@ -130,20 +130,11 @@ public class KeyImport extends CommandImpl {
                 }
             }
             
-            byte salt[] = new byte[16];
-            client.ctx().random().nextBytes(salt);
-            SessionKey saltedKey = client.ctx().keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(pass));
-            int pad = 16-(raw.length%16);
-            if (pad == 0) pad = 16;
-            byte pre[] = new byte[raw.length+pad];
-            System.arraycopy(raw, 0, pre, 0, raw.length);
-            for (int i = 0; i < pad; i++)
-                pre[pre.length-1-i] = (byte)(pad&0xff);
-            byte encrypted[] = new byte[pre.length];
-            client.ctx().aes().encrypt(pre, 0, encrypted, 0, saltedKey, salt, pre.length);
+            byte salt[] = new byte[16]; // overwritten by pbeEncrypt
+            byte encrypted[] = client.pbeEncrypt(raw, salt);
             
             Connection con = client.con();
-            PreparedStatement stmt = con.prepareStatement(SQL_INSERT_KEY);
+            stmt = con.prepareStatement(SQL_INSERT_KEY);
             stmt.setLong(1, nymId);
             stmt.setBytes(2, scope.getData());
             stmt.setString(3, type);
@@ -166,11 +157,15 @@ public class KeyImport extends CommandImpl {
                 throw new SQLException("Error importing keys: row count of " + rows);
             }
             con.commit();
+            stmt.close();
+            stmt = null;
             
             ui.commandComplete(0, null);
         } catch (SQLException se) {
             ui.errorMessage("Error importing the key", se);
             ui.commandComplete(-1, null);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
         return client;
