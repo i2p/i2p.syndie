@@ -33,9 +33,12 @@ public class SpellUtil {
     }
     private static Reader getDictionaryReader() {
         // read from the db/etc
+        String dictLocation = System.getProperty("syndie.dict", "/usr/share/dict/words");
         try {
-            return new InputStreamReader(new FileInputStream("/usr/share/dict/words"), "UTF-8");
-        } catch (IOException ioe) {}
+            return new InputStreamReader(new FileInputStream(dictLocation), "UTF-8");
+        } catch (IOException ioe) {
+            System.out.println("Dictionary could not be loaded: " + dictLocation);
+        }
         return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
     }    
 }

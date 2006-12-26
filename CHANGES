@@ -1,5 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2006-12-26  1.000a released
+    - lets call a spade a spade
+    - ship a dictionary on win32/osx (1932 websters english)
+
 * 2006-12-26  0.920a released
     - merged in the GUI
 

@@ -26,41 +26,36 @@
 </div>
 <div id="Content">
 <h1>Development Roadmap</h1>
-<p>The first public <a href="index.html">Syndie</a> release includes the following
-baseline functionality:
-<ul>
- <li>The Syndie (scriptable) <a href="manual.html">text interface</a>, packaged
-     up as a typical java application, or buildable with modern GCJs.</li>
- <li>Support for all types of Syndie forums</li>
- <li>Manual Syndie distribution (as <code>.syndie</code> files), HTTP
-     syndication to public <a href="archive.html">Syndie archives</a>, as well as
-     syndication to <a href="http://www.freenetproject.org/">Freenet</a> 0.7 hosted
-     archives, all through the (scriptable) text interface.</li>
- <li>Specs for the <a href="spec.html#message"><code>.syndie</code> file format</a>
-     and encryption algorithms, <a href="spec.html#uri">Syndie URIs</a>, and the
-     <a href="db.html">database schema</a>, allowing extensions and alternate
-     implementations by third parties</li>
-</ul></p>
+<h3>Syndie 1.0 alpha criteria: "good enough to get feedback from hackers and zealots"</h3><ul>
+<li>Contains the graphical Syndie user interface and embedded text interface</li>
+<li>Support all types of Syndie forums, text and HTML pages, web rips, 
+    HTTP syndication, Freenet 0.7 hosted archives, and include an integrated HTTP
+    archive.</li>
+</ul>
 
-<p>Subsequent releases will improve Syndie's capabilities across several dimensions:
-<ul>
- <li>User interface:<ul>
-  <li>SWT-based GUI</li>
-  <li>Web browser plugin</li>
-  <li>Web scrape text UI (to pull in a full page for offline reading)</li>
-  <li>IMAP/POP3/NNTP reading interface</li>
- </ul></li>
- <li>Content support:<ul>
-  <li>HTML (safe rendering within the GUI)</li>
- </ul></li>
- <li>Syndication:<ul>
-  <li>Feedspace, feedtree, or low latency purpose built syndication</li>
-  <li>Email (post through SMTP/mixmaster/mixminion, read from procmail)</li>
- </ul></li>
- <li>Full text search with <a href="http://lucene.apache.org/">Lucene</a> integration</li>
- <li><a href="http://www.hsqldb.org/">HSQLDB</a> full database encryption
-     (logs, data, backup, scripts, etc)</li>
- <li>Archive management heuristics</li>
+<h3>Syndie 1.0 beta criteria: "good enough to get feedback from potential target users"</h3><ul>
+<li>bug stomping is less frequent</li>
+<li>functionality exists for <a href="usecases.html">main use cases</a></li>
+<li>all screens in the main use cases having received usability treatment</li>
+<li>all screens in the main use cases having received accessibility treatment</li>
+<li>performance is sufficient</li>
+<li>provide a translation guide &amp; ship with translation tools</li>
+<li>"todo:" lines in the code are addressed or deferred</li>
+</ul>
+
+<h3>Syndie 1.0 live criteria: "good enough to use"</h3><ul>
+<li>no critical bugs</li>
+<li>feedback from beta testers integrated</li>
+<li>slick web site, tutorials, documentation, etc</li>
+</ul>
+
+<h3>Features deferred for 2.0:</h3><ul>
+<li>p2p syndication</li>
+<li>email syndication (mixmaster/mixminion integration?)</li>
+<li>usenet syndication</li>
+<li>full text search (lucene integration)</li>
+<li>robust archive management</li>
+<li>full database encryption (logs, data, backups, scripts, etc, not just keys)</li>
 </ul>
 </p>
 </div>

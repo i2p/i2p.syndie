@@ -17,6 +17,12 @@ installed, it may be some convoluted directory under the eclipse dir.
 OSX users will also need to specify -XstartOnFirstThread as a command
 line parameter
 
+Additionally, you can specify a dictionary to use on the command
+line with -Dsyndie.dict=filename, where filename is the path to a file
+containing a newline delimited list of words.  On windows and OSX, an
+English dictionary is bundled with Syndie, and on linux, Syndie uses
+the contents of /usr/share/dict/words by default.
+
 So, as a windows example:
  javaw -cp lib\syndie.jar;lib\hsqldb.jar;lib\swt.jar syndie.gui.SWTUI
 or as a linux example:
