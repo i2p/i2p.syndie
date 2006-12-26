@@ -494,8 +494,8 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         _root.layout();
     }
 
-    public void searchResultSelected(TreeItem item, ReferenceNode node) {
-        _browser.getUI().debugMessage("search result selected [" + item.getText() + "]: " + node.getURI().toString());
+    public void searchResultSelected(String name, ReferenceNode node) {
+        _browser.getUI().debugMessage("search result selected [" + name + "]: " + node.getURI().toString());
         _curReference = node.getURI();
         refSelected();
         _root.layout();

@@ -1870,7 +1870,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) { view(node.getURI()); }
         public void manageChannelSelected(TreeItem item, ChannelInfo channel) { view(SyndieURI.createScope(channel.getChannelHash())); }
         public void postChannelSelected(TreeItem item, ChannelInfo channel) { view(SyndieURI.createScope(channel.getChannelHash())); }
-        public void searchResultSelected(TreeItem item, ReferenceNode node) { view(node.getURI()); }
+        public void searchResultSelected(String name, ReferenceNode node) { view(node.getURI()); }
         public void otherSelected(TreeItem item) {}
     }
     

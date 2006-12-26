@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
@@ -21,6 +20,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
@@ -33,11 +33,10 @@ import syndie.db.JobRunner;
 import syndie.db.UI;
 
 /**
- * The reference chooser tree has four roots:
+ * The reference chooser tree has three roots, plus a search results list
  *  - the nym's bookmarks
  *  - the channels the nym can post to
  *  - the channels the nym can manage
- *  - search results
  */
 public class ReferenceChooserTree implements Translatable, Themeable {
     private BrowserControl _browser;
@@ -56,6 +55,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     
     private Composite _root;
     private Tree _tree;
+    private List _searchList;
     private TreeItem _bookmarkRoot;
     /** map of TreeItem to NymReferenceNode */
     private Map _bookmarkNodes;
@@ -65,19 +65,17 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     private TreeItem _manageRoot;
     /** map of TreeItem to ChannelInfo */
     private Map _manageChannels;
-    private TreeItem _searchRoot;
-    /** map of TreeItem to ReferenceNode */
-    private Map _searchNodes;
 
     private ChoiceListener _choiceListener;
     private AcceptanceListener _acceptanceListener;
     private boolean _chooseAllStartupItems;
     private UI _ui;
+    private boolean _showSearchList;
     
     public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        this(control, parent, lsnr, accept, false);
+        this(control, parent, lsnr, accept, false, true);
     }
-    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems) {
+    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList) {
         _ui = control.getUI();
         _client = control.getClient();
         _browser = control;
@@ -89,8 +87,8 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _bookmarkNodes = new HashMap();
         _postChannels = new HashMap();
         _manageChannels = new HashMap();
-        _searchNodes = new HashMap();
         _searchResults = new ArrayList();
+        _showSearchList = showSearchList;
         initComponents(true);
     }
 
@@ -121,7 +119,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         public void bookmarkSelected(TreeItem item, NymReferenceNode node);
         public void manageChannelSelected(TreeItem item, ChannelInfo channel);
         public void postChannelSelected(TreeItem item, ChannelInfo channel);
-        public void searchResultSelected(TreeItem item, ReferenceNode node);
+        public void searchResultSelected(String name, ReferenceNode node);
         public void otherSelected(TreeItem item);
     }
     
@@ -202,7 +200,19 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _bookmarkRoot = new TreeItem(_tree, SWT.NONE);
         _postRoot = new TreeItem(_tree, SWT.NONE);
         _manageRoot = new TreeItem(_tree, SWT.NONE);
-        _searchRoot = new TreeItem(_tree, SWT.NONE);
+        //_searchRoot = new TreeItem(_tree, SWT.NONE);
+        
+        _searchList = new List(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true);
+        _searchList.setLayoutData(gd);
+        _searchList.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { searchSelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { searchSelected(); }
+        });
+        if (!_showSearchList) {
+            gd.exclude = true;
+            _searchList.setVisible(false);
+        }
         
         long t2 = System.currentTimeMillis();
         configTreeListeners(_tree);
@@ -234,6 +244,14 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
     
+    private void searchSelected() {
+        int idx = _searchList.getSelectionIndex();
+        if (idx >= 0) {
+            ReferenceNode node = (ReferenceNode)_searchResults.get(idx);
+            _choiceListener.searchResultSelected(_searchList.getItem(idx), node);
+        }
+    }
+    
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
@@ -252,14 +270,20 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected NymReferenceNode getBookmark(TreeItem item) { return (NymReferenceNode)_bookmarkNodes.get(item); }
     protected ChannelInfo getPostChannel(TreeItem item) { return (ChannelInfo)_postChannels.get(item); }
     protected ChannelInfo getManageChannel(TreeItem item) { return (ChannelInfo)_manageChannels.get(item); }
-    protected ReferenceNode getSearchResult(TreeItem item) { return (ReferenceNode)_searchNodes.get(item); }
+    protected ReferenceNode getSearchResult(String name) { 
+        int idx = _searchList.indexOf(name);
+        if (idx >= 0)
+            return (ReferenceNode)_searchResults.get(idx);
+        else
+            return null;
+    }
     
-    protected TreeItem getSearchRoot() { return _searchRoot; }
+    //protected TreeItem getSearchRoot() { return _searchRoot; }
     protected TreeItem getManageRoot() { return _manageRoot; }
     protected TreeItem getPostRoot() { return _postRoot; }
     protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
     
-    protected void bookmarksRebuilt(List nymRefs) {}
+    protected void bookmarksRebuilt(ArrayList nymRefs) {}
     
     private void rebuildBookmarks() {
         JobRunner.instance().enqueue(new Rebuilder());
@@ -272,7 +296,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                 _rebuilding = true;
             }
             _browser.getUI().debugMessage("rebuilder started");
-            final List refs = _client.getNymReferences(_client.getLoggedInNymId());
+            final ArrayList refs = new ArrayList(_client.getNymReferences(_client.getLoggedInNymId()));
             final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {
                 _nymRefs.clear();
@@ -430,15 +454,24 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         }
     }
     private void redrawSearchResults(boolean forceExpand) {
-        _searchRoot.removeAll();
-        _searchNodes.clear();
+        _searchList.setRedraw(false);
+        _searchList.removeAll();
         for (int i = 0; i < _searchResults.size(); i++) {
             ReferenceNode node = (ReferenceNode)_searchResults.get(i);
-            add(_searchRoot, node);
+            String str = null;
+            if (node.getName() != null)
+                str = node.getName();
+            else if (node.getDescription() != null)
+                str = node.getDescription();
+            else if (node.getURI().getScope() != null)
+                str = node.getURI().getScope().toBase64().substring(0,6);
+            else
+                str = "?";
+            _searchList.add(str);
         }
-        if (forceExpand)
-            _searchRoot.setExpanded(true);
+        _searchList.setRedraw(true);
     }
+    /*
     private void add(TreeItem parent, ReferenceNode child) {
         TreeItem childItem = new TreeItem(parent, SWT.NONE);
         if (child.getDescription() != null)
@@ -450,6 +483,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         for (int i = 0; i < child.getChildCount(); i++)
             add(childItem, child.getChild(i));
     }
+     */
 
     /** tell the listener about each selected item */
     private void fireSelectionEvents() {
@@ -462,11 +496,6 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                 NymReferenceNode nref = (NymReferenceNode)_bookmarkNodes.get(items[i]);
                 if (nref != null) {
                     lsnr.bookmarkSelected(items[i], nref);
-                    continue;
-                }
-                ReferenceNode ref = (ReferenceNode)_searchNodes.get(items[i]);
-                if (ref != null) {
-                    lsnr.searchResultSelected(items[i], ref);
                     continue;
                 }
                 ChannelInfo info = (ChannelInfo)_manageChannels.get(items[i]);
@@ -502,7 +531,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));
         _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
         _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
-        _searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
+        //_searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
         //refreshBookmarks();
         //redrawPostable();
         //redrawManageable();

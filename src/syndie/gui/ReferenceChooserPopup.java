@@ -103,7 +103,7 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) { _info.bookmarkSelected(item, node); }
     public void manageChannelSelected(TreeItem item, ChannelInfo channel) { _info.manageChannelSelected(item, channel); }
     public void postChannelSelected(TreeItem item, ChannelInfo channel) { _info.postChannelSelected(item, channel); }
-    public void searchResultSelected(TreeItem item, ReferenceNode node) { _info.searchResultSelected(item, node); }
+    public void searchResultSelected(String name, ReferenceNode node) { _info.searchResultSelected(name, node); }
     public void otherSelected(TreeItem item) { _info.otherSelected(item); }
 
     public void referenceAccepted(SyndieURI uri) {

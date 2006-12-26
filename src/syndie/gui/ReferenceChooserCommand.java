@@ -122,8 +122,8 @@ public class ReferenceChooserCommand implements CLI.Command {
         public void postChannelSelected(TreeItem item, ChannelInfo channel) {
             _ui.statusMessage("post channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
         }
-        public void searchResultSelected(TreeItem item, ReferenceNode node) {
-            _ui.statusMessage("search result selected [" + item.getText() + "]: " + node);
+        public void searchResultSelected(String name, ReferenceNode node) {
+            _ui.statusMessage("search result selected [" + name + "]: " + node);
         }
         public void otherSelected(TreeItem item) {
             _ui.statusMessage("other item selected [" + item.getText() + "]");

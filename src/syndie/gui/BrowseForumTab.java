@@ -82,6 +82,7 @@ public class BrowseForumTab extends BrowserTab {
     public boolean canShow(SyndieURI uri) {
         if (super.canShow(uri)) return true;
         if (!uri.isSearch() && !uri.isChannel()) return false;
+        if (uri.getMessageId() != null) return false; // individual messages go to MessageViewTab
         // now check for search vs. browse
         SyndieURI localURI = getURI();
         Hash scope = null;

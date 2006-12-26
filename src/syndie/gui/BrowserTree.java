@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import net.i2p.data.Hash;
@@ -39,7 +40,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private Menu _bookmarkMenu;
     private Menu _postMenu;
     private Menu _manageMenu;
-    private Menu _searchMenu;
+    //private Menu _searchMenu;
     
     private Button _searchAdvanced;
     
@@ -53,14 +54,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private MenuItem _bookmarkMenuAdd;
     private MenuItem _postMenuItem;
     private MenuItem _manageMenuItem;
-    private MenuItem _searchMenuView;
+    //private MenuItem _searchMenuView;
     private long _startInit;
     private long _superInit;
     
     private List _nymRefs;
     
     public BrowserTree(Browser browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        super(browser, parent, lsnr, accept, false);
+        super(browser, parent, lsnr, accept, false, false);
         _browser = browser;
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
@@ -101,10 +102,19 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _searchDetail.search();
         _searchDetailPopup.setVisible(false);
     }
+    private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browsertree.searchforumtitle";
     private void searchAdvanced() { 
+        final ReferenceChooserPopup popup = new ReferenceChooserPopup(getControl().getShell(), _browser, T_SEARCH_FORUM_TITLE, "Forum search");
+        popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+            public void referenceAccepted(SyndieURI uri) { _browser.view(uri); }
+            public void referenceChoiceAborted() { popup.dispose(); }
+        });
+        popup.show();
+        /*
         if (_searchDetail == null)
             createSearchDetailPopup();
         _searchDetailPopup.open(); 
+         */
     }
     
     public void setSearchResults(Collection resultNodes) {
@@ -175,12 +185,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(getManageScope(getSelectedItem()))); }
         });
         
+        /*
         _searchMenu = new Menu(tree);
         _searchMenuView = new MenuItem(_searchMenu, SWT.PUSH);
         _searchMenuView.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
             public void widgetSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
         });
+         */
         
         tree.setMenu(null);
     }
@@ -220,6 +232,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         }
     }
     
+    /*
     private SyndieURI getSearchResultURI(TreeItem item) {
         ReferenceNode node = getSearchResult(item);
         if (node != null)
@@ -227,6 +240,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         else
             return null;
     }
+     */
 
     private Hash getPostScope(TreeItem item) {
         ChannelInfo chan = getPostChannel(item);
@@ -273,11 +287,13 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             tree.setMenu(_manageMenu);
             return;
         }
+        /*
         ReferenceNode search = getSearchResult(item);
         if ( (search != null) || (item.equals(getSearchRoot())) ) {
             tree.setMenu(_searchMenu);
             return;
         }
+         */
     }
     
     private class BrowserTreeListener extends SyndieTreeListener {
@@ -321,14 +337,16 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             getBrowser().view(SyndieURI.createScope(chan.getChannelHash()));
             return;
         }
+        /*
         ReferenceNode search = getSearchResult(item);
         if (search != null) {
             getBrowser().view(search.getURI());
             return;
         }
+         */
     }
 
-    protected void bookmarksRebuilt(List nymRefs) {
+    protected void bookmarksRebuilt(ArrayList nymRefs) {
         if (_browser != null)
             _browser.bookmarksUpdated(nymRefs);
         else
@@ -356,7 +374,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _bookmarkMenuAdd.setText(registry.getText(T_BOOKMARK_ADD, "Add"));
         _postMenuItem.setText(registry.getText(T_POST_TITLE, "Post"));
         _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
-        _searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
+        //_searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
         _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Search..."));
         if (_searchDetailPopup != null)
             _searchDetailPopup.setText(registry.getText(T_SEARCH_DETAIL_POPUP, "Search"));
