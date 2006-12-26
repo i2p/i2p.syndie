@@ -73,8 +73,8 @@
     <target name="-warnswt">
         <fail unless="swt.dir">Specify the location of your swt.jar with -Dswt.dir=/some/directory/</fail>
     </target>
-
     <target name="-pre-compile">
+        <fail unless="swt.dir">Specify the location of your swt.jar with -Dswt.dir=/some/directory/</fail>
         <loadproperties srcfile="VERSION" />
         <echo file="src/syndie/Version.java">package syndie;
 public class Version {
@@ -193,8 +193,7 @@ public class Version {
     <target name="installer-exe" depends="prep-java, syndie-exe, -do-installer, -do-installer-exe" />
 
     <target name="-do-installer-exe" description="Package up syndie-$version.bin.exe">
-        <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
-(If located elsewhere, run "ant -Dlaunch4jdir=/some/path installer-exe")</echo>
+        <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
         <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
@@ -319,8 +318,7 @@ public class Version {
 
     <target name="installer" depends="prep-java, -do-installer" description="Package up syndie-$version.bin.$os.jar" />
     <target name="-do-installer">
-        <echo>Using IzPack installer in ${izpackdir}/lib/compiler.jar
-(If located elsewhere, run "ant -Dizpackdir=/some/path installer")</echo>
+        <fail unless="izpackdir">Specify the location of the IzPack installation directory with -Dizpackdir=/some/path where it contains lib/compiler.jar</fail>
         <loadproperties srcfile="VERSION" />
         <taskdef name="izpack" classpath="${izpackdir}/lib/standalone-compiler.jar"
                  classname="com.izforge.izpack.ant.IzPackTask" />
@@ -564,8 +562,7 @@ public class Version {
 
 
     <target name="syndie-exe" depends="jar" description="build a syndie.exe">
-        <echo>Using Launch4J packager in ${launch4jdir}/launch4j.jar
-(If located elsewhere, run "ant -Dlaunch4jdir=/some/path syndie-exe")</echo>
+        <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
         <loadproperties srcfile="VERSION" />
         <mkdir dir="doc/web/dist" />
         <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"

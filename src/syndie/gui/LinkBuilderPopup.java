@@ -625,6 +625,9 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             if (!name.startsWith("http://"))
                 name = "http://" + name;
             buf.append(name);
+            // add a trailing / to http://foo.i2p
+            if (name.lastIndexOf('/') <= 6)
+                buf.append("/");
             String dest = _linkTypeEepsiteDestination.getText().trim();
             if (dest.length() > 0)
                 buf.append("?i2paddresshelper=").append(dest);
