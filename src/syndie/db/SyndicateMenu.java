@@ -30,6 +30,7 @@ class SyndicateMenu implements TextEngine.Menu {
     private boolean _shouldProxy;
     private boolean _archiveWasRemote;
     private int _curPBEIndex;
+    private SyndicationManager _mgr;
     
     public SyndicateMenu(TextEngine engine) {
         _engine = engine;
@@ -67,6 +68,8 @@ class SyndicateMenu implements TextEngine.Menu {
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
         String cmd = opts.getCommand();
         if ("buildindex".equalsIgnoreCase(cmd)) {
+            _mgr = new SyndicationManager(client, ui);
+            _mgr.loadArchives();
             processBuildIndex(client, ui, opts);
         } else if ("getindex".equalsIgnoreCase(cmd)) {
             processGetIndex(client, ui, opts);

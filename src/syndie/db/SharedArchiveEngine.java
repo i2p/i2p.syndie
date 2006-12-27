@@ -272,18 +272,24 @@ public class SharedArchiveEngine {
                 uris.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
                 totalAllocatedKB += messages[i].getMaxSizeKB();
             } else {
-                if ( (strategy.maxKBPerMessage > 0) && (messages[i].getMaxSizeKB() > strategy.maxKBPerMessage) )
+                if ( (strategy.maxKBPerMessage > 0) && (messages[i].getMaxSizeKB() > strategy.maxKBPerMessage) ) {
+                    //ui.debugMessage("message size exceeds strategy max (" + strategy.maxKBPerMessage + "): " + messages[i].getMaxSizeKB() + ": " + messages[i].toString());
                     continue;
+                }
                 if (messages[i].isPBE() && !strategy.includePBEMessages)
                     continue;
                 if (messages[i].isPrivate() && !strategy.includePrivateMessages)
                     continue;
-                if (messages[i].isNew() && !strategy.includeRecentMessagesOnly)
+                if (!messages[i].isNew() && strategy.includeRecentMessagesOnly) {
+                    //ui.debugMessage("message is old and we only want recent messages: " + messages[i]);
                     continue;
+                }
                 
                 // already known
-                if (!strategy.includeDupForPIR && (client.getMessageId(scope, messages[i].getMessageId()) >= 0))
+                if (!strategy.includeDupForPIR && (client.getMessageId(scope, messages[i].getMessageId()) >= 0)) {
+                    //ui.debugMessage("message is already known: " + messages[i]);
                     continue;
+                }
                 
                 long targetChanId = client.getChannelId(target);
                 long scopeChanId = client.getChannelId(scope);
@@ -381,7 +387,7 @@ public class SharedArchiveEngine {
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
             if (sendMeta) {
                 if (metaFile.exists()) {
-                    //ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
+                    ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
                     rv.add(metaURI);
                 } else {
                     ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
@@ -411,40 +417,40 @@ public class SharedArchiveEngine {
 
                 long lenKB = (files[j].length()+1023)/1024;
                 if (lenKB > archive.getAbout().maxMessageSize()) {
-                    //ui.debugMessage("Don't send them " + messageId + " because it is too large for them to receive (" + lenKB + "KB)");
+                    ui.debugMessage("Don't send them " + messageId + " because it is too large for them to receive (" + lenKB + "KB vs " + archive.getAbout().maxMessageSize() + ")");
                     continue;
                 }
                 if ( (strategy.maxKBPerMessage > 0) && (lenKB > strategy.maxKBPerMessage) ) {
-                    //ui.debugMessage("Don't send them " + messageId + " because it is too large for us to send (" + lenKB + "KB)");
+                    ui.debugMessage("Don't send them " + messageId + " because it is too large for us to send (" + lenKB + "KB)");
                     continue;
                 }
 
                 long msgId = client.getMessageId(scope, messageId);
                 int privacy = client.getMessagePrivacy(msgId);
                 if (!archive.getAbout().wantPBE() && (privacy == DBClient.PRIVACY_PBE)) {
-                    //ui.debugMessage("Don't send them " + messageId + " because it they don't want PBE'd messages");
+                    ui.debugMessage("Don't send them " + messageId + " because it they don't want PBE'd messages");
                     continue;
                 }
                 if (!archive.getAbout().wantPrivate() && (privacy == DBClient.PRIVACY_PRIVREPLY)) {
-                    //ui.debugMessage("Don't send them " + messageId + " because it they don't want private reply messages");
+                    ui.debugMessage("Don't send them " + messageId + " because it they don't want private reply messages");
                     continue;
                 }
 
                 long importDate = client.getMessageImportDate(msgId);
                 if (archive.getAbout().wantRecentOnly()) {
                     if (importDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
-                        //ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
+                        ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
                         continue;
                     }
                 }
                 
                 if (importDate + PERIOD_TOO_OLD < System.currentTimeMillis()) {
-                    //ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
+                    ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
                     continue;
                 }
 
                 if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal)) {
-                    //ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
+                    ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
                     continue;
                 }
 

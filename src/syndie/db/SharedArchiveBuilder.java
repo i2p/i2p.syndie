@@ -36,7 +36,7 @@ public class SharedArchiveBuilder {
         _ui = ui;
         _about = about;
         
-        setHideLocalHours(6); // don't advertize things we created locally until at least 6h have passed
+        setHideLocalHours(1); // don't advertize things we created locally until at least an hour has passed
         setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
         setShareDelayHours(_about.getPublishRebuildFrequencyHours());
         setShareReceivedOnly(false);
