@@ -35,6 +35,7 @@ import syndie.data.SyndieURI;
  *
  */
 public class SyndicationManager {
+    private static SyndicationManager _instance;
     private DBClient _client;
     private UI _ui;
     private List _archives;
@@ -95,6 +96,14 @@ public class SyndicationManager {
         _onPullFailure = Collections.synchronizedMap(new HashMap());
         _archivesLoaded = false;
         _online = false;
+        _instance = this;
+    }
+    
+    /** grab the most recently build manager, or create a new one if necessary */
+    public static SyndicationManager getInstance(DBClient client, UI ui) {
+        if (_instance == null)
+            _instance = new SyndicationManager(client, ui);
+        return _instance;
     }
     
     /** 
@@ -224,14 +233,15 @@ public class SyndicationManager {
             prefs.remove("syndicate.pullStrategy");
         _client.setNymPrefs(prefs);
     }
-    public SharedArchiveEngine.PullStrategy getPullStrategy() {
-        Properties prefs = _client.getNymPrefs();
+    public SharedArchiveEngine.PullStrategy getPullStrategy() { return getPullStrategy(_client, _ui); }
+    public static SharedArchiveEngine.PullStrategy getPullStrategy(DBClient client, UI ui) {
+        if (!client.isLoggedIn()) return null;
+        Properties prefs = client.getNymPrefs();
         String strat = prefs.getProperty("syndicate.pullStrategy");
         SharedArchiveEngine.PullStrategy rv = new SharedArchiveEngine.PullStrategy(strat);
-        _ui.debugMessage("db pull strategy: " + rv);
+        ui.debugMessage("db pull strategy: " + rv);
         return rv;
     }
-    
     
     public void setPushStrategy(SharedArchiveEngine.PushStrategy strategy) {
         Properties prefs = _client.getNymPrefs();
@@ -780,13 +790,15 @@ public class SyndicationManager {
         KeyImport.importKey(_ui, _client, Constants.KEY_FUNCTION_SSKPRIV, pubSSKHash, padded, true);
     }
     
-    public SharedArchive.About getLocalAbout() { return getLocalAbout(_client); }
-    private static SharedArchive.About getLocalAbout(DBClient client) {
+    public SharedArchive.About getLocalAbout() { return getLocalAbout(_client, getPullStrategy()); }
+    private static SharedArchive.About getLocalAbout(DBClient client, SharedArchiveEngine.PullStrategy pullStrategy) {
         SharedArchive.About about = new SharedArchive.About();
         about.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
         
         Properties prefs = client.getNymPrefs();
         int maxSize = getInt(prefs, "archive.maxMsgSizeKB", -1);
+        if (maxSize < 0)
+            maxSize = pullStrategy.maxKBPerMessage;
         
         int archiveCount = 0;
         while (prefs.containsKey("archive.altURI" + archiveCount))
@@ -801,21 +813,22 @@ public class SyndicationManager {
         }
         
         int republishFrequencyHours = getInt(prefs, "archive.republishFrequencyHours", 1);
-        
+    
         about.setPublishRebuildFrequencyHours(republishFrequencyHours);
         about.setAlternativeArchives(archives);
         about.setMaxMessageSize(maxSize);
         about.setPostingRequiresPassphrase(false);
-        about.setWantKnownChannelsOnly(false);
-        about.setWantPBE(true);
-        about.setWantPrivate(true);
-        about.setWantRecentOnly(true);
+        about.setWantKnownChannelsOnly(pullStrategy.knownChannelsOnly);
+        about.setWantPBE(pullStrategy.includePBEMessages);
+        about.setWantPrivate(pullStrategy.includePrivateMessages);
+        about.setWantRecentOnly(pullStrategy.includeRecentMessagesOnly);
         return about;
     }
     
     public void setLocalAbout(SharedArchive.About about) {
         Properties prefs = _client.getNymPrefs();
-        prefs.setProperty("archive.maxMsgSizeKB", about.maxMessageSize()+"");
+        if (about.maxMessageSize() > 0)
+            prefs.setProperty("archive.maxMsgSizeKB", about.maxMessageSize()+"");
         SyndieURI uris[] = about.getAlternateArchives();
         
         int old = 0;
@@ -827,7 +840,7 @@ public class SyndicationManager {
                 prefs.setProperty("archive.altURI" + i, uris[i].toString());
 
         prefs.setProperty("archive.republishFrequencyHours", about.getPublishRebuildFrequencyHours()+"");
-        
+
         _client.setNymPrefs(prefs);
     }
     
@@ -841,10 +854,18 @@ public class SyndicationManager {
         }
     }
     
+    private static boolean getBoolean(Properties prefs, String key, boolean def) {
+        String val = prefs.getProperty(key);
+        if (val == null) return def;
+        return Boolean.valueOf(val).booleanValue();
+    }
+    
     public static final String SHARED_INDEX_FILE = "shared-index.dat";
     
-    public static void buildIndex(DBClient client, UI ui) {
-        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client));
+    public static void buildIndex(DBClient client, UI ui) { buildIndex(client, ui, getPullStrategy(client, ui)); }
+    public static void buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy) {
+        if (!client.isLoggedIn()) return;
+        SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client, pullStrategy));
         SharedArchive archive = builder.buildSharedArchive();
         FileOutputStream fos = null;
         try {
@@ -1333,7 +1354,7 @@ public class SyndicationManager {
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate, consecutiveFailures FROM nymArchive WHERE nymId = ? ORDER BY name";
     public void loadArchives() {
         if (_archivesLoaded) {
-            _ui.debugMessage("not loading archives, as they are already loaded");
+            //_ui.debugMessage("not loading archives, as they are already loaded");
             return;
         }
         //buildIndex(_client, _ui);

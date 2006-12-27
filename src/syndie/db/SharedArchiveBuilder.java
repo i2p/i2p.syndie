@@ -62,8 +62,8 @@ public class SharedArchiveBuilder {
         archive.setChannels(channels);
         archive.setMessages(messages);
         archive.setAbout(about);
-        _ui.debugMessage("no_admin_chan = " + SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
-        _ui.debugMessage("message count = " + messages.size() + " channel count = " + channels.size());
+        //_ui.debugMessage("no_admin_chan = " + SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
+        _ui.debugMessage("shared archive message count = " + messages.size() + " channel count = " + channels.size());
         
         return archive;
     }
@@ -116,7 +116,7 @@ public class SharedArchiveBuilder {
             
             int scopeChannel = getChannelIndex(channels, scope);
             if (scopeChannel < 0) {
-                //_ui.debugMessage("Could not share the metadata for " + scope.toBase64() + ", so we cannot share any of its messages");
+                _ui.debugMessage("Could not share the metadata for " + scope.toBase64() + ", so we cannot share any of its messages");
                 continue;
             }
             File msgFiles[] = dirs[i].listFiles(new FileFilter() {
@@ -152,7 +152,7 @@ public class SharedArchiveBuilder {
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
                         targetChannel = getChannelIndex(channels, new Hash(target));
                         if (targetChannel == -1) {
-                            //_ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
+                            _ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
                             continue;
                         }
                     } else {

@@ -62,6 +62,9 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     
     public LogTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
+        _debug = false;
+        _error = true;
+        _status = true;
         _sizeModifier = 0;
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -110,9 +113,9 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     public void show(SyndieURI uri) { updateFlags(uri); }
     
     private void updateFlags(SyndieURI uri) {
-        _debug = uri.getBoolean("debug", false);
-        _error = uri.getBoolean("error", true);
-        _status = uri.getBoolean("status", true);
+        _debug = uri.getBoolean("debug", _debug);
+        _error = uri.getBoolean("error", _error);
+        _status = uri.getBoolean("status", _status);
         
         _levelError.setSelection(_error);
         _levelStatus.setSelection(_status);

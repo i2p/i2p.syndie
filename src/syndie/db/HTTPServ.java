@@ -7,9 +7,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -97,8 +99,30 @@ public class HTTPServ implements CLI.Command {
     
     private class AcceptRunner implements Runnable {
         public void run() {
+            boolean loggedIn = false;
             while (_alive && _ssocket != null) {
+                if (!_client.isLoggedIn()) {
+                    if (loggedIn) break; // if we logged in but then logged out, stop
+                    try { Thread.currentThread().sleep(1000); } catch (InterruptedException ie) {}
+                    continue;
+                }
+                if (!loggedIn)
+                    _ui.debugMessage("Starting acceptance runner");
+                loggedIn = true;
+                File sharedIndex = new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE);
+                SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
+                manager.loadArchives();
+                if (!sharedIndex.exists()) {
+                    _ui.debugMessage("shared index does not exist: building it");
+                    manager.buildIndex(_client, _ui, manager.getPullStrategy());
+                } else if (sharedIndex.lastModified() + manager.getLocalRebuildDelayHours()*60*60*1000L < System.currentTimeMillis()) {
+                    _ui.debugMessage("shared index is too old, rebuilding it");
+                    manager.buildIndex(_client, _ui, manager.getPullStrategy());
+                }
+                
                 try {
+                    // we want to break from the accept() periodically so we can do the above rebuilding checks
+                    _ssocket.setSoTimeout(2*60*1000);
                     Socket socket = _ssocket.accept();
                     _ui.debugMessage("Connection accepted");
                     boolean added = false;
@@ -111,6 +135,8 @@ public class HTTPServ implements CLI.Command {
                     }
                     if (!added)
                         tooBusy(socket);
+                } catch (InterruptedIOException iie) {
+                    // ignore the accept() timeout
                 } catch (IOException ioe) {
                     if (_alive)
                         _ui.debugMessage("Error accepting", ioe);
@@ -311,7 +337,7 @@ public class HTTPServ implements CLI.Command {
         out.write(DataHelper.getUTF8(buf.toString()));
         
         int len = 0;
-        Sha256Standalone hash = new Sha256Standalone();
+        //Sha256Standalone hash = new Sha256Standalone();
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(file);
@@ -319,7 +345,7 @@ public class HTTPServ implements CLI.Command {
             int read = 0;
             while ( (read = fin.read(dbuf)) != -1) {
                 out.write(dbuf, 0, read);
-                hash.update(dbuf, 0, read);
+                //hash.update(dbuf, 0, read);
                 len += read;
             }
             
@@ -328,7 +354,7 @@ public class HTTPServ implements CLI.Command {
             
             out.flush();
             
-            _ui.debugMessage("Sent " + file.getPath() + ": " + len + "/" + file.length() +", sha256 = " + Base64.encode(hash.digest()));
+            _ui.debugMessage("Sent " + file.getPath() + ": " + len + "/" + file.length());// +", sha256 = " + Base64.encode(hash.digest()));
         } finally {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
             close(socket, in, out);

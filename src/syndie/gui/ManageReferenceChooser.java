@@ -575,7 +575,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
             _browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
             col.setWidth(width);
         } else {
-            _browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
+            //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
         }
     }
     

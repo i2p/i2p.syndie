@@ -159,7 +159,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         Set watched = getWatched(refs);
         Map watchedNames = getNames(watched);
         List sortedNames = sortWatchedForums(watchedNames);
-        _browser.getUI().debugMessage("sorted names: " + sortedNames + " out of " + watchedNames.values());
+        //_browser.getUI().debugMessage("sorted names: " + sortedNames + " out of " + watchedNames.values());
         TreeItem items[] = _itemWatchedForums.getItems();
         if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
         int totalUnread = 0;
@@ -172,7 +172,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             totalUnread += unread;
             if (unread > 0)
                 activeForums++;
-            _browser.getUI().debugMessage("# unread messages for [" + name + "] / [" + scope.toBase64().substring(0,6) + "]: " + unread);
+            //_browser.getUI().debugMessage("# unread messages for [" + name + "] / [" + scope.toBase64().substring(0,6) + "]: " + unread);
             if (unread > 0) {
                 TreeItem item = new TreeItem(_itemWatchedForums, SWT.NONE);
                 item.setText(0, name);
@@ -220,7 +220,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         }
         if (matches.size() > 1)
             Collections.sort(matches); // Hash is comparable
-        _browser.getUI().debugMessage("sorted forums named [" + name + "]: " + matches);
+        //_browser.getUI().debugMessage("sorted forums named [" + name + "]: " + matches);
         return matches;
     }
     
@@ -266,7 +266,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         SyndicationManager mgr = _browser.getSyndicationManager();
         mgr.loadArchives();
         int archives = mgr.getArchiveCount();
-        _browser.getUI().debugMessage("known archives: " + archives);
+        //_browser.getUI().debugMessage("known archives: " + archives);
         int scheduled = 0;
         for (int i = 0; i < archives; i++) {
             String name = mgr.getArchiveName(i);
@@ -799,10 +799,10 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         int width = ImageUtil.getWidth(text, _tree) + _tree.getGridLineWidth()*2 + extraWidth;
         int existing = col.getWidth();
         if (width > existing) {
-            _browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
+            //_browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
             col.setWidth(width);
         } else {
-            _browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
+            //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
         }
     }
 

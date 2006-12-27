@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+    - simplified running a headless archive - see bin/runhttpserv.syndie
+    - improved dependency tracking during syndication
+
 * 2006-12-26  1.000a released
     - lets call a spade a spade
     - ship a dictionary on win32/osx (1932 websters english)

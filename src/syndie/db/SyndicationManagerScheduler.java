@@ -46,13 +46,6 @@ public class SyndicationManagerScheduler implements SyndicationManager.Syndicati
     private class Runner implements Runnable {
         public void run() {
             while (_alive) {
-                File sharedIndex = new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE);
-                if (!sharedIndex.exists()) {
-                    _manager.buildIndex(_client, _ui);
-                } else if (sharedIndex.lastModified() + _manager.getLocalRebuildDelayHours()*60*60*1000L < System.currentTimeMillis()) {
-                    _manager.buildIndex(_client, _ui);
-                }
-                
                 String archive = getNextArchive();
                 if (archive != null) {
                     _ui.debugMessage("fireSync(" + archive + ")");

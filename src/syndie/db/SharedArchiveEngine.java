@@ -230,6 +230,8 @@ public class SharedArchiveEngine {
         public String serialize() { return toString(); }
     }
     
+    private static final long PERIOD_TOO_OLD = 7*24*60*60*1000;
+    
     /** 
      * pick out what elements of the shared archive we want, according to the given
      * strategy.  the elements are ordered so as to include dependencies first, though
@@ -366,8 +368,10 @@ public class SharedArchiveEngine {
             //ui.debugMessage("Scheduling push from " + scope.toBase64());
 
             SharedArchive.Channel remChan = archive.getChannel(scope);
-            if (archive.getAbout().wantKnownChannelsOnly() && (remChan == null))
+            if (archive.getAbout().wantKnownChannelsOnly() && (remChan == null)) {
+                ui.debugMessage("Remote archive doesn't know " + scope.toBase64().substring(0,6) + " and doesn't want any new chans.  skipping");
                 continue;
+            }
 
             boolean sendMeta = false;
             if ( (remChan == null) || (remChan.getVersion() < version) )
@@ -380,7 +384,7 @@ public class SharedArchiveEngine {
                     //ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
                     rv.add(metaURI);
                 } else {
-                    //ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
+                    ui.debugMessage("we want to send them the metadata for " + scope.toBase64() + ", but don't have it anymore");
                     continue;
                 }
             }
@@ -397,8 +401,10 @@ public class SharedArchiveEngine {
             boolean added = false;
             for (int j = 0; j < files.length; j++) {
                 long messageId = SharedArchiveBuilder.getMessageId(files[j]);
-                if (messageId < 0)
+                if (messageId < 0) {                
+                    ui.debugMessage("File is not relevent for a message: " + files[j].getName());
                     continue;
+                }
                 boolean known = archive.isKnown(scope, messageId);
                 if (known)
                     continue;
@@ -431,6 +437,11 @@ public class SharedArchiveEngine {
                         continue;
                     }
                 }
+                
+                if (importDate + PERIOD_TOO_OLD < System.currentTimeMillis()) {
+                    //ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
+                    continue;
+                }
 
                 if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal)) {
                     //ui.debugMessage("Don't send them " + messageId + " because the total exceeds what they want");
@@ -444,6 +455,7 @@ public class SharedArchiveEngine {
                 totalKB += lenKB;
                 SyndieURI msgURI = SyndieURI.createMessage(scope, messageId);
                 rv.add(msgURI);
+                ui.debugMessage("scheduling " + msgURI + ": size=" + lenKB + " privacy=" + privacy + " age=" + DataHelper.formatDuration(System.currentTimeMillis()-importDate));
 
                 if ( (targetId >= 0) && (scopeId != targetId) ) {
                     Hash target = client.getChannelHash(targetId);
@@ -459,7 +471,10 @@ public class SharedArchiveEngine {
             if (!added) {
                 if ( (remChan != null) && (remChan.getVersion() > version) ) {
                     // ok, they want this new version
+                } else if (dependencies.containsValue(metaURI)) {
+                    //ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, but someone else depends on it, so send it");
                 } else {
+                    ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, and no one else depends on it, so don't send it");
                     //ui.debugMessage("All of the messages in " + scope.toBase64() + " were rejected, so we don't need to send them the metadata");
                     rv.remove(metaURI);
                 }

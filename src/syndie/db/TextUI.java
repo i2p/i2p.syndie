@@ -91,11 +91,13 @@ public class TextUI implements UI {
                 } else {
                     if (_insertedCommands.size() == 0) {
                         line = readLine(); //DataHelper.readLine(System.in);
-                        debugMessage("command line read [" + line + "]");
+                        if ( (line != null) && (!line.startsWith("#")) )
+                            debugMessage("command line read [" + line + "]");
                     } else {
                         line = (String)_insertedCommands.remove(0);
                         line = line.trim();
-                        debugMessage("command line inserted [" + line + "]");
+                        if (!line.startsWith("#"))
+                            debugMessage("command line inserted [" + line + "]");
                     }
                 }
                 if (line == null) {
@@ -104,6 +106,7 @@ public class TextUI implements UI {
                 } else if (line.startsWith("#")) {
                     // skip comment lines
                     rv = null;
+                    displayPrompt = false;
                 } else {
                     rv = new Opts(line);
                     if (!rv.getParseOk()) {
@@ -243,6 +246,11 @@ public class TextUI implements UI {
             else
                 rootDir = args[i];
         }
+        
+        // this way the logs won't go to ./logs/log-#.txt (i2p's default)
+        // (this has to be set before the I2PAppContext instantiates the LogManager)
+        System.setProperty("loggerFilenameOverride", rootDir + "/logs/syndie-log-#.txt");
+
         if (script != null) {
             BufferedReader in = null;
             try {
