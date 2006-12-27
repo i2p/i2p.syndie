@@ -215,7 +215,7 @@ public class ImportPost {
                         }
                     }
                     if (_body == null) {
-                        _ui.errorMessage("Read keys were unable to decrypt the post to " + _channel.toBase64());
+                        _ui.debugMessage("Read keys were unable to decrypt the post to " + _channel.toBase64());
                         _body = new UnreadableEnclosureBody(_client.ctx());
                     }
                 }

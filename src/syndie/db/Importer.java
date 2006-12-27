@@ -33,6 +33,7 @@ public class Importer extends CommandImpl {
     private boolean _wasAlreadyImported;
     private boolean _noKey;
     
+    public Importer(DBClient client) { this(client, (client != null ? client.getPass(): null)); }
     public Importer(DBClient client, String pass) {
         _client = client;
         _passphrase = pass;

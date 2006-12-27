@@ -1,6 +1,7 @@
 package syndie.db;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
@@ -8,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -158,7 +160,7 @@ class ImportMeta {
             // clear out (recursively) and insert into channelArchive
             setChannelArchives(client, ui, channelId, enc, body);
             // insert into channelReadKey
-            setChannelReadKeys(client, ui, channelId, enc, body, wasPublic);
+            int newKeys = setChannelReadKeys(client, ui, channelId, enc, body, wasPublic);
             // insert into channelMetaHeader
             setChannelMetaHeaders(client, channelId, enc, body);
             // insert into channelReferenceGroup
@@ -170,7 +172,8 @@ class ImportMeta {
             
             saveToArchive(client, ui, ident, enc);
             
-            // todo: see if the read keys can decrypt any previously undecryptable posts in the channel
+            if (newKeys > 0)
+                importUndecryptable(client, ui, channelId);
             return true;
         } catch (SQLException se) {
             ui.errorMessage("Error importing", se);
@@ -185,6 +188,69 @@ class ImportMeta {
                 con.setAutoCommit(wasAuto);
             } catch (SQLException ex) {
                 // ignore
+            }
+        }
+    }
+
+    private static final String SQL_GET_UNDECRYPTABLE = "SELECT msgId, messageId, channelHash FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE readKeyMissing = TRUE AND scopeChannelId = ?";
+    /**
+     * the received channel read keys may be able to decrypt some previously-undecryptable
+     * posts
+     */
+    private static void importUndecryptable(DBClient client, UI ui, long channelId) throws SQLException {
+        Connection con = client.con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        ArrayList uris = new ArrayList();
+        try {
+            stmt = con.prepareStatement(SQL_GET_UNDECRYPTABLE);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (rs.wasNull()) continue;
+                long messageId = rs.getLong(2);
+                if (rs.wasNull()) continue;
+                byte chanHash[] = rs.getBytes(3);
+                if ( (chanHash == null) || (chanHash.length != Hash.HASH_LENGTH) ) continue;
+                SyndieURI uri = SyndieURI.createMessage(new Hash(chanHash), messageId);
+                if (!uris.contains(uri))
+                    uris.add(uri);
+            }
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+        }
+        
+        ui.debugMessage("Messages pending decryption in the newly updated channel: " + uris);
+        if (uris.size() > 0) {
+            for (int i = 0; i < uris.size(); i++) {
+                SyndieURI uri = (SyndieURI)uris.get(i);
+                File chanDir = new File(client.getArchiveDir(), uri.getScope().toBase64());
+                File msgFile = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+                if (msgFile.exists()) {
+                    // lets try to import 'er
+                    Importer imp = new Importer(client);
+                    FileInputStream fin = null;
+                    try {
+                        fin = new FileInputStream(msgFile);
+                        boolean ok = imp.processMessage(ui, client, fin, null, true);
+                        if (ok) {
+                            if (imp.wasMissingKey())
+                                ui.debugMessage("Still not able to decrypt " + uri.toString());
+                            else
+                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri.toString());
+                        } else {
+                            ui.debugMessage("Still not able to decrypt " + uri.toString());
+                        }
+                    } catch (IOException ioe) {
+                        ui.debugMessage("Still not able to decrypt " + uri.toString());
+                    } finally {
+                        if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                    }
+                } else {
+                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri.toString());
+                }
             }
         }
     }
@@ -607,20 +673,22 @@ class ImportMeta {
     }
     
     static final String SQL_DEPRECATE_READ_KEYS = "UPDATE channelReadKey SET keyEnd = CURDATE() WHERE channelId = ? AND keyEnd IS NULL";
-    private static void setChannelReadKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body, boolean wasPublic) throws SQLException {
+    private static int setChannelReadKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body, boolean wasPublic) throws SQLException {
+        int newKeys = 0;
         SessionKey priv[] = body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         SessionKey pub[] = enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         if ( ( (priv != null) && (priv.length > 0) ) || ( (pub != null) && (pub.length > 0) ) ) {
             client.exec(SQL_DEPRECATE_READ_KEYS, channelId);
             if ( (priv != null) && (priv.length > 0) ) {
                 ui.debugMessage("setting channel read keys to include " + priv.length + " private read keys (pub? " + wasPublic + ")");
-                addChannelReadKeys(client, ui, channelId, priv, wasPublic);
+                newKeys += addChannelReadKeys(client, ui, channelId, priv, wasPublic);
             }
             if ( (pub != null) && (pub.length > 0) ) {
                 ui.debugMessage("setting channel read keys to include " + pub.length + " publicly displayed read keys");
-                addChannelReadKeys(client, ui, channelId, pub, true);
+                newKeys += addChannelReadKeys(client, ui, channelId, pub, true);
             }
         }
+        return newKeys;
     }
     /*
      * CREATE CACHED TABLE channelReadKey (
@@ -633,8 +701,9 @@ class ImportMeta {
     private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData, wasPublic, keyStart) VALUES (?, ?, ?, CURDATE())";
     private static final String SQL_ENABLE_CHANNEL_READ_KEY = "UPDATE channelReadKey SET keyEnd = NULL, wasPublic = ? WHERE channelId = ? AND keyData = ?";
     private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*), wasPublic FROM channelReadKey WHERE channelId = ? AND keyData = ? GROUP BY wasPublic";
-    private static void addChannelReadKeys(DBClient client, UI ui, long channelId, SessionKey keys[], boolean wasPublic) throws SQLException {
-        if (keys == null) return;
+    private static int addChannelReadKeys(DBClient client, UI ui, long channelId, SessionKey keys[], boolean wasPublic) throws SQLException {
+        if (keys == null) return 0;
+        int newKeys = 0;
         Connection con = client.con();
         PreparedStatement insertStmt = null;
         PreparedStatement enableStmt = null;
@@ -677,6 +746,7 @@ class ImportMeta {
                     insertStmt.setBoolean(3, wasPublic);
                     if (insertStmt.executeUpdate() != 1)
                         throw new SQLException("Unable to insert the channel read key");
+                    newKeys++;
                 }
             }
         } finally {
@@ -685,6 +755,7 @@ class ImportMeta {
             if (enableStmt != null) insertStmt.close();
             if (existsStmt != null) existsStmt.close();
         }
+        return newKeys;
     }
     /*
      * CREATE CACHED TABLE channelMetaHeader (
