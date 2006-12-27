@@ -470,6 +470,7 @@ class SyndicateMenu implements TextEngine.Menu {
         
         File f = new File(dir);
         File files[] = f.listFiles(_metafilter);
+        SharedArchiveBuilder.sortFiles(files);
         for (int i = 0; files != null && i < files.length; i++) {
             importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {
@@ -483,6 +484,7 @@ class SyndicateMenu implements TextEngine.Menu {
         }
         
         files = f.listFiles(_postfilter);
+        SharedArchiveBuilder.sortFiles(files);
         for (int i = 0; files != null && i < files.length; i++) {
             importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
             if (del) {

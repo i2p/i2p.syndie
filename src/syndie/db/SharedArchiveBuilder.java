@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -85,13 +86,72 @@ public class SharedArchiveBuilder {
          */
         return _about;
     }
+    
+    /**
+     * compare two filenames and order them numerically and then alphabetically -
+     * eg: "1", "2.foo", "3.bar", "11.baz", "1003.asdf", "0100000.boing", "a", "b", "c"
+     */
+    private static final Comparator FILENAME_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            String lhs = o1.toString();
+            String rhs = o2.toString();
+            
+            long lhsNum = -1;
+            if (Character.isDigit(lhs.charAt(0))) {
+                int split = lhs.indexOf('.');
+                if (split > 0) {
+                    try {
+                        lhsNum = Long.parseLong(lhs.substring(0, split));
+                    } catch (NumberFormatException nfe) {}
+                } else {
+                    try {
+                        lhsNum = Long.parseLong(lhs);
+                    } catch (NumberFormatException nfe) {}
+                }
+            }
+            
+            long rhsNum = -1;
+            if (Character.isDigit(rhs.charAt(0))) {
+                int split = rhs.indexOf('.');
+                if (split > 0) {
+                    try {
+                        rhsNum = Long.parseLong(rhs.substring(0, split));
+                    } catch (NumberFormatException nfe) {}
+                } else {
+                    try {
+                        rhsNum = Long.parseLong(rhs);
+                    } catch (NumberFormatException nfe) {}
+                }
+            }
+            
+            int rv = 0;
+            if (lhsNum >= 0) {
+                if (rhsNum < 0)
+                    return -1;
+                if (lhsNum < rhsNum)
+                    rv = -1;
+                else if (lhsNum == rhsNum)
+                    rv = lhs.compareTo(rhs);
+                else
+                    rv = 1;
+            } else if (rhsNum >= 0) {
+                rv = 1;
+            } else {
+                rv = lhs.compareTo(rhs);
+            }
+            
+            //System.out.println("comparing [" + lhs + "/" + rhs + "]: " + rv + " ("+ lhsNum + "/" + rhsNum + ")");
+            
+            return rv;
+        }
+    };
 
     /**
      * sort them alphabetically, so any os-dependence on file.listFiles() is avoided 
      * (listFiles has no specified order)
      */
     static void sortFiles(File files[]) {        
-        TreeMap sorted = new TreeMap();
+        TreeMap sorted = new TreeMap(FILENAME_COMPARATOR);
         for (int i = 0; i < files.length; i++)
             sorted.put(files[i].getName(), files[i]);
         int i = 0;
