@@ -12,6 +12,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -39,6 +40,8 @@ import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
@@ -66,8 +69,10 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private Text _expire;
     private Label _descLabel;
     private Text _desc;
+    /*
     private Label _privacyLabel;
     private Combo _privacy;
+     */
     private Label _authLabel;
     private Combo _auth;
 
@@ -76,6 +81,30 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private CTabItem _posterItem;
     private CTabItem _archiveItem;
     private CTabItem _referencesItem;
+    private CTabItem _readKeysItem;
+    
+    private ScrolledComposite _readKeysScroll;
+    private Composite _readKeys;
+    private Label _readKeySummary;
+
+    private Group _readKeysCurrent;
+    private Table _readKeysCurrentTable;
+    private TableColumn _readKeysCurrentHash;
+    private TableColumn _readKeysCurrentPublic;
+    private TableColumn _readKeysCurrentCreatedOn;
+    private Button _readKeysAdd;
+    private Button _readKeysDrop;
+    
+    private Group _readKeysOld;
+    private Table _readKeysOldTable;
+    private TableColumn _readKeysOldHash;
+    private TableColumn _readKeysOldPublic;
+    private TableColumn _readKeysOldCreatedOn;
+    private TableColumn _readKeysOldDroppedOn;
+
+    private Label _readKeyPrivacySummary;
+    private Label _readKeyPrivacyPrompt;
+    private Combo _readKeyPrivacyCombo;
     
     private Composite _managers;
     private List _managerList;
@@ -211,8 +240,21 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 //_browser.getUI().errorMessage("You are not authorized to manage this channel");
                 //info = null;
             } else {
+                _readKeys.setEnabled(true);
                 _browser.getUI().debugMessage("explicit forum key found");
             }
+            
+            _readKeys.setEnabled(found);
+            _readKeyPrivacyCombo.setEnabled(found);
+            _readKeyPrivacyPrompt.setEnabled(found);
+            _readKeyPrivacySummary.setEnabled(found);
+            _readKeySummary.setEnabled(found);
+            _readKeysAdd.setEnabled(found);
+            _readKeysCurrent.setEnabled(found);
+            _readKeysCurrentTable.setEnabled(found);
+            _readKeysDrop.setEnabled(found);
+            _readKeysOld.setEnabled(found);
+            _readKeysOldTable.setEnabled(found);
         }
         if (info != null) {
             _browser.getUI().debugMessage("forum loaded: " + info.getChannelHash().toBase64());
@@ -229,7 +271,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             }
             _browser.getUI().debugMessage("auth index: " + _auth.getSelectionIndex() + " out of " + _auth.getItemCount());
             //todo: pick the right value here.
-            _privacy.select(PRIV_PUBLIC);
+            //_privacy.select(PRIV_PUBLIC);
             byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());
             if (avatar != null)
                 _avatarImage = ImageUtil.createImage(avatar);
@@ -292,7 +334,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             _browser.getUI().debugMessage("forum NOT loaded");
             _channelId = -1;
             _auth.select(AUTH_AUTHORIZEDONLY);
-            _privacy.select(PRIV_PUBLIC);
+            //_privacy.select(PRIV_PUBLIC);
             _avatar.setImage(null);
             _desc.setText("");
             _name.setText("");
@@ -394,6 +436,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void modifyText(ModifyEvent modifyEvent) { modified(); }
         });
         
+        /*
         _privacyLabel = new Label(_root, SWT.NONE);
         _privacyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -403,12 +446,13 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { privacyUpdated(); modified(); }
             public void widgetSelected(SelectionEvent selectionEvent) { privacyUpdated(); modified(); }
         });
+         */
         
         _authLabel = new Label(_root, SWT.NONE);
         _authLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _auth = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
-        _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         _auth.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
             public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
@@ -420,6 +464,61 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _detailTabs.setSimple(false);
         _detailTabs.setUnselectedImageVisible(true);
         _detailTabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
+        
+        _readKeysItem = new CTabItem(_detailTabs, SWT.NONE);
+        _readKeysScroll = new ScrolledComposite(_detailTabs, SWT.H_SCROLL | SWT.V_SCROLL);
+        _readKeys = new Composite(_readKeysScroll, SWT.NONE);
+        _readKeysScroll.setContent(_readKeys);
+        _readKeysScroll.setExpandHorizontal(true);
+        _readKeysScroll.setExpandVertical(true);
+        
+        _readKeysItem.setControl(_readKeysScroll);
+        _readKeys.setLayout(new GridLayout(2, false));
+        
+        _readKeySummary = new Label(_readKeys, SWT.WRAP | SWT.LEFT);
+        _readKeySummary.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 2, 1));
+        
+        _readKeysCurrent = new Group(_readKeys, SWT.SHADOW_ETCHED_IN);
+        _readKeysCurrent.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _readKeysCurrent.setLayout(new GridLayout(2, false));
+        
+        _readKeysCurrentTable = new Table(_readKeysCurrent, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+        _readKeysCurrentTable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        _readKeysCurrentTable.setHeaderVisible(true);
+        _readKeysCurrentTable.setLinesVisible(true);
+        
+        _readKeysCurrentHash = new TableColumn(_readKeysCurrentTable, SWT.LEFT);
+        _readKeysCurrentPublic = new TableColumn(_readKeysCurrentTable, SWT.CENTER);
+        _readKeysCurrentCreatedOn = new TableColumn(_readKeysCurrentTable, SWT.LEFT);
+        
+        _readKeysAdd = new Button(_readKeysCurrent, SWT.PUSH);
+        _readKeysAdd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        _readKeysDrop = new Button(_readKeysCurrent, SWT.PUSH);
+        _readKeysDrop.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        _readKeysOld = new Group(_readKeys, SWT.SHADOW_ETCHED_IN);
+        _readKeysOld.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _readKeysOld.setLayout(new GridLayout(2, false));
+        
+        _readKeysOldTable = new Table(_readKeysOld, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+        _readKeysOldTable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        _readKeysOldTable.setHeaderVisible(true);
+        _readKeysOldTable.setLinesVisible(true);
+        
+        _readKeysOldHash = new TableColumn(_readKeysOldTable, SWT.LEFT);
+        _readKeysOldPublic = new TableColumn(_readKeysOldTable, SWT.CENTER);
+        _readKeysOldCreatedOn = new TableColumn(_readKeysOldTable, SWT.LEFT);
+        _readKeysOldDroppedOn = new TableColumn(_readKeysOldTable, SWT.LEFT);
+        
+        _readKeyPrivacySummary = new Label(_readKeys, SWT.WRAP | SWT.LEFT);
+        _readKeyPrivacySummary.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 2, 1));
+        
+        _readKeyPrivacyPrompt = new Label(_readKeys, SWT.WRAP | SWT.LEFT);
+        _readKeyPrivacyPrompt.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 2, 1));
+        
+        _readKeyPrivacyCombo = new Combo(_readKeys, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _readKeyPrivacyCombo.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 2, 1));
         
         _managerItem = new CTabItem(_detailTabs, SWT.NONE);
         _managers = new Composite(_detailTabs, SWT.NONE);
@@ -533,6 +632,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _browser.getThemeRegistry().register(this);
     }
     
+    /*
     private void privacyUpdated() {
         int idx = _privacy.getSelectionIndex();
         if (idx == PRIV_PASSPHRASE) {
@@ -555,6 +655,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             prompt.open();
         }
     }
+     */
     
     private static final int PRIV_PUBLIC = 0;
     private static final int PRIV_AUTHORIZED = 1;
@@ -565,6 +666,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final int AUTH_UNAUTHPOST = 2;
     
     private void populateCombos() {
+        /*
         _privacy.setRedraw(false);
         int idx = PRIV_PUBLIC;
         if (_privacy.getItemCount() != 0)
@@ -577,9 +679,10 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _privacy.select(idx);
         _privacy.setEnabled(_editable);
         _privacy.setRedraw(true);
+         */
         
         _auth.setRedraw(false);
-        idx = AUTH_AUTHORIZEDONLY;
+        int idx = AUTH_AUTHORIZEDONLY;
         if (_auth.getItemCount() != 0)
             idx = _auth.getSelectionIndex();
         _auth.removeAll();
@@ -591,10 +694,12 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _auth.setRedraw(true);
     }
     
-    private static final int CHOICE_MANAGER = 0;
-    private static final int CHOICE_POSTER = 1;
-    private static final int CHOICE_ARCHIVES = 2;
-    private static final int CHOICE_REFS = 3;
+    private static final int CHOICE_READKEYS = 0;
+    private static final int CHOICE_MANAGER = 1;
+    private static final int CHOICE_POSTER = 2;
+    private static final int CHOICE_ARCHIVES = 3;
+    private static final int CHOICE_REFS = 4;
+    private static final String T_CHOICE_READKEYS = "syndie.gui.manageforum.choice.readkeys";
     private static final String T_CHOICE_MANAGER = "syndie.gui.manageforum.choice.manager";
     private static final String T_CHOICE_POSTER = "syndie.gui.manageforum.choice.poster";
     private static final String T_CHOICE_ARCHIVES = "syndie.gui.manageforum.choice.archives";
@@ -617,11 +722,12 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     Set getPrivateArchives() { return _archiveChooser.getPrivateArchives(); }
     String getReferences() { return _referencesChooser.getReferences(); }
     boolean getEncryptContent() {
-        return _privacy.getSelectionIndex() == PRIV_PASSPHRASE || 
-               _privacy.getSelectionIndex() == PRIV_AUTHORIZED; 
+        return false;
+        //return _privacy.getSelectionIndex() == PRIV_PASSPHRASE || 
+        //       _privacy.getSelectionIndex() == PRIV_AUTHORIZED; 
     }
     long getChannelId() { return _channelId; }
-    boolean getPBE() { return _privacy.getSelectionIndex() == PRIV_PASSPHRASE; }
+    boolean getPBE() { return false; } //_privacy.getSelectionIndex() == PRIV_PASSPHRASE; }
     String getPassphrase() { return _passphrase; }
     String getPassphrasePrompt() { return _passphrasePrompt; }
     long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
@@ -819,7 +925,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final String T_TAGS = "syndie.gui.manageforum.tags";
     private static final String T_EXPIRATION = "syndie.gui.manageforum.expiration";
     private static final String T_DESC = "syndie.gui.manageforum.desc";
-    private static final String T_PRIVACY = "syndie.gui.manageforum.privacy";
+    //private static final String T_PRIVACY = "syndie.gui.manageforum.privacy";
     private static final String T_AUTHORIZATION = "syndie.gui.manageforum.authorization";
     private static final String T_CHOOSER = "syndie.gui.manageforum.chooserlabel";
     private static final String T_MANAGERS = "syndie.gui.manageforum.managers";
@@ -835,12 +941,33 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final String T_SAVE = "syndie.gui.manageforum.save";
     private static final String T_CANCEL = "syndie.gui.manageforum.cancel";
     
+    private static final String T_READKEYSUMMARY = "syndie.gui.manageforum.readkeysummary";
+    private static final String T_READKEYPRIVSUMMARY = "syndie.gui.manageforum.readkeyprivsummary";
+    private static final String T_READKEYPRIVPROMPT = "syndie.gui.manageforum.readkeyprivprompt";
+    private static final String T_READKEYPRIV_EXISTING = "syndie.gui.manageforum.readkeypriv.existing";
+    private static final String T_READKEYPRIV_PUBLIC = "syndie.gui.manageforum.readkeypriv.public";
+    private static final String T_READKEYPRIV_PBE = "syndie.gui.manageforum.readkeypriv.pbe";
+    
+    private static final String T_READKEYSCURRENT = "syndie.gui.manageforum.readkeyscurrent";
+    private static final String T_READKEYSOLD = "syndie.gui.manageforum.readkeysold";
+    private static final String T_READKEYSADD = "syndie.gui.manageforum.readkeysadd";
+    private static final String T_READKEYSDROP = "syndie.gui.manageforum.readkeysdrop";
+
+    private static final String T_READKEYSCURRENTHASH = "syndie.gui.manageforum.readkeyscurrenthash";
+    private static final String T_READKEYSCURRENTCREATEDON = "syndie.gui.manageforum.readkeyscurrentcreatedon";
+    private static final String T_READKEYSCURRENTPUBLIC = "syndie.gui.manageforum.readkeyscurrentpublic";
+
+    private static final String T_READKEYSOLDHASH = "syndie.gui.manageforum.readkeysoldhash";
+    private static final String T_READKEYSOLDCREATEDON = "syndie.gui.manageforum.readkeysoldcreatedon";
+    private static final String T_READKEYSOLDDROPPEDON = "syndie.gui.manageforum.readkeysolddroppedon";
+    private static final String T_READKEYSOLDPUBLIC = "syndie.gui.manageforum.readkeysoldpublic";
+
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _expireLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
         _descLabel.setText(registry.getText(T_DESC, "Description:"));
-        _privacyLabel.setText(registry.getText(T_PRIVACY, "Privacy:"));
+        //_privacyLabel.setText(registry.getText(T_PRIVACY, "Privacy:"));
         _authLabel.setText(registry.getText(T_AUTHORIZATION, "Authorization:"));
         //_managers.setText(registry.getText(T_MANAGERS, "Managers"));
         _managerAdd.setText(registry.getText(T_MANAGERS_ADD, "add"));
@@ -855,6 +982,41 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _save.setText(registry.getText(T_SAVE, "Save"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
 
+        _readKeySummary.setText(registry.getText(T_READKEYSUMMARY, "Anyone with the \"read key\" that a message used to secure it " +
+                "wil be able to view the message.  Some messages publish that \"read key\" so anyone can read it, others derive the" +
+                "\"read key\" from a passphrase, and others use one of the forum's predefined \"read keys\".  The later are managed here:"));
+        _readKeyPrivacySummary.setText(registry.getText(T_READKEYPRIVSUMMARY, "The current read keys will be published as part of " +
+                "the updated forum metadata, but hidden inside the secured area.  That secured area can be publicly readable, " +
+                "thereby giving everyone access to these keys, or it can be protected - either by a passphrase or by one of the existing " +
+                "read keys (so only those already authorized to read the forum will know these new keys, or be able to view any of the published " +
+                "forum details)"));
+        _readKeyPrivacyPrompt.setText(registry.getText(T_READKEYPRIVPROMPT, "How would you like to protect the secured area?"));
+        
+        int idx = -1;
+        if (_readKeyPrivacyCombo.getItemCount() > 0)
+            idx = _readKeyPrivacyCombo.getSelectionIndex();
+        _readKeyPrivacyCombo.removeAll();
+        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_EXISTING, "Use one of the existing keys"));
+        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PUBLIC, "Make the keys and metadata publicly readable"));
+        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PBE, "Require a passphrase to read the keys and metadata"));
+        if (idx >= 0)
+            _readKeyPrivacyCombo.select(idx);
+
+        _readKeysCurrent.setText(registry.getText(T_READKEYSCURRENT, "Current read keys:"));
+        _readKeysOld.setText(registry.getText(T_READKEYSOLD, "Old read keys:"));
+        _readKeysAdd.setText(registry.getText(T_READKEYSADD, "Add new"));
+        _readKeysDrop.setText(registry.getText(T_READKEYSDROP, "Drop selected"));
+
+        _readKeysCurrentHash.setText(registry.getText(T_READKEYSCURRENTHASH, "Key"));
+        _readKeysCurrentPublic.setText(registry.getText(T_READKEYSCURRENTPUBLIC, "Was public?"));
+        _readKeysCurrentCreatedOn.setText(registry.getText(T_READKEYSCURRENTCREATEDON, "Created on"));
+        
+        _readKeysOldHash.setText(registry.getText(T_READKEYSOLDHASH, "Key"));
+        _readKeysOldPublic.setText(registry.getText(T_READKEYSOLDPUBLIC, "Was public?"));
+        _readKeysOldCreatedOn.setText(registry.getText(T_READKEYSOLDCREATEDON, "Created on"));
+        _readKeysOldDroppedOn.setText(registry.getText(T_READKEYSOLDDROPPEDON, "Dropped on"));
+        
+        _readKeysItem.setText(registry.getText(T_CHOICE_READKEYS, "Read keys"));
         _managerItem.setText(registry.getText(T_CHOICE_MANAGER, "Authorized managers"));
         _posterItem.setText(registry.getText(T_CHOICE_POSTER, "Authorized posters"));
         _archiveItem.setText(registry.getText(T_CHOICE_ARCHIVES, "Archives"));
@@ -874,12 +1036,38 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _expireLabel.setFont(theme.DEFAULT_FONT);
         _name.setFont(theme.DEFAULT_FONT);
         _nameLabel.setFont(theme.DEFAULT_FONT);
-        _privacy.setFont(theme.DEFAULT_FONT);
-        _privacyLabel.setFont(theme.DEFAULT_FONT);
+        //_privacy.setFont(theme.DEFAULT_FONT);
+        //_privacyLabel.setFont(theme.DEFAULT_FONT);
         _save.setFont(theme.BUTTON_FONT);
         _tags.setFont(theme.DEFAULT_FONT);
         _tagsLabel.setFont(theme.DEFAULT_FONT);
         _managerList.setFont(theme.DEFAULT_FONT);
         _posterList.setFont(theme.DEFAULT_FONT);
+        
+        _readKeysCurrentTable.setFont(theme.TABLE_FONT);
+        _readKeysOldTable.setFont(theme.TABLE_FONT);
+        
+        _readKeysCurrent.setFont(theme.DEFAULT_FONT);
+        _readKeysOld.setFont(theme.DEFAULT_FONT);
+        _readKeysAdd.setFont(theme.BUTTON_FONT);
+        _readKeysDrop.setFont(theme.BUTTON_FONT);
+        
+        _readKeyPrivacyCombo.setFont(theme.DEFAULT_FONT);
+        _readKeyPrivacyPrompt.setFont(theme.DEFAULT_FONT);
+        _readKeyPrivacySummary.setFont(theme.DEFAULT_FONT);
+        _readKeySummary.setFont(theme.DEFAULT_FONT);
+                
+        _readKeysCurrentCreatedOn.pack();
+        _readKeysCurrentHash.pack();
+        _readKeysCurrentPublic.pack();
+        
+        _readKeysOldCreatedOn.pack();
+        _readKeysOldDroppedOn.pack();
+        _readKeysOldHash.pack();
+        _readKeysOldPublic.pack();
+
+        //_readKeys.layout(true, true);
+        _readKeys.pack(true);
+        _readKeysScroll.setMinSize(_readKeys.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     }
 }
