@@ -33,6 +33,11 @@ import syndie.data.ReferenceNode;
  * [--bodyPassphrase $passphrase --bodyPassphrasePrompt $prompt]
  *                                  // derive the body key from the passphrase, and include a publicly
  *                                  // visible hint to prompt it
+ * [--deliverReadKeys $base64SessionKey]*
+ *                                  // we want to make sure to include the specified channel read key in the
+ *                                  // wrapped metadata
+ * [--explicitBodyKey $base64SessionKey]
+ *                                  // explicitly specify the read key to use when encrypting the body
  *  --metaOut $metadataFile         // signed metadata file, ready to import
  *  --keyManageOut $keyFile         // signing private key to manage
  *  --keyReplyOut $keyFile          // decrypt private key to read replies
@@ -131,15 +136,28 @@ public class ChanGen extends CommandImpl {
                 readKey = new SessionKey(k.getData());
             } else {
                 // use the channel's default read keys
+                /*
+                 * todo: depending on whether we want to make this forum publicly readable or
+                 *       just authorized readers (or pbe-only), pick different keys (or if the
+                 *       privacy level changed, use new keys anyway, so those under the old
+                 *       privacy level (or with an old passphrase) can't access new posts).
+                 *       or, let the higher level decide this stuff and tell us what to do with
+                 *       --deliverReadKeys and --explicitBodyKey
+                 */
                 Set readKeys = existing.getReadKeys();
-                int idx = client.ctx().random().nextInt(readKeys.size());
-                SessionKey cur = null;
-                Iterator iter = readKeys.iterator();
-                for (int i = 0; i < idx; i++)
-                    iter.next(); // ignore
-                cur = (SessionKey)iter.next();
-                bodyKey = cur;
-                readKey = cur;
+                ui.debugMessage("using the channel's read keys: " + readKeys + " (channel: " + existing.getChannelHash() + ")");
+                if (readKeys.size() > 0) {
+                    int idx = client.ctx().random().nextInt(readKeys.size());
+                    SessionKey cur = null;
+                    Iterator iter = readKeys.iterator();
+                    for (int i = 0; i < idx; i++)
+                        iter.next(); // ignore
+                    cur = (SessionKey)iter.next();
+                    bodyKey = cur;
+                    readKey = cur;
+                } else {
+                    // we use a new one generated above
+                }
             }
         
         }
@@ -157,8 +175,36 @@ public class ChanGen extends CommandImpl {
             }
         }
         
+        List readKeys = new ArrayList();
+        List deliver = args.getOptValues("deliverReadKeys");
+        if (deliver != null) {
+            for (int i = 0; i < deliver.size(); i++) {
+                String str = (String)deliver.get(i);
+                byte k[] = Base64.decode(str);
+                if ( (k != null) && (k.length == SessionKey.KEYSIZE_BYTES) ) {
+                    SessionKey toAdd = new SessionKey(k);
+                    if (!readKeys.contains(toAdd))
+                        readKeys.add(toAdd);
+                }
+            }
+            readKey = null;
+        } else {
+            // the read key wasn't explicitly selected, so use the one determined by
+            // the above logic
+            readKeys.add(readKey);
+        }
+        
+        String explicitBody = args.getOptValue("explicitBodyKey");
+        if (explicitBody != null) {
+            byte k[] = Base64.decode(explicitBody);
+            if ( (k != null) && (k.length == SessionKey.KEYSIZE_BYTES) ) {
+                SessionKey newBody = new SessionKey(k);
+                bodyKey = newBody;
+            }
+        }
+        
         Map pubHeaders = generatePublicHeaders(ui, args, replyPublic, identPublic, bodyKey, readKey);
-        Map privHeaders = generatePrivateHeaders(ui, args, replyPublic, identPublic, bodyKey, readKey);
+        Map privHeaders = generatePrivateHeaders(ui, args, replyPublic, identPublic, bodyKey, readKeys);
         
         String refStr = null;
         String filename = args.getOptValue("refs");
@@ -197,9 +243,11 @@ public class ChanGen extends CommandImpl {
             ok = writeKey(ui, args.getOptValue("keyManageOut"), identPrivate, identPublic.calculateHash());
         if (ok && (replyPrivate != null))
             ok = writeKey(ui, args.getOptValue("keyReplyOut"), replyPrivate, identPublic.calculateHash());
-        if (ok && (args.getOptBoolean("encryptContent", false)))
-            ok = writeKey(ui, args.getOptValue("keyEncryptMetaOut"), bodyKey, identPublic.calculateHash()) &&
-                 writeKey(ui, args.getOptValue("keyEncryptPostOut"), readKey, identPublic.calculateHash());
+        if (ok && (args.getOptBoolean("encryptContent", false))) {
+            ok = writeKey(ui, args.getOptValue("keyEncryptMetaOut"), bodyKey, identPublic.calculateHash());
+            if (readKey != null)
+                ok = ok && writeKey(ui, args.getOptValue("keyEncryptPostOut"), readKey, identPublic.calculateHash());
+        }
         if (ok)
             ui.commandComplete(0, null);
         else
@@ -277,10 +325,17 @@ public class ChanGen extends CommandImpl {
         ui.debugMessage("public headers: " + rv);
         return rv;
     }
-    private Map generatePrivateHeaders(UI ui, Opts args, PublicKey replyPublic, SigningPublicKey identPublic, SessionKey bodyKey, SessionKey readKey) {
+    private Map generatePrivateHeaders(UI ui, Opts args, PublicKey replyPublic, SigningPublicKey identPublic, SessionKey bodyKey, List readKeys) {
         Map rv = new HashMap();
 
-        rv.put(Constants.MSG_META_HEADER_READKEYS, readKey.toBase64());
+        StringBuffer rkbuf = new StringBuffer();
+        for (int i = 0; i < readKeys.size(); i++) {
+            SessionKey cur = (SessionKey)readKeys.get(i);
+            rkbuf.append(cur.toBase64());
+            if (i + 1 < readKeys.size())
+                rkbuf.append('\t');
+        }
+        rv.put(Constants.MSG_META_HEADER_READKEYS, rkbuf.toString());
         
         // tags
         List tags = args.getOptValues("privTag");

@@ -732,11 +732,23 @@ public class MessageView implements Translatable, Themeable {
         _footerReference.clearSelection();
         _footerReference.deselectAll();
     }
+    
+    private static final String T_UNKNOWN_MSG = "syndie.gui.messageview.unknown.msg";
+    private static final String T_UNKNOWN_TITLE = "syndie.gui.messageview.unknown.title";
+    
     private void threadChosen() {
         int idx = _footerThread.getSelectionIndex();
         if ( (idx >= 0) && (idx < _threadURIs.size()) ) {
             SyndieURI uri = (SyndieURI)_threadURIs.get(idx);
-            _browser.view(uri);
+            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                _browser.view(uri);
+            } else {
+                MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
+                box.setMessage(_browser.getTranslationRegistry().getText(T_UNKNOWN_MSG, "The selected message isn't known locally"));
+                box.setText(_browser.getTranslationRegistry().getText(T_UNKNOWN_TITLE, "Message unkown"));
+                box.open();
+            }
         }
         _footerThread.select(_footerThreadCurrentIndex);
     }

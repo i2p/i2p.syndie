@@ -376,7 +376,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _manageChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -384,7 +387,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _manageChannels.put(item, info);
         }
     }
@@ -396,7 +402,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -404,7 +413,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
@@ -412,7 +424,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
@@ -420,7 +435,10 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
-            item.setText(info.getName());
+            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
+                item.setText("?");
+            else
+                item.setText(info.getName());
             _postChannels.put(item, info);
         }
     }

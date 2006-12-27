@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
@@ -45,6 +46,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
+import syndie.db.JobRunner;
 
 /**
  *
@@ -149,7 +151,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         }
     }
     
-    public void setForum(SyndieURI uri) {
+    public void setForum(final SyndieURI uri) {
         _managerKeys.clear();
         _posterKeys.clear();
         _origInfo = null;
@@ -170,6 +172,19 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             if (id >= 0) {
                 info = _browser.getClient().getChannel(id);
             }
+        }
+        if (info.getPassphrasePrompt() != null) {
+            _browser.getUI().debugMessage("the channel info is still encrypted");
+            PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), false);
+            prompt.setPassphrasePrompt(info.getPassphrasePrompt());
+            prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+                public void promptComplete(String passphraseEntered, String promptEntered) {
+                    reimport(passphraseEntered, uri);
+                }
+                public void promptAborted() { _browser.unview(uri); }
+            });
+            prompt.open();
+            return;
         }
         _browser.getUI().debugMessage("config forum: " + scope);
         if ( (scope != null) && (_browser.getClient().getNymKeys(info.getChannelHash(), Constants.KEY_FUNCTION_MANAGE).size() <= 0) ) {
@@ -213,6 +228,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 _auth.select(AUTH_AUTHORIZEDONLY);
             }
             _browser.getUI().debugMessage("auth index: " + _auth.getSelectionIndex() + " out of " + _auth.getItemCount());
+            //todo: pick the right value here.
             _privacy.select(PRIV_PUBLIC);
             byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());
             if (avatar != null)
@@ -291,6 +307,34 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _modified = false;
     }
     
+    private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.manageforum.reimporterrtitle";
+    private static final String T_REIMPORT_ERR_MSG = "syndie.gui.manageforum.reimporterrmsg";
+    private void reimport(final String passphrase, final SyndieURI uri) {
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                final boolean ok = _browser.reimport(uri, passphrase);
+                Display.getDefault().asyncExec(new Runnable() { 
+                   public void run() {
+                       MessageBox box = null;
+                       if (!ok) {
+                           box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+                           box.setText(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
+                           box.setMessage(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The forum metadata could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           int rc = box.open();
+                           if (rc == SWT.YES)
+                               setForum(uri);
+                           else
+                               _browser.unview(uri);
+                           return;
+                       } else {
+                           setForum(uri);
+                       }
+                   }
+                });
+            }
+        });
+    }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(7, false));
@@ -356,8 +400,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _privacy = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
         _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _privacy.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { privacyUpdated(); modified(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { privacyUpdated(); modified(); }
         });
         
         _authLabel = new Label(_root, SWT.NONE);
@@ -489,6 +533,29 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _browser.getThemeRegistry().register(this);
     }
     
+    private void privacyUpdated() {
+        int idx = _privacy.getSelectionIndex();
+        if (idx == PRIV_PASSPHRASE) {
+            PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), true);
+            if (_passphrase != null)
+                prompt.setPassphrase(_passphrase);
+            else
+                prompt.setPassphrase("");
+            if (_passphrasePrompt != null)
+                prompt.setPassphrasePrompt(_passphrasePrompt);
+            else
+                prompt.setPassphrasePrompt("");
+            prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+                public void promptComplete(String passphraseEntered, String promptEntered) {
+                    _passphrase = passphraseEntered;
+                    _passphrasePrompt = promptEntered;
+                }
+                public void promptAborted() {}
+            });
+            prompt.open();
+        }
+    }
+    
     private static final int PRIV_PUBLIC = 0;
     private static final int PRIV_AUTHORIZED = 1;
     private static final int PRIV_PASSPHRASE = 2;
@@ -559,6 +626,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     String getPassphrasePrompt() { return _passphrasePrompt; }
     long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
     Image getAvatar() { return (_avatarImage == ImageUtil.ICON_QUESTION ? null : _avatarImage); }
+    /** return the read keys we explicitly want to deliver in the metadata, or null/empty if we don't care */
+    ArrayList getCurrentReadKeys() { return null; }
     
     private void save() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), this);
@@ -707,7 +776,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private void modified() { 
         if (!_modified) {
             _modified = true;
-            _browser.getUI().debugMessage("modified", new Exception("modified by"));
+            //_browser.getUI().debugMessage("modified", new Exception("modified by"));
         }
     }
     

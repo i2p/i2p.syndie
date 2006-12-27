@@ -5,9 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
@@ -148,6 +150,14 @@ class ManageForumExecutor {
         if (_state.getPBE()) {
             chanGenOpts.setOptValue("bodyPassphrase", CommandImpl.strip(_state.getPassphrase()));
             chanGenOpts.setOptValue("bodyPassphrasePrompt", CommandImpl.strip(_state.getPassphrasePrompt()));
+        }
+        
+        List readKeys = _state.getCurrentReadKeys();
+        if ( (readKeys != null) && (readKeys.size() > 0) ) {
+            for (int i = 0; i < readKeys.size(); i++) {
+                SessionKey rk = (SessionKey)readKeys.get(i);
+                chanGenOpts.addOptValue("deliverReadKey", rk.toBase64());
+            }
         }
         
         ChanGen cmd = new ChanGen();

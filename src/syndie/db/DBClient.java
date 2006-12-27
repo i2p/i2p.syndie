@@ -564,6 +564,35 @@ public class DBClient {
         }
     }
 
+
+    private static final String SQL_GET_READ_KEY_PRIVACY = "SELECT wasPublic FROM channelReadKey WHERE channelId = ? AND keyData = ? ORDER BY keyStart ASC";
+    
+    public boolean getChannelReadKeyIsPublic(Hash channel, SessionKey key) {
+        if ( (key == null) || (key.getData() == null) ) return false;
+        long channelId = getChannelId(channel);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_READ_KEY_PRIVACY);
+            stmt.setLong(1, channelId);
+            stmt.setBytes(2, key.getData());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean wasPublic = rs.getBoolean(1);
+                if (rs.wasNull()) wasPublic = false;
+                return wasPublic;
+            }
+            return false;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the read key's status", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_READKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND keyFunction = '" + Constants.KEY_FUNCTION_READ + "'";

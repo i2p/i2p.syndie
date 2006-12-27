@@ -1168,7 +1168,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             debugMessage("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
             // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
             // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
-            return ok && !imp.wasMissingKey(); 
+            boolean rv = ok && !imp.wasMissingKey();
+            // the Importer should take care of reimporting messages with the new read keys
+            return rv;
         } catch (IOException ioe) {
             errorMessage("Error reimporting " + uri, ioe);
             return false;

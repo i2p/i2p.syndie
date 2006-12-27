@@ -32,6 +32,7 @@ class ImportMeta {
      * The signature has been validated, so now import what we can
      */
     public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String nymPassphrase, String bodyPassphrase) {
+        boolean wasPublic = false;
         EnclosureBody body = null;
         SigningPublicKey ident = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
         Hash identHash = ident.calculateHash();
@@ -45,6 +46,8 @@ class ImportMeta {
             try {
                 // decrypt it with that key
                 body = new EnclosureBody(client.ctx(), enc.getData(), enc.getDataSize(), key);
+                wasPublic = true;
+                ui.debugMessage("metadata was encrypted with a published bodyKey");
             } catch (DataFormatException dfe) {
                 ui.errorMessage("Error processing with the body key (" + Base64.encode(key.getData()) + " len=" + key.getData().length + ")", dfe);
                 ui.commandComplete(-1, null);
@@ -69,6 +72,7 @@ class ImportMeta {
                     try {
                         // decrypt it with that key
                         body = new EnclosureBody(client.ctx(), enc.getData(), enc.getDataSize(), key);
+                        ui.debugMessage("metadata was encrypted with a passphrase");
                     } catch (DataFormatException dfe) {
                         ui.errorMessage("Invalid passphrase", dfe);
                         body = new UnreadableEnclosureBody(client.ctx());
@@ -83,6 +87,8 @@ class ImportMeta {
                     // try decrypting with that key
                     try {
                         body = new EnclosureBody(client.ctx(), enc.getData(), enc.getDataSize(), (SessionKey)keys.get(i));
+                        wasPublic = client.getChannelReadKeyIsPublic(identHash, (SessionKey)keys.get(i));
+                        ui.debugMessage("metadata was encrypted with an existing read key (was that public before? " + wasPublic + ")");
                         break;
                     } catch (IOException ioe) {
                         ui.debugMessage("Error processing with a read key", ioe);
@@ -100,7 +106,7 @@ class ImportMeta {
         }
 
         ui.debugMessage("enclosure: " + enc + "\nbody: " + body);
-        boolean ok = importMeta(client, ui, nymId, nymPassphrase, enc, body);
+        boolean ok = importMeta(client, ui, nymId, nymPassphrase, enc, body, wasPublic);
         if (ok) {
             if (body instanceof UnreadableEnclosureBody)
                 ui.commandComplete(1, null);
@@ -110,14 +116,13 @@ class ImportMeta {
             ui.commandComplete(-1, null);
         }
         return ok;
-            
     }
     
     /**
      * interpret the bits in the enclosure body and headers, importing them
      * into the db
      */
-    private static boolean importMeta(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, EnclosureBody body) {
+    private static boolean importMeta(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, EnclosureBody body, boolean wasPublic) {
         SigningPublicKey identKey = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
         Hash ident = identKey.calculateHash();
         Long edition = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
@@ -153,7 +158,7 @@ class ImportMeta {
             // clear out (recursively) and insert into channelArchive
             setChannelArchives(client, ui, channelId, enc, body);
             // insert into channelReadKey
-            setChannelReadKeys(client, channelId, enc, body);
+            setChannelReadKeys(client, ui, channelId, enc, body, wasPublic);
             // insert into channelMetaHeader
             setChannelMetaHeaders(client, channelId, enc, body);
             // insert into channelReferenceGroup
@@ -164,6 +169,8 @@ class ImportMeta {
             ui.statusMessage("committed as channel " + channelId);
             
             saveToArchive(client, ui, ident, enc);
+            
+            // todo: see if the read keys can decrypt any previously undecryptable posts in the channel
             return true;
         } catch (SQLException se) {
             ui.errorMessage("Error importing", se);
@@ -600,13 +607,19 @@ class ImportMeta {
     }
     
     static final String SQL_DEPRECATE_READ_KEYS = "UPDATE channelReadKey SET keyEnd = CURDATE() WHERE channelId = ? AND keyEnd IS NULL";
-    private static void setChannelReadKeys(DBClient client, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
+    private static void setChannelReadKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body, boolean wasPublic) throws SQLException {
         SessionKey priv[] = body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         SessionKey pub[] = enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         if ( ( (priv != null) && (priv.length > 0) ) || ( (pub != null) && (pub.length > 0) ) ) {
             client.exec(SQL_DEPRECATE_READ_KEYS, channelId);
-            addChannelReadKeys(client, channelId, priv);
-            addChannelReadKeys(client, channelId, pub);
+            if ( (priv != null) && (priv.length > 0) ) {
+                ui.debugMessage("setting channel read keys to include " + priv.length + " private read keys (pub? " + wasPublic + ")");
+                addChannelReadKeys(client, ui, channelId, priv, wasPublic);
+            }
+            if ( (pub != null) && (pub.length > 0) ) {
+                ui.debugMessage("setting channel read keys to include " + pub.length + " publicly displayed read keys");
+                addChannelReadKeys(client, ui, channelId, pub, true);
+            }
         }
     }
     /*
@@ -617,10 +630,10 @@ class ImportMeta {
      *  , keyData       VARBINARY(32)
      * );
      */
-    private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData) VALUES (?, ?)";
-    private static final String SQL_ENABLE_CHANNEL_READ_KEY = "UPDATE channelReadKey SET keyEnd = NULL WHERE channelId = ? AND keyData = ?";
-    private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*) FROM channelReadKey WHERE channelId = ? AND keyData = ?";
-    private static void addChannelReadKeys(DBClient client, long channelId, SessionKey keys[]) throws SQLException {
+    private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData, wasPublic, keyStart) VALUES (?, ?, ?, CURDATE())";
+    private static final String SQL_ENABLE_CHANNEL_READ_KEY = "UPDATE channelReadKey SET keyEnd = NULL, wasPublic = ? WHERE channelId = ? AND keyData = ?";
+    private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*), wasPublic FROM channelReadKey WHERE channelId = ? AND keyData = ? GROUP BY wasPublic";
+    private static void addChannelReadKeys(DBClient client, UI ui, long channelId, SessionKey keys[], boolean wasPublic) throws SQLException {
         if (keys == null) return;
         Connection con = client.con();
         PreparedStatement insertStmt = null;
@@ -636,18 +649,32 @@ class ImportMeta {
                 existsStmt.setBytes(2, keys[i].getData());
                 rs = existsStmt.executeQuery();
                 boolean exists = false;
-                if ((rs.next()) && (rs.getLong(1) > 0))
-                    exists = true;
+                boolean curWasPublic = false;
+                if (rs.next()) {
+                    long cnt = rs.getLong(1);
+                    if (rs.wasNull()) cnt = 0;
+                    curWasPublic = rs.getBoolean(2);
+                    if (rs.wasNull()) curWasPublic = false;
+                    if (cnt > 0)
+                        exists = true;
+                }
                 rs.close();
                 rs = null;
                 if (exists) {
-                    enableStmt.setLong(1, channelId);
-                    enableStmt.setBytes(2, keys[i].getData());
+                    // if the current key was public, don't let it become private,
+                    // but if the current key was private, it may become public (if disclosed in
+                    // a publicly readable metadata)
+                    ui.debugMessage("key exists: " + keys[i].toBase64() + ", did it used to be public? " + curWasPublic);
+                    enableStmt.setBoolean(1, wasPublic || curWasPublic);
+                    enableStmt.setLong(2, channelId);
+                    enableStmt.setBytes(3, keys[i].getData());
                     if (enableStmt.executeUpdate() < 1)
                         throw new SQLException("Unable to enable the channel read key");
                 } else {
+                    ui.debugMessage("key did not exist: " + keys[i].toBase64());
                     insertStmt.setLong(1, channelId);
                     insertStmt.setBytes(2, keys[i].getData());
+                    insertStmt.setBoolean(3, wasPublic);
                     if (insertStmt.executeUpdate() != 1)
                         throw new SQLException("Unable to insert the channel read key");
                 }
