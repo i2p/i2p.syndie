@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class MessageEditorTab extends BrowserTab implements MessageEditor.MessageEditorListener {
+public class MessageEditorTab extends BrowserTab implements MessageEditor.MessageEditorListener, Translatable {
     private MessageEditor _editor;
     private Hash _forum;
     private SyndieURI _parent;
@@ -57,9 +57,13 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
             //getBrowser().getUI().debugMessage("page added");
         }
     
+        getBrowser().getTranslationRegistry().register(this);
     }
     
-    protected void disposeDetails() { _editor.dispose(); }
+    protected void disposeDetails() { 
+        _editor.dispose();
+        getBrowser().getTranslationRegistry().unregister(this);
+    }
 
     public boolean close() {
         if (allowClose()) {
@@ -97,7 +101,14 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
     public void messagePostponed(long postponementId) { closeTab(); }
     public void messageCancelled() { closeTab(); }
 
+    private static final String T_TITLE = "syndie.gui.messageeditortab.title";
+    private static final String T_DESC = "syndie.gui.messageeditortab.desc";
+    
     public Image getIcon() { return ImageUtil.ICON_TAB_PAGE; }
-    public String getName() { return "x editor"; }
-    public String getDescription() { return "x desc"; }
+    public String getName() { return getBrowser().getTranslationRegistry().getText(T_TITLE, "Post"); }
+    public String getDescription() { return getBrowser().getTranslationRegistry().getText(T_DESC, "Post a new message"); }
+    
+    public void translate(TranslationRegistry registry) {
+        reconfigItem(); // queries getName/getDescription
+    }
 }

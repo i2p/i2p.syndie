@@ -171,7 +171,9 @@ public class MessagePreview implements Themeable, Translatable {
                 if (_browser != null)
                     _browser.view(uri);
             }
-            public void bookmark(PageRenderer renderer, SyndieURI uri) {}
+            public void bookmark(PageRenderer renderer, SyndieURI uri) {
+                if (_browser != null) _browser.bookmark(uri);
+            }
             public void banScope(PageRenderer renderer, Hash scope) {}
             public void viewImage(PageRenderer renderer, Image img) {}
             public void ignoreImageScope(PageRenderer renderer, Hash scope) {}

@@ -407,6 +407,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                 //_tree.setSelection(new TreeItem[0]);
                 super.selectionUpdated();
             }
+            public void returnHit() { defaultSelectionAction(); }
+            public void doubleclick() { defaultSelectionAction(); }
         };
         _tree.addControlListener(lsnr);
         _tree.addMouseListener(lsnr);
@@ -449,6 +451,59 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+    /**
+     * the user hit return/double clicked on a highlight item, so perform the 
+     * associated default action for the item type (view a private message, resume 
+     * a postponed message, etc)
+     */
+    private void defaultSelectionAction() {
+        TreeItem sel[] = null;
+        if (_selected != null)
+            sel = new TreeItem[] { _selected };
+        else
+            sel = new TreeItem[0];
+        if ( (sel != null) && (sel.length == 1) ) {
+            TreeItem parent = sel[0].getParentItem();
+            TreeItem child = null;
+            if (parent == null)
+                parent = sel[0];
+            else
+                child = sel[0];
+            
+            if (parent == _itemArchives) {
+                _browser.view(_browser.createSyndicationArchiveURI());
+            } else if (parent == _itemNewForums) {
+                int idx = _itemNewForums.indexOf(sel[0]);
+                if (idx >= 0) {
+                    Hash scope = (Hash)_newForums.get(idx);
+                    _browser.view(SyndieURI.createScope(scope));
+                }
+            } else if (parent == _itemPostponed) {
+                int idx = _itemPostponed.indexOf(sel[0]);
+                if (idx >= 0) {
+                    Long id = (Long)_postponedId.get(idx);
+                    Integer ver = (Integer)_postponedVersion.get(idx);
+                    _browser.resumePost(id.longValue(), ver.intValue());
+                }
+            } else if (parent == _itemPrivateMessages) {
+                int idx = _itemPrivateMessages.indexOf(sel[0]);
+                if (idx >= 0) {
+                    Long msgId = (Long)_privateMessages.get(idx);
+                    long messageId = _browser.getClient().getMessageId(msgId.longValue());
+                    Hash scope = _browser.getClient().getMessageScope(msgId.longValue());
+                    if ( (messageId >= 0) && (scope != null) ) {
+                        _browser.view(SyndieURI.createMessage(scope, messageId));
+                    }
+                }
+            } else if (parent == _itemWatchedForums) {
+                int idx = _itemWatchedForums.indexOf(sel[0]);
+                if (idx >= 0) {
+                    Hash scope = (Hash)_watchedForums.get(idx);
+                    _browser.view(SyndieURI.createScope(scope));
+                }
+            }
+        }
     }
     
     private void reconfigMenu(Menu menu) {

@@ -29,6 +29,10 @@ import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -1815,8 +1819,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 SyndieURI uri = (SyndieURI)iter.next();
                 BrowserTab tab = (BrowserTab)_openTabs.get(uri);
                 if (tab.getTabItem() == item) {
-                    //SyndieURI curURI = tab.getURI(); // may have changed since insert
-                    //
+                    SyndieURI curURI = tab.getURI(); // may have changed since insert
+                    
+                    TextTransfer tt = TextTransfer.getInstance();
+                    Clipboard clip = new Clipboard(_shell.getDisplay());
+                    Transfer xf[] = new Transfer[] { tt };
+                    Object data[] = new Object[] { curURI.toString() };
+                    clip.setContents(data, xf);
+                    clip.dispose();
                     return;
                 }
             }

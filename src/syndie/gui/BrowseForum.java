@@ -4,6 +4,9 @@ import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -156,6 +159,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuBan = new MenuItem(_metaNameMenu, SWT.PUSH);
         
+        _metaNameMenuDeleteRead.setEnabled(false);
+        _metaNameMenuDeleteAll.setEnabled(false);
+        
         _metaNameMenuView.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createMetaURI(_scope)); }
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createMetaURI(_scope)); }
@@ -166,9 +172,41 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
         });
         
+        _metaNameMenuMarkRead.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
+            private void markAllRead() {
+                Hash scope = _scope;
+                if (scope == null) return;
+                long scopeId = _browser.getClient().getChannelId(scope);
+                if (scopeId >= 0) {
+                    _browser.getClient().markChannelRead(scopeId);
+                    // the filter may want to exclude 'read' messages (or it may just want
+                    // to redraw them differently)
+                    _tree.applyFilter();
+                }
+            }
+        });
+        
         _metaNameMenuBan.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
+        });
+        
+        _metaNameMenuCopyURI.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { copyURI(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { copyURI(); }
+            private void copyURI() {
+                if (_scope != null) {
+                    SyndieURI uri = SyndieURI.createScope(_scope);
+                    TextTransfer tt = TextTransfer.getInstance();
+                    Clipboard clip = new Clipboard(_root.getDisplay());
+                    Transfer xf[] = new Transfer[] { tt };
+                    Object data[] = new Object[] { uri.toString() };
+                    clip.setContents(data, xf);
+                    clip.dispose();
+                }
+            }
         });
         
         _metaName.setMenu(_metaNameMenu);

@@ -89,6 +89,12 @@ public class MessageTree implements Translatable, Themeable {
     
     private Menu _menu;
     private MenuItem _view;
+    private MenuItem _viewForum;
+    private MenuItem _viewForumMeta;
+    private MenuItem _bookmarkForum;
+    private MenuItem _viewAuthor;
+    private MenuItem _viewAuthorMeta;
+    private MenuItem _bookmarkAuthor;
     private MenuItem _markRead;
     private MenuItem _markUnread;
     private MenuItem _markAllRead;
@@ -807,6 +813,39 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewSelected(); }
         });
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _viewForum = new MenuItem(_menu, SWT.PUSH);
+        _viewForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
+        });
+        _viewForumMeta = new MenuItem(_menu, SWT.PUSH);
+        _viewForumMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
+        });
+        _bookmarkForum = new MenuItem(_menu, SWT.PUSH);
+        _bookmarkForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
+        });
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _viewAuthor = new MenuItem(_menu, SWT.PUSH);
+        _viewAuthor.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
+        });
+        _viewAuthorMeta = new MenuItem(_menu, SWT.PUSH);
+        _viewAuthorMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
+        });
+        _bookmarkAuthor = new MenuItem(_menu, SWT.PUSH);
+        _bookmarkAuthor.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
+        });
+        new MenuItem(_menu, SWT.SEPARATOR);
         _markRead = new MenuItem(_menu, SWT.PUSH);
         _markRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markRead(); }
@@ -1376,6 +1415,78 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    private void viewSelectedForum() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long targetId = _client.getMessageTarget(msgId);
+                Hash scope = _client.getChannelHash(targetId);
+                _browser.view(SyndieURI.createScope(scope));
+            }
+        }
+    }
+    private void viewSelectedForumMeta() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long targetId = _client.getMessageTarget(msgId);
+                Hash scope = _client.getChannelHash(targetId);
+                _browser.view(_browser.createMetaURI(scope));
+            }
+        }
+    }
+    private void bookmarkSelectedForum() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long targetId = _client.getMessageTarget(msgId);
+                Hash scope = _client.getChannelHash(targetId);
+                _browser.bookmark(SyndieURI.createScope(scope));
+            }
+        }
+    }
+    private void viewSelectedAuthor() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long authorId = _client.getMessageAuthor(msgId);
+                Hash scope = _client.getChannelHash(authorId);
+                _browser.view(SyndieURI.createScope(scope));
+            }
+        }
+    }
+    private void viewSelectedAuthorMeta() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long authorId = _client.getMessageAuthor(msgId);
+                Hash scope = _client.getChannelHash(authorId);
+                _browser.view(_browser.createMetaURI(scope));
+            }
+        }
+    }
+    private void bookmarkSelectedAuthor() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long authorId = _client.getMessageAuthor(msgId);
+                Hash scope = _client.getChannelHash(authorId);
+                _browser.bookmark(SyndieURI.createScope(scope));
+            }
+        }
+    }
     
     private void markRead() {
         TreeItem selected[] = _tree.getSelection();
@@ -1469,9 +1580,15 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     
     private static final String T_VIEW = "syndie.gui.messagetree.view";
+    private static final String T_VIEWFORUM = "syndie.gui.messagetree.viewforum";
+    private static final String T_VIEWFORUMMETA = "syndie.gui.messagetree.viewforummeta";
+    private static final String T_VIEWAUTHOR = "syndie.gui.messagetree.viewauthor";
+    private static final String T_VIEWAUTHORMETA = "syndie.gui.messagetree.viewauthormeta";
     private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
     private static final String T_MARKUNREAD = "syndie.gui.messagetree.markunread";
     private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
+    private static final String T_BOOKMARKFORUM = "syndie.gui.messagetree.bookmarkforum";
+    private static final String T_BOOKMARKAUTHOR = "syndie.gui.messagetree.bookmarkauthor";
     
     public void translate(TranslationRegistry registry) {
         _colSubject.setText(registry.getText(T_SUBJECT, "Subject"));
@@ -1483,7 +1600,13 @@ public class MessageTree implements Translatable, Themeable {
         if (_filterEditor != null)
             _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
 
-        _view.setText(registry.getText(T_VIEW, "View the messages"));
+        _view.setText(registry.getText(T_VIEW, "View the message"));
+        _viewForum.setText(registry.getText(T_VIEWFORUM, "View the forum's messages"));
+        _viewForumMeta.setText(registry.getText(T_VIEWFORUMMETA, "View the forum's metadata"));
+        _viewAuthor.setText(registry.getText(T_VIEWAUTHOR, "View the author's blog"));
+        _viewAuthorMeta.setText(registry.getText(T_VIEWAUTHORMETA, "View the author's metadata"));
+        _bookmarkForum.setText(registry.getText(T_BOOKMARKFORUM, "Bookmark the forum"));
+        _bookmarkAuthor.setText(registry.getText(T_BOOKMARKAUTHOR, "Bookmark the author"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
