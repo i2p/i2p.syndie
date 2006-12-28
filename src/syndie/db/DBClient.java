@@ -19,6 +19,7 @@ import java.util.zip.ZipOutputStream;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
+import syndie.data.BugConfig;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
@@ -596,8 +597,8 @@ public class DBClient {
     private static final String SQL_GET_READKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND keyFunction = '" + Constants.KEY_FUNCTION_READ + "'";
-    private static final String SQL_GET_CHANREADKEYS_RW = "SELECT keyData, keyStart FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL ORDER BY keyStart ASC";
-    private static final String SQL_GET_CHANREADKEYS_RO = "SELECT keyData, keyStart FROM channelReadKey WHERE channelId = ? ORDER BY keyStart ASC";
+    private static final String SQL_GET_CHANREADKEYS_RW = "SELECT DISTINCT keyData, keyStart FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL ORDER BY keyStart ASC";
+    private static final String SQL_GET_CHANREADKEYS_RO = "SELECT DISTINCT keyData, keyStart FROM channelReadKey WHERE channelId = ? ORDER BY keyStart ASC";
     /** 
      * list of SessionKey instances that the nym specified can use to try and read/write 
      * posts to the given identHash channel
@@ -1453,7 +1454,7 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_ARCHIVES = "SELECT archiveId, wasEncrypted FROM channelArchive WHERE channelId = ?";
-    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT keyData FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
+    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT DISTINCT keyData FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
     private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ? ORDER BY headerName";
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
@@ -4174,6 +4175,22 @@ public class DBClient {
         byte rv[] = new byte[decr.length-pad];
         System.arraycopy(decr, 0, rv, 0, rv.length);
         return rv;
+    }
+    
+    private BugConfig _bugConfig;
+    public BugConfig getBugConfig() {
+        ensureLoggedIn();
+        if (_bugConfig == null) {
+            BugConfig cfg = new BugConfig();
+            try {
+                cfg.load(_con);
+            } catch (SQLException se) {
+                _ui.errorMessage("Error loading the bug config", se);
+                return null;
+            }
+            _bugConfig = cfg;
+        }
+        return _bugConfig;
     }
     
     private boolean _trace;

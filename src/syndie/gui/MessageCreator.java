@@ -56,13 +56,25 @@ class MessageCreator {
             return target;
         }
         DBClient client = _editor.getClient();
-        // getAuthorizedPosters includes the managers and identities
-        List authorized = client.getAuthorizedPosters(target);
-        for (int i = 0; i < authorized.size(); i++) {
-            SigningPublicKey key = (SigningPublicKey)authorized.get(i);
+        
+        long chanId = client.getChannelId(target);
+        ChannelInfo info = client.getChannel(chanId);
+        //todo: handle this properly
+        //if (info.getAllowPublicPosts())
+        //    return target;
+        for (Iterator iter = info.getAuthorizedManagers().iterator(); iter.hasNext(); ) {
+            SigningPublicKey key = (SigningPublicKey)iter.next();
             if (key.calculateHash().equals(author))
                 return target;
         }
+        for (Iterator iter = info.getAuthorizedPosters().iterator(); iter.hasNext(); ) {
+            SigningPublicKey key = (SigningPublicKey)iter.next();
+            if (key.calculateHash().equals(author))
+                return target;
+        }
+        
+        // the target isn't going to let us, so use the author's
+        // todo: (though maybe per reply it would?)
         return author;
     }
     

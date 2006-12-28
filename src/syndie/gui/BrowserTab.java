@@ -44,6 +44,7 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_TRANSLATE = "translate";
     static final String TYPE_HIGHLIGHT = "highlight";
     static final String TYPE_ARCHIVEMGR = "archivemgr";
+    static final String TYPE_BUGREPORT = "bug";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -113,6 +114,8 @@ abstract class BrowserTab implements Themeable {
             return new BrowseForumTab(browser, uri);
         } else if (TYPE_ARCHIVEMGR.equals(uri.getType())) {
             return new ArchiveManagerTab(browser, uri);
+        } else if (TYPE_BUGREPORT.equals(uri.getType())) {
+            return new BugReportTab(browser, uri);
         }
         
         return null;

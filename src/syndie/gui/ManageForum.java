@@ -202,18 +202,20 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 info = _browser.getClient().getChannel(id);
             }
         }
-        if (info.getPassphrasePrompt() != null) {
-            _browser.getUI().debugMessage("the channel info is still encrypted");
-            PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), false);
-            prompt.setPassphrasePrompt(info.getPassphrasePrompt());
-            prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
-                public void promptComplete(String passphraseEntered, String promptEntered) {
-                    reimport(passphraseEntered, uri);
-                }
-                public void promptAborted() { _browser.unview(uri); }
-            });
-            prompt.open();
-            return;
+        if (info != null) {
+            if (info.getPassphrasePrompt() != null) {
+                _browser.getUI().debugMessage("the channel info is still encrypted");
+                PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), false);
+                prompt.setPassphrasePrompt(info.getPassphrasePrompt());
+                prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+                    public void promptComplete(String passphraseEntered, String promptEntered) {
+                        reimport(passphraseEntered, uri);
+                    }
+                    public void promptAborted() { _browser.unview(uri); }
+                });
+                prompt.open();
+                return;
+            }
         }
         _browser.getUI().debugMessage("config forum: " + scope);
         if ( (scope != null) && (_browser.getClient().getNymKeys(info.getChannelHash(), Constants.KEY_FUNCTION_MANAGE).size() <= 0) ) {

@@ -1,0 +1,194 @@
+-- update the database from schema version 11
+-- this version 12 includes the config necessary for the bug tracker
+--
+
+UPDATE appVersion SET versionNum = 12, visibleVersion = 'Bug tracker';
+
+-- drop down list of components the bug can be filed under
+CREATE TABLE bugTrackComponent (
+	-- componentId is often the classname of the thing involved
+	componentId		VARCHAR(256) PRIMARY KEY
+	-- defaultDisplayName is the english name to display for the component,
+	-- unless another translation entry keyed by componentId exists
+	, defaultDisplayName	VARCHAR(256)
+	, sortOrder		INTEGER DEFAULT 0
+	, isDefault		BOOLEAN DEFAULT FALSE
+	, parentId		VARCHAR(256) DEFAULT NULL
+);
+
+-- type of bug: bug, rfe, todo, etc
+CREATE TABLE bugTrackType (
+	typeId			VARCHAR(256) PRIMARY KEY
+	, defaultDisplayName	VARCHAR(256)
+	, sortOrder		INTEGER DEFAULT 0
+	, isDefault		BOOLEAN DEFAULT FALSE
+);
+
+-- minor, major, blocker, etc
+CREATE TABLE bugTrackSeverity (
+	severityId		VARCHAR(256) PRIMARY KEY
+	, defaultDisplayName	VARCHAR(256)
+	, sortOrder		INTEGER DEFAULT 0
+	, isDefault		BOOLEAN DEFAULT FALSE
+);
+
+-- now lets populate the tables...
+
+--
+-- posts are made to this channel if possible, otherwise to the nym's blog
+--
+
+--INSERT INTO nymPref (nymId, prefName, prefValue) VALUES
+--	(0, 'bugtrack.targetChannel',
+--	'urn:syndie:channel:d5:scope44:QU7SmeHqW1etRmXNEfCR6jP7CC0Tyln5V7YalYq1jnY=e');
+
+--
+-- #s are a (sparse) depth first traversal
+--
+
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.browser', 'Overall Syndie GUI', 0, true);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.bookmarks', 'Bookmark manager', 100, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.forumsearch', 'Forum search', 200, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.browse', 'Browse forum', 300, false);
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.browse.multi', 'Read all forums', 400, false,
+	'syndie.gui.browse');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.browse.filter', 'Forum fitlering/threading', 500, false,
+	'syndie.gui.browse');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.browse.preview', 'Message preview', 600, false,
+	'syndie.gui.browse');
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.highlight', 'Highlights', 700, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.messageview', 'Message view', 800, false);
+INSERT INTO bugTrackComponent 
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageview.render', 'Message view: rendering', 900, false,
+	'syndie.gui.messageview');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageview.refs', 'Message view: references', 1000, false,
+	'syndie.gui.messageview');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageview.attachments', 'Message view: attachments', 1100, false,
+	'syndie.gui.messageview');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageview.pages', 'Message view: pages', 1200, false,
+	'syndie.gui.messageview');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageview.threading', 'Message view: threading', 1300, false,
+	'syndie.gui.messageview');
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.manageforum', 'Forum management', 1400, false);
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.manageforum.avatar', 'Forum management: avatar', 1500, false,
+	'syndie.gui.manageforum');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.manageforum.refs', 'Forum management: references', 1600, false,
+	'syndie.gui.manageforum');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.manageforum.archives', 'Forum management: archives', 1700, false,
+	'syndie.gui.manageforum');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.manageforum.auth', 'Forum management: authorization', 1800, false,
+	'syndie.gui.manageforum');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.manageforum.keys', 'Forum management: read keys', 1900, false,
+	'syndie.gui.manageforum');
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.messageeditor', 'Message editor', 2000, false);
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.messageeditor.webrip', 'Message editor: web rip (as page)',
+	2100, false, 'syndie.gui.messageeditor');
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.webrip', 'Web rip (as a post)', 2200, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.messagepostpone', 'Message postpone/resume', 2300, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.syndication', 'Syndication', 2400, false);
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.syndication.archive', 'Syndication: archive management', 2450,
+	false, 'syndie.gui.syndication');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.syndication.schedule', 'Syndication: scheduling', 2500,
+	false, 'syndie.gui.syndication');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.syndication.http', 'Syndication: with HTTP archives', 2600,
+	false, 'syndie.gui.syndication');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.syndication.fcp', 'Syndication: with Freenet 0.7 archives', 2700,
+	false, 'syndie.gui.syndication');
+INSERT INTO bugTrackComponent
+	(componentId, defaultDisplayName, sortOrder, isDefault, parentId) VALUES
+	('syndie.gui.syndication.httpserv', 'Syndication: integrated HTTP server',
+	2800, false, 'syndie.gui.syndication');
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.translation', 'Translation', 2900, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.theming', 'Theming', 3000, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('syndie.gui.textui', 'Text interface', 3100, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('web', 'Syndie website', 3200, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('docs', 'Syndie documentation', 3300, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('installer', 'Syndie installer', 3400, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('build', 'Syndie build process', 3400, false);
+INSERT INTO bugTrackComponent (componentId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('other', 'Other', 3500, false);
+
+--
+--
+--
+
+INSERT INTO bugTrackType (typeId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('bug', 'Bug', 0, true);
+INSERT INTO bugTrackType (typeId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('rfe', 'Feature request', 10, false);
+INSERT INTO bugTrackType (typeId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('usability', 'Usability issue', 20, false);
+INSERT INTO bugTrackType (typeId, defaultDisplayName, sortOrder, isDefault) VALUES
+	('todo', 'Pending task', 30, false);
+
+--
+--
+--
+
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('trivial', 'Very minor', 0, false);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('minor', 'Minor annoyance', 100, false);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('standard', 'Normal', 200, true);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('elevated', 'Limits some useful functionality', 300, false);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('major', 'Limits key functionality', 400, false);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('critical', 'Prevents key functionality', 500, false);
+INSERT INTO bugTrackSeverity (severityId, defaultDisplayName, sortOrder, isDefault)
+	VALUES ('blocker', 'Prevents anything from working', 600, false);

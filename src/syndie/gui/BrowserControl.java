@@ -50,6 +50,7 @@ public interface BrowserControl {
     public SyndieURI createSyndicationDiffURI();
     public SyndieURI createSyndicationStatusURI();
     public SyndieURI createHighlightURI();
+    public SyndieURI createBugReportURI();
     public void showWaitCursor(boolean wait);
     
     public UI getUI();

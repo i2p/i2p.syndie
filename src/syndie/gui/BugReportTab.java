@@ -15,33 +15,33 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class HighlightViewTab extends BrowserTab implements Translatable, Themeable {
-    private HighlightView _view;
+public class BugReportTab extends BrowserTab implements Translatable, Themeable {
+    private BugReport _report;
     
-    public HighlightViewTab(BrowserControl browser, SyndieURI uri) {
+    public BugReportTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
     }
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _view = new HighlightView(getBrowser(), getRoot());
+        _report = new BugReport(getBrowser(), getRoot(), getURI());
         
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);
     }
     
     protected void disposeDetails() { 
-        _view.dispose();
+        _report.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);
     }
     
-    private static final String T_NAME = "syndie.gui.highlightviewtab.name";
-    private static final String T_DESC = "syndie.gui.highlightviewtab.desc";
+    private static final String T_NAME = "syndie.gui.bugreporttab.name";
+    private static final String T_DESC = "syndie.gui.bugreporttab.desc";
     
     public Image getIcon() { return ImageUtil.ICON_TAB_HIGHLIGHTS; }
-    public String getName() { return getBrowser().getTranslationRegistry().getText(T_NAME, "Highlights"); }
-    public String getDescription() { return getBrowser().getTranslationRegistry().getText(T_DESC, "Quick summary of local Syndie activity"); }
+    public String getName() { return getBrowser().getTranslationRegistry().getText(T_NAME, "Bug report"); }
+    public String getDescription() { return getBrowser().getTranslationRegistry().getText(T_DESC, "File a new bug report"); }
 
     public void translate(TranslationRegistry registry) { reconfigItem(); }
     public void applyTheme(Theme theme) {}

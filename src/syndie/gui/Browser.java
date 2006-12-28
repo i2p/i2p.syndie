@@ -159,6 +159,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _advancedMenuDumpResourcesDiff;
     private MenuItem _helpMenuRoot;
     private MenuItem _helpMenuAbout;
+    private MenuItem _helpMenuBugReport;
     private MenuItem _helpMenuFAQ;
     private MenuItem _helpMenuGUIManual;
     private MenuItem _helpMenuTextManual;
@@ -569,6 +570,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _helpMenuAbout.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showAbout(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showAbout(); }
+        });
+        _helpMenuBugReport = new MenuItem(helpMenu, SWT.PUSH);
+        _helpMenuBugReport.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createBugReportURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createBugReportURI()); }
         });
         _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuFAQ.setEnabled(false);
@@ -1792,6 +1798,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
     public SyndieURI createHighlightURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
+    public SyndieURI createBugReportURI() { return new SyndieURI(BrowserTab.TYPE_BUGREPORT, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
@@ -2018,6 +2025,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_ADVANCED_MENU_DUMPRESOURCESDIFF = "syndie.gui.browser.advancedmenu.dumpresourcesdiff";
     private static final String T_HELP_MENU_TITLE = "syndie.gui.browser.helpmenu.title";
     private static final String T_HELP_MENU_ABOUT = "syndie.gui.browser.helpmenu.about";
+    private static final String T_HELP_MENU_BUG = "syndie.gui.browser.helpmenu.bug";
     private static final String T_HELP_MENU_FAQ = "syndie.gui.browser.helpmenu.faq";
     private static final String T_HELP_MENU_GUIMAN = "syndie.gui.browser.helpmenu.guiman";
     private static final String T_HELP_MENU_TEXTMAN = "syndie.gui.browser.helpmenu.textman";
@@ -2098,6 +2106,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
 
         _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "&Help"));
         _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "&About"));
+        _helpMenuBugReport.setText(registry.getText(T_HELP_MENU_BUG, "File a new &bug report"));
         _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "&FAQ"));
         _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "&GUI manual"));
         _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "&Text interface manual"));

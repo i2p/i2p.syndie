@@ -5,10 +5,10 @@ Key:
  ? questionable task
 ===
 - dictionary selection GUI
+- scheduled web rips (and maybe even scheduled cli scripts?  expose webrip cli for both?)
 - monotone migration
  - on mtn rev push @ mtn.i2p.net, post to syndie-commit
- - publish the mtn web interface
-- logo, screenshots
+ - publish the mtn web interface, or get syndie up on the mtnview site?
 - bug report wizard
 - remove duplicate nymKeys (eg "Read key 5/89 attempt failed, continuing...")
 - clean up the highlight view (less text-oriented, more graphical)
