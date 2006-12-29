@@ -367,6 +367,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
     
     private void postMessage() {
+        if (!validateAuthorForum()) {
+            showUnauthorizedWarning();
+            return;
+        }
         MessageCreator creator = new MessageCreator(new CreatorSource());
         boolean ok = creator.execute();
         if (ok) {
@@ -1256,6 +1260,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (_pageEditors.size() > 0)
             viewPage(0);
         enableAutoSave();
+        if (!validateAuthorForum()) {
+            // ugly, yet it lets us delay long enough to show the tab (assuming an unauthorized reply)
+            _root.getDisplay().timerExec(500, new Runnable() { public void run() { showUnauthorizedWarning(); } });
+        }
     }
     
     private void initPage() {
@@ -1541,7 +1549,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     _forum = uri.getScope();
                     _browser.getUI().debugMessage("other forum picked: " + uri);
                     updateForum();
-                    validateAuthorForum();
+                    if (!validateAuthorForum())
+                        showUnauthorizedWarning();
                 }
 
                 public void referenceChoiceAborted() {
@@ -1557,7 +1566,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _browser.getUI().debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
         redrawForumAvatar(forum, channelId, summary, isManaged);
-        validateAuthorForum();
+        if (!validateAuthorForum())
+            showUnauthorizedWarning();
     }
     private void redrawForumAvatar(Hash forum, long channelId, String summary, boolean isManaged) {
         _forumButton.setRedraw(false);
@@ -1693,7 +1703,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _browser.getUI().debugMessage("pick author " + author + " / " + summary);
         _author = author;
         redrawAuthorAvatar(author, channelId, summary);
-        validateAuthorForum();
+        if (!validateAuthorForum())
+            showUnauthorizedWarning();
     }
     private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
         _authorButton.setRedraw(false);
@@ -1734,7 +1745,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
      * make sure the author selected has the authority to post to the forum selected (or to
      * reply to an existing message, if we are replying)
      */
-    private void validateAuthorForum() {
+    private boolean validateAuthorForum() {
         Hash author = _author;
         ChannelInfo forum = null;
         if (_forum != null)
@@ -1784,12 +1795,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             }
         }
         
-        if (!ok) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
-            box.setText(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
-            box.open();
-        }
+        return ok;
+    }
+    private void showUnauthorizedWarning() {
+        MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+        box.setMessage(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
+        box.setText(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
+        box.open();
     }
     
     private static final String T_NOT_AUTHORIZED_MSG = "syndie.gui.messageeditor.notauthorized.msg";
