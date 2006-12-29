@@ -3774,12 +3774,11 @@ public class DBClient {
     }
 
     private static final String SQL_GET_MSG_READ = 
-            "SELECT importDate, readThrough, ncrm.msgId " +
-            "FROM channelMessage cm, nymChannelReadThrough ncrt " +
-            "JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope " +
+            "SELECT importDate, readThrough, cm.msgId " +
+            "FROM channelMessage cm " +
+            "JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope AND ncrt.nymId = ? " +
             "LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? " +
-            "WHERE ncrt.nymId = ? " +
-            "AND cm.msgId IN (";
+            "WHERE cm.msgId IN (";
     /** get a list of msgIds (Long) from the given set who have already been read */
     public List getRead(long msgIds[]) { return getRead(_nymId, msgIds); }
     public List getRead(long nymId, long msgIds[]) {
@@ -3792,7 +3791,7 @@ public class DBClient {
                 buf.append(", ");
         }
         
-        buf.append(") AND (readThrough > importDate OR ncrm.msgId IS NOT NULL)");
+        buf.append(") AND (readThrough >= importDate OR ncrm.msgId IS NOT NULL)");
         String query = buf.toString();
         _ui.debugMessage("query: " + query);
         
@@ -3810,7 +3809,7 @@ public class DBClient {
             afterExec = System.currentTimeMillis();
             
             while (rs.next()) {
-                long msgId = rs.getLong(1);
+                long msgId = rs.getLong(3);
                 if (!rs.wasNull())
                     rv.add(new Long(msgId));
             }

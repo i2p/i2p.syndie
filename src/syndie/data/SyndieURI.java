@@ -78,7 +78,14 @@ public class SyndieURI {
         if (channel != null)
             scopes = new String[] { channel.toBase64() };
         return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
-                            null, null, null, null, null, null, null, null, false, false, false, true);
+                            null, null, null, null, null, null, null, null, false, false, false, true, false);
+    }
+    public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded) {
+        String scopes[] = null;
+        if (channel != null)
+            scopes = new String[] { channel.toBase64() };
+        return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
+                            null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
     }
     
     /**
@@ -88,7 +95,7 @@ public class SyndieURI {
                                          String inc[], String req[], String excl[], boolean msgs,
                                          Long pageMin, Long pageMax, Long attachMin, Long attachMax,
                                          Long refMin, Long refMax, Long keyMin, Long keyMax,
-                                         boolean encrypted, boolean pbe, boolean priv, boolean threaded) {
+                                         boolean encrypted, boolean pbe, boolean priv, boolean threaded, boolean unreadOnly) {
         HashMap attributes = new HashMap();
         if ( (scopes != null) && (scopes.length > 0) )
             attributes.put("scope", scopes);
@@ -126,6 +133,7 @@ public class SyndieURI {
         attributes.put("pbe", pbe ? Boolean.TRUE : Boolean.FALSE);
         attributes.put("private", priv ? Boolean.TRUE : Boolean.FALSE);
         attributes.put("threaded", threaded ? Boolean.TRUE : Boolean.FALSE);
+        attributes.put("unreadonly", unreadOnly ? Boolean.TRUE : Boolean.FALSE);
         
         return new SyndieURI("search", attributes);
     }

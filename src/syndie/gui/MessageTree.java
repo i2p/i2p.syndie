@@ -84,7 +84,6 @@ public class MessageTree implements Translatable, Themeable {
     //private Button _filterApply;
     //private Button _filterEdit;
     private SyndieURI _appliedFilter;
-    private MessageTreeFilter _filterEditor;
     private Shell _filterEditorShell;
     
     private Menu _menu;
@@ -296,12 +295,6 @@ public class MessageTree implements Translatable, Themeable {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _advancedMenu.setVisible(true); }
                 public void widgetSelected(SelectionEvent selectionEvent) { _advancedMenu.setVisible(true); }
             });
-            /*
-            _filterAdvanced.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { _msgTree.editFilter(); }
-            });
-             */
 
             _advancedMenu = new Menu(_filterAdvanced);
             _filterAdvanced.setMenu(_advancedMenu);
@@ -909,24 +902,6 @@ public class MessageTree implements Translatable, Themeable {
         applyFilter();
     }
     
-    private void createFilterEditor() {
-        _filterEditorShell = new Shell(_parent.getShell(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
-        _filterEditorShell.setLayout(new FillLayout());
-        // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
-        _filterEditorShell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; hideFilterEditor(); }
-            public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
-        });
-        _filterEditorShell.setText(_browser.getTranslationRegistry().getText(T_FILTER_EDIT_SHELL, "Message filter"));
-        _filterEditorShell.setFont(_browser.getThemeRegistry().getTheme().SHELL_FONT);
-        _filterEditor = new MessageTreeFilter(_browser, _filterEditorShell, this);
-        _filterEditorShell.pack();
-        _filterEditorShell.setSize(_filterEditor.getControl().computeSize(400, 400));
-    }
-    
     public void sortDate(boolean newestFirst) { _tree.setSortColumn(_colDate); _tree.setSortDirection(newestFirst ? SWT.DOWN : SWT.UP); }
     public void sortAuthor(boolean aToZ) { _tree.setSortColumn(_colAuthor); _tree.setSortDirection(aToZ ? SWT.UP : SWT.DOWN); }
     public void sortChannel(boolean aToZ) { _tree.setSortColumn(_colChannel); _tree.setSortDirection(aToZ ? SWT.UP : SWT.DOWN); }
@@ -941,8 +916,6 @@ public class MessageTree implements Translatable, Themeable {
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
-        if (_filterEditor != null)
-            _filterEditor.dispose();
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).dispose();
     }
@@ -1542,19 +1515,6 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
 
-    private void editFilter() { 
-        String txt = _filter;
-        //System.out.println("showing edit for [" + txt + "]");
-        if (_filterEditor == null)
-            createFilterEditor();
-        _filterEditor.setFilter(txt);
-        _filterEditorShell.open();
-    }
-    void hideFilterEditor() { 
-        if (_filterEditor != null)
-            _filterEditorShell.setVisible(false); 
-    }
-
     private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
     private static final String T_AUTHOR = "syndie.gui.messagetree.author";
     private static final String T_FORUM = "syndie.gui.messagetree.forum";
@@ -1597,9 +1557,6 @@ public class MessageTree implements Translatable, Themeable {
         _colDate.setText(registry.getText(T_DATE, "Date"));
         _colTags.setText(registry.getText(T_TAGS, "Tags"));
         
-        if (_filterEditor != null)
-            _filterEditorShell.setText(registry.getText(T_FILTER_EDIT_SHELL, "Message filter"));
-
         _view.setText(registry.getText(T_VIEW, "View the message"));
         _viewForum.setText(registry.getText(T_VIEWFORUM, "View the forum's messages"));
         _viewForumMeta.setText(registry.getText(T_VIEWFORUMMETA, "View the forum's metadata"));

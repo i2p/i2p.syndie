@@ -1355,6 +1355,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     public String toString() {
         StringBuffer buf = new StringBuffer();
         buf.append(" threaded? ").append(_showThreaded);
+        buf.append(" unreadOnly? ").append(_unreadOnly);
         buf.append(" owners? ").append(_includeOwners);
         buf.append(" managers? ").append(_includeManagers);
         buf.append(" authPosters? ").append(_includeAuthorizedPosters);

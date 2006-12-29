@@ -66,7 +66,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
         long t2 = System.currentTimeMillis();
-        System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
+        //System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
         if (_nymRefs != null)
             _browser.bookmarksUpdated(_nymRefs);
         _nymRefs = null;

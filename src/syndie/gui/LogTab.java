@@ -107,7 +107,6 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
             else
                 rv = false;
         }
-        System.out.println("logTab: canShow(" + uri + "): " + rv);
         return rv;
     }
     
@@ -233,18 +232,17 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         redrawOut();
     }
     private void redrawOut() {
-        final String str = _outBuf.toString();
+        // add some newlines so when we scroll, we go to the beginning of a line
+        final String str = _outBuf.toString() + "\n\n";
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
                 _out.setRedraw(false);
                 _out.setText(str);
-                if (str.length() > 1) {
-                    // scroll to the end
-                    _out.setSelection(str.length()-2, str.length()-1);
-                    _out.showSelection();
-                    _out.clearSelection();
-                }
+                // scroll to the end
+                _out.setSelection(str.length()-2, str.length()-1);
+                _out.showSelection();
+                _out.clearSelection();
                 
                 _out.setRedraw(true);
             }

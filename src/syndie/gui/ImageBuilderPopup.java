@@ -327,7 +327,7 @@ public class ImageBuilderPopup {
             //loader.save(outBuf, SWT.IMAGE_PNG);
             loader.save(outBuf, SWT.IMAGE_JPEG);
             _configPreviewImageSerialized = outBuf.toByteArray();
-            System.out.println("image size: " + _configPreviewImageSerialized.length + " bytes");
+            //System.out.println("image size: " + _configPreviewImageSerialized.length + " bytes");
         }
     }
     

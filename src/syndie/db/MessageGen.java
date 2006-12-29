@@ -211,7 +211,7 @@ public class MessageGen extends CommandImpl {
                     return false;
                 }
             }
-            if (!unauthorized) {
+            if (!unauthorized && false) { // disable permutation for the moment (only used for externally anon yet authorized posts)
                 authenticationMask = new byte[Signature.SIGNATURE_BYTES];
                 client.ctx().random().nextBytes(authenticationMask);
             }

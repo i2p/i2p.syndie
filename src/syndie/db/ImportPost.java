@@ -257,7 +257,27 @@ public class ImportPost {
                 byte realSig[] = DataHelper.xor(authenticationSig.getData(), mask);
                 authenticationSig.setData(realSig);
             } else {
-                _ui.debugMessage("Not permuting the authentication signature");
+                _ui.debugMessage("Not permuting the authentication signature (no mask)");
+            }
+        }
+        
+        if ( (authorVal == null) && (_body instanceof UnreadableEnclosureBody) ) {
+            Hash authorHash = _uri.getScope();
+            SigningPublicKey pub = _client.getIdentKey(authorHash);
+            if (pub != null) {
+                _authenticated = _client.ctx().dsa().verifySignature(authenticationSig, _enc.getAuthenticationHash(), pub);
+                if (_authenticated) {
+                    _ui.debugMessage("authenticated against the identity key for the unreadable authorHash (" + authorHash.toBase64() +"): " + pub.toBase64());
+                    // now filter out banned authors who are posting in channels that
+                    // aren't banned
+                    if (_client.getBannedChannels().contains(authorHash)) {
+                        _ui.errorMessage("Not importing unreadable post written by banned author " + authorHash.toBase64() + ": " + _uri);
+                        _ui.commandComplete(-1, null);
+                        return false;
+                    }
+                } else {
+                    _ui.debugMessage("not authenticated against the identity key for the unreadable authorHash (" + authorHash.toBase64() + ")");
+                }
             }
         }
         if ( (authorVal != null) && (authorVal.length == Hash.HASH_LENGTH) ) {
@@ -266,6 +286,7 @@ public class ImportPost {
             if (pub != null) {
                 _authenticated = _client.ctx().dsa().verifySignature(authenticationSig, _enc.getAuthenticationHash(), pub);
                 if (_authenticated) {
+                    _ui.debugMessage("authenticated against the identity key for the authorHash (" + authorHash.toBase64() +"): " + pub.toBase64());
                     // now filter out banned authors who are posting in channels that
                     // aren't banned
                     if (_client.getBannedChannels().contains(authorHash)) {

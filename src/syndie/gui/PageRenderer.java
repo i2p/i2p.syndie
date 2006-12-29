@@ -1029,7 +1029,7 @@ public class PageRenderer implements Themeable {
     }
     
     private void hoverLink(StyleRange range, int offset, HTMLTag tag) {
-        System.out.println("Hover over link @ " + offset + ": " + tag);
+        //System.out.println("Hover over link @ " + offset + ": " + tag);
         String href = tag.getAttribValue("href");
         String title = tag.getAttribValue("title");
         StringBuffer buf = new StringBuffer();

@@ -241,7 +241,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             _browser.getThemeRegistry().register(this);
         }
         long t9 = System.currentTimeMillis();
-        System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
+        //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
     
     private void searchSelected() {

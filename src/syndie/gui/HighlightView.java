@@ -40,6 +40,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.SharedArchive;
 import syndie.db.SyndicationManager;
+import syndie.db.ThreadAccumulatorJWZ;
 
 /**
  *
@@ -168,7 +169,17 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         for (int i = 0; i < sortedNames.size(); i++, scopeIndex++) {
             Hash scope = (Hash)_watchedForums.get(scopeIndex);
             String name = (String)sortedNames.get(i);
-            int unread = _browser.getClient().countUnreadMessages(scope);
+            ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
+            SyndieURI search = SyndieURI.createSearch(scope, true, false);
+            acc.setFilter(search);
+            acc.gatherThreads();
+            int unread = acc.getThreadCount();
+            _browser.getUI().debugMessage("searching in " + name + ": " + unread + " threads via "+ search);
+            if (unread > 0) {
+                for (int j = 0; j < unread; j++)
+                    _browser.getUI().debugMessage("root " + j + ":\n" + acc.getRootThread(j));
+            }
+            //int unread = _browser.getClient().countUnreadMessages(scope);
             totalUnread += unread;
             if (unread > 0)
                 activeForums++;
@@ -176,14 +187,14 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
             if (unread > 0) {
                 TreeItem item = new TreeItem(_itemWatchedForums, SWT.NONE);
                 item.setText(0, name);
-                item.setText(1, _browser.getTranslationRegistry().getText(T_WATCHED_DETAIL_PREFIX, "Unread: ") + unread);
+                item.setText(1, _browser.getTranslationRegistry().getText(T_WATCHED_DETAIL_PREFIX, "Unread threads: ") + unread);
                 setMinWidth(_colSummary, name, 50);
             } else {
                 _watchedForums.remove(scopeIndex);
                 scopeIndex--;
             }
         }
-        _itemWatchedForums.setText(1, _browser.getTranslationRegistry().getText(T_WATCHED_DETAIL_SUMMARY_PREFIX, "Active forums/unread messages: ") + activeForums + "/" + totalUnread);
+        _itemWatchedForums.setText(1, _browser.getTranslationRegistry().getText(T_WATCHED_DETAIL_SUMMARY_PREFIX, "Active forums/unread threads: ") + activeForums + "/" + totalUnread);
         rethemeWatchedForums(_browser.getThemeRegistry().getTheme());
     }
     private List sortWatchedForums(Map scopeToName) {
