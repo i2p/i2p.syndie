@@ -42,6 +42,7 @@ import syndie.data.SyndieURI;
  */
 class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Translatable {
     private Text _out;
+    private StringBuffer _outBuf;
     private MenuItem _menuClear;
     private Group _levels;
     private Button _levelError;
@@ -126,6 +127,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         _pendingMessages = new ArrayList();
         getRoot().setLayout(new GridLayout(1, true));
         
+        _outBuf = new StringBuffer();
         _out = new Text(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
         _out.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
@@ -133,8 +135,8 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         _out.setMenu(menu);
         _menuClear = new MenuItem(menu, SWT.PUSH);
         _menuClear.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _out.setText(""); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _out.setText(""); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _outBuf.setLength(0); redrawOut(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _outBuf.setLength(0); redrawOut(); }
         });
         
         _levels = new Group(getRoot(), SWT.NONE);
@@ -209,42 +211,40 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     
     /** called by the log thread */
     private void append(final List records) {
-        // maybe stylize STATUS/DEBUG/ERROR w/ colors in the out buffer?
+        if (records.size() <= 0) return;
+        while (records.size() > 0) {
+            Record r = (Record)records.remove(0);
+            if (r.msg != null) {
+                _outBuf.append(ts(r.when) + ":");
+                _outBuf.append(" " + r.msg + "\n");
+            }
+            if (r.e != null) {
+                StringWriter out = new StringWriter();
+                r.e.printStackTrace(new PrintWriter(out));
+                _outBuf.append(ts(r.when));
+                _outBuf.append("\n" + out.getBuffer().toString() + "\n");
+            }
+        }
+
+        int chars = _outBuf.length();
+        if (chars > MAX_CHARS)
+            _outBuf.delete(0,chars-MAX_CHARS);
+
+        redrawOut();
+    }
+    private void redrawOut() {
+        final String str = _outBuf.toString();
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
                 _out.setRedraw(false);
-                
-                while (records.size() > 0) {
-                    Record r = (Record)records.remove(0);
-                    if (r.msg != null) {
-                        _out.append(ts(r.when) + ":");
-                        _out.append(" " + r.msg + "\n");
-                    }
-                    if (r.e != null) {
-                        StringWriter out = new StringWriter();
-                        r.e.printStackTrace(new PrintWriter(out));
-                        _out.append(ts(r.when));
-                        _out.append("\n" + out.getBuffer().toString() + "\n");
-                    }
+                _out.setText(str);
+                if (str.length() > 1) {
+                    // scroll to the end
+                    _out.setSelection(str.length()-2, str.length()-1);
+                    _out.showSelection();
+                    _out.clearSelection();
                 }
-
-                int chars = _out.getCharCount();
-                if (chars > MAX_CHARS) {
-                    String str = _out.getText(chars-MAX_CHARS, chars);
-                    _out.setText(""); // blank then append to use the caret
-                    _out.append(str);
-                }
-
-                // unnnecessary - append scrolls for us
-                /*
-                // scroll to the end
-                int lines = _out.getLineCount();
-                if (lines > 0) {
-                    System.out.println("Scroll to line " + lines);
-                    _out.setTopIndex(lines-1);
-                }
-                */
                 
                 _out.setRedraw(true);
             }

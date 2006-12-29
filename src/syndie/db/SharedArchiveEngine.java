@@ -40,11 +40,11 @@ public class SharedArchiveEngine {
                 includeDupForPIR = (serialized.indexOf("PIR") != -1);
                 discoverArchives = (serialized.indexOf("DontDiscoverArchives") == -1);
                 if (!includeDupForPIR) {
+                    pullNothing = (serialized.indexOf("PullNothing") != -1);
                     includeRecentMessagesOnly = (serialized.indexOf("RecentMessagesOnly") != -1);
                     includePBEMessages = (serialized.indexOf("DontIncludePBE") == -1);
                     includePrivateMessages = (serialized.indexOf("DontIncludePrivate") == -1);
                     knownChannelsOnly = (serialized.indexOf("KnownChannelsOnly") != -1);
-                    pullNothing = (serialized.indexOf("PullNothing") != -1);
                     int maxPerIdx = serialized.indexOf("MaxPerMsg");
                     if (maxPerIdx >= 0) {
                         int end = serialized.indexOf(' ', maxPerIdx);
@@ -117,6 +117,8 @@ public class SharedArchiveEngine {
             StringBuffer buf = new StringBuffer();
             if (includeDupForPIR) {
                 buf.append("PIR ");
+            } else if (pullNothing) {
+                buf.append("PullNothing ");
             } else {
                 if (includeRecentMessagesOnly) buf.append("RecentMessagesOnly ");
                 if (includePBEMessages)
@@ -131,8 +133,6 @@ public class SharedArchiveEngine {
                     buf.append("KnownChannelsOnly ");
                 else
                     buf.append("AllChannels ");
-                if (pullNothing)
-                    buf.append("PullNothing ");
                 if (maxKBPerMessage >= 0)
                     buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
                 if (maxKBTotal >= 0)
@@ -160,9 +160,9 @@ public class SharedArchiveEngine {
             this();
             if (serialized != null) {
                 sendNothing = (serialized.indexOf("SendNothing") != -1);
-                sendLocalNewOnly = (serialized.indexOf("LocalNewOnly") != -1);
-                sendHashcashForAll = (serialized.indexOf("HCForAll") != -1);
-                sendHashcashForLocal = (serialized.indexOf("HCForLocal") != -1);
+                sendLocalNewOnly = !sendNothing && (serialized.indexOf("LocalNewOnly") != -1);
+                sendHashcashForAll = !sendNothing && (serialized.indexOf("HCForAll") != -1);
+                sendHashcashForLocal = !sendNothing && (serialized.indexOf("HCForLocal") != -1);
                 
                 int maxPerIdx = serialized.indexOf("MaxPerMsg");
                 if (maxPerIdx >= 0) {
@@ -213,18 +213,20 @@ public class SharedArchiveEngine {
         
         public String toString() {
             StringBuffer buf = new StringBuffer();
-            if (sendHashcashForLocal) buf.append("HCForLocal ");
-            if (sendHashcashForAll) buf.append("HCForAll ");
-            if (sendLocalNewOnly)
-                buf.append("LocalNewOnly ");
-            else
-                buf.append("AllDiff ");
-            if (sendNothing)
+            if (sendNothing) {
                 buf.append("SendNothing ");
-            if (maxKBPerMessage >= 0)
-                    buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
-            if (maxKBTotal >= 0)
-                buf.append("MaxTotal").append(maxKBTotal).append(" ");
+            } else {
+                if (sendHashcashForLocal) buf.append("HCForLocal ");
+                if (sendHashcashForAll) buf.append("HCForAll ");
+                if (sendLocalNewOnly)
+                    buf.append("LocalNewOnly ");
+                else
+                    buf.append("AllDiff ");
+                if (maxKBPerMessage >= 0)
+                        buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
+                if (maxKBTotal >= 0)
+                    buf.append("MaxTotal").append(maxKBTotal).append(" ");
+            }
             return buf.toString();
         }
         public String serialize() { return toString(); }

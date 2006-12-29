@@ -370,6 +370,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         
         if (strategy.includeDupForPIR) {
             _pullPIR.setSelection(true);
+        } else if (strategy.pullNothing) {
+            _pullNothing.setSelection(true);
         } else {
             if (strategy.includePBEMessages)
                 _pullPBE.setSelection(true);
@@ -382,8 +384,6 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
                 _pullRecentDelta.setSelection(true);
             else if (strategy.knownChannelsOnly)
                 _pullAllKnown.setSelection(true);
-            else if (strategy.pullNothing)
-                _pullNothing.setSelection(true);
             else
                 _pullAllDelta.setSelection(true);
             
@@ -412,6 +412,8 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         
         if (_pullPIR.getSelection()) {
             strategy.includeDupForPIR = true;
+        } else if (_pullNothing.getSelection()) {
+            strategy.pullNothing = true;
         } else {
             strategy.includeDupForPIR = false;
             if (_pullAllDelta.getSelection()) {
@@ -509,12 +511,31 @@ public class SyndicationScheduler implements Themeable, Translatable, Syndicatio
         if (detail == null) detail = "";
         item.setText(4, detail);
         
-        _colWhen.pack();
-        _colArchive.pack();
-        _colScope.pack();
-        _colEvent.pack();
-        _colDetail.pack();
+        // pack has to compute the size for all rows, while we just need to see if
+        // the new row is wider than the old
+        setMinWidth(_colWhen, item.getText(0), 0);
+        setMinWidth(_colArchive, item.getText(1), 0);
+        setMinWidth(_colScope, "", 32);
+        setMinWidth(_colEvent, "", 32);
+        setMinWidth(_colDetail, item.getText(4), 0);
+        //_colWhen.pack();
+        //_colArchive.pack();
+        //_colScope.pack();
+        //_colEvent.pack();
+        //_colDetail.pack();
     }
+
+    private void setMinWidth(TableColumn col, String text, int extraWidth) {
+        int width = ImageUtil.getWidth(text, _eventTable) + _eventTable.getGridLineWidth()*2 + extraWidth;
+        int existing = col.getWidth();
+        if (width > existing) {
+            //_browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
+            col.setWidth(width);
+        } else {
+            //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
+        }
+    }
+
     
     private static final int NEXT_SYNC_NEVER = 0;
     private static final int NEXT_SYNC_NOW = 1;

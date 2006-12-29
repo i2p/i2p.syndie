@@ -278,13 +278,31 @@ public class SyndicationManager {
     /** schedule a fetch of the particular message/metadata from the given archive */
     public void fetch(String archiveName, SyndieURI uri) {
         StatusRecord rec = new StatusRecord(archiveName, uri);
-        fireFetchStatusUpdated(rec);
         synchronized (_fetchRecords) {
             _fetchRecords.add(rec);
             if (uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() == null))
                 _fetchMetaRecords.add(rec);
             _fetchRecords.notifyAll();
         }
+        fireFetchStatusUpdated(rec);
+    }
+    /** schedule multiple fetches from the given archive */
+    public void fetch(String archiveName, List uris) {
+        List records = new ArrayList(uris.size());
+        for (int i = 0; i < uris.size(); i++) 
+            records.add(new StatusRecord(archiveName, (SyndieURI)uris.get(i)));
+        synchronized (_fetchRecords) {
+            _fetchRecords.addAll(records);
+            for (int i = 0; i < records.size(); i++) {
+                StatusRecord rec = (StatusRecord)records.get(i);
+                SyndieURI uri = rec.getURI();
+                if (uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() == null))
+                    _fetchMetaRecords.add(rec);
+            }
+            _fetchRecords.notifyAll();
+        }
+        for (int i = 0; i < records.size(); i++)
+            fireFetchStatusUpdated((StatusRecord)records.get(i));
     }
     /** schedule a fetch of the archive's index */
     public void fetchIndex(String archiveName) {
@@ -721,8 +739,9 @@ public class SyndicationManager {
                 oldSuccess = (Runnable)_onPullSuccess.put(archiveName, onSuccess);
             if (onFailure != null)
                 oldFailure = (Runnable)_onPullFailure.put(archiveName, onFailure);
-            for (int i = 0; i < toPull.size(); i++)
-                fetch(archiveName, (SyndieURI)toPull.get(i));
+            fetch(archiveName, toPull);
+            //for (int i = 0; i < toPull.size(); i++)
+            //    fetch(archiveName, (SyndieURI)toPull.get(i));
             if ( (oldSuccess != null) || (oldFailure != null) )
                 _ui.errorMessage("dup pull - oldSuccess=" + oldSuccess + " oldFailure=" + oldFailure + " success=" + onSuccess + " failure=" + onFailure);
         } else {
@@ -909,6 +928,7 @@ public class SyndicationManager {
     }
     
     private void fireFetchStatusUpdated(StatusRecord record) {
+        record.updateEventTime();
         for (int i = 0; i < _listeners.size(); i++) {
             SyndicationListener lsnr = (SyndicationListener)_listeners.get(i);
             lsnr.fetchStatusUpdated(this, record);
@@ -1352,6 +1372,7 @@ public class SyndicationManager {
     }
     
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate, consecutiveFailures FROM nymArchive WHERE nymId = ? ORDER BY name";
+    private static final String SQL_CLEAR_IN_PROGRESS = "UPDATE nymArchive SET inProgress = false";
     public void loadArchives() {
         if (_archivesLoaded) {
             //_ui.debugMessage("not loading archives, as they are already loaded");
@@ -1427,6 +1448,20 @@ public class SyndicationManager {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        
+        
+        stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_CLEAR_IN_PROGRESS);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error clearing in-progress state", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
         _ui.debugMessage("archives loaded");
         for (int i = 0; i < _listeners.size(); i++)
             ((SyndicationManager.SyndicationListener)_listeners.get(i)).archivesLoaded(this);
@@ -1565,6 +1600,7 @@ public class SyndicationManager {
         public int getStatus() { return _status; }
         public String getSource() { return _archiveName; }
         public long getEventTime() { return _timestamp; }
+        public void updateEventTime() { _timestamp = System.currentTimeMillis(); }
         public boolean isTerminal() {
             switch (_status) {
                 case FETCH_FAILED:
@@ -1625,23 +1661,39 @@ public class SyndicationManager {
                 int nonterminalRemaining = 0;
                 cur = null;
                 try {
+                    int count = 0;
                     synchronized (_fetchRecords) {
+                        count = _fetchRecords.size();
                         // fetch all metadata records before fetching any other records
                         int nonterminalMeta = 0;
                         for (int i = 0; i < _fetchMetaRecords.size(); i++) {
                             StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
-                            if (rec.getStatus() == FETCH_SCHEDULED) {
-                                rec.setStatus(FETCH_STARTED);
-                                cur = rec;
+                            if (rec.getStatus() == FETCH_STARTED)
                                 nonterminalMeta++;
-                                break;
-                            }
                             if (!rec.isTerminal()) {
                                 nonterminalRemaining++;
                                 nonterminalMeta++;
                             }
                         }
+                        for (int i = 0; i < _fetchMetaRecords.size(); i++) {
+                            StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
+                            if (rec.getStatus() == FETCH_SCHEDULED) {
+                                rec.setStatus(FETCH_STARTED);
+                                cur = rec;
+                                //nonterminalMeta++;
+                                break;
+                            }
+                            //if (!rec.isTerminal()) {
+                            //    nonterminalRemaining++;
+                            //    nonterminalMeta++;
+                            //}
+                        }
                         if ( (cur == null) && (nonterminalMeta == 0) ) {
+                            for (int i = 0; i < _fetchRecords.size(); i++) {
+                                StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
+                                if (!rec.isTerminal())
+                                    nonterminalRemaining++;
+                            }
                             for (int i = 0; i < _fetchRecords.size(); i++) {
                                 StatusRecord rec = (StatusRecord)_fetchRecords.get(i);
                                 if (rec.getStatus() == FETCH_SCHEDULED) {
@@ -1653,8 +1705,8 @@ public class SyndicationManager {
                                     cur = rec;
                                     break;
                                 }
-                                if (!rec.isTerminal())
-                                    nonterminalRemaining++;
+                                //if (!rec.isTerminal())
+                                //    nonterminalRemaining++;
                             }
                         }
                         if (cur == null) {
@@ -1668,7 +1720,7 @@ public class SyndicationManager {
                         addedSinceComplete = true;
                     }
                     if ( (nonterminalRemaining == 0) && (addedSinceComplete) ) {
-                        _ui.debugMessage("All of the records are terminal");
+                        _ui.debugMessage("All of the records are terminal [" + count + "]");
                         //buildIndex(ArchiveIndex.DEFAULT_MAX_SIZE);
                         fireSyndicationComplete();
                         addedSinceComplete = false;

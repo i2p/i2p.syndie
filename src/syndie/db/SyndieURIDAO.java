@@ -60,8 +60,8 @@ public class SyndieURIDAO {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        if (_log.shouldLog(Log.DEBUG))
-            _log.debug("URI found for " + uriId + ": " + type + ":" + attribs);
+        //if (_log.shouldLog(Log.DEBUG))
+        //    _log.debug("URI found for " + uriId + ": " + type + ":" + attribs);
         if (type == null) return null;
         return new SyndieURI(type, attribs);
     }
