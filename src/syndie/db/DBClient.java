@@ -3784,7 +3784,7 @@ public class DBClient {
     public List getRead(long nymId, long msgIds[]) {
         long begin = System.currentTimeMillis();
         List rv = new ArrayList();
-        StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ + 6*msgIds.length);
+        StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ);
         for (int i = 0; i < msgIds.length; i++) {
             buf.append(msgIds[i]);
             if (i+1 < msgIds.length)
