@@ -2,6 +2,7 @@ package syndie.db;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -410,7 +411,7 @@ public class SharedArchive {
             buf.append("= URIs: \n");
             if ( (_archiveURIs != null) && (_archiveURIs.length > 0) ) {
                 for (int i = 0; i < _archiveURIs.length; i++)
-                    buf.append("\t").append(_archiveURIs.toString()).append("\n");
+                    buf.append("\t").append(_archiveURIs[i].toString()).append("\n");
             } else {
                 buf.append("\tnone\n");
             }
@@ -470,5 +471,18 @@ public class SharedArchive {
         for (int i = 0; i < _messages.length; i++)
             buf.append(_messages[i].toString());
         return buf.toString();
+    }
+    
+    public static void main(String args[]) {
+        // ok yeah, its a hardcoded constant.  just use the cli if you're not jrandom ;)
+        String filename = "/home/jrandom/.syndie/archive/shared-index.dat";
+        if (args.length > 0) filename = args[0];
+        try {
+            FileInputStream fin = new FileInputStream(filename);
+            SharedArchive archive = new SharedArchive();
+            archive.read(fin);
+            fin.close();
+            System.out.println("archive: \n" + archive.toString());
+        } catch (IOException ioe) { ioe.printStackTrace(); }
     }
 }
