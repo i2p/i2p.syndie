@@ -85,7 +85,7 @@ public class SyndicationManager {
     public static final int PUSH_STRATEGY_DELTAKNOWN = 1;
     public static final int PUSH_STRATEGY_DEFAULT = PUSH_STRATEGY_DELTA;
     
-    public SyndicationManager(DBClient client, UI ui) {
+    private SyndicationManager(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
         _archives = new ArrayList();
@@ -101,8 +101,12 @@ public class SyndicationManager {
     
     /** grab the most recently build manager, or create a new one if necessary */
     public static SyndicationManager getInstance(DBClient client, UI ui) {
-        if (_instance == null)
-            _instance = new SyndicationManager(client, ui);
+        synchronized (SyndicationManager.class) {
+            if (_instance == null) {
+                _instance = new SyndicationManager(client, ui);
+                new Exception("creating syndication manager w/ ui=" + ui).printStackTrace();
+            }
+        }
         return _instance;
     }
     
@@ -1374,12 +1378,18 @@ public class SyndicationManager {
     private static final String SQL_GET_NYM_ARCHIVES = "SELECT name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, readKey, readKeySalt, nextSyncDate, consecutiveFailures FROM nymArchive WHERE nymId = ? ORDER BY name";
     private static final String SQL_CLEAR_IN_PROGRESS = "UPDATE nymArchive SET inProgress = false";
     public void loadArchives() {
-        if (_archivesLoaded) {
-            //_ui.debugMessage("not loading archives, as they are already loaded");
+        if (!_client.isLoggedIn()) {
+            _ui.debugMessage("Not loading the archives, as the client is not yet logged in");
             return;
         }
-        //buildIndex(_client, _ui);
-        _archivesLoaded = true;
+        synchronized (this) {
+            if (_archivesLoaded) {
+                //_ui.debugMessage("not loading archives, as they are already loaded");
+                return;
+            }
+            //buildIndex(_client, _ui);
+            _archivesLoaded = true;
+        }
         _online = loadOnlineStatus();
         fireOnlineStatus();
         

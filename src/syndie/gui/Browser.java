@@ -191,7 +191,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _initialized = false;
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
-        _syndicationManager = new SyndicationManager(_client, this);
+        _syndicationManager = SyndicationManager.getInstance(_client, this);
         _editorListener = new MsgEditorListener();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
@@ -319,7 +319,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             LoginPrompt prompt = new LoginPrompt(_client, this);
             prompt.login();
         } else {
-            //_syndicationManager.loadArchives();
+            _syndicationManager.loadArchives();
             long t1 = System.currentTimeMillis();
             _themes.loadTheme();
             long t2 = System.currentTimeMillis();

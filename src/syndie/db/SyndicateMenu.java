@@ -68,7 +68,7 @@ class SyndicateMenu implements TextEngine.Menu {
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
         String cmd = opts.getCommand();
         if ("buildindex".equalsIgnoreCase(cmd)) {
-            _mgr = new SyndicationManager(client, ui);
+            _mgr = SyndicationManager.getInstance(client, ui);
             _mgr.loadArchives();
             processBuildIndex(client, ui, opts);
         } else if ("getindex".equalsIgnoreCase(cmd)) {
