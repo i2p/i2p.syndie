@@ -104,7 +104,6 @@ public class SyndicationManager {
         synchronized (SyndicationManager.class) {
             if (_instance == null) {
                 _instance = new SyndicationManager(client, ui);
-                new Exception("creating syndication manager w/ ui=" + ui).printStackTrace();
             }
         }
         return _instance;
