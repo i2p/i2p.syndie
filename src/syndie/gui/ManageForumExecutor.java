@@ -34,15 +34,36 @@ import syndie.Constants;
 class ManageForumExecutor {
     private DBClient _client;
     private UI _ui;
-    private ManageForum _state;
+    private ManageForumState _state;
     private StringBuffer _errors;
     private SyndieURI _forum;
     
-    public ManageForumExecutor(DBClient client, UI ui, ManageForum state) {
+    public ManageForumExecutor(DBClient client, UI ui, ManageForumState state) {
         _client = client;
         _ui = ui;
         _state = state;
         _errors = new StringBuffer();
+    }
+    
+    public static interface ManageForumState {
+        public Image getAvatar();
+        public String getName();
+        public String getDescription();
+        public long getLastEdition();
+        public boolean getAllowPublicPosts();
+        public boolean getAllowPublicReplies();
+        public Set getPublicTags();
+        public Set getAuthorizedPosters();
+        public Set getAuthorizedManagers();
+        public String getReferences();
+        public Set getPublicArchives();
+        public Set getPrivateArchives();
+        public boolean getEncryptContent();
+        public long getChannelId();
+        public boolean getPBE();
+        public String getPassphrase();
+        public String getPassphrasePrompt();
+        public List getCurrentReadKeys();
     }
     
     public String getErrors() { return _errors.toString(); }

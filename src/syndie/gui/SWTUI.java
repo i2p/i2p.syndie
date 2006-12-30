@@ -101,9 +101,18 @@ public class SWTUI {
             return;
         }
         long t8 = System.currentTimeMillis();
-        browser.debugMessage("db login complete, starting browser...");
-        browser.startup();
-        browser.debugMessage("browser started");
+        if (engine.newNymCreated()) {
+            WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
+                public void complete() {
+                    browser.startup();
+                }
+            });
+            screen.open();
+        } else {
+            browser.debugMessage("db login complete, starting browser...");
+            browser.startup();
+            browser.debugMessage("browser started");
+        }
         long t9 = System.currentTimeMillis();
         
         System.out.println("Startup times: total=" + (t9-start) + ", " + 

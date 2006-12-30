@@ -54,7 +54,7 @@ import syndie.db.JobRunner;
 /**
  *
  */
-class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatable, Themeable {
+class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatable, Themeable, ManageForumExecutor.ManageForumState {
     private Composite _parent;
     private Composite _root;
     private BrowserControl _browser;
@@ -453,7 +453,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
         _authLabel = new Label(_root, SWT.NONE);
         _authLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _auth = new Combo(_root, SWT.DROP_DOWN | (_editable ? 0 : SWT.READ_ONLY));
+        _auth = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
         _auth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         _auth.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
@@ -707,35 +707,35 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     private static final String T_CHOICE_ARCHIVES = "syndie.gui.manageforum.choice.archives";
     private static final String T_CHOICE_REFS = "syndie.gui.manageforum.choice.refs";
     
-    String getName() { return _name.getText().trim(); }
-    String getDescription() { return _desc.getText().trim(); }
-    boolean getAllowPublicPosts() { return _auth.getSelectionIndex() == AUTH_UNAUTHPOST; }
-    boolean getAllowPublicReplies() { return _auth.getSelectionIndex() == AUTH_UNAUTHREPLY; }
-    Set getPublicTags() {
+    public String getName() { return _name.getText().trim(); }
+    public String getDescription() { return _desc.getText().trim(); }
+    public boolean getAllowPublicPosts() { return _auth.getSelectionIndex() == AUTH_UNAUTHPOST; }
+    public boolean getAllowPublicReplies() { return _auth.getSelectionIndex() == AUTH_UNAUTHREPLY; }
+    public Set getPublicTags() {
         String tags[] = Constants.split(", \t\r\n", _tags.getText().trim(), false);
         Set rv = new HashSet();
         for (int i = 0; i < tags.length; i++)
             rv.add(tags[i]);
         return rv;
     }
-    Set getAuthorizedPosters() { return new HashSet(_posterKeys); }
-    Set getAuthorizedManagers() { return new HashSet(_managerKeys); }
-    Set getPublicArchives() { return _archiveChooser.getPublicArchives(); }
-    Set getPrivateArchives() { return _archiveChooser.getPrivateArchives(); }
-    String getReferences() { return _referencesChooser.getReferences(); }
-    boolean getEncryptContent() {
+    public Set getAuthorizedPosters() { return new HashSet(_posterKeys); }
+    public Set getAuthorizedManagers() { return new HashSet(_managerKeys); }
+    public Set getPublicArchives() { return _archiveChooser.getPublicArchives(); }
+    public Set getPrivateArchives() { return _archiveChooser.getPrivateArchives(); }
+    public String getReferences() { return _referencesChooser.getReferences(); }
+    public boolean getEncryptContent() {
         return false;
         //return _privacy.getSelectionIndex() == PRIV_PASSPHRASE || 
         //       _privacy.getSelectionIndex() == PRIV_AUTHORIZED; 
     }
-    long getChannelId() { return _channelId; }
-    boolean getPBE() { return false; } //_privacy.getSelectionIndex() == PRIV_PASSPHRASE; }
-    String getPassphrase() { return _passphrase; }
-    String getPassphrasePrompt() { return _passphrasePrompt; }
-    long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
-    Image getAvatar() { return (_avatarImage == ImageUtil.ICON_QUESTION ? null : _avatarImage); }
+    public long getChannelId() { return _channelId; }
+    public boolean getPBE() { return false; } //_privacy.getSelectionIndex() == PRIV_PASSPHRASE; }
+    public String getPassphrase() { return _passphrase; }
+    public String getPassphrasePrompt() { return _passphrasePrompt; }
+    public long getLastEdition() { if (_origInfo != null) return _origInfo.getEdition(); else return -1; }
+    public Image getAvatar() { return (_avatarImage == ImageUtil.ICON_QUESTION ? null : _avatarImage); }
     /** return the read keys we explicitly want to deliver in the metadata, or null/empty if we don't care */
-    ArrayList getCurrentReadKeys() { return null; }
+    public java.util.List getCurrentReadKeys() { return null; }
     
     private void save() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), this);

@@ -35,6 +35,7 @@ public class TextEngine {
     private UI _realUI;
     private List _commandHistory;
     private List _scriptListeners;
+    private boolean _newNymCreated;
         
     public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
     public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
@@ -46,6 +47,7 @@ public class TextEngine {
         _gobbleUI = new NestedGobbleUI(_realUI);
         _exit = false;
         _rootFile = rootDir;
+        _newNymCreated = false;
         _commandHistory = new ArrayList();
         rebuildMenus();
         buildInstallDir();
@@ -112,6 +114,8 @@ public class TextEngine {
             return true;
         }
     }
+    
+    public boolean newNymCreated() { return _newNymCreated; }
 
     private boolean doRunStep() {
         Opts opts = _ui.readCommand();
@@ -198,6 +202,7 @@ public class TextEngine {
             //--root '" + _rootFile + "' 
             _ui.insertCommand("register --db '" + getDefaultURL() + "' --login " + DEFAULT_LOGIN + " --pass '" + DEFAULT_PASS + "' --name 'Default account'");
             _ui.insertCommand("ungobble");
+            _newNymCreated = true;
         }
         
         /*

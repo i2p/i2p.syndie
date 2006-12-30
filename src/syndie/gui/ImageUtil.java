@@ -122,7 +122,12 @@ public class ImageUtil {
     
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
+    private static boolean _initialized = false;
     public static void init() {
+        synchronized (ImageUtil.class) {
+            if (_initialized) return;
+            _initialized = true;
+        }
         _indisposableImages.add(ICON_ERROR);
         _indisposableImages.add(ICON_INFORMATION);
         _indisposableImages.add(ICON_QUESTION);

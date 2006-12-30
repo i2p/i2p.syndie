@@ -10,6 +10,9 @@ import org.eclipse.swt.SWT;
  * define the colors/fonts/icons to use
  */
 public class Theme {
+    private static final Font SYSFONT = Display.getDefault().getSystemFont();
+    private static final Theme _default = new Theme();
+    
     private Theme() {
         // SYSFONT, on GTK, is the font used to display the window title (aka pretty big)
         // swt only promises that its a valid font.  there doesn't seem to be a way to get
@@ -30,9 +33,6 @@ public class Theme {
         HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -4, null, null);
         DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -4);
     }
-    
-    private static final Font SYSFONT = Display.getDefault().getSystemFont();
-    private static final Theme _default = new Theme();
     
     /** used as the tab headers */
     public Font TAB_FONT;
