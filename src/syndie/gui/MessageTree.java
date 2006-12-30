@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import net.i2p.data.Hash;
@@ -185,8 +186,8 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
     
-    public void createFilterBar(Composite row) {
-        FilterBar bar = new FilterBar(_browser, this, row);
+    public void createFilterBar(Composite row, PreviewControlListener lsnr) {
+        FilterBar bar = new FilterBar(_browser, this, row, lsnr);
         _bars.add(bar);
     }
 
@@ -200,6 +201,20 @@ public class MessageTree implements Translatable, Themeable {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView);
         /** the new filter was applied */
         public void filterApplied(MessageTree tree, SyndieURI searchURI);
+    }
+    
+    public static interface PreviewControlListener {
+        public void togglePreview(boolean shouldShow);
+    }
+    
+    static boolean shouldShowPreview(BrowserControl ctl) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        return ( (prefs == null) || (!prefs.containsKey("showPreview")) || (Boolean.valueOf(prefs.getProperty("showPreview")).booleanValue()));
+    }
+    static void setShouldShowPreview(BrowserControl ctl, boolean shouldShow) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        prefs.setProperty("showPreview", shouldShow ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+        ctl.getClient().setNymPrefs(prefs);
     }
     
     private static class FilterBar implements Translatable, Themeable {
@@ -224,17 +239,20 @@ public class MessageTree implements Translatable, Themeable {
         private MenuItem _advancedPrivacyPrivate;
         private MenuItem _advancedDateImport;
         private MenuItem _advancedThreadResults;
+        private MenuItem _advancedPreview;
         private MenuItem _advancedPassphraseRequired;
         private ReferenceChooserPopup _forumChooser;
         /** if > 0, the custom date being filtered */
         private long _customDate;
         private Hash _forumScopeOther;
+        private PreviewControlListener _listener;
         
-        public FilterBar(BrowserControl browser, MessageTree msgTree, Composite bar) {
+        public FilterBar(BrowserControl browser, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
             _ctl = browser;
             _msgTree = msgTree;
             _filterRow = bar;
             _customDate = -1;
+            _listener = lsnr;
             initBar();
         }
         private void initBar() {
@@ -309,6 +327,9 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPrivate = new MenuItem(_advancedMenu, SWT.CHECK);
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedThreadResults = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedPreview = new MenuItem(_advancedMenu, SWT.CHECK);
+            if (_listener == null)
+                _advancedPreview.setEnabled(false);
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedDateImport = new MenuItem(_advancedMenu, SWT.CHECK);
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
@@ -320,6 +341,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.setSelection(true);
             _advancedPrivacyPrivate.setSelection(true);
             _advancedThreadResults.setSelection(true);
+            _advancedPreview.setSelection(shouldShowPreview(_ctl));
             _advancedDateImport.setSelection(true);
             
             SelectionListener lsnr = new SelectionListener() {
@@ -335,6 +357,19 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPrivate.addSelectionListener(lsnr);
             _advancedThreadResults.addSelectionListener(lsnr);
             _advancedDateImport.addSelectionListener(lsnr);
+            
+            _advancedPreview.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    setShouldShowPreview(_ctl, _advancedPreview.getSelection());
+                    if (_listener != null)
+                        _listener.togglePreview(_advancedPreview.getSelection());
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    setShouldShowPreview(_ctl, _advancedPreview.getSelection());
+                    if (_listener != null)
+                        _listener.togglePreview(_advancedPreview.getSelection());
+                }
+            });
             
             _advancedPassphraseRequired.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent evt) {
@@ -690,6 +725,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPrivate.setText(registry.getText(T_ADVANCED_PRIVACY_PRIVATE, "Readable by: forum administrators"));
             _advancedDateImport.setText(registry.getText(T_ADVANCED_DATEIMPORT, "Use local import date instead of (unreliable) message creation date"));
             _advancedThreadResults.setText(registry.getText(T_ADVANCED_THREAD, "Organize results in threads"));
+            _advancedPreview.setText(registry.getText(T_ADVANCED_PREVIEW, "Show a preview of the selected message"));
             _advancedPassphraseRequired.setText(registry.getText(T_ADVANCED_PASSPHRASE_REQUIRED, "Messages requiring a new passphrase"));
             
             populateAgeCombo();
@@ -859,7 +895,7 @@ public class MessageTree implements Translatable, Themeable {
             Composite filterRow = new Composite(_root, SWT.BORDER);
             filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             filterRow.setLayout(new GridLayout(8, false));
-            createFilterBar(filterRow);
+            createFilterBar(filterRow, null);
         }
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
@@ -1298,8 +1334,21 @@ public class MessageTree implements Translatable, Themeable {
             _itemsNewUnread.add(item);
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
         }
+        
+        setMinWidth(_colSubject, subj, 0);
+        setMinWidth(_colAuthor, auth, 0);
+        setMinWidth(_colChannel, chan, 0);
+        setMinWidth(_colDate, date, 20);
+        setMinWidth(_colTags, tags, 0);
         //_browser.getUI().debugMessage("message status: " + status);
         return dbEnd-dbStart;
+    }
+    
+    private void setMinWidth(TreeColumn col, String txt, int extra) {
+        int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
+        int existing = col.getWidth();
+        if (width > existing)
+            col.setWidth(width);
     }
     
     private boolean _colsResized = false;
@@ -1310,6 +1359,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void resizeCols() {
+        if (true) return;
         int dateWidth = ImageUtil.getWidth("0000/00/00XXXXXXXX", _tree) + _tree.getGridLineWidth()*2;
         int total = _tree.getClientArea().width - _colType.getWidth() - dateWidth;
         int subjWidth = total / 3;
@@ -1330,7 +1380,10 @@ public class MessageTree implements Translatable, Themeable {
         //_colDate.pack();
         _colDate.setWidth(dateWidth);
         //_colTags.setWidth(tagsWidth);
-        _colTags.pack();
+        int tagWidth = _colTags.getWidth();
+        if (tagWidth <= 0)
+            _colTags.setWidth(100);
+        //_colTags.pack();
         //_colType.pack();
         
         /*
@@ -1537,6 +1590,7 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_ADVANCED_PRIVACY_PRIVATE = "syndie.gui.messagetree.filteradvanced.priv.private";
     private static final String T_ADVANCED_DATEIMPORT = "syndie.gui.messagetree.filteradvanced.dateimport";
     private static final String T_ADVANCED_THREAD = "syndie.gui.messagetree.filteradvanced.thread";
+    private static final String T_ADVANCED_PREVIEW = "syndie.gui.messagetree.filteradvanced.preview";
     private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     
     private static final String T_VIEW = "syndie.gui.messagetree.view";

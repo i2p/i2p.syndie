@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.i2p.data.Base64;
+import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPublicKey;
 import syndie.Constants;
@@ -310,7 +311,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         long afterFilterStatus = System.currentTimeMillis();
         _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
-        
+
         boolean tagFilter = true;
         if ( ( (_rejectedTags == null) || (_rejectedTags.size() <= 0) ) &&
              ( (_requiredTags == null) || (_requiredTags.size() <= 0) ) &&
@@ -403,7 +404,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         
         // prune like a motherfucker,
         // and store the results in the accumulator's vars
-        ThreadReferenceNode pruned[] = prune(threads);
+        ThreadReferenceNode pruned[] = prune(threads, matchingThreadMsgIds);
         long afterPrune = System.currentTimeMillis();
         _ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
         ThreadReferenceNode sorted[] = sort(pruned);
@@ -469,6 +470,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     stmt.setDate(2, new java.sql.Date(minImportDate));
                     stmt.setLong(3, minMsgId);
                     
+                    _ui.debugMessage("query for msgs: " + query + " [" + chan.toBase64() + ", " + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
                     rs = stmt.executeQuery();
                     while (rs.next()) {
                         long msgId = rs.getLong(1);
@@ -496,7 +498,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 stmt = _client.con().prepareStatement(query);
                 stmt.setDate(1, new java.sql.Date(minImportDate));
                 stmt.setLong(2, minMsgId);
-                    
+
+                _ui.debugMessage("query for msgs: " + query + " [" + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
+
                 rs = stmt.executeQuery();
                 while (rs.next()) {
                     long msgId = rs.getLong(1);
@@ -844,12 +848,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) )
                         ancestor.unreadable = true;
                     
-                    
-                    rv.add(ancestor);
-                    if (ancestorMsgId >= 0) {
-                        Long aMsgId = new Long(ancestorMsgId);
-                        if (!existingAncestors.containsKey(aMsgId) && !pendingThreadMsgIds.contains(ancestor))
-                            pendingThreadMsgIds.add(ancestor);
+                    if (!rv.contains(ancestor)) {
+                        rv.add(ancestor);
+                        if (ancestorMsgId >= 0) {
+                            Long aMsgId = new Long(ancestorMsgId);
+                            if (!existingAncestors.containsKey(aMsgId) && !pendingThreadMsgIds.contains(ancestor))
+                                pendingThreadMsgIds.add(ancestor);
+                        }
                     }
                 }
                 
@@ -1154,21 +1159,23 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             return lhs.toString().compareTo(rhs.toString());
     }
     
-    private ThreadReferenceNode[] prune(ThreadReferenceNode roots[]) {
+    private ThreadReferenceNode[] prune(ThreadReferenceNode roots[], Set matchingThreadMsgIds) {
         List remaining = new ArrayList(roots.length);
         for (int i = 0; i < roots.length; i++) {
             if (roots[i] == null) {
                 continue;
             } else {
                 // go in deeper to prune out children as necessary
-                ThreadReferenceNode newRoot = prune(roots[i], null);
-                if (newRoot != null)
+                Set threadMatches = new HashSet();
+                ThreadReferenceNode newRoot = prune(roots[i], null, matchingThreadMsgIds, threadMatches);
+                if ( (newRoot != null) && (threadMatches.size() > 0) )
                     remaining.add(newRoot);
             }
         }
         return (ThreadReferenceNode[])remaining.toArray(new ThreadReferenceNode[0]);
     }
-    private ThreadReferenceNode prune(ThreadReferenceNode cur, ThreadReferenceNode parent) {
+    private ThreadReferenceNode prune(ThreadReferenceNode cur, ThreadReferenceNode parent, Set matchingThreadMsgIds, Set threadMatches) {
+        // add the threadMsgId to threadMatches for every thread element also in matchingThreadMsgIds
         // if the node is a dummy and has no children, drop the node by returning null
         // if the node is a dummy and has 1 child, return the pruned child
         // if the node is a dummy and has more than 1 child after pruning, return the dummy
@@ -1212,7 +1219,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         for (int i = 0; i < children.length; i++) {
             ThreadReferenceNode child = (ThreadReferenceNode)cur.getChild(0);
             cur.removeChild(child);
-            children[i] = prune(child, cur);
+            children[i] = prune(child, cur, matchingThreadMsgIds, threadMatches);
         }
         for (int i = 0; i < children.length; i++) {
             if (children[i] != null)
@@ -1235,6 +1242,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             // dummy with more than one pruned child.. gotta keep 'er
             return cur;
         } else {
+            if (matchingThreadMsgIds.contains(cur.getMsgId()))
+                threadMatches.add(cur.getMsgId());
             return cur;
         }
     }

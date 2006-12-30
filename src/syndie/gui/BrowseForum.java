@@ -74,6 +74,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private UI _ui;
     private BrowserControl _browser;
     private boolean _viewOnly;
+    private boolean _shouldPreview;
     
     public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr) {
         this(parent, browser, lsnr, false);
@@ -84,6 +85,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _parent = parent;
         _listener = lsnr;
         _viewOnly = viewOnly;
+        _shouldPreview = MessageTree.shouldShowPreview(browser);
         _ui = browser.getUI();
         _ui.debugMessage("initializing browse");
         initComponents();
@@ -293,7 +295,18 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _filterRow.setLayout(new GridLayout(8, false));
         
         // the tree keeps track of the components, updating 'em, etc, and disposing on tree disposal
-        _tree.createFilterBar(_filterRow);
+        _tree.createFilterBar(_filterRow, new MessageTree.PreviewControlListener() {
+            public void togglePreview(boolean shouldShow) {
+                _shouldPreview = shouldShow;
+                if (shouldShow) {
+                    SyndieURI uri = _tree.getSelected();
+                    preview(uri, false);
+                    //_sash.setMaximizedControl(null);
+                } else {
+                    _sash.setMaximizedControl(_top);
+                }
+            }
+        });
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -462,6 +475,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     
     // actually preview
     void doPreview(SyndieURI uri, boolean fullscreen) {
+        if (!_shouldPreview) return;
         _browser.getUI().debugMessage("previewing " + uri);
         _tree.select(uri);
         if (fullscreen && uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() != null) )
