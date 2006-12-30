@@ -201,7 +201,10 @@ public class MessageView implements Translatable, Themeable {
             String subject = msg.getSubject();
             if (subject == null)
                 subject = "";
-            _headerSubject.setText(subject);
+            if (subject.trim().length() <= 0)
+                _headerSubject.setText(_browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject"));
+            else
+                _headerSubject.setText(subject);
             
             ChannelInfo authorChan = _browser.getClient().getChannel(msg.getAuthorChannelId());
             if (authorChan != null) {
@@ -263,6 +266,7 @@ public class MessageView implements Translatable, Themeable {
         _body.renderPage(new PageRendererSource(_browser), uri);
         _root.layout(true, true);
     }
+    private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
     
     private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
     private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";
@@ -480,9 +484,6 @@ public class MessageView implements Translatable, Themeable {
         _avatar.forceSize(gd.widthHint, gd.heightHint);
         _avatar.setLayoutData(gd);
         
-        _headerSubject = new Label(_root, SWT.WRAP);
-        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 8, 1));
-        
         _headerAuthorLabel = new Label(_root, SWT.NONE);
         _headerAuthorLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -592,6 +593,9 @@ public class MessageView implements Translatable, Themeable {
         _headerDate = new Label(_root, SWT.WRAP);
         _headerDate.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         
+        _headerSubject = new Label(_root, SWT.WRAP);
+        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 8, 1));
+        
         _headerFlags = new MessageFlagBar(_browser, _root, true);
         _headerFlags.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 4, 1));
         
@@ -696,7 +700,7 @@ public class MessageView implements Translatable, Themeable {
     }
     private void bookmarkForum() {
         if (_target != null)
-            _browser.view(SyndieURI.createScope(_target));
+            _browser.bookmark(SyndieURI.createScope(_target));
     }
     private void banForum() {
         if (_target != null) {
@@ -766,8 +770,14 @@ public class MessageView implements Translatable, Themeable {
             if (_browser != null)
                 _browser.view(uri);
         }
-        public void bookmark(PageRenderer renderer, SyndieURI uri) {}
-        public void banScope(PageRenderer renderer, Hash scope) {}
+        public void bookmark(PageRenderer renderer, SyndieURI uri) {
+            if (_browser != null)
+                _browser.bookmark(uri);
+        }
+        public void banScope(PageRenderer renderer, Hash scope) {
+            if (_browser != null)
+                _browser.ban(scope);
+        }
         public void viewImage(PageRenderer renderer, Image img) {}
         public void ignoreImageScope(PageRenderer renderer, Hash scope) {}
         public void importReadKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, SessionKey key) {}

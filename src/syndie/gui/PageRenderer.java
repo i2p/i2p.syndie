@@ -254,6 +254,9 @@ public class PageRenderer implements Themeable {
                             rerender();
                         }
                         break;
+                    case ' ':
+                        _text.invokeAction(ST.PAGE_DOWN);
+                        break;
                 }
             }
         });

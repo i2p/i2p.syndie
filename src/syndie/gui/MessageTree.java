@@ -216,6 +216,15 @@ public class MessageTree implements Translatable, Themeable {
         prefs.setProperty("showPreview", shouldShow ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         ctl.getClient().setNymPrefs(prefs);
     }
+    static boolean shouldUseImportDate(BrowserControl ctl) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        return ( (prefs == null) || (!prefs.containsKey("browse.useImportDate")) || (Boolean.valueOf(prefs.getProperty("browse.useImportDate")).booleanValue()));
+    }
+    static void setShouldUseImportDate(BrowserControl ctl, boolean useImportDate) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        prefs.setProperty("browse.useImportDate", useImportDate ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+        ctl.getClient().setNymPrefs(prefs);
+    }
     
     private static class FilterBar implements Translatable, Themeable {
         private BrowserControl _ctl;
@@ -342,7 +351,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPrivate.setSelection(true);
             _advancedThreadResults.setSelection(true);
             _advancedPreview.setSelection(shouldShowPreview(_ctl));
-            _advancedDateImport.setSelection(true);
+            _advancedDateImport.setSelection(shouldUseImportDate(_ctl));
             
             SelectionListener lsnr = new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
@@ -356,7 +365,7 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.addSelectionListener(lsnr);
             _advancedPrivacyPrivate.addSelectionListener(lsnr);
             _advancedThreadResults.addSelectionListener(lsnr);
-            _advancedDateImport.addSelectionListener(lsnr);
+            //_advancedDateImport.addSelectionListener(lsnr);
             
             _advancedPreview.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -368,6 +377,17 @@ public class MessageTree implements Translatable, Themeable {
                     setShouldShowPreview(_ctl, _advancedPreview.getSelection());
                     if (_listener != null)
                         _listener.togglePreview(_advancedPreview.getSelection());
+                }
+            });
+            
+            _advancedDateImport.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    setShouldUseImportDate(_ctl, _advancedDateImport.getSelection());
+                    _msgTree.applyFilter();
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    setShouldUseImportDate(_ctl, _advancedDateImport.getSelection());
+                    _msgTree.applyFilter();
                 }
             });
             
@@ -777,7 +797,6 @@ public class MessageTree implements Translatable, Themeable {
                 _itemToMsgId.put(item, new Long(itemNode.getUniqueId()));
                 renderNode(itemNode, item);
                 item.setItemCount(itemNode.getChildCount());
-                initColSize(); // only adjusts the first time
             }
         });
         
@@ -899,7 +918,6 @@ public class MessageTree implements Translatable, Themeable {
         }
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
-            public void resized() { resizeCols(); }
             public void selected() { fireSelected(false); }
             public void returnHit() { fireSelected(true); }
             public void doubleclick() { fireSelected(true); }
@@ -1155,15 +1173,6 @@ public class MessageTree implements Translatable, Themeable {
         long after = System.currentTimeMillis();
         _browser.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
-        /*
-        _colType.pack();
-        _colSubject.pack();
-        _colDate.pack();
-        _colChannel.pack();
-        _colAuthor.pack();
-        _colTags.pack();
-         */
-        
         long beforeGetTags = System.currentTimeMillis();
         _tags.addAll(getTags(referenceNodes));
         long afterGetTags = System.currentTimeMillis();
@@ -1172,7 +1181,6 @@ public class MessageTree implements Translatable, Themeable {
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).populateTagCombo();
         
-        //resizeCols();
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
@@ -1310,7 +1318,10 @@ public class MessageTree implements Translatable, Themeable {
         long dbEnd = System.currentTimeMillis();
 
         if (subj == null) subj = "";
-        item.setText(0, subj);
+        if (subj.trim().length() <= 0)
+            item.setText(0, _browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject"));
+        else
+            item.setText(0, subj);
         // msgbar stuff
         // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
         //MessageFlagBar bar = new MessageFlagBar(_browser, _tree, false);
@@ -1335,93 +1346,26 @@ public class MessageTree implements Translatable, Themeable {
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
         }
         
-        setMinWidth(_colSubject, subj, 0);
-        setMinWidth(_colAuthor, auth, 0);
-        setMinWidth(_colChannel, chan, 0);
-        setMinWidth(_colDate, date, 20);
-        setMinWidth(_colTags, tags, 0);
+        setMinWidth(_colSubject, subj, 0, 100);
+        setMinWidth(_colAuthor, auth, 0, 50);
+        setMinWidth(_colChannel, chan, 0, 50);
+        setMinWidth(_colDate, date, 20, 50);
+        setMinWidth(_colTags, tags, 0, 50);
         //_browser.getUI().debugMessage("message status: " + status);
         return dbEnd-dbStart;
     }
     
-    private void setMinWidth(TreeColumn col, String txt, int extra) {
+    private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";
+    
+    private void setMinWidth(TreeColumn col, String txt, int extra, int min) {
         int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
+        if (width < min)
+            width = min;
         int existing = col.getWidth();
         if (width > existing)
             col.setWidth(width);
     }
     
-    private boolean _colsResized = false;
-    private void initColSize() {
-        if (_colsResized) return;
-        _colsResized = true;
-        resizeCols();
-    }
-    
-    private void resizeCols() {
-        if (true) return;
-        int dateWidth = ImageUtil.getWidth("0000/00/00XXXXXXXX", _tree) + _tree.getGridLineWidth()*2;
-        int total = _tree.getClientArea().width - _colType.getWidth() - dateWidth;
-        int subjWidth = total / 3;
-        
-        int chanWidth = total / 5;
-        if (!_showChannel) chanWidth = 0;
-        int authWidth = total / 5;
-        if (!_showAuthor) authWidth = 0;
-        //int dateWidth = total * 1 / 10;
-        //if (!_showDate) dateWidth = 0;
-        //int tagsWidth = total / 5;
-        //if (!_showTags) tagsWidth = 0;
-        
-        ////_colType.setWidth(24);
-        _colSubject.setWidth(subjWidth);
-        _colChannel.setWidth(chanWidth);
-        _colAuthor.setWidth(authWidth);
-        //_colDate.pack();
-        _colDate.setWidth(dateWidth);
-        //_colTags.setWidth(tagsWidth);
-        int tagWidth = _colTags.getWidth();
-        if (tagWidth <= 0)
-            _colTags.setWidth(100);
-        //_colTags.pack();
-        //_colType.pack();
-        
-        /*
-        _colSubject.pack();
-        _colChannel.pack();
-        _colAuthor.pack();
-        _colDate.pack();
-        _colTags.pack();
-        */
-        
-        /*
-        int total = _tree.getClientArea().width;
-        int subjWidth = 150;
-        
-        int chanWidth = 50;
-        if (!_showChannel) chanWidth = 0;
-        int authWidth = 50;
-        if (!_showAuthor) authWidth = 0;
-        _colDate.pack();
-        int dateWidth = _colDate.getWidth();
-        if (!_showDate) dateWidth = 0;
-        int tagsWidth = 50;
-        if (!_showTags) tagsWidth = 0;
-        
-        if (total > subjWidth+chanWidth+authWidth+dateWidth+tagsWidth+24)
-            subjWidth = total-chanWidth-authWidth-dateWidth-tagsWidth-24;
-        
-        ////_colType.setWidth(24);
-        _colSubject.setWidth(subjWidth);
-        _colChannel.setWidth(chanWidth);
-        _colAuthor.setWidth(authWidth);
-        _colDate.setWidth(dateWidth);
-        _colTags.setWidth(tagsWidth);
-         */
-        
-        //System.out.println("resize w/ total=" + total + " colSubject=" + _colSubject.getWidth());
-    }
-
     private void fireSelected(boolean toView) {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {

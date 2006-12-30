@@ -635,6 +635,12 @@ public class SyndicationManager {
         NymArchive archive = getArchive(archiveName);
         if (archive == null) return;
         String url = archive.getURI().getURL();
+        
+        File f = new File(url);
+        if (f.exists()) {
+            _ui.debugMessage("Not trying to push to a file-based archive: " + f.getPath());
+            return;
+        }
 
         _ui.debugMessage("push to " + archive.getName() + " @ " + url);
 
