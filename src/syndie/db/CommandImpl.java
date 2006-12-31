@@ -19,7 +19,7 @@ public abstract class CommandImpl implements CLI.Command {
     boolean writeKey(UI ui, String filename, SessionKey key, Hash scope) {
         return writeKey(ui, filename, Constants.KEY_FUNCTION_READ, scope, key.toBase64());
     }
-    boolean writeKey(UI ui, String filename, String type, Hash scope, String data) {
+    public static boolean writeKey(UI ui, String filename, String type, Hash scope, String data) {
         if (filename == null) {
             ui.errorMessage("Filename is null for writing?");
             return false;
@@ -27,10 +27,7 @@ public abstract class CommandImpl implements CLI.Command {
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(filename);
-            fos.write(DataHelper.getUTF8("keytype: " + type + "\n"));
-            if (scope != null)
-                fos.write(DataHelper.getUTF8("scope: " + scope.toBase64() + "\n"));
-            fos.write(DataHelper.getUTF8("raw: " + data + "\n"));
+            writeKey(fos, type, scope, data);
             fos.close();
             fos = null;
             return true;
@@ -40,6 +37,12 @@ public abstract class CommandImpl implements CLI.Command {
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
         }
+    }
+    public static void writeKey(OutputStream out, String type, Hash scope, String data) throws IOException {
+        out.write(DataHelper.getUTF8("keytype: " + type + "\n"));
+        if (scope != null)
+            out.write(DataHelper.getUTF8("scope: " + scope.toBase64() + "\n"));
+        out.write(DataHelper.getUTF8("raw: " + data + "\n"));
     }
     
     byte[] read(UI ui, String filename, int maxSize) {

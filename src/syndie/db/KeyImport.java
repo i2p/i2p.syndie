@@ -47,30 +47,7 @@ public class KeyImport extends CommandImpl {
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(f);
-            String line = DataHelper.readLine(fin);
-            if (!line.startsWith("keytype: ") || (line.length() < ("keytype: ".length() + 1)))
-                throw new IOException("Invalid type line: " + line);
-            String type = line.substring("keytype: ".length()).trim();
-            
-            line = DataHelper.readLine(fin);
-            if (!line.startsWith("scope: ") || (line.length() < ("scope: ".length() + 1)))
-                throw new IOException("Invalid scope line: " + line);
-            String scope = line.substring("scope: ".length()).trim();
-            
-            line = DataHelper.readLine(fin);
-            if (!line.startsWith("raw: ") || (line.length() < ("raw: ".length() + 1)))
-                throw new IOException("Invalid raw line: " + line);
-            String raw = line.substring("raw: ".length()).trim();
-            
-            byte scopeData[] = Base64.decode(scope);
-            if ( (scopeData != null) && (scopeData.length != Hash.HASH_LENGTH) )
-                scopeData = null;
-            byte rawData[] = Base64.decode(raw);
-            
-            ui.debugMessage("importing from " + f.getPath() +": type=" + type + " scope=" + scope + " raw=" + raw);
-            client = importKey(ui, client, db, login, pass, type, new Hash(scopeData), rawData, authentic);
-            fin = null;
-            return client;
+            return importKey(ui, client, db, login, pass, fin, authentic);
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the key", ioe);
             ui.commandComplete(-1, null);
@@ -78,6 +55,35 @@ public class KeyImport extends CommandImpl {
         } finally {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
         }
+    }
+    public static DBClient importKey(UI ui, DBClient client, InputStream fin, boolean authentic) throws IOException {
+        return importKey(ui, client, null, null, null, fin, authentic);
+    }
+    public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, InputStream fin, boolean authentic) throws IOException {
+        String line = DataHelper.readLine(fin);
+        if (!line.startsWith("keytype: ") || (line.length() < ("keytype: ".length() + 1)))
+            throw new IOException("Invalid type line: " + line);
+        String type = line.substring("keytype: ".length()).trim();
+
+        line = DataHelper.readLine(fin);
+        if (!line.startsWith("scope: ") || (line.length() < ("scope: ".length() + 1)))
+            throw new IOException("Invalid scope line: " + line);
+        String scope = line.substring("scope: ".length()).trim();
+
+        line = DataHelper.readLine(fin);
+        if (!line.startsWith("raw: ") || (line.length() < ("raw: ".length() + 1)))
+            throw new IOException("Invalid raw line: " + line);
+        String raw = line.substring("raw: ".length()).trim();
+
+        byte scopeData[] = Base64.decode(scope);
+        if ( (scopeData != null) && (scopeData.length != Hash.HASH_LENGTH) )
+            scopeData = null;
+        byte rawData[] = Base64.decode(raw);
+
+        //ui.debugMessage("importing from " + f.getPath() +": type=" + type + " scope=" + scope + " raw=" + raw);
+        client = importKey(ui, client, db, login, pass, type, new Hash(scopeData), rawData, authentic);
+        fin = null;
+        return client;
     }
     
     private static final String SQL_INSERT_KEY = "INSERT INTO nymKey " +

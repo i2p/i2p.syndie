@@ -198,8 +198,13 @@ public class HTTPSyndicator implements Cloneable {
         }
         msgDir.mkdirs();
         int curFile = 0;
-        File archiveDir = new File(_archiveURL);
-        _ui.debugMessage("Fetching " + _syndieURIs);
+        String url = _archiveURL;
+        if (url.startsWith("file://"))
+            url = url.substring("file://".length());
+        File archiveDir = new File(url);
+        if (archiveDir.isFile())
+            archiveDir = archiveDir.getParentFile();
+        _ui.debugMessage("Fetching in " + archiveDir.getPath() + ": " + _syndieURIs);
         for (int i = 0; i < _syndieURIs.size(); i++) {
             SyndieURI uri = (SyndieURI)_syndieURIs.get(i);
             Hash scope = uri.getScope();

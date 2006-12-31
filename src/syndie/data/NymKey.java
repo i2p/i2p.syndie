@@ -10,10 +10,17 @@ public class NymKey {
     private String _function;
     private String _type;
     private long _nymId;
+    private boolean _expired;
     public NymKey(String type, byte data[], boolean authenticated, String function, long nymId, Hash channel) {
-        this(type, data, null, authenticated, function, nymId, channel);
+        this(type, data, null, authenticated, function, nymId, channel, false);
+    }
+    public NymKey(String type, byte data[], boolean authenticated, String function, long nymId, Hash channel, boolean expired) {
+        this(type, data, null, authenticated, function, nymId, channel, expired);
     }
     public NymKey(String type, byte data[], String dataHash, boolean authenticated, String function, long nymId, Hash channel) {
+        this(type, data, dataHash, authenticated, function, nymId, channel, false);
+    }
+    public NymKey(String type, byte data[], String dataHash, boolean authenticated, String function, long nymId, Hash channel, boolean expired) {
         _channel = channel;
         _data = data;
         _dataHash = dataHash;
@@ -21,6 +28,7 @@ public class NymKey {
         _function = function;
         _type = type;
         _nymId = nymId;
+        _expired = expired;
     }
     public byte[] getData() { return _data; }
     /** DSA/ElGamal2048/AES256, etc */
@@ -31,6 +39,7 @@ public class NymKey {
     public String getFunction() { return _function; }
     /** nym that knows this key */
     public long getNymId() { return _nymId; }
+    public boolean getIsExpired() { return _expired; }
     public Hash getChannel() { return _channel; }
     public String toString() {
         return _function + " for " + _channel.toBase64() + " " + Base64.encode(_data) 

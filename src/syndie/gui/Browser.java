@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.ZipInputStream;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -153,6 +154,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _styleMenuEdit;
     private MenuItem _advancedMenuRoot;
     private MenuItem _advancedMenuTextUI;
+    private MenuItem _advancedMenuBackupSecrets;
+    private MenuItem _advancedMenuRestoreSecrets;
     private MenuItem _advancedMenuSQL;
     private MenuItem _advancedMenuLogs;
     private MenuItem _advancedMenuDumpResources;
@@ -352,6 +355,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
             public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
         });
+        new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuNextTab = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuNextTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { nextTab(); }
@@ -370,6 +374,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { closeTab(); }
         });
         _fileMenuCloseTab.setAccelerator(SWT.MOD1 + 'w');
+        new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { importMessage(); }
@@ -377,6 +382,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         });
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExport.setEnabled(false);
+        new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuExit = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { exit(); }
@@ -545,6 +551,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLogs(); }
             public void widgetSelected(SelectionEvent selectionEvent) { showLogs(); }
         });
+        new MenuItem(advancedMenu, SWT.SEPARATOR);
+        _advancedMenuBackupSecrets = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuBackupSecrets.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { backupSecrets(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { backupSecrets(); }
+        });
+        _advancedMenuRestoreSecrets = new MenuItem(advancedMenu, SWT.PUSH);
+        _advancedMenuRestoreSecrets.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { restoreSecrets(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { restoreSecrets(); }
+        });
+        new MenuItem(advancedMenu, SWT.SEPARATOR);
         _advancedMenuSQL = new MenuItem(advancedMenu, SWT.PUSH);
         _advancedMenuSQL.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
@@ -1707,6 +1725,27 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     
+    private void backupSecrets() { view(createBackupSecretsURI()); }
+    private void restoreSecrets() {
+        FileDialog dialog = new FileDialog(_shell, SWT.OPEN | SWT.SINGLE);
+        dialog.setFileName("nymkeys.dat");
+        dialog.setFilterExtensions(new String[] { "*.dat", "*.*" });
+        dialog.setFilterNames(new String[] { 
+            getTranslationRegistry().getText(T_RESTORE_BACKUP, "Syndie secrets files"), 
+            getTranslationRegistry().getText(T_RESTORE_ALL, "All files")
+        });
+        dialog.setText(getTranslationRegistry().getText(T_RESTORE_TEXT, "Select Syndie secrets file to restore"));
+        String file = dialog.open();
+        if (file != null) {
+            File f = new File(file);
+            if (!f.exists()) return;
+            BackupSecrets.restore(this, _shell, f);
+        }
+    }
+    private static final String T_RESTORE_BACKUP = "syndie.gui.browser.restore.backup";
+    private static final String T_RESTORE_ALL = "syndie.gui.browser.restore.all";
+    private static final String T_RESTORE_TEXT = "syndie.gui.browser.restore.text";
+    
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
     private void searchForums() {
@@ -1799,6 +1838,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
     public SyndieURI createHighlightURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
     public SyndieURI createBugReportURI() { return new SyndieURI(BrowserTab.TYPE_BUGREPORT, new HashMap()); }
+    public SyndieURI createBackupSecretsURI() { return new SyndieURI(BrowserTab.TYPE_BACKUPSECRETS, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
@@ -1988,6 +2028,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_NEXTTAB = "syndie.gui.browser.filemenu.nexttab";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
+    private static final String T_FILE_MENU_BACKUP_SECRETS = "syndie.gui.browser.filemenu.backupsecrets";
+    private static final String T_FILE_MENU_RESTORE_SECRETS = "syndie.gui.browser.filemenu.restoresecrets";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
     private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
     private static final String T_BOOKMARK_MENU_TITLE = "syndie.gui.browser.bookmarkmenu";
@@ -2100,6 +2142,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "&Advanced"));
         _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "&Logs"));
         _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "&Text interface"));
+        _advancedMenuBackupSecrets.setText(registry.getText(T_FILE_MENU_BACKUP_SECRETS, "&Backup secrets"));
+        _advancedMenuRestoreSecrets.setText(registry.getText(T_FILE_MENU_RESTORE_SECRETS, "&Restore secrets"));
         _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "&SQL interface"));
         _advancedMenuDumpResources.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCES, "Dump resources"));
         _advancedMenuDumpResourcesDiff.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCESDIFF, "Dump resource differences"));

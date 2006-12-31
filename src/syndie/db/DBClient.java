@@ -1069,6 +1069,34 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_PRIVATE_CHANNEL_READ_KEYS = "SELECT DISTINCT channelHash, keyData, c.channelId, keyEnd FROM channelReadKey crk JOIN channel c ON crk.channelId = c.channelId WHERE wasPublic = false ORDER BY c.channelId";
+    public List getPrivateChannelReadKeys() {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_PRIVATE_CHANNEL_READ_KEYS);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte chan[] = rs.getBytes(1);
+                byte key[] = rs.getBytes(2);
+                long chanId = rs.getLong(3);
+                if (rs.wasNull()) chanId = -1;
+                boolean isExpired = (rs.getDate(4) == null);
+                if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (key != null) && (key.length == SessionKey.KEYSIZE_BYTES) )
+                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, new Hash(chan), isExpired));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error listing private channel read keys", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
     
     private static final String SQL_ALLOW_PUB_REPLIES = "SELECT allowPubPost, allowPubReply FROM channel WHERE channelId = ?";
     public boolean getChannelAllowPublicReplies(long targetChannelId) {        
@@ -4152,8 +4180,14 @@ public class DBClient {
      * saving it in saltTarget.  The result is the padded encrypted data
      */
     public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
-        _context.random().nextBytes(saltTarget);
-        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(_pass));
+        return pbeEncrypt(orig, _pass, saltTarget, I2PAppContext.getGlobalContext());
+    }
+    public byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[]) {
+        return pbeEncrypt(orig, pass, saltTarget, I2PAppContext.getGlobalContext());
+    }
+    public static byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[], I2PAppContext ctx) {
+        ctx.random().nextBytes(saltTarget);
+        SessionKey saltedKey = ctx.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(pass));
         int pad = 16-(orig.length%16);
         if (pad == 0) pad = 16;
         byte pre[] = new byte[orig.length+pad];
@@ -4161,15 +4195,24 @@ public class DBClient {
         for (int i = 0; i < pad; i++)
             pre[pre.length-1-i] = (byte)(pad&0xff);
         byte encrypted[] = new byte[pre.length];
-        _context.aes().encrypt(pre, 0, encrypted, 0, saltedKey, saltTarget, pre.length);
+        ctx.aes().encrypt(pre, 0, encrypted, 0, saltedKey, saltTarget, pre.length);
         return encrypted;
     }
     
     /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
     public byte[] pbeDecrypt(byte orig[], byte salt[]) {
-        SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(_pass));
-        byte decr[] = new byte[orig.length];
-        _context.aes().decrypt(orig, 0, decr, 0, saltedKey, salt, orig.length);
+        return pbeDecrypt(orig, 0, salt, 0, _pass, orig.length, _context);
+    }
+    
+    public byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len) {
+        return pbeDecrypt(orig, origOffset, salt, saltOffset, pass, len, _context);
+    }
+    public static byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len, I2PAppContext ctx) {
+        byte saltCopy[] = new byte[16];
+        System.arraycopy(salt, saltOffset, saltCopy, 0, saltCopy.length);
+        SessionKey saltedKey = ctx.keyGenerator().generateSessionKey(saltCopy, DataHelper.getUTF8(pass));
+        byte decr[] = new byte[len];
+        ctx.aes().decrypt(orig, origOffset, decr, 0, saltedKey, saltCopy, len);
         int pad = (int)decr[decr.length-1];
         byte rv[] = new byte[decr.length-pad];
         System.arraycopy(decr, 0, rv, 0, rv.length);

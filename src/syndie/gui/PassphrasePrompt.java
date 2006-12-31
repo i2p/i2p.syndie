@@ -37,6 +37,13 @@ public class PassphrasePrompt implements Translatable, Themeable {
     }
     
     public void open() {
+        if (!_creatingNewPassphrase && (_passphrasePrompt.getText().trim().length() <= 0)) {
+            ((GridData)_passphrasePrompt.getLayoutData()).exclude = true;
+            ((GridData)_passphrasePromptLabel.getLayoutData()).exclude = true;
+            _passphrasePrompt.setVisible(false);
+            _passphrasePromptLabel.setVisible(false);
+            _shell.layout(true, true);
+        }
         _shell.setSize(_shell.computeSize(300, SWT.DEFAULT));
         _shell.open();
     }
