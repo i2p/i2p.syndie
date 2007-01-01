@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.MessageThreadBuilder;
+import syndie.db.ThreadBuilder;
+import syndie.db.ThreadMsgId;
 
 /**
  *
@@ -415,10 +418,18 @@ public class MessageView implements Translatable, Themeable {
                      "* 2.2: $hash 2006/08/03 'message being displayed...' blah"
                      "2.2.1: $hash 2006/08/04 'you still talking?' moo")
      */
-        MessageThreadBuilder builder = new MessageThreadBuilder(_browser.getClient(), _browser.getUI());
-        ReferenceNode root = builder.buildThread(msg);
+        //MessageThreadBuilder builder = new MessageThreadBuilder(_browser.getClient(), _browser.getUI());
+        //ReferenceNode root = builder.buildThread(msg);
+        //List roots = new ArrayList(1);
+        //roots.add(root);
+        ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
+        ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
+        id.scope = msg.getURI().getScope();
+        id.messageId = msg.getMessageId();
+        ReferenceNode root = builder.buildThread(id);
         List roots = new ArrayList(1);
         roots.add(root);
+        _browser.getUI().debugMessage("roots for the thread containing " + id + ": " + roots);
         ThreadWalker walker = new ThreadWalker(msg);
         ReferenceNode.walk(roots, walker);
         int idx = walker.getCurrentIndex();

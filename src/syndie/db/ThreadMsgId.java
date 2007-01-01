@@ -1,0 +1,24 @@
+package syndie.db;
+import net.i2p.data.Hash;
+
+public final class ThreadMsgId {
+    public long msgId;
+    public long messageId;
+    public Hash scope;
+    public boolean unreadable;
+    public ThreadMsgId(long id) {
+        msgId = id;
+        messageId = -1;
+        scope = null;
+        unreadable = false;
+    }
+    public int hashCode() { return messageId >= 0 ? (int)messageId : (int)msgId; }
+    public boolean equals(Object obj) throws ClassCastException {
+        ThreadMsgId tmi = (ThreadMsgId)obj;
+        return ( ( (tmi.msgId == msgId) && (tmi.msgId >= 0) ) || 
+                 ( (tmi.messageId == messageId) && (tmi.scope != null) && (tmi.scope.equals(scope))));
+    }
+    public String toString() {
+        return msgId + "/" + (scope != null ? scope.toBase64().substring(0,6) + ":" + messageId : "");
+    }
+}

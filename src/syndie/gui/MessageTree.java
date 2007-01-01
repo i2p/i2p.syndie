@@ -1233,86 +1233,88 @@ public class MessageTree implements Translatable, Themeable {
 
         long dbStart = System.currentTimeMillis();
 
-        long chanId = _client.getChannelId(uri.getScope());
-        String scopeName = _client.getChannelName(chanId);
-        //ChannelInfo scopeInfo = _client.getChannel(chanId);
-        //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+        if (uri != null) {
+            long chanId = _client.getChannelId(uri.getScope());
+            String scopeName = _client.getChannelName(chanId);
+            //ChannelInfo scopeInfo = _client.getChannel(chanId);
+            //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
 
-        // simple optimization: use the fact that these ReferenceNode instances are really
-        // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
+            // simple optimization: use the fact that these ReferenceNode instances are really
+            // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
 
-        long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
-        if (msgId >= 0) {
-            _itemToMsgId.put(item, new Long(msgId));
-            subj = _client.getMessageSubject(msgId);
-            long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
-            if (authorId != chanId) {
-                String authorName = _client.getChannelName(authorId);
-                Hash authorHash = _client.getChannelHash(authorId);
-                //ChannelInfo authInfo = _client.getChannel(authorId);
-                if (authorName != null) {
-                    auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
+            long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+            if (msgId >= 0) {
+                _itemToMsgId.put(item, new Long(msgId));
+                subj = _client.getMessageSubject(msgId);
+                long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
+                if (authorId != chanId) {
+                    String authorName = _client.getChannelName(authorId);
+                    Hash authorHash = _client.getChannelHash(authorId);
+                    //ChannelInfo authInfo = _client.getChannel(authorId);
+                    if (authorName != null) {
+                        auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
+                    } else {
+                        auth = "";
+                    }
+                    //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
                 } else {
-                    auth = "";
+                    //System.out.println("author is the scope chan for " + uri.toString());
+                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 }
-                //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
-            } else {
-                //System.out.println("author is the scope chan for " + uri.toString());
-                auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-            }
-            //ChannelInfo chanInfo = scopeInfo;
-            long targetChanId = _client.getMessageTarget(msgId);
-            if (targetChanId != chanId) {
-                //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
-                //System.out.println("msg: " + uri.toString());
-                String targetName = _client.getChannelName(targetChanId);
-                Hash targetHash = _client.getChannelHash(targetChanId);
-                //chanInfo = _client.getChannel(msg.getTargetChannelId());
-                chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
-                //if (chanInfo == null) {
-                //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
-                //} else {
-                //    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
-                //}
-            } else {
-                //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
-                //System.out.println("msg: " + uri.toString());
-                chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-            }
+                //ChannelInfo chanInfo = scopeInfo;
+                long targetChanId = _client.getMessageTarget(msgId);
+                if (targetChanId != chanId) {
+                    //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
+                    //System.out.println("msg: " + uri.toString());
+                    String targetName = _client.getChannelName(targetChanId);
+                    Hash targetHash = _client.getChannelHash(targetChanId);
+                    //chanInfo = _client.getChannel(msg.getTargetChannelId());
+                    chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
+                    //if (chanInfo == null) {
+                    //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
+                    //} else {
+                    //    chan = chanInfo.getName() + " [" + chanInfo.getChannelHash().toBase64().substring(0,6) + "]";
+                    //}
+                } else {
+                    //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
+                    //System.out.println("msg: " + uri.toString());
+                    chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+                }
 
-            if (auth.length() <= 0) {
-                 auth = chan;
-            }
-            Set msgTags = _client.getMessageTags(msgId, true, true);
-            StringBuffer buf = new StringBuffer();
-            for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
-                tag = tag.trim();
-                buf.append(tag).append(" ");
-                //_tags.add(tag);
-            }
-            tags = buf.toString().trim();
-            item.setGrayed(false);
-            long importDate = _client.getMessageImportDate(msgId);
-            long postDate = uri.getMessageId().longValue();
-            if ( (_appliedFilter == null) || (_appliedFilter.getString("agelocal") != null) ) {
-                date = Constants.getDate(importDate);
-                _browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
+                if (auth.length() <= 0) {
+                     auth = chan;
+                }
+                Set msgTags = _client.getMessageTags(msgId, true, true);
+                StringBuffer buf = new StringBuffer();
+                for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
+                    String tag = (String)iter.next();
+                    tag = tag.trim();
+                    buf.append(tag).append(" ");
+                    //_tags.add(tag);
+                }
+                tags = buf.toString().trim();
+                item.setGrayed(false);
+                long importDate = _client.getMessageImportDate(msgId);
+                long postDate = uri.getMessageId().longValue();
+                if ( (_appliedFilter == null) || (_appliedFilter.getString("agelocal") != null) ) {
+                    date = Constants.getDate(importDate);
+                    _browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
+                } else {
+                    date = Constants.getDate(postDate);
+                    _browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
+                }
+                status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
-                date = Constants.getDate(postDate);
-                _browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
+                // message is not locally known
+                subj = "";
+                if (scopeName != null)
+                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+                else
+                    auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
+                chan = "";
+                date = Constants.getDate(uri.getMessageId().longValue());
+                tags = "";
             }
-            status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
-        } else {
-            // message is not locally known
-            subj = "";
-            if (scopeName != null)
-                auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-            else
-                auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
-            chan = "";
-            date = Constants.getDate(uri.getMessageId().longValue());
-            tags = "";
         }
 
         long dbEnd = System.currentTimeMillis();
@@ -1341,6 +1343,9 @@ public class MessageTree implements Translatable, Themeable {
         } else if (status == DBClient.MSG_STATUS_NEW_READ) {
             _itemsNewRead.add(item);
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+        } else if (uri == null) {
+            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            // but don't add it to _itemsOld
         } else {
             _itemsNewUnread.add(item);
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);

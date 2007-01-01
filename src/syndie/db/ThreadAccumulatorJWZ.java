@@ -13,7 +13,8 @@ import syndie.Constants;
 import syndie.data.*;
 
 /**
- * revamped thread gathering/filtering, based off the jwz threading alogrithm
+ * revamped thread gathering/filtering, using the ThreadBuilder to wrap them
+ * up by threads, jwz-style
  */
 public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private DBClient _client;
@@ -350,7 +351,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (!_applyTagFilterToMessages) {
                 List tagBuf = new ArrayList();
                 for (int i = 0; i < threads.length; i++) {
-                    threads[i].getThreadTags(tagBuf);
+                    threads[i].getThreadTags(tagBuf, _msgTags);
                     if (!tagFilterPassed(tagBuf)) {
                         _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
                         threads[i] = null;
@@ -559,241 +560,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
         _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
-        long beforeAncestors = System.currentTimeMillis();
-        Map ancestors = buildAncestors(matchingThreadMsgIds);
-        long afterAncestors = System.currentTimeMillis();
-        _ui.debugMessage("finding ancestors for " + matchingThreadMsgIds.size() + " took " + (afterAncestors-beforeAncestors));
-        List rootMsgs = new ArrayList(ancestors.size());
-        Map msgContainers = new HashMap();
-        for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry cur = (Map.Entry)iter.next();
-            ThreadMsgId msg = (ThreadMsgId)cur.getKey();
-            List msgAncestors = (List)cur.getValue();
-            
-            boolean foundRoot = false;
-            for (int i = msgAncestors.size()-1; i >= 0; i--) {
-                ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
-                if (rootMsgs.contains(ancestorId)) {
-                    foundRoot = true;
-                    break;
-                }
-            }
-            if (!foundRoot) {
-                if (msgAncestors.size() > 0) {
-                    ThreadMsgId ancestor = (ThreadMsgId)msgAncestors.get(msgAncestors.size()-1);
-                    if (!rootMsgs.contains(ancestor))
-                        rootMsgs.add(ancestor);
-                } else {
-                    if (!rootMsgs.contains(msg))
-                        rootMsgs.add(msg);
-                }
-            }
-            
-            // build up hierarchy relationships, jwz-threading style (though without
-            // the rough missing-references/etc stuff, since syndie doesn't have backwards compatability)
-            ThreadMsgId child = msg;
-            ThreadContainer childContainer = (ThreadContainer)msgContainers.get(child);
-            if (childContainer == null) {
-                //_ui.debugMessage("building new container for current node " + msg);
-                childContainer = new ThreadContainer();
-                childContainer.msg = msg;
-                childContainer.parent = null;
-                childContainer.child = null;
-                msgContainers.put(msg, childContainer);
-            } else {
-                //_ui.debugMessage("container exists for current node " + msg);
-            }
-
-            if (msgAncestors.size() > 0)
-                _ui.debugMessage("building ancestor containers for " + msgAncestors + " above " + msg);
-            for (int i = 0; i < msgAncestors.size(); i++) {
-                ThreadMsgId ancestorId = (ThreadMsgId)msgAncestors.get(i);
-                ThreadContainer container = (ThreadContainer)msgContainers.get(ancestorId);
-                //_ui.debugMessage("ancestor: " + ancestorId + " container: " + container);
-                
-                if (childContainer.contains(ancestorId)) {
-                    _ui.debugMessage("loop detected under child " + childContainer + " --> parent would be " + ancestorId);
-                    continue;
-                }
-                
-                if (container == null) {
-                    //_ui.debugMessage("building new container for " + ancestorId + " w/ child " + child);
-                    container = new ThreadContainer();
-                    container.msg = ancestorId;
-                    if ( (childContainer != null) && (childContainer.parent == null) )
-                        childContainer.parent = container;
-                    container.child = childContainer;
-                    msgContainers.put(ancestorId, container);
-                } else if (container.child != null) {
-                    ThreadContainer curChild = container.child;
-                    //_ui.debugMessage("building siblings for " + curChild + " under " + container.msg);
-                    boolean alreadyContained = false;
-                    while (curChild.nextSibling != null) {
-                        //_ui.debugMessage("building siblings... container is " + container + ", curChild is " + curChild + ": next sibling is " + curChild.nextSibling);
-                        if (curChild.contains(childContainer.msg)) {
-                            _ui.debugMessage("loop avoided: child already contains the new branch");
-                            alreadyContained = true;
-                            break;
-                        }
-                        curChild = curChild.nextSibling;
-                    }
-                    //_ui.debugMessage("done building siblings for " + curChild + " under " + container.msg);
-                    if (alreadyContained)
-                        continue;
-                    //??
-                    if (!curChild.contains(childContainer.msg)) {
-                        curChild.nextSibling = childContainer;
-                        _ui.debugMessage("set the last sibling to the new child: " + child);
-                    } else {
-                        _ui.debugMessage("loop found and avoided, but should have been detected");
-                        continue;
-                    }
-                    //    curChild.nextSibling = (ThreadContainer)msgContainers.get(child);
-                    //} else {
-                    //    _ui.debugMessage("building siblings, but the child " + child + " is already in the tree: " + container);
-                    //}
-                } else {
-                    //_ui.debugMessage("existing container has no children, setting their child to " + child);
-                    container.child = childContainer;
-                }
-                child = ancestorId;
-                childContainer = container;
-            }
-        }
-
-        // now we can build the ThreadReferenceNode instances out of these
-        List roots = new ArrayList(rootMsgs.size());
-        Set fakeRoots = new HashSet();
-        //_ui.debugMessage("roots: " + rootMsgs);
-        for (int i = 0; i < rootMsgs.size(); i++) {
-            ThreadMsgId root = (ThreadMsgId)rootMsgs.get(i);
-            //_ui.debugMessage("building thread root " + i + ": " + root + " --> " + ancestors.get(root));
-            ThreadReferenceNode thread = buildThread(root, msgContainers, rootMsgs, fakeRoots);
-            //_ui.debugMessage("done building thread root " + i + ": " + thread);
-            if (thread != null)
-                roots.add(thread);
-        }
-        for (Iterator iter = fakeRoots.iterator(); iter.hasNext(); ) {
-            ThreadMsgId fakeRootId = (ThreadMsgId)iter.next();
-            for (int j = 0; j < roots.size(); j++) {
-                ThreadReferenceNode thread = (ThreadReferenceNode)roots.get(j);
-                if (fakeRootId.equals(thread.getMsgId())) {
-                    roots.remove(j);
-                    break;
-                }
-            }
-        }
-        return (ThreadReferenceNode[])roots.toArray(new ThreadReferenceNode[0]);
-    }
-    
-    private ThreadReferenceNode buildThread(ThreadMsgId rootMsg, Map msgContainers, List rootMsgs, Set fakeRoots) {
-        ThreadReferenceNode node = new ThreadReferenceNode(rootMsg);
-        node.setURI(SyndieURI.createMessage(rootMsg.scope, rootMsg.messageId));
-        if ( (rootMsg.msgId >= 0) && (!rootMsg.unreadable) ) {
-            node.setIsDummy(false);
-            long authorId = _client.getMessageAuthor(rootMsg.msgId);
-            String subject = _client.getMessageSubject(rootMsg.msgId);
-            long target = _client.getMessageTarget(rootMsg.msgId);
-            String authorName = _client.getChannelName(authorId);
-            node.setAuthorId(authorId);
-            node.setSubject(subject);
-            node.setThreadTarget(target);
-            
-            //List tags = new ArrayList(); node.getThreadTags(tags);
-            //_ui.debugMessage("buildThread: msg: " + rootMsg + " authorId: " + authorId + " target: " + target + " authorName: " + authorName + " tags: " + tags);
-           
-            // to mirror the MessageThreadBuilder, fill the node in per:
-            //
-            // * each node has the author's preferred name stored in node.getName()
-            // * and the message subject in node.getDescription(), with the message URI in
-            // * node.getURI().
-            //
-            node.setName(authorName);
-            node.setDescription(node.getThreadSubject());
-        } else {
-            //_ui.debugMessage("node is a dummy: " + rootMsg);
-            node.setIsDummy(true);
-        }
-        ThreadContainer container = (ThreadContainer)msgContainers.get(rootMsg);
-        if ( (container != null) && (container.child != null) ) {
-            ThreadContainer child = container.child;
-            while (child != null) {
-                if (child.parent == null) {
-                    //_ui.debugMessage("child of " + container.msg + " did not have a parent link from " + child.msg);
-                    child.parent = container;
-                }
-                // fake roots happen w/ incomplete ancestry is listed in a message, so
-                // simply make sure all children in a thread are not marked as roots for
-                // some other thread
-                if (rootMsgs.contains(child.msg)) {
-                    //_ui.debugMessage("fake root under container " + rootMsg + "/" + child.msg);
-                    fakeRoots.add(child.msg);
-                } else {
-                    //_ui.debugMessage("no fake root under container " + rootMsg + "/" + child.msg + ", building their subthread (parent: " + child.parent + ")");
-                }
-                // now build that child's thread
-                //_ui.debugMessage("building child of " + rootMsg + ": " + child.msg);
-                ThreadReferenceNode childNode = buildThread(child.msg, msgContainers, rootMsgs, fakeRoots);
-                //_ui.debugMessage("child of " + rootMsg + ": " + child.msg + " built");
-                node.addChild(childNode);
-                child = child.nextSibling;
-            }
-        }
-
-        //_ui.debugMessage("buildThread: done with msg: " + rootMsg);
-        return node;
-    }
-    
-    /** build a map of ThreadMsgId to a List of ThreadMsgId instances, most recent first */
-    private Map buildAncestors(Set threadMsgIds) {
-        Map rv = new HashMap();
-        for (Iterator iter = threadMsgIds.iterator(); iter.hasNext(); ) {
-            ThreadMsgId tmi = (ThreadMsgId)iter.next();
-            List ancestors = (List)rv.get(tmi);
-            if (ancestors == null) {
-                ancestors = new ArrayList();
-                rv.put(tmi, ancestors);
-                // this effectively runs recursively to populate entries in rv for
-                // the ancestors of the message and any of its ancestors, that we
-                // know of
-                if (_showThreaded)
-                    buildAncestors(_client, _ui, tmi, rv);
-            }
-        }
-        return rv;
-    }
-    
-    /**
-     * list of ancestors (SyndieURI) that are parents (or parents of parents, etc) of the msgId given 
-     */
-    public static List getAncestorURIs(DBClient client, UI ui, long msgId) {
-        ThreadMsgId id = new ThreadMsgId(msgId);
-        Map tmiToAncestorIds = new HashMap();
-        int total = buildAncestors(client, ui, id, tmiToAncestorIds);
-        //ui.debugMessage("ancestors for " + msgId + ": " + tmiToAncestorIds);
-        List orderedAncestors = new ArrayList(tmiToAncestorIds.size());
-        if (total > 0) // fetch this so the ThreadMsgId.hashCode will match
-            id.messageId = client.getMessageId(msgId);
-        walkAncestors(ui, id, orderedAncestors, tmiToAncestorIds);
-        //ui.debugMessage("ordered ancestors: " + orderedAncestors);
-        List rv = new ArrayList(orderedAncestors.size());
-        for (int i = 0; i < orderedAncestors.size(); i++) {
-            ThreadMsgId cur = (ThreadMsgId)orderedAncestors.get(i);
-            rv.add(SyndieURI.createMessage(cur.scope, cur.messageId));
-        }
-        return rv;
-    }
-    private static void walkAncestors(UI ui, ThreadMsgId id, List rv, Map tmiToAncestorIds) {
-        ThreadMsgId cur = id;
-        List ancestors = (List)tmiToAncestorIds.get(cur);
-        if (ancestors != null) {
-            for (int i = 0; i < ancestors.size(); i++) {
-                ThreadMsgId ancestor = (ThreadMsgId)ancestors.get(i);
-                if (!rv.contains(ancestor))
-                    rv.add(ancestor);
-                walkAncestors(ui, ancestor, rv, tmiToAncestorIds);
-            }
-        }
+        ThreadBuilder b = new ThreadBuilder(_client, _ui);
+        long before = System.currentTimeMillis();
+        List rv = b.buildThread(matchingThreadMsgIds);
+        long after = System.currentTimeMillis();
+        _ui.debugMessage("build threads took " + (after-before) + " to build: \n" + rv);
+        return (ThreadReferenceNode[])rv.toArray(new ThreadReferenceNode[0]);
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
@@ -803,7 +575,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
             "WHERE mh.msgId = ? " +
             "ORDER BY referencedCloseness ASC";
-    private static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map existingAncestors) {
+    public static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map existingAncestors) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         
@@ -875,28 +647,6 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         return queryMatches;
     }
     
-    private static final class ThreadMsgId {
-        public long msgId;
-        public long messageId;
-        public Hash scope;
-        public boolean unreadable;
-        public ThreadMsgId(long id) {
-            msgId = id;
-            messageId = -1;
-            scope = null;
-            unreadable = false;
-        }
-        public int hashCode() { return messageId >= 0 ? (int)messageId : (int)msgId; }
-        public boolean equals(Object obj) throws ClassCastException {
-            ThreadMsgId tmi = (ThreadMsgId)obj;
-            return ( ( (tmi.msgId == msgId) && (tmi.msgId >= 0) ) || 
-                     ( (tmi.messageId == messageId) && (tmi.scope != null) && (tmi.scope.equals(scope))));
-        }
-        public String toString() {
-            return msgId + "/" + (scope != null ? scope.toBase64().substring(0,6) + ":" + messageId : "");
-        }
-    }
-    
     /**
      * null out any messages in the thread who do not meet the authorization criteria,
      * returning true if the entire thread was nulled out
@@ -920,7 +670,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
-        return filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
+        boolean rv = filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
+        if (rv)
+            _ui.debugMessage("filter auth status rejects w/ target=" + targetChannelId + ", allowedAuthorIds=" + allowedAuthorIds + ", allowAnyone=" + allowAnyone + ", allowPubReply=" + allowPublicReplies + ": " + root);
+        return rv;
     }
     
     /** flag any unauthorized posts as dummy nodes, returning true if the entire tree rooted at the node is made of dummies  */
@@ -936,7 +689,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
             if (!nodeIsAuthorized) {
                 _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI().toString() + " parentAuth?" + parentIsAuthorized);
-                //_ui.debugMessage("parent: " + node.getParent());                
+                _ui.debugMessage("parent: " + node.getParent());                
                 node.setIsDummy(true);
             }
         } else {
@@ -1123,7 +876,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             long when = -1;
             if (_earliestReceiveDate > 0) {
                 // we are filtering by import date, not post date
-                when = peers[i].getLatestImportDate();
+                when = peers[i].getLatestImportDate(_client);
             } else {
                 // filtering by post date, not import date
                 when = peers[i].getLatestMessageId();
@@ -1261,7 +1014,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 _threadRootAuthorId.add(new Long(roots[i].getAuthorId()));
                 _threadSubject.add(roots[i].getThreadSubject());
                 List tags = new ArrayList();
-                roots[i].getThreadTags(tags);
+                roots[i].getThreadTags(tags, _msgTags);
                 _threadTags.add(tags);
             }
         }
@@ -1393,146 +1146,5 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if ( (_rejectedTags != null) && (_rejectedTags.size() > 0) )
             buf.append(" rejectedTags: [").append(_rejectedTags).append("]");
         return buf.toString();
-    }
-
-    /** jwz-esque */
-    private static class ThreadContainer {
-        ThreadMsgId msg;
-        ThreadContainer parent;
-        ThreadContainer child;
-        ThreadContainer nextSibling;
-        
-        public String toString() { 
-            StringBuffer buf = new StringBuffer();
-            buf.append("C:").append(msg);
-            buf.append("_");
-            if (nextSibling == this)
-                buf.append("**SELF**");
-            buf.append("-");
-            if (child == this)
-                buf.append("**SELF**");
-            return "C:" + msg + "_" + nextSibling + "-" + child; 
-        }
-        
-        public boolean contains(ThreadMsgId query) {
-            ThreadContainer cur = this;
-            while (cur != null) {
-                if ( (cur.msg != null) && (cur.msg.equals(query)) )
-                    return true;
-                if (cur.nextSibling != null)
-                    cur = cur.nextSibling;
-                else
-                    cur = cur.child;
-            }
-            return false;
-        }
-    }
-    
-    private class ThreadReferenceNode extends ReferenceNode {
-        private long _authorId;
-        private String _subject;
-        private long _targetChannelId;
-        private boolean _dummy;
-        private ThreadMsgId _msg;
-        private long _importDate;
-        public ThreadReferenceNode(ThreadMsgId id) {
-            super(null, null, null, null);
-            _msg = id;
-            _authorId = -1;
-            _subject = null;
-            _targetChannelId = -1;
-            _dummy = false;
-            _importDate = -1;
-        }
-        public ThreadMsgId getMsgId() { return _msg; }
-        public void setAuthorId(long authorId) { _authorId = authorId; }
-        public void setSubject(String subject) { _subject = subject; }
-        public String getSubject() { return _subject; }
-        public void setThreadTarget(long channelId) { _targetChannelId = channelId; }
-        /** this node represents something we do not have locally, or is filtered */
-        public boolean isDummy() { return _dummy || getUniqueId() < 0; }
-        public void setIsDummy(boolean dummy) { _dummy = dummy; }
-        public long getThreadTarget() {
-            if (_targetChannelId >= 0)
-                return _targetChannelId;
-            for (int i = 0; i < getChildCount(); i++) {
-                long id = ((ThreadReferenceNode)getChild(i)).getThreadTarget();
-                if (id >= 0)
-                    return id;
-            }
-            return -1;
-        }
-        public void getThreadTags(List rv) { 
-            if (_msg != null) {
-                Set tags = (Set)_msgTags.get(new Long(_msg.msgId));
-                if (tags != null)
-                    rv.addAll(tags);
-            }
-            for (int i = 0; i < getChildCount(); i++)
-                ((ThreadReferenceNode)getChild(i)).getThreadTags(rv);
-        }
-        public long getLatestMessageId() {
-            long latestMessageId = -1;
-            SyndieURI uri = getURI();
-            if ( !isDummy() && (uri != null) && (uri.getMessageId() != null) )
-                latestMessageId = uri.getMessageId().longValue();
-            for (int i = 0; i < getChildCount(); i++)
-                latestMessageId = Math.max(latestMessageId, ((ThreadReferenceNode)getChild(i)).getLatestMessageId());
-            return latestMessageId;
-        }
-        public long getLatestImportDate() {
-            long latest = _importDate;
-            if (!isDummy() && (_msg != null) && (_msg.msgId >= 0) && (latest < 0))
-                latest = _importDate = _client.getMessageImportDate(_msg.msgId);
-            for (int i = 0; i < getChildCount(); i++)
-                latest = Math.max(latest, ((ThreadReferenceNode)getChild(i)).getLatestImportDate());
-            return latest;
-        }
-        public long getLatestAuthorId() { return getLatestAuthorId(getLatestMessageId()); }
-        private long getLatestAuthorId(long latestMessageId) {
-            SyndieURI uri = getURI();
-            if ( !isDummy() && (uri != null) && (uri.getMessageId() != null) )
-                if (latestMessageId == uri.getMessageId().longValue())
-                    return getAuthorId();
-            for (int i = 0; i < getChildCount(); i++) {
-                long authorId = ((ThreadReferenceNode)getChild(i)).getLatestAuthorId(latestMessageId);
-                if (authorId >= 0)
-                    return authorId;
-            }
-            return -1;
-        }
-        public long getLatestPostDate() { return getLatestMessageId(); }
-        /** count of actual messages, not including any dummy nodes */
-        public int getMessageCount() {
-            int rv = isDummy() ? 1 : 0;
-            for (int i = 0; i < getChildCount(); i++)
-                rv += ((ThreadReferenceNode)getChild(i)).getMessageCount();
-            return rv;
-        }
-        public long getAuthorId() { return isDummy() ? -1 : _authorId; }
-        public String getThreadSubject() {
-            if ( !isDummy() && (_subject != null) && (_subject.length() > 0) )
-                return _subject;
-            for (int i = 0; i < getChildCount(); i++) {
-                String subject = ((ThreadReferenceNode)getChild(i)).getThreadSubject();
-                if ( (subject != null) && (subject.length() > 0) )
-                    return subject;
-            }
-            return "";
-        }
-        
-        public void setChildren(ThreadReferenceNode children[]) {
-            clearChildren();
-            if (children != null)
-                for (int i = 0; i < children.length; i++)
-                    addChild(children[i]);
-        }
-        public ThreadReferenceNode[] getChildren() {
-            ThreadReferenceNode rv[] = new ThreadReferenceNode[getChildCount()];
-            for (int i = 0; i < rv.length; i++)
-                rv[i] = (ThreadReferenceNode)getChild(i);
-            return rv;
-        }
-        public long getUniqueId() { return _msg.msgId; }
     }
 }

@@ -69,6 +69,7 @@ import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.ThreadAccumulatorJWZ;
+import syndie.db.ThreadMsgId;
 import syndie.db.UI;
 
 /**
@@ -1224,10 +1225,18 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             _parents.add(uri);
             long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
             if (msgId >= 0) {
-                List uris = ThreadAccumulatorJWZ.getAncestorURIs(_browser.getClient(), _browser.getUI(), msgId);
-                if (uris.size() > 0) {
-                    _browser.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + uris);
-                    _parents.addAll(uris);
+                ThreadMsgId tmi = new ThreadMsgId(msgId);
+                tmi.messageId = uri.getMessageId().longValue();
+                tmi.scope = uri.getScope();
+                Map tmiToList = new HashMap();
+                ThreadAccumulatorJWZ.buildAncestors(_browser.getClient(), _browser.getUI(), tmi, tmiToList);
+                List ancestors = (List)tmiToList.get(tmi);
+                if ( (ancestors != null) && (ancestors.size() > 0) ) {
+                    _browser.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + ancestors);
+                    for (int i = 0; i < ancestors.size(); i++) {
+                        ThreadMsgId ancestor = (ThreadMsgId)ancestors.get(i);
+                        _parents.add(SyndieURI.createMessage(ancestor.scope, ancestor.messageId));
+                    }
                 } else {
                     _browser.getUI().debugMessage("parentMessage is " + uri + ", and it has no ancestors");
                 }

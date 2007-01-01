@@ -223,11 +223,11 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
                 _outBuf.append(ts(r.when));
                 _outBuf.append("\n" + out.getBuffer().toString() + "\n");
             }
-        }
 
-        int chars = _outBuf.length();
-        if (chars > MAX_CHARS)
-            _outBuf.delete(0,chars-MAX_CHARS);
+            int chars = _outBuf.length();
+            if (chars > MAX_CHARS)
+                _outBuf.delete(0,chars-MAX_CHARS);
+        }
 
         redrawOut();
     }
