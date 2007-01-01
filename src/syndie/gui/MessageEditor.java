@@ -80,6 +80,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private Composite _parent;
     private Composite _root;
     private Composite _toolbar;
+    private Label _fromLabel;
+    private Combo _from;
+    private Label _toLabel;
+    private Combo _to;
     private Label _subjectLabel;
     private Text _subject;
     private Label _tagLabel;
@@ -1289,6 +1293,38 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         header.setLayout(new GridLayout(2, false));
         header.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
+        _fromLabel = new Label(header, SWT.NONE);
+        _fromLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _from = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _from.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _from.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickFrom(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickFrom(); }
+            private void pickFrom() {
+                int idx = _from.getSelectionIndex();
+                if ( (idx >= 0) && (idx < _authorHashes.size()) )
+                    pickAuthor((Hash)_authorHashes.get(idx));
+            }
+        });
+        
+        _toLabel = new Label(header, SWT.NONE);
+        _toLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _to = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _to.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickTo(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickTo(); }
+            private void pickTo() {
+                int idx = _to.getSelectionIndex();
+                if (idx >= _forumHashes.size())
+                    pickOtherForum();
+                else if (idx >= 0)
+                    pickForum((Hash)_forumHashes.get(idx));
+            }
+        });
+        
         _subjectLabel = new Label(header, SWT.NONE);
         _subjectLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -1314,6 +1350,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _subjectLabel.setText("Subject:");
         _tagLabel.setText("Tags:");
         _replyToLabel.setText("In reply to:");
+        _from.setText("Author:");
+        _to.setText("Forum:");
     }
     
     private void initToolbar() {
@@ -1336,10 +1374,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         initSearchControl();
     }
     
+    private List _forumHashes = new ArrayList();
+    
     private void updateForum() {
         MenuItem items[] = _forumMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
+        
+        _forumHashes.clear();
+        _to.removeAll();
         
         boolean targetFound = false;
         
@@ -1375,8 +1418,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 managed = true;
             }
             
+            _forumHashes.add(info.getChannelHash());
+            _to.add(summary);
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
+            item.setData("channel.managed", Boolean.TRUE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
@@ -1413,8 +1461,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 managed = true;
             }
 
+            _forumHashes.add(info.getChannelHash());
+            _to.add(summary);
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
+            item.setData("channel.managed", Boolean.TRUE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
@@ -1451,8 +1504,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 managed = true;
             }
             
+            _forumHashes.add(info.getChannelHash());
+            _to.add(summary);
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
+            item.setData("channel.managed", Boolean.TRUE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
@@ -1489,8 +1547,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 managed = false;
             }
             
+            _forumHashes.add(info.getChannelHash());
+            _to.add(summary);
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
+            item.setData("channel.managed", Boolean.FALSE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
@@ -1519,9 +1582,14 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
 
                 forumId = info.getChannelId();
                 forumSummary = summary;
-                
+            
+                _forumHashes.add(info.getChannelHash());
+                _to.add(summary);
+
                 MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
                 item.setText(summary);
+                item.setData("channel.hash", info.getChannelHash());
+                item.setData("channel.managed", Boolean.FALSE);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
                     public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
@@ -1531,6 +1599,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         } else if (!targetFound) {
             if (itemsSinceSep)
                 new MenuItem(_forumMenu, SWT.SEPARATOR);
+            
+            _to.add("other...");
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText("other...");
             item.addSelectionListener(new SelectionListener() {
@@ -1540,6 +1611,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         } else {
             if (itemsSinceSep)
                 new MenuItem(_forumMenu, SWT.SEPARATOR);
+            
+            _to.add("other...");
+            
             MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
             item.setText("other...");
             item.addSelectionListener(new SelectionListener() {
@@ -1573,6 +1647,22 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _refChooser.show();
     }
 
+    private void pickForum(Hash forum) {
+        _forum = forum;
+        MenuItem items[] = _forumMenu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Hash cur = (Hash)items[i].getData("channel.hash");
+            Boolean managed = (Boolean)items[i].getData("channel.managed");
+            if (managed == null) 
+                managed = Boolean.FALSE;
+            if ( (cur != null) && (cur.equals(forum)) ) {
+                redrawForumAvatar(cur, _browser.getClient().getChannelId(cur), items[i].getText(), managed.booleanValue());
+                break;
+            }
+        }
+        if (!validateAuthorForum())
+            showUnauthorizedWarning();
+    }
     private void pickForum(Hash forum, long channelId, String summary, boolean isManaged) {
         _browser.getUI().debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
@@ -1582,6 +1672,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     private void redrawForumAvatar(Hash forum, long channelId, String summary, boolean isManaged) {
         _forumButton.setRedraw(false);
+        for (int i = 0; i < _forumHashes.size(); i++) {
+            Hash h = (Hash)_forumHashes.get(i);
+            if (h.equals(forum)) {
+                _to.select(i);
+                break;
+            }
+        }
         ImageUtil.dispose(_forumButton.getImage());
         _forumButton.setImage(null);
         if (channelId >= 0) {
@@ -1626,11 +1723,14 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _forumGroup.setToolTipText("Select the forum to post in");
     }
 
+    private List _authorHashes = new ArrayList();
     private void updateAuthor() {
         MenuItem items[] = _authorMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
         
+        _authorHashes.clear();
+        _from.removeAll();
         boolean authorFound = false;
         
         long authorId = -1;
@@ -1662,8 +1762,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 authorSummary = summary;
             }
             
+            _authorHashes.add(info.getChannelHash());
+            _from.add(summary);
+                    
             MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
@@ -1698,8 +1802,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 authorSummary = summary;
             }
 
+            _authorHashes.add(info.getChannelHash());
+            _from.add(summary);
+            
             MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
             item.setText(summary);
+            item.setData("channel.hash", info.getChannelHash());
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
@@ -1710,6 +1818,19 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         redrawAuthorAvatar(_author, authorId, authorSummary);
     }
+    private void pickAuthor(Hash author) {
+        _author = author;
+        MenuItem items[] = _authorMenu.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Hash cur = (Hash)items[i].getData("channel.hash");
+            if ( (cur != null) && (cur.equals(author)) ) {
+                redrawAuthorAvatar(cur, _browser.getClient().getChannelId(cur), items[i].getText());
+                break;
+            }
+        }
+        if (!validateAuthorForum())
+            showUnauthorizedWarning();
+    }
     private void pickAuthor(Hash author, long channelId, String summary) {
         _browser.getUI().debugMessage("pick author " + author + " / " + summary);
         _author = author;
@@ -1719,6 +1840,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
         _authorButton.setRedraw(false);
+        for (int i = 0; i < _authorHashes.size(); i++) {
+            Hash h = (Hash)_authorHashes.get(i);
+            if (h.equals(author)) {
+                _from.select(i);
+                break;
+            }
+        }
         ImageUtil.dispose(_authorButton.getImage());
         _authorButton.setImage(null);
         byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
@@ -2220,6 +2348,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     public void applyTheme(Theme theme) {
+        _fromLabel.setFont(theme.DEFAULT_FONT);
+        _from.setFont(theme.DEFAULT_FONT);
+        _toLabel.setFont(theme.DEFAULT_FONT);
+        _to.setFont(theme.DEFAULT_FONT);
         _subjectLabel.setFont(theme.DEFAULT_FONT);
         _subject.setFont(theme.DEFAULT_FONT);
         _tagLabel.setFont(theme.DEFAULT_FONT);
@@ -2246,7 +2378,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     private static final String T_ATTACHMENTS_NONE = "syndie.gui.messageeditor.attachments.none";
     
-    public void translate(TranslationRegistry registry) {}
+    private static final String T_FROM_LINE = "syndie.gui.messageeditor.fromline";
+    private static final String T_TO_LINE = "syndie.gui.messageeditor.toline";
+    
+    public void translate(TranslationRegistry registry) {
+        _fromLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
+        _toLabel.setText(registry.getText(T_TO_LINE, "Forum:"));
+    }
 
     // image popup stuff
     private void addAttachment() {
