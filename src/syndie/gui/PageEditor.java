@@ -96,6 +96,7 @@ public class PageEditor {
     
     private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void preview() {
+        if (_editor != null) _editor.saveState();
         if (!_isPreviewable) return;
         MessageInfo msgInfo = new MessageInfo();
         msgInfo.setURI(_dummyURI);

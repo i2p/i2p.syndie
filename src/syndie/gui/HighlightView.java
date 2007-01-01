@@ -78,6 +78,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     
     private TreeItem _selected;
     
+    private Refresh _refresh;
+    
     public HighlightView(BrowserControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
@@ -88,11 +90,13 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _privateMessages = new ArrayList();
         _privateMessagesReadStatus = new ArrayList();
         _alreadyAskedToImportArchives = false;
+        _refresh = new Refresh();
         initComponents();
         refreshHighlights();
         _browser.addMessageEditorListener(this);
         _browser.getSyndicationManager().addListener(this);
         browser.getSyndicationManager().loadArchives();
+        Display.getDefault().timerExec(30*1000, _refresh);
     }
     
     public void refreshHighlights() {
@@ -111,6 +115,18 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         _browser.getSyndicationManager().removeListener(this);
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
+        _refresh.stop();
+    }
+    
+    private class Refresh implements Runnable {
+        private boolean _ok;
+        public Refresh() { _ok = true; }
+        public void stop() { _ok = false; }
+        public void run() {
+            if (!_ok) return;
+            refreshHighlights();
+            Display.getDefault().timerExec(30*1000, Refresh.this);
+        }
     }
 
     private static final String T_PRIVATE_PREFIX = "syndie.gui.highlightview.private";

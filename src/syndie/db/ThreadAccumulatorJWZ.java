@@ -744,7 +744,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterPrivacy((ThreadReferenceNode)node.getChild(i));
             rv = rv && childIsEmpty;
         }
-        _ui.debugMessage("filter privacy rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
+        _ui.debugMessage("filter privacy rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
         return rv;
     }
     

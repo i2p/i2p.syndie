@@ -1387,6 +1387,11 @@ public class SyndicationManager {
             _ui.debugMessage("Not loading the archives, as the client is not yet logged in");
             return;
         }
+        _ui.debugMessage("Loading archives");
+        // stash error messages/exceptions to log outside the synchronized block, since logging
+        // might have callbacks into other threads w/ locks held
+        List errs = new ArrayList();
+        List exceptions = new ArrayList();
         synchronized (this) {
             if (_archivesLoaded) {
                 //_ui.debugMessage("not loading archives, as they are already loaded");
@@ -1394,89 +1399,95 @@ public class SyndicationManager {
             }
             //buildIndex(_client, _ui);
             _archivesLoaded = true;
-        }
-        _online = loadOnlineStatus();
-        fireOnlineStatus();
-        
-        _ui.debugMessage("Loading archives");
-        _archives.clear();
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = _client.con().prepareStatement(SQL_GET_NYM_ARCHIVES);
-            stmt.setLong(1, _client.getLoggedInNymId());
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                // name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, 
-                // readKey, readKeySalt
-                String name = rs.getString(1);
-                long uriId = rs.getLong(2);
-                if (rs.wasNull()) {
-                    _ui.errorMessage("no URI for name = " + name);
-                    continue;
+            
+            _online = loadOnlineStatus();
+
+            _archives.clear();
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = _client.con().prepareStatement(SQL_GET_NYM_ARCHIVES);
+                stmt.setLong(1, _client.getLoggedInNymId());
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    // name, uriId, customProxyHost, customProxyPort, lastSyncDate, postKey, postKeySalt, 
+                    // readKey, readKeySalt
+                    String name = rs.getString(1);
+                    long uriId = rs.getLong(2);
+                    if (rs.wasNull()) {
+                        errs.add("no URI for name = " + name);
+                        continue;
+                    }
+                    //_ui.debugMessage("archive name=" + name + " uriId = " + uriId);
+                    String host = rs.getString(3);
+                    int port = rs.getInt(4);
+                    if (rs.wasNull()) {
+                        host = null;
+                        port = -1;
+                    }
+                    Date when = rs.getDate(5);
+                    byte[] postKeyEncr = rs.getBytes(6);
+                    byte[] postKeySalt = rs.getBytes(7);
+                    byte[] readKeyEncr = rs.getBytes(8);
+                    byte[] readKeySalt = rs.getBytes(9);
+                    Timestamp nextSync = rs.getTimestamp(10);
+                    int consecutiveFailures = rs.getInt(11);
+                    if (rs.wasNull()) consecutiveFailures = 0;
+
+                    byte[] postKey = null;
+                    if ( (postKeyEncr != null) && (postKeySalt != null) ) {
+                        SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
+                        postKey = new byte[SessionKey.KEYSIZE_BYTES];
+                        _client.ctx().aes().decrypt(postKeyEncr, 0, postKey, 0, key, postKeySalt, postKeyEncr.length);
+                    }
+
+                    byte[] readKey = null;
+                    if ( (readKeyEncr != null) && (readKeySalt != null) ) {
+                        SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
+                        readKey = new byte[SessionKey.KEYSIZE_BYTES];
+                        _client.ctx().aes().decrypt(readKeyEncr, 0, readKey, 0, key, readKeySalt, readKeyEncr.length);
+                    }
+
+                    SyndieURI uri = _client.getURI(uriId);
+                    if (uri == null) {
+                        errs.add("uri not found [id = " + uriId + ", name = " + name + "]");
+                        continue;
+                    }
+
+                    _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey, (nextSync == null ? -1L : nextSync.getTime()), consecutiveFailures));
                 }
-                _ui.debugMessage("archive name=" + name + " uriId = " + uriId);
-                String host = rs.getString(3);
-                int port = rs.getInt(4);
-                if (rs.wasNull()) {
-                    host = null;
-                    port = -1;
-                }
-                Date when = rs.getDate(5);
-                byte[] postKeyEncr = rs.getBytes(6);
-                byte[] postKeySalt = rs.getBytes(7);
-                byte[] readKeyEncr = rs.getBytes(8);
-                byte[] readKeySalt = rs.getBytes(9);
-                Timestamp nextSync = rs.getTimestamp(10);
-                int consecutiveFailures = rs.getInt(11);
-                if (rs.wasNull()) consecutiveFailures = 0;
-                
-                byte[] postKey = null;
-                if ( (postKeyEncr != null) && (postKeySalt != null) ) {
-                    SessionKey key = _client.ctx().keyGenerator().generateSessionKey(postKeySalt, DataHelper.getUTF8(_client.getPass()));
-                    postKey = new byte[SessionKey.KEYSIZE_BYTES];
-                    _client.ctx().aes().decrypt(postKeyEncr, 0, postKey, 0, key, postKeySalt, postKeyEncr.length);
-                }
-                
-                byte[] readKey = null;
-                if ( (readKeyEncr != null) && (readKeySalt != null) ) {
-                    SessionKey key = _client.ctx().keyGenerator().generateSessionKey(readKeySalt, DataHelper.getUTF8(_client.getPass()));
-                    readKey = new byte[SessionKey.KEYSIZE_BYTES];
-                    _client.ctx().aes().decrypt(readKeyEncr, 0, readKey, 0, key, readKeySalt, readKeyEncr.length);
-                }
-                
-                SyndieURI uri = _client.getURI(uriId);
-                if (uri == null) {
-                    _ui.errorMessage("uri not found [id = " + uriId + ", name = " + name + "]");
-                    continue;
-                }
-                
-                _archives.add(new NymArchive(name, uri, host, port, (when == null ? -1l : when.getTime()), postKey, readKey, (nextSync == null ? -1L : nextSync.getTime()), consecutiveFailures));
+                rs.close();
+                rs = null;
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                errs.add("Error fetching nym archives");
+                exceptions.add(se);
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
-            rs.close();
-            rs = null;
-            stmt.close();
+
             stmt = null;
-        } catch (SQLException se) {
-            _ui.errorMessage("Error fetching nym archives", se);
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            try {
+                stmt = _client.con().prepareStatement(SQL_CLEAR_IN_PROGRESS);
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                errs.add("Error clearing in-progress state");
+                exceptions.add(se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
         }
         
+        for (int i = 0; i < errs.size(); i++)
+            _ui.errorMessage((String)errs.get(i));
+        for (int i = 0; i < exceptions.size(); i++)
+            _ui.errorMessage("error during load", (Exception)exceptions.get(i));
         
-        stmt = null;
-        try {
-            stmt = _client.con().prepareStatement(SQL_CLEAR_IN_PROGRESS);
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-        } catch (SQLException se) {
-            _ui.errorMessage("Error clearing in-progress state", se);
-        } finally {
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
-        
+        fireOnlineStatus();
         _ui.debugMessage("archives loaded");
         for (int i = 0; i < _listeners.size(); i++)
             ((SyndicationManager.SyndicationListener)_listeners.get(i)).archivesLoaded(this);

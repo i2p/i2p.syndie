@@ -1005,6 +1005,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         rebuildPageMenu();
         viewPage(_pageEditors.size()-1);
+        saveState();
         return ed;
     }
     public void removePage(int pageNum) {
@@ -1017,6 +1018,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             editor.dispose();
             viewPage(_pageEditors.size()-1);
             rebuildPageMenu();
+            saveState();
         } else {
             _browser.getUI().debugMessage("remove page " + pageNum + " is out of range");
         }
@@ -2264,6 +2266,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         }
     }
 
+    private static final String T_TOOLARGE_MSG = "syndie.gui.messageeditor.toolarge.msg";
+    private static final String T_TOOLARGE_TITLE = "syndie.gui.messageeditor.toolarge.title";
+    private static final String T_LARGE_MSG = "syndie.gui.messageeditor.large.msg";
+    private static final String T_LARGE_TITLE = "syndie.gui.messageeditor.large.title";
+    
     private void addAttachment(File file) {
         saveState();
         modified();
@@ -2271,8 +2278,20 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         String name = Constants.stripFilename(fname, false);
         String type = WebRipRunner.guessContentType(fname);
         
-        if (file.length() > Constants.MAX_ATTACHMENT_SIZE)
+        if (file.length() > Constants.MAX_ATTACHMENT_SIZE) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
+            box.setText(_browser.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
+            box.open();
             return;
+        } else if (file.length() > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
+            box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
+            int rc = box.open();
+            if (rc != SWT.YES)
+                return;
+        }
         
         byte data[] = new byte[(int)file.length()];
         try {
