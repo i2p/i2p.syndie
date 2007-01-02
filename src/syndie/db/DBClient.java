@@ -3833,6 +3833,7 @@ public class DBClient {
             stmt = _con.prepareStatement(query);
             afterPrep = System.currentTimeMillis();
             stmt.setLong(1, nymId);
+            stmt.setLong(2, nymId);
             rs = stmt.executeQuery();
             afterExec = System.currentTimeMillis();
             
