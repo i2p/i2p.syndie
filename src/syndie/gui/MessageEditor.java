@@ -88,6 +88,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private Text _subject;
     private Label _tagLabel;
     private Text _tag;
+    private Label _privacyLabel;
+    private Combo _privacy;
     private Label _replyToLabel;
     private Label _replyTo;
     private StackLayout _stack;
@@ -957,6 +959,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         initHeader();
         initPage();
         initFooter();
+        initPrivacyCombo();
+        
+        pickPrivacy(1);
         
         _finder = new MessageEditorFind(this);
         _spellchecker = new MessageEditorSpell(this);
@@ -970,6 +975,60 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _nymChannels = _browser.getClient().getChannels(true, true, true, true);
         updateForum();
         updateAuthor();
+    }
+    
+    private void initPrivacyCombo() {
+        _privacy.setRedraw(false);
+        int idx = -1;
+        if (_privacy.getItemCount() > 0)
+            idx = _privacy.getSelectionIndex();
+        else
+            idx = 1;
+        _privacy.removeAll();
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PUBLIC, "Anyone can read the post"));
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_AUTHORIZED, "Authorized readers of the forum can read the post"));
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PBE, "Passphrase required to read the post..."));
+        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_REPLY, "Only forum administrators can read the post"));
+        _privacy.setRedraw(true);
+    }
+    
+    private static final String T_PRIV_PUBLIC = "syndie.gui.messageeditor.priv.public";
+    private static final String T_PRIV_AUTHORIZED = "syndie.gui.messageeditor.priv.auth";
+    private static final String T_PRIV_PBE = "syndie.gui.messageeditor.priv.pbe";
+    private static final String T_PRIV_REPLY = "syndie.gui.messageeditor.priv.reply";
+    
+    private void pickPrivacy(int privacyIndex) {
+        switch (privacyIndex) {
+            case 0: // public 
+                _privacy.select(privacyIndex);
+                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
+                break;
+            case 2: //pbe
+                _privacy.select(privacyIndex);
+                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); 
+                final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
+                dialog.setPassphrase(_passphrase);
+                dialog.setPassphrasePrompt(_passphrasePrompt);
+                dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
+                    public void promptComplete(String passphraseEntered, String promptEntered) {
+                        _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
+                        _passphrase = passphraseEntered;
+                        _passphrasePrompt = promptEntered;
+                    }
+                    public void promptAborted() {}
+                });
+                dialog.open();
+                break;
+            case 3: // private reply
+                _privacy.select(privacyIndex);
+                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
+                break;
+            case 1: // authorized only
+            default:
+                _privacy.select(privacyIndex);
+                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
+                break;
+        }
     }
     
     private void initFooter() {
@@ -1290,14 +1349,14 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     private void initHeader() {
         Composite header = new Composite(_root, SWT.NONE);
-        header.setLayout(new GridLayout(2, false));
+        header.setLayout(new GridLayout(4, false));
         header.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _fromLabel = new Label(header, SWT.NONE);
         _fromLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _from = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _from.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _from.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _from.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickFrom(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickFrom(); }
@@ -1312,7 +1371,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _toLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _to = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _to.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickTo(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickTo(); }
@@ -1329,7 +1388,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _subjectLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _subject = new Text(header, SWT.BORDER | SWT.SINGLE);
-        _subject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _subject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
         _tagLabel = new Label(header, SWT.NONE);
         _tagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -1337,13 +1396,23 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _tag = new Text(header, SWT.BORDER | SWT.SINGLE);
         _tag.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
+        _privacyLabel = new Label(header, SWT.NONE);
+        _privacyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _privacy = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _privacy.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
+        });
+        
         _replyToLabel = new Label(header, SWT.NONE);
         GridData gd = new GridData(GridData.END, GridData.CENTER, false, false);
         gd.exclude = true;
         _replyToLabel.setLayoutData(gd);
         
         _replyTo = new Label(header, SWT.NONE);
-        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1);
         gd.exclude = true;
         _replyTo.setLayoutData(gd);
         
@@ -1352,6 +1421,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _replyToLabel.setText("In reply to:");
         _from.setText("Author:");
         _to.setText("Forum:");
+        _privacyLabel.setText("Privacy:");
     }
     
     private void initToolbar() {
@@ -1965,37 +2035,22 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _privReply = new MenuItem(_privMenu, SWT.RADIO);
         
         _privPublic.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC); }
+            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(0); }
+            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(0); }
         });
         _privAuthorized.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED); }
+            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(1);}
+            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(1); }
         });
         _privPBE.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); promptForPassphrase(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); promptForPassphrase(); }
-            private void promptForPassphrase() {
-                final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
-                dialog.setPassphrase(_passphrase);
-                dialog.setPassphrasePrompt(_passphrasePrompt);
-                dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
-                    public void promptComplete(String passphraseEntered, String promptEntered) {
-                        _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
-                        _passphrase = passphraseEntered;
-                        _passphrasePrompt = promptEntered;
-                    }
-                    public void promptAborted() {}
-                });
-                dialog.open();
-            }
+            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(2); }
+            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(2); }
         });
         _privReply.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY); }
+            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(3);}
+            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(3); }
         });
         
-        _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED); 
         _privAuthorized.setSelection(true);
         
         _privPublic.setText("Anyone can read the post");
