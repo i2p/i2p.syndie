@@ -4,6 +4,13 @@
     - improved dependency tracking during syndication
     - substantial bugfixes for syndication message selection
     - integrated bug report tool
+    - revamped message threading
+    - simplified message posting
+    - separate functionality to backup and restore private keys and
+      shared secrets (into either an encrypted zip or a plain zip)
+    - on first startup, pop up a wizard to adjust the basic nym settings
+      (name, avatar, blog/forum post authorization)
+    - lots of odds and ends cleaned up
 
 * 2006-12-26  1.000a released
     - lets call a spade a spade
