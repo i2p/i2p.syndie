@@ -724,12 +724,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         rv.setProperty(SER_SUBJECT, _subject.getText());
         rv.setProperty(SER_TAGS, _tag.getText());
         
-        int privacy = -1;
+        int privacy = _privacy.getSelectionIndex();
+        /*-1;
         if (_privPublic.getSelection()) privacy = 0;
         else if (_privAuthorized.getSelection()) privacy = 1;
         else if (_privPBE.getSelection()) privacy = 2;
         else if (_privReply.getSelection()) privacy = 3;
         else privacy = 1;
+         */
+        if (privacy < 0) privacy = 1;
         
         rv.setProperty(SER_PRIV, privacy + "");
         //String exp = getExpiration();
@@ -785,20 +788,21 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         else
             _tag.setText("");
         
-        if (cfg.containsKey(SER_PRIV)) {
+        String privStr = cfg.getProperty(SER_PRIV);
+        if (privStr != null) {
             try {
-                int priv = Integer.parseInt(cfg.getProperty(SER_PRIV));
+                int priv = Integer.parseInt(privStr);
                 
                 _privPublic.setSelection(false);
                 _privAuthorized.setSelection(false);
                 _privPBE.setSelection(false);
                 _privReply.setSelection(false);
                 switch (priv) {
-                    case 0: _privPublic.setSelection(true); break;
-                    case 2: _privPBE.setSelection(true); break;
-                    case 3: _privReply.setSelection(true); break;
+                    case 0: pickPrivacy(0); break;
+                    case 2: pickPrivacy(2); break;
+                    case 3: pickPrivacy(3, false); break;
                     case 1: 
-                    default: _privAuthorized.setSelection(true); break;
+                    default: pickPrivacy(1); break;
                 }
             } catch (NumberFormatException nfe) {}
         }
@@ -997,36 +1001,44 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_PRIV_PBE = "syndie.gui.messageeditor.priv.pbe";
     private static final String T_PRIV_REPLY = "syndie.gui.messageeditor.priv.reply";
     
-    private void pickPrivacy(int privacyIndex) {
+    private void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
+    private void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
+        modified();
         switch (privacyIndex) {
             case 0: // public 
                 _privacy.select(privacyIndex);
                 _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
+                _privPublic.setSelection(true);
                 break;
             case 2: //pbe
                 _privacy.select(privacyIndex);
                 _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); 
-                final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
-                dialog.setPassphrase(_passphrase);
-                dialog.setPassphrasePrompt(_passphrasePrompt);
-                dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
-                    public void promptComplete(String passphraseEntered, String promptEntered) {
-                        _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
-                        _passphrase = passphraseEntered;
-                        _passphrasePrompt = promptEntered;
-                    }
-                    public void promptAborted() {}
-                });
-                dialog.open();
+                _privPBE.setSelection(true);
+                if (promptForPassphrase) { // false when deserializing state
+                    final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
+                    dialog.setPassphrase(_passphrase);
+                    dialog.setPassphrasePrompt(_passphrasePrompt);
+                    dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
+                        public void promptComplete(String passphraseEntered, String promptEntered) {
+                            _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
+                            _passphrase = passphraseEntered;
+                            _passphrasePrompt = promptEntered;
+                        }
+                        public void promptAborted() {}
+                    });
+                    dialog.open();
+                }
                 break;
             case 3: // private reply
                 _privacy.select(privacyIndex);
                 _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
+                _privReply.setSelection(true);
                 break;
             case 1: // authorized only
             default:
                 _privacy.select(privacyIndex);
                 _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
+                _privAuthorized.setSelection(true);
                 break;
         }
     }
@@ -1718,6 +1730,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
 
     private void pickForum(Hash forum) {
+        modified();
         _forum = forum;
         MenuItem items[] = _forumMenu.getItems();
         for (int i = 0; i < items.length; i++) {
@@ -1889,6 +1902,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         redrawAuthorAvatar(_author, authorId, authorSummary);
     }
     private void pickAuthor(Hash author) {
+        modified();
         _author = author;
         MenuItem items[] = _authorMenu.getItems();
         for (int i = 0; i < items.length; i++) {
