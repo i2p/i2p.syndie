@@ -178,7 +178,7 @@ public class MessageTree implements Translatable, Themeable {
         for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();
             SyndieURI cur = (SyndieURI)_itemToURI.get(item);
-            if (cur.equals(uri)) {
+            if ( (cur != null) && (cur.equals(uri)) ) {
                 _tree.setSelection(item);
                 //_tree.setTopItem(item);
                 return;
