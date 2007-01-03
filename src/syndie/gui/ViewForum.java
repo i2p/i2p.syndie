@@ -3,28 +3,39 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.i2p.data.Hash;
+import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -48,6 +59,10 @@ class ViewForum implements Translatable, Themeable {
     private ScrolledComposite _scroll;
     private Composite _root;
     private ImageCanvas _avatar;
+    private Image _avatarImgOrig;
+    private Image _avatarImg;
+    private List _avatarImgStandard;
+    private MenuItem _avatarOther;
     private Label _nameLabel;
     private Text _name;
     private Label _tagsLabel;
@@ -64,9 +79,8 @@ class ViewForum implements Translatable, Themeable {
     private Combo _references;
     /** ReferenceNode instances correlating with the entries in _references (may be null) */
     private List _referenceNodes;
-    private Button _referencesAdd;
-    private Button _referencesEdit;
-    private Button _referencesDelete;
+    /** just the roots of the _references */
+    private List _referenceNodeRoots;
     private Group _userGroup;
     private Table _users;
     private TableColumn _userName;
@@ -96,12 +110,17 @@ class ViewForum implements Translatable, Themeable {
     private Button _keyManagementNewReply;
     
     private boolean _editable;
+    private boolean _initialized;
     private boolean _modified;
+    
+    private ManageReferenceChooserPopup _refPopup;
     
     private List _managerHashes;
     private List _posterHashes;
     private List _pubArchiveURIs;
     private List _privArchiveURIs;
+    private String _passphrase;
+    private String _prompt;
     
     public ViewForum(BrowserControl browser, Composite parent, SyndieURI uri) {
         _browser = browser;
@@ -110,9 +129,13 @@ class ViewForum implements Translatable, Themeable {
         _editable = false;
         _scope = null;
         _scopeId = -1;
+        _initialized = false;
+        _avatarImgStandard = new ArrayList();
         _archiveItemToURI = new HashMap();
         _userItemToHash = new HashMap();
         Hash scope = uri.getScope();
+        if (scope == null)
+            scope = uri.getHash("channel");
         if (scope != null) {
             List keys = browser.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
             if ( (keys != null) && (keys.size() > 0) )
@@ -120,11 +143,18 @@ class ViewForum implements Translatable, Themeable {
             _browser.getUI().debugMessage("management nym keys for " + scope.toBase64() + ": " + keys);
             _scope = scope;
             _scopeId = browser.getClient().getChannelId(scope);
+            
+            if (_editable) {
+                Long val = uri.getLong("editable");
+                if ( (val != null) && (val.longValue() == 0) )
+                    _editable = false;
+            }
         } else {
             _browser.getUI().debugMessage("no scope!");
         }
         initComponents();
     }
+    public boolean getEditable() { return _editable; }
     
     private void initComponents() {
         _scroll = new ScrolledComposite(_parent, SWT.V_SCROLL | SWT.H_SCROLL);
@@ -135,8 +165,18 @@ class ViewForum implements Translatable, Themeable {
         _root.setLayout(new GridLayout(7, false));
         _scroll.setContent(_root);
         
+        _parent.addControlListener(new ControlListener() {
+            public void controlMoved(ControlEvent controlEvent) {}
+            public void controlResized(ControlEvent controlEvent) { 
+                // applyTheme does our scroll resizing
+                applyTheme(_browser.getThemeRegistry().getTheme()); 
+            }
+        });
+        
+        loadOrigAvatar();
+        
         _avatar = new ImageCanvas(_root, false);
-        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.END, false, false, 1, 2));
+        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.END, false, false, 1, 3));
         
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -145,31 +185,21 @@ class ViewForum implements Translatable, Themeable {
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         //gd.widthHint = 100;
         _name.setLayoutData(gd);
+        _name.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
         _tagsLabel = new Label(_root, SWT.NONE);
         _tagsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _tags = new Text(_root, SWT.BORDER | SWT.SINGLE | (!_editable ? SWT.READ_ONLY : 0));
         _tags.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _tags.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
         _descriptionLabel = new Label(_root, SWT.NONE);
         _descriptionLabel.setLayoutData(new GridData(GridData.END, GridData.BEGINNING, false, false));
         
         _description = new Text(_root, SWT.BORDER | SWT.SINGLE | (!_editable ? SWT.READ_ONLY : 0));
         _description.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 5, 1));
-        
-        _avatarSelect = new Button(_root, SWT.PUSH);
-        _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        if (!_editable) _avatarSelect.setVisible(false);
-        
-        if (_editable) {
-            _avatarMenu = new Menu(_avatar);
-            _avatar.setMenu(_avatarMenu);
-            _avatarSelect.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-            });
-        }
+        _description.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
         _authorizationLabel = new Label(_root, SWT.NONE);
         _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -177,6 +207,10 @@ class ViewForum implements Translatable, Themeable {
         _authorization = new Combo(_root, SWT.READ_ONLY | SWT.DROP_DOWN);
         _authorization.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         if (!_editable) _authorization.setEnabled(false);
+        _authorization.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+        });
         
         _expirationLabel = new Label(_root, SWT.NONE);
         _expirationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -185,20 +219,49 @@ class ViewForum implements Translatable, Themeable {
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
         gd.widthHint = 50;
         _expiration.setLayoutData(gd);
+        _expiration.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
+        
+        if (_editable) {
+            _avatarSelect = new Button(_root, SWT.PUSH);
+            _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+            
+            _avatarMenu = new Menu(_avatar);
+            _avatar.setMenu(_avatarMenu);
+            
+            populateAvatarMenu();
+            
+            _avatarSelect.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+            });
+        }
         
         _referencesLabel = new Label(_root, SWT.NONE);
         _referencesLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _references = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        int colspan = 5;
+        if (!_editable)
+            colspan = 6;
+        _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, colspan, 1));
         
-        Composite refActions = new Composite(_root, SWT.NONE);
-        refActions.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 2, 1));
-        refActions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        
-        _referencesAdd = new Button(refActions, SWT.PUSH);
-        _referencesEdit = new Button(refActions, SWT.PUSH);
-        _referencesDelete = new Button(refActions, SWT.PUSH);
+        _references.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewRef(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewRef(); }
+            private void viewRef() {
+                if (_refPopup == null)
+                    _refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell(), _editable);
+                _refPopup.setReferences(_referenceNodeRoots);
+                _refPopup.addCloseListener(new ManageReferenceChooserPopup.CloseListener() {
+                    public void closed(List refRoots) {
+                        _referenceNodeRoots = refRoots;
+                        modified();
+                        redrawReferences();
+                    }
+                });
+                _refPopup.show();
+            }
+        });
         
         _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -327,6 +390,7 @@ class ViewForum implements Translatable, Themeable {
                         SyndieURI uri = (SyndieURI)_archiveItemToURI.get(items[i]);
                         _pubArchiveURIs.remove(uri);
                         _privArchiveURIs.remove(uri);
+                        modified();
                     }
                     redrawArchives();
                     _root.layout(true, true);
@@ -352,14 +416,13 @@ class ViewForum implements Translatable, Themeable {
                                 _pubArchiveURIs.add(uri);
                         }
                     }
+                    modified();
                     redrawArchives();
                     _root.layout(true, true);
                 }
             });
         }
 
-        
-        
         if (_editable) {
             _archiveAdd = new Button(_archiveGroup, SWT.PUSH);
             _archiveAdd.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
@@ -370,13 +433,23 @@ class ViewForum implements Translatable, Themeable {
             });
         }
         
-        if (!_editable) refActions.setVisible(false);
-        
         _actions = new Composite(_root, SWT.NONE);
         _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
         _save = new Button(_actions, SWT.PUSH);
         _cancel = new Button(_actions, SWT.PUSH);
+        _save.setEnabled(false);
+        _cancel.setEnabled(false);
+        
+        _save.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveChanges(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { saveChanges(); }
+        });
+        
+        _cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadData(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { loadData(); }
+        });
         
         if (!_editable) {
             _actions.setVisible(false);
@@ -384,52 +457,78 @@ class ViewForum implements Translatable, Themeable {
         }
         
         _keyManagementGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _keyManagementGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
-        _keyManagementGroup.setLayout(new GridLayout(1, true));
+        _keyManagementGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
+        RowLayout rl = new RowLayout(SWT.VERTICAL);
+        rl.fill = true;
+        rl.wrap = false;
+        /*
+        GridLayout gl = new GridLayout(1, true);
+        _keyManagementGroup.setLayout(gl);
+         */
+        _keyManagementGroup.setLayout(rl);
+        
+        int width = SWT.DEFAULT; //_parent.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
+        //_browser.getUI().debugMessage("key management width: " + width);
         
         _keyManagementOpen = new Button(_keyManagementGroup, SWT.RADIO);
-        _keyManagementOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementOpen.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementOpenInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        _keyManagementOpenInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementOpenInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementOpenInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementKeep = new Button(_keyManagementGroup, SWT.RADIO);
-        _keyManagementKeep.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementKeep.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementKeep.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementKeepInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        _keyManagementKeepInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementKeepInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementKeepInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementRotate = new Button(_keyManagementGroup, SWT.RADIO);
-        _keyManagementRotate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementRotate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementRotate.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementRotateInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        _keyManagementRotateInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementRotateInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementRotateInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementReset = new Button(_keyManagementGroup, SWT.RADIO);
-        _keyManagementReset.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementReset.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementReset.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementResetInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        _keyManagementResetInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementResetInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementResetInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementPBE = new Button(_keyManagementGroup, SWT.CHECK);
-        _keyManagementPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementPBE.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementPBEInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        _keyManagementPBEInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementPBEInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementPBEInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
         _keyManagementNewReply = new Button(_keyManagementGroup, SWT.CHECK);
-        _keyManagementNewReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        //_keyManagementNewReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementNewReply.setLayoutData(new RowData(width, SWT.DEFAULT));
         
         _keyManagementKeep.setSelection(true);
+        
+        _keyManagementPBE.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                if (_keyManagementPBE.getSelection())
+                    promptForPBE();
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                if (_keyManagementPBE.getSelection())
+                    promptForPBE();
+            }
+        });
         
         if (!_editable) {
             _keyManagementGroup.setVisible(false);
             ((GridData)_keyManagementGroup.getLayoutData()).exclude = true;
         }
     
+        ChannelInfo info = _browser.getClient().getChannel(_scopeId);
         loadData();
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
-    }
-    
-    public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
-    }
-    
-    private void loadData() {
-        ChannelInfo info = _browser.getClient().getChannel(_scopeId);
+        
+        // wait until after translate, since that populates _authorization
         if (info != null) {
             if (info.getAllowPublicPosts())
                 _authorization.select(AUTH_PUBLIC);
@@ -437,32 +536,230 @@ class ViewForum implements Translatable, Themeable {
                 _authorization.select(AUTH_PUBREPLY);
             else
                 _authorization.select(AUTH_AUTH);
-            
-            byte avatar[] = _browser.getClient().getChannelAvatar(_scopeId);
-            if (avatar != null) {
-                Image img = ImageUtil.createImage(avatar);
-                if (img != null) {
-                    Rectangle rect = img.getBounds();
-                    int width = rect.width;
-                    int height = rect.height;
-                    boolean mod = false;
-                    if (width > Constants.MAX_AVATAR_WIDTH) {
-                        width = Constants.MAX_AVATAR_WIDTH;
-                        mod = true;
-                    }
-                    if (height > Constants.MAX_AVATAR_HEIGHT) {
-                        height = Constants.MAX_AVATAR_HEIGHT;
-                        mod = true;
-                    }
-                    if (mod)
-                        img = ImageUtil.resize(img, width, height, true);
-                    _avatar.setImage(img);
-                } else {
-                    _avatar.disposeImage();
-                    _avatar.setImage(null);
-                }
+        }
+    }
+    
+    public void dispose() {
+        ImageUtil.dispose(_avatarImgOrig);
+        for (int i = 0; i < _avatarImgStandard.size(); i++)
+            ImageUtil.dispose((Image)_avatarImgStandard.get(i));
+        _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
+        if (_refPopup != null) _refPopup.dispose();
+    }
+    
+    /* called when the tab is closed */
+    public boolean confirmClose() {
+        if (!_editable || !_modified) return true;
+        MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+        confirm.setText(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
+        confirm.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
+        int rc = confirm.open();
+        if (rc == SWT.YES) {
+            return true;
+        } else if (rc == SWT.NO) {
+            return false;
+        } else {
+            return false;
+        }
+    }    
+    private static final String T_CONFIRM_CLOSE_TITLE = "syndie.gui.viewforum.close.title";
+    private static final String T_CONFIRM_CLOSE_MSG = "syndie.gui.viewforum.close.msg";
+    
+    private void promptForPBE() {
+        PassphrasePrompt prompt = new PassphrasePrompt(_browser, _root.getShell(), true);
+        prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+            public void promptComplete(String passphraseEntered, String promptEntered) {
+                _passphrase = passphraseEntered;
+                _prompt = promptEntered;
             }
+            public void promptAborted() {}
+        });
+        prompt.open();
+    }
+    
+    private void saveChanges() {
+        ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), new ManageForumExecutor.ManageForumState() {
+            public Image getAvatar() { return _avatarImg; }
+            public String getName() { return _name.getText(); }
+            public String getDescription() { return _description.getText(); }
+            public long getLastEdition() {
+                if (_scopeId >= 0) 
+                    return _browser.getClient().getChannelVersion(_scopeId);
+                else
+                    return -1;
+            }
+
+            public boolean getAllowPublicPosts() { return _authorization.getSelectionIndex() == AUTH_PUBLIC; }
+            public boolean getAllowPublicReplies() { return _authorization.getSelectionIndex() == AUTH_PUBREPLY; }
+            public Set getPublicTags() { return Collections.EMPTY_SET; }
+            public Set getAuthorizedPosters() { return getPubKeys(_posterHashes); }
+            public Set getAuthorizedManagers() { return getPubKeys(_managerHashes); }
+            private Set getPubKeys(List scopes) {
+                Set rv = new HashSet();
+                for (int i = 0; i < scopes.size(); i++) {
+                    Hash scope = (Hash)scopes.get(i);
+                    SigningPublicKey key = _browser.getClient().getChannelIdentKey(scope);
+                    if (key != null)
+                        rv.add(key);
+                }
+                return rv;
+            }
+            public String getReferences() { return (_referenceNodeRoots != null ? ReferenceNode.walk(_referenceNodeRoots) : ""); }
+            public Set getPublicArchives() { return getArchives(_pubArchiveURIs); }
+            public Set getPrivateArchives() { return getArchives(_privArchiveURIs); }
+            private Set getArchives(List uris) {
+                Set archives = new HashSet();
+                for (Iterator iter = uris.iterator(); iter.hasNext(); ) {
+                    SyndieURI uri = (SyndieURI)iter.next();
+                    ArchiveInfo info = new ArchiveInfo(uri);
+                    archives.add(info);
+                }
+                return archives;
+            }
+
+            public long getChannelId() { return _scopeId; }
             
+            public boolean getEncryptContent() { return false; }
+            public boolean getPBE() { return false; }
+            public String getPassphrase() { return _passphrase; }
+            public String getPassphrasePrompt() { return _prompt; }
+            /** return the read keys we explicitly want to deliver in the metadata, or null/empty if we don't care */
+            public List getCurrentReadKeys() { return null; }
+        });
+        exec.execute();
+        String errs = exec.getErrors();
+        if ( (errs != null) && (errs.trim().length() > 0) ) {
+            MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setText(_browser.getTranslationRegistry().getText(T_ERROR_TITLE, "Error"));
+            box.setMessage(_browser.getTranslationRegistry().getText(T_ERROR_MSG, "Internal error saving the forum:") + errs);
+            box.open();
+        } else {
+            _browser.unview(_uri);
+            if (_scopeId < 0)
+                _browser.view(exec.getForum());
+        }
+    }
+    private static final String T_ERROR_TITLE = "syndie.gui.viewforum.error.title";
+    private static final String T_ERROR_MSG = "syndie.gui.viewforum.error.msg";
+    
+    private void modified() {
+        if (!_initialized) return;
+        if (!_modified) {
+            _save.setEnabled(true);
+            _cancel.setEnabled(true);
+        }
+        _modified = true;
+    }
+
+    private void loadOrigAvatar() {
+        byte avatar[] = _browser.getClient().getChannelAvatar(_scopeId);
+        if (avatar != null) {
+            Image img = ImageUtil.createImage(avatar);
+            if (img != null) {
+                Rectangle rect = img.getBounds();
+                int width = rect.width;
+                int height = rect.height;
+                boolean mod = false;
+                if (width > Constants.MAX_AVATAR_WIDTH) {
+                    width = Constants.MAX_AVATAR_WIDTH;
+                    mod = true;
+                }
+                if (height > Constants.MAX_AVATAR_HEIGHT) {
+                    height = Constants.MAX_AVATAR_HEIGHT;
+                    mod = true;
+                }
+                if (mod)
+                    img = ImageUtil.resize(img, width, height, true);
+                _avatarImgOrig = img;
+            } else {
+                _avatarImgOrig = null;
+            }
+        }
+    }
+    private void populateAvatarMenu() {
+        if (!_editable) return;
+        if (_avatarImgOrig != null) { // populated earlier in the initialization
+            MenuItem origItem = new MenuItem(_avatarMenu, SWT.PUSH);
+            origItem.setImage(_avatarImgOrig);
+            origItem.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
+                public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
+            });
+        }
+        int i = 0;
+        while (true) {
+            final Image img = ImageUtil.createImageFromResource("iconAvatar" + i + ".png");
+            if (img != null) {
+                _avatarImgStandard.add(img);
+                MenuItem item = new MenuItem(_avatarMenu, SWT.PUSH);
+                item.setImage(img);
+                item.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
+                });
+                i++;
+            } else {
+                break;
+            }
+        }
+        
+        _avatarOther = new MenuItem(_avatarMenu, SWT.PUSH);
+        _avatarOther.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(); }
+        });
+    }
+    
+    private void pickAvatar(Image img) {
+        Image old = _avatarImg;
+        if (!_avatarImgStandard.contains(old) && (old != _avatarImgOrig) )
+            _avatar.disposeImage();
+        _avatarImg = img;
+        _avatar.setImage(img);
+        _avatar.redraw();
+        if (img != _avatarImgOrig)
+            modified();
+    }
+    private void pickAvatar() {
+        FileDialog dialog = new FileDialog(_root.getShell(), SWT.SINGLE | SWT.OPEN);
+        dialog.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OPEN_NAME, "Select a 48x48 pixel PNG image"));
+        dialog.setFilterExtensions(new String[] { "*.png" });
+        dialog.setFilterNames(new String[] { _browser.getTranslationRegistry().getText(T_AVATAR_OPEN_TYPE, "PNG image") });
+        String filename = dialog.open();
+        if (filename != null) {
+            Image img = ImageUtil.createImageFromFile(filename);
+            if (img != null) {
+                Rectangle bounds = img.getBounds();
+                int width = bounds.width;
+                int height = bounds.height;
+                if (width > Constants.MAX_AVATAR_WIDTH)
+                    width = Constants.MAX_AVATAR_WIDTH;
+                if (height > Constants.MAX_AVATAR_HEIGHT)
+                    height = Constants.MAX_AVATAR_HEIGHT;
+                if ( (height != bounds.height) || (width != bounds.width) ) {
+                    img = ImageUtil.resize(img, width, height, true);
+                }
+                final Image revamped = img;
+                int idx = _avatarMenu.indexOf(_avatarOther);
+                MenuItem item = new MenuItem(_avatarMenu, SWT.PUSH, idx);
+                item.setImage(img);
+                item.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(revamped); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(revamped); }
+                });
+                _avatarImgStandard.add(img);
+                pickAvatar(img);
+            }
+        }
+    }
+    
+    private static final String T_AVATAR_OPEN_NAME = "syndie.gui.viewforum.avatar.name";
+    private static final String T_AVATAR_OPEN_TYPE = "syndie.gui.viewforum.avatar.type";
+    
+    private void loadData() { loadData(_browser.getClient().getChannel(_scopeId)); }
+    private void loadData(ChannelInfo info) {
+        if (info != null) {
             _description.setText(str(info.getDescription()));
             
             if (info.getExpiration() > 0)
@@ -479,16 +776,27 @@ class ViewForum implements Translatable, Themeable {
                 buf.append((String)iter.next()).append(" ");
             _tags.setText(buf.toString());
             
+            if (_avatarImgOrig != null)
+                pickAvatar(_avatarImgOrig);
+            
             loadArchives(info);
             loadUsers(info);
             _root.layout(true, true);
         }
+        _initialized = true;
         _modified = false;
+        _save.setEnabled(false);
+        _cancel.setEnabled(false);
     }
     private static final String str(String orig) { return (orig != null ? orig : ""); }
     private void loadReferences(ChannelInfo info) {
+        _referenceNodeRoots = info.getReferences();
+        redrawReferences();
+    }
+    private void redrawReferences() {
+        _references.setRedraw(false);
+        _references.removeAll();
         // place a depth first walk of the references into _references
-        List refs = info.getReferences();
         final List dfsNodes = new ArrayList();
         ReferenceNode.Visitor walker = new ReferenceNode.Visitor() {
             public void visit(ReferenceNode node, int depth, int siblingOrder) {
@@ -509,35 +817,24 @@ class ViewForum implements Translatable, Themeable {
                     buf.append(desc);
                 else if (uri != null)
                     buf.append(uri.toString());
-                /*
-                if (desc != null)
-                    buf.append(desc).append(' ');
-                if (uri != null) {
-                    if (uri.isArchive())
-                        buf.append(uri.getURL());
-                    else if (uri.isChannel())
-                        buf.append(uri.getScope().toBase64().substring(0,6));
-                    else if (uri.isSearch())
-                        buf.append(uri.toString());
-                    else if (uri.isURL())
-                        buf.append(uri.getURL());
-                    else
-                        buf.append(uri.toString());
-                }
-                 */
                 _references.add(buf.toString());
             }
         };
-        ReferenceNode.walk(refs, walker);
+        ReferenceNode.walk(_referenceNodeRoots, walker);
         _referenceNodes = dfsNodes;
         if ( (!_editable) && (_referenceNodes.size() <= 0) ) {
             ((GridData)_references.getLayoutData()).exclude = true;
             ((GridData)_referencesLabel.getLayoutData()).exclude = true;
-            ((GridData)_referencesAdd.getParent().getLayoutData()).exclude = true;
+            //((GridData)_referencesAdd.getParent().getLayoutData()).exclude = true;
+            //_referencesAdd.getParent().setVisible(false);
             _references.setVisible(false);
             _referencesLabel.setVisible(false);
-            _referencesAdd.getParent().setVisible(false);
+        } else if (_editable && (_referenceNodes.size() <= 0)) {
+            _references.add(_browser.getTranslationRegistry().getText(T_REFERENCES_ADD, "Add new references"));
+        } else if (_editable) {
+            _references.add(_browser.getTranslationRegistry().getText(T_REFERENCES_EDIT, "Manage references"));
         }
+        _references.setRedraw(true);
     }
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
@@ -601,6 +898,7 @@ class ViewForum implements Translatable, Themeable {
                     if (uri != null) {
                         _privArchiveURIs.add(uri);
                         redrawArchives();
+                        modified();
                     }
                 }
                 public int getPageCount() { return 0; }
@@ -675,11 +973,27 @@ class ViewForum implements Translatable, Themeable {
         }
         redrawUsers();
         _root.layout(true, true);
+        modified();
     }
-    private void addUser() {}
+    private void addUser() {
+        ReferenceChooserPopup popup = new ReferenceChooserPopup(_root.getShell(), _browser, new ReferenceChooserTree.AcceptanceListener() {
+            public void referenceAccepted(SyndieURI uri) {
+                Hash scope = uri.getScope();
+                if (!_posterHashes.contains(scope) && !_managerHashes.contains(scope)) {
+                    _posterHashes.add(scope);
+                    redrawUsers();
+                    modified();
+                }
+            }
+            public void referenceChoiceAborted() {}
+        }, T_USER_ADD_TITLE, "Select user to add");
+        popup.show();
+    }
+    private static final String T_USER_ADD_TITLE = "syndie.gui.viewforum.users.add.title";
     private void deleteUser(Hash scope) {
         _managerHashes.remove(scope);
         _posterHashes.remove(scope);
+        modified();
         redrawUsers();
         _root.layout(true, true);
     }
@@ -716,19 +1030,72 @@ class ViewForum implements Translatable, Themeable {
         _users.setFont(theme.TABLE_FONT);
         _archives.setFont(theme.TABLE_FONT);
         
-        _avatarSelect.setFont(theme.BUTTON_FONT);
-        _referencesAdd.setFont(theme.BUTTON_FONT);
-        _referencesEdit.setFont(theme.BUTTON_FONT);
-        _referencesDelete.setFont(theme.BUTTON_FONT);
-        
-        if (_userAdd != null) _userAdd.setFont(theme.BUTTON_FONT);
-        if (_archiveAdd != null) _archiveAdd.setFont(theme.BUTTON_FONT);
+        if (_editable) {
+            _avatarSelect.setFont(theme.BUTTON_FONT);
+            _userAdd.setFont(theme.BUTTON_FONT);
+            _archiveAdd.setFont(theme.BUTTON_FONT);
+        }
         
         redrawArchives();
         redrawUsers();
 
-        _root.layout(true, true);
-        _scroll.setMinSize(_root.computeSize(_userGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT).x, SWT.DEFAULT));
+        // this sizing stuff below is a mess.  problem being i'd like the 
+        // keyManagementGroup's elements to be as wide as possible without
+        // requiring a horizontal scrollbar, but the wrapping labels seem to
+        // cause some trouble.  as it stands now, its just inconsistent, but
+        // usually fits the text in there...
+        
+        //_root.layout(true, true);
+        _root.pack(true);
+        
+        Rectangle sz = _keyManagementGroup.getClientArea();
+        Point kgSz = _keyManagementGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point groupSz = _userGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point rootSz = _root.computeSize(groupSz.x, SWT.DEFAULT);
+        Point parentSz = _parent.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point shellSz = _root.getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point groupCurSz = _userGroup.getSize();
+        Point rootCurSz = _root.getSize();
+        Point parentCurSz = _parent.getSize();
+        Point shellCurSz = _root.getShell().getSize();
+        //_browser.getUI().debugMessage("computed group size: " + groupSz + " rootSz: " + rootSz + " parentSz: " + parentSz + " shellSz: " + shellSz);
+        //_browser.getUI().debugMessage("current group size: " + groupCurSz + " rootSz: " + rootCurSz + " parentSz: " + parentCurSz + " shellSz: " + shellCurSz);
+        //_browser.getUI().debugMessage("client area: " + sz + " kgSz: " + kgSz);
+        
+        int width = SWT.DEFAULT;
+        if (parentCurSz.x <= 0) // first time
+            width = parentSz.x;
+        else
+            width = sz.width-20; //SWT.DEFAULT; //_parent.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
+        _browser.getUI().debugMessage("key management width: " + width);
+        _keyManagementOpen.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementOpenInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementKeep.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementKeepInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementRotate.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementRotateInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementReset.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementResetInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementPBE.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementPBEInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementNewReply.setLayoutData(new RowData(width, SWT.DEFAULT));
+        
+        _scroll.setMinSize(rootSz);
+        
+        /*
+        sz = _keyManagementGroup.getClientArea();
+        groupSz = _userGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        rootSz = _root.computeSize(groupSz.x, SWT.DEFAULT);
+        parentSz = _parent.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        shellSz = _root.getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        groupCurSz = _userGroup.getSize();
+        rootCurSz = _root.getSize();
+        parentCurSz = _parent.getSize();
+        shellCurSz = _root.getShell().getSize();
+        _browser.getUI().debugMessage("after computed group size: " + groupSz + " rootSz: " + rootSz + " parentSz: " + parentSz + " shellSz: " + shellSz);
+        _browser.getUI().debugMessage("after current group size: " + groupCurSz + " rootSz: " + rootCurSz + " parentSz: " + parentCurSz + " shellSz: " + shellCurSz);
+        _browser.getUI().debugMessage("after client area: " + sz);
+         */
     }
 
     private static final String T_NAME = "syndie.gui.viewforum.name";
@@ -740,7 +1107,6 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_REFERENCES = "syndie.gui.viewforum.references";
     private static final String T_REFERENCES_ADD = "syndie.gui.viewforum.references.add";
     private static final String T_REFERENCES_EDIT = "syndie.gui.viewforum.references.edit";
-    private static final String T_REFERENCES_DELETE = "syndie.gui.viewforum.references.delete";
     private static final String T_USERS = "syndie.gui.viewforum.users";
     private static final String T_PUBARCHIVE = "syndie.gui.viewforum.pubarchive";
     private static final String T_PRIVARCHIVE = "syndie.gui.viewforum.privarchive";
@@ -762,40 +1128,42 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_AUTH_PUBLIC = "syndie.gui.viewforum.auth.public";
     private static final String T_AUTH_PUBREPLY = "syndie.gui.viewforum.auth.pubreply";
     private static final String T_AUTH_AUTH = "syndie.gui.viewforum.auth.auth";
-        
+    
+    private static final String T_AVATAR_OTHER = "syndie.gui.viewforum.avatar.other";
+
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
-        _avatarSelect.setText(registry.getText(T_AVATAR_SELECT, "Select..."));
+        if (_avatarSelect != null)
+            _avatarSelect.setText(registry.getText(T_AVATAR_SELECT, "Select..."));
         _authorizationLabel.setText(registry.getText(T_AUTH, "Authorization:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
         _referencesLabel.setText(registry.getText(T_REFERENCES, "References:"));
-        _referencesAdd.setText(registry.getText(T_REFERENCES_ADD, "Add"));
-        _referencesEdit.setText(registry.getText(T_REFERENCES_EDIT, "Edit"));
-        _referencesDelete.setText(registry.getText(T_REFERENCES_DELETE, "Delete"));
         _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
         _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertized archives:"));
-        _save.setText(registry.getText(T_SAVE, "Save changes"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
-        _keyManagementGroup.setText(registry.getText(T_KEYMGMT, "Advanced: forum key management:"));
-        _keyManagementOpen.setText(registry.getText(T_KEYMGMT_OPEN, "Open access"));
-        _keyManagementOpenInfo.setText(registry.getText(T_KEYMGMT_OPEN_INFO, "This creates a new key for reading messages and publicizes it so that anyone can read with it"));
-        _keyManagementKeep.setText(registry.getText(T_KEYMGMT_KEEP, "Keep existing keys"));
-        _keyManagementKeepInfo.setText(registry.getText(T_KEYMGMT_KEEP_INFO, "This uses existing keys, publicizing them if they used to be public.  If the keys were passphrase protected before however, new users will not be able to enter the passphrase and gain access to these existing keys.  To do so, require a passphrase again here as well."));
-        _keyManagementRotate.setText(registry.getText(T_KEYMGMT_ROTATE, "Rotate keys for authorized readers"));
-        _keyManagementRotateInfo.setText(registry.getText(T_KEYMGMT_ROTATE_INFO, "This creates a new key, encrypted so that only already authorized readers can access the new key"));
-        _keyManagementReset.setText(registry.getText(T_KEYMGMT_RESET, "Reset all keys"));
-        _keyManagementResetInfo.setText(registry.getText(T_KEYMGMT_RESET_INFO, "This creates a new key encrypted with another new key.  The key used can either be distributed to authorized readers manually (with links in private messages, keyfiles, etc) or shared in a passphrase encrypted post."));
-        _keyManagementPBE.setText(registry.getText(T_KEYMGMT_PBE, "Require a passphrase to access the keys"));
-        _keyManagementPBEInfo.setText(registry.getText(T_KEYMGMT_PBE_INFO, "If a passphrase is required, even already authorized users will need to know the passphrase, so consider posting that prior to a key rotation."));
-        _keyManagementNewReply.setText(registry.getText(T_KEYMGMT_NEWREPLY, "Create a new forum reply key"));
-
-        if (_archiveAdd != null)
+        if (_editable) {
+            _save.setText(registry.getText(T_SAVE, "Save changes"));
+            _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
+            _keyManagementGroup.setText(registry.getText(T_KEYMGMT, "Advanced: forum key management:"));
+            _keyManagementOpen.setText(registry.getText(T_KEYMGMT_OPEN, "Open access"));
+            _keyManagementOpenInfo.setText(registry.getText(T_KEYMGMT_OPEN_INFO, "This creates a new key for reading messages and publicizes it so that anyone can read with it"));
+            _keyManagementKeep.setText(registry.getText(T_KEYMGMT_KEEP, "Keep existing keys"));
+            _keyManagementKeepInfo.setText(registry.getText(T_KEYMGMT_KEEP_INFO, "This uses existing keys, publicizing them if they used to be public.  If the keys were passphrase protected before however, new users will not be able to enter the passphrase and gain access to these existing keys.  To do so, require a passphrase again here as well."));
+            _keyManagementRotate.setText(registry.getText(T_KEYMGMT_ROTATE, "Rotate keys for authorized readers"));
+            _keyManagementRotateInfo.setText(registry.getText(T_KEYMGMT_ROTATE_INFO, "This creates a new key, encrypted so that only already authorized readers can access the new key"));
+            _keyManagementReset.setText(registry.getText(T_KEYMGMT_RESET, "Reset all keys"));
+            _keyManagementResetInfo.setText(registry.getText(T_KEYMGMT_RESET_INFO, "This creates a new key encrypted with another new key.  The key used can either be distributed to authorized readers manually (with links in private messages, keyfiles, etc) or shared in a passphrase encrypted post."));
+            _keyManagementPBE.setText(registry.getText(T_KEYMGMT_PBE, "Require a passphrase to access the keys"));
+            _keyManagementPBEInfo.setText(registry.getText(T_KEYMGMT_PBE_INFO, "If a passphrase is required, even already authorized users will need to know the passphrase, so consider posting that prior to a key rotation."));
+            _keyManagementNewReply.setText(registry.getText(T_KEYMGMT_NEWREPLY, "Create a new forum reply key"));
+            
             _archiveAdd.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
-        if (_userAdd != null)
             _userAdd.setText(_browser.getTranslationRegistry().getText(T_USER_ADD, "Add"));
-        
+            
+            _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
+        }
+
         int auth = -1;
         if (_authorization.getItemCount() > 0)
             auth = _authorization.getSelectionIndex();

@@ -79,8 +79,11 @@ abstract class BrowserTab implements Themeable {
                 }
             }
         } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
-            return new ManageForumTab(browser, uri);
+            return new ViewForumTab(browser, uri);
+            //return new ManageForumTab(browser, uri);
         } else if (TYPE_META.equalsIgnoreCase(uri.getType())) {
+            return new ViewForumTab(browser, uri);
+            /*
             Hash forum = uri.getHash("channel");
             if (forum == null)
                 forum = uri.getScope();
@@ -91,6 +94,7 @@ abstract class BrowserTab implements Themeable {
                     return new ManageForumTab(browser, uri, true);
             }
             return new ManageForumTab(browser, uri, false);
+             */
         } else if (TYPE_TEXTUI.equals(uri.getType())) {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {

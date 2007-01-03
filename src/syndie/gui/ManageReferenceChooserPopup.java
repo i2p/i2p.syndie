@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -24,10 +25,15 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
     private Shell _shell;
     private ManageReferenceChooser _refs;
     private Button _close;
+    private boolean _editable;
+    private List _closeListeners;
     
-    public ManageReferenceChooserPopup(BrowserControl browser, Shell parentShell) {
+    public ManageReferenceChooserPopup(BrowserControl browser, Shell parentShell) { this(browser, parentShell, false); }
+    public ManageReferenceChooserPopup(BrowserControl browser, Shell parentShell, boolean editable) {
         _browser = browser;
         _parentShell = parentShell;
+        _editable = editable;
+        _closeListeners = new ArrayList();
         initComponents();
     }
     
@@ -36,17 +42,27 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         //_shell.pack(true); 
         _shell.open();
     }
-    public void hide() { _shell.setVisible(false); }
+    public void hide() { 
+        _shell.setVisible(false);
+        if (_closeListeners.size() > 0) {
+            List refs = _refs.getReferenceNodes();
+            for (int i = 0; i < _closeListeners.size(); i++)
+                ((CloseListener)_closeListeners.get(i)).closed(refs);
+        }
+    }
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
         _refs.dispose();
     }
     
+    public interface CloseListener { public void closed(List refRoots); }
+    public void addCloseListener(CloseListener lsnr) { _closeListeners.add(lsnr); }
+    
     private void initComponents() {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new GridLayout(1, true));
-        _refs = new ManageReferenceChooser(_shell, _browser, false);
+        _refs = new ManageReferenceChooser(_shell, _browser, _editable);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
         //gd.widthHint = 600;
         //gd.heightHint = 300;

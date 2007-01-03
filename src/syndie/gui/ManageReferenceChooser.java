@@ -499,7 +499,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     }
     
     public void setReferences(List refs) {
-        _browser.getUI().debugMessage("setting refs:\n\n\n" + refs + "\n\n\n");
+        _browser.getUI().debugMessage("setting refs:\n" + refs);
         _tree.setRedraw(false);
         _tree.removeAll();
         _refs.clear();

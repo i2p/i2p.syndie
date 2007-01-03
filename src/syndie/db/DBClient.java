@@ -2243,6 +2243,34 @@ public class DBClient {
         }   
     }
     
+    private static final String SQL_GET_CHANNEL_IDENT_KEY = "SELECT identKey FROM channel WHERE channelHash = ?";
+    public SigningPublicKey getChannelIdentKey(Hash scope) {
+        if (scope == null) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_IDENT_KEY);
+            stmt.setBytes(1, scope.getData());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                if ( (data != null) && (data.length == SigningPublicKey.KEYSIZE_BYTES) )
+                    return new SigningPublicKey(data);
+                else
+                    return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel ident key", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_IMPORT_DATE = "SELECT importDate FROM channel WHERE channelId = ?";
     /** when we imported the scope, or -1 if never */
     public long getChannelImportDate(Hash scope) {        
