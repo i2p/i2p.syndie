@@ -1,6 +1,5 @@
 package syndie.gui;
 
-import javax.naming.ldap.Rdn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.ShellEvent;

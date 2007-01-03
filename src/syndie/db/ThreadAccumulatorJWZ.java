@@ -688,7 +688,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 nodeIsAuthorized = true;
             }
             if (!nodeIsAuthorized) {
-                _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI().toString() + " parentAuth?" + parentIsAuthorized);
+                _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI() + " parentAuth?" + parentIsAuthorized);
                 _ui.debugMessage("parent: " + node.getParent());                
                 node.setIsDummy(true);
             }
@@ -772,7 +772,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterKeyword((ThreadReferenceNode)node.getChild(i));
             rv = rv && childIsEmpty;
         }
-        _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI().toString());
+        _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
         return rv;
     }
     

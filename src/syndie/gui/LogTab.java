@@ -59,7 +59,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     
     private List _pendingMessages;
     
-    private static int MAX_CHARS = 10000*120;
+    private static int MAX_CHARS = 1000*120;
     
     public LogTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
@@ -233,7 +233,9 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     }
     private void redrawOut() {
         // add some newlines so when we scroll, we go to the beginning of a line
-        final String str = _outBuf.toString() + "\n\n";
+        _outBuf.append("\n\n");
+        final String str = _outBuf.toString();
+        _outBuf.setLength(str.length()-2);
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;

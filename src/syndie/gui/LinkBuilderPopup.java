@@ -674,6 +674,15 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     public SyndieURI getURI() { return _selectedURI; }
 
+    public void setShowText(boolean show) {
+        if (!show) {
+            _text.setVisible(false);
+            ((GridData)_text.getLayoutData()).exclude = true;
+            _textLabel.setVisible(false);
+            ((GridData)_textLabel.getLayoutData()).exclude = true;
+        }
+    }
+    
     /** limit what type of link can be built */
     public void limitOptions(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
         _fieldsLimited = true;
