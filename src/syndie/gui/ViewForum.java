@@ -68,7 +68,10 @@ class ViewForum implements Translatable, Themeable {
     private Button _referencesEdit;
     private Button _referencesDelete;
     private Group _userGroup;
-    private Composite _userButtons;
+    private Table _users;
+    private TableColumn _userName;
+    private TableColumn _userPriv;
+    private Map _userItemToHash;
     private Button _userAdd;
     private Group _archiveGroup;
     private Table _archives;
@@ -108,6 +111,7 @@ class ViewForum implements Translatable, Themeable {
         _scope = null;
         _scopeId = -1;
         _archiveItemToURI = new HashMap();
+        _userItemToHash = new HashMap();
         Hash scope = uri.getScope();
         if (scope != null) {
             List keys = browser.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
@@ -199,14 +203,78 @@ class ViewForum implements Translatable, Themeable {
         _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
         _userGroup.setLayout(new GridLayout(2, false));
-        _userButtons = new Composite(_userGroup, SWT.NONE);
-        _userButtons.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _userButtons.setLayoutData(new GridData(GridData.BEGINNING, GridData.BEGINNING, false, false));
         
+        _users = new Table(_userGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
+        _users.setHeaderVisible(false);
+        _users.setLinesVisible(true);
+        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
+        gd.heightHint = 50;
+        _users.setLayoutData(gd);
+        
+        _userName = new TableColumn(_users, SWT.LEFT);
+        _userPriv = new TableColumn(_users, SWT.RIGHT);
+        
+        final Menu userMenu = new Menu(_users);
+        _users.setMenu(userMenu);
+        MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
+        viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
+        viewForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
+            private void viewUser() {
+                TableItem items[] = _users.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    Hash scope = (Hash)_userItemToHash.get(items[i]);
+                    _browser.view(SyndieURI.createScope(scope));
+                }
+            }
+        });
+        MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
+        viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum metadata"));
+        viewMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
+            private void viewMeta() {
+                TableItem items[] = _users.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    Hash scope = (Hash)_userItemToHash.get(items[i]);
+                    _browser.view(_browser.createMetaURI(scope));
+                }
+            }
+        });
+
         if (_editable) {
-            _userAdd  = new Button(_userGroup, SWT.PUSH);
+            final MenuItem manager = new MenuItem(userMenu, SWT.PUSH);
+            manager.setText(_browser.getTranslationRegistry().getText(T_USER_MANAGE, "Toggle manager/poster"));
+            manager.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent evt) { toggleManager(); }
+                public void widgetSelected(SelectionEvent evt) { toggleManager(); }
+                private void toggleManager() {
+                    TableItem items[] = _users.getSelection();
+                    for (int i = 0; i < items.length; i++) {
+                        Hash scope = (Hash)_userItemToHash.get(items[i]);
+                        toggleUserManagement(scope);
+                    }
+                }
+            });
+            
+            MenuItem delete = new MenuItem(userMenu, SWT.PUSH);
+            delete.setText(_browser.getTranslationRegistry().getText(T_USER_DELETE, "Delete"));
+            delete.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
+                private void delete() {
+                    TableItem items[] = _users.getSelection();
+                    for (int i = 0; i < items.length; i++) {
+                        Hash scope = (Hash)_userItemToHash.get(items[i]);
+                        deleteUser(scope);
+                    }
+                }
+            });
+            
+            _userAdd = new Button(_userGroup, SWT.PUSH);
             _userAdd.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
-            _userAdd.setLayoutData(new GridData(GridData.END, GridData.FILL, true, false));
+            _userAdd.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
             _userAdd.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
@@ -215,15 +283,17 @@ class ViewForum implements Translatable, Themeable {
         
         _archiveGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
-        _archiveGroup.setLayout(new GridLayout(1, true));
+        _archiveGroup.setLayout(new GridLayout(2, false));
         
         _archives = new Table(_archiveGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
         _archives.setLinesVisible(true);
         _archives.setHeaderVisible(false);
-        _archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
+        gd.heightHint = 50;
+        _archives.setLayoutData(gd);
         
         _archiveURL = new TableColumn(_archives, SWT.LEFT);
-        _archiveIsPub = new TableColumn(_archives, SWT.CENTER);
+        _archiveIsPub = new TableColumn(_archives, SWT.RIGHT);
 
         final Menu archiveMenu = new Menu(_archives);
         _archives.setMenu(archiveMenu);
@@ -293,7 +363,7 @@ class ViewForum implements Translatable, Themeable {
         if (_editable) {
             _archiveAdd = new Button(_archiveGroup, SWT.PUSH);
             _archiveAdd.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
-            _archiveAdd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _archiveAdd.setLayoutData(new GridData(GridData.BEGINNING, GridData.BEGINNING, false, false));
             _archiveAdd.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { addArchive(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { addArchive(); }
@@ -307,6 +377,11 @@ class ViewForum implements Translatable, Themeable {
         _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
         _save = new Button(_actions, SWT.PUSH);
         _cancel = new Button(_actions, SWT.PUSH);
+        
+        if (!_editable) {
+            _actions.setVisible(false);
+            ((GridData)_actions.getLayoutData()).exclude = true;
+        }
         
         _keyManagementGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _keyManagementGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -545,9 +620,9 @@ class ViewForum implements Translatable, Themeable {
     }
     
     private void redrawUsers() {
-        _userButtons.setRedraw(false);
-        Control children[] = _userButtons.getChildren();
-        for (int i = 0; i < children.length; i++) children[i].dispose();
+        _users.setRedraw(false);
+        _users.removeAll();
+        _userItemToHash.clear();
         
         List all = new ArrayList();
         all.addAll(_managerHashes);
@@ -557,72 +632,32 @@ class ViewForum implements Translatable, Themeable {
             final Hash scope = (Hash)all.get(i);
             String name = _browser.getClient().getChannelName(scope);
             
-            Button b = new Button(_userButtons, SWT.PUSH);
+            TableItem item = new TableItem(_users, SWT.NONE);
             if (name != null)
-                b.setText(scope.toBase64().substring(0,6) + ": " + name);
+                item.setText(0, scope.toBase64().substring(0,6) + ": " + name);
             else
-                b.setText(scope.toBase64().substring(0,6));
-            b.setFont(_browser.getThemeRegistry().getTheme().DEFAULT_FONT);
-            final Menu m = new Menu(b);
-            b.setMenu(m);
-            b.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { m.setVisible(true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { m.setVisible(true); }
-            });
-            MenuItem viewForum = new MenuItem(m, SWT.PUSH);
-            viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
-            viewForum.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createScope(scope));
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createScope(scope));
-                }
-            });
-            MenuItem viewMeta = new MenuItem(m, SWT.PUSH);
-            viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum metadata"));
-            viewMeta.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createMetaURI(scope));
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createMetaURI(scope));
-                }
-            });
-            final MenuItem isManager = new MenuItem(m, SWT.CHECK);
-            isManager.setText(_browser.getTranslationRegistry().getText(T_USER_MANAGE, "Can manage the forum?"));
-            isManager.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent evt) { 
-                    if (!_editable) 
-                        isManager.setSelection(!isManager.getSelection());
-                    else
-                        toggleUserManagement(scope); 
-                }
-                public void widgetSelected(SelectionEvent evt) { 
-                    if (!_editable) 
-                        isManager.setSelection(!isManager.getSelection());
-                    else
-                        toggleUserManagement(scope); 
-                }
-            });
-            isManager.setSelection(_managerHashes.contains(scope));
-            if (_editable) {
-                MenuItem delete = new MenuItem(m, SWT.PUSH);
-                delete.setText(_browser.getTranslationRegistry().getText(T_USER_DELETE, "Delete"));
-                delete.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { deleteUser(scope); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { deleteUser(scope); }
-                });
-            }
+                item.setText(0, scope.toBase64().substring(0,6));
+            
+            if (_managerHashes.contains(scope))
+                item.setText(1, _browser.getTranslationRegistry().getText(T_USER_PRIV_MANAGE, "Manager"));
+            else
+                item.setText(1, _browser.getTranslationRegistry().getText(T_USER_PRIV_POST, "Authorized poster"));
+            
+            _userItemToHash.put(item, scope);
         }
         
         if ( (all.size() <= 0) && (!_editable) ) {
             _userGroup.setVisible(false);
             ((GridData)_userGroup.getLayoutData()).exclude = true;
         }
+        
+        _userName.pack();
+        _userPriv.pack();
     
-        _userButtons.setRedraw(true);
+        _users.setRedraw(true);
     }
+    private static final String T_USER_PRIV_MANAGE = "syndie.gui.viewforum.users.priv.manage";
+    private static final String T_USER_PRIV_POST = "syndie.gui.viewforum.users.priv.post";
     private static final String T_USER_ADD = "syndie.gui.viewforum.user.add";
     private static final String T_USER_DELETE = "syndie.gui.viewforum.user.delete";
     private static final String T_USER_MANAGE = "syndie.gui.viewforum.user.manage";
@@ -678,6 +713,8 @@ class ViewForum implements Translatable, Themeable {
         _keyManagementReset.setFont(theme.DEFAULT_FONT);
         _keyManagementPBE.setFont(theme.DEFAULT_FONT);
         _keyManagementNewReply.setFont(theme.DEFAULT_FONT);
+        _users.setFont(theme.TABLE_FONT);
+        _archives.setFont(theme.TABLE_FONT);
         
         _avatarSelect.setFont(theme.BUTTON_FONT);
         _referencesAdd.setFont(theme.BUTTON_FONT);
