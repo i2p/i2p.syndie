@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -86,6 +87,12 @@ public class BugReport implements Themeable, Translatable {
     private ArrayList _attachmentFiles;
     private ArrayList _targetChans;
     private ArrayList _signAsChans;
+    
+    /** 
+     * if the user knows this forum (and its one they can post to), it'll be their default 
+     * target (which is good, since this is the standard bug report forum)
+     */
+    private static final String STANDARD_BUGREPORT_FORUM = "eu61~moznLTNsOizxDjAsJpxBIm1WC1s4b1hWDy8gYQ=";
     
     public BugReport(BrowserControl browser, Composite parent, SyndieURI uri) {
         _browser = browser;
@@ -509,7 +516,11 @@ public class BugReport implements Themeable, Translatable {
         // todo: enable this (need to modify MessageGen to create authorized unauthenticated posts)
         // _signAs.add(_browser.getTranslationRegistry().getText(T_SIGN_AS_ANON, "Anonymous"));
         
-        _target.select(0);
+        int idx = _targetChans.indexOf(new Hash(Base64.decode(STANDARD_BUGREPORT_FORUM)));
+        if (idx >= 0)
+            _target.select(idx);
+        else
+            _target.select(0);
         targetSelected();
         _signAs.select(0);
     }

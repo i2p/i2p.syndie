@@ -101,6 +101,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     
     public void refreshHighlights() {
         _tree.setRedraw(false);
+        // todo: make this keep track of expanded entries, and reexpand them on refresh
         updatePrivateMessages();
         updateWatchedForums();
         updateArchives();

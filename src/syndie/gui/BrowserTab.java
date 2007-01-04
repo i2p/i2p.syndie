@@ -220,6 +220,7 @@ abstract class BrowserTab implements Themeable {
         if (uri == null) return false;
         return getURI().equals(uri);
     }
+    public void resized() {}
     
     public void show(SyndieURI uri) {}
     

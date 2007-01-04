@@ -268,8 +268,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent evt) { evt.doit = false; exit(); }
             public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) { resized(); }
+            public void shellIconified(ShellEvent shellEvent) { resized(); }
+        });
+        _shell.addControlListener(new ControlListener() {
+            public void controlMoved(ControlEvent controlEvent) {}
+            public void controlResized(ControlEvent controlEvent) { resized(); }
         });
         
         long t9 = System.currentTimeMillis();
@@ -297,6 +301,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                            (t4-t3)+"/"+(t5-t4)+"/"+(t6-t5)+"/"+(t7-t6)+"/"+(t8-t7)+"/"+(t9-t8)+"/"+
                            (t10-t9)+"/"+(t11-t10)+"/"+(t12-t11)+"/"+(t13-t12));
         _shell.setVisible(false);
+    }
+    
+    private void resized() {
+        for (Iterator iter = _openTabs.values().iterator(); iter.hasNext(); ) {
+            ((BrowserTab)iter.next()).resized();
+        }
     }
     
     public void setEngine(TextEngine engine) { _engine = engine; }

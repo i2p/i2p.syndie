@@ -36,6 +36,7 @@ public class ViewForumTab extends BrowserTab {
     }
     
     protected boolean allowClose() { return _view.confirmClose(); }
+    public void resized() { _view.resized(); }
     
     public boolean canShow(SyndieURI uri) { 
         if (uri == null) return false;

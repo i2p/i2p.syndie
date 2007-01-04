@@ -962,7 +962,22 @@ public class SyndicationManager {
             Map.Entry entry = (Map.Entry)iter.next();
             String name = (String)entry.getKey();
             String url = (String)entry.getValue();
-            add(name, SyndieURI.createArchive(url, null), null, -1, null, null);
+            String proxyInfo = (String)Constants.DEFAULT_ARCHIVE_PROXIES.get(name);
+            String proxyHost = null;
+            int proxyPort = -1;
+            if (proxyInfo != null) {
+                String str[] = Constants.split(':', proxyInfo);
+                if ( (str != null) && (str.length == 2) ) {
+                    try {
+                        int port = Integer.parseInt(str[1]);
+                        if (port > 0) {
+                            proxyPort = port;
+                            proxyHost = str[0].trim();
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+            }
+            add(name, SyndieURI.createArchive(url, null), proxyHost, proxyPort, null, null);
         }
     }
     

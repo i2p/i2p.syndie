@@ -11,13 +11,14 @@ import java.util.Set;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -36,6 +37,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -56,7 +58,6 @@ class ViewForum implements Translatable, Themeable {
     private Hash _scope;
     private long _scopeId;
     
-    private ScrolledComposite _scroll;
     private Composite _root;
     private ImageCanvas _avatar;
     private Image _avatarImgOrig;
@@ -87,6 +88,7 @@ class ViewForum implements Translatable, Themeable {
     private TableColumn _userPriv;
     private Map _userItemToHash;
     private Button _userAdd;
+    private Button _keyManagementAdvanced;
     private Group _archiveGroup;
     private Table _archives;
     private TableColumn _archiveURL;
@@ -96,7 +98,7 @@ class ViewForum implements Translatable, Themeable {
     private Composite _actions;
     private Button _save;
     private Button _cancel;
-    private Group _keyManagementGroup;
+    private Shell _keyManagementShell;
     private Button _keyManagementOpen;
     private Label _keyManagementOpenInfo;
     private Button _keyManagementKeep;
@@ -108,6 +110,7 @@ class ViewForum implements Translatable, Themeable {
     private Button _keyManagementPBE;
     private Label _keyManagementPBEInfo;
     private Button _keyManagementNewReply;
+    private Button _keyManagementOk;
     
     private boolean _editable;
     private boolean _initialized;
@@ -159,22 +162,15 @@ class ViewForum implements Translatable, Themeable {
         return (scope != null) && (_scope != null) && _scope.equals(scope);
     }
     
+    public void resized() {
+        _browser.getUI().debugMessage("resizing forum parent");
+        applyTheme(_browser.getThemeRegistry().getTheme()); 
+        _parent.layout(true, true);
+    }
+    
     private void initComponents() {
-        _scroll = new ScrolledComposite(_parent, SWT.V_SCROLL | SWT.H_SCROLL);
-        _scroll.setAlwaysShowScrollBars(false);
-        _scroll.setExpandHorizontal(true);
-        _scroll.setExpandVertical(true);
-        _root = new Composite(_scroll, SWT.NONE);
+        _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(7, false));
-        _scroll.setContent(_root);
-        
-        _parent.addControlListener(new ControlListener() {
-            public void controlMoved(ControlEvent controlEvent) {}
-            public void controlResized(ControlEvent controlEvent) { 
-                // applyTheme does our scroll resizing
-                applyTheme(_browser.getThemeRegistry().getTheme()); 
-            }
-        });
         
         loadOrigAvatar();
         
@@ -267,14 +263,13 @@ class ViewForum implements Translatable, Themeable {
         });
         
         _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
         _userGroup.setLayout(new GridLayout(2, false));
         
         _users = new Table(_userGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
         _users.setHeaderVisible(false);
         _users.setLinesVisible(true);
-        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
-        gd.heightHint = 50;
+        gd = new GridData(GridData.FILL, GridData.FILL, true, true, 1, 2);
         _users.setLayoutData(gd);
         
         _userName = new TableColumn(_users, SWT.LEFT);
@@ -345,17 +340,30 @@ class ViewForum implements Translatable, Themeable {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
             });
+            
+            _keyManagementAdvanced = new Button(_userGroup, SWT.PUSH);
+            _keyManagementAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.END, false, false));
+            _keyManagementAdvanced.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { showShell(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { showShell(); }
+                private void showShell() {
+                    _keyManagementShell.pack();
+                    Point sz = _keyManagementShell.computeSize(600, SWT.DEFAULT);
+                    //_browser.getUI().debugMessage("packed size: " + sz);
+                    _keyManagementShell.setSize(sz);
+                    _keyManagementShell.open();
+                }
+            });
         }
         
         _archiveGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
         _archiveGroup.setLayout(new GridLayout(2, false));
         
         _archives = new Table(_archiveGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
         _archives.setLinesVisible(true);
         _archives.setHeaderVisible(false);
         gd = new GridData(GridData.FILL, GridData.FILL, true, true);
-        gd.heightHint = 50;
         _archives.setLayoutData(gd);
         
         _archiveURL = new TableColumn(_archives, SWT.LEFT);
@@ -459,53 +467,48 @@ class ViewForum implements Translatable, Themeable {
             ((GridData)_actions.getLayoutData()).exclude = true;
         }
         
-        _keyManagementGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _keyManagementGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
-        RowLayout rl = new RowLayout(SWT.VERTICAL);
-        rl.fill = true;
-        rl.wrap = false;
-        /*
+        _keyManagementShell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(1, true);
-        _keyManagementGroup.setLayout(gl);
-         */
-        _keyManagementGroup.setLayout(rl);
+        _keyManagementShell.setLayout(gl);
+        _keyManagementShell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) {
+                evt.doit = false;
+                _keyManagementShell.setVisible(false);
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
         
-        int width = SWT.DEFAULT; //_parent.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
-        //_browser.getUI().debugMessage("key management width: " + width);
-        
-        _keyManagementOpen = new Button(_keyManagementGroup, SWT.RADIO);
-        //_keyManagementOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementOpen.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementOpenInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        //_keyManagementOpenInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementOpenInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementKeep = new Button(_keyManagementGroup, SWT.RADIO);
-        //_keyManagementKeep.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementKeep.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementKeepInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        //_keyManagementKeepInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementKeepInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementRotate = new Button(_keyManagementGroup, SWT.RADIO);
-        //_keyManagementRotate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementRotate.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementRotateInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        //_keyManagementRotateInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementRotateInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementReset = new Button(_keyManagementGroup, SWT.RADIO);
-        //_keyManagementReset.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementReset.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementResetInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        //_keyManagementResetInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementResetInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementPBE = new Button(_keyManagementGroup, SWT.CHECK);
-        //_keyManagementPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementPBE.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementPBEInfo = new Label(_keyManagementGroup, SWT.WRAP);
-        //_keyManagementPBEInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementPBEInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementNewReply = new Button(_keyManagementGroup, SWT.CHECK);
-        //_keyManagementNewReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementNewReply.setLayoutData(new RowData(width, SWT.DEFAULT));
+        _keyManagementOpen = new Button(_keyManagementShell, SWT.RADIO);
+        _keyManagementOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementOpenInfo = new Label(_keyManagementShell, SWT.WRAP);
+        _keyManagementOpenInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementKeep = new Button(_keyManagementShell, SWT.RADIO);
+        _keyManagementKeep.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementKeepInfo = new Label(_keyManagementShell, SWT.WRAP);
+        _keyManagementKeepInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementRotate = new Button(_keyManagementShell, SWT.RADIO);
+        _keyManagementRotate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementRotateInfo = new Label(_keyManagementShell, SWT.WRAP);
+        _keyManagementRotateInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementReset = new Button(_keyManagementShell, SWT.RADIO);
+        _keyManagementReset.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementResetInfo = new Label(_keyManagementShell, SWT.WRAP);
+        _keyManagementResetInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementPBE = new Button(_keyManagementShell, SWT.CHECK);
+        _keyManagementPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementPBEInfo = new Label(_keyManagementShell, SWT.WRAP);
+        _keyManagementPBEInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementNewReply = new Button(_keyManagementShell, SWT.CHECK);
+        _keyManagementNewReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementOk = new Button(_keyManagementShell, SWT.PUSH);
+        _keyManagementOk.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _keyManagementOk.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _keyManagementShell.setVisible(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _keyManagementShell.setVisible(false); }
+        });
         
         _keyManagementKeep.setSelection(true);
         
@@ -519,12 +522,14 @@ class ViewForum implements Translatable, Themeable {
                     promptForPBE();
             }
         });
-        
-        if (!_editable) {
-            _keyManagementGroup.setVisible(false);
-            ((GridData)_keyManagementGroup.getLayoutData()).exclude = true;
-        }
     
+        _keyManagementOpen.setEnabled(false);
+        _keyManagementKeep.setEnabled(false);
+        _keyManagementRotate.setEnabled(false);
+        _keyManagementReset.setEnabled(false);
+        _keyManagementPBE.setEnabled(false);
+        _keyManagementNewReply.setEnabled(false);
+        
         ChannelInfo info = _browser.getClient().getChannel(_scopeId);
         loadData();
         
@@ -540,6 +545,11 @@ class ViewForum implements Translatable, Themeable {
             else
                 _authorization.select(AUTH_AUTH);
         }
+        
+        // ugly hack
+        //_root.getDisplay().timerExec(100, new Runnable() {
+        //    public void run() { applyTheme(_browser.getThemeRegistry().getTheme()); _parent.layout(true, true); }
+        //});
     }
     
     public void dispose() {
@@ -1016,24 +1026,26 @@ class ViewForum implements Translatable, Themeable {
         _references.setFont(theme.DEFAULT_FONT);
         _userGroup.setFont(theme.DEFAULT_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
-        _save.setFont(theme.BUTTON_FONT);
-        _cancel.setFont(theme.BUTTON_FONT);
-        _keyManagementGroup.setFont(theme.DEFAULT_FONT);
-        _keyManagementOpenInfo.setFont(theme.DEFAULT_FONT);
-        _keyManagementRotateInfo.setFont(theme.DEFAULT_FONT);
-        _keyManagementKeepInfo.setFont(theme.DEFAULT_FONT);
-        _keyManagementResetInfo.setFont(theme.DEFAULT_FONT);
-        _keyManagementPBEInfo.setFont(theme.DEFAULT_FONT);
-        _keyManagementOpen.setFont(theme.DEFAULT_FONT);
-        _keyManagementRotate.setFont(theme.DEFAULT_FONT);
-        _keyManagementKeep.setFont(theme.DEFAULT_FONT);
-        _keyManagementReset.setFont(theme.DEFAULT_FONT);
-        _keyManagementPBE.setFont(theme.DEFAULT_FONT);
-        _keyManagementNewReply.setFont(theme.DEFAULT_FONT);
         _users.setFont(theme.TABLE_FONT);
         _archives.setFont(theme.TABLE_FONT);
         
         if (_editable) {
+            _save.setFont(theme.BUTTON_FONT);
+            _cancel.setFont(theme.BUTTON_FONT);
+            _keyManagementShell.setFont(theme.SHELL_FONT);
+            _keyManagementAdvanced.setFont(theme.BUTTON_FONT);
+            _keyManagementOpenInfo.setFont(theme.DEFAULT_FONT);
+            _keyManagementRotateInfo.setFont(theme.DEFAULT_FONT);
+            _keyManagementKeepInfo.setFont(theme.DEFAULT_FONT);
+            _keyManagementResetInfo.setFont(theme.DEFAULT_FONT);
+            _keyManagementPBEInfo.setFont(theme.DEFAULT_FONT);
+            _keyManagementOpen.setFont(theme.DEFAULT_FONT);
+            _keyManagementRotate.setFont(theme.DEFAULT_FONT);
+            _keyManagementKeep.setFont(theme.DEFAULT_FONT);
+            _keyManagementReset.setFont(theme.DEFAULT_FONT);
+            _keyManagementPBE.setFont(theme.DEFAULT_FONT);
+            _keyManagementNewReply.setFont(theme.DEFAULT_FONT);
+            _keyManagementOk.setFont(theme.BUTTON_FONT);
             _avatarSelect.setFont(theme.BUTTON_FONT);
             _userAdd.setFont(theme.BUTTON_FONT);
             _archiveAdd.setFont(theme.BUTTON_FONT);
@@ -1042,63 +1054,7 @@ class ViewForum implements Translatable, Themeable {
         redrawArchives();
         redrawUsers();
 
-        // this sizing stuff below is a mess.  problem being i'd like the 
-        // keyManagementGroup's elements to be as wide as possible without
-        // requiring a horizontal scrollbar, but the wrapping labels seem to
-        // cause some trouble.  as it stands now, its just inconsistent, but
-        // usually fits the text in there...
-        
-        //_root.layout(true, true);
         _root.pack(true);
-        
-        Rectangle sz = _keyManagementGroup.getClientArea();
-        Point kgSz = _keyManagementGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point groupSz = _userGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point rootSz = _root.computeSize(groupSz.x, SWT.DEFAULT);
-        Point parentSz = _parent.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point shellSz = _root.getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point groupCurSz = _userGroup.getSize();
-        Point rootCurSz = _root.getSize();
-        Point parentCurSz = _parent.getSize();
-        Point shellCurSz = _root.getShell().getSize();
-        //_browser.getUI().debugMessage("computed group size: " + groupSz + " rootSz: " + rootSz + " parentSz: " + parentSz + " shellSz: " + shellSz);
-        //_browser.getUI().debugMessage("current group size: " + groupCurSz + " rootSz: " + rootCurSz + " parentSz: " + parentCurSz + " shellSz: " + shellCurSz);
-        //_browser.getUI().debugMessage("client area: " + sz + " kgSz: " + kgSz);
-        
-        int width = SWT.DEFAULT;
-        if (parentCurSz.x <= 0) // first time
-            width = parentSz.x;
-        else
-            width = sz.width-20; //SWT.DEFAULT; //_parent.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
-        _browser.getUI().debugMessage("key management width: " + width);
-        _keyManagementOpen.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementOpenInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementKeep.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementKeepInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementRotate.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementRotateInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementReset.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementResetInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementPBE.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementPBEInfo.setLayoutData(new RowData(width, SWT.DEFAULT));
-        _keyManagementNewReply.setLayoutData(new RowData(width, SWT.DEFAULT));
-        
-        _scroll.setMinSize(rootSz);
-        
-        /*
-        sz = _keyManagementGroup.getClientArea();
-        groupSz = _userGroup.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        rootSz = _root.computeSize(groupSz.x, SWT.DEFAULT);
-        parentSz = _parent.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        shellSz = _root.getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        groupCurSz = _userGroup.getSize();
-        rootCurSz = _root.getSize();
-        parentCurSz = _parent.getSize();
-        shellCurSz = _root.getShell().getSize();
-        _browser.getUI().debugMessage("after computed group size: " + groupSz + " rootSz: " + rootSz + " parentSz: " + parentSz + " shellSz: " + shellSz);
-        _browser.getUI().debugMessage("after current group size: " + groupCurSz + " rootSz: " + rootCurSz + " parentSz: " + parentCurSz + " shellSz: " + shellCurSz);
-        _browser.getUI().debugMessage("after client area: " + sz);
-         */
     }
 
     private static final String T_NAME = "syndie.gui.viewforum.name";
@@ -1127,6 +1083,8 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_KEYMGMT_PBE = "syndie.gui.viewforum.keymgmt.pbe";
     private static final String T_KEYMGMT_PBE_INFO = "syndie.gui.viewforum.keymgmt.pbe.info";
     private static final String T_KEYMGMT_NEWREPLY = "syndie.gui.viewforum.keymgmt.newreply";
+    private static final String T_KEYMGMT_OK = "syndie.gui.viewforum.keymgmt.ok";
+    private static final String T_KEYMGMT_ADVANCED = "syndie.gui.viewforum.keymgmt.advanced";
 
     private static final String T_AUTH_PUBLIC = "syndie.gui.viewforum.auth.public";
     private static final String T_AUTH_PUBREPLY = "syndie.gui.viewforum.auth.pubreply";
@@ -1148,7 +1106,7 @@ class ViewForum implements Translatable, Themeable {
         if (_editable) {
             _save.setText(registry.getText(T_SAVE, "Save changes"));
             _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
-            _keyManagementGroup.setText(registry.getText(T_KEYMGMT, "Advanced: forum key management:"));
+            _keyManagementShell.setText(registry.getText(T_KEYMGMT, "Forum key management"));
             _keyManagementOpen.setText(registry.getText(T_KEYMGMT_OPEN, "Open access"));
             _keyManagementOpenInfo.setText(registry.getText(T_KEYMGMT_OPEN_INFO, "This creates a new key for reading messages and publicizes it so that anyone can read with it"));
             _keyManagementKeep.setText(registry.getText(T_KEYMGMT_KEEP, "Keep existing keys"));
@@ -1160,9 +1118,11 @@ class ViewForum implements Translatable, Themeable {
             _keyManagementPBE.setText(registry.getText(T_KEYMGMT_PBE, "Require a passphrase to access the keys"));
             _keyManagementPBEInfo.setText(registry.getText(T_KEYMGMT_PBE_INFO, "If a passphrase is required, even already authorized users will need to know the passphrase, so consider posting that prior to a key rotation."));
             _keyManagementNewReply.setText(registry.getText(T_KEYMGMT_NEWREPLY, "Create a new forum reply key"));
+            _keyManagementOk.setText(registry.getText(T_KEYMGMT_OK, "Ok"));
             
             _archiveAdd.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
             _userAdd.setText(_browser.getTranslationRegistry().getText(T_USER_ADD, "Add"));
+            _keyManagementAdvanced.setText(_browser.getTranslationRegistry().getText(T_KEYMGMT_ADVANCED, "Advanced..."));
             
             _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
         }

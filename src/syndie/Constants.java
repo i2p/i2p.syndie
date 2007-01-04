@@ -10,7 +10,15 @@ import java.util.*;
 public class Constants {
     /** name (String) to url (String) for some default archives that can be offered to users when they have none */
     public static final Map DEFAULT_ARCHIVES = new TreeMap();
-    static { DEFAULT_ARCHIVES.put("Standard archive", "http://syndie.i2p.net:8080/"); }
+    /** name (String) to proxy (String of host:port) for the proxies associated with the DEFAULT_ARCHIVES */
+    public static final Map DEFAULT_ARCHIVE_PROXIES = new TreeMap();
+    static { 
+        DEFAULT_ARCHIVES.put("Standard archive (direct)", "http://syndie.i2p.net:8080/"); 
+        DEFAULT_ARCHIVES.put("Standard archive (over I2P)", "http://archive.syndie.i2p/"); // todo: make this the full ?i2paddresshelper
+        DEFAULT_ARCHIVES.put("synar.i2p", "http://synar.i2p/");  // todo: make this the full ?i2paddresshelper
+        DEFAULT_ARCHIVE_PROXIES.put("Standard archive (over I2P)", "localhost:4444");
+        DEFAULT_ARCHIVE_PROXIES.put("synar.i2p", "localhost:4444");
+    }
     
     /** header line in the enclosure before the body specifying the body size */
     public static final String MSG_HEADER_SIZE = "Size";
