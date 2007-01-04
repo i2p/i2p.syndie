@@ -9,7 +9,6 @@ Key:
 - monotone migration
  - on mtn rev push @ mtn.i2p.net, post to syndie-commit
  - publish the mtn web interface, or get syndie up on the mtnview site?
-- bug report wizard
 - remove duplicate nymKeys (eg "Read key 5/89 attempt failed, continuing...")
 - clean up the highlight view (less text-oriented, more graphical)
 - simplify pbe resolution (special link to search:pbePending=true?)
