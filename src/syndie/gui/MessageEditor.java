@@ -793,10 +793,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             try {
                 int priv = Integer.parseInt(privStr);
                 
-                _privPublic.setSelection(false);
-                _privAuthorized.setSelection(false);
-                _privPBE.setSelection(false);
-                _privReply.setSelection(false);
                 switch (priv) {
                     case 0: pickPrivacy(0); break;
                     case 2: pickPrivacy(2); break;
@@ -1004,6 +1000,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
     private void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
         modified();
+        _privPublic.setSelection(false);
+        _privAuthorized.setSelection(false);
+        _privPBE.setSelection(false);
+        _privReply.setSelection(false);
+        
         switch (privacyIndex) {
             case 0: // public 
                 _privacy.select(privacyIndex);

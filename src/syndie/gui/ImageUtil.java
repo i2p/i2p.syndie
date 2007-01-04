@@ -110,10 +110,10 @@ public class ImageUtil {
     public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, 16, 16, false);
     public static final Image ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, 16, 16, false);
 
-    public static final Image ICON_EDITOR_PRIVACY_PUBLIC = resize(ImageUtil.ICON_WARNING, 48, 48, false);
-    public static final Image ICON_EDITOR_PRIVACY_PBE = resize(ImageUtil.ICON_ERROR, 48, 48, false);
-    public static final Image ICON_EDITOR_PRIVACY_AUTHORIZED = resize(ImageUtil.ICON_INFORMATION, 48, 48, false);
-    public static final Image ICON_EDITOR_PRIVACY_REPLY = resize(ImageUtil.ICON_QUESTION, 48, 48, false);
+    public static final Image ICON_EDITOR_PRIVACY_PUBLIC = createImageFromResource("iconPrivPublic.png");
+    public static final Image ICON_EDITOR_PRIVACY_PBE = createImageFromResource("iconPrivPBE.png");
+    public static final Image ICON_EDITOR_PRIVACY_AUTHORIZED = createImageFromResource("iconPrivAuthorized.png");
+    public static final Image ICON_EDITOR_PRIVACY_REPLY = createImageFromResource("iconPrivReply.png");
     public static final Image ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
     public static final Image ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
     

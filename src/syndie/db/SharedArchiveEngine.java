@@ -243,6 +243,9 @@ public class SharedArchiveEngine {
     public List selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy) {
         int totalAllocatedKB = 0;
         List uris = new ArrayList();
+        if (strategy.pullNothing)
+            return uris;
+        
         SharedArchive.Channel channels[] = archive.getChannels();
         for (int i = 0; i < channels.length; i++) {
             Hash scope = new Hash(channels[i].getScope());
@@ -320,6 +323,9 @@ public class SharedArchiveEngine {
         /** SyndieURI of a message to the SyndieURI of a scope it depends on */
         Map dependencies = new HashMap();
         List rv = new ArrayList();
+        if (strategy.sendNothing)
+            return rv;
+        
         if (strategy.sendLocalNewOnly) // local new == messages in our ./outbound/*/ directories
             scheduleNew(client, ui, archive, rv, dependencies, client.getOutboundDir(), strategy);
         else // otherwise, push new (etc) from our ./archive/*/ directories

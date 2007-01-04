@@ -477,11 +477,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     void doPreview(SyndieURI uri, boolean fullscreen) {
         if (!_shouldPreview) return;
         _browser.getUI().debugMessage("previewing " + uri);
-        _tree.select(uri);
         if (fullscreen && uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() != null) )
             _sash.setMaximizedControl(_preview.getControl());
         else
             _sash.setMaximizedControl(null);
+        _tree.select(uri); // do this after the preview pane is shown, so it doesn't hide lower selections
         // dont update the metadata, since a message may be selected that isn't strictly
         // in this forum (eg its in another forum, but uses something in the filtered messages
         // as a parent).  when viewing a forum, the forum metadata at the top stays the same

@@ -180,6 +180,7 @@ public class MessageTree implements Translatable, Themeable {
             SyndieURI cur = (SyndieURI)_itemToURI.get(item);
             if ( (cur != null) && (cur.equals(uri)) ) {
                 _tree.setSelection(item);
+                _tree.showItem(item);
                 //_tree.setTopItem(item);
                 return;
             }
