@@ -1,5 +1,6 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-01-04  1.001a released
     - simplified running a headless archive - see bin/runhttpserv.syndie
     - improved dependency tracking during syndication
     - substantial bugfixes for syndication message selection
