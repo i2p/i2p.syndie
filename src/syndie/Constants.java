@@ -15,7 +15,7 @@ public class Constants {
     static { 
         DEFAULT_ARCHIVES.put("Standard archive (direct)", "http://syndie.i2p.net:8080/"); 
         DEFAULT_ARCHIVES.put("Standard archive (over I2P)", "http://archive.syndie.i2p/"); // todo: make this the full ?i2paddresshelper
-        DEFAULT_ARCHIVES.put("synar.i2p", "http://synar.i2p/");  // todo: make this the full ?i2paddresshelper
+        DEFAULT_ARCHIVES.put("synar.i2p", "http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHfLgQbFOtO-KWt~14IQr36jtXaUKThYU8eISCfnRQ0295GGUGeer1zUldON9Kcvf0I31so70397sGHJHG7TPGlV-mCKdht7TZBW6qK037omn4QBa8wuiA80fDtcpAdG3xKAnhEBO3fH2UEH-4ZFXSP7dRVW5c88zdTq93TMRqgNanC8cWzgoPDaE1lzIydbseeP9449RCDj9XUr16PiBQtuveUJvsZhdajzYrjgRsBPQXBa9k4hvFeVB8VRLnfPaHugd~6ct6iMdxOybJMaBF6NH~NVOwUaOn8uDKgQOzsWaqwUWahizKlmZbC0NtimQdAIa4~pgdq4S8Wz5YWTB3lceUlF-ZAo-F5QSbw4Pjg8iJ0rvapxuGec9i2cwW~qwOjKwbv1z4kZ0niKvUNH9T4WoRUDO2ttu5d4CAAAA");
         DEFAULT_ARCHIVE_PROXIES.put("Standard archive (over I2P)", "localhost:4444");
         DEFAULT_ARCHIVE_PROXIES.put("synar.i2p", "localhost:4444");
     }

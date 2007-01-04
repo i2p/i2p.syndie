@@ -43,6 +43,10 @@ public class ViewForumTab extends BrowserTab {
         Hash scope = uri.getScope();
         if (scope == null)
             scope = uri.getHash("scope");
+        if (uri.getMessageId() != null)
+            return false;
+        if (uri.isSearch())
+            return false;
         return _view.canShow(scope);
     }
 }

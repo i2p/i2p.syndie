@@ -1000,11 +1000,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
     private void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
         modified();
-        _privPublic.setSelection(false);
-        _privAuthorized.setSelection(false);
-        _privPBE.setSelection(false);
-        _privReply.setSelection(false);
-        
         switch (privacyIndex) {
             case 0: // public 
                 _privacy.select(privacyIndex);
@@ -2044,26 +2039,31 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             public void widgetSelected(SelectionEvent selectionEvent) { _privMenu.setVisible(true); }
         });
         
-        _privPublic = new MenuItem(_privMenu, SWT.RADIO);
-        _privAuthorized = new MenuItem(_privMenu, SWT.RADIO);
-        _privPBE = new MenuItem(_privMenu, SWT.RADIO);
-        _privReply = new MenuItem(_privMenu, SWT.RADIO);
+        _privPublic = new MenuItem(_privMenu, SWT.PUSH);
+        _privAuthorized = new MenuItem(_privMenu, SWT.PUSH);
+        _privPBE = new MenuItem(_privMenu, SWT.PUSH);
+        _privReply = new MenuItem(_privMenu, SWT.PUSH);
+        
+        _privPublic.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
+        _privAuthorized.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
+        _privPBE.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE);
+        _privReply.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
         
         _privPublic.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(0); }
-            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(0); }
+            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(0); }
+            public void widgetSelected(SelectionEvent evt) { pickPrivacy(0); }
         });
         _privAuthorized.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(1);}
-            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(1); }
+            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(1);}
+            public void widgetSelected(SelectionEvent evt) { pickPrivacy(1); }
         });
         _privPBE.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(2); }
-            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(2); }
+            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(2); }
+            public void widgetSelected(SelectionEvent evt) { pickPrivacy(2); }
         });
         _privReply.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(3);}
-            public void widgetSelected(SelectionEvent evt) { if (evt.stateMask != 0) pickPrivacy(3); }
+            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(3);}
+            public void widgetSelected(SelectionEvent evt) { pickPrivacy(3); }
         });
         
         _privAuthorized.setSelection(true);
@@ -2431,6 +2431,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _post.setFont(theme.BUTTON_FONT);
         _postpone.setFont(theme.BUTTON_FONT);
         _cancel.setFont(theme.BUTTON_FONT);
+        _privacyLabel.setFont(theme.DEFAULT_FONT);
+        _privacy.setFont(theme.DEFAULT_FONT);
     
         _forumGroup.setFont(theme.DEFAULT_FONT);
         _authorGroup.setFont(theme.DEFAULT_FONT);
@@ -2452,8 +2454,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_TO_LINE = "syndie.gui.messageeditor.toline";
     
     public void translate(TranslationRegistry registry) {
-        _fromLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
-        _toLabel.setText(registry.getText(T_TO_LINE, "Forum:"));
+        _fromLabel.setText(registry.getText(T_FROM_LINE, "Sign as:"));
+        _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
     }
 
     // image popup stuff
