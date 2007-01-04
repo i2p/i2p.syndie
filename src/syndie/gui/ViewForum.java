@@ -135,7 +135,7 @@ class ViewForum implements Translatable, Themeable {
         _userItemToHash = new HashMap();
         Hash scope = uri.getScope();
         if (scope == null)
-            scope = uri.getHash("channel");
+            scope = uri.getHash("scope");
         if (scope != null) {
             List keys = browser.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
             if ( (keys != null) && (keys.size() > 0) )
@@ -155,6 +155,9 @@ class ViewForum implements Translatable, Themeable {
         initComponents();
     }
     public boolean getEditable() { return _editable; }
+    public boolean canShow(Hash scope) {
+        return (scope != null) && (_scope != null) && _scope.equals(scope);
+    }
     
     private void initComponents() {
         _scroll = new ScrolledComposite(_parent, SWT.V_SCROLL | SWT.H_SCROLL);

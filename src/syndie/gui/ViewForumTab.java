@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import net.i2p.data.Hash;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.SWT;
@@ -35,4 +36,12 @@ public class ViewForumTab extends BrowserTab {
     }
     
     protected boolean allowClose() { return _view.confirmClose(); }
+    
+    public boolean canShow(SyndieURI uri) { 
+        if (uri == null) return false;
+        Hash scope = uri.getScope();
+        if (scope == null)
+            scope = uri.getHash("scope");
+        return _view.canShow(scope);
+    }
 }
