@@ -152,6 +152,35 @@ public class ThreadBuilder {
         }
         return rv;
     }
+    
+    static void populateNode(DBClient client, ThreadReferenceNode node, ThreadMsgId tmi) {
+        node.setURI(SyndieURI.createMessage(tmi.scope, tmi.messageId));
+        if ( (tmi.msgId >= 0) && (!tmi.unreadable) ) {
+            node.setIsDummy(false);
+            long authorId = client.getMessageAuthor(tmi.msgId);
+            String subject = client.getMessageSubject(tmi.msgId);
+            long target = client.getMessageTarget(tmi.msgId);
+            String authorName = client.getChannelName(authorId);
+            node.setAuthorId(authorId);
+            node.setSubject(subject);
+            node.setThreadTarget(target);
+
+            //List tags = new ArrayList(); node.getThreadTags(tags);
+            //_ui.debugMessage("buildThread: msg: " + tmi + " authorId: " + authorId + " target: " + target + " authorName: " + authorName);// + " tags: " + tags);
+
+            // to mirror the MessageThreadBuilder, fill the node in per:
+            //
+            // * each node has the author's preferred name stored in node.getName()
+            // * and the message subject in node.getDescription(), with the message URI in
+            // * node.getURI().
+            //
+            node.setName(authorName);
+            node.setDescription(node.getThreadSubject());
+        } else {
+            //_ui.debugMessage("node is a dummy: " + tmi);
+            node.setIsDummy(true);
+        }
+    }
 
     private ThreadReferenceNode containerToRefNode(Container container, ThreadReferenceNode parent) {
         ThreadMsgId tmi = null;
@@ -160,32 +189,7 @@ public class ThreadBuilder {
         ThreadReferenceNode node = new ThreadReferenceNode(tmi);
         
         if (tmi != null) {
-            node.setURI(SyndieURI.createMessage(tmi.scope, tmi.messageId));
-            if ( (tmi.msgId >= 0) && (!tmi.unreadable) ) {
-                node.setIsDummy(false);
-                long authorId = _client.getMessageAuthor(tmi.msgId);
-                String subject = _client.getMessageSubject(tmi.msgId);
-                long target = _client.getMessageTarget(tmi.msgId);
-                String authorName = _client.getChannelName(authorId);
-                node.setAuthorId(authorId);
-                node.setSubject(subject);
-                node.setThreadTarget(target);
-
-                //List tags = new ArrayList(); node.getThreadTags(tags);
-                //_ui.debugMessage("buildThread: msg: " + tmi + " authorId: " + authorId + " target: " + target + " authorName: " + authorName);// + " tags: " + tags);
-
-                // to mirror the MessageThreadBuilder, fill the node in per:
-                //
-                // * each node has the author's preferred name stored in node.getName()
-                // * and the message subject in node.getDescription(), with the message URI in
-                // * node.getURI().
-                //
-                node.setName(authorName);
-                node.setDescription(node.getThreadSubject());
-            } else {
-                //_ui.debugMessage("node is a dummy: " + tmi);
-                node.setIsDummy(true);
-            }
+            populateNode(_client, node, tmi);
         } else {
             node.setIsDummy(true);
             //_ui.debugMessage("tmi is null: " + container);

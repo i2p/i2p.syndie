@@ -559,12 +559,26 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
+        List rv = null;
         _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
-        ThreadBuilder b = new ThreadBuilder(_client, _ui);
-        long before = System.currentTimeMillis();
-        List rv = b.buildThread(matchingThreadMsgIds);
-        long after = System.currentTimeMillis();
-        _ui.debugMessage("build threads took " + (after-before) + " to build: \n" + rv);
+        if (_showThreaded) {
+            ThreadBuilder b = new ThreadBuilder(_client, _ui);
+            long before = System.currentTimeMillis();
+            rv = b.buildThread(matchingThreadMsgIds);
+            long after = System.currentTimeMillis();
+            _ui.debugMessage("build threads took " + (after-before) + " to build: \n" + rv);
+        } else {
+            long before = System.currentTimeMillis();
+            rv = new ArrayList(matchingThreadMsgIds.size());
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId id = (ThreadMsgId)iter.next();
+                ThreadReferenceNode node = new ThreadReferenceNode(id);
+                ThreadBuilder.populateNode(_client, node, id);
+                rv.add(node);
+            }
+            long after = System.currentTimeMillis();
+            _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
+        }
         return (ThreadReferenceNode[])rv.toArray(new ThreadReferenceNode[0]);
     }
     
