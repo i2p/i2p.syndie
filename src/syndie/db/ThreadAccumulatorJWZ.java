@@ -426,24 +426,24 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("threads: " + _roots);
     }
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId, wasAuthorized FROM channelMessage m " +
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.isCancelled = FALSE AND m.readKeyMissing = false " +
                 "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId FROM channelMessage " +
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId, wasAuthorized FROM channelMessage " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE importDate > ? AND messageId > ? " +
                 "AND isCancelled = FALSE AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId, wasAuthorized FROM channelMessage m " +
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId, wasAuthorized FROM channelMessage m " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL";
@@ -481,10 +481,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                             continue;
                         long messageId = rs.getLong(3);
                         if (rs.wasNull()) continue;
+                        Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
+                        if (rs.wasNull()) wasAuth = null;
                         
                         ThreadMsgId tmi = new ThreadMsgId(msgId);
                         tmi.scope = new Hash(scope);
                         tmi.messageId = messageId;
+                        tmi.authorized = wasAuth;
                         matchingThreadMsgIds.add(tmi);
                     }
                     rs.close();
@@ -510,10 +513,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if ( (scope == null) || (scope.length != Hash.HASH_LENGTH) ) continue;
                     long messageId = rs.getLong(3);
                     if (rs.wasNull()) continue;
+                    Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
+                    if (rs.wasNull()) wasAuth = null;
 
                     ThreadMsgId tmi = new ThreadMsgId(msgId);
                     tmi.scope = new Hash(scope);
                     tmi.messageId = messageId;
+                    tmi.authorized = wasAuth;
                     matchingThreadMsgIds.add(tmi);
                 }
                 rs.close();
@@ -583,7 +589,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
-            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing " +
+            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized " +
             "FROM messageHierarchy mh " +
             "LEFT OUTER JOIN channel c ON channelHash = referencedChannelHash " +
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
@@ -624,6 +630,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     String pbePrompt = rs.getString(6);
                     boolean replyKeyMissing = rs.getBoolean(7);
                     if (rs.wasNull()) replyKeyMissing = false;
+                    Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
+                    if (rs.wasNull()) wasAuth = null;
                     
                     ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
                     ancestor.messageId = messageId;
@@ -631,8 +639,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         ancestor.scope = new Hash(chanHash);
                     
                     // if we don't have the actual data, just use a dummy
-                    if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) )
+                    if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {
                         ancestor.unreadable = true;
+                        ancestor.authorized = null;
+                    } else {
+                        ancestor.authorized = wasAuth;
+                    }
                     
                     if (!rv.contains(ancestor)) {
                         rv.add(ancestor);
@@ -700,10 +712,23 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 nodeIsAuthorized = true;
             } else if (authorizeReplies && parentIsAuthorized) {
                 nodeIsAuthorized = true;
+            } else if (!nodeIsAuthorized) {
+                //nodeIsAuthorized = _client.getMessageIsAuthorized(node.getM)
+                if ( (node.getMsgId() != null) && (node.getMsgId().authorized != null) )
+                    nodeIsAuthorized = node.getMsgId().authorized.booleanValue();
             }
+            
             if (!nodeIsAuthorized) {
                 _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI() + " parentAuth?" + parentIsAuthorized);
-                _ui.debugMessage("parent: " + node.getParent());                
+                ReferenceNode root = node;
+                List parentURIs = new ArrayList();
+                while (root.getParent() != null) {
+                    root = root.getParent();
+                    if (root.getURI() != null)
+                        parentURIs.add(root.getURI());
+                }
+                _ui.debugMessage("thread: " + root);
+                _ui.debugMessage("ancestor URIs: " + parentURIs);
                 node.setIsDummy(true);
             }
         } else {

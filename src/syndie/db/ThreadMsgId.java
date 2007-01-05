@@ -6,11 +6,13 @@ public final class ThreadMsgId {
     public long messageId;
     public Hash scope;
     public boolean unreadable;
+    public Boolean authorized;
     public ThreadMsgId(long id) {
         msgId = id;
         messageId = -1;
         scope = null;
         unreadable = false;
+        authorized = null;
     }
     public int hashCode() { return messageId >= 0 ? (int)messageId : (int)msgId; }
     public boolean equals(Object obj) throws ClassCastException {
