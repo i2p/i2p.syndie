@@ -192,6 +192,8 @@ public class MessagePreview implements Themeable, Translatable {
                 if (_browser != null)
                     _browser.view(_browser.createPostURI(forum, msg));
             }
+            public void nextPage() {}
+            public void prevPage() {}
         });
         
         _browser.getTranslationRegistry().register(this);

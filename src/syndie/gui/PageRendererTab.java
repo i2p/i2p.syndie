@@ -108,4 +108,6 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
     public void importArchiveKey(PageRenderer renderer, Hash referencedBy, SyndieURI archiveURI, SessionKey key) {}
     public void saveAllImages(PageRenderer renderer, Map images) {}
     public void saveImage(PageRenderer renderer, String suggestedName, Image img) {}
+    public void nextPage() {}
+    public void prevPage() {}
 }

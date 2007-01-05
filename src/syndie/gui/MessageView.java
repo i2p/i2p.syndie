@@ -34,6 +34,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.TabFolder;
+import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -81,11 +83,20 @@ public class MessageView implements Translatable, Themeable {
     private MessageFlagBar _headerFlags;
     private Label _headerTags;
     
-    private PageRenderer _body;
+    /**
+     * bodyContainer either holds the _tabFolder (if there are multiple pages) 
+     * or the one _body (if there is one) 
+     */
+    private Composite _bodyContainer;
+    /** the tabFolder exists if there are multiple pages */
+    private TabFolder _tabFolder;
+    /** the tabs exist only if there are multiple pages */
+    private TabItem _tabs[];
+    /** the tabRoots are the composites for each tab */
+    private Composite _tabRoots[];
+    private PageRenderer _body[];
     
     private Composite _footer;
-    private Label _footerPageLabel;
-    private Combo _footerPage;
     private Label _footerAttachmentLabel;
     private Combo _footerAttachment;
     private Label _footerReferenceLabel;
@@ -131,7 +142,9 @@ public class MessageView implements Translatable, Themeable {
     
     public void dispose() {
         _headerFlags.dispose();
-        _body.dispose();
+        if (_body != null)
+            for (int i = 0; i < _body.length; i++)
+                _body[i].dispose();
         if (_attachmentPopup != null)
             _attachmentPopup.dispose();
         if (_refPopup != null)
@@ -146,8 +159,10 @@ public class MessageView implements Translatable, Themeable {
     
     public void viewPage(int page) {
         _page = page;
-        showPage();
-        _footerPage.select(_page-1);
+        if (_tabFolder != null)
+            _tabFolder.setSelection(_tabs[page-1]);
+        //showPage();
+        //_footerPage.select(_page-1);
     }
 
     private MessageInfo getMessage() {
@@ -270,12 +285,49 @@ public class MessageView implements Translatable, Themeable {
         }
         
         updateFooter(msg);
-        
-        SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), _page);
-        _body.renderPage(new PageRendererSource(_browser), uri);
+
+        if (_body == null)
+            initBody(msg);
+        //SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), _page);
+        //_body.renderPage(new PageRendererSource(_browser), uri);
         _root.layout(true, true);
     }
     private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
+    
+    private void initBody(MessageInfo msg) {
+        if (msg == null) return;
+        int pageCount = msg.getPageCount();
+        if (pageCount == 0) {
+            _body = new PageRenderer[0];
+        } else if (pageCount == 1) {
+            // create the renderer directly in the view, no tabs
+            _body = new PageRenderer[1];
+            _body[0] = new PageRenderer(_bodyContainer, true, _browser);
+            _body[0].setListener(new PageListener());
+            SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
+            _body[0].renderPage(new PageRendererSource(_browser), uri);
+        } else {
+            _tabFolder = new TabFolder(_bodyContainer, SWT.BORDER);
+            _tabs = new TabItem[pageCount];
+            _tabRoots = new Composite[pageCount];
+            _body = new PageRenderer[pageCount];
+            _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
+            PageListener lsnr = new PageListener();
+            for (int i = 0; i < pageCount; i++) {
+                _tabs[i] = new TabItem(_tabFolder, SWT.NONE);
+                _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
+                _tabs[i].setControl(_tabRoots[i]);
+                _tabs[i].setText(_browser.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                _tabRoots[i].setLayout(new FillLayout());
+                _body[i] = new PageRenderer(_tabRoots[i], true, _browser);
+                _body[i].setListener(lsnr);
+                SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
+                _body[i].renderPage(new PageRendererSource(_browser), uri);
+            }
+        }
+        _root.layout(true, true);
+    }
+    private static final String T_PAGE_PREFIX = "syndie.gui.messageview.pageprefix";
     
     private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
     private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";
@@ -339,20 +391,6 @@ public class MessageView implements Translatable, Themeable {
         _footerAttachmentLabel.setEnabled((msg != null) && (_footerAttachment.getItemCount() > 0));
         _footerAttachment.setEnabled((msg != null) && (_footerAttachment.getItemCount() > 0));
         
-        int cur = 0;
-        if (_footerPage.getItemCount() > 0)
-            cur = _footerPage.getSelectionIndex();
-        _footerPage.removeAll();
-        if (msg != null) {
-            int pages = msg.getPageCount();
-            if (pages > 1)
-                footerNecessary = true;
-            for (int i = 0; i < pages; i++)
-                _footerPage.add(Integer.toString(i+1));
-            _footerPage.select(cur);
-        }
-        _footerPageLabel.setEnabled((msg != null) && (_footerPage.getItemCount() > 1));
-        _footerPage.setEnabled((msg != null) && (_footerPage.getItemCount() > 1));
         
         _refs.clear();
         _refRoots.clear();
@@ -619,9 +657,12 @@ public class MessageView implements Translatable, Themeable {
         _headerTags = new Label(_root, SWT.WRAP);
         _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false, 4, 1));
         
-        _body = new PageRenderer(_root, true, _browser);
-        _body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
-        _body.setListener(new PageListener());
+        _bodyContainer = new Composite(_root, SWT.NONE);
+        _bodyContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
+        _bodyContainer.setLayout(new FillLayout());
+        //_body = new PageRenderer(_root, true, _browser);
+        //_body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
+        //_body.setListener(new PageListener());
         
         _footer = new Composite(_root, SWT.NONE);
         _footer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 9, 1));
@@ -630,15 +671,6 @@ public class MessageView implements Translatable, Themeable {
         // label/combo pairs are in composites so the footer's row layout wraps them together
         
         Composite c = new Composite(_footer, SWT.NONE);
-        c.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _footerPageLabel = new Label(c, SWT.NONE);
-        _footerPage = new Combo(c, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _footerPage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pageChosen(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pageChosen(); }
-        });
-        
-        c = new Composite(_footer, SWT.NONE);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         _footerAttachmentLabel = new Label(c, SWT.NONE);
         _footerAttachment = new Combo(c, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
@@ -730,12 +762,6 @@ public class MessageView implements Translatable, Themeable {
         }
     }
 
-    private void pageChosen() {
-        int page = _footerPage.getSelectionIndex()+1;
-        _page = page;
-        SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), page);
-        _body.renderPage(new PageRendererSource(_browser), uri);
-    }
     private void attachmentChosen() {
         int attachment = _footerAttachment.getSelectionIndex()+1;
         SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), attachment);
@@ -812,6 +838,24 @@ public class MessageView implements Translatable, Themeable {
             if (_browser != null)
                 _browser.view(_browser.createPostURI(forum, msg));
         }
+        public void prevPage() {
+            if (_tabFolder != null) {
+                int idx = _tabFolder.getSelectionIndex();
+                if (idx > 0) {
+                    _tabFolder.setSelection(idx-1);
+                    _body[idx-1].getComposite().forceFocus();
+                }
+            }
+        }
+        public void nextPage() {
+            if (_tabFolder != null) {
+                int idx = _tabFolder.getSelectionIndex();
+                if (idx + 1 < _tabs.length) {
+                    _tabFolder.setSelection(idx+1);
+                    _body[idx+1].getComposite().forceFocus();
+                }
+            }
+        }
     }
     
     public void applyTheme(Theme theme) {
@@ -823,11 +867,12 @@ public class MessageView implements Translatable, Themeable {
         _headerDateLabel.setFont(theme.DEFAULT_FONT);
         _headerDate.setFont(theme.DEFAULT_FONT);
         _headerTags.setFont(theme.DEFAULT_FONT);
+
+        if (_tabFolder != null)
+            _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
         
         _footerAttachment.setFont(theme.DEFAULT_FONT);
         _footerAttachmentLabel.setFont(theme.DEFAULT_FONT);
-        _footerPage.setFont(theme.DEFAULT_FONT);
-        _footerPageLabel.setFont(theme.DEFAULT_FONT);
         _footerReference.setFont(theme.DEFAULT_FONT);
         _footerReferenceLabel.setFont(theme.DEFAULT_FONT);
         _footerThread.setFont(theme.DEFAULT_FONT);
@@ -871,7 +916,6 @@ public class MessageView implements Translatable, Themeable {
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
         _headerDateLabel.setText(registry.getText(T_DATE, "Date:"));
         _footerAttachmentLabel.setText(registry.getText(T_ATTACHMENT, "Attachments:"));
-        _footerPageLabel.setText(registry.getText(T_PAGE, "Pages:"));
         _footerReferenceLabel.setText(registry.getText(T_REFERENCES, "References:"));
         _footerThreadLabel.setText(registry.getText(T_THREAD, "Thread:"));
         

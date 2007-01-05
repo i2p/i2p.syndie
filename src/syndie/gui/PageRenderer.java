@@ -255,12 +255,49 @@ public class PageRenderer implements Themeable {
                         }
                         break;
                     case ' ':
-                        _text.invokeAction(ST.PAGE_DOWN);
+                        pageDown(true);
                         break;
                 }
+                _browser.getUI().debugMessage("keyCode: " + evt.keyCode + " char=" + (int)evt.character + " state=" + evt.stateMask + " pgDown=" + SWT.PAGE_DOWN + "/" + ST.PAGE_DOWN + " pgUp=" + SWT.PAGE_UP + "/" + ST.PAGE_UP);
+                if (evt.keyCode == SWT.PAGE_DOWN)
+                    pageDown(false);
+                else if (evt.keyCode == SWT.PAGE_UP)
+                    pageUp(false);
             }
         });
         _browser.getThemeRegistry().register(this);
+    }
+    private void pageDown(boolean fake) {
+        ScrollBar bar = _text.getVerticalBar();
+        if (bar != null) {
+            if (bar.getSelection() + 1 >= bar.getMaximum()) {
+                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+                if (_listener != null)
+                    _listener.nextPage();
+            } else {
+                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+            }
+        } else {
+            _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar);
+        }
+        if (fake)
+            _text.invokeAction(ST.PAGE_DOWN);
+    }
+    private void pageUp(boolean fake) {
+        ScrollBar bar = _text.getVerticalBar();
+        if (bar != null) {
+            if (bar.getSelection() - 1 <= bar.getMinimum()) {
+                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+                if (_listener != null)
+                    _listener.prevPage();
+            } else {
+                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+            }
+        } else {
+            _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar);
+        }
+        if (fake)
+            _text.invokeAction(ST.PAGE_UP);
     }
     public void setLayoutData(Object data) { _text.setLayoutData(data); }
     public void setListener(PageActionListener lsnr) { _listener = lsnr; }
@@ -1681,6 +1718,9 @@ public class PageRenderer implements Themeable {
          * The user wants to post up a reply to the given forum
          */
         public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg);
+        
+        public void nextPage();
+        public void prevPage();
     }
     
     public void applyTheme(Theme theme) {

@@ -136,5 +136,7 @@ public class ViewMessageCommand implements CLI.Command {
         public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
             _ui.statusMessage("reply in " + forum.toBase64() + " regarding " + msg);
         }
+        public void nextPage() {}
+        public void prevPage() {}
     }
 }
