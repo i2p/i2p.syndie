@@ -270,12 +270,13 @@ public class PageRenderer implements Themeable {
     private void pageDown(boolean fake) {
         ScrollBar bar = _text.getVerticalBar();
         if (bar != null) {
-            if (bar.getSelection() + 1 >= bar.getMaximum()) {
-                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+            int incr = bar.getPageIncrement();
+            if (bar.getSelection() + 1 + incr >= bar.getMaximum()) {
+                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
                 if (_listener != null)
                     _listener.nextPage();
             } else {
-                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
             _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar);
@@ -286,12 +287,13 @@ public class PageRenderer implements Themeable {
     private void pageUp(boolean fake) {
         ScrollBar bar = _text.getVerticalBar();
         if (bar != null) {
-            if (bar.getSelection() - 1 <= bar.getMinimum()) {
-                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+            int incr = bar.getPageIncrement();
+            if (bar.getSelection() - 1 - incr <= bar.getMinimum()) {
+                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
                 if (_listener != null)
                     _listener.prevPage();
             } else {
-                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum());
+                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
             _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar);
