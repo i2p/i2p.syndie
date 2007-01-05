@@ -97,6 +97,7 @@ public class MessageTree implements Translatable, Themeable {
     private MenuItem _bookmarkAuthor;
     private MenuItem _markRead;
     private MenuItem _markUnread;
+    private MenuItem _markThreadRead;
     private MenuItem _markAllRead;
     
     private boolean _showAuthor;
@@ -798,6 +799,8 @@ public class MessageTree implements Translatable, Themeable {
                 _itemToMsgId.put(item, new Long(itemNode.getUniqueId()));
                 renderNode(itemNode, item);
                 item.setItemCount(itemNode.getChildCount());
+                if (itemNode.getChildCount() > 0)
+                    item.setExpanded(true);
             }
         });
         
@@ -904,6 +907,11 @@ public class MessageTree implements Translatable, Themeable {
         _markUnread.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markUnread(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markUnread(); }
+        });
+        _markThreadRead = new MenuItem(_menu, SWT.PUSH);
+        _markThreadRead.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { markThreadRead(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { markThreadRead(); }
         });
         _markAllRead = new MenuItem(_menu, SWT.PUSH);
         _markAllRead.addSelectionListener(new SelectionListener() {
@@ -1201,28 +1209,6 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
     
-    private long add(ReferenceNode node, TreeItem parent) {
-        long dbTime = 0;
-        TreeItem item = null;
-        SyndieURI uri = node.getURI();
-        if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) ) {
-            if (parent == null)
-                item = new TreeItem(_tree, SWT.NONE);
-            else
-                item = new TreeItem(parent, SWT.NONE);
-
-            _itemToURI.put(item, uri);
-            
-            dbTime += renderNode(node, item);
-        } else {
-            // reference node does not point to a uri, so don't build a row
-            item = parent;
-        }
-        for (int i = 0; i < node.getChildCount(); i++)
-            dbTime += add(node.getChild(i), item);
-        return dbTime;
-    }
-    
     private long renderNode(ReferenceNode node, TreeItem item) {
         SyndieURI uri = node.getURI();
         String subj = "";
@@ -1351,6 +1337,9 @@ public class MessageTree implements Translatable, Themeable {
             _itemsNewUnread.add(item);
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
         }
+        
+        // note: this will only retheme the ancestors of unread messages /that have been rendered/
+        rethemeAncestorsOfUnread();
         
         setMinWidth(_colSubject, subj, 0, 100);
         setMinWidth(_colAuthor, auth, 0, 50);
@@ -1498,6 +1487,35 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    
+    private void markThreadRead() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                TreeItem root = selected[i];
+                while (root.getParentItem() != null)
+                    root = root.getParentItem();
+                markThreadRead(root);
+            }
+        }
+    }
+    private void markThreadRead(TreeItem item) {
+        Long msgId = (Long)_itemToMsgId.get(item);
+        if (msgId != null) {
+            if (_itemsOld.contains(item)) {
+                // noop
+            } else {
+                _browser.getClient().markMessageRead(msgId.longValue());
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+                _itemsNewUnread.remove(item);
+                _itemsOld.remove(item);
+                _itemsNewRead.add(item);
+            }
+        }
+        TreeItem children[] = item.getItems();
+        for (int i = 0; i < children.length; i++)
+            markThreadRead(children[i]);
+    }
     private void markAllRead() {
         TreeItem selected[] = _tree.getSelection();
         if ( (selected != null) && (selected.length > 0) ) {
@@ -1549,6 +1567,7 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_VIEWAUTHOR = "syndie.gui.messagetree.viewauthor";
     private static final String T_VIEWAUTHORMETA = "syndie.gui.messagetree.viewauthormeta";
     private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
+    private static final String T_MARKTHREADREAD = "syndie.gui.messagetree.markthreadread";
     private static final String T_MARKUNREAD = "syndie.gui.messagetree.markunread";
     private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
     private static final String T_BOOKMARKFORUM = "syndie.gui.messagetree.bookmarkforum";
@@ -1569,6 +1588,7 @@ public class MessageTree implements Translatable, Themeable {
         _bookmarkForum.setText(registry.getText(T_BOOKMARKFORUM, "Bookmark the forum"));
         _bookmarkAuthor.setText(registry.getText(T_BOOKMARKAUTHOR, "Bookmark the author"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
+        _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
     }
@@ -1591,6 +1611,19 @@ public class MessageTree implements Translatable, Themeable {
         for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();
             item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+        }
+        rethemeAncestorsOfUnread();
+    }
+    private void rethemeAncestorsOfUnread() {
+        // now readjust the font of read/old message ancestors of unread messages
+        for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
+            TreeItem item = (TreeItem)iter.next();
+            TreeItem parent = item.getParentItem();
+            while (parent != null) {
+                if (_itemsOld.contains(parent) || (_itemsNewRead.contains(parent)))
+                    parent.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
+                parent = parent.getParentItem();
+            }
         }
     }
 }

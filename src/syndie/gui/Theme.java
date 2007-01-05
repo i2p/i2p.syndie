@@ -28,6 +28,7 @@ public class Theme {
         LOG_FONT = adjustHeight("initlog", SYSFONT, -4, null, null, "Courier");
         MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, -4, null, null); // same as msg_new_read
         MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, -4, null, null);
+        MSG_UNREAD_CHILD_FONT = adjustHeight("initmsgunreadchild", SYSFONT, -4, null, Boolean.TRUE);
         MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -4, Boolean.TRUE, null);
         HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -4, null, Boolean.TRUE);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -4, null, null);
@@ -58,6 +59,8 @@ public class Theme {
     public Font MSG_NEW_READ_FONT;
     /** messages in a message tree that have not yet been read */
     public Font MSG_NEW_UNREAD_FONT;
+    /** messages that have an unread child (or grandchild, etc) but have otherwise been read already */
+    public Font MSG_UNREAD_CHILD_FONT;
     /** row in the highlight tree that has nothing interesting to say */
     public Font HIGHLIGHT_INACTIVE_FONT;
     /** row in the highlight tree that should be brought to attention */
@@ -84,6 +87,7 @@ public class Theme {
         dispose(LOG_FONT);
         dispose(MSG_OLD_FONT);
         dispose(MSG_NEW_READ_FONT);
+        dispose(MSG_UNREAD_CHILD_FONT);
         dispose(MSG_NEW_UNREAD_FONT);
         dispose(HIGHLIGHT_INACTIVE_FONT);
         dispose(HIGHLIGHT_ACTIVE_FONT);
@@ -154,6 +158,7 @@ public class Theme {
         DEFAULT_FONT = increaseFont("default", DEFAULT_FONT);
         MSG_OLD_FONT = increaseFont("msgold", MSG_OLD_FONT);
         MSG_NEW_READ_FONT = increaseFont("msgnewread", MSG_NEW_READ_FONT);
+        MSG_UNREAD_CHILD_FONT = increaseFont("msgunreadchild", MSG_UNREAD_CHILD_FONT);
         MSG_NEW_UNREAD_FONT = increaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
         HIGHLIGHT_ACTIVE_FONT = increaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = increaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
@@ -171,6 +176,7 @@ public class Theme {
         DEFAULT_FONT = decreaseFont("default", DEFAULT_FONT);
         MSG_OLD_FONT = decreaseFont("msgold", MSG_OLD_FONT);
         MSG_NEW_READ_FONT = decreaseFont("msgnewread", MSG_NEW_READ_FONT);
+        MSG_UNREAD_CHILD_FONT = decreaseFont("msgunreadchild", MSG_UNREAD_CHILD_FONT);
         MSG_NEW_UNREAD_FONT = decreaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
         HIGHLIGHT_ACTIVE_FONT = decreaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = decreaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
@@ -191,6 +197,7 @@ public class Theme {
         store(props, LINK_FONT, face, size, "theme.linkfont");
         store(props, MSG_OLD_FONT, face, size, "theme.msgoldfont");
         store(props, MSG_NEW_READ_FONT, face, size, "theme.msgnewreadfont");
+        store(props, MSG_UNREAD_CHILD_FONT, face, size, "theme.msgunreadchildfont");
         store(props, MSG_NEW_UNREAD_FONT, face, size, "theme.msgnewunreadfont");
         store(props, HIGHLIGHT_INACTIVE_FONT, face, size, "theme.highlightinactive");
         store(props, HIGHLIGHT_ACTIVE_FONT, face, size, "theme.highlightactive");
@@ -226,6 +233,7 @@ public class Theme {
         LINK_FONT = load(props, LINK_FONT, "theme.linkfont");
         MSG_OLD_FONT = load(props, MSG_OLD_FONT, "theme.msgoldfont");
         MSG_NEW_READ_FONT = load(props, MSG_NEW_READ_FONT, "theme.msgnewreadfont");
+        MSG_UNREAD_CHILD_FONT = load(props, MSG_UNREAD_CHILD_FONT, "theme.msgunreadchildfont");
         MSG_NEW_UNREAD_FONT = load(props, MSG_NEW_UNREAD_FONT, "theme.msgnewunreadfont");
         HIGHLIGHT_INACTIVE_FONT = load(props, HIGHLIGHT_INACTIVE_FONT, "theme.highlightinactive");
         HIGHLIGHT_ACTIVE_FONT = load(props, HIGHLIGHT_ACTIVE_FONT, "theme.highlightactive");
