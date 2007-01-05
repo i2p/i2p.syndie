@@ -36,6 +36,21 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);
     }
+
+    
+    public boolean canShow(SyndieURI uri) { 
+        if (super.canShow(uri)) return true;
+        if (uri == null) return false;
+        if (uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() != null))
+            return getURI().getScope().equals(uri.getScope()) && (getURI().getMessageId().equals(uri.getMessageId()));
+        return false;
+    }
+    
+    public void show(SyndieURI uri) {
+        if (uri.getPage() != null)
+            _view.viewPage(uri.getPage().intValue());
+    }
+    
     
     public Image getIcon() { return ImageUtil.ICON_TAB_MSG; }
     public String getName() { return _view.getTitle(); }

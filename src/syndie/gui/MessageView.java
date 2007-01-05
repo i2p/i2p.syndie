@@ -143,6 +143,12 @@ public class MessageView implements Translatable, Themeable {
         String rv = _headerSubject.getText();
         return _browser.getTranslationRegistry().getText(T_TITLE_PREFIX, "msg: ") + rv;
     }
+    
+    public void viewPage(int page) {
+        _page = page;
+        showPage();
+        _footerPage.select(_page-1);
+    }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )
@@ -779,7 +785,7 @@ public class MessageView implements Translatable, Themeable {
         }
         public void view(PageRenderer renderer, SyndieURI uri) {
             if (_browser != null)
-                _browser.view(uri);
+                _browser.view(SyndieURI.resolveRelative(_uri, uri));
         }
         public void bookmark(PageRenderer renderer, SyndieURI uri) {
             if (_browser != null)

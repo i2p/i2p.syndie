@@ -169,7 +169,7 @@ public class MessagePreview implements Themeable, Translatable {
             }
             public void view(PageRenderer renderer, SyndieURI uri) {
                 if (_browser != null)
-                    _browser.view(uri);
+                    _browser.view(SyndieURI.resolveRelative(_uri, uri));
             }
             public void bookmark(PageRenderer renderer, SyndieURI uri) {
                 if (_browser != null) _browser.bookmark(uri);

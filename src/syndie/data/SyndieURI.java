@@ -473,6 +473,26 @@ public class SyndieURI {
     public static boolean isSensitiveAttribute(String name) {
         return (name != null) && SENSITIVE_ATTRIBUTES.contains(name);
     }
+
+    /**
+     * the target URI could be a normal URI, or it could be a relative URI scoped
+     * within the given source - for instance, the target may refer to "page 2".
+     * this method returns the absolute SyndieURI to the target (which is just the
+     * target itself, in most situations, except those that are e.g. "page 2")
+     */
+    public static SyndieURI resolveRelative(SyndieURI source, SyndieURI target) {
+       if ( (source != null) && (target != null) && (target.isChannel()) && (target.getScope() == null) ) {
+           if ( (source.getScope() != null) && (source.getMessageId() != null) ) {
+               Long page = target.getPage();
+               if (page != null)
+                   return SyndieURI.createMessage(source.getScope(), source.getMessageId().longValue(), page.intValue());
+               Long attachment = target.getAttachment();
+               if (attachment != null)
+                   return SyndieURI.createAttachment(source.getScope(), source.getMessageId().longValue(), attachment.intValue());
+           }
+       }
+       return target;
+    }
     
     public boolean equals(Object obj) { return (obj != null) && toString().equals(obj.toString()); }
     public int hashCode() { return toString().hashCode(); }
