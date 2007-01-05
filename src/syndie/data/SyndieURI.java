@@ -80,11 +80,17 @@ public class SyndieURI {
         return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
                             null, null, null, null, null, null, null, null, false, false, false, true, false);
     }
-    public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded) {
+    public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded, boolean useImportDate) {
         String scopes[] = null;
         if (channel != null)
             scopes = new String[] { channel.toBase64() };
-        return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
+        Long postDays = null;
+        Long importDays = null;
+        if (useImportDate)
+            importDays = new Long(7);
+        else
+            postDays = new Long(7);
+        return createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
                             null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
     }
     

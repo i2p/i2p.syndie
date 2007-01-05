@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -101,12 +102,21 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     
     public void refreshHighlights() {
         _tree.setRedraw(false);
-        // todo: make this keep track of expanded entries, and reexpand them on refresh
+        boolean pmExpanded = _itemPrivateMessages.getExpanded();
+        boolean archiveExpanded = _itemArchives.getExpanded();
+        boolean newExpanded = _itemNewForums.getExpanded();
+        boolean postExpanded = _itemPostponed.getExpanded();
+        boolean watchExpanded = _itemWatchedForums.getExpanded();
         updatePrivateMessages();
         updateWatchedForums();
         updateArchives();
         updateNewForums();
         updatePostponed();
+        if (pmExpanded) _itemPrivateMessages.setExpanded(true);
+        if (archiveExpanded) _itemArchives.setExpanded(true);
+        if (newExpanded) _itemNewForums.setExpanded(true);
+        if (postExpanded) _itemPostponed.setExpanded(postExpanded);
+        if (watchExpanded) _itemWatchedForums.setExpanded(watchExpanded);
         resizeCols();
         _tree.setRedraw(true);
     }
@@ -183,11 +193,15 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         int totalUnread = 0;
         int activeForums = 0;
         int scopeIndex = 0;
+    
+        boolean useImportDate = MessageTree.shouldUseImportDate(_browser);
+        
         for (int i = 0; i < sortedNames.size(); i++, scopeIndex++) {
             Hash scope = (Hash)_watchedForums.get(scopeIndex);
             String name = (String)sortedNames.get(i);
+            _browser.getUI().debugMessage("Before searching for new messages in " + name);
             ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
-            SyndieURI search = SyndieURI.createSearch(scope, true, false);
+            SyndieURI search = SyndieURI.createSearch(scope, true, true, useImportDate);
             acc.setFilter(search);
             acc.gatherThreads();
             int unread = acc.getThreadCount();
