@@ -423,13 +423,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         /** @param attachmentIndex starts at 1 */
         public byte[] getAttachmentData(int attachmentIndex) { return MessageEditor.this.getAttachmentData(attachmentIndex); }
         public String getSubject() { return _subject.getText(); }
-        public boolean getPrivacyPBE() { return _privPBE.getSelection() && (_passphrase != null) && (_passphrasePrompt != null); }
-        public String getPassphrase() { return _privPBE.getSelection() ? _passphrase : null; }
-        public String getPassphrasePrompt() { return _privPBE.getSelection() ? _passphrasePrompt : null; }
-        public boolean getPrivacyPublic() { return _privPublic.getSelection(); }
+        public boolean getPrivacyPBE() { return (_privacy.getSelectionIndex() == PRIVACY_PBE) && (_passphrase != null) && (_passphrasePrompt != null); }
+        public String getPassphrase() { return (_privacy.getSelectionIndex() == PRIVACY_PBE) ? _passphrase : null; }
+        public String getPassphrasePrompt() { return (_privacy.getSelectionIndex() == PRIVACY_PBE) ? _passphrasePrompt : null; }
+        public boolean getPrivacyPublic() { return _privacy.getSelectionIndex() == PRIVACY_PUBLIC; }
         public String getAvatarUnmodifiedFilename() { return null; }
         public byte[] getAvatarModifiedData() { return null; }
-        public boolean getPrivacyReply() { return _privReply.getSelection(); }
+        public boolean getPrivacyReply() { return _privacy.getSelectionIndex() == PRIVACY_REPLY; }
         public String[] getPublicTags() { return new String[0]; }
         public String[] getPrivateTags() {
             String src = _tag.getText().trim();
@@ -996,6 +996,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_PRIV_AUTHORIZED = "syndie.gui.messageeditor.priv.auth";
     private static final String T_PRIV_PBE = "syndie.gui.messageeditor.priv.pbe";
     private static final String T_PRIV_REPLY = "syndie.gui.messageeditor.priv.reply";
+    
+    private static final int PRIVACY_PUBLIC = 0;
+    private static final int PRIVACY_AUTHORIZED = 1;
+    private static final int PRIVACY_PBE = 2;
+    private static final int PRIVACY_REPLY = 3;
     
     private void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
     private void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
@@ -2481,27 +2486,33 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_LARGE_MSG = "syndie.gui.messageeditor.large.msg";
     private static final String T_LARGE_TITLE = "syndie.gui.messageeditor.large.title";
     
+    private boolean isValidSize(long length) {
+        if (length > Constants.MAX_ATTACHMENT_SIZE) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
+            box.setText(_browser.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
+            box.open();
+            return false;
+        } else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
+            box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
+            int rc = box.open();
+            if (rc != SWT.YES)
+                return false;
+        }
+        return true;
+    }
+    
     private void addAttachment(File file) {
         saveState();
         modified();
         String fname = file.getName();
         String name = Constants.stripFilename(fname, false);
         String type = WebRipRunner.guessContentType(fname);
-        
-        if (file.length() > Constants.MAX_ATTACHMENT_SIZE) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
-            box.setText(_browser.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
-            box.open();
+
+        if (!isValidSize(file.length()))
             return;
-        } else if (file.length() > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
-            box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
-            int rc = box.open();
-            if (rc != SWT.YES)
-                return;
-        }
         
         byte data[] = new byte[(int)file.length()];
         try {
@@ -2519,6 +2530,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         updateToolbar();
     }
     public int addAttachment(String contentType, String name, byte[] data) {
+        if (data == null) return -1;
+        if (!isValidSize(data.length)) return -1;
         saveState();
         modified();
         int rv = -1;

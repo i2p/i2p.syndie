@@ -299,8 +299,10 @@ public class BugReport implements Themeable, Translatable {
                     fis = new FileInputStream(f);
                     int remaining = buf.length;
                     int read = 0;
-                    while ( (read = fis.read(buf, off, remaining)) != -1)
+                    while ( (read = fis.read(buf, off, remaining)) != -1) {
                         off += read;
+                        remaining -= read;
+                    }
                     return buf;
                 } catch (IOException ioe) {
                     _browser.getUI().errorMessage("Error reading attachment", ioe);

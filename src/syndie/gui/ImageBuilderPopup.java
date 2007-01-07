@@ -361,6 +361,7 @@ public class ImageBuilderPopup {
             }
             
             attachment = _page.addAttachment(type, Constants.stripFilename(fname.getName(), false), data);
+            if (attachment < 0) return;
             //System.out.println("Adding image attachment of size " + data.length + " at attachment " + attachment);
         } else if (_choiceAttach.getSelection()) {
             int img = _choiceAttachCombo.getSelectionIndex();

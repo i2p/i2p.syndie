@@ -111,6 +111,11 @@ class SyndicateMenu implements TextEngine.Menu {
      *          [--scope (all|new|meta)]
      */
     private void processGetIndex(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         //_diff = null;
         _syndicator = null; // delete files?
         _baseUrl = opts.getOptValue("archive");
@@ -255,6 +260,11 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processDiff(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         if (_currentIndex == null) {
             ui.errorMessage("No index loaded");
             ui.commandComplete(-1, null);
@@ -334,6 +344,11 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processFetch(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         if (_currentIndex == null) {
             ui.errorMessage("No archive fetched");
             ui.commandComplete(-1, null);
@@ -391,6 +406,11 @@ class SyndicateMenu implements TextEngine.Menu {
     }
     
     private void processNextPBE(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         if (_syndicator == null) {
             ui.errorMessage("No syndication in progress");
             ui.commandComplete(0, null);
@@ -412,18 +432,33 @@ class SyndicateMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     private void processPrevPBE(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         _curPBEIndex -= 10;
         if (_curPBEIndex < 0)
             _curPBEIndex = 0;
         processNextPBE(client, ui, opts);
     }
     private void processResolvePBE(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         int index = (int)opts.getOptLong("index", 0);
         String pass = opts.getOptValue("passphrase");
         _syndicator.importPBE(index, pass);
     }
     
     private void processSchedule(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         String style = opts.getOptValue("put");
         if (style == null) {
             ui.errorMessage("Usage: schedule --put (outbound|outboundmeta|archive|archivemeta) [--deleteOutbound $boolean]");
@@ -443,6 +478,11 @@ class SyndicateMenu implements TextEngine.Menu {
     }
 
     private void processPut(DBClient client, UI ui, Opts opts) {
+        if (true) {
+            ui.errorMessage("Currently disabled in the text interface");
+            ui.commandComplete(-1, null);
+            return;
+        }
         String url = opts.getOptValue("postURL");
         if (url != null)
             _syndicator.setPostURLOverride(url);
