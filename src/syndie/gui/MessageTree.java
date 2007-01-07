@@ -22,6 +22,7 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -105,6 +106,8 @@ public class MessageTree implements Translatable, Themeable {
     private boolean _showDate;
     private boolean _showTags;
     
+    private SyndieURI _highlight;
+    
     /** tags applied to the messages being displayed */
     private Set _tags;
 
@@ -134,6 +137,8 @@ public class MessageTree implements Translatable, Themeable {
     private List _bars;
     private boolean _hideFilter;
     
+    private boolean _filterable;
+    
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
         this(browser, parent, lsnr, true, true, true, true, hideFilter);
@@ -157,6 +162,7 @@ public class MessageTree implements Translatable, Themeable {
         _itemToNode = new HashMap();
         _tags = new HashSet();
         _bars = new ArrayList();
+        _filterable = true;
         initComponents();
     }
     
@@ -175,6 +181,27 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     public void select(SyndieURI uri) {
+        _highlight = uri;
+        renderHighlight();
+        show(uri);
+    }
+    private void renderHighlight() {
+        if (_highlight == null) return;
+        for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
+            TreeItem item = (TreeItem)iter.next();
+            SyndieURI cur = (SyndieURI)_itemToURI.get(item);
+            if ( (cur != null) && (cur.equals(_highlight)) ) {
+                renderHighlight(item);
+                return;
+            }
+        }
+    }
+    private static final Color HIGHLIGHT_COLOR = ColorUtil.getColor("yellow");
+    private void renderHighlight(TreeItem item) {
+        item.setBackground(HIGHLIGHT_COLOR);
+    }
+    
+    private void show(SyndieURI uri) {
         if (uri == null) return;
         for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
             TreeItem item = (TreeItem)iter.next();
@@ -801,6 +828,9 @@ public class MessageTree implements Translatable, Themeable {
                 item.setItemCount(itemNode.getChildCount());
                 if (itemNode.getChildCount() > 0)
                     item.setExpanded(true);
+                if ( (_highlight != null) && (itemNode.getURI() != null) )
+                    if (_highlight.equals(itemNode.getURI()))
+                        renderHighlight(item);
             }
         });
         
@@ -951,6 +981,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private void toggleSort(TreeColumn column) {
+        if (!_filterable) return;
         if (column == _currentSortColumn) {
             _currentSortDirection = (_currentSortDirection == SWT.UP ? SWT.DOWN : SWT.UP);
             _browser.getUI().debugMessage("toggleSort direction on " + column.getText());
@@ -982,6 +1013,8 @@ public class MessageTree implements Translatable, Themeable {
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).dispose();
     }
+    
+    public void setFilterable(boolean filterable) { _filterable = filterable; }
     
     public void setFilter(SyndieURI searchURI) {
         if (searchURI != null)
@@ -1019,6 +1052,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     private transient boolean _filtering;
     public void applyFilter(String filter) {
+        if (!_filterable) return;
         boolean alreadyFiltering = false;
         synchronized (MessageTree.this) {
             if (_filtering)

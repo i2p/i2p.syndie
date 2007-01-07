@@ -45,6 +45,7 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.MessageThreadBuilder;
+import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 
@@ -84,51 +85,32 @@ public class MessageView implements Translatable, Themeable {
     private Label _headerTags;
     
     /**
-     * bodyContainer either holds the _tabFolder (if there are multiple pages) 
-     * or the one _body (if there is one) 
+     * bodyContainer either holds the _tabFolder (if there are multiple pages, refs, attachments,
+     * or threads) or the one _body (otherwise) 
      */
     private Composite _bodyContainer;
-    /** the tabFolder exists if there are multiple pages */
+    /** the tabFolder exists if there are multiple pages, refs, attachments, or threads */
     private TabFolder _tabFolder;
-    /** the tabs exist only if there are multiple pages */
+    /** the tabs exist only if there are multiple pages, refs, attachments, or threads */
     private TabItem _tabs[];
     /** the tabRoots are the composites for each tab */
     private Composite _tabRoots[];
     private PageRenderer _body[];
     
-    private Composite _footer;
-    private Label _footerAttachmentLabel;
-    private Combo _footerAttachment;
-    private Label _footerReferenceLabel;
-    private Combo _footerReference;
-    private Label _footerThreadLabel;
-    private Combo _footerThread;
-
-    private AttachmentPreviewPopup _attachmentPopup;
-    private ManageReferenceChooserPopup _refPopup;
+    private MessageTree _threadTree;
+    private ManageReferenceChooser _refTree;
+    private AttachmentPreview _attachmentPreviews[];
     
     private SyndieURI _uri;
     private int _page;
     private Hash _author;
     private Hash _target;
-    private int _footerThreadCurrentIndex;
-    
-    /** ReferenceNode items for those going into the footerReference combo (depth first traversal of the trees) */
-    private List _refs;
-    /** ReferenceNode items for the roots of those trees */
-    private List _refRoots;
-    /** SyndieURI for each of the _footerThread elements */
-    private List _threadURIs;
     
     public MessageView(BrowserControl browser, Composite parent, SyndieURI uri) {
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
         _uri = uri;
-        _refs = new ArrayList();
-        _refRoots = new ArrayList();
-        _threadURIs = new ArrayList();
-        _footerThreadCurrentIndex = 0;
         Long page = uri.getPage();
         if (page == null)
             _page = 1;
@@ -145,10 +127,10 @@ public class MessageView implements Translatable, Themeable {
         if (_body != null)
             for (int i = 0; i < _body.length; i++)
                 _body[i].dispose();
-        if (_attachmentPopup != null)
-            _attachmentPopup.dispose();
-        if (_refPopup != null)
-            _refPopup.dispose();
+        if (_threadTree != null)
+            _threadTree.dispose();
+        if (_refTree != null)
+            _refTree.dispose();
         _avatar.disposeImage();
     }
     
@@ -284,22 +266,54 @@ public class MessageView implements Translatable, Themeable {
             _target = msg.getTargetChannel();
         }
         
-        updateFooter(msg);
-
         if (_body == null)
             initBody(msg);
+        
+        if (_tabFolder != null) {
+            if (_page > 0) {
+                _tabFolder.setSelection(_tabs[_page-1]);
+            } else {
+                _tabFolder.setSelection(_tabs[0]);
+            }
+        }
         //SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), _page);
         //_body.renderPage(new PageRendererSource(_browser), uri);
         _root.layout(true, true);
     }
     private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
     
+    private int countMessages(List nodes) {
+        NodeCounter counter = new NodeCounter();
+        ReferenceNode.walk(nodes, counter);
+        return counter.getCount();
+    }
+    
+    private static class NodeCounter implements ReferenceNode.Visitor {
+        private int _count = 0;
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            _count++;
+        }
+        public int getCount() { return _count; }
+    }
+    
     private void initBody(MessageInfo msg) {
         if (msg == null) return;
         int pageCount = msg.getPageCount();
-        if (pageCount == 0) {
+        List refs = msg.getReferences();
+        
+        ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
+        List msgs = new ArrayList(1);
+        ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
+        id.messageId = msg.getMessageId();
+        id.scope = msg.getScopeChannel();
+        msgs.add(builder.buildThread(id));
+        int threadSize = countMessages(msgs);
+        _browser.getUI().debugMessage("thread for " + _uri + ":\n" + msgs);
+
+        int attachments = msg.getAttachmentCount();
+        if ( (pageCount == 0) && (attachments == 0) && ( (refs == null) || (refs.size() <= 0) ) && (threadSize <= 1) ) {
             _body = new PageRenderer[0];
-        } else if (pageCount == 1) {
+        } else if ( (pageCount == 1) && (attachments == 0) && ( (refs == null) || (refs.size() <= 0) ) && (threadSize <= 1) ) {
             // create the renderer directly in the view, no tabs
             _body = new PageRenderer[1];
             _body[0] = new PageRenderer(_bodyContainer, true, _browser);
@@ -307,9 +321,13 @@ public class MessageView implements Translatable, Themeable {
             SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
             _body[0].renderPage(new PageRendererSource(_browser), uri);
         } else {
+            int tabs = pageCount + attachments;
+            if ( (refs != null) && (refs.size() > 0) ) tabs++;
+            if (threadSize > 1) tabs++;
+            
             _tabFolder = new TabFolder(_bodyContainer, SWT.BORDER);
-            _tabs = new TabItem[pageCount];
-            _tabRoots = new Composite[pageCount];
+            _tabs = new TabItem[tabs];
+            _tabRoots = new Composite[tabs];
             _body = new PageRenderer[pageCount];
             _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
             PageListener lsnr = new PageListener();
@@ -324,10 +342,56 @@ public class MessageView implements Translatable, Themeable {
                 SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
                 _body[i].renderPage(new PageRendererSource(_browser), uri);
             }
+            int off = pageCount;
+            if (threadSize > 1) {
+                _tabs[off] = new TabItem(_tabFolder, SWT.NONE);
+                _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
+                _tabs[off].setControl(_tabRoots[off]);
+                _tabs[off].setText(_browser.getTranslationRegistry().getText(T_TAB_THREAD, "Thread"));
+                _tabRoots[off].setLayout(new FillLayout());
+                _threadTree = new MessageTree(_browser, _tabRoots[off], new MessageTree.MessageTreeListener() {
+                        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+                            if (toView)
+                                _browser.view(uri);
+                        }
+                        public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
+                }, true);
+                _threadTree.setMessages(msgs);
+                _threadTree.select(_uri);
+                _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+                off++;
+            }
+            if ( (refs != null) && (refs.size() > 0) ) {
+                _tabs[off] = new TabItem(_tabFolder, SWT.NONE);
+                _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
+                _tabs[off].setControl(_tabRoots[off]);
+                _tabs[off].setText(_browser.getTranslationRegistry().getText(T_TAB_REFS, "References"));
+                _tabRoots[off].setLayout(new FillLayout());
+                _refTree = new ManageReferenceChooser(_tabRoots[off], _browser, false);
+                _refTree.setReferences(refs);
+                off++;
+            }
+            if (attachments > 0)
+                _attachmentPreviews = new AttachmentPreview[attachments];
+            for (int i = 0; i < attachments; i++) {
+                _tabs[off+i] = new TabItem(_tabFolder, SWT.NONE);
+                _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
+                _tabs[off+i].setControl(_tabRoots[off+i]);
+                _tabs[off+i].setText(_browser.getTranslationRegistry().getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
+                _tabRoots[off+i].setLayout(new FillLayout());
+                
+                SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), i+1);
+                _attachmentPreviews[i] = new AttachmentPreview(_browser, _tabRoots[off+i]);
+                _attachmentPreviews[i].showURI(uri);
+                off++;
+            }
         }
         _root.layout(true, true);
     }
     private static final String T_PAGE_PREFIX = "syndie.gui.messageview.pageprefix";
+    private static final String T_ATTACH_PREFIX = "syndie.gui.messageview.attachprefix";
+    private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
+    private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
     
     private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
     private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";
@@ -357,177 +421,6 @@ public class MessageView implements Translatable, Themeable {
         });
     }
     
-    private void updateFooter(MessageInfo msg) {
-        _footer.setRedraw(false);
-        boolean footerNecessary = false;
-        _footerAttachment.removeAll();
-        if (msg != null) {
-            int cnt = msg.getAttachmentCount();
-            if (cnt > 0)
-                footerNecessary = true;
-            for (int i = 0; i < cnt; i++) {
-                Properties cfg = _client.getMessageAttachmentConfig(msg.getInternalId(), i);
-                StringBuffer buf = new StringBuffer();
-                buf.append((i+1) + ": ");
-                if (cfg != null) {
-                    String name = cfg.getProperty(Constants.MSG_ATTACH_NAME);
-                    String desc = cfg.getProperty(Constants.MSG_ATTACH_DESCRIPTION);
-                    String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
-                    int bytes = _client.getMessageAttachmentSize(msg.getInternalId(), i);
-        
-                    if (name != null) {
-                        buf.append(name.trim()).append(" ");
-                        if (desc != null)
-                            buf.append("- ");
-                    }
-                    if (desc != null)
-                        buf.append(desc.trim()).append(" ");
-                    
-                    buf.append("[").append((bytes+1023)/1024).append("KB]");
-                }
-                _footerAttachment.add(buf.toString());
-            }
-        }
-        _footerAttachmentLabel.setEnabled((msg != null) && (_footerAttachment.getItemCount() > 0));
-        _footerAttachment.setEnabled((msg != null) && (_footerAttachment.getItemCount() > 0));
-        
-        
-        _refs.clear();
-        _refRoots.clear();
-        _footerReference.removeAll();
-        if (msg != null) {
-            List refs = msg.getReferences();
-            if (refs != null) {
-                if (refs.size() > 0)
-                    footerNecessary = true;
-                for (int i = 0; i < refs.size(); i++) {
-                    ReferenceNode ref = (ReferenceNode)refs.get(i);
-                    _refRoots.add(ref);
-                    addRef(ref, "");
-                }
-            }
-        }
-        _footerReferenceLabel.setEnabled((msg != null) && (_footerReference.getItemCount() > 0));
-        _footerReference.setEnabled((msg != null) && (_footerReference.getItemCount() > 0));
-        
-        _footerThread.removeAll();
-        _threadURIs.clear();
-        if (msg != null)
-            buildThread(msg);
-        _footerThreadLabel.setEnabled(_footerThread.getItemCount() > 1);
-        _footerThread.setEnabled(_footerThread.getItemCount() > 1);
-        if (_footerThread.getItemCount() > 1)
-            footerNecessary = true;
-        
-        if (footerNecessary) {
-            ((GridData)_footer.getLayoutData()).exclude = false;
-            _footer.setVisible(true);
-        } else {
-            ((GridData)_footer.getLayoutData()).exclude = true;
-            _footer.setVisible(false);
-        }
-        _footer.setRedraw(true);
-    }
-    
-    private void addRef(ReferenceNode ref, String parentText) {
-        String txt = null;
-        if (parentText.length() > 0)
-            txt = parentText + " > " + ref.getName();
-        else
-            txt = ref.getName();
-        _footerReference.add(txt);
-        _refs.add(ref);
-        for (int i = 0; i < ref.getChildCount(); i++)
-            addRef(ref.getChild(i), txt);
-    }
-    
-    /** 
-     * populate the thread drop down with parents and replies.  this is ported from 
-     * the TextUI's ReadMenu.buildThread
-     */
-    private void buildThread(MessageInfo msg) {
-            
-    /**
-                [Thread:
-                $position: $channel $date $subject $author
-                $position: $channel $date $subject $author
-                $position: $channel $date $subject $author
-                $position: $channel $date $subject $author]
-                (thread display includes nesting and the current position,
-                e.g. "1: $hash 2006/08/01 'I did stuff' me"
-                     "1.1: $hash 2006/08/02 'Liar, you did not' you"
-                     "2: $hash 2006/08/03 'No more stuff talk' foo"
-                     "2.1: $hash 2006/08/03 'wah wah wah' you"
-                     "2.1.1: $hash 2006/08/03 'what you said' me"
-                     "* 2.2: $hash 2006/08/03 'message being displayed...' blah"
-                     "2.2.1: $hash 2006/08/04 'you still talking?' moo")
-     */
-        //MessageThreadBuilder builder = new MessageThreadBuilder(_browser.getClient(), _browser.getUI());
-        //ReferenceNode root = builder.buildThread(msg);
-        //List roots = new ArrayList(1);
-        //roots.add(root);
-        ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
-        ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
-        id.scope = msg.getURI().getScope();
-        id.messageId = msg.getMessageId();
-        ReferenceNode root = builder.buildThread(id);
-        List roots = new ArrayList(1);
-        roots.add(root);
-        _browser.getUI().debugMessage("roots for the thread containing " + id + ": " + roots);
-        ThreadWalker walker = new ThreadWalker(msg);
-        ReferenceNode.walk(roots, walker);
-        int idx = walker.getCurrentIndex();
-        _footerThread.select(idx);
-    }
-    
-    private class ThreadWalker implements ReferenceNode.Visitor {
-        private MessageInfo _currentMessage;
-        private int _nodes;
-        private int _currentIndex;
-        public ThreadWalker(MessageInfo msg) { _currentMessage = msg; _nodes = 0; _currentIndex = -1; }
-        public int getCurrentIndex() { return _currentIndex; }
-        public void visit(ReferenceNode node, int indent, int siblingOrder) {
-            SyndieURI uri = node.getURI();
-            if (uri == null) return;
-            Hash channel = uri.getScope();
-            Long msgId = uri.getMessageId();
-            if ( (channel == null) || (msgId == null) ) return;
-            //_ui.debugMessage("Walking node " + _nodes + " - " + channel.toBase64() + ":" + msgId.longValue() + " [" + node.getTreeIndex() + "/" + node.getName() + "]");
-            //if (node.getParent() == null)
-            //    _ui.debugMessage("parent: none");
-            //else
-            //    _ui.debugMessage("parent: " + node.getParent().getURI());
-            //_ui.debugMessage("Child count: " + node.getChildCount());
-            
-            StringBuffer walked = new StringBuffer();
-            
-            if ( (_currentMessage != null) && (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) ) {
-                _currentIndex = _nodes;
-                _footerThreadCurrentIndex = _nodes;
-                walked.append("* ");
-            }
-            
-            walked.append(node.getTreeIndex()).append(": ");
-            if (node.getDescription() == null) {
-                // dummy element in the tree, representing a message we don't have locally
-                walked.append(node.getName());
-                walked.append(" (").append(channel.toBase64().substring(0,6)).append(") ");
-                String when = Constants.getDate(msgId.longValue());
-                walked.append(when).append(" ");
-                walked.append("[message not locally known]");
-            } else {
-                walked.append(node.getName());
-                walked.append(" (").append(channel.toBase64().substring(0,6)).append(") ");
-                String when = Constants.getDate(msgId.longValue());
-                walked.append(when).append(" ");
-                walked.append(node.getDescription());
-            }
-            _footerThread.add(walked.toString());
-            _threadURIs.add(uri);
-            _nodes++;
-        }
-    }
-
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(9, false));
@@ -660,45 +553,6 @@ public class MessageView implements Translatable, Themeable {
         _bodyContainer = new Composite(_root, SWT.NONE);
         _bodyContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
         _bodyContainer.setLayout(new FillLayout());
-        //_body = new PageRenderer(_root, true, _browser);
-        //_body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
-        //_body.setListener(new PageListener());
-        
-        _footer = new Composite(_root, SWT.NONE);
-        _footer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 9, 1));
-        _footer.setLayout(new RowLayout(SWT.HORIZONTAL));
-        
-        // label/combo pairs are in composites so the footer's row layout wraps them together
-        
-        Composite c = new Composite(_footer, SWT.NONE);
-        c.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _footerAttachmentLabel = new Label(c, SWT.NONE);
-        _footerAttachment = new Combo(c, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _footerAttachment.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { attachmentChosen(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { attachmentChosen(); }
-        });
-        
-        c = new Composite(_footer, SWT.NONE);
-        c.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _footerReferenceLabel = new Label(c, SWT.NONE);
-        _footerReference = new Combo(c, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _footerReference.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { refChosen(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { refChosen(); }
-        });
-        
-        c = new Composite(_footer, SWT.NONE);
-        c.setLayout(new RowLayout(SWT.HORIZONTAL));
-        _footerThreadLabel = new Label(c, SWT.NONE);
-        _footerThread = new Combo(c, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
-        _footerThread.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { threadChosen(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { threadChosen(); }
-        });
-        
-        //_attachmentPopup = new AttachmentPreviewPopup(_browser, _root.getShell());
-        //_refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell());
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -761,44 +615,6 @@ public class MessageView implements Translatable, Themeable {
                 _browser.getClient().ban(_target, _browser.getUI(), true);
         }
     }
-
-    private void attachmentChosen() {
-        int attachment = _footerAttachment.getSelectionIndex()+1;
-        SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), attachment);
-        if (_attachmentPopup == null)
-            _attachmentPopup = new AttachmentPreviewPopup(_browser, _root.getShell());
-        _attachmentPopup.showURI(uri);
-        _footerAttachment.clearSelection();
-        _footerAttachment.deselectAll();
-    }
-    private void refChosen() { 
-        if (_refPopup == null)
-            _refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell());
-        _refPopup.setReferences(_refRoots);
-        _refPopup.show();
-        _footerReference.clearSelection();
-        _footerReference.deselectAll();
-    }
-    
-    private static final String T_UNKNOWN_MSG = "syndie.gui.messageview.unknown.msg";
-    private static final String T_UNKNOWN_TITLE = "syndie.gui.messageview.unknown.title";
-    
-    private void threadChosen() {
-        int idx = _footerThread.getSelectionIndex();
-        if ( (idx >= 0) && (idx < _threadURIs.size()) ) {
-            SyndieURI uri = (SyndieURI)_threadURIs.get(idx);
-            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-            if (msgId >= 0) {
-                _browser.view(uri);
-            } else {
-                MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                box.setMessage(_browser.getTranslationRegistry().getText(T_UNKNOWN_MSG, "The selected message isn't known locally"));
-                box.setText(_browser.getTranslationRegistry().getText(T_UNKNOWN_TITLE, "Message unkown"));
-                box.open();
-            }
-        }
-        _footerThread.select(_footerThreadCurrentIndex);
-    }
     
     private class PageListener implements PageRenderer.PageActionListener {
         public void viewScopeMessages(PageRenderer renderer, Hash scope) {
@@ -843,7 +659,8 @@ public class MessageView implements Translatable, Themeable {
                 int idx = _tabFolder.getSelectionIndex();
                 if (idx > 0) {
                     _tabFolder.setSelection(idx-1);
-                    _body[idx-1].getComposite().forceFocus();
+                    if (idx-1 < _body.length)
+                        _body[idx-1].getComposite().forceFocus();
                 }
             }
         }
@@ -852,7 +669,8 @@ public class MessageView implements Translatable, Themeable {
                 int idx = _tabFolder.getSelectionIndex();
                 if (idx + 1 < _tabs.length) {
                     _tabFolder.setSelection(idx+1);
-                    _body[idx+1].getComposite().forceFocus();
+                    if (idx+1 < _body.length)
+                        _body[idx+1].getComposite().forceFocus();
                 }
             }
         }
@@ -870,13 +688,6 @@ public class MessageView implements Translatable, Themeable {
 
         if (_tabFolder != null)
             _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
-        
-        _footerAttachment.setFont(theme.DEFAULT_FONT);
-        _footerAttachmentLabel.setFont(theme.DEFAULT_FONT);
-        _footerReference.setFont(theme.DEFAULT_FONT);
-        _footerReferenceLabel.setFont(theme.DEFAULT_FONT);
-        _footerThread.setFont(theme.DEFAULT_FONT);
-        _footerThreadLabel.setFont(theme.DEFAULT_FONT);
     }
     
     private static final String T_AUTHOR = "syndie.gui.messageview.author";
@@ -915,9 +726,6 @@ public class MessageView implements Translatable, Themeable {
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
         _headerDateLabel.setText(registry.getText(T_DATE, "Date:"));
-        _footerAttachmentLabel.setText(registry.getText(T_ATTACHMENT, "Attachments:"));
-        _footerReferenceLabel.setText(registry.getText(T_REFERENCES, "References:"));
-        _footerThreadLabel.setText(registry.getText(T_THREAD, "Thread:"));
         
         _authorMenuBan.setText(registry.getText(T_AUTHORBAN, "Ban author"));
         _authorMenuBookmark.setText(registry.getText(T_AUTHORBOOKMARK, "Bookmark author"));
