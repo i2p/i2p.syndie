@@ -6,7 +6,7 @@ your OS and architecture from http://www.eclipse.org/swt/ (or from
 your favorite package manager).
 
 First, you need to tell ant where to find SWT - add a line to the
-file nbproject/private/private.properies (creating a new directory or
+file nbproject/private/private.properties (creating a new directory or
 file if necessary):
   swt.dir=../swt-I20061214-1445-gtk-linux-x86
 (or whatever the path to the directory containing swt.jar is)

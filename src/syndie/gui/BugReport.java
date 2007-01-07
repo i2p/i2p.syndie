@@ -299,7 +299,7 @@ public class BugReport implements Themeable, Translatable {
                     fis = new FileInputStream(f);
                     int remaining = buf.length;
                     int read = 0;
-                    while ( (read = fis.read(buf, off, remaining)) != -1) {
+                    while ( (remaining > 0) && ((read = fis.read(buf, off, remaining)) != -1) ) {
                         off += read;
                         remaining -= read;
                     }
