@@ -116,6 +116,9 @@ public class ImageUtil {
     public static final Image ICON_EDITOR_PRIVACY_REPLY = createImageFromResource("iconPrivReply.png");
     public static final Image ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
     public static final Image ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
+    public static final Image ICON_EDITOR_PAGEADD = createImageFromResource("iconEdPageAdd.png");
+    public static final Image ICON_EDITOR_PAGETYPE_TEXT = createImageFromResource("iconEdPageTypeText.png");
+    public static final Image ICON_EDITOR_PAGETYPE_HTML = createImageFromResource("iconEdPageTypeHTML.png");
     
     public static final Image ICON_ONLINE = createImageFromResource("iconOnline.png");
     public static final Image ICON_OFFLINE = createImageFromResource("iconOffline.png");
@@ -200,6 +203,9 @@ public class ImageUtil {
         _indisposableImages.add(ICON_EDITOR_PRIVACY_REPLY);
         _indisposableImages.add(ICON_EDITOR_BOOKMARKED_NOAVATAR);
         _indisposableImages.add(ICON_EDITOR_NOT_BOOKMARKED);
+        _indisposableImages.add(ICON_EDITOR_PAGEADD);
+        _indisposableImages.add(ICON_EDITOR_PAGETYPE_TEXT);
+        _indisposableImages.add(ICON_EDITOR_PAGETYPE_HTML);
         
         _indisposableImages.add(ICON_ONLINE);
         _indisposableImages.add(ICON_OFFLINE);

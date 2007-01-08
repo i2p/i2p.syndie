@@ -18,6 +18,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.TabFolder;
+import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
@@ -29,6 +31,7 @@ import syndie.data.SyndieURI;
 public class PageEditor {
     private BrowserControl _browser;
     private MessageEditor _editor;
+    private TabItem _item;
     private Composite _root;
     private SashForm _sash;
     private StyledText _text;
@@ -38,58 +41,70 @@ public class PageEditor {
     private StyleRange _findHighlight;
     /** has the current search wrapped the end at least once yet? */
     private boolean _findWrapped;
+    private int _pageNum;
     
     /** Creates a new instance of PageEditorNew */
-    public PageEditor(BrowserControl browser, MessageEditor editor, boolean previewable) {
+    public PageEditor(BrowserControl browser, MessageEditor editor, boolean previewable, int pageNum) {
         _browser = browser;
         _editor = editor;
         _isPreviewable = previewable;
+        _pageNum = pageNum;
         initComponents();
     }
     
     public Control getControl() { return _root; }
     public String getContent() { return _text.getText(); }
     public String getContentType() { return _isPreviewable ? "text/html" : "text/plain"; }
+    public TabItem getItem() { return _item; }
     
     public void setContent(String body) { _text.setText(body); }
+    public void setContentType(String type) {
+        _isPreviewable = MessageEditor.TYPE_HTML.equals(type);
+        preview();
+    }
     
     public void dispose() {
         if (_preview != null)
             _preview.dispose();
         if (!_root.isDisposed())
             _root.dispose();
+        if (_item != null)
+            _item.dispose();
     }
     
     private void initComponents() {
-        Composite parent = _editor.getPageRoot();
+        TabFolder parent = _editor.getPageRoot();
+        _item = new TabItem(parent, SWT.NONE, _pageNum);
         _root = new Composite(parent, SWT.NONE);
         _root.setLayout(new FillLayout());
+        _item.setControl(_root);
         
         _sash = new SashForm(_root, SWT.HORIZONTAL);
         _text = new StyledText(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
         configText();
         
-        if (_isPreviewable) {
-            _preview = new PageRenderer(_sash, true, _browser);
-            _text.addControlListener(new ControlListener() {
-                public void controlMoved(ControlEvent controlEvent) {}
-                public void controlResized(ControlEvent evt) {
-                    //_browser.getUI().debugMessage("text resized: "+ evt);
-                    if (_lastResizeWidth != _text.getBounds().width) {
-                        _lastResized = System.currentTimeMillis();
-                        evt.display.timerExec(100, _timedPreview);
-                    }
+        _preview = new PageRenderer(_sash, true, _browser);
+        _text.addControlListener(new ControlListener() {
+            public void controlMoved(ControlEvent controlEvent) {}
+            public void controlResized(ControlEvent evt) {
+                //_browser.getUI().debugMessage("text resized: "+ evt);
+                if (_lastResizeWidth != _text.getBounds().width) {
+                    _lastResized = System.currentTimeMillis();
+                    evt.display.timerExec(100, _timedPreview);
                 }
-            });
+            }
+        });
 
-            _sash.setWeights(new int[] { 80, 20 });
+        _sash.setWeights(new int[] { 80, 20 });
+        if (_isPreviewable) {
+            _sash.setMaximizedControl(null);
         } else {
-            _sash.setWeights(new int[] { 100 });
             _sash.setMaximizedControl(_text);
         }
         
         _findHighlight = new StyleRange();
         _findHighlight.background = ColorUtil.getColor("yellow", null);
+        _findHighlight.foreground = ColorUtil.getColor("black", null);
     }
     
     public void updated() { preview(); }
@@ -97,7 +112,10 @@ public class PageEditor {
     private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void preview() {
         if (_editor != null) _editor.saveState();
-        if (!_isPreviewable) return;
+        if (!_isPreviewable) {
+            _sash.setMaximizedControl(_text);
+            return;
+        }
         MessageInfo msgInfo = new MessageInfo();
         msgInfo.setURI(_dummyURI);
         msgInfo.setTargetChannel(_dummyURI.getScope());
@@ -120,6 +138,7 @@ public class PageEditor {
         }
         PageRendererSourceMem src = new PageRendererSourceMem(_browser, null, msgInfo, pageData, attachments, attachmentOrder);
         _preview.setRender(true);
+        _sash.setMaximizedControl(null);
         long before = System.currentTimeMillis();
         _preview.renderPage(src, _dummyURI);
         long renderTime = System.currentTimeMillis()-before;

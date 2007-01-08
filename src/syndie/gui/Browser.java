@@ -1847,7 +1847,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
     public SyndieURI createHighlightURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
-    public SyndieURI createBugReportURI() { return new SyndieURI(BrowserTab.TYPE_BUGREPORT, new HashMap()); }
+    public SyndieURI createBugReportURI() { 
+        HashMap attr = new HashMap();
+        // not really random, just (likely) different from other values, so multiple instances of the bug report
+        // tab can come up (one per uri)
+        attr.put("rand", System.currentTimeMillis()+""); 
+        return new SyndieURI(BrowserTab.TYPE_BUGREPORT, attr);
+    }
     public SyndieURI createBackupSecretsURI() { return new SyndieURI(BrowserTab.TYPE_BACKUPSECRETS, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }

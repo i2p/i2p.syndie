@@ -54,8 +54,12 @@ public class ColorUtil {
             _systemColorSwatches.put(color, ImageUtil.createImage(16, 16, color, true));
         }
     }
+    private static boolean _initialized = false;
     public static void init() {
-        buildColorNameToSystemColor();
+        synchronized (ColorUtil.class) {
+            buildColorNameToSystemColor();
+            _initialized = true;
+        }
         // lazyload 'em
         //buildSystemColorSwatches();
     }
