@@ -1113,6 +1113,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     static final String TYPE_HTML = "text/html";
     static final String TYPE_TEXT = "text/plain";
+    private void setDefaultPageType(String type) {
+        Properties prefs = _browser.getClient().getNymPrefs();
+        prefs.setProperty("editor.defaultFormat", type);
+        _browser.getClient().setNymPrefs(prefs);
+    }
     
     private PageEditor addPage() {
         Properties prefs = _browser.getClient().getNymPrefs();
@@ -1185,6 +1190,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
             else
                 _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+            setDefaultPageType(type);
         }
     }
     
