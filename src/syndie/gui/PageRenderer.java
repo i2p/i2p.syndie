@@ -20,6 +20,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -165,12 +166,15 @@ public class PageRenderer implements Themeable {
         });
         _text.addMouseTrackListener(new MouseTrackListener() {
             public void mouseEnter(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, false); }
-            public void mouseExit(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, false); }
+            public void mouseExit(MouseEvent mouseEvent) { 
+                pickMenu(mouseEvent.x, mouseEvent.y, false);
+            }
             public void mouseHover(MouseEvent mouseEvent) {
                 pickMenu(mouseEvent.x, mouseEvent.y, false);
                 _text.setToolTipText("");
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
+                boolean link = false;
                 try {
                     off = _text.getOffsetAtLocation(p);
                     HTMLTag linkTag = null;
@@ -201,13 +205,50 @@ public class PageRenderer implements Themeable {
                         hoverImage(imgRange, off, imgTag);
                     } else if (linkTag != null) {
                         hoverLink(linkRange, off, linkTag);
+                        link = true;
                     }
                 } catch (IllegalArgumentException iae) {
                     // no char at that point (why doesn't swt just return -1?)
                 }
                 //System.out.println("hoover [" + mouseEvent.x + " to " + mouseEvent.y + "] / " + off);
+                if (!link)
+                    _text.setCursor(null);
             }
         });
+        
+        _text.addMouseMoveListener(new MouseMoveListener() {
+            public void mouseMove(MouseEvent mouseEvent) {
+                Point p = new Point(mouseEvent.x, mouseEvent.y);
+                int off = -1;
+                boolean link = false;
+                try {
+                    off = _text.getOffsetAtLocation(p);
+                    HTMLTag linkTag = null;
+                    StyleRange linkRange = null;
+                    HTMLTag imgTag = null;
+                    StyleRange imgRange = null;
+                    for (int i = 0; i < _linkTags.size(); i++) {
+                        HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                        if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
+                            StyleRange range = _text.getStyleRangeAtOffset(off);
+                            linkTag = tag;
+                            linkRange = range;
+                            break;
+                        }
+                    }
+                    if (linkTag != null)
+                        link = true;
+                } catch (IllegalArgumentException iae) {
+                    // no char at that point (why doesn't swt just return -1?)
+                }
+                //System.out.println("hoover [" + mouseEvent.x + " to " + mouseEvent.y + "] / " + off);
+                if (!link)
+                    _text.setCursor(null);
+                else
+                    _text.setCursor(_text.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+            }
+        });
+        
         // draw the current image or bullet on the pane
         _text.addPaintObjectListener(new PaintObjectListener() {
             public void paintObject(PaintObjectEvent evt) {
@@ -1082,8 +1123,9 @@ public class PageRenderer implements Themeable {
         }
         if (href != null)
             buf.append('(').append(CommandImpl.strip(href)).append(')');
-        if (buf.length() > 0)
+        if (buf.length() > 0) {
             _text.setToolTipText(buf.toString());
+        }
     }
     private void hoverImage(StyleRange range, int offset, HTMLTag tag) {
         //System.out.println("Hover over image @ " + offset + ": " + tag);

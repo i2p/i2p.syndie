@@ -31,6 +31,7 @@ public class ColorUtil {
         _colorNameToSystem.put("yellow", dev.getSystemColor(SWT.COLOR_YELLOW));
         _colorNameToSystem.put("white", dev.getSystemColor(SWT.COLOR_WHITE));
         _colorNameToSystem.put("black", dev.getSystemColor(SWT.COLOR_BLACK));
+        _systemColorNames.clear();
         _systemColorNames.addAll(new TreeSet(_colorNameToSystem.keySet()));
         for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {
             String name = (String)iter.next();

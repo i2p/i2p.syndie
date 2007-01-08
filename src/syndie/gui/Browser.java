@@ -371,13 +371,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { nextTab(); }
             public void widgetSelected(SelectionEvent selectionEvent) { nextTab(); }
         });
-        _fileMenuNextTab.setAccelerator(SWT.MOD1 + SWT.ARROW_RIGHT);
+        _fileMenuNextTab.setAccelerator(SWT.MOD2 + SWT.MOD1 + SWT.ARROW_RIGHT); // ^-shift-right
         _fileMenuPrevTab = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuPrevTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { prevTab(); }
             public void widgetSelected(SelectionEvent selectionEvent) { prevTab(); }
         });
-        _fileMenuPrevTab.setAccelerator(SWT.MOD1 + SWT.ARROW_LEFT);
+        _fileMenuPrevTab.setAccelerator(SWT.MOD2 + SWT.MOD1 + SWT.ARROW_LEFT); // ^-shift-left
         _fileMenuCloseTab = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuCloseTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { closeTab(); }
@@ -1439,9 +1439,21 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private void showTextUI() { view(createTextUIURI()); }
     private void showLogs() { view(createLogsURI()); }
     
-    private void increaseFont() { _themes.increaseFont(); }
-    private void decreaseFont() { _themes.decreaseFont(); }
-    private void resetStyle() { _themes.resetTheme(); }
+    private void increaseFont() {
+        _shell.setRedraw(false);
+        _themes.increaseFont();
+        _shell.setRedraw(true);
+    }
+    private void decreaseFont() {
+        _shell.setRedraw(false);
+        _themes.decreaseFont();
+        _shell.setRedraw(true);
+    }
+    private void resetStyle() {
+        _shell.setRedraw(false);
+        _themes.resetTheme();
+        _shell.setRedraw(true);
+    }
     
     private void postWebRip() {
         WebRipPostPopup popup = new WebRipPostPopup(this, _shell);

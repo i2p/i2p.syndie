@@ -1191,6 +1191,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             else
                 _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
             setDefaultPageType(type);
+            updateToolbar();
         }
     }
     
@@ -2383,6 +2384,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private void initStyleControl() {
+        _browser.getUI().debugMessage("init styleControl");
         _styleGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
         _styleGroup.setLayout(new FillLayout());
         
@@ -2419,6 +2421,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         });
         ColorUtil.init();
         List names = ColorUtil.getSystemColorNames();
+        _browser.getUI().debugMessage("color names: " + names);
         for (int i = 0; i < names.size(); i++) {
             final String name = (String)names.get(i);
             Color color = ColorUtil.getColor(name);
@@ -2645,9 +2648,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             _attachmentSummary.remove(idx);
         }
         rebuildAttachmentSummaries();
-        PageEditor editor = getPageEditor();
-        if (editor != null)
-            editor.updated();
+        for (int i = 0; i < _pageEditors.size(); i++) {
+            PageEditor ed = (PageEditor)_pageEditors.get(i);
+            ed.updated();
+        }
         updateToolbar();
     }
 

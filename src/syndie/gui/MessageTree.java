@@ -23,6 +23,7 @@ import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -1361,18 +1362,23 @@ public class MessageTree implements Translatable, Themeable {
         item.setText(3, chan);
         item.setText(4, date);
         item.setText(5, tags);
+        Font f = null;
         if (status == DBClient.MSG_STATUS_OLD) {
             _itemsOld.add(item);
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
         } else if (status == DBClient.MSG_STATUS_NEW_READ) {
             _itemsNewRead.add(item);
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+            f = _browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT;
         } else if (uri == null) {
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
             // but don't add it to _itemsOld
         } else {
             _itemsNewUnread.add(item);
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+            f = _browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT;
+        }
+        
+        synchronized (this) {
+            item.setFont(f);
         }
         
         // note: this will only retheme the ancestors of unread messages /that have been rendered/
@@ -1631,35 +1637,39 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     public void applyTheme(Theme theme) {
-        _tree.setFont(theme.TREE_FONT);
-        if (_filterEditorShell != null) {
-            _filterEditorShell.setFont(theme.SHELL_FONT);
-            _filterEditorShell.layout(true, true);
+        synchronized (this) {
+            _tree.setFont(theme.TREE_FONT);
+            if (_filterEditorShell != null) {
+                _filterEditorShell.setFont(theme.SHELL_FONT);
+                _filterEditorShell.layout(true, true);
+            }
+            //_root.layout(true, true);
+            for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
+                TreeItem item = (TreeItem)iter.next();
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+            }
+            for (Iterator iter = _itemsNewRead.iterator(); iter.hasNext(); ) {
+                TreeItem item = (TreeItem)iter.next();
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+            }
+            for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
+                TreeItem item = (TreeItem)iter.next();
+                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+            }
+            rethemeAncestorsOfUnread();
         }
-        //_root.layout(true, true);
-        for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
-        }
-        for (Iterator iter = _itemsNewRead.iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
-        }
-        for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
-        }
-        rethemeAncestorsOfUnread();
     }
     private void rethemeAncestorsOfUnread() {
         // now readjust the font of read/old message ancestors of unread messages
-        for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            TreeItem parent = item.getParentItem();
-            while (parent != null) {
-                if (_itemsOld.contains(parent) || (_itemsNewRead.contains(parent)))
-                    parent.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
-                parent = parent.getParentItem();
+        synchronized (this) {
+            for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
+                TreeItem item = (TreeItem)iter.next();
+                TreeItem parent = item.getParentItem();
+                while (parent != null) {
+                    if (_itemsOld.contains(parent) || (_itemsNewRead.contains(parent)))
+                        parent.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
+                    parent = parent.getParentItem();
+                }
             }
         }
     }

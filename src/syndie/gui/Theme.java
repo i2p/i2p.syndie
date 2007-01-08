@@ -314,7 +314,7 @@ public class Theme {
     }
     private void dispose(Font font) {
         if ( (font != SYSFONT) && (!font.equals(SYSFONT)) ) {
-            //System.out.println("disposing: " + old);
+            //System.out.println("disposing: " + font);
             font.dispose();
         }
     }

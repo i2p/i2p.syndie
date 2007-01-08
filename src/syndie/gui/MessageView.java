@@ -325,6 +325,8 @@ public class MessageView implements Translatable, Themeable {
             if ( (refs != null) && (refs.size() > 0) ) tabs++;
             if (threadSize > 1) tabs++;
             
+            _browser.getUI().debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
+            
             _tabFolder = new TabFolder(_bodyContainer, SWT.BORDER);
             _tabs = new TabItem[tabs];
             _tabRoots = new Composite[tabs];
@@ -383,7 +385,6 @@ public class MessageView implements Translatable, Themeable {
                 SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), i+1);
                 _attachmentPreviews[i] = new AttachmentPreview(_browser, _tabRoots[off+i]);
                 _attachmentPreviews[i].showURI(uri);
-                off++;
             }
         }
         _root.layout(true, true);
