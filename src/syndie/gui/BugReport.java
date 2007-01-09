@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Properties;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -239,7 +240,31 @@ public class BugReport implements Themeable, Translatable {
         _scroll.setMinSize(_root.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     }
     
+    private void savePrefs(String os, String jvm, String swt) {
+        Properties prefs = _browser.getClient().getNymPrefs();
+        prefs.setProperty("bugreport.os", os);
+        prefs.setProperty("bugreport.jvm", jvm);
+        prefs.setProperty("bugreport.swt", swt);
+        _browser.getClient().setNymPrefs(prefs);
+    }
+    private void loadPrefs() {
+        String defOS = System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch");
+        String defJVM = System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version");
+        String defSWT = SWT.getPlatform() + "-" + SWT.getVersion();
+        
+        Properties prefs = _browser.getClient().getNymPrefs();
+        _os.setText(prefs.getProperty("bugreport.os", defOS));
+        _jvm.setText(prefs.getProperty("bugreport.jvm", defJVM));
+        _swt.setText(prefs.getProperty("bugreport.swt", defSWT));
+    }
+    
     private void postReport() {
+        final String os = _os.getText().trim();
+        final String jvm = _jvm.getText().trim();
+        final String swt = _swt.getText().trim();
+        
+        savePrefs(os, jvm, swt);
+                
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
             public DBClient getClient() { return _browser.getClient(); }
             public UI getUI() { return _browser.getUI(); }
@@ -265,9 +290,10 @@ public class BugReport implements Themeable, Translatable {
 
             public String getPageContent(int page) { 
                 StringBuffer rv = new StringBuffer();
-                rv.append("OS: " + _os.getText() + "\n");
-                rv.append("JVM: " + _jvm.getText() + "\n");
-                rv.append("SWT: " + _swt.getText() + "\n");
+                rv.append("OS: " + os + "\n");
+                rv.append("JVM: " + jvm + "\n");
+                rv.append("SWT: " + swt + "\n");
+        
                 rv.append("\n");
                 rv.append(_log.getText());
                 return rv.toString();
@@ -477,9 +503,7 @@ public class BugReport implements Themeable, Translatable {
         }
         _type.setRedraw(true);
         
-        _os.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch"));
-        _jvm.setText(System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version"));
-        _swt.setText(SWT.getPlatform() + "-" + SWT.getVersion());
+        loadPrefs();
         _syndie.setText(Version.VERSION);
         
         SyndieURI target = cfg.getTargetScope();
