@@ -153,7 +153,7 @@ public class MessageGen extends CommandImpl {
         boolean postAsUnauthorized = args.getOptBoolean("postAsUnauthorized", false);
         
         if ( (readKeys == null) || (readKeys.size() <= 0) ) {
-            if (!postAsUnauthorized) {
+            if (!postAsUnauthorized && (to == null)) {
                 ui.errorMessage("We are not authorized to post (or don't have any keys to post with) and ");
                 ui.errorMessage("we haven't been asked to --postAsUnauthorized.  aborting.");
                 return false;

@@ -87,9 +87,16 @@ public class ImportPost {
         _body = null;
         if (_enc.isReply()) {
             List privKeys = _client.getReplyKeys(_channel, _nymId, _pass);
+            _ui.debugMessage("post is a reply in scope " + _channel.toBase64() + " and we have " + privKeys.size() + " keys");
+
             byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-            if (target != null)
-                privKeys.addAll(_client.getReplyKeys(new Hash(target), _nymId, _pass));
+            Hash targetHash = null;
+            if (target != null) {
+                targetHash = new Hash(target);
+                List targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
+                privKeys.addAll(targetKeys);
+                _ui.debugMessage("post is a reply targetting " + targetHash.toBase64() + " and we have " + targetKeys.size() + " keys");
+            }
             if ( (privKeys != null) && (privKeys.size() > 0) ) {
                 for (int i = 0; i < privKeys.size(); i++) {
                     PrivateKey priv = (PrivateKey)privKeys.get(i);
@@ -431,6 +438,13 @@ public class ImportPost {
             if (isAuthorizedFor(_channel, targetChannelId, author, forceNewThread)) {
                 _authorized = true;
             }
+        }
+        
+        if ( (!_authorized) && (_enc.isReply()) ) {
+            Hash targetHash = new Hash(target);
+            long targetId = _client.getChannelId(targetHash);
+            targetChannelId = targetId;
+            _ui.debugMessage("Unauthorized post to " + targetHash.toBase64() + ", but it is a private reply, so put it in the chan (as unauthorized)");
         }
         
         String subject = _body.getHeaderString(Constants.MSG_HEADER_SUBJECT);

@@ -2113,7 +2113,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             } else if (forum.getAuthorizedPosterHashes().contains(author)) {
                 // again
                 _browser.getUI().debugMessage("forum explicitly allows the author to post in the forum");
-            } else if (_privReply.getSelection()) {
+            } else if (_privacy.getSelectionIndex() == PRIVACY_REPLY) {
                 // sure... though it won't go in the forum's scope
                 _browser.getUI().debugMessage("post is a private reply");
             } else if (forum.getAllowPublicReplies() && (_parents.size() > 0) ) {
@@ -2125,8 +2125,21 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     Hash scope = uri.getScope();
                     if (forum.getChannelHash().equals(scope) ||
                         forum.getAuthorizedManagerHashes().contains(scope) ||
-                        forum.getAuthorizedPosterHashes().contains(scope))
-                        allowed = true;
+                        forum.getAuthorizedPosterHashes().contains(scope)) {
+                        // the scope is authorized, but make sure the uri is actually pointing to
+                        // a post in the targetted forum!
+                        long msgId = _browser.getClient().getMessageId(scope, uri.getMessageId());
+                        if (msgId >= 0) {
+                            long targetChanId = _browser.getClient().getMessageTarget(msgId);
+                            if (forum.getChannelId() == targetChanId) {
+                                allowed = true;
+                            } else {
+                                _browser.getUI().debugMessage("ancestor would be authorized, but they are targetting a different forum: " + targetChanId + ": " + uri);
+                            }
+                        } else {
+                            _browser.getUI().debugMessage("ancestor would be authorized, but isn't known, so we don't know whether they're actually targetting the right forum: " + uri);
+                        }
+                    }
                 }
                 if (!allowed) {
                     // none of the ancestors were allowed, so reject
