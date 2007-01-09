@@ -840,9 +840,10 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private void adjustVisibility(Control ctl) { ctl.setVisible(!((GridData)ctl.getLayoutData()).exclude); }
     
     public void showPopup() { showPopup(null); }
-    public void showPopup(SyndieURI uri) {
+    public void showPopup(SyndieURI uri) { showPopup(uri, _text.getText()); }
+    public void showPopup(SyndieURI uri, String text) {
         if (uri != null) {
-            setURI(uri, _text.getText());
+            setURI(uri, text);
         } else {
             blankSettings();
             if (_target == null) {

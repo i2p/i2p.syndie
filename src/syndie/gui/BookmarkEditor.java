@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,6 +44,7 @@ class BookmarkEditor implements Translatable {
     private Button _save;
     private Button _cancel;
     
+    private LinkBuilderPopup _refPopup;
     private BookmarkEditorListener _lsnr;
     
     public BookmarkEditor(BrowserControl control, Composite parent, BookmarkEditorListener lsnr) {
@@ -60,6 +62,11 @@ class BookmarkEditor implements Translatable {
     public void setBookmark(NymReferenceNode node) {
         _node = node;
         updateUI();
+    }
+    
+    public void dispose() {
+        if (_refPopup != null)
+            _refPopup.dispose();
     }
     
     private void initComponents() {
@@ -104,6 +111,11 @@ class BookmarkEditor implements Translatable {
         _uriBrowse = new Button(_root, SWT.PUSH);
         _uriBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
+        _uriBrowse.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { browse(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { browse(); }
+        });
+        
         _loadOnStart = new Button(_root, SWT.CHECK);
         _loadOnStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
@@ -131,6 +143,38 @@ class BookmarkEditor implements Translatable {
         });
         
         _browser.getTranslationRegistry().register(this);
+    }
+    
+    private void browse() {
+        if (_refPopup == null) {
+            _refPopup = new LinkBuilderPopup(_browser, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
+                public void uriBuilt(SyndieURI uri, String text) {
+                    if (uri != null) {
+                        if ( (text != null) && (text.trim().length() > 0) )
+                            _name.setText(text.trim());
+                        _uri.setText(uri.toString());
+                    }
+                }
+                public int getPageCount() { return 0; }
+                public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
+            });
+        }
+        String name = _name.getText().trim();
+        SyndieURI uri = getURI();
+        if (uri != null)
+            _refPopup.showPopup(uri, name);
+        else
+            _refPopup.showPopup();
+    }
+    
+    private SyndieURI getURI() {
+        String uriStr = _uri.getText().trim();
+        if (uriStr.length() > 0) {
+            try {
+                return new SyndieURI(uriStr);
+            } catch (URISyntaxException use) {}
+        }
+        return null;
     }
     
     private NymReferenceNode getState() {

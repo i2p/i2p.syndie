@@ -41,6 +41,12 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
         _browser.getThemeRegistry().register(this);
     }
     
+    public void dispose() {
+        _browser.getTranslationRegistry().unregister(this);
+        _browser.getThemeRegistry().unregister(this);
+        _editor.dispose();
+    }
+    
     public void setBookmark(NymReferenceNode node) { _editor.setBookmark(node); }
     public void open() { 
         _shell.setSize(_shell.computeSize(300, SWT.DEFAULT));
