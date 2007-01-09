@@ -1237,7 +1237,7 @@ public class PageRenderer implements Themeable {
             }
         });
         _bodyViewForumMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewForumMetadata.setText("View forum metadata");
+        _bodyViewForumMetadata.setText("View forum profile");
         _bodyViewForumMetadata.addSelectionListener(new FireEventListener() { 
             public void fireEvent() { 
                 if ( (_listener != null) && (_msg != null) )
@@ -1254,7 +1254,7 @@ public class PageRenderer implements Themeable {
             }
         });
         _bodyViewAuthorMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewAuthorMetadata.setText("View author metadata");
+        _bodyViewAuthorMetadata.setText("View author profile");
         _bodyViewAuthorMetadata.addSelectionListener(new FireEventListener() { 
             public void fireEvent() { 
                 if ( (_listener != null) && (_msg != null) )

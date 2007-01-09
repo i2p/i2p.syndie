@@ -16,6 +16,8 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -91,6 +93,7 @@ public class MessageTree implements Translatable, Themeable {
     
     private Menu _menu;
     private MenuItem _view;
+    private MenuItem _reply;
     private MenuItem _viewForum;
     private MenuItem _viewForumMeta;
     private MenuItem _bookmarkForum;
@@ -894,10 +897,35 @@ public class MessageTree implements Translatable, Themeable {
     
         _menu = new Menu(_tree);
         _tree.setMenu(_menu);
+        
+        _menu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) {
+                boolean enable = _tree.getSelectionCount() > 0;
+                _bookmarkAuthor.setEnabled(enable);
+                _bookmarkForum.setEnabled(enable);
+                _markAllRead.setEnabled(enable);
+                _markRead.setEnabled(enable);
+                _markThreadRead.setEnabled(enable);
+                _markUnread.setEnabled(enable);
+                _view.setEnabled(enable);
+                _reply.setEnabled(enable);
+                _viewAuthor.setEnabled(enable);
+                _viewAuthorMeta.setEnabled(enable);
+                _viewForum.setEnabled(enable);
+                _viewForumMeta.setEnabled(enable);
+            }
+        });
+        
         _view = new MenuItem(_menu, SWT.PUSH);
         _view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewSelected(); }
+        });
+        _reply = new MenuItem(_menu, SWT.PUSH);
+        _reply.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replySelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replySelected(); }
         });
         new MenuItem(_menu, SWT.SEPARATOR);
         _viewForum = new MenuItem(_menu, SWT.PUSH);
@@ -1423,6 +1451,18 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    private void replySelected() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                long targetId = _browser.getClient().getMessageTarget(msgId);
+                Hash target = _browser.getClient().getChannelHash(targetId);
+                _browser.view(_browser.createPostURI(target, uri));
+            }
+        }
+    }
     private void viewSelectedForum() {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
@@ -1562,13 +1602,32 @@ public class MessageTree implements Translatable, Themeable {
     private void markAllRead() {
         TreeItem selected[] = _tree.getSelection();
         if ( (selected != null) && (selected.length > 0) ) {
+            HashSet channelIds = new HashSet();
             for (int i = 0; i < selected.length; i++) {
                 Long msgId = (Long)_itemToMsgId.get(selected[i]);
                 if (msgId != null) {
                     long target = _client.getMessageTarget(msgId.longValue());
+                    channelIds.add(new Long(target));
                     _browser.getClient().markChannelRead(target);
                 }
             }
+            for (Iterator iter = _itemToURI.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry cur = (Map.Entry)iter.next();
+                TreeItem item = (TreeItem)cur.getKey();
+                SyndieURI uri = (SyndieURI)cur.getValue();
+                
+                long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                if (msgId >= 0) {
+                    long target = _browser.getClient().getMessageTarget(msgId);
+                    if (channelIds.contains(new Long(target))) {
+                        _itemsNewRead.remove(item);
+                        _itemsNewUnread.remove(item);
+                        item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+                    }
+                }
+            }
+            // we aren't marking *all* read, just all messages in a particular forum */
+            /*
             _itemsNewRead.clear();
             _itemsNewUnread.clear();
             for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
@@ -1576,6 +1635,7 @@ public class MessageTree implements Translatable, Themeable {
                 _itemsOld.add(item);
                 item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
             }
+             */
         }
     }
 
@@ -1624,16 +1684,17 @@ public class MessageTree implements Translatable, Themeable {
         _colTags.setText(registry.getText(T_TAGS, "Tags"));
         
         _view.setText(registry.getText(T_VIEW, "View the message"));
+        _reply.setText(registry.getText(T_VIEW, "Reply to the message"));
         _viewForum.setText(registry.getText(T_VIEWFORUM, "View the forum's messages"));
-        _viewForumMeta.setText(registry.getText(T_VIEWFORUMMETA, "View the forum's metadata"));
+        _viewForumMeta.setText(registry.getText(T_VIEWFORUMMETA, "View the forum's profile"));
         _viewAuthor.setText(registry.getText(T_VIEWAUTHOR, "View the author's blog"));
-        _viewAuthorMeta.setText(registry.getText(T_VIEWAUTHORMETA, "View the author's metadata"));
+        _viewAuthorMeta.setText(registry.getText(T_VIEWAUTHORMETA, "View the author's profile"));
         _bookmarkForum.setText(registry.getText(T_BOOKMARKFORUM, "Bookmark the forum"));
         _bookmarkAuthor.setText(registry.getText(T_BOOKMARKAUTHOR, "Bookmark the author"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
         _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
-        _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages as read"));
+        _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark the forum as read"));
     }
     
     public void applyTheme(Theme theme) {

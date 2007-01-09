@@ -363,7 +363,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                        if (!ok) {
                            box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
                            box.setText(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
-                           box.setMessage(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The forum metadata could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           box.setMessage(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The forum profile could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
                            if (rc == SWT.YES)
                                setForum(uri);
@@ -988,7 +988,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
                 "wil be able to view the message.  Some messages publish that \"read key\" so anyone can read it, others derive the" +
                 "\"read key\" from a passphrase, and others use one of the forum's predefined \"read keys\".  The later are managed here:"));
         _readKeyPrivacySummary.setText(registry.getText(T_READKEYPRIVSUMMARY, "The current read keys will be published as part of " +
-                "the updated forum metadata, but hidden inside the secured area.  That secured area can be publicly readable, " +
+                "the updated forum profile, but hidden inside the secured area.  That secured area can be publicly readable, " +
                 "thereby giving everyone access to these keys, or it can be protected - either by a passphrase or by one of the existing " +
                 "read keys (so only those already authorized to read the forum will know these new keys, or be able to view any of the published " +
                 "forum details)"));
@@ -999,8 +999,8 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
             idx = _readKeyPrivacyCombo.getSelectionIndex();
         _readKeyPrivacyCombo.removeAll();
         _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_EXISTING, "Use one of the existing keys"));
-        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PUBLIC, "Make the keys and metadata publicly readable"));
-        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PBE, "Require a passphrase to read the keys and metadata"));
+        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PUBLIC, "Make the keys and profile data publicly readable"));
+        _readKeyPrivacyCombo.add(registry.getText(T_READKEYPRIV_PBE, "Require a passphrase to read the keys and profile"));
         if (idx >= 0)
             _readKeyPrivacyCombo.select(idx);
 

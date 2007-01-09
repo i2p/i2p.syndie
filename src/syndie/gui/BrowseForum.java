@@ -53,6 +53,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private ImageCanvas _metaAvatar;
     private Label _metaName;
     private Menu _metaNameMenu;
+    private Button _metaAction;
     private Label _metaDesc;
     private MenuItem _metaNameMenuView;
     private MenuItem _metaNameMenuBookmark;
@@ -113,7 +114,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.exclude = true;
         _meta.setLayoutData(gd);
-        gl = new GridLayout(8, false);
+        gl = new GridLayout(9, false);
         gl.horizontalSpacing = 0;
         gl.marginHeight = 0;
         gl.marginWidth = 0;
@@ -128,6 +129,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaName = new Label(_meta, SWT.WRAP);
         _metaName.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         _metaName.setText("");
+        _metaAction = new Button(_meta, SWT.ARROW | SWT.DOWN);
+        _metaAction.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, false, false));
         _metaDesc = new Label(_meta, SWT.WRAP);
         _metaDesc.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
         _metaDesc.setText("");
@@ -163,6 +166,11 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         
         _metaNameMenuDeleteRead.setEnabled(false);
         _metaNameMenuDeleteAll.setEnabled(false);
+        
+        _metaAction.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
+        });
         
         _metaNameMenuView.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createMetaURI(_scope)); }
@@ -386,7 +394,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
-            _metaDesc.setText(" - " + desc);
+            _metaDesc.setText(desc);
             boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
             _metaIconManageable.setVisible(manage);
             boolean post = manage || info.getAllowPublicPosts() || (_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);

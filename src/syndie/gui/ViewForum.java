@@ -291,7 +291,7 @@ class ViewForum implements Translatable, Themeable {
             }
         });
         MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
-        viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum metadata"));
+        viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum profile"));
         viewMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }

@@ -499,7 +499,7 @@ public class BackupSecrets implements Themeable, Translatable {
     private static final String T_CANCEL = "syndie.gui.backupsecrets.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _includeMeta.setText(registry.getText(T_META, "Backup related forum metadata?"));
+        _includeMeta.setText(registry.getText(T_META, "Backup related forum profile?"));
         _includeExpiredKeys.setText(registry.getText(T_EXPIRED, "Backup expired keys?"));
         _passphraseRequired.setText(registry.getText(T_PASSPHRASE, "Passphrase required to restore:"));
         _ok.setText(registry.getText(T_OK, "Ok"));
