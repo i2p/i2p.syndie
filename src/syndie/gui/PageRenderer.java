@@ -855,6 +855,7 @@ public class PageRenderer implements Themeable {
     //public DBClient getCurrentClient() { return _client; }
 
     private void pickMenu(int x, int y, boolean showMenu) {
+        _browser.getUI().debugMessage("menu is visible? " + _text.getMenu().isVisible());
         Point p = new Point(x, y);
         int off = -1;
         try {
@@ -876,14 +877,17 @@ public class PageRenderer implements Themeable {
                 }
             }
             if ( (imgTag != null) && (linkTag != null) ) {
+                _text.getMenu().setVisible(false);
                 pickImageLinkMenu(linkTag, imgTag);
                 if (showMenu) _text.getMenu().setVisible(true);
                 return;
             } else if (linkTag != null) {
+                _text.getMenu().setVisible(false);
                 pickLinkMenu(linkTag);
                 if (showMenu) _text.getMenu().setVisible(true);
                 return;
             } else if (imgTag != null) {
+                _text.getMenu().setVisible(false);
                 pickImageMenu(imgTag);
                 if (showMenu) _text.getMenu().setVisible(true);
                 return;
@@ -897,6 +901,7 @@ public class PageRenderer implements Themeable {
     
     private void pickImageLinkMenu(HTMLTag linkTag, HTMLTag imgTag) {
         _text.setMenu(_imageLinkMenu);
+        _browser.getUI().debugMessage("pickImageLinkMenu: " + imgTag);
         SyndieURI uri = null;
         if (linkTag != null)
             uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
@@ -937,6 +942,7 @@ public class PageRenderer implements Themeable {
                 for (int i = 0; i < _imageIndexes.size(); i++) {
                     Integer idx = (Integer)_imageIndexes.get(i);
                     if (idx.intValue() == imgTag.startIndex) {
+                        if (_images.size() <= 0) return; // disposing
                         _currentEventImage = (Image)_images.get(i);
                         _currentEventImageTag = imgTag;
                         break;
@@ -969,6 +975,7 @@ public class PageRenderer implements Themeable {
     
     private void pickLinkMenu(HTMLTag linkTag) {
         _text.setMenu(_linkMenu);
+        _browser.getUI().debugMessage("pickLinkMenu: " + linkTag);
         SyndieURI uri = null;
         if (linkTag != null)
             uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
@@ -1010,6 +1017,7 @@ public class PageRenderer implements Themeable {
     
     private void pickBodyMenu() {
         _text.setMenu(_bodyMenu);
+        _browser.getUI().debugMessage("pickBodyMenu");
             
         _currentEventURI = null;
         _currentEventLinkTag = null;
@@ -1068,6 +1076,7 @@ public class PageRenderer implements Themeable {
     }
     
     private void pickImageMenu(HTMLTag imgTag) {
+        _browser.getUI().debugMessage("pickImageMenu: " + imgTag);
         _text.setMenu(_imageMenu);
             
         _currentEventURI = null;
@@ -1078,6 +1087,7 @@ public class PageRenderer implements Themeable {
             for (int i = 0; i < _imageIndexes.size(); i++) {
                 Integer idx = (Integer)_imageIndexes.get(i);
                 if (idx.intValue() == imgTag.startIndex) {
+                    if (_images.size() <= 0) return; // disposing
                     _currentEventImage = (Image)_images.get(i);
                     _currentEventImageTag = imgTag;
                     break;
@@ -1090,15 +1100,17 @@ public class PageRenderer implements Themeable {
             _imgEnable.setEnabled(false);
             _imgIgnoreAuthor.setEnabled(false);
             _imgIgnoreForum.setEnabled(false);
-            _imgSave.setEnabled(false);
+            /*_imgSave.setEnabled(false);
             _imgSaveAll.setEnabled(false);
             _imgView.setEnabled(false);
+             */
         } else {
             _imgDisable.setEnabled(_enableImages);
             _imgEnable.setEnabled(!_enableImages);
-            _imgSave.setEnabled(true);
+            /*_imgSave.setEnabled(true);
             _imgSaveAll.setEnabled(true);
             _imgView.setEnabled(true);
+             */
             _imgIgnoreForum.setEnabled(true);
             
             long targetId = _msg.getTargetChannelId();
@@ -1492,6 +1504,7 @@ public class PageRenderer implements Themeable {
         _imageMenu = new Menu(_text);
         _imageMenu.setEnabled(true);
         
+        /*
         _imgView = new MenuItem(_imageMenu, SWT.PUSH);
         _imgView.setText("View image");
         _imgView.addSelectionListener(new FireEventListener() {
@@ -1516,6 +1529,7 @@ public class PageRenderer implements Themeable {
             }
         });
         new MenuItem(_imageMenu, SWT.SEPARATOR);
+         */
         _imgDisable = new MenuItem(_imageMenu, SWT.PUSH);
         _imgDisable.setText("Disable images");
         _imgDisable.addSelectionListener(new FireEventListener() {
