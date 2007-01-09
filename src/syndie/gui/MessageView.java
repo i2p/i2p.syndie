@@ -736,7 +736,7 @@ public class MessageView implements Translatable, Themeable {
         
         _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
         _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
-        _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View fourm information"));
+        _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View forum profile"));
         _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
         _forumMenuReplyPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
         _forumMenuReplyPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
