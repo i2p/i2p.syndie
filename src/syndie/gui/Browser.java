@@ -371,13 +371,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { nextTab(); }
             public void widgetSelected(SelectionEvent selectionEvent) { nextTab(); }
         });
-        _fileMenuNextTab.setAccelerator(SWT.MOD2 + SWT.MOD1 + SWT.ARROW_RIGHT); // ^-shift-right
+        _fileMenuNextTab.setAccelerator(SWT.MOD3 + SWT.ARROW_RIGHT); // alt-right
         _fileMenuPrevTab = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuPrevTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { prevTab(); }
             public void widgetSelected(SelectionEvent selectionEvent) { prevTab(); }
         });
-        _fileMenuPrevTab.setAccelerator(SWT.MOD2 + SWT.MOD1 + SWT.ARROW_LEFT); // ^-shift-left
+        _fileMenuPrevTab.setAccelerator(SWT.MOD3 + SWT.ARROW_LEFT); // alt-left
         _fileMenuCloseTab = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuCloseTab.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { closeTab(); }

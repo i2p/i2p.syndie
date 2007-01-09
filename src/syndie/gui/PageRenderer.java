@@ -298,6 +298,22 @@ public class PageRenderer implements Themeable {
                     case ' ':
                         pageDown(true);
                         break;
+                    case 0x01: // ^A
+                        _text.selectAll();
+                        evt.doit = false;
+                        break;
+                    case 0x03: // ^C
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _text.copy();
+                            evt.doit = false;
+                        }
+                        break;
+                    case 0x18: // ^X for cut doesn't make sense in a page renderer, so just copy
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            _text.copy();
+                            evt.doit = false;
+                        }
+                        break;
                 }
                 _browser.getUI().debugMessage("keyCode: " + evt.keyCode + " char=" + (int)evt.character + " state=" + evt.stateMask + " pgDown=" + SWT.PAGE_DOWN + "/" + ST.PAGE_DOWN + " pgUp=" + SWT.PAGE_UP + "/" + ST.PAGE_UP);
                 if (evt.keyCode == SWT.PAGE_DOWN)

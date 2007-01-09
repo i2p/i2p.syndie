@@ -1122,7 +1122,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private PageEditor addPage() {
         Properties prefs = _browser.getClient().getNymPrefs();
         boolean html = true;
-        String pref = prefs.getProperty("editor.defaultFormat", TYPE_HTML);
+        String pref = prefs.getProperty("editor.defaultFormat", TYPE_TEXT);
         if (TYPE_HTML.equals(pref))
             html = true;
         else

@@ -16,6 +16,7 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -993,6 +994,12 @@ public class MessageTree implements Translatable, Themeable {
             public void returnHit() { fireSelected(true); }
             public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
+            public void keyReleased(KeyEvent evt) {
+                super.keyPressed(evt);
+                // refresh the pane on ^R
+                if ( (_filterable) && (evt.character == 0x12) & ((evt.stateMask & SWT.MOD1) != 0) )
+                    applyFilter();
+            }
         };
         _tree.addSelectionListener(lsnr);
         _tree.addControlListener(lsnr);
