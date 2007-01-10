@@ -53,6 +53,7 @@ class ManageForumExecutor {
         public boolean getAllowPublicPosts();
         public boolean getAllowPublicReplies();
         public Set getPublicTags();
+        public Set getPrivateTags();
         public Set getAuthorizedPosters();
         public Set getAuthorizedManagers();
         public String getReferences();
@@ -121,6 +122,11 @@ class ManageForumExecutor {
         if (tags != null) {
             for (Iterator iter = tags.iterator(); iter.hasNext(); )
                 chanGenOpts.addOptValue("pubTag", iter.next().toString());
+        }
+        tags = _state.getPrivateTags();
+        if (tags != null) {
+            for (Iterator iter = tags.iterator(); iter.hasNext(); )
+                chanGenOpts.addOptValue("privTag", iter.next().toString());
         }
         
         Set keys = _state.getAuthorizedPosters();

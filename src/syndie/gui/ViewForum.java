@@ -136,6 +136,10 @@ class ViewForum implements Translatable, Themeable {
         _avatarImgStandard = new ArrayList();
         _archiveItemToURI = new HashMap();
         _userItemToHash = new HashMap();
+        _privArchiveURIs = new ArrayList();
+        _pubArchiveURIs = new ArrayList();
+        _managerHashes = new ArrayList();
+        _posterHashes = new ArrayList();
         Hash scope = uri.getScope();
         if (scope == null)
             scope = uri.getHash("scope");
@@ -153,7 +157,8 @@ class ViewForum implements Translatable, Themeable {
                     _editable = false;
             }
         } else {
-            _browser.getUI().debugMessage("no scope!");
+            _browser.getUI().debugMessage("no scope!  creating a new one");
+            _editable = true;
         }
         initComponents();
     }
@@ -606,6 +611,13 @@ class ViewForum implements Translatable, Themeable {
             public boolean getAllowPublicPosts() { return _authorization.getSelectionIndex() == AUTH_PUBLIC; }
             public boolean getAllowPublicReplies() { return _authorization.getSelectionIndex() == AUTH_PUBREPLY; }
             public Set getPublicTags() { return Collections.EMPTY_SET; }
+            public Set getPrivateTags() { 
+                String tags[] = Constants.split(" \t\r\n,", _tags.getText(), false);
+                Set rv = new HashSet(tags.length);
+                for (int i = 0; i < tags.length; i++)
+                    rv.add(tags[i]);
+                return rv;
+            }
             public Set getAuthorizedPosters() { return getPubKeys(_posterHashes); }
             public Set getAuthorizedManagers() { return getPubKeys(_managerHashes); }
             private Set getPubKeys(List scopes) {
@@ -851,12 +863,12 @@ class ViewForum implements Translatable, Themeable {
     }
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
-        _privArchiveURIs = new ArrayList();
+        _privArchiveURIs.clear();
         for (Iterator iter = info.getPrivateArchives().iterator(); iter.hasNext(); ) {
             ArchiveInfo archive = (ArchiveInfo)iter.next();
             _privArchiveURIs.add(archive.getURI());
         }
-        _pubArchiveURIs = new ArrayList();
+        _pubArchiveURIs.clear();
         for (Iterator iter = info.getPublicArchives().iterator(); iter.hasNext(); ) {
             ArchiveInfo archive = (ArchiveInfo)iter.next();
             _pubArchiveURIs.add(archive.getURI());
@@ -924,8 +936,10 @@ class ViewForum implements Translatable, Themeable {
     
     private void loadUsers(ChannelInfo info) {
         // add buttons w/ menus for the authorized managers and posters in _userGroup
-        _managerHashes = new ArrayList(info.getAuthorizedManagerHashes());
-        _posterHashes = new ArrayList(info.getAuthorizedPosterHashes());
+        _managerHashes.clear();
+        _posterHashes.clear();
+        _managerHashes.addAll(info.getAuthorizedManagerHashes());
+        _posterHashes.addAll(info.getAuthorizedPosterHashes());
         
         redrawUsers();
     }

@@ -711,6 +711,7 @@ class ManageForum implements ReferenceChooserTree.AcceptanceListener, Translatab
     public String getDescription() { return _desc.getText().trim(); }
     public boolean getAllowPublicPosts() { return _auth.getSelectionIndex() == AUTH_UNAUTHPOST; }
     public boolean getAllowPublicReplies() { return _auth.getSelectionIndex() == AUTH_UNAUTHREPLY; }
+    public Set getPrivateTags() { return getPublicTags(); }
     public Set getPublicTags() {
         String tags[] = Constants.split(", \t\r\n", _tags.getText().trim(), false);
         Set rv = new HashSet();
