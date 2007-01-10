@@ -50,8 +50,14 @@ public class MessagePreview implements Themeable, Translatable {
     //private Composite _header;
     private Label _headerSubject;
     private Button _headerView;
+    private Button _headerReply;
     private MessageFlagBar _headerIcons;
     private Label _headerTags;
+    
+    private Menu _headerReplyMenu;
+    private MenuItem _headerReplyAuthorPrivate;
+    private MenuItem _headerReplyForumPrivate;
+    private MenuItem _headerReplyForumPublic;
     
     private PageRenderer _body;
     private SyndieURI _uri;
@@ -95,17 +101,18 @@ public class MessagePreview implements Themeable, Translatable {
         MessageInfo msg = getMessage();
         if (msg != null) {
             updateMeta(msg);
+            _target = msg.getTargetChannel();
+            _author = _browser.getClient().getChannelHash(msg.getAuthorChannelId());
             _body.renderPage(new PageRendererSource(_browser), _uri);
         } else {
+            _target = null;
+            _author = null;
             _headerIcons.setMessage(null);
         }
     }
     private void updateMeta(MessageInfo msg) {
-        String subj = msg.getSubject();
-        if (subj != null)
-            _headerSubject.setText(subj);
-        else
-            _headerSubject.setText("");
+        String subj = MessageView.calculateSubject(_browser, msg);
+        _headerSubject.setText(subj);
         
         Set tags = new TreeSet(msg.getPublicTags());
         tags.addAll(msg.getPrivateTags());
@@ -130,7 +137,7 @@ public class MessagePreview implements Themeable, Translatable {
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.BORDER);
-        _root.setLayout(new GridLayout(2, false));
+        _root.setLayout(new GridLayout(3, false));
         
         _headerView = new Button(_root, SWT.PUSH | SWT.FLAT);
         _headerView.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
@@ -148,16 +155,42 @@ public class MessagePreview implements Themeable, Translatable {
         _headerSubject.setLayoutData(gd);
         _headerSubject.setText("");
         
+        _headerReply = new Button(_root, SWT.PUSH);
+        _headerReply.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        
+        _headerReplyMenu = new Menu(_headerReply);
+        _headerReply.setMenu(_headerReplyMenu);
+        _headerReply.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
+        });
+        
+        _headerReplyForumPublic = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyForumPublic.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+        });
+        _headerReplyAuthorPrivate = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyAuthorPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+        });
+        _headerReplyForumPrivate = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyForumPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+        });
+        
         _headerIcons = new MessageFlagBar(_browser, _root, true);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.heightHint = ICON_HEIGHT;
         _headerIcons.getControl().setLayoutData(gd);
         
         _headerTags = new Label(_root, SWT.SINGLE | SWT.WRAP | SWT.READ_ONLY);
-        _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false));
+        _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false, 2, 1));
         
         _body = new PageRenderer(_root, true, _browser);
-        _body.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        _body.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) {
                 if (_browser != null)
@@ -200,14 +233,38 @@ public class MessagePreview implements Themeable, Translatable {
         _browser.getThemeRegistry().register(this);
     }
     
+    private void replyPrivateAuthor() {
+        if (_author != null)
+            _browser.view(_browser.createPostURI(_author, _uri, true));
+    }
+    private void replyPrivateForum() {
+        if (_target != null)
+            _browser.view(_browser.createPostURI(_target, _uri, true));
+    }
+    private void replyPublicForum() {
+        if (_target != null)
+            _browser.view(_browser.createPostURI(_target, _uri, false));
+    }
+    
     private static final String T_VIEW = "syndie.gui.messagepreview.view";
+    private static final String T_REPLY = "syndie.gui.messagepreview.reply";
+    
+    private static final String T_AUTHORREPLYPRIV = "syndie.gui.messagepreview.authorreplypriv";
+    private static final String T_FORUMREPLYPUB = "syndie.gui.messagepreview.forumreplypub";
+    private static final String T_FORUMREPLYPRIV = "syndie.gui.messagepreview.forumreplypriv";
     
     public void translate(TranslationRegistry registry) {
         _headerView.setText(registry.getText(T_VIEW, "View"));
+        _headerReply.setText(registry.getText(T_REPLY, "Reply..."));
+        
+        _headerReplyAuthorPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
+        _headerReplyForumPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
+        _headerReplyForumPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
     }
     
     public void applyTheme(Theme theme) {
         _headerSubject.setFont(theme.DEFAULT_FONT);
+        _headerReply.setFont(theme.BUTTON_FONT);
         _headerTags.setFont(theme.DEFAULT_FONT);
         _headerView.setFont(theme.BUTTON_FONT);
     }

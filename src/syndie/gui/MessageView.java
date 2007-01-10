@@ -61,6 +61,11 @@ public class MessageView implements Translatable, Themeable {
     
     private ImageCanvas _avatar;
     private Label _headerSubject;
+    private Button _headerReply;
+    private Menu _headerReplyMenu;
+    private MenuItem _headerReplyAuthorPrivate;
+    private MenuItem _headerReplyForumPrivate;
+    private MenuItem _headerReplyForumPublic;
     private Label _headerAuthorLabel;
     private Label _headerAuthor;
     private Button _headerAuthorAction;
@@ -597,7 +602,33 @@ public class MessageView implements Translatable, Themeable {
         _headerDate.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
         
         _headerSubject = new Label(_root, SWT.WRAP);
-        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 8, 1));
+        _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 7, 1));
+        
+        _headerReply = new Button(_root, SWT.PUSH);
+        _headerReply.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        
+        _headerReplyMenu = new Menu(_headerReply);
+        _headerReply.setMenu(_headerReplyMenu);
+        _headerReply.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
+        });
+        
+        _headerReplyForumPublic = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyForumPublic.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+        });
+        _headerReplyAuthorPrivate = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyAuthorPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateAuthor(); }
+        });
+        _headerReplyForumPrivate = new MenuItem(_headerReplyMenu, SWT.PUSH);
+        _headerReplyForumPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+        });
         
         _headerFlags = new MessageFlagBar(_browser, _root, true);
         _headerFlags.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 4, 1));
@@ -733,6 +764,7 @@ public class MessageView implements Translatable, Themeable {
     
     public void applyTheme(Theme theme) {
         _headerSubject.setFont(theme.DEFAULT_FONT);
+        _headerReply.setFont(theme.BUTTON_FONT);
         _headerAuthorLabel.setFont(theme.DEFAULT_FONT);
         _headerAuthor.setFont(theme.DEFAULT_FONT);
         _headerForumLabel.setFont(theme.DEFAULT_FONT);
@@ -745,6 +777,7 @@ public class MessageView implements Translatable, Themeable {
             _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
     }
     
+    private static final String T_REPLY = "syndie.gui.messageview.reply";
     private static final String T_AUTHOR = "syndie.gui.messageview.author";
     private static final String T_FORUM = "syndie.gui.messageview.forum";
     private static final String T_DATE = "syndie.gui.messageview.date";
@@ -778,21 +811,28 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_FORUMREPLYPRIV = "syndie.gui.messageview.forumreplypriv";
     
     public void translate(TranslationRegistry registry) {
+        _headerReply.setText(registry.getText(T_REPLY, "Reply..."));
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
         _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
         _headerDateLabel.setText(registry.getText(T_DATE, "Date:"));
+        
+        _headerReplyAuthorPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
+        _headerReplyForumPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
+        _headerReplyForumPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
+        
+        // duplicate the reply menu 
+        _authorMenuReplyPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
+        _forumMenuReplyPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
+        _forumMenuReplyPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
         
         _authorMenuBan.setText(registry.getText(T_AUTHORBAN, "Ban author"));
         _authorMenuBookmark.setText(registry.getText(T_AUTHORBOOKMARK, "Bookmark author"));
         _authorMenuViewMeta.setText(registry.getText(T_AUTHORVIEWMETA, "View author's information"));
         _authorMenuViewMsgs.setText(registry.getText(T_AUTHORVIEWMSGS, "View author's forum"));
-        _authorMenuReplyPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
         
         _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
         _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
         _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View forum profile"));
         _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
-        _forumMenuReplyPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
-        _forumMenuReplyPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
     }
 }
