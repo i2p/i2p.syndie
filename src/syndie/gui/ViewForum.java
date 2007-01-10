@@ -282,6 +282,12 @@ class ViewForum implements Translatable, Themeable {
         
         final Menu userMenu = new Menu(_users);
         _users.setMenu(userMenu);
+        MenuItem addForum = new MenuItem(userMenu, SWT.PUSH);
+        addForum.setText(_browser.getTranslationRegistry().getText(T_USER_ADDFORUM, "Add"));
+        addForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
+        });
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
         viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
@@ -376,6 +382,14 @@ class ViewForum implements Translatable, Themeable {
 
         final Menu archiveMenu = new Menu(_archives);
         _archives.setMenu(archiveMenu);
+        if (_editable) {
+            MenuItem add = new MenuItem(archiveMenu, SWT.PUSH);
+            add.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
+            add.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addArchive(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { addArchive(); }
+            });
+        }
         MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
         view.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_VIEW, "View"));
         view.addSelectionListener(new SelectionListener() {
@@ -988,6 +1002,7 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_USER_MANAGE = "syndie.gui.viewforum.user.manage";
     private static final String T_USER_VIEWFORUMMETA = "syndie.gui.viewforum.user.viewforummeta";
     private static final String T_USER_VIEWFORUM = "syndie.gui.viewforum.user.viewforum";
+    private static final String T_USER_ADDFORUM = "syndie.gui.viewforum.user.addforum";
     private void toggleUserManagement(Hash scope) {
         if (_managerHashes.contains(scope)) {
             _managerHashes.remove(scope);
