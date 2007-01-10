@@ -1379,9 +1379,8 @@ public class MessageTree implements Translatable, Themeable {
 
         long dbEnd = System.currentTimeMillis();
 
-        if (subj == null) subj = "";
-        if (subj.trim().length() <= 0)
-            item.setText(0, _browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject"));
+        if ( (subj == null) || (subj.trim().length() <= 0) )
+            item.setText(0, MessageView.calculateSubject(_browser, uri));
         else
             item.setText(0, subj);
         // msgbar stuff

@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -204,13 +205,8 @@ public class MessageView implements Translatable, Themeable {
                 _avatar.setVisible(true);
                 _avatar.forceSize(Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT);
             }
-            String subject = msg.getSubject();
-            if (subject == null)
-                subject = "";
-            if (subject.trim().length() <= 0)
-                _headerSubject.setText(_browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject"));
-            else
-                _headerSubject.setText(subject);
+            String subject = calculateSubject(msg);
+            _headerSubject.setText(subject);
             
             ChannelInfo authorChan = _browser.getClient().getChannel(msg.getAuthorChannelId());
             if (authorChan != null) {
@@ -279,6 +275,64 @@ public class MessageView implements Translatable, Themeable {
         //SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), _page);
         //_body.renderPage(new PageRendererSource(_browser), uri);
         _root.layout(true, true);
+    }
+    
+    private String calculateSubject(MessageInfo msg) { return calculateSubject(_browser, msg); }
+    public static String calculateSubject(BrowserControl browser, MessageInfo msg) {
+        if (msg != null) {
+            String subject = msg.getSubject();
+            if ( (subject != null) && (subject.trim().length() > 0) )
+                return subject;
+            // message has no subject... try its ancestors (and append a "re: ")
+            List ancestors = msg.getHierarchy();
+            for (int i = 0; i < ancestors.size(); i++) {
+                SyndieURI uri = (SyndieURI)ancestors.get(i);
+                long msgId = browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                if (msgId >= 0) {
+                    String ancestorSubject = browser.getClient().getMessageSubject(msgId);
+                    if ( (ancestorSubject != null) && (ancestorSubject.trim().length() > 0) ) {
+                        if (Constants.lowercase(ancestorSubject).startsWith("re:"))
+                            return ancestorSubject;
+                        else
+                            return "re: " + ancestorSubject.trim();
+                    }
+                }
+            }
+        }
+        // no ancestors with a subject found
+        return browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject");
+    }
+    static String calculateSubject(BrowserControl browser, SyndieURI uri) {
+        if (uri != null) {
+            long msgId = browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                String subject = browser.getClient().getMessageSubject(msgId);
+                if ( (subject != null) && (subject.trim().length() > 0) )
+                    return subject;
+                ThreadMsgId tmi = new ThreadMsgId(msgId);
+                tmi.scope = uri.getScope();
+                tmi.messageId = uri.getMessageId().longValue();
+                Map ancestors = new HashMap();
+                ThreadAccumulatorJWZ.buildAncestors(browser.getClient(), browser.getUI(), tmi, ancestors);
+                List ids = (List)ancestors.get(tmi);
+                if (ids != null) {
+                    for (int i = 0; i < ids.size(); i++) {
+                        ThreadMsgId id = (ThreadMsgId)ids.get(i);
+                        if (id.msgId >= 0) {
+                            subject = browser.getClient().getMessageSubject(id.msgId);
+                            if ( (subject != null) && (subject.trim().length() > 0) ) {
+                                if (Constants.lowercase(subject).startsWith("re:"))
+                                    return subject;
+                                else
+                                    return "re: " + subject.trim();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // no ancestors with a subject found
+        return browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject");
     }
     private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
     
