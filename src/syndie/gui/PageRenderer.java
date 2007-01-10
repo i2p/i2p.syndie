@@ -132,6 +132,8 @@ public class PageRenderer implements Themeable {
     
     private int _viewSizeModifier;
     private int _charsPerLine;
+
+    private boolean _disposed;
     
     public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
     public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
@@ -150,6 +152,7 @@ public class PageRenderer implements Themeable {
         _enableRender = true;
         _viewAsText = false;
         _viewSizeModifier = 0;
+        _disposed = false;
     
         buildMenus();
         pickBodyMenu();
@@ -170,6 +173,7 @@ public class PageRenderer implements Themeable {
                 pickMenu(mouseEvent.x, mouseEvent.y, false);
             }
             public void mouseHover(MouseEvent mouseEvent) {
+                if (_disposed) return;
                 pickMenu(mouseEvent.x, mouseEvent.y, false);
                 _text.setToolTipText("");
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
@@ -218,6 +222,7 @@ public class PageRenderer implements Themeable {
         
         _text.addMouseMoveListener(new MouseMoveListener() {
             public void mouseMove(MouseEvent mouseEvent) {
+                if (_disposed) return;
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
                 boolean link = false;
@@ -252,6 +257,7 @@ public class PageRenderer implements Themeable {
         // draw the current image or bullet on the pane
         _text.addPaintObjectListener(new PaintObjectListener() {
             public void paintObject(PaintObjectEvent evt) {
+                if (_disposed) return;
                 GC gc = evt.gc;
                 StyleRange range = evt.style;
                 int start = range.start;
@@ -821,6 +827,7 @@ public class PageRenderer implements Themeable {
     }
     
     public void dispose() {
+        _disposed = true;
         disposeFonts();
         disposeColors();
         disposeImages();
@@ -871,6 +878,7 @@ public class PageRenderer implements Themeable {
     //public DBClient getCurrentClient() { return _client; }
 
     private void pickMenu(int x, int y, boolean showMenu) {
+        if (_disposed) return;
         _browser.getUI().debugMessage("menu is visible? " + _text.getMenu().isVisible());
         Point p = new Point(x, y);
         int off = -1;
@@ -1103,7 +1111,7 @@ public class PageRenderer implements Themeable {
             for (int i = 0; i < _imageIndexes.size(); i++) {
                 Integer idx = (Integer)_imageIndexes.get(i);
                 if (idx.intValue() == imgTag.startIndex) {
-                    if (_images.size() <= 0) return; // disposing
+                    if (_images.size() <= i) return; // disposing
                     _currentEventImage = (Image)_images.get(i);
                     _currentEventImageTag = imgTag;
                     break;
