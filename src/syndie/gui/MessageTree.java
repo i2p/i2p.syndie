@@ -195,12 +195,18 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
     }
+    private TreeItem _prevHighlight;
     private void renderHighlight(TreeItem item) {
+        if ( (_prevHighlight != null) && (!_prevHighlight.isDisposed()) ) {
+            _prevHighlight.setBackground(null);
+            _prevHighlight.setForeground(null);
+        }
         if (item != null) {
             ColorUtil.init();
             item.setBackground(ColorUtil.getColor("yellow"));
             item.setForeground(ColorUtil.getColor("black"));
         }
+        _prevHighlight = item;
     }
     
     private void show(SyndieURI uri) {

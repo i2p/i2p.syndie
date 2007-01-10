@@ -565,14 +565,14 @@ public class PageRenderer implements Themeable {
                     _text.setBackgroundImage(_bgImage);
                 } else {
                     _text.setBackgroundImage(null);
-                    _text.setBackgroundMode(SWT.INHERIT_DEFAULT); // use the container's background
+                    //_text.setBackgroundMode(SWT.INHERIT_DEFAULT); // use the container's background
                 }
 
                 _bgColor = sbuilder.getBackgroundColor();
                 if (_styled && _bgColor != null)
                     _text.setBackground(_bgColor);
                 else
-                    _text.setBackground(null);
+                    _text.setBackground(ColorUtil.getColor("white")); //null);
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _text.setCursor(null);

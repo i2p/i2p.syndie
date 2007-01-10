@@ -485,6 +485,8 @@ class HTMLStyleBuilder {
         
         if (_styled && (fgColor != null))
             style.foreground = fgColor;
+        else
+            style.foreground = ColorUtil.getColor("black");
         
         if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
             // ok, we can't use a default font, so lets construct a new one (or use a cached one)

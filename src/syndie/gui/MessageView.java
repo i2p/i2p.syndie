@@ -610,8 +610,8 @@ public class MessageView implements Translatable, Themeable {
         _headerReplyMenu = new Menu(_headerReply);
         _headerReply.setMenu(_headerReplyMenu);
         _headerReply.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
+            public void widgetDefaultSelected(SelectionEvent evt) { _headerReplyMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent evt) { _headerReplyMenu.setVisible(true); }
         });
         
         _headerReplyForumPublic = new MenuItem(_headerReplyMenu, SWT.PUSH);
@@ -639,6 +639,8 @@ public class MessageView implements Translatable, Themeable {
         _bodyContainer = new Composite(_root, SWT.NONE);
         _bodyContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
         _bodyContainer.setLayout(new FillLayout());
+        
+        _headerReplyMenu.setVisible(false);
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
