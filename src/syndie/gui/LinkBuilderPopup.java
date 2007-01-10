@@ -910,9 +910,9 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             SyndieURI uri = _browser.getSyndicationManager().getArchiveURI(i);
             String name = _browser.getSyndicationManager().getArchiveName(i);
             if (name != null)
-                _linkTypeArchiveCombo.add(name + ": " + ManageForumArchiveChooser.getLocation(uri));
+                _linkTypeArchiveCombo.add(name + ": " + getLocation(uri));
             else
-                _linkTypeArchiveCombo.add(ManageForumArchiveChooser.getLocation(uri));
+                _linkTypeArchiveCombo.add(getLocation(uri));
             _archives.add(uri);
         }
         _linkTypeArchiveCombo.setRedraw(true);
@@ -948,6 +948,34 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _syndieManageKeyCombo.setEnabled(false);
         _syndieManageKeyCombo.removeAll();
         _syndieManageKey.setSelection(false);
+    }
+    
+    private static final String getLocation(SyndieURI uri) {
+        if (uri != null) {
+            String url = uri.getURL();
+            if (url == null) {
+                return uri.toString();
+            } else if ( (url.indexOf("SSK@") >= 0) || (url.indexOf("CHK@") >= 0) || (url.indexOf("USK@") >= 0) ) {
+                int idx = url.indexOf("CHK@");
+                if (idx < 0)
+                    idx = url.indexOf("SSK@");
+                if (idx < 0)
+                    idx = url.indexOf("USK@");
+                int end = url.indexOf('?', idx);
+                if (end > 0)
+                    return url.substring(idx, end);
+                else
+                    return url.substring(idx);
+            } else if ( url.startsWith("/") || 
+                        ((url.length() > 2) && (url.charAt(1) == ':') && (url.charAt(2) == '\\')) || 
+                        (url.startsWith("file://")) ) {
+                return url;
+            } else {
+                return url;
+            }
+        } else {
+            return "";
+        }
     }
     
     /** attach any of the keys specified to the given uri, as well as update the page/attachment */

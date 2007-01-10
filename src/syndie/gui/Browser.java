@@ -1820,7 +1820,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
-        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_REFS);
+        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_REFS);
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
         return uri;
     }
@@ -1828,7 +1828,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
-        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_ARCHIVES);
+        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_ARCHIVES);
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
         return uri;
     }
@@ -1836,7 +1836,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
-        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_POSTERS);
+        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_POSTERS);
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
         return uri;
     }
@@ -1844,7 +1844,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
-        attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_MANAGER);
+        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_MANAGER);
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
         return uri;
     }

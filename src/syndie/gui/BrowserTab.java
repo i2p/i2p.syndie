@@ -80,21 +80,8 @@ abstract class BrowserTab implements Themeable {
             }
         } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
             return new ViewForumTab(browser, uri);
-            //return new ManageForumTab(browser, uri);
         } else if (TYPE_META.equalsIgnoreCase(uri.getType())) {
             return new ViewForumTab(browser, uri);
-            /*
-            Hash forum = uri.getHash("channel");
-            if (forum == null)
-                forum = uri.getScope();
-            // if we can manage this, do so
-            if (forum != null) {
-                List keys = browser.getClient().getNymKeys(forum, Constants.KEY_FUNCTION_MANAGE);
-                if ( (keys != null) && (keys.size() > 0) )
-                    return new ManageForumTab(browser, uri, true);
-            }
-            return new ManageForumTab(browser, uri, false);
-             */
         } else if (TYPE_TEXTUI.equals(uri.getType())) {
             return new TextUITab(browser, uri);
         } else if (TYPE_LOGS.equals(uri.getType())) {
