@@ -551,7 +551,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaIconReferences.setToolTipText(registry.getText(T_REFS_TOOLTIP, "This forum has published references"));
         _metaIconAdmins.setToolTipText(registry.getText(T_ADMINS_TOOLTIP, "This forum has specific admins"));
 
-        _metaNameMenuView.setText(registry.getText(T_VIEW, "View the forum attributes"));
+        _metaNameMenuView.setText(registry.getText(T_VIEW, "View the forum profile"));
         _metaNameMenuBookmark.setText(registry.getText(T_BOOKMARK, "Bookmark this forum"));
         _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
         _metaNameMenuDeleteRead.setText(registry.getText(T_DELETEREAD, "Delete read messages"));

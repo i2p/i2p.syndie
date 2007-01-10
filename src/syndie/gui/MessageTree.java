@@ -118,10 +118,6 @@ public class MessageTree implements Translatable, Themeable {
 
     private MessageTreeListener _listener;
     private Map _itemToURI;
-    /** items for messages that are old */
-    private Set _itemsOld;
-    /** items for messages that are new but read */
-    private Set _itemsNewRead;
     /** items for messages that are new and unread */
     private Set _itemsNewUnread;
     /** item to msgId (Long) */
@@ -159,8 +155,6 @@ public class MessageTree implements Translatable, Themeable {
         _showTags = showTags;
         _hideFilter = hideFilter;
         _itemToURI = new HashMap();
-        _itemsOld = new HashSet();
-        _itemsNewRead = new HashSet();
         _itemsNewUnread = new HashSet();
         _itemToMsgId = new HashMap();
         _itemToMsgFlags = new HashMap();
@@ -1236,8 +1230,6 @@ public class MessageTree implements Translatable, Themeable {
         for (Iterator iter = _itemToMsgFlags.values().iterator(); iter.hasNext(); )
             ((MessageFlagBar)iter.next()).dispose();
         _itemToMsgFlags.clear();
-        _itemsOld.clear();
-        _itemsNewRead.clear();
         _itemsNewUnread.clear();
         _tags.clear();
         _itemToNode.clear();
@@ -1289,7 +1281,7 @@ public class MessageTree implements Translatable, Themeable {
         String chan = "";
         String date = "";
         String tags = "";
-        int status = DBClient.MSG_STATUS_NEW_UNREAD;
+        int status = DBClient.MSG_STATUS_UNREAD;
 
         long dbStart = System.currentTimeMillis();
 
@@ -1397,15 +1389,8 @@ public class MessageTree implements Translatable, Themeable {
         item.setText(4, date);
         item.setText(5, tags);
         Font f = null;
-        if (status == DBClient.MSG_STATUS_OLD) {
-            _itemsOld.add(item);
+        if ( (status == DBClient.MSG_STATUS_READ) || (uri == null) ) {
             f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
-        } else if (status == DBClient.MSG_STATUS_NEW_READ) {
-            _itemsNewRead.add(item);
-            f = _browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT;
-        } else if (uri == null) {
-            f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
-            // but don't add it to _itemsOld
         } else {
             _itemsNewUnread.add(item);
             f = _browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT;
@@ -1548,14 +1533,11 @@ public class MessageTree implements Translatable, Themeable {
             for (int i = 0; i < selected.length; i++) {
                 Long msgId = (Long)_itemToMsgId.get(selected[i]);
                 if (msgId != null) {
-                    if (_itemsOld.contains(selected[i])) {
-                        // noop
-                    } else {
+                    if (_itemsNewUnread.contains(selected[i])) {
+                        _browser.getUI().debugMessage("mark an unread message as read (" + msgId + ")");
                         _browser.getClient().markMessageRead(msgId.longValue());
                         selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
                         _itemsNewUnread.remove(selected[i]);
-                        _itemsOld.remove(selected[i]);
-                        _itemsNewRead.add(selected[i]);
                     }
                 }
             }
@@ -1567,11 +1549,10 @@ public class MessageTree implements Translatable, Themeable {
             for (int i = 0; i < selected.length; i++) {
                 Long msgId = (Long)_itemToMsgId.get(selected[i]);
                 if (msgId != null) {
+                    _browser.getUI().debugMessage("mark as unread (" + msgId + ")");
                     _browser.getClient().markMessageUnread(msgId.longValue());
                     selected[i].setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
                     _itemsNewUnread.add(selected[i]);
-                    _itemsOld.remove(selected[i]);
-                    _itemsNewRead.remove(selected[i]);
                 }
             }
         }
@@ -1591,14 +1572,10 @@ public class MessageTree implements Translatable, Themeable {
     private void markThreadRead(TreeItem item) {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
-            if (_itemsOld.contains(item)) {
-                // noop
-            } else {
+            if (_itemsNewUnread.contains(item)) {
                 _browser.getClient().markMessageRead(msgId.longValue());
                 item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
                 _itemsNewUnread.remove(item);
-                _itemsOld.remove(item);
-                _itemsNewRead.add(item);
             }
         }
         TreeItem children[] = item.getItems();
@@ -1622,13 +1599,14 @@ public class MessageTree implements Translatable, Themeable {
                 TreeItem item = (TreeItem)cur.getKey();
                 SyndieURI uri = (SyndieURI)cur.getValue();
                 
-                long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
-                if (msgId >= 0) {
-                    long target = _browser.getClient().getMessageTarget(msgId);
-                    if (channelIds.contains(new Long(target))) {
-                        _itemsNewRead.remove(item);
-                        _itemsNewUnread.remove(item);
-                        item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+                if (uri != null) {
+                    long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                    if (msgId >= 0) {
+                        long target = _browser.getClient().getMessageTarget(msgId);
+                        if (channelIds.contains(new Long(target))) {
+                            _itemsNewUnread.remove(item);
+                            item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
+                        }
                     }
                 }
             }
@@ -1711,17 +1689,12 @@ public class MessageTree implements Translatable, Themeable {
                 _filterEditorShell.layout(true, true);
             }
             //_root.layout(true, true);
-            for (Iterator iter = _itemsOld.iterator(); iter.hasNext(); ) {
+            for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
                 TreeItem item = (TreeItem)iter.next();
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
-            }
-            for (Iterator iter = _itemsNewRead.iterator(); iter.hasNext(); ) {
-                TreeItem item = (TreeItem)iter.next();
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
-            }
-            for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
-                TreeItem item = (TreeItem)iter.next();
-                item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+                if (_itemsNewUnread.contains(item))
+                    item.setFont(_browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+                else
+                    item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
             }
             rethemeAncestorsOfUnread();
         }
@@ -1733,7 +1706,7 @@ public class MessageTree implements Translatable, Themeable {
                 TreeItem item = (TreeItem)iter.next();
                 TreeItem parent = item.getParentItem();
                 while (parent != null) {
-                    if (_itemsOld.contains(parent) || (_itemsNewRead.contains(parent)))
+                    if (!_itemsNewUnread.contains(parent))
                         parent.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
                     parent = parent.getParentItem();
                 }

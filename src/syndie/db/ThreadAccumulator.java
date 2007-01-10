@@ -488,7 +488,7 @@ AND
         long chanId = _client.getChannelId(uri.getScope());
         long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
         int status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, chanId);
-        if (status == DBClient.MSG_STATUS_NEW_UNREAD)
+        if (status == DBClient.MSG_STATUS_UNREAD)
             return false;
         for (int i = 0; i < node.getChildCount(); i++) {
             if (!allRead(node.getChild(i)))
@@ -624,7 +624,7 @@ AND
         if (ok) {
             if (_unreadOnly) {
                 int status = _client.getMessageStatus(_client.getLoggedInNymId(), msg.getInternalId(), chan.getChannelId());
-                if (status != DBClient.MSG_STATUS_NEW_UNREAD) {
+                if (status != DBClient.MSG_STATUS_UNREAD) {
                     if (!_showThreaded) {
                         ok = false;
                         _ui.debugMessage("filter fail cause: message is already read (" + status + ")");

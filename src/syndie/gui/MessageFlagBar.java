@@ -138,7 +138,7 @@ public class MessageFlagBar implements Translatable {
             boolean hasArchives = false;
             boolean hasRefs = refs.size() > 0;
             boolean hasAttachments = _msg.getAttachmentCount() > 0;
-            boolean isNew = _browser.getClient().getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_NEW_UNREAD;
+            boolean isNew = _browser.getClient().getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
             
             for (int i = 0; i < refs.size(); i++) {
                 if (hasArchives((ReferenceNode)refs.get(i))) {

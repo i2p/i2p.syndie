@@ -363,6 +363,7 @@ public class ImportPost {
             setMessageAttachments(msgId);
             setMessagePages(msgId);
             setMessageReferences(msgId);
+            setUnread(msgId);
 
             processControlActivity();
             
@@ -869,6 +870,25 @@ public class ImportPost {
         return rv.toString();
     }
 
+    private static final String SQL_DELETE_UNREAD = "DELETE FROM nymUnreadMessage WHERE msgId = ?";
+    private static final String SQL_MARK_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
+    private void setUnread(long msgId) throws SQLException {
+        _client.exec(SQL_DELETE_UNREAD, msgId);
+        List nymIds = _client.getNymIds();
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_MARK_UNREAD);
+            for (int i = 0; i < nymIds.size(); i++) {
+                stmt.setLong(1, ((Long)nymIds.get(i)).longValue());
+                stmt.setLong(2, msgId);
+                stmt.executeUpdate();
+            }
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     static final String SQL_DELETE_MESSAGE_REF_URIS = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM messageReference WHERE msgId = ?)";
     static final String SQL_DELETE_MESSAGE_REFS = "DELETE FROM messageReference WHERE msgId = ?";
     private void setMessageReferences(long msgId) throws SQLException {

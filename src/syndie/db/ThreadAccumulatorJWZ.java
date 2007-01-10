@@ -171,8 +171,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private static final long getStartDate(Long numDaysAgo) {
         if (numDaysAgo == null) return -1;
         long now = System.currentTimeMillis();
-        long dayBegin = now - (now % 24*60*60*1000L);
-        dayBegin -= numDaysAgo.longValue()*24*60*60*1000L;
+        long msSinceBegin = now % (24*60*60*1000L);
+        long dayBegin = now - msSinceBegin;
+        dayBegin -= numDaysAgo.longValue()*(24*60*60*1000L);
         return dayBegin;
     }
     private static final int getInt(Long val) { 
@@ -285,11 +286,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 msgIds[i] = tmi.msgId;
             }
             long afterPrep = System.currentTimeMillis();
-            List read = _client.getRead(msgIds);
+            List unread = _client.getUnread(msgIds);
             long beforeStrip = System.currentTimeMillis();
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
-                if (read.contains(new Long(tmi.msgId))) {
+                if (!unread.contains(new Long(tmi.msgId))) {
                     _ui.debugMessage("reject " + tmi + " because it was already read");
                     iter.remove();
                 }
@@ -464,6 +465,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (pbePending)
                     query = SQL_GET_BASE_MSGS_BY_TARGET_PBE;
                 stmt = _client.con().prepareStatement(query);
+                _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
                 
                 for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
@@ -471,7 +473,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     stmt.setDate(2, new java.sql.Date(minImportDate));
                     stmt.setLong(3, minMsgId);
                     
-                    _ui.debugMessage("query for msgs: " + query + " [" + chan.toBase64() + ", " + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
+                    //_ui.debugMessage("query for msgs: " + query + " [" + chan.toBase64() + ", " + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
                     rs = stmt.executeQuery();
                     while (rs.next()) {
                         long msgId = rs.getLong(1);
@@ -500,10 +502,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (pbePending)
                     query = SQL_GET_BASE_MSGS_ALLCHANS_PBE;
                 stmt = _client.con().prepareStatement(query);
+                _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
                 stmt.setDate(1, new java.sql.Date(minImportDate));
                 stmt.setLong(2, minMsgId);
 
-                _ui.debugMessage("query for msgs: " + query + " [" + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
+                //_ui.debugMessage("query for msgs: " + query + " [" + DataHelper.formatDuration(System.currentTimeMillis()-minImportDate) + ", " + minMsgId + ")");
 
                 rs = stmt.executeQuery();
                 while (rs.next()) {

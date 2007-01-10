@@ -100,6 +100,7 @@ public class WelcomeScreen implements Themeable, Translatable {
             public boolean getAllowPublicPosts() { return _authenticatePublic.getSelection(); }
             public boolean getAllowPublicReplies() { return _authenticateReplies.getSelection() || _authenticatePublic.getSelection(); }
             public Set getPublicTags() { return Collections.EMPTY_SET; }
+            public Set getPrivateTags() { return Collections.EMPTY_SET; }
             public Set getAuthorizedPosters() { return Collections.EMPTY_SET; }
             public Set getAuthorizedManagers() { return Collections.EMPTY_SET; }
             public String getReferences() { return ""; }

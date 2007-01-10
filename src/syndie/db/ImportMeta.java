@@ -167,6 +167,7 @@ class ImportMeta {
             setChannelReferences(client, channelId, body);
             // (plus lots of 'insert into uriAttribute' interspersed)
             setChannelAvatar(client, channelId, body);
+            setUnread(client, channelId);
             con.commit();
             ui.statusMessage("committed as channel " + channelId);
             
@@ -899,6 +900,25 @@ class ImportMeta {
             } finally {
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
+        }
+    }
+    
+    private static final String SQL_DELETE_UNREAD = "DELETE FROM nymUnreadChannel WHERE channelId = ?";
+    private static final String SQL_MARK_UNREAD = "INSERT INTO nymUnreadChannel (nymId, channelId) VALUES (?, ?)";
+    private static void setUnread(DBClient client, long channelId) throws SQLException {
+        client.exec(SQL_DELETE_UNREAD, channelId);
+        List nymIds = client.getNymIds();
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = client.con().prepareStatement(SQL_MARK_UNREAD);
+            for (int i = 0; i < nymIds.size(); i++) {
+                stmt.setLong(1, ((Long)nymIds.get(i)).longValue());
+                stmt.setLong(2, channelId);
+                stmt.executeUpdate();
+            }
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
     

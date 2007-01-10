@@ -236,6 +236,30 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_NYMIDS = "SELECT nymId FROM nym";
+    public List getNymIds() {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYMIDS);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long nymId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(new Long(nymId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Unable to list the nymIds", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+    
     private static final String SQL_INSERT_NYM = "INSERT INTO nym (nymId, login, publicName, passSalt, passHash, isDefaultUser) VALUES (?, ?, ?, ?, ?, ?)";
     public long register(String login, String passphrase, String publicName) {
         long nymId = nextId("nymIdSequence");
@@ -1967,7 +1991,7 @@ public class DBClient {
         for (int i = 0; i < rv.size(); i++) {
             Long msgId = (Long)rv.get(i);
             int status = getMessageStatus(msgId.longValue());
-            if (status == MSG_STATUS_NEW_UNREAD) {
+            if (status == MSG_STATUS_UNREAD) {
                 if (alreadyRead) {
                     rv.remove(i);
                     i--;
@@ -3778,13 +3802,11 @@ public class DBClient {
     }
 
     /** the nym has previously marked all messages through this one as being read */
-    public static final int MSG_STATUS_OLD = 1;
-    /** the message hasn't previously been marked in bulk as read, but has been read since then */
-    public static final int MSG_STATUS_NEW_READ = 2;
-    /** the message hasn't previously been marked in bulk as read, and has not been read since then */
-    public static final int MSG_STATUS_NEW_UNREAD = 3;
+    public static final int MSG_STATUS_READ = 1;
+    /** the message hasn't been read */
+    public static final int MSG_STATUS_UNREAD = 3;
 
-    private static final String SQL_GET_MSG_STATUS = "SELECT importDate, readThrough, ncrm.msgId FROM channelMessage cm, nymChannelReadThrough ncrt  JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? WHERE cm.msgId = ? AND ncrt.nymId = ?";
+    private static final String SQL_GET_MSG_STATUS = "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId = ?";
     public int getMessageStatus(long msgId) { return getMessageStatus(msgId, -1); }
     public int getMessageStatus(long msgId, long targetChanId) { return getMessageStatus(_nymId, msgId, targetChanId); }
     public int getMessageStatus(long nymId, long msgId, long targetChanId) {
@@ -3794,35 +3816,17 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_GET_MSG_STATUS);
             stmt.setLong(1, nymId);
             stmt.setLong(2, msgId);
-            stmt.setLong(3, nymId);
             rs = stmt.executeQuery();
             
             if (rs.next()) {
-                Date importDate = rs.getDate(1);
-                Date readThrough = rs.getDate(2);
-                long curMsgId = rs.getLong(3);
-                if (rs.wasNull())
-                    curMsgId = -1;
-                if (readThrough.getTime() >= importDate.getTime())
-                    return MSG_STATUS_OLD;
-                else if (curMsgId == msgId)
-                    return MSG_STATUS_NEW_READ;
-                else
-                    return MSG_STATUS_NEW_UNREAD;
+                return MSG_STATUS_UNREAD;
             } else {
-                // there weren't any nymChannelReadThrough records at all, so we want to consider
-                // this new & unread
-                
-                // insert a nymChannelReadThrough record for a really old date
-                if (targetChanId < 0)
-                    targetChanId = getMessageTarget(msgId);
-                markChannelReadThrough(nymId, targetChanId, 0);
-                return MSG_STATUS_NEW_UNREAD;
+                return MSG_STATUS_READ;
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error getting message status", se);
-            return MSG_STATUS_NEW_UNREAD;
+            return MSG_STATUS_UNREAD;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -3830,14 +3834,10 @@ public class DBClient {
     }
 
     private static final String SQL_GET_MSG_READ = 
-            "SELECT importDate, readThrough, cm.msgId " +
-            "FROM channelMessage cm " +
-            "JOIN nymChannelReadThrough ncrt ON cm.targetChannelId = ncrt.scope AND ncrt.nymId = ? " +
-            "LEFT OUTER JOIN nymChannelReadMsg ncrm ON ncrm.msgId = cm.msgId AND ncrm.nymId = ? " +
-            "WHERE cm.msgId IN (";
+            "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (";
     /** get a list of msgIds (Long) from the given set who have already been read */
-    public List getRead(long msgIds[]) { return getRead(_nymId, msgIds); }
-    public List getRead(long nymId, long msgIds[]) {
+    public List getUnread(long msgIds[]) { return getUnread(_nymId, msgIds); }
+    public List getUnread(long nymId, long msgIds[]) {
         long begin = System.currentTimeMillis();
         List rv = new ArrayList();
         StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ);
@@ -3847,9 +3847,9 @@ public class DBClient {
                 buf.append(", ");
         }
         
-        buf.append(") AND (readThrough >= importDate OR ncrm.msgId IS NOT NULL)");
+        buf.append(")");
         String query = buf.toString();
-        _ui.debugMessage("query: " + query);
+        _ui.debugMessage("getUnread query: [" + nymId + "]: " + query);
         
         long beforePrep = System.currentTimeMillis();
         long afterPrep = -1;
@@ -3861,12 +3861,11 @@ public class DBClient {
             stmt = _con.prepareStatement(query);
             afterPrep = System.currentTimeMillis();
             stmt.setLong(1, nymId);
-            stmt.setLong(2, nymId);
             rs = stmt.executeQuery();
             afterExec = System.currentTimeMillis();
             
             while (rs.next()) {
-                long msgId = rs.getLong(3);
+                long msgId = rs.getLong(1);
                 if (!rs.wasNull())
                     rv.add(new Long(msgId));
             }
@@ -3913,19 +3912,11 @@ public class DBClient {
         }
     }
 
-    private static final String SQL_UNMARK_MESSAGE_READ = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId = ?";
-    private static final String SQL_MARK_MESSAGE_READ = "INSERT INTO nymChannelReadMsg (nymId, msgId) VALUES (?, ?)";
+    private static final String SQL_MARK_MESSAGE_READ = "DELETE FROM nymUnreadMessage WHERE nymId = ? AND msgId = ?";
     public void markMessageRead(long msgId) { markMessageRead(_nymId, msgId); }
     public void markMessageRead(long nymId, long msgId) {
         PreparedStatement stmt = null;
         try {
-            stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
-            stmt.setLong(1, nymId);
-            stmt.setLong(2, msgId);
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-
             stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
             stmt.setLong(1, nymId);
             stmt.setLong(2, msgId);
@@ -3938,155 +3929,74 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        
+        // when we read a message, consider that we've "seen" the new forum
+        long chanId = getMessageTarget(msgId);
+        if (chanId >= 0)
+            markChannelNotNew(chanId);
     }
 
-    private static final String SQL_GET_REMARK_MESSAGES = "SELECT msgId FROM channelMessage WHERE importDate >= ? AND importDate <= ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    private static final String SQL_MARK_MESSAGE_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
     public void markMessageUnread(long msgId) { markMessageUnread(_nymId, msgId); }
     public void markMessageUnread(long nymId, long msgId) {
-        // if it is > the high water mark in nymChannelReadThrough, this simply means delete from nymChannelReadMsg
-        // otherwise, select the msgIds imported after the given message who are < the high water mark, reduce the
-        // high water mark, and insert those msgIds into nymChannelReadMsg
-        long targetId = getMessageTarget(msgId);
-        long readThrough = getChannelReadThrough(nymId, targetId);
-        long msgImportDate = getMessageImportDate(msgId);
-        _ui.debugMessage("Marking message " + msgId + " unread: target channel: " + targetId + " readThrough: " + readThrough + " msgImportDate: " + msgImportDate);
-        if (msgImportDate > readThrough) {
-            _ui.debugMessage("Simple mark-unread strategy, since the message was imported after the watermark by " + (msgImportDate-readThrough)/(24*60*60*1000L) + " day(s)");
-            PreparedStatement stmt = null;
-            try {
-                stmt = _con.prepareStatement(SQL_UNMARK_MESSAGE_READ);
-                stmt.setLong(1, nymId);
-                stmt.setLong(2, msgId);
-                stmt.executeUpdate();
-                stmt.close();
-                stmt = null;
-            } catch (SQLException se) {
-                if (_log.shouldLog(Log.WARN))
-                    _log.warn("Error marking message unread", se);
-            } finally {
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-            }
-        } else {
-            List msgIds = new ArrayList();
-            PreparedStatement stmt = null;
-            ResultSet rs = null;
-            try {
-                stmt = _con.prepareStatement(SQL_GET_REMARK_MESSAGES);
-                stmt.setDate(1, new Date(msgImportDate));
-                stmt.setDate(2, new Date(readThrough));
-                stmt.setLong(3, nymId);
-                rs = stmt.executeQuery();
-                while (rs.next()) {
-                    long id = rs.getLong(1);
-                    if (!rs.wasNull())
-                        msgIds.add(new Long(id));
-                }
-                rs.close();
-                rs = null;
-                stmt.close();
-                stmt = null;
-            } catch (SQLException se) {
-                if (_log.shouldLog(Log.WARN))
-                    _log.warn("Error marking message unread", se);
-            } finally {
-                if (rs != null) try { rs.close(); } catch (SQLException se) {}
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-            }
-
-            _ui.debugMessage("Messages to remark as read in channel: " + targetId + ": " + msgIds);
-
-            markChannelReadThrough(_nymId, targetId, msgImportDate-1);
-            
-            stmt = null;
-            try {
-                stmt = _con.prepareStatement(SQL_MARK_MESSAGE_READ);
-                for (int i = 0; i < msgIds.size(); i++) {
-                    long curId = ((Long)msgIds.get(i)).longValue();
-                    if (curId == msgId) 
-                        continue; // that'd defeat the whole point, 'eh?
-                    stmt.setLong(1, nymId);
-                    stmt.setLong(2, curId);
-                    stmt.executeUpdate();
-                }
-                stmt.close();
-                stmt = null;
-            } catch (SQLException se) {
-                if (_log.shouldLog(Log.WARN))
-                    _log.warn("Error remarking message read", se);
-            } finally {
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-            }
-        }
-    }
-
-    private static final String SQL_GET_CHANNEL_READTHROUGH = "SELECT readThrough FROM nymChannelReadThrough WHERE nymId = ? AND scope = ?";
-    public long getChannelReadThrough(long nymId, long scopeId) {
+        markMessageRead(nymId, msgId); // delete then we insert below
         PreparedStatement stmt = null;
-        ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement(SQL_GET_CHANNEL_READTHROUGH);
+            stmt = _con.prepareStatement(SQL_MARK_MESSAGE_UNREAD);
             stmt.setLong(1, nymId);
-            stmt.setLong(2, scopeId);
-            rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                Date when = rs.getDate(1);
-                _ui.debugMessage("channelReadThrough: " + scopeId + ": " + when);
-                if (when != null)
-                    return when.getTime();
-            }
-            _ui.debugMessage("No channel read through for scopeId=" + scopeId);
-            return -1;
+            stmt.setLong(2, msgId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
-                _log.warn("Error getting channel read through", se);
-            return -1;
+                _log.warn("Error marking message unread", se);
         } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
 
-
-    private static final String SQL_DELETE_CHANNEL_READ_THROUGH = "DELETE FROM nymChannelReadThrough WHERE scope = ? AND nymId = ?";
-    private static final String SQL_INSERT_CHANNEL_READ_THROUGH = "INSERT INTO nymChannelReadThrough (scope, nymId, readThrough) VALUES (?, ?, ?)";
-    private static final String SQL_DELETE_CHANNEL_READ_MSG = "DELETE FROM nymChannelReadMsg WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ? AND importDate <= ?)";
-    public void markChannelRead(long chanId) { markChannelReadThrough(_nymId, chanId, System.currentTimeMillis()); }
-    public void markChannelReadThrough(long chanId, long importDate) { markChannelReadThrough(_nymId, chanId, importDate); }
-    public void markChannelReadThrough(long nymId, long chanId, long importDate) {
+    private static final String SQL_MARK_CHANNELMSG_READ = "DELETE FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ?)";
+    public void markChannelRead(long chanId) { markChannelRead(_nymId, chanId); }
+    public void markChannelRead(long nymId, long chanId) {
         PreparedStatement stmt = null;
         try {
-            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_THROUGH);
-            stmt.setLong(1, chanId);
-            stmt.setLong(2, nymId);
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-            
-            stmt = _con.prepareStatement(SQL_INSERT_CHANNEL_READ_THROUGH);
-            stmt.setLong(1, chanId);
-            stmt.setLong(2, nymId);
-            stmt.setDate(3, new Date(importDate));
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-            
-            stmt = _con.prepareStatement(SQL_DELETE_CHANNEL_READ_MSG);
+            stmt = _con.prepareStatement(SQL_MARK_CHANNELMSG_READ);
             stmt.setLong(1, nymId);
             stmt.setLong(2, chanId);
-            stmt.setDate(3, new Date(importDate));
             stmt.executeUpdate();
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
-                _log.warn("Error setting channel readThrough", se);
+                _log.warn("Error marking message read", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        markChannelNotNew(nymId, chanId);
+    }
+    
+    private static final String SQL_MARK_CHANNEL_READ = "DELETE FROM nymUnreadChannel WHERE nymId = ? AND channelId = ?";
+    public void markChannelNotNew(long chanId) { markChannelNotNew(_nymId, chanId); }
+    public void markChannelNotNew(long nymId, long chanId) {
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_MARK_CHANNEL_READ);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, chanId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error marking channel read", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
-
-    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(messageId) FROM channelMessage LEFT OUTER JOIN nymChannelReadThrough ON scope = targetChannelId AND nymId = ? WHERE (readThrough IS NULL OR importDate > readThrough) AND targetChannelId = ? AND msgId NOT IN (SELECT msgId FROM nymChannelReadMsg WHERE nymId = ?)";
+    
+    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ?";
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
     public int countUnreadMessages(long nymId, Hash scope) {
         long chan = getChannelId(scope);
@@ -4096,7 +4006,6 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_COUNT_UNREAD_MESSAGES);
             stmt.setLong(1, nymId);
             stmt.setLong(2, chan);
-            stmt.setLong(3, nymId);
             rs = stmt.executeQuery();
             
             if (rs.next()) {
@@ -4118,8 +4027,8 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM channel WHERE channelId NOT IN (SELECT scope FROM nymChannelReadThrough WHERE nymId = ?)";
-    /** list of forums where the nym hasn't set a nymChannelReadThrough date (not even one in 1970) */
+    private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM nymUnreadChannel WHERE nymId = ?";
+    /** forums that haven't been marked as read */
     public List getNewChannelIds() { return getNewChannelIds(_nymId); }
     public List getNewChannelIds(long nymId) {
         List rv = new ArrayList();

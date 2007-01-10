@@ -1,0 +1,37 @@
+-- update the database from schema version 12
+-- this version 13 reworks how we track read vs. unread messages
+--
+
+UPDATE appVersion SET versionNum = 13, visibleVersion = 'Read status';
+
+-- contains the msgId of messages imported that have not yet been read
+CREATE TABLE nymUnreadMessage (
+	nymId	INTEGER	NOT NULL
+	, msgId BIGINT NOT NULL
+	, PRIMARY KEY (nymId, msgId)
+);
+
+-- contains the channelId of forums/authors who have been updated since
+-- the nym last reviewed them
+CREATE TABLE nymUnreadChannel (
+	nymId	INTEGER NOT NULL
+	, channelId	BIGINT NOT NULL
+	, PRIMARY KEY (nymId, channelId)
+);
+
+-- migrate the old nymChannelReadThrough (but only for the default nym)
+INSERT INTO nymUnreadChannel (nymId, channelId)
+	SELECT 0, channelId FROM channel WHERE channelId NOT IN (SELECT scope
+	FROM nymChannelReadThrough WHERE nymId = 0)
+-- migrate the individual messages too
+INSERT INTO nymUnreadMessage (nymId, msgId)
+	SELECT 0, msgId FROM channelMessage WHERE msgId NOT IN
+		(SELECT msgId FROM nymChannelReadMsg WHERE nymId = 0);
+DELETE FROM nymUnreadMessage WHERE msgId IN
+	(SELECT msgId FROM channelMessage
+	 JOIN nymChannelReadThrough ON targetChannelId = scope
+	 WHERE importDate < readThrough);
+
+-- now drop the old style
+DROP TABLE nymChannelReadThrough;
+DROP TABLE nymChannelReadMsg;
