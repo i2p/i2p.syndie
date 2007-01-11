@@ -2006,6 +2006,64 @@ public class DBClient {
         return rv;
     }
     
+    /** 
+     * syndie URI for elements still requiring a passphrase.
+     * @param meta include forum metadata that still need a passphrase
+     * @param msgs include forum messages that still need a passphrase
+     */
+    public List getPBERequired(boolean meta, boolean msgs) {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        if (meta)
+            getPBERequiredMeta(rv);
+        if (msgs)
+            getPBERequiredMsgs(rv);
+        return rv;
+    }
+    private static final String SQL_GET_PBEREQUIRED_META = "SELECT channelHash FROM channel WHERE pbePrompt IS NOT NULL";
+    private void getPBERequiredMeta(List rv) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_PBEREQUIRED_META);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte hash[] = rs.getBytes(1);
+                if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
+                    rv.add(SyndieURI.createScope(new Hash(hash)));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the pbe meta", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    private static final String SQL_GET_PBEREQUIRED_MSGS = "SELECT channelHash, messageId FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE pbePrompt IS NOT NULL";
+    private void getPBERequiredMsgs(List rv) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_PBEREQUIRED_MSGS);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte hash[] = rs.getBytes(1);
+                long messageId = rs.getLong(2);
+                if (rs.wasNull())
+                    continue;
+                if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
+                    rv.add(SyndieURI.createMessage(new Hash(hash), messageId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the pbe meta", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_MESSAGES_AUTHORIZED = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND wasAuthorized = TRUE ORDER BY messageId ASC";
     public List getMessageIdsAuthorized(Hash chan) {
         ensureLoggedIn();
@@ -2630,6 +2688,14 @@ public class DBClient {
         return rv;
     }
     
+    public SyndieURI getMessageURI(long msgId) {
+        Hash scope = getMessageScope(msgId);
+        long messageId = getMessageId(msgId);
+        if ( (scope != null) && (messageId >= 0) )
+            return SyndieURI.createMessage(scope, messageId);
+        else
+            return null;
+    }
     private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
     public long getMessageAuthor(long chanId, long messageId) { 
         return getMessageAuthor(getMessageId(chanId, messageId));

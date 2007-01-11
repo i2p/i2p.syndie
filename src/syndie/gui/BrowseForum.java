@@ -62,8 +62,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private MenuItem _metaNameMenuCopyURI;
     private MenuItem _metaNameMenuDeleteAll;
     private MenuItem _metaNameMenuBan;
-    private Label _metaIconManageable;
-    private Label _metaIconPostable;
+    private Button _metaIconManageable;
+    private Button _metaIconPostable;
     private Label _metaIconArchives;
     private Label _metaIconReferences;
     private Label _metaIconAdmins;
@@ -137,16 +137,22 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaDesc = new Label(_meta, SWT.WRAP);
         _metaDesc.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
         _metaDesc.setText("");
-        _metaIconManageable = new Label(_meta, SWT.NONE);
-        _metaIconPostable = new Label(_meta, SWT.NONE);
+        _metaIconManageable = new Button(_meta, SWT.PUSH);
+        _metaIconPostable = new Button(_meta, SWT.PUSH);
         _metaIconArchives = new Label(_meta, SWT.NONE);
         _metaIconReferences = new Label(_meta, SWT.NONE);
         _metaIconAdmins = new Label(_meta, SWT.NONE);
-        _metaIconManageable.setLayoutData(new GridData(20, 20));
-        _metaIconPostable.setLayoutData(new GridData(20, 20));
-        _metaIconArchives.setLayoutData(new GridData(20, 20));
-        _metaIconReferences.setLayoutData(new GridData(20, 20));
-        _metaIconAdmins.setLayoutData(new GridData(20, 20));
+        //_metaIconManageable.setLayoutData(new GridData(20, 20));
+        //_metaIconPostable.setLayoutData(new GridData(20, 20));
+        //_metaIconArchives.setLayoutData(new GridData(20, 20));
+        //_metaIconReferences.setLayoutData(new GridData(20, 20));
+        //_metaIconAdmins.setLayoutData(new GridData(20, 20));
+        _metaIconManageable.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        _metaIconPostable.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        _metaIconArchives.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        _metaIconReferences.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        _metaIconAdmins.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        
         _metaIconManageable.setVisible(false);
         _metaIconPostable.setVisible(false);
         _metaIconArchives.setVisible(false);
@@ -157,6 +163,12 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaIconArchives.setImage(ImageUtil.ICON_BROWSE_ARCHIVES);
         _metaIconReferences.setImage(ImageUtil.ICON_BROWSE_REFS);
         _metaIconAdmins.setImage(ImageUtil.ICON_BROWSE_ADMINS);
+        
+        ((GridData)_metaIconManageable.getLayoutData()).exclude = true;
+        ((GridData)_metaIconPostable.getLayoutData()).exclude = true;
+        ((GridData)_metaIconArchives.getLayoutData()).exclude = true;
+        ((GridData)_metaIconReferences.getLayoutData()).exclude = true;
+        ((GridData)_metaIconAdmins.getLayoutData()).exclude = true;
         
         _metaNameMenu = new Menu(_metaName);
         _metaNameMenuView = new MenuItem(_metaNameMenu, SWT.PUSH);
@@ -197,6 +209,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                     // the filter may want to exclude 'read' messages (or it may just want
                     // to redraw them differently)
                     _tree.applyFilter();
+                    _browser.readStatusUpdated();
                 }
             }
         });
@@ -415,6 +428,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             
             boolean admins = (info.getAuthorizedManagers().size() > 0) || (info.getAuthorizedPosters().size() > 0);
             _metaIconAdmins.setVisible(admins);
+            
+            ((GridData)_metaIconManageable.getLayoutData()).exclude = !manage;
+            ((GridData)_metaIconPostable.getLayoutData()).exclude = !post;
+            ((GridData)_metaIconArchives.getLayoutData()).exclude = !hasArchives;
+            ((GridData)_metaIconReferences.getLayoutData()).exclude = !inclRefs;
+            ((GridData)_metaIconAdmins.getLayoutData()).exclude = !admins;
+        
             _top.layout(true, true);
         } else {
             GridData gd = (GridData)_meta.getLayoutData();
@@ -427,6 +447,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             _metaIconArchives.setVisible(false);
             _metaIconReferences.setVisible(false);
             _metaIconAdmins.setVisible(false);
+                
+            ((GridData)_metaIconManageable.getLayoutData()).exclude = true;
+            ((GridData)_metaIconPostable.getLayoutData()).exclude = true;
+            ((GridData)_metaIconArchives.getLayoutData()).exclude = true;
+            ((GridData)_metaIconReferences.getLayoutData()).exclude = true;
+            ((GridData)_metaIconAdmins.getLayoutData()).exclude = true;
+            
             _browser.getUI().debugMessage("no avatar found for no channel: " + uri);
             gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = true;
@@ -550,6 +577,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private static final String T_DELETEALL = "syndie.gui.browseforum.deleteall";
     private static final String T_BAN = "syndie.gui.browseforum.ban";
     
+    private static final String T_MANAGE = "syndie.gui.browseforum.manage";
+    private static final String T_POST = "syndie.gui.browseforum.post";
+    
     public void translate(TranslationRegistry registry) {
         _metaIconManageable.setToolTipText(registry.getText(T_MANAGEABLE_TOOLTIP, "You can manage this forum"));
         _metaIconPostable.setToolTipText(registry.getText(T_POSTABLE_TOOLTIP, "You can post in this forum"));
@@ -557,6 +587,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaIconReferences.setToolTipText(registry.getText(T_REFS_TOOLTIP, "This forum has published references"));
         _metaIconAdmins.setToolTipText(registry.getText(T_ADMINS_TOOLTIP, "This forum has specific admins"));
 
+        _metaIconManageable.setText(registry.getText(T_MANAGE, "Manage"));
+        _metaIconPostable.setText(registry.getText(T_POST, "Post"));
+        
         _metaNameMenuView.setText(registry.getText(T_VIEW, "View the forum profile"));
         _metaNameMenuBookmark.setText(registry.getText(T_BOOKMARK, "Bookmark this forum"));
         _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
@@ -564,11 +597,16 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));
         _metaNameMenuDeleteAll.setText(registry.getText(T_DELETEALL, "Delete all messages"));
         _metaNameMenuBan.setText(registry.getText(T_BAN, "Ban this forum"));
+        _meta.layout(true, true);
     }
     
     public void applyTheme(Theme theme) {
         _metaName.setFont(theme.LINK_FONT);
         _metaDesc.setFont(theme.DEFAULT_FONT);
+        
+        _metaIconManageable.setFont(theme.BUTTON_FONT);
+        _metaIconPostable.setFont(theme.BUTTON_FONT);
+        
         _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
         //_root.layout(true, true);
     }

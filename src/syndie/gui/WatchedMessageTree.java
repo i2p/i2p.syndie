@@ -98,6 +98,11 @@ public class WatchedMessageTree extends MessageTree {
         return null;
     }
     
+    protected void markUnreadChild(TreeItem item) {
+        if (item.getParentItem() != null) // don't mark the forum nodes
+            super.markUnreadChild(item);
+    }
+    
     protected long renderNode(ReferenceNode node, TreeItem item) {
         if (_forumNodes.containsKey(node))
             return renderForumNode(node, item);

@@ -395,6 +395,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private class CreatorSource implements MessageCreator.MessageCreatorSource {
+        public BrowserControl getBrowser() { return _browser; }
         public DBClient getClient() { return _browser.getClient(); }
         public UI getUI() { return _browser.getUI(); }
         public Hash getAuthor() { return _author; }

@@ -1266,6 +1266,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 });
             }
         }
+        _statusBar.refreshDisplay();
     }
     
     private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
@@ -1297,6 +1298,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
             boolean rv = ok && !imp.wasMissingKey();
             // the Importer should take care of reimporting messages with the new read keys
+            if (uri.getMessageId() == null)
+                metaImported();
+            else
+                messageImported();
             return rv;
         } catch (IOException ioe) {
             errorMessage("Error reimporting " + uri, ioe);
@@ -1826,7 +1831,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         File f = new File(path, filename);
         if (f.exists()) {
             try {
-                return imp.processMessage(getUI(), _client, new FileInputStream(f), null, false);
+                boolean rv = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false);
+                messageImported();
+                return rv;
             } catch (IOException ioe) {
                 errorMessage("error importing " + path + "/" + filename, ioe);
                 return false;
@@ -1868,15 +1875,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         popup.show();
     }
     
-    private void viewBookmarked() {
+    private void viewBookmarked() { view(createBookmarkedURI(true, false, true)); }
+    public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) {
         List scopes = new ArrayList();
         List nodes = getBookmarks();
         for (int i = 0; i < nodes.size(); i++) {
             NymReferenceNode node = (NymReferenceNode)nodes.get(i);
             getScopes(scopes, node);
         }
-        SyndieURI uri = SyndieURI.createBookmarked(scopes);
-        view(uri);
+        SyndieURI uri = SyndieURI.createBookmarked(scopes, threaded, unreadOnly, useImportDate);
+        return uri;
     }
     private void getScopes(List scopes, ReferenceNode node) {
         SyndieURI uri = node.getURI();
@@ -2036,6 +2044,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     
+    public void messageImported() { _statusBar.refreshDisplay(); }
+    public void metaImported() { _statusBar.refreshDisplay(); }
+    public void readStatusUpdated() { _statusBar.refreshDisplay(); }
+    
     /** get the bookmarks (NymReferenceNode) currently loaded */
     public List getBookmarks() { 
         if (_bookmarkCache == null)
@@ -2057,6 +2069,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             final NymReferenceNode ref = (NymReferenceNode)nymRefs.get(i);
             bookmarksUpdated(ref, _bookmarkMenu);
         }
+        _statusBar.refreshDisplay();
     }
     private void bookmarksUpdated(final NymReferenceNode ref, Menu parent) {
         MenuItem item = null;

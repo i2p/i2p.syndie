@@ -94,18 +94,18 @@ public class SyndieURI {
                             null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
     }
     
-    public static SyndieURI createBookmarked(List scopeHashes) {
+    public static SyndieURI createBookmarked(List scopeHashes, boolean threaded, boolean unreadOnly, boolean useImportDate) {
         String scopes[] = new String[scopeHashes.size()];
         for (int i = 0; i < scopes.length; i++)
             scopes[i] = ((Hash)scopeHashes.get(i)).toBase64();
         Long postDays = null;
         Long importDays = null;
-        if (true) //useImportDate)
+        if (useImportDate)
             importDays = new Long(7);
         else
             postDays = new Long(7);
         SyndieURI uri = createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
-                                     null, null, null, null, null, null, null, null, false, false, false, true, false);
+                                     null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
         Map attr = uri.getAttributes();
         attr.put("byforum", "true");
         return uri;

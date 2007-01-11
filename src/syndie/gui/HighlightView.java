@@ -623,6 +623,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _itemNewForums.setExpanded(true);
                     resizeCols();
                     _tree.setRedraw(true);
+                    _browser.readStatusUpdated();
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) { 
                     _browser.getClient().markChannelRead(channelId);
@@ -631,6 +632,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _itemNewForums.setExpanded(true);
                     resizeCols();
                     _tree.setRedraw(true);
+                    _browser.readStatusUpdated();
                 }
             });
         }
@@ -687,6 +689,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _itemPrivateMessages.setExpanded(true);
                             resizeCols();
                             _tree.setRedraw(true);
+                            _browser.readStatusUpdated();
                         }
                         public void widgetSelected(SelectionEvent selectionEvent) { 
                             _browser.getClient().markMessageRead(msgId);
@@ -695,6 +698,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _itemPrivateMessages.setExpanded(true);
                             resizeCols();
                             _tree.setRedraw(true);
+                            _browser.readStatusUpdated();
                         }
                     });
                 } else {
@@ -708,6 +712,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _itemPrivateMessages.setExpanded(true);
                             resizeCols();
                             _tree.setRedraw(true);
+                            _browser.readStatusUpdated();
                         }
                         public void widgetSelected(SelectionEvent selectionEvent) { 
                             _browser.getClient().markMessageUnread(msgId);
@@ -716,6 +721,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                             _itemPrivateMessages.setExpanded(true);
                             resizeCols();
                             _tree.setRedraw(true);
+                            _browser.readStatusUpdated();
                         }
                     });
                 }
@@ -749,6 +755,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _itemWatchedForums.setExpanded(true);
                     resizeCols();
                     _tree.setRedraw(true);
+                    _browser.readStatusUpdated();
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) { 
                     _browser.getClient().markChannelRead(channelId);
@@ -757,6 +764,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                     _itemWatchedForums.setExpanded(true);
                     resizeCols();
                     _tree.setRedraw(true);
+                    _browser.readStatusUpdated();
                 }
             });
         }

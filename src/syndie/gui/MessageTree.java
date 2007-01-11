@@ -534,6 +534,7 @@ public class MessageTree implements Translatable, Themeable {
             else if (uri.isSearch()) {
                 _forumScopeOther = uri.getSearchScopes();
             }
+            _filterUnreadOnly.setSelection(uri.getBoolean("unreadonly", false));
             _advancedScopeAll.setSelection(false);
             _advancedScopeBookmarked.setSelection(false);
             _advancedScopeOther.setSelection(false);
@@ -1249,7 +1250,7 @@ public class MessageTree implements Translatable, Themeable {
             public void run() { 
                 _browser.getUI().debugMessage("nodes calculated, setting them");
                 setMessages(nodes);
-                _browser.getUI().debugMessage("nodes set");
+                _browser.getUI().debugMessage("nodes set w/ " + uri);
                 _appliedFilter = uri;
                 _filter = uri.toString(); // normalize manually edited uris
                 if (_listener != null)
@@ -1608,6 +1609,7 @@ public class MessageTree implements Translatable, Themeable {
                     }
                 }
             }
+            _browser.readStatusUpdated();
         }
     }
     private void markUnread() {
@@ -1622,6 +1624,7 @@ public class MessageTree implements Translatable, Themeable {
                     _itemsNewUnread.add(selected[i]);
                 }
             }
+            _browser.readStatusUpdated();
         }
     }
     
@@ -1634,6 +1637,8 @@ public class MessageTree implements Translatable, Themeable {
                     root = root.getParentItem();
                 markThreadRead(root);
             }
+            if (selected.length > 0)
+                _browser.readStatusUpdated();
         }
     }
     private void markThreadRead(TreeItem item) {
@@ -1661,6 +1666,9 @@ public class MessageTree implements Translatable, Themeable {
                     _browser.getClient().markChannelRead(target);
                 }
             }
+            if (channelIds.size() > 0)
+                _browser.readStatusUpdated();
+            
             for (Iterator iter = _itemToURI.entrySet().iterator(); iter.hasNext(); ) {
                 Map.Entry cur = (Map.Entry)iter.next();
                 TreeItem item = (TreeItem)cur.getKey();
@@ -1774,10 +1782,13 @@ public class MessageTree implements Translatable, Themeable {
                 TreeItem parent = item.getParentItem();
                 while (parent != null) {
                     if (!_itemsNewUnread.contains(parent))
-                        parent.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
+                        markUnreadChild(parent);
                     parent = parent.getParentItem();
                 }
             }
         }
+    }
+    protected void markUnreadChild(TreeItem item) {
+        item.setFont(_browser.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
     }
 }

@@ -51,6 +51,7 @@ public interface BrowserControl {
     public SyndieURI createSyndicationStatusURI();
     public SyndieURI createHighlightURI();
     public SyndieURI createBugReportURI();
+    public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate);
     public void showWaitCursor(boolean wait);
     
     public UI getUI();
@@ -79,4 +80,8 @@ public interface BrowserControl {
     public void resumePost(long postponeId, int postponeVersion);
     
     public boolean reimport(SyndieURI uri, String passphrase);
+    
+    public void messageImported();
+    public void metaImported();
+    public void readStatusUpdated();
 }

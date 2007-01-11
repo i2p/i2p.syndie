@@ -87,6 +87,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     public void setFilter(SyndieURI criteria) {
+        _ui.debugMessage("accumulator filter: " + criteria);
         // split up the individual attributes. see doc/web/spec.html#uri_search
         String scope[] = criteria.getStringArray("scope");
         if ( (scope == null) || (scope.length == 0) || ( (scope.length == 1) && ("all".equals(scope[0]))) ) {

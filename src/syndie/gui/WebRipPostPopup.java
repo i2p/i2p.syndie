@@ -142,6 +142,7 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     
     private void post(final String html, final List attachmentNames, final List attachmentTypes, final List attachmentData, final Hash author, final Hash target, final String tags, final int privacy, final String passphrase, final String passphrasePrompt) {
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
+            public BrowserControl getBrowser() { return _browser; }
             public DBClient getClient() { return _browser.getClient(); }
             public UI getUI() { return _browser.getUI(); }
             public Hash getAuthor() { return author; }

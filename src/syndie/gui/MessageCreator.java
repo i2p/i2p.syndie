@@ -369,6 +369,7 @@ class MessageCreator {
                 ui.statusMessage("Post imported");
                 ui.commandComplete(0, null);
                 cleanup(tempFiles, refFile);
+                _editor.getBrowser().messageImported();
                 return true;
             }
         } else {
@@ -386,6 +387,7 @@ class MessageCreator {
     }
     
     public interface MessageCreatorSource {
+        public BrowserControl getBrowser();
         public DBClient getClient();
         public UI getUI();
         public Hash getAuthor();

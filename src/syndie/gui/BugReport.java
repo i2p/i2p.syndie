@@ -266,6 +266,7 @@ public class BugReport implements Themeable, Translatable {
         savePrefs(os, jvm, swt);
                 
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
+            public BrowserControl getBrowser() { return _browser; }
             public DBClient getClient() { return _browser.getClient(); }
             public UI getUI() { return _browser.getUI(); }
             public Hash getAuthor() {
