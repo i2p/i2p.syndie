@@ -77,15 +77,18 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private boolean _viewOnly;
     private boolean _shouldPreview;
     
-    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr) {
-        this(parent, browser, lsnr, false);
+    private boolean _byForum;
+    
+    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr, boolean byForum) {
+        this(parent, browser, lsnr, false, byForum);
     }
-    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr, boolean viewOnly) {
+    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
         _listener = lsnr;
         _viewOnly = viewOnly;
+        _byForum = byForum;
         _shouldPreview = MessageTree.shouldShowPreview(browser);
         _ui = browser.getUI();
         _ui.debugMessage("initializing browse");
@@ -286,7 +289,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         });
         
         _browser.getUI().debugMessage("browseForum.initialize: creating tree");
-        _tree = new MessageTree(_browser, _top, this, true);
+        if (_byForum)
+            _tree = new WatchedMessageTree(_browser, _top, this, true);
+        else
+            _tree = new MessageTree(_browser, _top, this, true);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _browser.getUI().debugMessage("browseForum.initialize: creating preview");
         _preview = new MessagePreview(_browser, _sash);

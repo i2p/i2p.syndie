@@ -279,13 +279,20 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     private void getWatched(ReferenceNode node, Set rv) {
         SyndieURI uri = node.getURI();
         if (uri == null) return;
-        Hash scope = null;
-        if (uri.isChannel() && uri.getMessageId() == null)
-            scope = uri.getScope();
-        else if (uri.isSearch())
-            scope = uri.getSearchScope();
-        if (scope != null)
-            rv.add(scope);
+        if (uri.isChannel() && uri.getMessageId() == null) {
+            Hash scope = uri.getScope();
+            if (scope != null)
+                rv.add(scope);
+        } else if (uri.isSearch()) {
+            Hash scopes[] = uri.getSearchScopes();
+            if (scopes != null) {
+                for (int i = 0; i < scopes.length; i++) {
+                    if (scopes[i] != null) {
+                        rv.add(scopes[i]);
+                    }
+                }
+            }
+        }
         for (int i = 0; i < node.getChildCount(); i++)
             getWatched(node.getChild(i), rv);
     }

@@ -65,13 +65,13 @@ import syndie.db.ThreadAccumulatorJWZ;
  * 
  */
 public class MessageTree implements Translatable, Themeable {
-    private BrowserControl _browser;
+    protected BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
     private Tree _tree;
     private TreeColumn _colType;
-    private TreeColumn _colSubject;
+    protected TreeColumn _colSubject;
     private TreeColumn _colAuthor;
     private TreeColumn _colChannel;
     private TreeColumn _colDate;
@@ -110,6 +110,9 @@ public class MessageTree implements Translatable, Themeable {
     private boolean _showChannel;
     private boolean _showDate;
     private boolean _showTags;
+    private boolean _showFlags;
+    private boolean _expandRoots;
+    private boolean _expandAll;
     
     private SyndieURI _highlight;
     
@@ -142,9 +145,9 @@ public class MessageTree implements Translatable, Themeable {
     
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(browser, parent, lsnr, true, true, true, true, hideFilter);
+        this(browser, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
     }
-    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
+    public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
@@ -153,7 +156,10 @@ public class MessageTree implements Translatable, Themeable {
         _showChannel = showChannel;
         _showDate = showDate;
         _showTags = showTags;
+        _showFlags = showFlags;
         _hideFilter = hideFilter;
+        _expandRoots = expandRoots;
+        _expandAll = expandAll;
         _itemToURI = new HashMap();
         _itemsNewUnread = new HashSet();
         _itemToMsgId = new HashMap();
@@ -290,7 +296,7 @@ public class MessageTree implements Translatable, Themeable {
         private ReferenceChooserPopup _forumChooser;
         /** if > 0, the custom date being filtered */
         private long _customDate;
-        private Hash _forumScopeOther;
+        private Hash _forumScopeOther[];
         private PreviewControlListener _listener;
         
         public FilterBar(BrowserControl browser, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
@@ -468,7 +474,7 @@ public class MessageTree implements Translatable, Themeable {
                 _forumChooser = new ReferenceChooserPopup(_filterRow.getShell(), _ctl, new ReferenceChooserTree.AcceptanceListener () {
                     public void referenceAccepted(SyndieURI uri) {
                         Hash scope = uri.getScope();
-                        _forumScopeOther = scope;
+                        _forumScopeOther = new Hash[] { scope };
                         _msgTree.applyFilter();
                     }
                     public void referenceChoiceAborted() {}
@@ -518,10 +524,9 @@ public class MessageTree implements Translatable, Themeable {
             }
             
             if (uri.isChannel())
-                _forumScopeOther = uri.getScope();
+                _forumScopeOther = new Hash[] { uri.getScope() };
             else if (uri.isSearch()) {
-                // there may be more than one, but atm, the gui only supports one 'other' at a time
-                _forumScopeOther = uri.getHash("scope");
+                _forumScopeOther = uri.getSearchScopes();
             }
             _advancedScopeAll.setSelection(false);
             _advancedScopeBookmarked.setSelection(false);
@@ -573,10 +578,12 @@ public class MessageTree implements Translatable, Themeable {
         private static final String T_TAG_ALL = "syndie.gui.messagetree.tag.all";
 
         private void populateTagCombo() {
-            String txt = _filterTag.getText();
+            String txt = _filterTag.getText().trim();
             int selected = -1;
-            if ( (_filterTag.getItemCount() > 0) && (txt.trim().length() == 0) )
-                selected = _filterTag.getSelectionIndex();
+            //if ( (_filterTag.getItemCount() > 0) && (txt.trim().length() == 0) )
+            //    selected = _filterTag.getSelectionIndex();
+            if ( (_filterTag.getItemCount() > 0) && (txt.length() > 0) )
+                selected = _filterTag.indexOf(txt);
             _ctl.getUI().debugMessage("populateTagCombo text=[" + txt + "] selected [" + selected + "]");
             _filterTag.setRedraw(false);
             _filterTag.removeAll();
@@ -584,10 +591,12 @@ public class MessageTree implements Translatable, Themeable {
             _filterTag.add(_ctl.getTranslationRegistry().getText(T_TAG_ALL, "Any tags"));
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
-                _filterTag.add(tag);
+                if (tag.trim().length() > 0)
+                    _filterTag.add(tag.trim());
             }
-            if (selected > 0) {
+            if (selected >= 0) {
                 _filterTag.select(selected);
+                _filterTag.setText(txt);
             } else {
                 _filterTag.setText(txt);
                 //_filterTag.select(0);
@@ -697,7 +706,10 @@ public class MessageTree implements Translatable, Themeable {
             if (_advancedScopeAll.getSelection()) {
                 attributes.put("scope", new String[] { "all" });
             } else if (_advancedScopeOther.getSelection() && (_forumScopeOther != null)) {
-                attributes.put("scope", new String[] { _forumScopeOther.toBase64() } );
+                String val[] = new String[_forumScopeOther.length];
+                for (int i = 0; i < val.length; i++)
+                    val[i] = _forumScopeOther[i].toBase64();
+                attributes.put("scope", val);
             } else {
                 attributes.put("scope", getBookmarkedScopes());
             }
@@ -834,8 +846,10 @@ public class MessageTree implements Translatable, Themeable {
                 _itemToMsgId.put(item, new Long(itemNode.getUniqueId()));
                 renderNode(itemNode, item);
                 item.setItemCount(itemNode.getChildCount());
-                if (itemNode.getChildCount() > 0)
-                    item.setExpanded(true);
+                if ( _expandAll || ( (parent == null) && (_expandRoots) ) ) {
+                    if (itemNode.getChildCount() > 0)
+                        item.setExpanded(true);
+                }
                 if ( (_highlight != null) && (itemNode.getURI() != null) )
                     if (_highlight.equals(itemNode.getURI()))
                         renderHighlight(item);
@@ -849,7 +863,10 @@ public class MessageTree implements Translatable, Themeable {
         _colDate = new TreeColumn(_tree, SWT.LEFT);
         _colTags = new TreeColumn(_tree, SWT.LEFT);
         
-        _colType.setWidth(getMessageFlagBarWidth(_tree));
+        if (_showFlags)
+            _colType.setWidth(getMessageFlagBarWidth(_tree));
+        else
+            _colType.setWidth(1);
         //_tree.addListener(SWT.MeasureItem, new Listener() {
         //    public void handleEvent(Event evt) {
         //        if (evt.index == 1) evt.width = getMessageFlagBarWidth(_tree);
@@ -857,6 +874,7 @@ public class MessageTree implements Translatable, Themeable {
         //});
         _tree.addListener(SWT.PaintItem, new Listener() {
             public void handleEvent(Event evt) {
+                if (!_showFlags) return;
                 if (evt.index == 1) {
                     MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
                     if (bar == null) {
@@ -995,10 +1013,12 @@ public class MessageTree implements Translatable, Themeable {
             public void doubleclick() { fireSelected(true); }
             public boolean collapseOnReturn() { return false; }
             public void keyReleased(KeyEvent evt) {
-                super.keyPressed(evt);
                 // refresh the pane on ^R
-                if ( (_filterable) && (evt.character == 0x12) & ((evt.stateMask & SWT.MOD1) != 0) )
+                if ( (_filterable) && (evt.character == 0x12) & ((evt.stateMask & SWT.MOD1) != 0) ) {
                     applyFilter();
+                    return;
+                }
+                super.keyReleased(evt);
             }
         };
         _tree.addSelectionListener(lsnr);
@@ -1280,7 +1300,7 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
     
-    private long renderNode(ReferenceNode node, TreeItem item) {
+    protected long renderNode(ReferenceNode node, TreeItem item) {
         SyndieURI uri = node.getURI();
         String subj = "";
         String auth = "";
@@ -1414,13 +1434,14 @@ public class MessageTree implements Translatable, Themeable {
         setMinWidth(_colChannel, chan, 0, 50);
         setMinWidth(_colDate, date, 20, 50);
         setMinWidth(_colTags, tags, 0, 50);
+        if (!_showChannel) _colChannel.setWidth(1);
         //_browser.getUI().debugMessage("message status: " + status);
         return dbEnd-dbStart;
     }
     
     private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";
     
-    private void setMinWidth(TreeColumn col, String txt, int extra, int min) {
+    protected void setMinWidth(TreeColumn col, String txt, int extra, int min) {
         int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
         if (width < min)
             width = min;

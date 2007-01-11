@@ -54,24 +54,25 @@ public class BrowseForumTab extends BrowserTab {
     
     protected void initComponents() {
         SyndieURI uri = getURI();
+        boolean byForum = uri.getBoolean("byforum", false);
         if (uri.isChannel()) {
             if (uri.getMessageId() != null) {
                 getBrowser().getUI().debugMessage("browse forum w/ channel & msgId");
-                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), true);
+                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), true, byForum);
                 _browse.setFilter(uri.createSearch());
                 _browse.preview(uri, true);
             } else {
                 getBrowser().getUI().debugMessage("browse forum w/out channel & msgId");
-                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
+                _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false, byForum);
                 _browse.setFilter(uri.createSearch());
             }
         } else if (uri.isSearch()) {
             getBrowser().getUI().debugMessage("browse forum w/ search");
-            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
+            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false, byForum);
             _browse.setFilter(uri);
         } else {
             getBrowser().getUI().debugMessage("browse forum w/ other");
-            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false);
+            _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false, byForum);
             _browse.setFilter(SyndieURI.DEFAULT_SEARCH_URI);
         }
         getRoot().setLayout(new FillLayout());
@@ -85,20 +86,36 @@ public class BrowseForumTab extends BrowserTab {
         if (uri.getMessageId() != null) return false; // individual messages go to MessageViewTab
         // now check for search vs. browse
         SyndieURI localURI = getURI();
+        Hash scopes[] = null;
         Hash scope = null;
         if (localURI.isChannel())
             scope = localURI.getScope();
         else if (localURI.isSearch())
-            scope = localURI.getSearchScope();
+            scopes = localURI.getSearchScopes();
         
+        Hash newScopes[] = null;
         Hash newScope = null;
         if (uri.isChannel())
             newScope = uri.getScope();
         else if (uri.isSearch())
-            newScope = uri.getSearchScope();
+            newScopes = uri.getSearchScopes();
         
-        return ( ( (newScope == null) && (scope == null) ) ||
-                 ( (scope != null) && scope.equals(newScope) ) );
+        if ( (newScope == null) && (scope == null) && (newScopes == null) && (scopes == null) )
+            return true;
+        if ( (scope != null) && (newScope != null) && (scope.equals(newScope)) )
+            return true;
+        if ( (scopes != null) && (newScopes != null) && (scopes.length == newScopes.length) ) {
+            for (int i = 0; i < scopes.length; i++) {
+                boolean found = false;
+                for (int j = 0; j < newScopes.length && !found; j++)
+                    if (scopes[i].equals(newScopes[j]))
+                        found = true;
+                if (!found)
+                    return false;
+            }
+            return true;
+        }
+        return false;
     }
     
     public void show(SyndieURI uri) {

@@ -122,7 +122,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _bookmarkMenuShow;
     private MenuItem _forumMenuRoot;
     private MenuItem _forumMenuSearch;
+    private MenuItem _forumMenuBookmarked;
     private MenuItem _forumMenuBrowse;
+    private MenuItem _forumMenuBrowseForums;
     private MenuItem _forumMenuCreate;
     private MenuItem _forumMenuManageRoot;
     private Menu _forumMenuManageMenu;
@@ -422,10 +424,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { searchForums(); }
             public void widgetSelected(SelectionEvent selectionEvent) { searchForums(); }
         });
+        _forumMenuBookmarked = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuBookmarked.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewBookmarked(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewBookmarked(); }
+        });
         _forumMenuBrowse = new MenuItem(forumMenu, SWT.PUSH);
         _forumMenuBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(SyndieURI.DEFAULT_SEARCH_URI); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(SyndieURI.DEFAULT_SEARCH_URI); }
+        });
+        _forumMenuBrowseForums = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuBrowseForums.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewAllByForums(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewAllByForums(); }
         });
         _forumMenuCreate = new MenuItem(forumMenu, SWT.PUSH);
         _forumMenuCreate.addSelectionListener(new SelectionListener() {
@@ -1779,6 +1791,45 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         popup.show();
     }
     
+    private void viewBookmarked() {
+        List scopes = new ArrayList();
+        List nodes = getBookmarks();
+        for (int i = 0; i < nodes.size(); i++) {
+            NymReferenceNode node = (NymReferenceNode)nodes.get(i);
+            getScopes(scopes, node);
+        }
+        SyndieURI uri = SyndieURI.createBookmarked(scopes);
+        view(uri);
+    }
+    private void getScopes(List scopes, ReferenceNode node) {
+        SyndieURI uri = node.getURI();
+        if (uri != null) {
+            if (uri.isChannel()) {
+                Hash scope = (Hash)uri.getScope();
+                if ( (scope != null) && (!scopes.contains(scope)) )
+                        scopes.add(scope);
+            } else if (uri.isSearch()) {
+                Hash vals[] = uri.getSearchScopes();
+                if (vals != null) {
+                    for (int i = 0; i < vals.length; i++) {
+                        if ( (vals[i] != null) && (!scopes.contains(vals[i])) )
+                            scopes.add(vals[i]);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < node.getChildCount(); i++)
+            getScopes(scopes, node.getChild(i));
+    }
+    
+    private void viewAllByForums() {
+        SyndieURI defURI = SyndieURI.DEFAULT_SEARCH_URI;
+        Map attr = new HashMap(defURI.getAttributes());
+        attr.put("byforum", "true");
+        SyndieURI uri = new SyndieURI(defURI.getType(), attr);
+        view(uri);
+    }
+    
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
     }
@@ -2064,7 +2115,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_BOOKMARK_MENU_SHOW = "syndie.gui.browser.bookmarkmenu.show";
     private static final String T_FORUM_MENU_TITLE = "syndie.gui.browser.forummenu.title";
     private static final String T_FORUM_MENU_SEARCH = "syndie.gui.browser.forummenu.search";
+    private static final String T_FORUM_MENU_BOOKMARKED = "syndie.gui.browser.forummenu.bookmarked";
     private static final String T_FORUM_MENU_BROWSE = "syndie.gui.browser.forummenu.browse";
+    private static final String T_FORUM_MENU_BROWSEFORUMS = "syndie.gui.browser.forummenu.browseforums";
     private static final String T_FORUM_MENU_CREATE = "syndie.gui.browser.forummenu.create";
     private static final String T_FORUM_MENU_MANAGE = "syndie.gui.browser.forummenu.manage";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
@@ -2139,7 +2192,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
         _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Search"));
+        _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &bookmarked"));
         _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
+        _forumMenuBrowseForums.setText(registry.getText(T_FORUM_MENU_BROWSEFORUMS, "Read &all by forum"));
         _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
         _forumMenuManageRoot.setText(registry.getText(T_FORUM_MENU_MANAGE, "&Manage"));
         

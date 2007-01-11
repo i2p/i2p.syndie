@@ -286,7 +286,7 @@ public class ImageUtil {
         FontMetrics fm = gc.getFontMetrics();
         int per = fm.getAverageCharWidth();
         gc.dispose();
-        int rv = per * text.length();
+        int rv = per * (text == null ? 1 : text.length());
         return rv;
     }
     

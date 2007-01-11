@@ -94,6 +94,23 @@ public class SyndieURI {
                             null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
     }
     
+    public static SyndieURI createBookmarked(List scopeHashes) {
+        String scopes[] = new String[scopeHashes.size()];
+        for (int i = 0; i < scopes.length; i++)
+            scopes[i] = ((Hash)scopeHashes.get(i)).toBase64();
+        Long postDays = null;
+        Long importDays = null;
+        if (true) //useImportDate)
+            importDays = new Long(7);
+        else
+            postDays = new Long(7);
+        SyndieURI uri = createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
+                                     null, null, null, null, null, null, null, null, false, false, false, true, false);
+        Map attr = uri.getAttributes();
+        attr.put("byforum", "true");
+        return uri;
+    }
+    
     /**
      * parameters here map to the fields @ doc/web/spec.html#uri_search
      */
@@ -431,7 +448,17 @@ public class SyndieURI {
     public Long getMessageId() { return getLong("messageId"); }
     public Long getAttachment() { return getLong("attachment"); }
     public Long getPage() { return getLong("page"); }
-    public Hash getSearchScope() { return getHash("scope"); }
+    public Hash[] getSearchScopes() { 
+        String scopes[] = getStringArray("scope");
+        if (scopes == null) return null;
+        Hash rv[] = new Hash[scopes.length];
+        for (int i = 0; i < scopes.length; i++) {
+            byte val[] = Base64.decode(scopes[i]);
+            if ( (val != null) && (val.length == Hash.HASH_LENGTH) )
+                rv[i] = new Hash(val);
+        }
+        return rv;
+    }
     
     public void fromString(String bencodedURI) throws URISyntaxException {
         if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");
