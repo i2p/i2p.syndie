@@ -168,7 +168,7 @@ public class StatusBar implements Translatable, Themeable {
     }
     private class Refresh implements Runnable {
         public void run() {
-            doRefreshDisplay();
+            doRefreshDisplay(true);
             Display.getDefault().timerExec(30*1000, Refresh.this);
         }
     }
@@ -181,15 +181,18 @@ public class StatusBar implements Translatable, Themeable {
     private static final String T_OFFLINE = "syndie.gui.statusbar.offline";
 
     public void refreshDisplay() {
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(); } });
+        _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(false); } });
     }
-    private void doRefreshDisplay() {
+    private void doRefreshDisplay() { doRefreshDisplay(false); }
+    private void doRefreshDisplay(boolean onlineStateOnly) {
         displayOnlineState(_browser.getSyndicationManager().isOnline());
+        
+        if (onlineStateOnly) return;
         
         int newForums = refreshNewForums();
         String unread = calcUnread();
         int pbe = refreshPBE();
-        int priv = refreshPrivateMessages();
+        String priv = refreshPrivateMessages();
         int postpone = refreshPostponed();
         
         TranslationRegistry registry = _browser.getTranslationRegistry();
@@ -221,7 +224,7 @@ public class StatusBar implements Translatable, Themeable {
             _pbe.setVisible(false);
         }
         
-        if (priv > 0) {
+        if (priv != null) {
             _priv.setText(registry.getText(T_PRIV, "Private msgs: ") + priv);
             ((GridData)_priv.getLayoutData()).exclude = false;
             _priv.setVisible(true);
@@ -243,7 +246,7 @@ public class StatusBar implements Translatable, Themeable {
         if (newForums == 0) cells++;
         if (unread == null) cells++;
         if (pbe == 0) cells++;
-        if (priv == 0) cells++;
+        if (priv == null) cells++;
         if (postpone == 0) cells++;
         
         ((GridData)_version.getLayoutData()).horizontalSpan = cells;
@@ -340,11 +343,10 @@ public class StatusBar implements Translatable, Themeable {
         return unread;
     }
     
-    private int refreshPrivateMessages() {
+    private String refreshPrivateMessages() {
         MenuItem items[] = _privMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
-        int rv = 0;
         final List unreadMsgIds = _browser.getPrivateMsgIds(false);
         for (int i = 0; i < unreadMsgIds.size(); i++) {
             long msgId = ((Long)unreadMsgIds.get(i)).longValue();
@@ -381,9 +383,42 @@ public class StatusBar implements Translatable, Themeable {
                 }
             });
         }
-        return unreadMsgIds.size();
+        
+        final List readMsgIds = _browser.getPrivateMsgIds(true);
+        if (readMsgIds.size() > 0) {
+            MenuItem sub = new MenuItem(_privMenu, SWT.CASCADE);
+            sub.setText(_browser.getTranslationRegistry().getText(T_PRIV_READ, "Already read: ") + readMsgIds.size());
+            Menu subm = new Menu(sub);
+            sub.setMenu(subm);
+            for (int i = 0; i < readMsgIds.size(); i++) {
+                long msgId = ((Long)readMsgIds.get(i)).longValue();
+                long authorId = _browser.getClient().getMessageAuthor(msgId);
+                String author = _browser.getClient().getChannelName(authorId);
+                if (author == null) author = "";
+                long when = _browser.getClient().getMessageImportDate(msgId);
+                String subject = _browser.getClient().getMessageSubject(msgId);
+                if (subject == null) subject = "";
+                String str = Constants.getDate(when) + ": " + author + " - " + subject;
+                MenuItem item = new MenuItem(subm, SWT.PUSH);
+                item.setText(str);
+                item.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
+                final SyndieURI uri = _browser.getClient().getMessageURI(msgId);
+                item.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                });
+            }
+        }
+        
+        int unread = unreadMsgIds.size();
+        int read = readMsgIds.size();
+        if ( (unread == 0) && (read == 0) )
+            return null;
+        else
+            return unread + "/" + read;
     }
     private static final String T_PRIV_MARKALLREAD = "syndie.gui.statusbar.priv.markallread";
+    private static final String T_PRIV_READ = "syndie.gui.statusbar.priv.read";
     private int refreshPBE() {
         MenuItem items[] = _pbeMenu.getItems();
         for (int i = 0; i < items.length; i++)
