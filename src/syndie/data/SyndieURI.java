@@ -551,6 +551,12 @@ public class SyndieURI {
             e.printStackTrace();
             return;
         }
+        try {
+            new SyndieURI("urn:syndie:channel:de extra data after the bencoded section");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
         if (!test(new TreeMap()))
             throw new RuntimeException("failed on empty");
         if (!test(createStrings()))
@@ -684,9 +690,10 @@ public class SyndieURI {
         }
     }
     
-    private static final void bdecodeNext(StringBuffer remaining, TreeMap target) throws URISyntaxException {
+    private static final boolean bdecodeNext(StringBuffer remaining, TreeMap target) throws URISyntaxException {
         String key = null;
         while (true) {
+            if (remaining.length() <= 0) return true;
             switch (remaining.charAt(0)) {
                 case 'l':
                     List l = new ArrayList();
@@ -697,7 +704,7 @@ public class SyndieURI {
                         remaining.deleteCharAt(0);
                         target.put(key, new String[0]);
                         key = null;
-                        return;
+                        return false;
                     } else {
                         while (bdecodeNext(remaining, l)) {
                             if (remaining.charAt(0) == 'e') {
@@ -707,7 +714,7 @@ public class SyndieURI {
                                 target.put(key, str);
                                 key = null;
                                 remaining.deleteCharAt(0);
-                                return;
+                                return false;
                             }
                         }
                         // decode failed
@@ -722,7 +729,7 @@ public class SyndieURI {
                     } else {
                         target.put(key, str);
                         key = null;
-                        return;
+                        return false;
                     }
                     break;
                 case 'i':
@@ -738,10 +745,13 @@ public class SyndieURI {
                         target.put(key, new Long(val));
                         key = null;
                         remaining.delete(0, idx+1);
-                        return;
+                        return false;
                     } catch (NumberFormatException nfe) {
                         throw new URISyntaxException(remaining.toString(), "Invalid number format: " + nfe.getMessage());
                     }
+                case 'e':
+                    // end of the dictionary reached
+                    return true;
                 default:
                     throw new URISyntaxException(remaining.toString(), "Unsupported bencoding type");
             }
@@ -778,14 +788,17 @@ public class SyndieURI {
      * strings.
      */
     private static final TreeMap bdecode(String bencoded) throws URISyntaxException {
-        if ( (bencoded.charAt(0) != 'd') || (bencoded.charAt(bencoded.length()-1) != 'e') )
+        //if ( (bencoded.charAt(0) != 'd') || (bencoded.charAt(bencoded.length()-1) != 'e') )
+        //    throw new URISyntaxException(bencoded, "Not bencoded properly");
+        if (bencoded.charAt(0) != 'd')
             throw new URISyntaxException(bencoded, "Not bencoded properly");
         StringBuffer buf = new StringBuffer(bencoded);
         buf.deleteCharAt(0);
         buf.deleteCharAt(buf.length()-1);
         TreeMap rv = new TreeMap();
-        while (buf.length() > 0)
-            bdecodeNext(buf, rv);
+        boolean done = false;
+        while (!done)
+            done = bdecodeNext(buf, rv);
         return rv;
     }
 }

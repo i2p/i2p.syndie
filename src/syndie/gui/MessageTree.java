@@ -14,6 +14,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
@@ -1029,9 +1035,43 @@ public class MessageTree implements Translatable, Themeable {
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+        
+        initDnD();
+    }
+    
+    private void initDnD() {
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        int ops = DND.DROP_COPY;
+        DragSource source = new DragSource(_tree, ops);
+        source.setTransfer(transfer);
+        source.addDragListener(new DragSourceListener() {
+            public void dragFinished(DragSourceEvent evt) {}
+            public void dragSetData(DragSourceEvent evt) {
+                SyndieURI uri = getSelected();
+                if (uri != null) {
+                    TreeItem sel[] = _tree.getSelection();
+                    BookmarkDnD bookmark = getBookmark(sel[0], (ReferenceNode)_itemToNode.get(sel[0]));
+                    if (bookmark != null)
+                        evt.data = bookmark.toString();
+                }
+            }
+            public void dragStart(DragSourceEvent evt) {
+                SyndieURI uri = getSelected();
+                if (uri == null)
+                    evt.doit = false; // don't drag when nothing is selected
+            }
+        });
+    }
+    
+    protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
+        SyndieURI uri = (SyndieURI)_itemToURI.get(item);
+        BookmarkDnD bookmark = new BookmarkDnD();
+        bookmark.uri = uri;
+        bookmark.name = item.getText(0);
+        bookmark.desc = "";
+        return bookmark;
     }
 
-    
     private static final int getMessageFlagBarWidth(Tree tree) {
         // to avoid a bunch of messageflagbar calcs, lets just assume 8 flags
         int width = tree.getGridLineWidth() * 2;

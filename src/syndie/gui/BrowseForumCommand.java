@@ -36,7 +36,7 @@ public class BrowseForumCommand implements CLI.Command {
             public void run() {
                 Shell shell = new Shell(display, SWT.SHELL_TRIM);
                 shell.setLayout(new FillLayout());
-                BrowseForum browse = new BrowseForum(shell, new DummyBrowserControl(client, new NullUI()), new Listener());
+                BrowseForum browse = null;//new BrowseForum(shell, new DummyBrowserControl(client, new NullUI()), new Listener());
 
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) )
                     browse.setFilter(SyndieURI.createSearch(new Hash(chan)));

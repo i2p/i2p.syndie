@@ -31,6 +31,10 @@ import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
@@ -291,6 +295,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         debugMessage("=tabs sized: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         
+        initDnD();
+        
         long t12 = System.currentTimeMillis();
         //JobRunner.instance().enqueue(new Runnable() {
         //    public void run() { _bookmarks.viewStartupItems(); }
@@ -303,6 +309,77 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                            (t4-t3)+"/"+(t5-t4)+"/"+(t6-t5)+"/"+(t7-t6)+"/"+(t8-t7)+"/"+(t9-t8)+"/"+
                            (t10-t9)+"/"+(t11-t10)+"/"+(t12-t11)+"/"+(t13-t12));
         _shell.setVisible(false);
+    }
+    
+    private void initDnD() {
+        initDnDTabs();
+        initDnDBookmarks();
+    }
+    private void initDnDTabs() {
+        int ops = DND.DROP_COPY | DND.DROP_LINK;
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        DropTarget target = new DropTarget(_tabs, ops);
+        target.setTransfer(transfer);
+        target.addDropListener(new DropTargetListener() {
+            public void dragEnter(DropTargetEvent evt) {
+                // we can take the element
+                evt.detail = evt.operations | DND.DROP_COPY;
+            }
+            public void dragLeave(DropTargetEvent evt) {}
+            public void dragOperationChanged(DropTargetEvent evt) {}
+            public void dragOver(DropTargetEvent evt) {}
+            public void drop(DropTargetEvent evt) {
+                if (evt.data == null) {
+                    evt.detail = DND.DROP_NONE;
+                    return;
+                } else {
+                    String str = evt.data.toString();
+                    try {
+                        SyndieURI uri = new SyndieURI(str);
+                        view(uri);
+                    } catch (URISyntaxException use) {
+                        getUI().debugMessage("invalid uri: " + str, use);
+                    }
+                }
+            }
+            public void dropAccept(DropTargetEvent evt) {}
+        });
+    }
+    private void initDnDBookmarks() {
+        int ops = DND.DROP_COPY | DND.DROP_LINK;
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        DropTarget target = new DropTarget(_bookmarks.getControl(), ops);
+        target.setTransfer(transfer);
+        target.addDropListener(new DropTargetListener() {
+            public void dragEnter(DropTargetEvent evt) {
+                // we can take the element
+                evt.detail = evt.operations | DND.DROP_COPY;
+            }
+            public void dragLeave(DropTargetEvent evt) {}
+            public void dragOperationChanged(DropTargetEvent evt) {}
+            public void dragOver(DropTargetEvent evt) {}
+            public void drop(DropTargetEvent evt) {
+                if (evt.data == null) {
+                    evt.detail = DND.DROP_NONE;
+                    return;
+                } else {
+                    BookmarkDnD bookmark = new BookmarkDnD();
+                    bookmark.fromString(evt.data.toString());
+                    if (bookmark.uri != null) { // parsed fine
+                        bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, -1, 0, false, false, false));
+                    } else { // wasn't in bookmark syntax, try as a uri
+                        String str = evt.data.toString();
+                        try {
+                            SyndieURI uri = new SyndieURI(str);
+                            bookmark(uri);
+                        } catch (URISyntaxException use) {
+                            getUI().debugMessage("invalid uri: " + str, use);
+                        }
+                    }
+                }
+            }
+            public void dropAccept(DropTargetEvent evt) {}
+        });
     }
     
     private void resized() {

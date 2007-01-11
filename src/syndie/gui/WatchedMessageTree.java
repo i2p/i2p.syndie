@@ -111,5 +111,22 @@ public class WatchedMessageTree extends MessageTree {
         setMinWidth(_colSubject, title, 0, 100);
         return 0;
     }
-    
+       
+    protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
+        if (_forumNodes.containsKey(node)) {
+            Hash forum = (Hash)_forumNodes.get(node);
+            if (forum == null) return null;
+            String name = _browser.getClient().getChannelName(forum);
+            if (name == null) name = "";
+            
+            SyndieURI uri = SyndieURI.createScope(forum);
+            BookmarkDnD bookmark = new BookmarkDnD();
+            bookmark.uri = uri;
+            bookmark.name = name;
+            bookmark.desc = forum.toBase64();
+            return bookmark;
+        } else {
+            return super.getBookmark(item, node);
+        }
+    }    
 }
