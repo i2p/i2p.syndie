@@ -103,6 +103,13 @@ public class WatchedMessageTree extends MessageTree {
             super.markUnreadChild(item);
     }
     
+    protected TreeItem getThreadRoot(TreeItem item) {
+        TreeItem root = item;
+        while ( (root.getParentItem() != null) && (root.getParentItem().getParentItem() != null) )
+            root = root.getParentItem();
+        return root;
+    }
+    
     protected long renderNode(ReferenceNode node, TreeItem item) {
         if (_forumNodes.containsKey(node))
             return renderForumNode(node, item);

@@ -1632,14 +1632,18 @@ public class MessageTree implements Translatable, Themeable {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                TreeItem root = selected[i];
-                while (root.getParentItem() != null)
-                    root = root.getParentItem();
+                TreeItem root = getThreadRoot(selected[i]);
                 markThreadRead(root);
             }
             if (selected.length > 0)
                 _browser.readStatusUpdated();
         }
+    }
+    protected TreeItem getThreadRoot(TreeItem item) {
+        TreeItem root = item;
+        while (root.getParentItem() != null)
+            root = root.getParentItem();
+        return root;
     }
     private void markThreadRead(TreeItem item) {
         Long msgId = (Long)_itemToMsgId.get(item);
