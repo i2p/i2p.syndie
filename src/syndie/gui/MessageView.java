@@ -152,6 +152,8 @@ public class MessageView implements Translatable, Themeable {
         //showPage();
         //_footerPage.select(_page-1);
     }
+    
+    public boolean isKnownLocally() { return _author != null; }
 
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )

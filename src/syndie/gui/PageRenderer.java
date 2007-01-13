@@ -1060,13 +1060,13 @@ public class PageRenderer implements Themeable {
             _bodyViewForumMetadata.setEnabled(false);
             _bodyEnable.setEnabled(false);
             _bodyDisable.setEnabled(false);
-            _bodyViewAsText.setEnabled(false);
+            //_bodyViewAsText.setEnabled(false);
             _bodyViewStyled.setEnabled(false);
             _bodySaveAll.setEnabled(false);
         } else {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
-            _bodyViewAsText.setEnabled(!_viewAsText);
+            _bodyViewAsText.setSelection(_viewAsText);
             _bodySaveAll.setEnabled(true);
             _bodyViewStyled.setEnabled(true);
             long targetId = _msg.getTargetChannelId();
@@ -1345,7 +1345,7 @@ public class PageRenderer implements Themeable {
                 toggleImages();
             }
         });
-        _bodyViewAsText = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyViewAsText = new MenuItem(_bodyMenu, SWT.CHECK);
         _bodyViewAsText.setText("View as text");
         _bodyViewAsText.addSelectionListener(new FireEventListener() {
             public void fireEvent() { toggleViewAsText(); }
