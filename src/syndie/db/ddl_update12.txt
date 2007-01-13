@@ -22,7 +22,7 @@ CREATE TABLE nymUnreadChannel (
 -- migrate the old nymChannelReadThrough (but only for the default nym)
 INSERT INTO nymUnreadChannel (nymId, channelId)
 	SELECT 0, channelId FROM channel WHERE channelId NOT IN (SELECT scope
-	FROM nymChannelReadThrough WHERE nymId = 0)
+	FROM nymChannelReadThrough WHERE nymId = 0);
 -- migrate the individual messages too
 INSERT INTO nymUnreadMessage (nymId, msgId)
 	SELECT 0, msgId FROM channelMessage WHERE msgId NOT IN
