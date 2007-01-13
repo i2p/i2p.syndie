@@ -458,19 +458,21 @@ class HTMLStyleBuilder {
         }
         
         Color bgColor = null;
+        Color fgColor = null;
         // innermost bgcolor is used
         //System.out.println("Looking for a bgcolor in " + tags);
         for (int i = 0; (bgColor == null) && (i < tags.size()); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
             bgColor = ColorUtil.getColor(tag.getAttribValue("bgcolor"), _customColors);
         }
-        if ((bgColor == null) && (containsTag(tags, "quote")))
+        if ((bgColor == null) && (containsTag(tags, "quote"))) {
             bgColor = _bgColorQuote;
+            fgColor = ColorUtil.getColor("black");
+        }
         
         if (_styled && (bgColor != null))
             style.background = bgColor;
         
-        Color fgColor = null;
         // innermost fgcolor/color is used
         //System.out.println("Looking for a fgcolor in " + tags);
         for (int i = 0; i < tags.size(); i++) {
@@ -478,6 +480,8 @@ class HTMLStyleBuilder {
             String color = tag.getAttribValue("fgcolor");
             if (color == null)
                 color = tag.getAttribValue("color");
+            if (color == null)
+                continue;
             
             fgColor = ColorUtil.getColor(color, _customColors);
             if (fgColor != null) break;
