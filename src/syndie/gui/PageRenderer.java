@@ -462,6 +462,9 @@ public class PageRenderer implements Themeable {
                 } else {
                     _text.setText("");
                 }
+                _text.setBackgroundImage(null); // make this explicit, for toggling
+                _text.setBackground(null);
+
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _text.setCursor(null);
@@ -571,8 +574,9 @@ public class PageRenderer implements Themeable {
                 _bgColor = sbuilder.getBackgroundColor();
                 if (_styled && _bgColor != null)
                     _text.setBackground(_bgColor);
-                else
-                    _text.setBackground(ColorUtil.getColor("white")); //null);
+                //else
+                //    _text.setBackground(ColorUtil.getColor("white")); //null);
+                    _text.setBackground(null); // perhaps this'll work properly sans the INHERIT_DEFAULT above
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _text.setCursor(null);
