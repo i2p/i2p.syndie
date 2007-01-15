@@ -38,6 +38,7 @@ import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.SyncManager;
 
 /**
  *
@@ -905,10 +906,11 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeArchiveCombo.setText("");
         _linkTypeArchiveCombo.removeAll();
         _archives.clear();
-        int archives = _browser.getSyndicationManager().getArchiveCount();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        int archives = mgr.getArchiveCount();
         for (int i = 0; i < archives; i++) {
-            SyndieURI uri = _browser.getSyndicationManager().getArchiveURI(i);
-            String name = _browser.getSyndicationManager().getArchiveName(i);
+            SyndieURI uri = mgr.getArchive(i).getArchiveURI();
+            String name = mgr.getArchive(i).getName();
             if (name != null)
                 _linkTypeArchiveCombo.add(name + ": " + getLocation(uri));
             else

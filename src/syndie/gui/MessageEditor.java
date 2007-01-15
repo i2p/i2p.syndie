@@ -2599,13 +2599,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             box.setText(_browser.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
             box.open();
             return false;
-        } else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
-            box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
-            int rc = box.open();
-            if (rc != SWT.YES)
-                return false;
+        //} else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
+        //    MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+        //    box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
+        //    box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
+        //    int rc = box.open();
+        //    if (rc != SWT.YES)
+        //        return false;
         }
         return true;
     }

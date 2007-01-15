@@ -3275,6 +3275,31 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+    
+    private static final String SQL_GET_NYMARCHIVENAMES = "SELECT name FROM nymArchive where nymId = ? ORDER BY name ASC";
+    public List getNymArchiveNames() { return getNymArchiveNames(_nymId); }
+    public List getNymArchiveNames(long nymId) { 
+        ensureLoggedIn();
+        ArrayList rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYMARCHIVENAMES);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString(1);
+                rv.add(name);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting the nym's archive names", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
 
     private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */

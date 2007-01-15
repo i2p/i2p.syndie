@@ -7,7 +7,6 @@ import org.eclipse.swt.custom.CTabFolder;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
-import syndie.db.SyndicationManager;
 import syndie.db.UI;
 
 /**
@@ -52,8 +51,6 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createSyndicationDiffURI() { return null; }
     public SyndieURI createSyndicationStatusURI() { return null; }
     public SyndieURI createHighlightURI() { return null; }
-
-    public SyndicationManager getSyndicationManager() { return null; }
 
     public SyndieURI createMetaURI(Hash forum) { return null; }
     public SyndieURI createMetaRefsURI(Hash forum) { return createMetaURI(forum); }

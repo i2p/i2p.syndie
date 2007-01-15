@@ -23,14 +23,13 @@ class SyndicateMenu implements TextEngine.Menu {
     private TextEngine _engine;
     private SharedArchive _currentIndex;
     //private ArchiveDiff _diff;
-    private HTTPSyndicator _syndicator;
+    //private HTTPSyndicator _syndicator;
     private String _baseUrl;
     private String _proxyHost;
     private int _proxyPort;
     private boolean _shouldProxy;
     private boolean _archiveWasRemote;
     private int _curPBEIndex;
-    private SyndicationManager _mgr;
     
     public SyndicateMenu(TextEngine engine) {
         _engine = engine;
@@ -68,9 +67,10 @@ class SyndicateMenu implements TextEngine.Menu {
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
         String cmd = opts.getCommand();
         if ("buildindex".equalsIgnoreCase(cmd)) {
-            _mgr = SyndicationManager.getInstance(client, ui);
-            _mgr.loadArchives();
-            processBuildIndex(client, ui, opts);
+            //_mgr = SyndicationManager.getInstance(client, ui);
+            //_mgr.loadArchives();
+            SyncManager mgr = SyncManager.getInstance(client, ui);
+            processBuildIndex(client, ui, opts, mgr.getDefaultPullStrategy());
         } else if ("getindex".equalsIgnoreCase(cmd)) {
             processGetIndex(client, ui, opts);
         } else if ("diff".equalsIgnoreCase(cmd)) {
@@ -117,7 +117,7 @@ class SyndicateMenu implements TextEngine.Menu {
             return;
         }
         //_diff = null;
-        _syndicator = null; // delete files?
+        //_syndicator = null; // delete files?
         _baseUrl = opts.getOptValue("archive");
         if (_baseUrl == null)
             _baseUrl = client.getDefaultHTTPArchive();
@@ -180,8 +180,20 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         } else { //if ("all".equalsIgnoreCase(scope))
         */
-        url = _baseUrl + SyndicationManager.SHARED_INDEX_FILE; //"index-all.dat";
-	if (includeForceDownload) url = url + "?forcedownload";
+        
+        // deal with baseurls like http://foo.i2p/?i2paddresshelper=blah
+        int q = _baseUrl.indexOf('?');
+        if (q > 0)
+            url = _baseUrl.substring(0, q) + LocalArchiveManager.SHARED_INDEX_FILE + _baseUrl.substring(q);
+        else
+            url = _baseUrl + LocalArchiveManager.SHARED_INDEX_FILE;
+        //url = _baseUrl + LocalArchiveManager.SHARED_INDEX_FILE; //"index-all.dat";
+	if (includeForceDownload) {
+            if (q > 0)
+                url = url + "&forcedownload";
+            else
+                url = url + "?forcedownload";
+        }
 
         _shouldProxy = (_proxyHost != null) && (_proxyPort > 0);
         _archiveWasRemote = true;
@@ -388,11 +400,11 @@ class SyndicateMenu implements TextEngine.Menu {
         //uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         ui.debugMessage("Fetching " + uris.size() + " entries: " + uris);
         
-        boolean ok = _syndicator.fetch(uris);
+        boolean ok = false; //_syndicator.fetch(uris);
         if (ok) {
             ui.debugMessage("Messages fetched.  Importing...");
-            int imported = _syndicator.importFetched();
-            int missing = _syndicator.countMissingPassphrases();
+            int imported = 0; //_syndicator.importFetched();
+            int missing = 0; //_syndicator.countMissingPassphrases();
             if (missing > 0) {
                 ui.statusMessage("Some messages could not be imported as they require a passphrase to read.");
                 ui.statusMessage("To import these " + missing + " messages, please review them with");
@@ -411,6 +423,7 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
+        /*
         if (_syndicator == null) {
             ui.errorMessage("No syndication in progress");
             ui.commandComplete(0, null);
@@ -430,6 +443,7 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.statusMessage("\t" + CommandImpl.strip(prompt));
         }
         ui.commandComplete(0, null);
+         */
     }
     private void processPrevPBE(DBClient client, UI ui, Opts opts) {
         if (true) {
@@ -450,7 +464,7 @@ class SyndicateMenu implements TextEngine.Menu {
         }
         int index = (int)opts.getOptLong("index", 0);
         String pass = opts.getOptValue("passphrase");
-        _syndicator.importPBE(index, pass);
+        //_syndicator.importPBE(index, pass);
     }
     
     private void processSchedule(DBClient client, UI ui, Opts opts) {
@@ -459,6 +473,7 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
+        /*
         String style = opts.getOptValue("put");
         if (style == null) {
             ui.errorMessage("Usage: schedule --put (outbound|outboundmeta|archive|archivemeta) [--deleteOutbound $boolean]");
@@ -471,10 +486,11 @@ class SyndicateMenu implements TextEngine.Menu {
         }
         boolean deleteOutbound = opts.getOptBoolean("deleteOutbound", true);
         boolean knownChanOnly = opts.getOptBoolean("knownChanOnly", false);
-        _syndicator.setDeleteOutboundAfterSend(deleteOutbound);
-        _syndicator.schedulePut(style, knownChanOnly);
+        //_syndicator.setDeleteOutboundAfterSend(deleteOutbound);
+        //_syndicator.schedulePut(style, knownChanOnly);
         ui.statusMessage("Posting scheduled");
         ui.commandComplete(0, null);
+         */
     }
 
     private void processPut(DBClient client, UI ui, Opts opts) {
@@ -483,6 +499,7 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
+        /*
         String url = opts.getOptValue("postURL");
         if (url != null)
             _syndicator.setPostURLOverride(url);
@@ -491,6 +508,7 @@ class SyndicateMenu implements TextEngine.Menu {
             _syndicator.setPostPassphrase(pass);
         _syndicator.post();
         _syndicator = null;
+         */
     }
     
     /** bulkimport --dir $directory --delete $boolean --rmdir $boolean*/
@@ -595,15 +613,17 @@ class SyndicateMenu implements TextEngine.Menu {
         if (ssk == null)
             ssk = "new";
 
-        processBuildIndex(client, new NestedUI(ui), new Opts());
+        
+        SyncManager mgr = SyncManager.getInstance(client, ui);
+        processBuildIndex(client, new NestedUI(ui), new Opts(), mgr.getDefaultPullStrategy());
         // ignore the results
 
-        FreenetArchivePusher pusher = new FreenetArchivePusher(ui, fcpHost, fcpPort);
+        //FreenetArchivePusher pusher = new FreenetArchivePusher(ui, fcpHost, fcpPort);
         if ("new".equalsIgnoreCase(ssk)) {
-            pusher.generateSSK();
-            ssk = pusher.getPrivateSSK();
+            //pusher.generateSSK();
+            ssk = null; //pusher.getPrivateSSK();
             if (ssk != null) {
-                String pubSSK = pusher.getPublicSSK();
+                String pubSSK = null; //pusher.getPublicSSK();
                 ui.statusMessage("Published results will be visible under " + pubSSK);
                 // save the ssk to the prefs at the next opportunity
                 ui.insertCommand("prefs --freenetPublicKey " + CommandImpl.strip(pubSSK) +
@@ -616,10 +636,10 @@ class SyndicateMenu implements TextEngine.Menu {
                 return;
             }
         } else {
-            pusher.setPrivateSSK(ssk);
-            pusher.setPublicSSK(client.getDefaultFreenetPublicKey());
+            //pusher.setPrivateSSK(ssk);
+            //pusher.setPublicSSK(client.getDefaultFreenetPublicKey());
         }
-        pusher.putArchive(client.getArchiveDir());
+        //pusher.putArchive(client.getArchiveDir());
     }
     
     
@@ -666,9 +686,9 @@ class SyndicateMenu implements TextEngine.Menu {
         }
     }
     
-    private void processBuildIndex(DBClient client, UI ui, Opts opts) {
+    private void processBuildIndex(DBClient client, UI ui, Opts opts, SharedArchiveEngine.PullStrategy pullStrategy) {
         //long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
-        SyndicationManager.buildIndex(client, ui); //, maxSize);
+        LocalArchiveManager.buildIndex(client, ui, pullStrategy); //, maxSize);
         ui.commandComplete(0, null);
     }
 }

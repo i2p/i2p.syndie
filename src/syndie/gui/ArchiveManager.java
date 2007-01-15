@@ -20,7 +20,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import syndie.data.SyndieURI;
 import syndie.db.SharedArchive;
-import syndie.db.SyndicationManager;
+import syndie.db.LocalArchiveManager;
+import syndie.db.SyncArchive;
+import syndie.db.SyncManager;
 
 /**
  *
@@ -163,7 +165,8 @@ public class ArchiveManager implements Translatable, Themeable {
     }
     
     private void loadConfig() {
-        SharedArchive.About cfg = _browser.getSyndicationManager().getLocalAbout();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_browser.getClient(), mgr.getDefaultPullStrategy());
         SyndieURI uris[] = cfg.getAlternateArchives();
         if (uris != null)
             _advertized.setText(uris.length+"");
@@ -185,9 +188,10 @@ public class ArchiveManager implements Translatable, Themeable {
     }
     
     public void saveConfig() {
-        SharedArchive.About cfg = _browser.getSyndicationManager().getLocalAbout();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_browser.getClient(), mgr.getDefaultPullStrategy());
         cfg.setAlternativeArchives((SyndieURI[])_uris.toArray(new SyndieURI[0]));
-        _browser.getSyndicationManager().setLocalAbout(cfg);
+        LocalArchiveManager.setLocalAbout(_browser.getClient(), _browser.getUI(), cfg);
         
         List chans = _browser.getClient().getBannedChannels();
         List unbanned = new ArrayList();
@@ -220,10 +224,11 @@ public class ArchiveManager implements Translatable, Themeable {
         final Table archives = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
-        SyndicationManager mgr = _browser.getSyndicationManager();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
         for (int i = 0; i < mgr.getArchiveCount(); i++) {
-            String name = mgr.getArchiveName(i);
-            SyndieURI uri = mgr.getArchiveURI(i);
+            SyncArchive archive = mgr.getArchive(i);
+            String name = archive.getName();
+            SyndieURI uri = archive.getArchiveURI();
             uris.add(uri);
             boolean checked = _uris.contains(uri);
             TableItem item = new TableItem(archives, SWT.NONE);

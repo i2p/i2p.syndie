@@ -40,13 +40,14 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.SharedArchive;
-import syndie.db.SyndicationManager;
+import syndie.db.SyncArchive;
+import syndie.db.SyncManager;
 import syndie.db.ThreadAccumulatorJWZ;
 
 /**
  *
  */
-public class HighlightView implements Themeable, Translatable, SyndicationManager.SyndicationListener, MessageEditor.MessageEditorListener {
+public class HighlightView implements Themeable, Translatable, MessageEditor.MessageEditorListener {
     private Composite _parent;
     private BrowserControl _browser;
     private Composite _root;
@@ -95,8 +96,8 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         initComponents();
         refreshHighlights();
         _browser.addMessageEditorListener(this);
-        _browser.getSyndicationManager().addListener(this);
-        browser.getSyndicationManager().loadArchives();
+        //_browser.getSyndicationManager().addListener(this);
+        //browser.getSyndicationManager().loadArchives();
         Display.getDefault().timerExec(30*1000, _refresh);
     }
     
@@ -123,7 +124,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
     
     public void dispose() {
         _browser.removeMessageEditorListener(this);
-        _browser.getSyndicationManager().removeListener(this);
+        //_browser.getSyndicationManager().removeListener(this);
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
         _refresh.stop();
@@ -312,15 +313,17 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         TreeItem items[] = _itemArchives.getItems();
         if (items != null) for (int i = 0; i < items.length; i++) items[i].dispose();
         
-        SyndicationManager mgr = _browser.getSyndicationManager();
-        mgr.loadArchives();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        //SyndicationManager mgr = _browser.getSyndicationManager();
+        //mgr.loadArchives();
         int archives = mgr.getArchiveCount();
         //_browser.getUI().debugMessage("known archives: " + archives);
         int scheduled = 0;
         for (int i = 0; i < archives; i++) {
-            String name = mgr.getArchiveName(i);
-            long nextSync = mgr.getNextSyncDate(i);
-            long lastSync = mgr.getLastSyncDate(i);
+            SyncArchive archive = mgr.getArchive(i);
+            String name = archive.getName();
+            long nextSync = -1; //archive.getNextSyncDate(i);
+            long lastSync = -1; //archive.getLastSyncDate(i);
             if (nextSync > 0)
                 scheduled++;
             TreeItem item = new TreeItem(_itemArchives, SWT.NONE);
@@ -351,7 +354,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
                 box.setText(_browser.getTranslationRegistry().getText(T_IMPORT_TITLE, "Import archives?"));
                 int rc = box.open();
                 if (rc == SWT.YES) {
-                    _browser.getSyndicationManager().importDefaultArchives();
+                    //_browser.getSyndicationManager().importDefaultArchives();
                     _browser.view(_browser.createSyndicationConfigURI());
                 }
             }
@@ -918,6 +921,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         }
     }
 
+    /*
     public void archivesLoaded(SyndicationManager mgr) { 
         _tree.getDisplay().asyncExec(new Runnable() { 
             public void run() { _tree.setRedraw(false); updateArchives(); resizeCols(); _tree.setRedraw(true); }
@@ -951,6 +955,7 @@ public class HighlightView implements Themeable, Translatable, SyndicationManage
         Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });
     }
     public void onlineStateAdjusted(boolean online) {}
+    */
 
     public void messageCreated(SyndieURI postedURI) {
         Display.getDefault().asyncExec(new Runnable() { public void run() { refreshHighlights(); } });

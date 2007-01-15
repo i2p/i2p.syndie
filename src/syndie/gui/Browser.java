@@ -81,7 +81,7 @@ import syndie.db.HTTPServ;
 import syndie.db.Importer;
 import syndie.db.JobRunner;
 import syndie.db.SharedArchive;
-import syndie.db.SyndicationManager;
+import syndie.db.SyncManager;
 import syndie.gui.TranslationRegistry;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -101,7 +101,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TextEngine _engine;
     private TranslationRegistry _translation;
     private ThemeRegistry _themes;
-    private SyndicationManager _syndicationManager;
     private MsgEditorListener _editorListener;
     private Shell _shell;
     private Menu _mainMenu;
@@ -200,7 +199,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _initialized = false;
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
-        _syndicationManager = SyndicationManager.getInstance(_client, this);
         _editorListener = new MsgEditorListener();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
@@ -411,7 +409,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             LoginPrompt prompt = new LoginPrompt(_client, this);
             prompt.login();
         } else {
-            _syndicationManager.loadArchives();
             long t1 = System.currentTimeMillis();
             _themes.loadTheme();
             long t2 = System.currentTimeMillis();
@@ -584,6 +581,19 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
         });
+                
+        new MenuItem(_syndicateMenu, SWT.SEPARATOR);
+
+        MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        startServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_START, "Start HTTP archive server"));
+        MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        stopServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_STOP, "Stop HTTP archive server"));
+        MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
+        configServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_CONFIG, "Configure HTTP archive server"));
+        
+        stopServer.setEnabled(false);
+        new ServerConfig(startServer, stopServer, configServer);
+
         
         _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         _languageMenu = new Menu(_languageMenuRoot);
@@ -702,6 +712,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _shell.setMenuBar(_mainMenu);
         
+        /*
         _syndicationManager.addListener(new SyndicationManager.SyndicationListener() {
             public void archiveAdded(SyndicationManager mgr, String name) { refreshSyndicationMenu(); }
             public void archiveRemoved(SyndicationManager mgr, String name) { refreshSyndicationMenu(); }
@@ -718,10 +729,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void syndicationComplete(SyndicationManager mgr) {}
             public void onlineStateAdjusted(boolean online) {}
         });
+        */
         
+        /*
         JobRunner.instance().enqueue(new Runnable() {
             public void run() { _syndicationManager.loadArchives(); }
         });
+         */
     }
     private static final String T_SYNDICATE_FETCHDIFF = "syndie.gui.browser.syndicate.fetchdiff";
     private static final String T_SYNDICATE_SELECTEXPLICIT = "syndie.gui.browser.syndicate.selectedexplicit";
@@ -740,11 +754,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_HTTPSERV_OK = "syndie.gui.browser.httpserv.ok";
 
     private void toggleOnline() {
-        getSyndicationManager().setOnlineStatus(!getSyndicationManager().isOnline());
+        SyncManager mgr = SyncManager.getInstance(getClient(), getUI());
+        mgr.setIsOnline(!mgr.isOnline());
+        //getSyndicationManager().setOnlineStatus(!getSyndicationManager().isOnline());
     }
     
     private void refreshSyndicationMenu() {
-        _syndicationManager.loadArchives();
+        //_syndicationManager.loadArchives();
         _shell.getDisplay().asyncExec(new Runnable() {
             public void run() { doRefreshSyndicationMenu(); }
         });
@@ -2006,7 +2022,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }
-    public SyndicationManager getSyndicationManager() { return _syndicationManager; }
+    //public SyndicationManager getSyndicationManager() { return _syndicationManager; }
     public ThemeRegistry getThemeRegistry() { return _themes;} 
 
     private void bookmarkTab() {

@@ -1,0 +1,27 @@
+-- update the database from schema version 13
+-- this version 14 reflects the new changes to the syndication process
+--
+
+UPDATE appVersion SET versionNum = 14, visibleVersion = 'Sync cleanup';
+
+ALTER TABLE nymArchive ADD customPullPolicy VARCHAR(256) DEFAULT NULL;
+ALTER TABLE nymArchive ADD customPushPolicy VARCHAR(256) DEFAULT NULL;
+
+ALTER TABLE nymArchive ADD customFCPHost VARCHAR(256) DEFAULT NULL;
+ALTER TABLE nymArchive ADD customFCPPort INTEGER DEFAULT NULL;
+
+ALTER TABLE nymArchive ADD nextPullDate TIMESTAMP DEFAULT NULL;
+ALTER TABLE nymArchive ADD nextPushDate TIMESTAMP DEFAULT NULL;
+UPDATE nymArchive SET nextPullDate = nextSyncDate, nextPushDate = nextSyncDate;
+ALTER TABLE nymArchive DROP nextSyncDate;
+
+ALTER TABLE nymArchive ADD lastPullDate TIMESTAMP DEFAULT NULL;
+ALTER TABLE nymArchive ADD lastPushDate TIMESTAMP DEFAULT NULL;
+UPDATE nymArchive SET lastPullDate = lastSyncDate, lastPushDate = lastSyncDate;
+ALTER TABLE nymArchive DROP lastSyncDate;
+
+-- these two weren't used yet, so resizing is safe
+ALTER TABLE nymArchive DROP readKey;
+ALTER TABLE nymArchive DROP postKey;
+ALTER TABLE nymArchive ADD readKey VARBINARY(256) DEFAULT NULL;
+ALTER TABLE nymArchive ADD postKey VARBINARY(256) DEFAULT NULL;

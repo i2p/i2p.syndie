@@ -47,6 +47,7 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_BUGREPORT = "bug";
     static final String TYPE_BACKUPSECRETS = "backupsecrets";
     static final String TYPE_VIEWFORUM = "viewforum";
+    static final String TYPE_SYNC = "sync";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
         // build a new browser tab based on the uri pointed to
@@ -87,16 +88,20 @@ abstract class BrowserTab implements Themeable {
         } else if (TYPE_LOGS.equals(uri.getType())) {
             return new LogTab(browser, uri);
         } else if (uri.isArchive()) {
-            return new SyndicationSchedulerTab(browser, uri);
+            //return new SyndicationSchedulerTab(browser, uri);
+            return new SyndicatorTab(browser, uri);
         } else if (TYPE_SYNDICATE_ARCHIVES.equals(uri.getType())) {
             //return new SyndicationArchiveTab(browser, uri);
-            return new SyndicationSchedulerTab(browser, uri);
+            //return new SyndicationSchedulerTab(browser, uri);
+            return new SyndicatorTab(browser, uri);
         } else if (TYPE_SYNDICATE_CONFIG.equals(uri.getType())) {
             //return new SyndicationConfigTab(browser, uri);
-            return new SyndicationSchedulerTab(browser, uri);
+            //return new SyndicationSchedulerTab(browser, uri);
+            return new SyndicatorTab(browser, uri);
         } else if (TYPE_SYNDICATE_STATUS.equals(uri.getType())) {
             //return new SyndicationStatusTab(browser, uri);
-            return new SyndicationSchedulerTab(browser, uri);
+            //return new SyndicationSchedulerTab(browser, uri);
+            return new SyndicatorTab(browser, uri);
         } else if (TYPE_SQL.equals(uri.getType())) {
             return new SQLTab(browser, uri);
         } else if (uri.isText()) {
@@ -113,6 +118,8 @@ abstract class BrowserTab implements Themeable {
             return new BackupSecretsTab(browser, uri);
         } else if (TYPE_VIEWFORUM.equals(uri.getType())) {
             return new ViewForumTab(browser, uri);
+        } else if (TYPE_SYNC.equals(uri.getType())) {
+            return new SyndicatorTab(browser, uri);
         }
         
         return null;

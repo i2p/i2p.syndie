@@ -51,6 +51,7 @@ public class ImportPost {
     
     public boolean getAlreadyImported() { return _alreadyImported; }
     public boolean getNoKey() { return (_body != null) && (_body instanceof UnreadableEnclosureBody); }
+    public SyndieURI getURI() { return _uri; }
     
     /*
      * The post message is ok if it is either signed by the channel's

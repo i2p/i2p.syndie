@@ -27,7 +27,8 @@ import syndie.Version;
 import syndie.data.ChannelInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.db.SyndicationManager;
+import syndie.db.SyncArchive;
+import syndie.db.SyncManager;
 import syndie.db.ThreadAccumulatorJWZ;
 
 /**
@@ -133,6 +134,7 @@ public class StatusBar implements Translatable, Themeable {
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         
+        /*
         _browser.getSyndicationManager().addListener(new SyndicationManager.SyndicationListener() {
             public void archiveAdded(SyndicationManager mgr, String name) {}
             public void archiveRemoved(SyndicationManager mgr, String name) {}
@@ -157,6 +159,7 @@ public class StatusBar implements Translatable, Themeable {
                 });
             }
         });
+         */
         
         Refresh r = new Refresh();
         Display.getDefault().timerExec(30*1000, r);
@@ -174,7 +177,8 @@ public class StatusBar implements Translatable, Themeable {
     }
     
     private void toggleOnline() {
-        _browser.getSyndicationManager().setOnlineStatus(!_browser.getSyndicationManager().isOnline());
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        mgr.setIsOnline(!mgr.isOnline());
     }
     
     private static final String T_ONLINE = "syndie.gui.statusbar.online";
@@ -185,7 +189,8 @@ public class StatusBar implements Translatable, Themeable {
     }
     private void doRefreshDisplay() { doRefreshDisplay(false); }
     private void doRefreshDisplay(boolean onlineStateOnly) {
-        displayOnlineState(_browser.getSyndicationManager().isOnline());
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        displayOnlineState(mgr.isOnline());
         
         if (onlineStateOnly) return;
         
@@ -537,9 +542,11 @@ public class StatusBar implements Translatable, Themeable {
     }
     
     private void updateNextSync() {
-        final long nextSync = _browser.getSyndicationManager().getNextSyncDate();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        final boolean isOnline = mgr.isOnline();
+        final long nextSync = mgr.getNextSyncDate();
         Display.getDefault().asyncExec(new Runnable() {
-            public void run() { setNextSync(nextSync, _browser.getSyndicationManager().isOnline()); }
+            public void run() { setNextSync(nextSync, isOnline); }
         });
     }
     

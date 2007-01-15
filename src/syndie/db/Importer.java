@@ -14,6 +14,7 @@ import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
 import syndie.Constants;
 import syndie.data.Enclosure;
+import syndie.data.SyndieURI;
 
 /**
  * Import a message for the user, using the keys known to that user and
@@ -29,9 +30,12 @@ import syndie.data.Enclosure;
 public class Importer extends CommandImpl {
     private DBClient _client;
     private String _passphrase;
+    private String _pbePrompt;
     private boolean _wasPBE;
     private boolean _wasAlreadyImported;
     private boolean _noKey;
+    private boolean _wasReply;
+    private SyndieURI _uri;
     
     public Importer(DBClient client) { this(client, (client != null ? client.getPass(): null)); }
     public Importer(DBClient client, String pass) {
@@ -171,7 +175,8 @@ public class Importer extends CommandImpl {
             } else if (!format.startsWith(Constants.TYPE_PREFIX)) {
                 throw new IOException("Unsupported enclosure format: " + format);
             }
-            _wasPBE = (enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT) != null);
+            _pbePrompt = enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
+            _wasPBE = _pbePrompt != null;
             
             String type = enc.getHeaderString(Constants.MSG_HEADER_TYPE);
             if (Constants.MSG_TYPE_META.equals(type)) { // validate and import metadata message
@@ -179,8 +184,10 @@ public class Importer extends CommandImpl {
                 isMeta = true;
             } else if (Constants.MSG_TYPE_POST.equals(type)) { // validate and import content message
                 rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+                _wasReply = false;
             } else if (Constants.MSG_TYPE_REPLY.equals(type)) { // validate and import reply message
                 rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+                _wasReply = true;
             } else {
                 throw new IOException("Invalid message type: " + type);
             }
@@ -193,6 +200,10 @@ public class Importer extends CommandImpl {
     public boolean wasPBE() { return _wasPBE; }
     public boolean wasAlreadyImported() { return _wasAlreadyImported; }
     public boolean wasMissingKey() { return _noKey; }
+    
+    public String getPBEPrompt() { return _pbePrompt; }
+    public boolean wasReply() { return _wasReply; }
+    public SyndieURI getURI() { return _uri; }
     
     protected boolean importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
         // first check that the metadata is signed by an authorized key
@@ -232,6 +243,7 @@ public class Importer extends CommandImpl {
                 ui.debugMessage("authentication hash matches");
             else
                 ui.debugMessage("authentication hash does not match the identity, but that's alright");
+            _uri = SyndieURI.createScope(pubKey.calculateHash());
         }
         return ok;
     }
@@ -241,6 +253,7 @@ public class Importer extends CommandImpl {
         boolean rv = post.process();
         _wasAlreadyImported = post.getAlreadyImported();
         _noKey = post.getNoKey();
+        _uri = post.getURI();
         return rv;
     }
 }

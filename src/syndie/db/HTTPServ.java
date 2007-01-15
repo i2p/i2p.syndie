@@ -109,15 +109,16 @@ public class HTTPServ implements CLI.Command {
                 if (!loggedIn)
                     _ui.debugMessage("Starting acceptance runner");
                 loggedIn = true;
-                File sharedIndex = new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE);
-                SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
-                manager.loadArchives();
+                File sharedIndex = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+                SyncManager mgr = SyncManager.getInstance(_client, _ui);
+                //SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
+                //manager.loadArchives();
                 if (!sharedIndex.exists()) {
                     _ui.debugMessage("shared index does not exist: building it");
-                    manager.buildIndex(_client, _ui, manager.getPullStrategy());
-                } else if (sharedIndex.lastModified() + manager.getLocalRebuildDelayHours()*60*60*1000L < System.currentTimeMillis()) {
+                    LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy());
+                } else if (sharedIndex.lastModified() + LocalArchiveManager.getLocalRebuildDelayHours(_client)*60*60*1000L < System.currentTimeMillis()) {
                     _ui.debugMessage("shared index is too old, rebuilding it");
-                    manager.buildIndex(_client, _ui, manager.getPullStrategy());
+                    LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy());
                 }
                 
                 try {
@@ -235,8 +236,8 @@ public class HTTPServ implements CLI.Command {
         if ( (chan.length() <= 0) && (sub == null) )
             sub = "index.html";
         
-        if ( (chan.length() <= 0) && (SyndicationManager.SHARED_INDEX_FILE.equals(sub)) ) {
-            send(socket, in, out, new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE));
+        if ( (chan.length() <= 0) && (LocalArchiveManager.SHARED_INDEX_FILE.equals(sub)) ) {
+            send(socket, in, out, new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE));
             return;
         } else if ("index.html".equals(sub)) {
             send(socket, in, out, new File(_client.getArchiveDir(), "index.html"));
@@ -247,7 +248,7 @@ public class HTTPServ implements CLI.Command {
     }
     
     private SharedArchive getSharedArchive() {
-        File indexFile = new File(_client.getArchiveDir(), SyndicationManager.SHARED_INDEX_FILE);
+        File indexFile = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
         boolean needsLoad = false;
         if (_archive == null)
             needsLoad = true;

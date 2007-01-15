@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.TreeMap;
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
-import syndie.db.SyndicationManager;
 import syndie.db.UI;
 import syndie.data.SyndieURI;
 import net.i2p.data.Hash;
@@ -61,8 +60,6 @@ public interface BrowserControl {
 
     public CTabFolder getTabFolder();
     
-    public SyndicationManager getSyndicationManager();
-
     public void addUIListener(Browser.UIListener lsnr);
     public void removeUIListener(Browser.UIListener lsnr);
     
