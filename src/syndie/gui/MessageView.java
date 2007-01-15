@@ -14,6 +14,7 @@ import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
@@ -104,6 +105,7 @@ public class MessageView implements Translatable, Themeable {
     private PageRenderer _body[];
     
     private MessageTree _threadTree;
+    private MessagePreview _preview;
     private ManageReferenceChooser _refTree;
     private AttachmentPreview _attachmentPreviews[];
     
@@ -135,6 +137,8 @@ public class MessageView implements Translatable, Themeable {
                 _body[i].dispose();
         if (_threadTree != null)
             _threadTree.dispose();
+        if (_preview != null)
+            _preview.dispose();
         if (_refTree != null)
             _refTree.dispose();
         _avatar.disposeImage();
@@ -412,16 +416,39 @@ public class MessageView implements Translatable, Themeable {
                 _tabs[off].setControl(_tabRoots[off]);
                 _tabs[off].setText(_browser.getTranslationRegistry().getText(T_TAB_THREAD, "Thread"));
                 _tabRoots[off].setLayout(new FillLayout());
-                _threadTree = new MessageTree(_browser, _tabRoots[off], new MessageTree.MessageTreeListener() {
-                        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
-                            if (toView)
-                                _browser.view(uri);
-                        }
-                        public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
-                }, true);
-                _threadTree.setMessages(msgs);
-                _threadTree.select(_uri);
-                _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+                if (MessageTree.shouldShowPreview(_browser)) {
+                    // show a preview pane too
+                    final SashForm sash = new SashForm(_tabRoots[off], SWT.VERTICAL);
+                    _threadTree = new MessageTree(_browser, sash, new MessageTree.MessageTreeListener() {
+                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+                                if (toView) {
+                                    _browser.view(uri);
+                                } else {
+                                    sash.setMaximizedControl(null);
+                                    _preview.preview(uri);
+                                }
+                            }
+                            public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
+                    }, true);
+                    _threadTree.setMessages(msgs);
+                    _threadTree.select(_uri);
+                    _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+                    
+                    _preview = new MessagePreview(_browser, sash);
+                    sash.setWeights(new int[] { 50, 50 });
+                    sash.setMaximizedControl(_threadTree.getControl());
+                } else {
+                    _threadTree = new MessageTree(_browser, _tabRoots[off], new MessageTree.MessageTreeListener() {
+                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+                                if (toView)
+                                    _browser.view(uri);
+                            }
+                            public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
+                    }, true);
+                    _threadTree.setMessages(msgs);
+                    _threadTree.select(_uri);
+                    _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+                }
                 off++;
             }
             if ( (refs != null) && (refs.size() > 0) ) {
