@@ -419,7 +419,7 @@ public class SyncArchive {
     /** persist all of the archive's attributes */
     public void store() { store(false); }
     public void store(boolean notifyListeners) {
-        delete();
+        delete(false);
         
         PreparedStatement stmt = null;
         try {
@@ -536,8 +536,10 @@ public class SyncArchive {
                 stmt = null;
             }
             
-            if (_uriId >= 0)
+            if (_uriId >= 0) {
                 _client.exec(SQL_DELETE_URI, _uriId);
+                _uriId = -1;
+            }
         } catch (SQLException se) {
             _client.logError("Error deleting the nym archive details", se);
         } finally {
@@ -584,10 +586,19 @@ public class SyncArchive {
     public void setPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _pushStrategy = strategy; }
 
     public boolean getIndexFetchInProgress() { return _indexFetching; }
-    public void setIndexFetchInProgress(boolean now) { 
+    public void setIndexFetchInProgress(boolean now) {
         _indexFetching = now;
-        if (!now)
+        if (!now) {
+            _manager.getUI().debugMessage("SyncArchive: index complete for " + _name);
             _indexFetchComplete = true;
+        } else {
+            _manager.getUI().debugMessage("SyncArchive: index fetch beginning for " + _name);
+        }
+        
+        for (int i = 0; i < _listeners.size(); i++) {
+            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+            lsnr.archiveUpdated(this);
+        }
     }
     public boolean getIndexFetchComplete() { return _indexFetchComplete; }
     
@@ -617,6 +628,7 @@ public class SyncArchive {
     }
     
     void indexFetchFail(String msg, Exception cause, boolean allowReschedule) {
+        _manager.getUI().debugMessage("index fetch failed for " + _name + ": " + msg, cause);
         setIndexFetchInProgress(false);
         setConsecutiveFailures(1 + getConsecutiveFailures());
         setLastIndexFetchErrorMsg(msg);

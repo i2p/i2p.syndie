@@ -73,7 +73,7 @@ class IndexFetcher {
             get.addStatusListener(lsnr);
             get.fetch(); // no timeout
         } catch (IOException ioe) {
-            archive.indexFetchFail("Internal error writing temp file", ioe);
+            archive.indexFetchFail("Internal error writing temp file", ioe, true);
         }
     }
     
@@ -122,7 +122,7 @@ class IndexFetcher {
             if (f.isDirectory()) {
                 f = new File(f, LocalArchiveManager.SHARED_INDEX_FILE);
                 if (!f.exists()) {
-                    archive.indexFetchFail("Shared index does not exist: " + f.getPath(), null);
+                    archive.indexFetchFail("Shared index does not exist: " + f.getPath(), null, true);
                     return;
                 }
             }
@@ -134,7 +134,7 @@ class IndexFetcher {
                 index.read(fin);
                 archive.indexFetched(_manager.getUI(), index);
             } catch (IOException ioe) {
-                archive.indexFetchFail(ioe.getMessage(), ioe);
+                archive.indexFetchFail(ioe.getMessage(), ioe, true);
             } finally {
                 if (fin != null) try { fin.close(); } catch (IOException ioe) {}
             }
@@ -171,7 +171,7 @@ class IndexFetcher {
             get.addStatusListener(lsnr);
             get.fetch(60*1000);
         } catch (IOException ioe) {
-            archive.indexFetchFail("Internal error writing temp file", ioe);
+            archive.indexFetchFail("Internal error writing temp file", ioe, true);
         }
     }
     
@@ -194,7 +194,7 @@ class IndexFetcher {
                     index.read(fin);
                     _archive.indexFetched(_manager.getUI(), index);
                 } catch (IOException ioe) {
-                    _archive.indexFetchFail(ioe.getMessage(), ioe);
+                    _archive.indexFetchFail(ioe.getMessage(), ioe, true);
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                     _indexFile.delete();
@@ -210,7 +210,7 @@ class IndexFetcher {
         }
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt) {
             _manager.getUI().debugMessage("Fetch totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
-            _archive.indexFetchFail("Unable to fetch", _err);
+            _archive.indexFetchFail("Unable to fetch", _err, true);
         }
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
         public void headerReceived(String url, int currentAttempt, String key, String val) {}
