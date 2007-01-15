@@ -43,6 +43,19 @@ public class SyncManager {
     UI getUI() { return _ui; }
     DBClient getClient() { return _client; }
     
+    void deleted(SyncArchive archive) {
+        for (int i = 0; i < _listeners.size(); i++) {
+            SyncListener lsnr = (SyncListener)_listeners.get(i);
+            lsnr.archiveRemoved(archive);
+        }
+    }
+    void added(SyncArchive archive) {
+        for (int i = 0; i < _listeners.size(); i++) {
+            SyncListener lsnr = (SyncListener)_listeners.get(i);
+            lsnr.archiveAdded(archive);
+        }
+    }
+    
     public long getNextSyncDate() {
         long earliest = -1;
         for (int i = 0; i < getArchiveCount(); i++) {
@@ -126,8 +139,10 @@ public class SyncManager {
         List names = _client.getNymArchiveNames();
         for (int i = 0; i < names.size(); i++) {
             String name = (String)names.get(i);
-            SyncArchive archive = new SyncArchive(_client, name);
+            SyncArchive archive = new SyncArchive(this, _client, name);
             _archives.add(archive);
+            for (int j = 0; j < _listeners.size(); j++)
+                ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
         }
         for (int i = 0; i < _listeners.size(); i++)
             ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);

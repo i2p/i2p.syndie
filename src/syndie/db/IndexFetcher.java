@@ -51,7 +51,7 @@ class IndexFetcher {
     private void fetch(SyncArchive archive) {
         String url = archive.getURL();
         if ( (url == null) || (url.length() == 0) ) {
-            archive.indexFetchFail("No URL", null);
+            archive.indexFetchFail("No URL", null, false);
             return;
         }
         if ( (url.indexOf("USK@") >= 0) || (url.indexOf("SSK@") >= 0) || (url.indexOf("KSK@") >= 0) ) {

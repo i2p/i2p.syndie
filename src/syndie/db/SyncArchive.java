@@ -17,6 +17,7 @@ import syndie.data.SyndieURI;
  *
  */
 public class SyncArchive {
+    private SyncManager _manager;
     private DBClient _client;
     private String _name;
     private String _oldName;
@@ -46,10 +47,20 @@ public class SyncArchive {
     private String _indexFetchErrorMsg;
     private Exception _indexFetchError;
     
-    public SyncArchive(DBClient client, String name) {
+    public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
+    public SyncArchive(SyncManager mgr, DBClient client, String name) {
+        _manager = mgr;
         _client = client;
         _name = name;
         _oldName = name;
+        _uriId = -1;
+        _lastPullTime = -1;
+        _lastPushTime = -1;
+        _nextPullTime = -1;
+        _nextPushTime = -1;
+        _nextPullOneOff = false;
+        _nextPushOneOff = false;
+        _consecutiveFailures = 0;
         _incomingActions = new ArrayList();
         _outgoingActions = new ArrayList();
         _listeners = new ArrayList();
@@ -317,6 +328,8 @@ public class SyncArchive {
     private static final String SQL_GET_ATTRIBUTES = "SELECT uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy FROM nymArchive WHERE name = ? AND nymId = ?";
     /** (re)load all of the archive's attributes */
     private void load() {
+        if (_name == null) return;
+        
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -404,30 +417,11 @@ public class SyncArchive {
             "name, nymId) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     /** persist all of the archive's attributes */
-    public void store() {
-        PreparedStatement stmt = null;
-        try {
-            stmt = _client.con().prepareStatement(SQL_DELETE);
-            stmt.setString(1, _name);
-            stmt.setLong(2, _client.getLoggedInNymId());
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-            
-            stmt = _client.con().prepareStatement(SQL_DELETE);
-            stmt.setString(1, _oldName);
-            stmt.setLong(2, _client.getLoggedInNymId());
-            stmt.executeUpdate();
-            stmt.close();
-            stmt = null;
-            
-            _client.exec(SQL_DELETE_URI, _uriId);
-        } catch (SQLException se) {
-            _client.logError("Error deleting the nym archive details", se);
-        } finally {
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
+    public void store() { store(false); }
+    public void store(boolean notifyListeners) {
+        delete();
         
+        PreparedStatement stmt = null;
         try {
             long uriId = _client.addURI(getArchiveURI());
             
@@ -508,6 +502,50 @@ public class SyncArchive {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        
+        if (_oldName == null)
+            _manager.added(this);
+        
+        if (notifyListeners) {
+            for (int i = 0; i < _listeners.size(); i++) {
+                SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+                lsnr.archiveUpdated(this);
+            }
+        }
+    }
+    
+    public void delete() { delete(true); }
+    public void delete(boolean notifyListeners) {
+        PreparedStatement stmt = null;
+        try {
+            if (_name != null) {
+                stmt = _client.con().prepareStatement(SQL_DELETE);
+                stmt.setString(1, _name);
+                stmt.setLong(2, _client.getLoggedInNymId());
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            }
+            
+            if (_oldName != null) {
+                stmt = _client.con().prepareStatement(SQL_DELETE);
+                stmt.setString(1, _oldName);
+                stmt.setLong(2, _client.getLoggedInNymId());
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
+            }
+            
+            if (_uriId >= 0)
+                _client.exec(SQL_DELETE_URI, _uriId);
+        } catch (SQLException se) {
+            _client.logError("Error deleting the nym archive details", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if (notifyListeners)
+            _manager.deleted(this);
     }
     
     public String getName() { return _name; }
@@ -578,17 +616,25 @@ public class SyncArchive {
         return action;
     }
     
-    void indexFetchFail(String msg, Exception cause) {
+    void indexFetchFail(String msg, Exception cause, boolean allowReschedule) {
         setIndexFetchInProgress(false);
         setConsecutiveFailures(1 + getConsecutiveFailures());
         setLastIndexFetchErrorMsg(msg);
         setLastIndexFetchError(cause);
         
-        // which index fetch are we failing here?
-        if (_nextPullTime < System.currentTimeMillis())
-            updateSchedule(false, true);
-        if (_nextPushTime < System.currentTimeMillis())
-            updateSchedule(false, false);
+        if (allowReschedule) {
+            // which index fetch are we failing here?
+            if (_nextPullTime < System.currentTimeMillis())
+                updateSchedule(false, true);
+            if (_nextPushTime < System.currentTimeMillis())
+                updateSchedule(false, false);
+        } else {
+            _nextPullTime = -1;
+            _nextPushTime = -1;
+            _nextPullOneOff = false;
+            _nextPushOneOff = false;
+            store();
+        }
         
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
@@ -626,12 +672,13 @@ public class SyncArchive {
     }
     
     private void updateSchedule(boolean success, boolean inbound) {
-        long delay = 60*60*1000L;
-        if (!success) {
-            int hours = 1 << getConsecutiveFailures();
-            if (hours > 24) hours = 24;
-            delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
-        }
+        long delay = 0;
+        int hours = 1;
+        if (!success)
+            hours = 1 << getConsecutiveFailures();
+        
+        if (hours > 24) hours = 24;
+        delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
         
         if (inbound) {
             if ( (getNextPullTime() > 0) && (getNextPullTime() <= System.currentTimeMillis()) ) {
@@ -641,6 +688,8 @@ public class SyncArchive {
                     setNextPullTime(System.currentTimeMillis() + delay);
                 setNextPullOneOff(false);
             }
+            if (success)
+                setLastPullTime(System.currentTimeMillis());
         } else {
             if ( (getNextPushTime() > 0) && (getNextPushTime() <= System.currentTimeMillis()) ) {
                 if (getNextPushOneOff())
@@ -649,6 +698,8 @@ public class SyncArchive {
                     setNextPushTime(System.currentTimeMillis() + delay);
                 setNextPushOneOff(false);
             }
+            if (success)
+                setLastPushTime(System.currentTimeMillis());
         }
         
         store();

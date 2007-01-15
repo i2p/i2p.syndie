@@ -70,7 +70,7 @@ class SyncInboundFetcher {
     private void fetch(Runner runner, SyncArchive archive) {
         String url = archive.getURL();
         if ( (url == null) || (url.length() == 0) ) {
-            archive.indexFetchFail("No URL", null);
+            archive.indexFetchFail("No URL", null, false);
             synchronized (_runnerToArchive) { _runnerToArchive.remove(runner); }
             return;
         }

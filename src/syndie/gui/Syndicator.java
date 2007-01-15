@@ -4,12 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -18,6 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
@@ -36,13 +41,17 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private Composite _root;
     private Composite _actions;
+    private SashForm _sash;
     private Tree _tree;
     private TreeColumn _colName;
     private TreeColumn _colTime;
     private TreeColumn _colStatus;
     private TreeColumn _colSummary;
     private Menu _treeMenu;
-    private Composite _detailRoot;
+    private ScrolledComposite _detailRoot;
+    private Disposable _detail;
+    
+    private Button _add;
     
     private Map _archiveNameToRootItem;
     private Map _archiveNameToIndexItem;
@@ -93,13 +102,21 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         // actual action buttons...
-        new Button(_actions, SWT.PUSH).setText("Add archive");
+        _add = new Button(_actions, SWT.PUSH);
         new Button(_actions, SWT.PUSH).setText("Pause all");
         new Button(_actions, SWT.PUSH).setText("Schedule one-off");
         new Button(_actions, SWT.PUSH).setText("Delete archive");
         
-        _tree = new Tree(_root, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
-        _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _add.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { add(); }
+        });
+        
+        _sash = new SashForm(_root, SWT.VERTICAL);
+        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        
+        _tree = new Tree(_sash, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
+        //_tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
         
@@ -127,12 +144,12 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void menuShown(MenuEvent evt) { buildMenu(); }
         });
         
-        _detailRoot = new Composite(_root, SWT.NONE);
-        _detailRoot.setLayout(new FillLayout());
-        _detailRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _detailRoot = new ScrolledComposite(_sash, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+        //_detailRoot.setLayout(new FillLayout());
+        //_detailRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        Text t = new Text(_detailRoot, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
-        t.setText("details here");
+        _sash.setWeights(new int[] { 50, 50 });
+        _sash.setMaximizedControl(_tree);
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -169,6 +186,29 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
+    
+    private void add() {
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        viewDetailArchive(new SyncArchive(mgr, _browser.getClient()));
+    }
+    private void delete() { 
+        if (_tree.getSelectionCount() != 1) return;
+        TreeItem item = _tree.getSelection()[0];
+        Object val = _items.get(item);
+        if (val == null) return;
+        if (val instanceof SyncArchive) {
+            SyncArchive archive = (SyncArchive)val;
+            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_DELETE_CONFIRM, "Are you sure you want to delete this archive? ") + archive.getName());
+            box.setText(_browser.getTranslationRegistry().getText(T_DELETE_CONFIRM_TITLE, "Delete?"));
+            int rc = box.open();
+            if (rc == SWT.YES)
+                archive.delete();
+        }
+    }
+    
+    private static final String T_DELETE_CONFIRM = "syndie.gui.syndicator.delete.confirm";
+    private static final String T_DELETE_CONFIRM_TITLE = "syndie.gui.syndicator.delete.confirm.title";
     
     private void buildMenu() {
         // depending on what type of item is selected, we want to show different options
@@ -254,7 +294,21 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_MENU_VIEW = "syndie.gui.syndicator.menu.view";
     private static final String T_MENU_PBE = "syndie.gui.syndicator.menu.pbe";
     
-    private void viewDetailArchive(SyncArchive archive) {}
+    private void viewDetailArchive(SyncArchive archive) {
+        if (_detail != null) _detail.dispose();
+        _sash.setMaximizedControl(null);
+        _detail = new SyndicatorDetailHTTPArchive(_browser, _detailRoot, archive);
+        //_detailRoot.setExpandHorizontal(true);
+        //_detailRoot.setExpandVertical(true);
+        _detailRoot.setContent(_detail.getControl());
+        Rectangle rect = _tree.getClientArea();
+        Point dSz = _detail.getControl().computeSize(rect.width-20, SWT.DEFAULT);
+        _detail.getControl().setSize(dSz);
+        _root.layout(true, true);
+        TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
+        if (item != null) // null for new ones
+            _tree.showItem(item);
+    }
     private void viewDetailIncoming(TreeItem item) {}
     private void viewDetailOutgoing(TreeItem item) {}
     private void viewDetailFetchIndex(TreeItem item) {}
@@ -305,7 +359,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             _items.put(rootItem, archive);
         }
         rootItem.setText(0, archive.getName());
-        if (nextTime < 0) {
+        if (nextTime <= 0) {
             rootItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NEVER, "Never"));
             rootItem.setText(3, _browser.getTranslationRegistry().getText(T_SUMMARY_NEVER, "No syndication scheduled"));
         } else if (nextTime < System.currentTimeMillis()) {
@@ -358,7 +412,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_ERROR, "Fetch error: ") + archive.getLastIndexFetchErrorMsg());
-            } else if (nextTime <= System.currentTimeMillis()) {
+            } else if ( (nextTime > 0) && (nextTime <= System.currentTimeMillis()) ) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_COMPLETE, "Fetch complete"));
             } else {
@@ -573,11 +627,15 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_COLSTATUS = "syndie.gui.syndicator.colstatus";
     private static final String T_COLSUMMARY = "syndie.gui.syndicator.colsummary";
     
+    private static final String T_ADD = "syndie.gui.syndicator.add";
+    
     public void translate(TranslationRegistry registry) {
         _colName.setText(registry.getText(T_COLNAME, ""));
         _colTime.setText(registry.getText(T_COLTIME, "Time"));
         _colStatus.setText(registry.getText(T_COLSTATUS, "Status"));
         _colSummary.setText(registry.getText(T_COLSUMMARY, "Summary"));
+        
+        _add.setText(registry.getText(T_ADD, "Add archive"));
     }
     
     public void applyTheme(Theme theme) {
