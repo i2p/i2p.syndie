@@ -638,7 +638,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         sel = (cnt > 0 ? _pullMaxSize.getSelectionIndex() : SIZE_DEFAULT_INDEX);
         _pullMaxSize.removeAll();
         for (int i = 0; i < SIZES.length; i++)
-            _pullMaxSize.add(SIZES[i] + registry.getText(T_SIZE_SUFFIX, "KBytes"));
+            _pullMaxSize.add(SIZES[i] + registry.getText(T_SIZE_SUFFIX, " KBytes"));
         _pullMaxSize.select(sel);
         
         cnt = _nextSyncDelay.getItemCount();

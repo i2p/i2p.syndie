@@ -53,6 +53,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private Button _add;
     private Button _cancel;
+    private Button _delete;
     
     private Map _archiveNameToRootItem;
     private Map _archiveNameToIndexItem;
@@ -105,7 +106,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         // actual action buttons...
         _add = new Button(_actions, SWT.PUSH);
         _cancel = new Button(_actions, SWT.PUSH);
-        new Button(_actions, SWT.PUSH).setText("Delete archive");
+        _delete = new Button(_actions, SWT.PUSH);
         
         _add.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
@@ -114,6 +115,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
+        });
+        _delete.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
         });
         
         _sash = new SashForm(_root, SWT.VERTICAL);
@@ -525,6 +530,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             indexItem = new TreeItem(rootItem, SWT.NONE);
             _archiveNameToIndexItem.put(archive.getName(), indexItem);
             _items.put(indexItem, "fetchindex");
+            rootItem.setExpanded(true);
         }
 
         indexItem.setText(0, _browser.getTranslationRegistry().getText(T_INDEX_NAME, "Fetch index"));
@@ -801,6 +807,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private static final String T_ADD = "syndie.gui.syndicator.add";
     private static final String T_CANCEL = "syndie.gui.syndicator.cancel";
+    private static final String T_DELETE = "syndie.gui.syndicator.delete";
     
     public void translate(TranslationRegistry registry) {
         _colName.setText(registry.getText(T_COLNAME, ""));
@@ -810,6 +817,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         
         _add.setText(registry.getText(T_ADD, "Add archive"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel syndications"));
+        _delete.setText(registry.getText(T_DELETE, "Delete archive"));
     }
     
     public void applyTheme(Theme theme) {

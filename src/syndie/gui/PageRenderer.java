@@ -134,6 +134,8 @@ public class PageRenderer implements Themeable {
     private int _charsPerLine;
 
     private boolean _disposed;
+    /** top index to scroll to when rendered */
+    private int _wantedTop;
     
     public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
     public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
@@ -373,9 +375,11 @@ public class PageRenderer implements Themeable {
         _text.setVisible(false);
         _text.setText("");
         _text.setStyleRanges(null, null);
+        _text.setTopIndex(_wantedTop);
     }
     
     public void renderPage(PageRendererSource src, SyndieURI uri) {
+        _wantedTop = _text.getTopIndex();
         Hash chan = uri.getScope();
         if (chan == null) {
             showNoPage();
@@ -466,6 +470,9 @@ public class PageRenderer implements Themeable {
                 _text.setBackground(null);
 
                 _text.setVisible(true);
+                
+                _text.setTopIndex(_wantedTop);
+                
                 _text.setRedraw(true);
                 _text.setCursor(null);
                 if (body == null)
@@ -577,6 +584,9 @@ public class PageRenderer implements Themeable {
                 //else
                 //    _text.setBackground(ColorUtil.getColor("white")); //null);
                     _text.setBackground(null); // perhaps this'll work properly sans the INHERIT_DEFAULT above
+                
+                _text.setTopIndex(_wantedTop);
+                
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _text.setCursor(null);
