@@ -142,10 +142,15 @@ public class SyncArchive {
         }
         
         ui.debugMessage("index fetch complete, notify " + _listeners);
+        fireUpdated();
+    }
+    
+    void fireUpdated() {
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
             lsnr.archiveUpdated(this);
         }
+        _manager.wakeUpEngine();
     }
     
     public interface SyncArchiveListener {
@@ -469,99 +474,97 @@ public class SyncArchive {
     /** persist all of the archive's attributes */
     public void store() { store(false); }
     public void store(boolean notifyListeners) {
-        delete(false);
-        
-        PreparedStatement stmt = null;
-        try {
-            long uriId = _client.addURI(getArchiveURI());
-            
-            // uriId, postKey, postKeySalt, readKey, readKeySalt, " +
-            // "consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, " +
-            // "nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, " +
-            // "name, nymId)
-            stmt = _client.con().prepareStatement(SQL_INSERT);
-            stmt.setLong(1, uriId);
-            if (_postKey != null) {
-                byte postKeySalt[] = new byte[16];
-                byte postKeyEncr[] = _client.pbeEncrypt(DataHelper.getUTF8(_postKey), postKeySalt);
-                stmt.setBytes(2, postKeyEncr);
-                stmt.setBytes(3, postKeySalt);
-            } else {
-                stmt.setNull(2, Types.VARBINARY);
-                stmt.setNull(3, Types.VARBINARY);
+        synchronized (this) {
+            delete(false);
+
+            PreparedStatement stmt = null;
+            try {
+                long uriId = _client.addURI(getArchiveURI());
+
+                // uriId, postKey, postKeySalt, readKey, readKeySalt, " +
+                // "consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, " +
+                // "nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, " +
+                // "name, nymId)
+                stmt = _client.con().prepareStatement(SQL_INSERT);
+                stmt.setLong(1, uriId);
+                if (_postKey != null) {
+                    byte postKeySalt[] = new byte[16];
+                    byte postKeyEncr[] = _client.pbeEncrypt(DataHelper.getUTF8(_postKey), postKeySalt);
+                    stmt.setBytes(2, postKeyEncr);
+                    stmt.setBytes(3, postKeySalt);
+                } else {
+                    stmt.setNull(2, Types.VARBINARY);
+                    stmt.setNull(3, Types.VARBINARY);
+                }
+                if (_readKey != null) {
+                    byte readKeySalt[] = new byte[16];
+                    byte readKeyEncr[] = _client.pbeEncrypt(DataHelper.getUTF8(_readKey), readKeySalt);
+                    stmt.setBytes(4, readKeyEncr);
+                    stmt.setBytes(5, readKeySalt);
+                } else {
+                    stmt.setNull(4, Types.VARBINARY);
+                    stmt.setNull(5, Types.VARBINARY);
+                }
+                stmt.setInt(6, _consecutiveFailures);
+                if ( (_httpProxyHost != null) && (_httpProxyPort > 0) ) {
+                    stmt.setString(7, _httpProxyHost);
+                    stmt.setInt(8, _httpProxyPort);
+                } else {
+                    stmt.setNull(7, Types.VARCHAR);
+                    stmt.setNull(8, Types.INTEGER);
+                }
+                if ( (_fcpHost != null) && (_fcpPort > 0) ) {
+                    stmt.setString(9, _fcpHost);
+                    stmt.setInt(10, _fcpPort);
+                } else {
+                    stmt.setNull(9, Types.VARCHAR);
+                    stmt.setNull(10, Types.INTEGER);
+                }
+
+                if (_nextPullTime > 0)
+                    stmt.setTimestamp(11, new Timestamp(_nextPullTime));
+                else
+                    stmt.setNull(11, Types.TIMESTAMP);
+                if (_nextPushTime > 0)
+                    stmt.setTimestamp(12, new Timestamp(_nextPushTime));
+                else
+                    stmt.setNull(12, Types.TIMESTAMP);
+
+                if (_lastPullTime > 0)
+                    stmt.setTimestamp(13, new Timestamp(_lastPullTime));
+                else
+                    stmt.setNull(13, Types.TIMESTAMP);
+                if (_lastPushTime > 0)
+                    stmt.setTimestamp(14, new Timestamp(_lastPushTime));
+                else
+                    stmt.setNull(14, Types.TIMESTAMP);
+
+                if (_pullStrategy != null)
+                    stmt.setString(15, _pullStrategy.serialize());
+                else
+                    stmt.setNull(15, Types.VARCHAR);
+
+                if (_pushStrategy != null)
+                    stmt.setString(16, _pushStrategy.serialize());
+                else
+                    stmt.setNull(16, Types.VARCHAR);
+
+                stmt.setString(17, _name);
+                stmt.setLong(18, _client.getLoggedInNymId());
+
+                stmt.executeUpdate();
+            } catch (SQLException se) {
+                _client.logError("Error storing the nym archive details", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
-            if (_readKey != null) {
-                byte readKeySalt[] = new byte[16];
-                byte readKeyEncr[] = _client.pbeEncrypt(DataHelper.getUTF8(_readKey), readKeySalt);
-                stmt.setBytes(4, readKeyEncr);
-                stmt.setBytes(5, readKeySalt);
-            } else {
-                stmt.setNull(4, Types.VARBINARY);
-                stmt.setNull(5, Types.VARBINARY);
-            }
-            stmt.setInt(6, _consecutiveFailures);
-            if ( (_httpProxyHost != null) && (_httpProxyPort > 0) ) {
-                stmt.setString(7, _httpProxyHost);
-                stmt.setInt(8, _httpProxyPort);
-            } else {
-                stmt.setNull(7, Types.VARCHAR);
-                stmt.setNull(8, Types.INTEGER);
-            }
-            if ( (_fcpHost != null) && (_fcpPort > 0) ) {
-                stmt.setString(9, _fcpHost);
-                stmt.setInt(10, _fcpPort);
-            } else {
-                stmt.setNull(9, Types.VARCHAR);
-                stmt.setNull(10, Types.INTEGER);
-            }
-            
-            if (_nextPullTime > 0)
-                stmt.setTimestamp(11, new Timestamp(_nextPullTime));
-            else
-                stmt.setNull(11, Types.TIMESTAMP);
-            if (_nextPushTime > 0)
-                stmt.setTimestamp(12, new Timestamp(_nextPushTime));
-            else
-                stmt.setNull(12, Types.TIMESTAMP);
-            
-            if (_lastPullTime > 0)
-                stmt.setTimestamp(13, new Timestamp(_lastPullTime));
-            else
-                stmt.setNull(13, Types.TIMESTAMP);
-            if (_lastPushTime > 0)
-                stmt.setTimestamp(14, new Timestamp(_lastPushTime));
-            else
-                stmt.setNull(14, Types.TIMESTAMP);
-            
-            if (_pullStrategy != null)
-                stmt.setString(15, _pullStrategy.serialize());
-            else
-                stmt.setNull(15, Types.VARCHAR);
-            
-            if (_pushStrategy != null)
-                stmt.setString(16, _pushStrategy.serialize());
-            else
-                stmt.setNull(16, Types.VARCHAR);
-            
-            stmt.setString(17, _name);
-            stmt.setLong(18, _client.getLoggedInNymId());
-            
-            stmt.executeUpdate();
-        } catch (SQLException se) {
-            _client.logError("Error storing the nym archive details", se);
-        } finally {
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
         if (_oldName == null)
             _manager.added(this);
         
-        if (notifyListeners) {
-            for (int i = 0; i < _listeners.size(); i++) {
-                SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-                lsnr.archiveUpdated(this);
-            }
-        }
+        if (notifyListeners)
+            fireUpdated();
     }
     
     public void delete() { delete(true); }
@@ -645,10 +648,7 @@ public class SyncArchive {
             _manager.getUI().debugMessage("SyncArchive: index fetch beginning for " + _name);
         }
         
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-            lsnr.archiveUpdated(this);
-        }
+        fireUpdated();
     }
     public boolean getIndexFetchComplete() { return _indexFetchComplete; }
     
@@ -698,10 +698,7 @@ public class SyncArchive {
             store();
         }
         
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-            lsnr.archiveUpdated(this);
-        }
+        fireUpdated();
     }
     
     public void fetchActionComplete() {
@@ -720,17 +717,11 @@ public class SyncArchive {
         } else {
             updateSchedule(true, true);
         }
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-            lsnr.archiveUpdated(this);
-        }
+        fireUpdated();
     }
     public void pushActionComplete() {
         updateSchedule(true, false);
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-            lsnr.archiveUpdated(this);
-        }
+        fireUpdated();
     }
     
     private void updateSchedule(boolean success, boolean inbound) {

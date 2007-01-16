@@ -26,15 +26,30 @@ class SyncInboundFetcher {
             t.start();
         }
     }
-    
+
+    public void wakeUp() { synchronized (this) { notifyAll(); } }
+        
     private class Runner implements Runnable {
         public void run() {
             while (true) {
+                while (!_manager.isOnline()) {
+                    try {
+                        synchronized (SyncInboundFetcher.this) {
+                            SyncInboundFetcher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
+                
                 SyncArchive archive = getNextToFetch(Runner.this);
-                if (archive != null)
+                if (archive != null) {
                     fetch(Runner.this, archive);
-                else
-                    try { Thread.sleep(10*1000); } catch (InterruptedException ie) {}
+                } else {
+                    try {
+                        synchronized (SyncInboundFetcher.this) {
+                            SyncInboundFetcher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
             }
         }
     }
@@ -89,6 +104,9 @@ class SyncInboundFetcher {
     private void fetchFreenet(SyncArchive archive) {
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
+            while (!_manager.isOnline())
+                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+        
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it
@@ -161,6 +179,9 @@ class SyncInboundFetcher {
         
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
+            while (!_manager.isOnline())
+                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+        
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it
@@ -179,6 +200,9 @@ class SyncInboundFetcher {
     private void fetchHTTP(SyncArchive archive) {
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
+            while (!_manager.isOnline())
+                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+        
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it

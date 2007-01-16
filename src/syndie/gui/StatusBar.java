@@ -154,36 +154,26 @@ public class StatusBar implements Translatable, Themeable {
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         
-        /*
-        _browser.getSyndicationManager().addListener(new SyndicationManager.SyndicationListener() {
-            public void archiveAdded(SyndicationManager mgr, String name) {}
-            public void archiveRemoved(SyndicationManager mgr, String name) {}
-            public void archiveUpdated(SyndicationManager mgr, String oldName, String newName) {
-                updateNextSync();
+        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        mgr.addListener(new SyncManager.SyncListener() {
+            public void archiveAdded(SyncArchive archive) {
+                registerListen(archive);
             }
-            public void archivesLoaded(SyndicationManager mgr) {
-                updateNextSync();
+            public void archiveRemoved(SyncArchive archive) {}
+            public void archiveLoaded(SyncArchive archive) {
+                registerListen(archive);
             }
-            public void archiveIndexStatus(SyndicationManager mgr, SyndicationManager.StatusRecord record) {
-                updateNextSync();
-            }
-            public void fetchStatusUpdated(SyndicationManager mgr, SyndicationManager.StatusRecord record) {}
-            public void syndicationComplete(SyndicationManager mgr) {
-                updateNextSync();
-            }
-            public void onlineStateAdjusted(final boolean nowOnline) {
-                Display.getDefault().asyncExec(new Runnable() { 
-                    public void run() { 
+            public void onlineStatusUpdated(final boolean nowOnline) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() {
                         displayOnlineState(nowOnline);
                     }
                 });
             }
         });
-         */
-        
-        Refresh r = new Refresh();
-        Display.getDefault().timerExec(30*1000, r);
-
+        for (int i = 0; i < mgr.getArchiveCount(); i++)
+            registerListen(mgr.getArchive(i));
+    
         doRefreshDisplay();
         
         _browser.getTranslationRegistry().register(this);
@@ -191,11 +181,18 @@ public class StatusBar implements Translatable, Themeable {
         
         initDnD();
     }
-    private class Refresh implements Runnable {
-        public void run() {
-            doRefreshDisplay(true);
-            Display.getDefault().timerExec(30*1000, Refresh.this);
-        }
+    
+    private void registerListen(SyncArchive archive) {
+        archive.addListener(new SyncArchive.SyncArchiveListener() {
+            public void incomingUpdated(SyncArchive.IncomingAction action) {
+                if (action.isComplete() || (action.getPBEPrompt() != null))
+                    refreshDisplay(false); // new import may require updating the counts
+            }
+            public void outgoingUpdated(SyncArchive.OutgoingAction action) {}
+            public void archiveUpdated(SyncArchive archive) {
+                refreshDisplay(true); // only update the next sync time
+            }
+        });
     }
     
     private void toggleOnline() {
@@ -206,8 +203,9 @@ public class StatusBar implements Translatable, Themeable {
     private static final String T_ONLINE = "syndie.gui.statusbar.online";
     private static final String T_OFFLINE = "syndie.gui.statusbar.offline";
 
-    public void refreshDisplay() {
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(false); } });
+    public void refreshDisplay() { refreshDisplay(false); }
+    public void refreshDisplay(final boolean onlineStateOnly) {
+        _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(onlineStateOnly); } });
     }
     private void doRefreshDisplay() { doRefreshDisplay(false); }
     private void doRefreshDisplay(boolean onlineStateOnly) {

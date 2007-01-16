@@ -19,15 +19,29 @@ class IndexFetcher {
         t.start();
     }
     
+    public void wakeUp() { synchronized (this) { notifyAll(); } }
+    
     private class Runner implements Runnable {
         public void run() {
-            try { Thread.sleep(30*1000); } catch (InterruptedException ie) {}
             while (true) {
+                while (!_manager.isOnline()) {
+                    try {
+                        synchronized (IndexFetcher.this) {
+                            IndexFetcher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
+                
                 SyncArchive archive = getNextToFetch();
-                if (archive != null)
+                if (archive != null) {
                     fetch(archive);
-                else
-                    try { Thread.sleep(60*1000); } catch (InterruptedException ie) {}
+                } else {
+                    try {
+                        synchronized (IndexFetcher.this) {
+                            IndexFetcher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
             }
         }
     }

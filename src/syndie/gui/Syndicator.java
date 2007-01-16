@@ -493,6 +493,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             rootItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NEVER, "Never"));
             rootItem.setImage(2, null);
             rootItem.setText(3, _browser.getTranslationRegistry().getText(T_SUMMARY_NEVER, "No syndication scheduled"));
+        } else if (!SyncManager.getInstance(_browser.getClient(), _browser.getUI()).isOnline()) {
+            rootItem.setText(1, Constants.getDateTime(nextTime));
+            rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+            rootItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
         } else if (nextTime < System.currentTimeMillis()) {
             if (archive.getIndexFetchInProgress()) {
                 rootItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_INDEXFETCHINPROGRESS, "Now"));
@@ -520,9 +524,11 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         TreeItem indexItem = (TreeItem)_archiveNameToIndexItem.get(archive.getName());
         if (nextTime <= 0) {
             // keep it around to view the details
-            //if (indexItem != null)
-            //    indexItem.dispose();
-            //_archiveNameToIndexItem.remove(archive.getName());
+            if (indexItem != null) {
+                indexItem.dispose();
+                _items.remove(indexItem);
+            }
+            _archiveNameToIndexItem.remove(archive.getName());
             return;
         }
         
@@ -544,6 +550,9 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_ERROR, "Fetch error: ") + archive.getLastIndexFetchErrorMsg());
+            } else if (!SyncManager.getInstance(_browser.getClient(), _browser.getUI()).isOnline()) {
+                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+                indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
             } else if ( (nextTime > 0) && (nextTime <= System.currentTimeMillis()) && (archive.getIndexFetchComplete()) ) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_COMPLETE, "Fetch complete"));
@@ -796,6 +805,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_INDEX_ERROR = "syndie.gui.syndicator.index.error";
     private static final String T_INDEX_COMPLETE = "syndie.gui.syndicator.index.complete";
     private static final String T_INDEX_SCHEDULED = "syndie.gui.syndicator.index.scheduled";
+    private static final String T_INDEX_OFFLINE = "syndie.gui.syndicator.index.offline";
     
     private static final String T_INCOMING_NAME = "syndie.gui.syndicator.incoming.name";
     private static final String T_OUTGOING_NAME = "syndie.gui.syndicator.outgoing.name";

@@ -26,6 +26,10 @@ public class SyncManager {
     private SharedArchiveEngine.PullStrategy _defaultPullStrategy;
     private SharedArchiveEngine.PushStrategy _defaultPushStrategy;
     
+    private IndexFetcher _indexFetcher;
+    private SyncInboundFetcher _inboundFetcher;
+    private SyncOutboundPusher _outboundPusher;
+    
     private SyncManager() {
         _archives = new ArrayList();
         _archivesLoaded = false;
@@ -56,6 +60,12 @@ public class SyncManager {
         }
     }
     
+    void wakeUpEngine() {
+        _indexFetcher.wakeUp();
+        _inboundFetcher.wakeUp();
+        _outboundPusher.wakeUp();
+    }
+    
     public long getNextSyncDate() {
         long earliest = -1;
         for (int i = 0; i < getArchiveCount(); i++) {
@@ -79,6 +89,10 @@ public class SyncManager {
         storeOnlineStatus(); 
         for (int i = 0; i < _listeners.size(); i++)
             ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);
+        for (int i = 0; i < _archives.size(); i++)
+            getArchive(i).fireUpdated();
+        
+        wakeUpEngine();
     }
     private void storeOnlineStatus() {
         Properties prefs = _client.getNymPrefs();
@@ -147,14 +161,14 @@ public class SyncManager {
         for (int i = 0; i < _listeners.size(); i++)
             ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);
         
-        IndexFetcher fetcher = new IndexFetcher(this);
-        fetcher.start();
+        _indexFetcher = new IndexFetcher(this);
+        _indexFetcher.start();
         
-        SyncInboundFetcher inbound = new SyncInboundFetcher(this);
-        inbound.start();
+        _inboundFetcher = new SyncInboundFetcher(this);
+        _inboundFetcher.start();
         
-        SyncOutboundPusher outbound = new SyncOutboundPusher(this);
-        outbound.start();
+        _outboundPusher = new SyncOutboundPusher(this);
+        _outboundPusher.start();
         /*
         String name = "foo";
         String url = "http://blah";

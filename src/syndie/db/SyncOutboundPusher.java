@@ -37,14 +37,29 @@ class SyncOutboundPusher {
         }
     }
     
+    public void wakeUp() { synchronized (this) { notifyAll(); } }
+    
     private class Runner implements Runnable {
         public void run() {
             while (true) {
+                while (!_manager.isOnline()) {
+                    try {
+                        synchronized (SyncOutboundPusher.this) {
+                            SyncOutboundPusher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
+                
                 SyncArchive archive = getNextToPush(Runner.this);
-                if (archive != null)
+                if (archive != null) {
                     push(Runner.this, archive);
-                else
-                    try { Thread.sleep(10*1000); } catch (InterruptedException ie) {}
+                } else {
+                    try {
+                        synchronized (SyncOutboundPusher.this) {
+                            SyncOutboundPusher.this.wait(60*1000);
+                        } 
+                    } catch (InterruptedException ie) {}
+                }
             }
         }
     }
