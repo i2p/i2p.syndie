@@ -204,13 +204,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
         for (int i = 0; i < mgr.getArchiveCount(); i++) {
             SyncArchive archive = mgr.getArchive(i);
-            archive.setNextPullOneOff(false);
-            archive.setNextPushOneOff(false);
-            archive.setNextPullTime(-1);
-            archive.setNextPushTime(-1);
-            archive.store(true);
+            archive.stop(_browser.getTranslationRegistry().getText(T_CANCELLED, "Cancelled"));
         }
     }
+    private static final String T_CANCELLED = "syndie.gui.syndicator.cancelled";
     private void delete() { 
         if (_tree.getSelectionCount() != 1) return;
         TreeItem item = _tree.getSelection()[0];
@@ -315,11 +312,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
                 private void fire() {
-                    archive.setNextPullOneOff(false);
-                    archive.setNextPullTime(-1);
-                    archive.setNextPushOneOff(false);
-                    archive.setNextPushTime(-1);
-                    archive.store(true);
+                    archive.stop(_browser.getTranslationRegistry().getText(T_CANCELLED, "Cancelled"));
                 }
             });
         }
@@ -387,7 +380,6 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                     public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
                 });
             }
-            
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
             item.addSelectionListener(new SelectionListener() {
@@ -397,9 +389,20 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                     action.dispose();
                 }
             });
+        } else {
+            MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CANCEL_FETCH, "Cancel"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    action.cancel(_browser.getTranslationRegistry().getText(T_CANCELLED, "Cancelled"));
+                }
+            });
         }
     }
     private static final String T_MENU_CLEAR_ACTION = "syndie.gui.syndicator.menu.clearaction";
+    private static final String T_MENU_CANCEL_FETCH = "syndie.gui.syndicator.menu.cancelfetch";
     private void buildMenuOutgoing(final SyncArchive.OutgoingAction action) {
         final SyndieURI uri = action.getURI();
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
@@ -417,6 +420,16 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
                 private void fire() {
                     action.dispose();
+                }
+            });
+        } else if (action.isScheduled()) {
+            item = new MenuItem(_treeMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CANCEL_FETCH, "Cancel"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    action.cancel(_browser.getTranslationRegistry().getText(T_CANCELLED, "Cancelled"));
                 }
             });
         }

@@ -76,7 +76,7 @@ public class HighlightView implements Themeable, Translatable, MessageEditor.Mes
     /** read (Boolean) for each of the _privateMessages */
     private List _privateMessagesReadStatus;
     /** if there are no archives, ask the user once if they want to import the default ones */
-    private boolean _alreadyAskedToImportArchives;
+    private boolean _alreadyAskedToScheduleArchives;
     
     private TreeItem _selected;
     
@@ -91,7 +91,7 @@ public class HighlightView implements Themeable, Translatable, MessageEditor.Mes
         _postponedVersion = new ArrayList();
         _privateMessages = new ArrayList();
         _privateMessagesReadStatus = new ArrayList();
-        _alreadyAskedToImportArchives = false;
+        _alreadyAskedToScheduleArchives = false;
         _refresh = new Refresh();
         initComponents();
         refreshHighlights();
@@ -338,25 +338,25 @@ public class HighlightView implements Themeable, Translatable, MessageEditor.Mes
         _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + scheduled);
         rethemeArchives(_browser.getThemeRegistry().getTheme());
         
-        if ( (archives == 0) && (!_alreadyAskedToImportArchives) ) 
-            askImportDefaultArchives();
+        if ( (scheduled == 0) && (!_alreadyAskedToScheduleArchives) ) 
+            askScheduleDefaultArchives();
     }
     
-    private static final String T_IMPORT_MESSAGE = "syndie.gui.highlightview.import.message";
-    private static final String T_IMPORT_TITLE = "syndie.gui.highlightview.import.title";
+    private static final String T_SCHEDULE_MESSAGE = "syndie.gui.highlightview.schedule.message";
+    private static final String T_SCHEDULE_TITLE = "syndie.gui.highlightview.schedule.title";
     
-    private void askImportDefaultArchives() {
-        _alreadyAskedToImportArchives = true;
+    private void askScheduleDefaultArchives() {
+        // rewrite this to detect whether the number of scheduled fetches is 0, and if so,
+        // to point the user at the syndication page to config/schedule 
+        _alreadyAskedToScheduleArchives = true;
         _root.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-                box.setMessage(_browser.getTranslationRegistry().getText(T_IMPORT_MESSAGE, "To use Syndie, you will need to tell it about some 'archives' to share messages with.  Would you like to add the standard archives to your list now?"));
-                box.setText(_browser.getTranslationRegistry().getText(T_IMPORT_TITLE, "Import archives?"));
+                box.setMessage(_browser.getTranslationRegistry().getText(T_SCHEDULE_MESSAGE, "To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
+                box.setText(_browser.getTranslationRegistry().getText(T_SCHEDULE_TITLE, "No syndication scheduled"));
                 int rc = box.open();
-                if (rc == SWT.YES) {
-                    //_browser.getSyndicationManager().importDefaultArchives();
+                if (rc == SWT.YES)
                     _browser.view(_browser.createSyndicationConfigURI());
-                }
             }
         });
     }

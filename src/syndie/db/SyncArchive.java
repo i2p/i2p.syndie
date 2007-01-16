@@ -71,6 +71,13 @@ public class SyncArchive {
      * this creates the actions to be run as a result of fetching the specified archive index
      */
     public void indexFetched(UI ui, SharedArchive archive) {
+        if ( (_nextPullTime <= 0) && (_nextPushTime <= 0) ) {
+            ui.debugMessage("cancel during fetch, so even though we got the index, don't build actions");
+            setIndexFetchInProgress(false);
+            setConsecutiveFailures(0);
+            fireUpdated();
+            return;
+        }
         SharedArchiveEngine.PullStrategy pullStrategy = getPullStrategy();
         if (pullStrategy == null)
             pullStrategy = SyncManager.getInstance(_client, ui).getDefaultPullStrategy();
@@ -270,6 +277,8 @@ public class SyncArchive {
             return true;
         }
         
+        public void cancel(String reason) { if (!isComplete()) fetchFailed(reason, null); }
+        
         public void dispose() {
             _disposed = true;
             _incomingActions.remove(IncomingAction.this);
@@ -333,6 +342,7 @@ public class SyncArchive {
             if (executing) notifyUpdate(this);
             return true;
         }
+        public void cancel(String reason) { if (!isComplete()) pushFailed(reason, null); }
         public void dispose() {
             _disposed = true;
             _outgoingActions.remove(OutgoingAction.this);
@@ -378,6 +388,30 @@ public class SyncArchive {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
             lsnr.outgoingUpdated(action);
         }
+    }
+    
+    public void stop(String cancelReason) {
+        if (!_indexFetchComplete) {
+            _indexFetching = false;
+            _indexFetchErrorMsg = cancelReason;
+            _indexFetchError = null;
+        }
+        setNextPullOneOff(false);
+        setNextPushOneOff(false);
+        setNextPullTime(-1);
+        setNextPushTime(-1);
+        for (int i = 0; i < _incomingActions.size(); i++) {
+            IncomingAction action = (IncomingAction)_incomingActions.get(i);
+            if (!action.isComplete())
+                action.fetchFailed(cancelReason, null);
+        }
+        for (int i = 0; i < _outgoingActions.size(); i++) {
+            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+            if (!action.isComplete())
+                action.pushFailed(cancelReason, null);
+        }
+        store(false);
+        fireUpdated();
     }
     
     private static final String SQL_GET_ATTRIBUTES = "SELECT uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy FROM nymArchive WHERE name = ? AND nymId = ?";

@@ -2,8 +2,11 @@ package syndie.db;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
@@ -116,6 +119,38 @@ public class SyncManager {
     public void setDefaultPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _defaultPullStrategy = strategy; saveDefaultStrategies(); }
     public void setDefaultPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _defaultPushStrategy = strategy; saveDefaultStrategies(); }
     
+    public void importDefaultArchives() {
+        for (Iterator iter = Constants.DEFAULT_ARCHIVES.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            String name = (String)entry.getKey();
+            String url = (String)entry.getValue();
+            String proxyInfo = (String)Constants.DEFAULT_ARCHIVE_PROXIES.get(name);
+            String proxyHost = null;
+            int proxyPort = -1;
+            if (proxyInfo != null) {
+                String str[] = Constants.split(':', proxyInfo);
+                if ( (str != null) && (str.length == 2) ) {
+                    try {
+                        int port = Integer.parseInt(str[1]);
+                        if (port > 0) {
+                            proxyPort = port;
+                            proxyHost = str[0].trim();
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+            }
+            SyncArchive archive = new SyncArchive(this, _client);
+            archive.setName(name);
+            archive.setURL(url);
+            archive.setHTTPProxyHost(proxyHost);
+            archive.setHTTPProxyPort(proxyPort);
+            //_archives.add(archive);
+            archive.store();
+            //for (int j = 0; j < _listeners.size(); j++)
+            //    ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
+        }
+    }
+    
     private void loadDefaultStrategies() {
        if (!_client.isLoggedIn()) return;
         Properties prefs = _client.getNymPrefs();
@@ -151,6 +186,10 @@ public class SyncManager {
         loadDefaultStrategies();
         // .. load 'em up
         List names = _client.getNymArchiveNames();
+        if (names.size() == 0) {
+            importDefaultArchives();
+            names = _client.getNymArchiveNames();
+        }
         for (int i = 0; i < names.size(); i++) {
             String name = (String)names.get(i);
             SyncArchive archive = new SyncArchive(this, _client, name);

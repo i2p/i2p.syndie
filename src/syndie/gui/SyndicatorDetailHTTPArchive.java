@@ -619,6 +619,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     }
     
     private void loadData() {
+        if (_root.isDisposed()) return;
         _name.setText(str(_archive.getName()));
         _location.setText(str(_archive.getURL()));
         _proxyHost.setText(str(_archive.getHTTPProxyHost()));
