@@ -663,6 +663,12 @@ public class SyncArchive {
     public IncomingAction getIncomingAction(int num) { return (IncomingAction)_incomingActions.get(num); }
     
     IncomingAction createIncomingAction(SyndieURI uri) { 
+        for (int i = 0; i < _incomingActions.size(); i++) {
+            IncomingAction cur = (IncomingAction)_incomingActions.get(i);
+            // hmm, what if it was already complete?  etc
+            if (cur.getURI().equals(uri))
+                return cur;
+        }
         IncomingAction action = new IncomingAction(uri); 
         _incomingActions.add(action);
         return action;
@@ -672,6 +678,12 @@ public class SyncArchive {
     public OutgoingAction getOutgoingAction(int num) { return (OutgoingAction)_outgoingActions.get(num); }
     
     OutgoingAction createOutgoingAction(SyndieURI uri) { 
+        for (int i = 0; i < _outgoingActions.size(); i++) {
+            OutgoingAction cur = (OutgoingAction)_outgoingActions.get(i);
+            // hmm, what if it was already complete?  etc
+            if (cur.getURI().equals(uri))
+                return cur;
+        }
         OutgoingAction action = new OutgoingAction(uri); 
         _outgoingActions.add(action);
         return action;
@@ -729,6 +741,9 @@ public class SyncArchive {
         int hours = 1;
         if (!success)
             hours = 1 << getConsecutiveFailures();
+        
+        _indexFetchComplete = false;
+        _indexFetching = false;
         
         if (hours > 24) hours = 24;
         delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);

@@ -152,13 +152,13 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _proxyHost = new Text(row, SWT.SINGLE | SWT.BORDER);
-        _proxyHost.setLayoutData(new GridData(100, SWT.DEFAULT));
+        _proxyHost.setLayoutData(new GridData(200, SWT.DEFAULT));
         
         _proxyPortLabel = new Label(row, SWT.NONE);
         _proxyPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _proxyPort = new Text(row, SWT.SINGLE | SWT.BORDER);
-        _proxyPort.setLayoutData(new GridData(50, SWT.DEFAULT));
+        _proxyPort.setLayoutData(new GridData(75, SWT.DEFAULT));
         
         // push policy row
         

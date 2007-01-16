@@ -17,7 +17,6 @@ import java.util.Map;
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
-import net.i2p.util.EepGet;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -375,7 +374,10 @@ class SyncOutboundPusher {
             uris.add(uri);
             actionsPushed.add(action);
         }
-        String err = pushHTTP(archive, uris);
+        String err = null;
+        if (uris.size() > 0)
+            err = pushHTTP(archive, uris);
+        
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
                 SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);

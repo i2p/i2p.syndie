@@ -125,7 +125,7 @@ class SyncInboundFetcher {
                 _manager.getUI().statusMessage("Fetching [" + url + "]");
                 try {
                     File dataFile = File.createTempFile("freenetget", "dat", _manager.getClient().getTempDir());
-                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), 3, dataFile.getAbsolutePath(), url);
+                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
                     GetListener lsnr = new GetListener(action, dataFile);
                     get.addStatusListener(lsnr);
                     get.fetch();
@@ -242,7 +242,7 @@ class SyncInboundFetcher {
             _manager.getUI().statusMessage("Fetching [" + url + "]");
             try {
                 File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
-                EepGet get = new EepGet(I2PAppContext.getGlobalContext(), 3, dataFile.getAbsolutePath(), url);
+                EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
                 GetListener lsnr = new GetListener(action, dataFile);
                 get.addStatusListener(lsnr);
                 get.fetch(60*1000);
@@ -271,22 +271,22 @@ class SyncInboundFetcher {
         }
 
         public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {
-            _manager.getUI().debugMessage("Fetch complete [" + url + "] after " + bytesTransferred);
+            _manager.getUI().debugMessage("Fetch data complete [" + url + "] after " + bytesTransferred);
             importData(_incomingAction, _dataFile, true);
         }
         
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
-            _manager.getUI().debugMessage("Fetch attempt failed [" + url + "] after " + bytesTransferred);
+            _manager.getUI().debugMessage("Fetch data attempt failed [" + url + "] after " + bytesTransferred);
             _err = cause;
         }
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt) {
-            _manager.getUI().debugMessage("Fetch totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
+            _manager.getUI().debugMessage("Fetch data totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
             _incomingAction.fetchFailed("Unable to fetch", _err);
         }
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
         public void headerReceived(String url, int currentAttempt, String key, String val) {}
         public void attempting(String url) {
-            _manager.getUI().debugMessage("Fetch attempting [" + url + "]...");
+            _manager.getUI().debugMessage("Fetch data attempting [" + url + "]...");
         }
     }
     

@@ -432,7 +432,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         //_detailRoot.setExpandVertical(true);
         _detailRoot.setContent(_detail.getControl());
         Rectangle rect = _tree.getClientArea();
-        Point dSz = _detail.getControl().computeSize(rect.width-20, SWT.DEFAULT);
+        Point dSz = _detail.getControl().computeSize(rect.width-50, SWT.DEFAULT);
         _detail.getControl().setSize(dSz);
         _root.layout(true, true);
         TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
@@ -524,11 +524,11 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         TreeItem indexItem = (TreeItem)_archiveNameToIndexItem.get(archive.getName());
         if (nextTime <= 0) {
             // keep it around to view the details
-            if (indexItem != null) {
-                indexItem.dispose();
-                _items.remove(indexItem);
-            }
-            _archiveNameToIndexItem.remove(archive.getName());
+            //if (indexItem != null) {
+            //    indexItem.dispose();
+            //    _items.remove(indexItem);
+            //}
+            //_archiveNameToIndexItem.remove(archive.getName());
             return;
         }
         

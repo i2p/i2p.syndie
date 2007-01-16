@@ -63,6 +63,7 @@ class IndexFetcher {
     }
 
     private void fetch(SyncArchive archive) {
+        _manager.getUI().debugMessage("fetch index for " + archive.getName());
         String url = archive.getURL();
         if ( (url == null) || (url.length() == 0) ) {
             archive.indexFetchFail("No URL", null, false);
@@ -82,7 +83,7 @@ class IndexFetcher {
         _manager.getUI().statusMessage("Fetching [" + url + "]");
         try {
             File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), 3, indexFile.getAbsolutePath(), url);
+            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
             GetListener lsnr = new GetListener(archive, indexFile);
             get.addStatusListener(lsnr);
             get.fetch(); // no timeout
@@ -180,7 +181,7 @@ class IndexFetcher {
         _manager.getUI().statusMessage("Fetching [" + url + "]");
         try {
             File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), 3, indexFile.getAbsolutePath(), url);
+            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
             GetListener lsnr = new GetListener(archive, indexFile);
             get.addStatusListener(lsnr);
             get.fetch(60*1000);
