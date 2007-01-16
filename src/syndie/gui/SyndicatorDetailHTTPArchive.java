@@ -1,6 +1,13 @@
 package syndie.gui;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.Map;
+import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
@@ -12,11 +19,16 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
+import syndie.db.SyncOutboundPusher;
 
 /**
  *
@@ -31,6 +43,11 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private Text _name;
     private Label _locationLabel;
     private Text _location;
+    private Button _locationAdvanced;
+    private Menu _locationAdvancedMenu;
+    private MenuItem _locationAdvancedSendKey;
+    private MenuItem _locationAdvancedReadKey;
+    private MenuItem _locationAdvancedFreenet;
     private Label _proxyHostLabel;
     private Text _proxyHost;
     private Label _proxyPortLabel;
@@ -88,7 +105,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         Composite row = new Composite(_root, SWT.NONE);
-        row.setLayout(new GridLayout(3, false));
+        row.setLayout(new GridLayout(4, false));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _name = new Text(row, SWT.SINGLE | SWT.BORDER);
@@ -99,6 +116,26 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         _location = new Text(row, SWT.SINGLE | SWT.BORDER);
         _location.setLayoutData(new GridData(200, SWT.DEFAULT));
+        
+        _locationAdvanced = new Button(row, SWT.PUSH);
+        _locationAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        _locationAdvancedMenu = new Menu(_locationAdvanced);
+        _locationAdvanced.setMenu(_locationAdvancedMenu);
+        _locationAdvanced.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _locationAdvancedMenu.setVisible(true); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _locationAdvancedMenu.setVisible(true); }
+        });
+        
+        _locationAdvancedSendKey = new MenuItem(_locationAdvancedMenu, SWT.PUSH);
+        _locationAdvancedSendKey.setEnabled(false);
+        _locationAdvancedReadKey = new MenuItem(_locationAdvancedMenu, SWT.PUSH);
+        _locationAdvancedReadKey.setEnabled(false);
+        _locationAdvancedFreenet = new MenuItem(_locationAdvancedMenu, SWT.PUSH);
+        _locationAdvancedFreenet.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { configFreenet(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { configFreenet(); }
+        });
         
         // last sync row
         
@@ -296,6 +333,175 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetSelected(SelectionEvent selectionEvent) { save(); }
         });
     }
+    
+    private void configFreenet() {
+        final Shell dialog = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        dialog.setText(_browser.getTranslationRegistry().getText(T_FREENET_TITLE, "Freenet configuration"));
+        dialog.setLayout(new GridLayout(1, true));
+        
+        Composite row = new Composite(dialog, SWT.NONE);
+        row.setLayout(new GridLayout(2, false));
+        row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        Label pubLabel = new Label(row, SWT.NONE);
+        pubLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        pubLabel.setText(_browser.getTranslationRegistry().getText(T_FREENET_PUB, "Public key:"));
+        final Text pub = new Text(row, SWT.SINGLE | SWT.BORDER);
+        pub.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        String loc = _location.getText().trim();
+        if (loc.startsWith("USK@") || loc.startsWith("SSK@") || loc.startsWith("KSK@") || loc.startsWith("CHK@"))
+            pub.setText(loc);
+        
+        final Button readOnly = new Button(dialog, SWT.RADIO);
+        readOnly.setText(_browser.getTranslationRegistry().getText(T_FREENET_READONLY, "Read only"));
+        final Button writeOnly = new Button(dialog, SWT.RADIO);
+        writeOnly.setText(_browser.getTranslationRegistry().getText(T_FREENET_WRITEONLY, "Write only"));
+        
+        row = new Composite(dialog, SWT.NONE);
+        row.setLayout(new GridLayout(4, false));
+        row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        Label fcpHostLabel = new Label(row, SWT.NONE);
+        fcpHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        fcpHostLabel.setText(_browser.getTranslationRegistry().getText(T_FREENET_FCPHOST, "FCP host:"));
+        final Text fcpHost = new Text(row, SWT.SINGLE | SWT.BORDER);
+        fcpHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        if ( (_archive.getFCPHost() != null) && (_archive.getFCPHost().trim().length() > 0) )
+            fcpHost.setText(_archive.getFCPHost());
+        else
+            fcpHost.setText("127.0.0.1");
+        Label fcpPortLabel = new Label(row, SWT.NONE);
+        fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        fcpPortLabel.setText(_browser.getTranslationRegistry().getText(T_FREENET_FCPPORT, "port:"));
+        final Text fcpPort = new Text(row, SWT.SINGLE | SWT.BORDER);
+        fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        if (_archive.getFCPPort() > 0)
+            fcpPort.setText(_archive.getFCPPort() + "");
+        else
+            fcpPort.setText(9481 + "");
+        
+        row = new Composite(dialog, SWT.NONE);
+        row.setLayout(new GridLayout(3, false));
+        row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        Label privLabel = new Label(row, SWT.NONE);
+        privLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        privLabel.setText(_browser.getTranslationRegistry().getText(T_FREENET_PRIV, "Private key:"));
+        final Text privKey = new Text(row, SWT.SINGLE | SWT.BORDER);
+        privKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        if (_archive.getPostKey() != null)
+            privKey.setText(_archive.getPostKey());
+        else
+            privKey.setText("");
+        Button gen = new Button(row, SWT.PUSH);
+        gen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        gen.setText(_browser.getTranslationRegistry().getText(T_FREENET_NEWKEY, "Generate new"));
+        gen.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { gen(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { gen(); }
+            private void gen() {
+                genKey(dialog, fcpHost.getText(), getInt(fcpPort.getText().trim()), pub, privKey);
+                readOnly.setSelection(false);
+                writeOnly.setSelection(true);
+            }
+        });
+        privKey.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                readOnly.setSelection(false);
+                writeOnly.setSelection(true);
+            }
+        });
+        
+        String priv = null;
+        if (_archive.getPostKey() == null) {
+            readOnly.setSelection(true);
+            writeOnly.setSelection(false);
+        } else {
+            readOnly.setSelection(false);
+            writeOnly.setSelection(true);
+        }
+        
+        row = new Composite(dialog, SWT.NONE);
+        row.setLayout(new FillLayout(SWT.HORIZONTAL));
+        row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        Button save = new Button(row, SWT.PUSH);
+        save.setText(_browser.getTranslationRegistry().getText(T_FREENET_SAVE, "Save"));
+        save.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { save(); }
+            private void save() {
+                if (writeOnly.getSelection() && (privKey.getText().trim().length() > 0))
+                    _archive.setPostKey(privKey.getText().trim());
+                else
+                    _archive.setPostKey(null);
+                _archive.setFCPHost(fcpHost.getText().trim());
+                _archive.setFCPPort(getInt(fcpPort.getText().trim()));
+                _archive.setURL(pub.getText().trim());
+                dialog.dispose();
+                loadData();
+            }
+        });
+        Button cancel = new Button(row, SWT.PUSH);
+        cancel.setText(_browser.getTranslationRegistry().getText(T_FREENET_CANCEL, "Cancel"));
+        cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
+        });
+        
+        dialog.pack();
+        dialog.setSize(dialog.computeSize(400, SWT.DEFAULT));
+        dialog.open();
+    }
+    private static final String T_FREENET_TITLE = "syndie.gui.syndicatordetailhttparchive.freenet.title";
+    private static final String T_FREENET_PUB = "syndie.gui.syndicatordetailhttparchive.freenet.pub";
+    private static final String T_FREENET_READONLY = "syndie.gui.syndicatordetailhttparchive.freenet.readonly";
+    private static final String T_FREENET_WRITEONLY = "syndie.gui.syndicatordetailhttparchive.freenet.writeonly";
+    private static final String T_FREENET_FCPHOST = "syndie.gui.syndicatordetailhttparchive.freenet.fcphost";
+    private static final String T_FREENET_FCPPORT = "syndie.gui.syndicatordetailhttparchive.freenet.fcpport";
+    private static final String T_FREENET_PRIV = "syndie.gui.syndicatordetailhttparchive.freenet.priv";
+    private static final String T_FREENET_NEWKEY = "syndie.gui.syndicatordetailhttparchive.freenet.newkey";
+    private static final String T_FREENET_SAVE = "syndie.gui.syndicatordetailhttparchive.freenet.save";
+    private static final String T_FREENET_CANCEL = "syndie.gui.syndicatordetailhttparchive.freenet.cancel";
+    
+    private int getInt(String str) {
+        if (str == null) return -1;
+        try { return Integer.parseInt(str); } catch (NumberFormatException nfe) { return -1; }
+    }
+    private void genKey(Shell parent, String fcpHost, int fcpPort, Text targetPub, Text targetPriv) {
+        System.out.println("genKey called");
+        try {
+            Socket s = new Socket(fcpHost, fcpPort);
+            OutputStream out = s.getOutputStream();
+            long msgId = System.currentTimeMillis();
+            out.write(DataHelper.getUTF8("ClientHello\r\n" +
+            "Name=syndie" + msgId + "\r\n" +
+            "ExpectedVersion=2.0\r\n" +
+            "Identifier=" + msgId + "\r\n" +
+            "EndMessage\r\n" +
+            "GenerateSSK\r\n" +
+            "Identifier=" + (msgId+1) + "\r\n" +
+            "EndMessage\r\n"));
+            Map rv = SyncOutboundPusher.readResults(s.getInputStream(), _browser.getUI());
+            if (rv == null) {
+                MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
+                box.setMessage(_browser.getTranslationRegistry().getText(T_FREENET_ERROR, "Error communicating with the Freenet server"));
+                box.setText(_browser.getTranslationRegistry().getText(T_FREENET_ERROR_TITLE, "Error"));
+                box.open();
+                //_ui.commandComplete(-1, null);
+            } else {
+                targetPub.setText((String)rv.get("RequestURI"));
+                targetPriv.setText((String)rv.get("InsertURI"));
+            }
+            s.close();
+        } catch (Exception e) {
+            //_error = "Error generating a new Freenet keypair";
+            _browser.getUI().debugMessage("Error generating a new Freenet keypair", e);
+            MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
+            box.setMessage(_browser.getTranslationRegistry().getText(T_FREENET_ERROR, "Error communicating with the Freenet server") + ": " + e.getMessage());
+            box.setText(_browser.getTranslationRegistry().getText(T_FREENET_ERROR_TITLE, "Error"));
+            box.open();
+            //_ui.commandComplete(-1, null);
+        }
+    }
+    private static final String T_FREENET_ERROR = "syndie.gui.syndicatordetailhttparchive.freenet.error";
+    private static final String T_FREENET_ERROR_TITLE = "syndie.gui.syndicatordetailhttparchive.freenet.error.title";
     
     private void save() {
         _archive.setName(_name.getText());
@@ -522,6 +728,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _failures.setFont(theme.DEFAULT_FONT);
         _backOffOnFailures.setFont(theme.DEFAULT_FONT);
     
+        _locationAdvanced.setFont(theme.BUTTON_FONT);
         _nextSyncNow.setFont(theme.BUTTON_FONT);
         _nextSyncNever.setFont(theme.BUTTON_FONT);
         _nextSyncOneOff.setFont(theme.BUTTON_FONT);
@@ -531,6 +738,10 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     
     private static final String T_NAME = "syndie.gui.syndicatordetailhttparchive.name";
     private static final String T_LOCATION = "syndie.gui.syndicatordetailhttparchive.location";
+    private static final String T_LOCATIONADVANCED = "syndie.gui.syndicatordetailhttparchive.locationadvanced";
+    private static final String T_LOCATIONADVANCED_SEND = "syndie.gui.syndicatordetailhttparchive.locationadvanced.send";
+    private static final String T_LOCATIONADVANCED_READ = "syndie.gui.syndicatordetailhttparchive.locationadvanced.read";
+    private static final String T_LOCATIONADVANCED_FREENET = "syndie.gui.syndicatordetailhttparchive.locationadvanced.freenet";
     private static final String T_PROXYHOST = "syndie.gui.syndicatordetailhttparchive.proxyhost";
     private static final String T_PROXYPORT = "syndie.gui.syndicatordetailhttparchive.proxyport";
     private static final String T_PUSHPOLICY = "syndie.gui.syndicatordetailhttparchive.pushpolicy";
@@ -565,6 +776,10 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
         _locationLabel.setText(registry.getText(T_LOCATION, "Archive URL:"));
+        _locationAdvanced.setText(registry.getText(T_LOCATIONADVANCED, "Advanced..."));
+        _locationAdvancedSendKey.setText(registry.getText(T_LOCATIONADVANCED_SEND, "Specify posting key"));
+        _locationAdvancedReadKey.setText(registry.getText(T_LOCATIONADVANCED_READ, "Specify reading key"));
+        _locationAdvancedFreenet.setText(registry.getText(T_LOCATIONADVANCED_FREENET, "Configure freenet settings"));
         _proxyHostLabel.setText(registry.getText(T_PROXYHOST, "Proxy host:"));
         _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "Port:"));
         _pushPolicyLabel.setText(registry.getText(T_PUSHPOLICY, "Push policy:"));

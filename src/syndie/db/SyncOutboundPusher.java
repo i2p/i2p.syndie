@@ -20,7 +20,7 @@ import net.i2p.data.DataHelper;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
-class SyncOutboundPusher {
+public class SyncOutboundPusher {
     private SyncManager _manager;
     private static Map _runnerToArchive = new HashMap();
     
@@ -319,14 +319,15 @@ class SyncOutboundPusher {
         return "USK@" + key + "/archive/0/";
     }
     
-    private Map readResults(InputStream in) throws IOException {
+    private Map readResults(InputStream in) throws IOException { return readResults(in, _manager.getUI()); }
+    public static Map readResults(InputStream in, UI ui) throws IOException {
         // read the result map, ignoring the NodeHello message
         BufferedReader bin = new BufferedReader(new InputStreamReader(in, "UTF-8"));
         String line = null;
         Map rv = new HashMap();
         String cmd = null;
         while ( (line = bin.readLine()) != null) {
-            _manager.getUI().debugMessage("Line read: " + line);
+            ui.debugMessage("Line read: " + line);
             if (cmd == null) {
                 cmd = line;
             } else if (line.startsWith("EndMessage")) {
