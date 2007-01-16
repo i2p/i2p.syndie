@@ -318,15 +318,54 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 }
             });
         }
+        
+        if ( (archive.getIncomingActionCount() > 0) || (archive.getOutgoingActionCount() > 0) ) {
+            item = new MenuItem(_treeMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    archive.clearCompletedActions(true, true);
+                }
+            });
+        }
     }
     private static final String T_MENU_SYNC_NOW = "syndie.gui.syndicator.menu.sync.now";
     private static final String T_MENU_SYNC_ONEOFF = "syndie.gui.syndicator.menu.sync.oneoff";
     private static final String T_MENU_SYNC_CANCEL = "syndie.gui.syndicator.menu.sync.cancel";
+    private static final String T_MENU_CLEAR_ACTIONS = "syndie.gui.syndicator.menu.clearactions";
     
-    private void buildMenuIncoming(TreeItem item) {}
-    private void buildMenuOutgoing(TreeItem item) {}
+    private void buildMenuIncoming(TreeItem item) {
+        final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
+        if (archive.getIncomingActionCount() > 0) {
+            MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
+            clear.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
+            clear.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    archive.clearCompletedActions(true, false);
+                }
+            });
+        }
+    }
+    private void buildMenuOutgoing(TreeItem item) {
+        final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
+        if (archive.getOutgoingActionCount() > 0) {
+            MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
+            clear.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
+            clear.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    archive.clearCompletedActions(false, true);
+                }
+            });
+        }
+    }
     private void buildMenuFetchIndex(TreeItem item) {}
-    private void buildMenuIncoming(SyncArchive.IncomingAction action) {
+    private void buildMenuIncoming(final SyncArchive.IncomingAction action) {
         if (action.isComplete()) {
             final SyndieURI uri = action.getURI();
             MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
@@ -343,9 +382,20 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                     public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
                 });
             }
+            
+            item = new MenuItem(_treeMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    action.dispose();
+                }
+            });
         }
     }
-    private void buildMenuOutgoing(SyncArchive.OutgoingAction action) {
+    private static final String T_MENU_CLEAR_ACTION = "syndie.gui.syndicator.menu.clearaction";
+    private void buildMenuOutgoing(final SyncArchive.OutgoingAction action) {
         final SyndieURI uri = action.getURI();
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_browser.getTranslationRegistry().getText(T_MENU_VIEW, "View"));
@@ -353,6 +403,18 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
         });
+        
+        if (action.isComplete()) {
+            item = new MenuItem(_treeMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    action.dispose();
+                }
+            });
+        }
     }
     private static final String T_MENU_VIEW = "syndie.gui.syndicator.menu.view";
     private static final String T_MENU_PBE = "syndie.gui.syndicator.menu.pbe";
@@ -424,6 +486,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         rootItem.setText(0, archive.getName());
         if (nextTime <= 0) {
             rootItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NEVER, "Never"));
+            rootItem.setImage(2, null);
             rootItem.setText(3, _browser.getTranslationRegistry().getText(T_SUMMARY_NEVER, "No syndication scheduled"));
         } else if (nextTime < System.currentTimeMillis()) {
             if (archive.getIndexFetchInProgress()) {
@@ -495,8 +558,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             }
         } else {
             TreeItem incomingItem = (TreeItem)_archiveNameToIncomingItem.remove(archive.getName());
-            if (incomingItem != null)
+            if (incomingItem != null) {
                 incomingItem.dispose();
+                _items.remove(incomingItem);
+            }
             _archiveNameToIncoming.remove(archive.getName());
         }
     }
@@ -516,6 +581,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             }
             
             TreeItem incomingItem = (TreeItem)_archiveNameToIncomingItem.get(action.getArchive().getName());
+            
             if (incomingItem == null) {
                 TreeItem rootItem = loadDataRoot(action.getArchive());
                 incomingItem = new TreeItem(rootItem, SWT.NONE);
@@ -528,6 +594,24 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             resizeCols(incomingItem);
             
             TreeItem actionItem = (TreeItem)incomingURIToItem.get(uri);
+            
+            if (action.isDisposed()) {
+                incomingURIToItem.remove(uri);
+                if (actionItem != null) {
+                    actionItem.dispose();
+                    _items.remove(actionItem);
+                }
+                
+                if (action.getArchive().getIncomingActionCount() == 0) {
+                    _archiveNameToIncomingItem.remove(action.getArchive().getName());
+                    _archiveNameToIncoming.remove(action.getArchive().getName());
+                    incomingItem.dispose();
+                    _items.remove(incomingItem);
+                }
+                
+                return;
+            }
+            
             if (actionItem == null) {
                 actionItem = new TreeItem(incomingItem, SWT.NONE);
                 incomingURIToItem.put(uri, actionItem);
@@ -582,8 +666,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             }
         } else {
             TreeItem outgoingItem = (TreeItem)_archiveNameToOutgoingItem.remove(archive.getName());
-            if (outgoingItem != null)
+            if (outgoingItem != null) {
                 outgoingItem.dispose();
+                _items.remove(outgoingItem);
+            }
             _archiveNameToOutgoing.remove(archive.getName());
         }
     }
@@ -597,6 +683,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             if (scope == null) return;
 
             TreeItem outgoingItem = (TreeItem)_archiveNameToOutgoingItem.get(action.getArchive().getName());
+            
             if (outgoingItem == null) {
                 TreeItem rootItem = loadDataRoot(action.getArchive());
                 outgoingItem = new TreeItem(rootItem, SWT.NONE);
@@ -614,6 +701,23 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             resizeCols(outgoingItem);
             
             TreeItem actionItem = (TreeItem)outgoingURIToItem.get(uri);
+            
+            if (action.isDisposed()) {
+                outgoingURIToItem.remove(uri);
+                if (actionItem != null) {
+                    actionItem.dispose();
+                    _items.remove(actionItem);
+                }
+                
+                if (action.getArchive().getOutgoingActionCount() == 0) {
+                    _archiveNameToOutgoingItem.remove(action.getArchive().getName());
+                    _archiveNameToOutgoing.remove(action.getArchive().getName());
+                    outgoingItem.dispose();
+                    _items.remove(outgoingItem);
+                }
+                return;
+            }
+            
             if (actionItem == null) {
                 actionItem = new TreeItem(outgoingItem, SWT.NONE);
                 outgoingURIToItem.put(uri, actionItem);
@@ -632,6 +736,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             } else if (action.isExecuting()) {
                 actionItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+            } else if (action.getErrorMsg() != null) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_PUSH_ERROR, "Error pushing: ") + action.getErrorMsg());
             } else { // complete
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
@@ -673,6 +781,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_FETCH_CORRUPT = "syndie.gui.syndicator.fetch.corrupt";
     
     private static final String T_PUSH_OK = "syndie.gui.syndicator.push.ok";
+    private static final String T_PUSH_ERROR = "syndie.gui.syndicator.push.error";
 
     private static final String T_WHEN_NOW = "syndie.gui.syndicator.now";
     private static final String T_WHEN_ASAP = "syndie.gui.syndicator.asap";
@@ -735,8 +844,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 _archiveNameToIndexItem.remove(archive.getName());
                 _archiveNameToOutgoing.remove(archive.getName());
                 _archiveNameToOutgoingItem.remove(archive.getName());
-                if (rootItem != null)
+                if (rootItem != null) {
                     rootItem.dispose(); 
+                    _items.remove(rootItem);
+                }
             } 
         });
     }

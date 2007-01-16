@@ -74,7 +74,8 @@ class SyncInboundFetcher {
             synchronized (_runnerToArchive) { _runnerToArchive.remove(runner); }
             return;
         }
-        if ( (url.indexOf("USK@") >= 0) || (url.indexOf("SSK@") >= 0) || (url.indexOf("KSK@") >= 0) ) {
+        url = url.trim();
+        if ( (url.startsWith("USK@")) || (url.startsWith("SSK@")) || (url.startsWith("KSK@")) ) {
             fetchFreenet(archive);
         } else if (url.startsWith("/") || url.startsWith("file://") || url.startsWith("C:\\")) {
             fetchFile(archive);
@@ -94,6 +95,10 @@ class SyncInboundFetcher {
             if (!action.setIsExecuting(true)) continue; // someone else is doing it
             
             SyndieURI uri = action.getURI();
+            if (isLocal(uri)) { // fetched concurrently from another archive
+                action.importSuccessful();
+                continue;
+            }
         
             String url = getFreenetURL(archive, uri);
             if (url == null) {
@@ -181,6 +186,11 @@ class SyncInboundFetcher {
             
             SyndieURI uri = action.getURI();
         
+            if (isLocal(uri)) { // fetched concurrently from another archive
+                action.importSuccessful();
+                continue;
+            }
+        
             String url = archive.getURL();
             if (url.indexOf("://") == -1)
                 url = "http://" + url;
@@ -216,6 +226,15 @@ class SyncInboundFetcher {
                 action.fetchFailed("Internal error writing temp file", ioe);
             }
         }
+    }
+    
+    private boolean isLocal(SyndieURI uri) {
+        if (uri.getMessageId() != null) {
+            long msgId = _manager.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0)
+                return true;
+        }
+        return false;
     }
     
     private class GetListener implements EepGet.StatusListener {

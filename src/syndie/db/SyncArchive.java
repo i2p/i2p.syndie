@@ -74,12 +74,16 @@ public class SyncArchive {
         SharedArchiveEngine.PullStrategy pullStrategy = getPullStrategy();
         if (pullStrategy == null)
             pullStrategy = SyncManager.getInstance(_client, ui).getDefaultPullStrategy();
+        ui.debugMessage("index fetched, pull strategy: " + pullStrategy);
         List pullURIs = new SharedArchiveEngine().selectURIsToPull(_client, ui, archive, pullStrategy);
+        ui.debugMessage("index fetched, uris to push: " + pullURIs);
         
         SharedArchiveEngine.PushStrategy pushStrategy = getPushStrategy();
         if (pushStrategy == null)
             pushStrategy = SyncManager.getInstance(_client, ui).getDefaultPushStrategy();
+        ui.debugMessage("index fetched, push strategy: " + pushStrategy);
         List pushURIs = new SharedArchiveEngine().selectURIsToPush(_client, ui, archive, pushStrategy);
+        ui.debugMessage("index fetched, uris to push: " + pushURIs);
         
         SharedArchive.Message msgs[] = archive.getMessages();
         SharedArchive.Channel scopes[] = archive.getChannels();
@@ -166,6 +170,7 @@ public class SyncArchive {
         private boolean _corrupt;
         private int _attempts;
         private int _size;
+        private boolean _disposed;
         
         public IncomingAction(SyndieURI uri) {
             _uri = uri;
@@ -182,6 +187,7 @@ public class SyncArchive {
             _corrupt = false;
             _attempts = 0;
             _size = 0;
+            _disposed = false;
         }
         
         public SyndieURI getURI() { return _uri; }
@@ -190,6 +196,7 @@ public class SyncArchive {
         public boolean isExecuting() { return _executing; }
         public boolean isComplete() { return _completionTime > 0; }
         public boolean isPaused() { return _paused; }
+        public boolean isDisposed() { return _disposed; }
         public long getCompletionTime() { return _completionTime; }
         public String getPBEPrompt() { return _pbePrompt; }
         public boolean isReplyKeyUnknown() { return _noReplyKey; }
@@ -233,9 +240,11 @@ public class SyncArchive {
             notifyUpdate(this);
         }
         void importSuccessful() {
-            _completionTime = System.currentTimeMillis();
-            _importOK = true;
-            _executing = false;
+            if (_completionTime <= 0) {
+                _completionTime = System.currentTimeMillis();
+                _importOK = true;
+                _executing = false;
+            }
             notifyUpdate(this);
         }
         
@@ -255,6 +264,12 @@ public class SyncArchive {
             if (executing) notifyUpdate(this);
             return true;
         }
+        
+        public void dispose() {
+            _disposed = true;
+            _incomingActions.remove(IncomingAction.this);
+            notifyUpdate(this);
+        }
     }
 
     /** represents a push element, either scheduled, in process, or complete */
@@ -266,6 +281,7 @@ public class SyncArchive {
         private int _size;
         private String _errMsg;
         private Exception _err;
+        private boolean _disposed;
         
         public OutgoingAction(SyndieURI uri) {
             _uri = uri;
@@ -273,6 +289,7 @@ public class SyncArchive {
             _paused = false;
             _executing = false;
             _size = 0;
+            _disposed = false;
         }
         
         public SyndieURI getURI() { return _uri; }
@@ -281,8 +298,11 @@ public class SyncArchive {
         public boolean isExecuting() { return _executing; }
         public boolean isPaused() { return _paused; }
         public boolean isComplete() { return _completionTime > 0; }
+        public boolean isDisposed() { return _disposed; }
         public long getCompletionTime() { return _completionTime; }
         public int getSize() { return _size; }
+        public String getErrorMsg() { return _errMsg; }
+        public Exception getError() { return _err; }
         
         void setSize(int bytes) { _size = bytes; }
         
@@ -290,11 +310,13 @@ public class SyncArchive {
             _errMsg = msg;
             _err = err;
             _completionTime = System.currentTimeMillis();
+            setIsExecuting(false);
             notifyUpdate(this);
         }
         
         void pushOK() {
             _completionTime = System.currentTimeMillis();
+            setIsExecuting(false);
             notifyUpdate(this);
         }
         
@@ -306,10 +328,38 @@ public class SyncArchive {
             if (executing) notifyUpdate(this);
             return true;
         }
+        public void dispose() {
+            _disposed = true;
+            _outgoingActions.remove(OutgoingAction.this);
+            notifyUpdate(this);
+        }
     }
     
     public void addListener(SyncArchiveListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
     public void removeListener(SyncArchiveListener lsnr) { _listeners.remove(lsnr); }
+    
+    public void clearCompletedActions(boolean incoming, boolean outgoing) {
+        if (incoming) {
+            List toRemove = new ArrayList();
+            for (int i = 0; i < _incomingActions.size(); i++) {
+                IncomingAction action = (IncomingAction)_incomingActions.get(i);
+                if (action.getCompletionTime() > 0)
+                    toRemove.add(action);
+            }
+            for (int i = 0; i < toRemove.size(); i++)
+                ((IncomingAction)toRemove.get(i)).dispose(); // removes the element from _incomingActions
+        }
+        if (outgoing) {
+            List toRemove = new ArrayList();
+            for (int i = 0; i < _outgoingActions.size(); i++) {
+                OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+                if (action.getCompletionTime() > 0)
+                    toRemove.add(action);
+            }
+            for (int i = 0; i < toRemove.size(); i++)
+                ((OutgoingAction)toRemove.get(i)).dispose(); // removes the element from _outgoingActions
+        }
+    }
 
     private void notifyUpdate(IncomingAction action) {
         for (int i = 0; i < _listeners.size(); i++) {
@@ -629,10 +679,10 @@ public class SyncArchive {
     
     void indexFetchFail(String msg, Exception cause, boolean allowReschedule) {
         _manager.getUI().debugMessage("index fetch failed for " + _name + ": " + msg, cause);
-        setIndexFetchInProgress(false);
-        setConsecutiveFailures(1 + getConsecutiveFailures());
         setLastIndexFetchErrorMsg(msg);
         setLastIndexFetchError(cause);
+        setConsecutiveFailures(1 + getConsecutiveFailures());
+        setIndexFetchInProgress(false);
         
         if (allowReschedule) {
             // which index fetch are we failing here?
