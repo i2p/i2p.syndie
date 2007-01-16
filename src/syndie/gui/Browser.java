@@ -32,6 +32,9 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
@@ -341,6 +344,44 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 }
             }
             public void dropAccept(DropTargetEvent evt) {}
+        });
+        
+        transfer = new Transfer[] { TextTransfer.getInstance() };
+        ops = DND.DROP_COPY;
+        DragSource source = new DragSource(_tabs, ops);
+        source.setTransfer(transfer);
+        source.addDragListener(new DragSourceListener() {
+            public void dragFinished(DragSourceEvent evt) {}
+            public void dragSetData(DragSourceEvent evt) {
+                CTabItem item = _tabs.getSelection();
+                if (item != null) {
+                    SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
+                    BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                    SyndieURI curURI = tab.getURI(); // may have changed since creation
+
+                    BookmarkDnD bookmark = new BookmarkDnD();
+                    bookmark.desc = tab.getDescription();
+                    bookmark.name = tab.getName();
+                    bookmark.uri = curURI;
+                    evt.data = bookmark.toString();
+                }
+            }
+            public void dragStart(DragSourceEvent evt) {
+                CTabItem item = _tabs.getSelection();
+                if (item != null) {
+                    SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
+                    BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                    if (tab == null) {
+                       evt.doit = false;
+                    } else {
+                        SyndieURI curURI = tab.getURI(); // may have changed since creation
+                        if (curURI == null)
+                            evt.doit = false; // don't drag when nothing is selected
+                    }
+                } else {
+                    evt.doit = false; // don't drag when nothing is selected
+                }
+            }
         });
     }
     private void initDnDBookmarks() {
@@ -1457,6 +1498,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         if (_bookmarkEditor == null)
             _bookmarkEditor = new BookmarkEditorPopup(this, _shell);
         return _bookmarkEditor;
+    }
+    
+    public void bookmarkCurrentTab() {
+        CTabItem item = _tabs.getSelection();
+        if (item != null) {
+            SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
+            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            SyndieURI curURI = tab.getURI(); // may have changed since creation
+            bookmark(new NymReferenceNode(tab.getName(), curURI, tab.getDescription(), -1, -1, -1, 0, false, false, false));
+        }
     }
     
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */

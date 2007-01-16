@@ -177,6 +177,7 @@ public class MessageTree implements Translatable, Themeable {
         initComponents();
     }
     
+    public SyndieURI getCurrentFilter() { return _appliedFilter; }
     public Control getControl() { return _root; } //return _tree; }
     public SyndieURI getSelected() {
         TreeItem items[] = _tree.getSelection();

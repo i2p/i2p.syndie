@@ -45,6 +45,15 @@ public class BrowseForumTab extends BrowserTab {
         reconfigItem();
     }
     
+    public SyndieURI getURI() {
+        SyndieURI uri = null;
+        if (_browse != null)
+            uri = _browse.getURI();
+        if (uri == null)
+            uri = super.getURI();
+        return uri;
+    }
+    
     public void setFilter(SyndieURI uri) {
         if (!uri.equals(getURI())) {
             getBrowser().getUI().debugMessage("updating filter to " + uri);

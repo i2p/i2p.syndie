@@ -39,6 +39,7 @@ public class DummyBrowserControl implements BrowserControl {
     public void deleteBookmark(long bookmarkGroupId) {}
     public void updateBookmark(NymReferenceNode bookmark) {}
     public void bookmark(NymReferenceNode node) {}
+    public void bookmarkCurrentTab() {}
     public List getBookmarks() { return null; }
 
     public List getPrivateMsgIds(boolean alreadyRead) { return null; }

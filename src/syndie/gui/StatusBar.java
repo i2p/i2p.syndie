@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -9,6 +10,12 @@ import java.util.TreeMap;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -25,6 +32,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.ChannelInfo;
+import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.SyncArchive;
@@ -38,6 +46,7 @@ public class StatusBar implements Translatable, Themeable {
     private BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
+    private Button _bookmark;
     private Label _onlineState;
     private Label _nextSyncLabel;
     private Label _nextSyncDate;
@@ -63,8 +72,19 @@ public class StatusBar implements Translatable, Themeable {
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        GridLayout gl = new GridLayout(9, false);
+        GridLayout gl = new GridLayout(10, false);
         _root.setLayout(gl);
+        
+        _bookmark = new Button(_root, SWT.PUSH);
+        _bookmark.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _bookmark.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _browser.bookmarkCurrentTab();
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _browser.bookmarkCurrentTab();
+            }
+        });
         
         _onlineState = new Label(_root, SWT.SHADOW_OUT | SWT.BORDER);
         _onlineState.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
@@ -168,6 +188,8 @@ public class StatusBar implements Translatable, Themeable {
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+        
+        initDnD();
     }
     private class Refresh implements Runnable {
         public void run() {
@@ -565,18 +587,59 @@ public class StatusBar implements Translatable, Themeable {
         _root.layout(true);
     }
     
+    private void initDnD() {
+        int ops = DND.DROP_COPY | DND.DROP_LINK;
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        DropTarget target = new DropTarget(_bookmark, ops);
+        target.setTransfer(transfer);
+        target.addDropListener(new DropTargetListener() {
+            public void dragEnter(DropTargetEvent evt) {
+                // we can take the element
+                evt.detail = evt.operations | DND.DROP_COPY;
+            }
+            public void dragLeave(DropTargetEvent evt) {}
+            public void dragOperationChanged(DropTargetEvent evt) {}
+            public void dragOver(DropTargetEvent evt) {}
+            public void drop(DropTargetEvent evt) {
+                if (evt.data == null) {
+                    evt.detail = DND.DROP_NONE;
+                    return;
+                } else {
+                    BookmarkDnD bookmark = new BookmarkDnD();
+                    bookmark.fromString(evt.data.toString());
+                    if (bookmark.uri != null) { // parsed fine
+                        _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, -1, 0, false, false, false));
+                    } else { // wasn't in bookmark syntax, try as a uri
+                        String str = evt.data.toString();
+                        try {
+                            SyndieURI uri = new SyndieURI(str);
+                            _browser.bookmark(uri);
+                        } catch (URISyntaxException use) {
+                            _browser.getUI().debugMessage("invalid uri: " + str, use);
+                        }
+                    }
+                }
+            }
+            public void dropAccept(DropTargetEvent evt) {}
+        });
+    }
+    
+    
     private static final String T_NEXT_SYNC = "syndie.gui.statusbar.nextsync";
     private static final String T_NEWFORUM = "syndie.gui.statusbar.newforum";
     private static final String T_UNREAD = "syndie.gui.statusbar.newmsg";
     private static final String T_PBE = "syndie.gui.statusbar.pbe";
     private static final String T_PRIV = "syndie.gui.statusbar.priv";
     private static final String T_POSTPONE = "syndie.gui.statusbar.postpone";
+    private static final String T_BOOKMARK = "syndie.gui.statusbar.bookmark";
     public void translate(TranslationRegistry registry) {
         _nextSyncLabel.setText(registry.getText(T_NEXT_SYNC, "Next sync:"));
+        _bookmark.setText(registry.getText(T_BOOKMARK, "Bookmark!"));
         _root.layout(true);
     }
     
     public void applyTheme(Theme theme) {
+        _bookmark.setFont(theme.BUTTON_FONT);
         _nextSyncDate.setFont(theme.DEFAULT_FONT);
         _nextSyncLabel.setFont(theme.DEFAULT_FONT);
         _onlineState.setFont(theme.DEFAULT_FONT);

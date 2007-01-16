@@ -19,6 +19,7 @@ public interface BrowserControl {
     public void bookmark(NymReferenceNode node);
     public void deleteBookmark(long bookmarkGroupId);
     public void updateBookmark(NymReferenceNode bookmark);
+    public void bookmarkCurrentTab();
     /** get the bookmarks (NymReferenceNode) currently loaded */
     public List getBookmarks();
 
