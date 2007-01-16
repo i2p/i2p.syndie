@@ -180,6 +180,19 @@ public class StatusBar implements Translatable, Themeable {
         _browser.getThemeRegistry().register(this);
         
         initDnD();
+        
+        delayedRefresh();
+    }
+    
+    // periodically update the online state section, since that includes a timer
+    // for when the next sync is.  everything else is updated through event callbacks
+    private void delayedRefresh() {
+        _root.getDisplay().timerExec(30*1000, new Runnable() {
+            public void run() {
+                doRefreshDisplay(true);
+                delayedRefresh();
+            }
+        });
     }
     
     private void registerListen(SyncArchive archive) {
@@ -574,14 +587,24 @@ public class StatusBar implements Translatable, Themeable {
     private static final String T_NEXT_SYNC_NOW = "syndie.gui.statusbar.nextsync.now";
     private static final String T_NEXT_SYNC_NONE = "syndie.gui.statusbar.nextsync.none";
     public void setNextSync(long when, boolean online) {
-        if (!online)
+        if (!online) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_OFFLINE, "Deferred..."));
-        else if (when <= 0)
+        } else if (when <= 0) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NONE, "None scheduled"));
-        else if (when-System.currentTimeMillis() <= 0)
+        } else if (when-System.currentTimeMillis() <= 0) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NOW, "Now"));
-        else
-            _nextSyncDate.setText(DataHelper.formatDuration(when-System.currentTimeMillis())); // 3h, 39m, 2d, etc
+        } else {
+            long delay = when-System.currentTimeMillis();
+            if (delay < 60*1000)
+                _nextSyncDate.setText("<" + 1 + "m");
+            else if (delay < 120*60*1000)
+                _nextSyncDate.setText(delay/(60*1000) + "m");
+            else if (delay < 48*60*60*1000)
+                _nextSyncDate.setText(delay/(60*60*1000) + "h");
+            else
+                _nextSyncDate.setText(delay/(24*60*60*1000) + "d");
+            //_nextSyncDate.setText(DataHelper.formatDuration()); // 3h, 39m, 2d, etc
+        }
         _root.layout(true);
     }
     
@@ -606,7 +629,11 @@ public class StatusBar implements Translatable, Themeable {
                     BookmarkDnD bookmark = new BookmarkDnD();
                     bookmark.fromString(evt.data.toString());
                     if (bookmark.uri != null) { // parsed fine
-                        _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, -1, 0, false, false, false));
+                        NymReferenceNode parent = getParent(_browser, bookmark);
+                        long parentGroupId = -1;
+                        if (parent != null)
+                            parentGroupId = parent.getGroupId();
+                        _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
                         try {
@@ -622,6 +649,28 @@ public class StatusBar implements Translatable, Themeable {
         });
     }
     
+    /**
+     * select the bookmark folder to stash the bookmark in, creating a new one if
+     * necessary.  the folder is named "$date messages"
+     */
+    static NymReferenceNode getParent(BrowserControl browser, BookmarkDnD bookmark) {
+        if (bookmark.uri.getMessageId() == null) return null;
+        
+        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + browser.getTranslationRegistry().getText(T_BOOKMARK_SUFFIX_MSGS, "messages");
+        
+        List bookmarks = browser.getBookmarks();
+        for (int i = 0; i < bookmarks.size(); i++) {
+            NymReferenceNode node = (NymReferenceNode)bookmarks.get(i);
+            if (wantedName.equals(node.getName()))
+                return node;
+        }
+        // does not exist.  create it
+        NymReferenceNode node = new NymReferenceNode(wantedName, null, "", -1, -1, -1, 0, false, false, false);
+        browser.bookmark(node);
+        return node;
+    }
+    
+    private static final String T_BOOKMARK_SUFFIX_MSGS = "syndie.gui.statusbar.bookmarksuffixmsgs";
     
     private static final String T_NEXT_SYNC = "syndie.gui.statusbar.nextsync";
     private static final String T_NEWFORUM = "syndie.gui.statusbar.newforum";

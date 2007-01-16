@@ -69,7 +69,7 @@ public class WelcomeScreen implements Themeable, Translatable {
         _shell.pack();
         
         Rectangle shellSize = _shell.getBounds();
-        Rectangle screenSize = _display.getBounds();
+        Rectangle screenSize = Splash.getScreenSize(_shell);
         int width = Math.max(shellSize.width, 400);
         int x = screenSize.width/2-width/2;
         int y = screenSize.height/2-shellSize.height/2;

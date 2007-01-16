@@ -4,8 +4,10 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
 /**
@@ -22,7 +24,7 @@ public class Splash {
         l.setImage(_img);
         _shell.pack();
         Rectangle imgSize = _img.getBounds();
-        Rectangle screenSize = display.getBounds();
+        Rectangle screenSize = getScreenSize(_shell);
         int x = screenSize.width/2-imgSize.width/2;
         int y = screenSize.height/2-imgSize.height/2;
         _shell.setBounds(x, y, imgSize.width, imgSize.height);
@@ -32,5 +34,17 @@ public class Splash {
         if (!_shell.isDisposed())
             _shell.dispose();
         ImageUtil.dispose(_img);
+    }
+    
+    static Rectangle getScreenSize(Shell shell) {
+        Monitor monitors[] = shell.getDisplay().getMonitors();
+        if ( (monitors == null) || (monitors.length <= 1) ) {
+            return shell.getDisplay().getBounds();
+        } else {
+            // just throw it up on the first monitor (we may not be able to
+            // query shell to see what its coordinates will be (and hence
+            // determine what monitor its on) since its not yet open)
+            return monitors[0].getBounds();
+        }
     }
 }

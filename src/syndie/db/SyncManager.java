@@ -61,9 +61,9 @@ public class SyncManager {
     }
     
     void wakeUpEngine() {
-        _indexFetcher.wakeUp();
-        _inboundFetcher.wakeUp();
-        _outboundPusher.wakeUp();
+        if (_indexFetcher != null) _indexFetcher.wakeUp();
+        if (_inboundFetcher != null) _inboundFetcher.wakeUp();
+        if (_outboundPusher != null) _outboundPusher.wakeUp();
     }
     
     public long getNextSyncDate() {

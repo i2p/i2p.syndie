@@ -405,7 +405,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     BookmarkDnD bookmark = new BookmarkDnD();
                     bookmark.fromString(evt.data.toString());
                     if (bookmark.uri != null) { // parsed fine
-                        bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, -1, 0, false, false, false));
+                        NymReferenceNode parent = StatusBar.getParent(Browser.this, bookmark);
+                        long parentGroupId = -1;
+                        if (parent != null)
+                            parentGroupId = parent.getGroupId();
+                        bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
                         try {
@@ -1506,7 +1510,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
             BrowserTab tab = (BrowserTab)_openTabs.get(uri);
             SyndieURI curURI = tab.getURI(); // may have changed since creation
-            bookmark(new NymReferenceNode(tab.getName(), curURI, tab.getDescription(), -1, -1, -1, 0, false, false, false));
+            
+            BookmarkDnD bookmark = new BookmarkDnD();
+            bookmark.uri = curURI;
+            bookmark.name = tab.getName();
+            bookmark.desc = tab.getDescription();
+            
+            NymReferenceNode parent = StatusBar.getParent(this, bookmark);
+            long parentGroupId = -1;
+            if (parent != null)
+                parentGroupId = parent.getGroupId();
+            bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
         }
     }
     
