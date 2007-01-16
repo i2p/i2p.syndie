@@ -529,7 +529,7 @@ public class MessageTree implements Translatable, Themeable {
                 _filterTag.setText(tags[0]);
             }
             
-            if (uri.isChannel())
+            if (uri.isChannel() && (uri.getScope() != null) )
                 _forumScopeOther = new Hash[] { uri.getScope() };
             else if (uri.isSearch()) {
                 _forumScopeOther = uri.getSearchScopes();

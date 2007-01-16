@@ -451,11 +451,25 @@ public class SyndieURI {
     public Hash[] getSearchScopes() { 
         String scopes[] = getStringArray("scope");
         if (scopes == null) return null;
+        int valid = 0;
         Hash rv[] = new Hash[scopes.length];
         for (int i = 0; i < scopes.length; i++) {
             byte val[] = Base64.decode(scopes[i]);
-            if ( (val != null) && (val.length == Hash.HASH_LENGTH) )
+            if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
                 rv[i] = new Hash(val);
+                valid++;
+            }
+        }
+        if (valid != scopes.length) {
+            Hash validHashes[] = new Hash[valid];
+            int cur = 0;
+            for (int i = 0; i < rv.length; i++) {
+                if (rv[i] != null) {
+                    validHashes[cur] = rv[i];
+                    cur++;
+                }
+            }
+            rv = validHashes;
         }
         return rv;
     }

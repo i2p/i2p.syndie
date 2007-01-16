@@ -27,7 +27,8 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
         browser.getUI().debugMessage("Editing message replying to " + parent + " in forum " + forum);
         _asReply = asReply;
         _editor.setParentMessage(_parent);
-        _editor.setForum(_forum);
+        if (forum != null)
+            _editor.setForum(_forum);
         if (_asReply)
             _editor.setAsReply(true);
         //updateTabInfo(scope, null);

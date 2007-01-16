@@ -248,6 +248,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _enableSave = false;
         _postponeId = -1;
         _postponeVersion = -1;
+        Properties prefs = _browser.getClient().getNymPrefs();
+        String val = prefs.getProperty("editor.defaultAuthor");
+        if (val != null) {
+            byte hash[] = Base64.decode(val);
+            if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
+                _author = new Hash(hash);
+                _forum = _author;
+            }
+        }
         _listeners = new ArrayList();
         if (lsnr != null) _listeners.add(lsnr);
         initComponents();
@@ -2022,11 +2031,22 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 authorFound = true;            
         }
         
+        if (_author != null) {
+            Properties prefs = _browser.getClient().getNymPrefs();
+            prefs.setProperty("editor.defaultAuthor", _author.toBase64());
+            _browser.getClient().setNymPrefs(prefs);
+        }
+        
         redrawAuthorAvatar(_author, authorId, authorSummary);
     }
     private void pickAuthor(Hash author) {
         modified();
         _author = author;
+        if (_author != null) {
+            Properties prefs = _browser.getClient().getNymPrefs();
+            prefs.setProperty("editor.defaultAuthor", _author.toBase64());
+            _browser.getClient().setNymPrefs(prefs);
+        }
         MenuItem items[] = _authorMenu.getItems();
         for (int i = 0; i < items.length; i++) {
             Hash cur = (Hash)items[i].getData("channel.hash");
@@ -2041,6 +2061,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private void pickAuthor(Hash author, long channelId, String summary) {
         _browser.getUI().debugMessage("pick author " + author + " / " + summary);
         _author = author;
+        if (_author != null) {
+            Properties prefs = _browser.getClient().getNymPrefs();
+            prefs.setProperty("editor.defaultAuthor", _author.toBase64());
+            _browser.getClient().setNymPrefs(prefs);
+        }
         redrawAuthorAvatar(author, channelId, summary);
         if (!validateAuthorForum())
             showUnauthorizedWarning();
