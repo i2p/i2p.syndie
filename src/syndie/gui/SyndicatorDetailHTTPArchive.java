@@ -351,9 +351,13 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         if (loc.startsWith("USK@") || loc.startsWith("SSK@") || loc.startsWith("KSK@") || loc.startsWith("CHK@"))
             pub.setText(loc);
         
-        final Button readOnly = new Button(dialog, SWT.RADIO);
+        row = new Composite(dialog, SWT.NONE);
+        row.setLayout(new FillLayout(SWT.HORIZONTAL));
+        row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        final Button readOnly = new Button(row, SWT.RADIO);
         readOnly.setText(_browser.getTranslationRegistry().getText(T_FREENET_READONLY, "Read only"));
-        final Button writeOnly = new Button(dialog, SWT.RADIO);
+        final Button writeOnly = new Button(row, SWT.RADIO);
         writeOnly.setText(_browser.getTranslationRegistry().getText(T_FREENET_WRITEONLY, "Write only"));
         
         row = new Composite(dialog, SWT.NONE);
