@@ -1,5 +1,34 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-01-17  1.002a released
+    - fix private and passphrase protected messages
+    - redesign the syndication tab and revamp the code powering it
+    - temporarily disable the syndication controls in the text interface
+    - prefill the message subject when possible (thanks Anonymous)
+    - remove many image handle leaks which led to windows instability
+    - include most of the highlights tab on the status bar
+    - support browsing unread messages in all bookmarked forums, sorted
+      by forum and then by thread
+    - add in freenet key generation support, and more aggressive USK
+      fetches (thanks Darn)
+    - rework the message read/unread status to fix a few bugs, and include
+      a new "mark thread as read"
+    - drag and drop of messages, forums, and tabs to the bookmark bar
+      and button
+    - always import the standard archives if there aren't any
+    - bundle a Tor archive setting as part of the default install
+    - increased the syndication retries
+    - use the last author as the new author (thanks tuna)
+    - support pulling from Freenet archives through an HTTP proxy
+      (eg fproxy.tino.i2p/USK@blah - thanks voyde)
+    - add in a preview pane into the thread subtab (thanks bar)
+    - color cleanup (thanks voyde)
+    - lots revamped on the message editor (thanks polecat, voyde, Anonymous)
+    - include separate sub tabs for different pages in a single message
+    - switch tabs with Alt+Left/Right (thanks voyde)
+    - make a few options "sticky" (thanks voyde, bar)
+    - properly honor the message size limits (thanks bar)
+
 * 2007-01-04  1.001a released
     - simplified running a headless archive - see bin/runhttpserv.syndie
     - improved dependency tracking during syndication
