@@ -364,7 +364,10 @@ public class MessageTree implements Translatable, Themeable {
             _filterKeyword = new Text(_filterRow, SWT.BORDER | SWT.SINGLE);
             _filterKeyword.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
             _filterKeyword.addTraverseListener(new TraverseListener() {
-                public void keyTraversed(TraverseEvent evt) { _msgTree.applyFilter(); }
+                public void keyTraversed(TraverseEvent evt) { 
+                    if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) )
+                        _msgTree.applyFilter();
+                }
             });
             
             _filterTagLabel = new Label(_filterRow, SWT.NONE);
@@ -374,7 +377,8 @@ public class MessageTree implements Translatable, Themeable {
             _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
             _filterTag.addTraverseListener(new TraverseListener() {
                 public void keyTraversed(TraverseEvent evt) {
-                    if (evt.detail == SWT.TRAVERSE_RETURN) _msgTree.applyFilter();
+                    if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) )
+                        _msgTree.applyFilter();
                 }
             });
             _filterTag.addSelectionListener(new SelectionListener() {
