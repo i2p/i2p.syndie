@@ -162,7 +162,7 @@ public class MessageTree implements Translatable, Themeable {
         _showChannel = showChannel;
         _showDate = showDate;
         _showTags = showTags;
-        _showFlags = showFlags;
+        _showFlags = false; //showFlags; // disabled for now, until we need them
         _hideFilter = hideFilter;
         _expandRoots = expandRoots;
         _expandAll = expandAll;
@@ -275,6 +275,26 @@ public class MessageTree implements Translatable, Themeable {
         prefs.setProperty("browse.useImportDate", useImportDate ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         ctl.getClient().setNymPrefs(prefs);
     }
+ 
+    static boolean shouldMarkReadOnView(BrowserControl ctl) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        return ( (prefs != null) && (prefs.containsKey("browse.markReadOnView")) && (Boolean.valueOf(prefs.getProperty("browse.markReadOnView")).booleanValue()));
+    }
+    static void setShouldMarkReadOnView(BrowserControl ctl, boolean markReadOnView) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        prefs.setProperty("browse.markReadOnView", markReadOnView ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+        ctl.getClient().setNymPrefs(prefs);
+    }
+    
+    static boolean shouldMarkReadOnPreview(BrowserControl ctl) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        return ( (prefs != null) && (prefs.containsKey("browse.markReadOnPreview")) && (Boolean.valueOf(prefs.getProperty("browse.markReadOnPreview")).booleanValue()));
+    }
+    static void setShouldMarkReadOnPreview(BrowserControl ctl, boolean markReadOnPreview) {
+        Properties prefs = ctl.getClient().getNymPrefs();
+        prefs.setProperty("browse.markReadOnPreview", markReadOnPreview ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+        ctl.getClient().setNymPrefs(prefs);
+    }
     
     private static class FilterBar implements Translatable, Themeable {
         private BrowserControl _ctl;
@@ -299,6 +319,8 @@ public class MessageTree implements Translatable, Themeable {
         private MenuItem _advancedDateImport;
         private MenuItem _advancedThreadResults;
         private MenuItem _advancedPreview;
+        private MenuItem _advancedMarkReadOnView;
+        private MenuItem _advancedMarkReadOnPreview;
         private MenuItem _advancedPassphraseRequired;
         private ReferenceChooserPopup _forumChooser;
         /** if > 0, the custom date being filtered */
@@ -387,8 +409,12 @@ public class MessageTree implements Translatable, Themeable {
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedThreadResults = new MenuItem(_advancedMenu, SWT.CHECK);
             _advancedPreview = new MenuItem(_advancedMenu, SWT.CHECK);
-            if (_listener == null)
+            _advancedMarkReadOnView = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedMarkReadOnPreview = new MenuItem(_advancedMenu, SWT.CHECK);
+            if (_listener == null) {
                 _advancedPreview.setEnabled(false);
+                _advancedMarkReadOnPreview.setEnabled(false);
+            }
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
             _advancedDateImport = new MenuItem(_advancedMenu, SWT.CHECK);
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
@@ -401,6 +427,8 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPrivate.setSelection(true);
             _advancedThreadResults.setSelection(true);
             _advancedPreview.setSelection(shouldShowPreview(_ctl));
+            _advancedMarkReadOnView.setSelection(shouldMarkReadOnView(_ctl));
+            _advancedMarkReadOnPreview.setSelection(shouldMarkReadOnPreview(_ctl));
             _advancedDateImport.setSelection(shouldUseImportDate(_ctl));
             
             SelectionListener lsnr = new SelectionListener() {
@@ -418,15 +446,26 @@ public class MessageTree implements Translatable, Themeable {
             //_advancedDateImport.addSelectionListener(lsnr);
             
             _advancedPreview.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
                     setShouldShowPreview(_ctl, _advancedPreview.getSelection());
                     if (_listener != null)
                         _listener.togglePreview(_advancedPreview.getSelection());
                 }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    setShouldShowPreview(_ctl, _advancedPreview.getSelection());
-                    if (_listener != null)
-                        _listener.togglePreview(_advancedPreview.getSelection());
+            });
+            _advancedMarkReadOnView.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    setShouldMarkReadOnView(_ctl, _advancedMarkReadOnView.getSelection());
+                }
+            });
+            _advancedMarkReadOnPreview.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() {
+                    setShouldMarkReadOnPreview(_ctl, _advancedMarkReadOnPreview.getSelection());
                 }
             });
             
@@ -803,6 +842,8 @@ public class MessageTree implements Translatable, Themeable {
             _advancedDateImport.setText(registry.getText(T_ADVANCED_DATEIMPORT, "Use local import date instead of (unreliable) message creation date"));
             _advancedThreadResults.setText(registry.getText(T_ADVANCED_THREAD, "Organize results in threads"));
             _advancedPreview.setText(registry.getText(T_ADVANCED_PREVIEW, "Show a preview of the selected message"));
+            _advancedMarkReadOnView.setText(registry.getText(T_ADVANCED_MARKREADVIEW, "Mark messages read when opened"));
+            _advancedMarkReadOnPreview.setText(registry.getText(T_ADVANCED_MARKREADPREVIEW, "Mark messages read when previewed"));
             _advancedPassphraseRequired.setText(registry.getText(T_ADVANCED_PASSPHRASE_REQUIRED, "Messages requiring a new passphrase"));
             
             populateAgeCombo();
@@ -1726,6 +1767,9 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_ADVANCED_DATEIMPORT = "syndie.gui.messagetree.filteradvanced.dateimport";
     private static final String T_ADVANCED_THREAD = "syndie.gui.messagetree.filteradvanced.thread";
     private static final String T_ADVANCED_PREVIEW = "syndie.gui.messagetree.filteradvanced.preview";
+    private static final String T_ADVANCED_MARKREADVIEW = "syndie.gui.messagetree.filteradvanced.markreadview";
+    private static final String T_ADVANCED_MARKREADPREVIEW = "syndie.gui.messagetree.filteradvanced.markreadpreview";
+
     private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     
     private static final String T_VIEW = "syndie.gui.messagetree.view";

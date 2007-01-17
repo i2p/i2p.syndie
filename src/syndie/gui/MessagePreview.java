@@ -104,6 +104,10 @@ public class MessagePreview implements Themeable, Translatable {
             _target = msg.getTargetChannel();
             _author = _browser.getClient().getChannelHash(msg.getAuthorChannelId());
             _body.renderPage(new PageRendererSource(_browser), _uri);
+            if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) ) {
+                if (MessageTree.shouldMarkReadOnPreview(_browser))
+                    _browser.getClient().markMessageRead(msg.getInternalId());
+            }
         } else {
             _target = null;
             _author = null;

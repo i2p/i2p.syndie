@@ -196,6 +196,8 @@ public class MessageView implements Translatable, Themeable {
                 prompt.open();
             } else {
                 _root.setVisible(true);
+                if (MessageTree.shouldMarkReadOnView(_browser))
+                    _browser.getClient().markMessageRead(msg.getInternalId());
             }
             // perhaps we should check for the message avatar too...
             byte authorAvatar[] = _browser.getClient().getChannelAvatar(msg.getAuthorChannelId());
