@@ -34,7 +34,11 @@ class IndexFetcher {
                 
                 SyncArchive archive = getNextToFetch();
                 if (archive != null) {
-                    fetch(archive);
+                    try {
+                        fetch(archive);
+                    } catch (Exception e) {
+                        archive.indexFetchFail("Internal error fetching the index", e, true);
+                    }
                 } else {
                     try {
                         synchronized (IndexFetcher.this) {

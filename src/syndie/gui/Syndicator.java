@@ -173,16 +173,23 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             for (int i = 0; i < cnt; i++) {
                 SyncArchive archive = mgr.getArchive(i);
                 if (archive.getURL().equals(uri.getURL())) {
+                    _browser.getUI().debugMessage("viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
                     TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
                     if (item != null) {
                         _tree.setSelection(item);
                         fireSelection(item);
+                        viewDetailArchive(archive);
                     }
                     return;
                 }
             }
             // it isn't an existing archive, so show it in the details pane w/out a treeitem
-            // todo: do that
+            _tree.setSelection(new TreeItem[0]);
+            SyncArchive archive = new SyncArchive(mgr, _browser.getClient());
+            archive.setURL(uri.getURL());
+            archive.setName(uri.getString("name"));
+            _browser.getUI().debugMessage("editing as if we are viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
+            viewDetailArchive(archive);
         }
     }
     
@@ -316,8 +323,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 }
             });
         }
-        
-        if ( (archive.getIncomingActionCount() > 0) || (archive.getOutgoingActionCount() > 0) ) {
+        // only allow clear when there isn't a sync in progress
+        if ( !syncRunning(archive) && ( (archive.getIncomingActionCount() > 0) || (archive.getOutgoingActionCount() > 0) ) ) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
             item.addSelectionListener(new SelectionListener() {
@@ -336,7 +343,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private void buildMenuIncoming(TreeItem item) {
         final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
-        if (archive.getIncomingActionCount() > 0) {
+        if (!syncRunning(archive) && archive.getIncomingActionCount() > 0) {
             MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
             clear.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
             clear.addSelectionListener(new SelectionListener() {
@@ -350,7 +357,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     }
     private void buildMenuOutgoing(TreeItem item) {
         final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
-        if (archive.getOutgoingActionCount() > 0) {
+        if (!syncRunning(archive) && archive.getOutgoingActionCount() > 0) {
             MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
             clear.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
             clear.addSelectionListener(new SelectionListener() {
@@ -394,15 +401,17 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                     public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
                 });
             }
-            item = new MenuItem(_treeMenu, SWT.PUSH);
-            item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
-                    action.dispose();
-                }
-            });
+            if (!syncRunning(action.getArchive())) {
+                item = new MenuItem(_treeMenu, SWT.PUSH);
+                item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
+                item.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                    private void fire() {
+                        action.dispose();
+                    }
+                });
+            }
         } else {
             MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_browser.getTranslationRegistry().getText(T_MENU_CANCEL_FETCH, "Cancel"));
@@ -426,7 +435,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
         });
         
-        if (action.isComplete()) {
+        if (!syncRunning(action.getArchive()) && action.isComplete()) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear action"));
             item.addSelectionListener(new SelectionListener() {
@@ -450,6 +459,14 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     }
     private static final String T_MENU_VIEW = "syndie.gui.syndicator.menu.view";
     private static final String T_MENU_PBE = "syndie.gui.syndicator.menu.pbe";
+    
+    private boolean syncRunning(SyncArchive archive) {
+        if ( (archive.getNextPullTime() > 0) && (archive.getNextPullTime() <= System.currentTimeMillis()) )
+            return true;
+        if ( (archive.getNextPushTime() > 0) && (archive.getNextPushTime() <= System.currentTimeMillis()) )
+            return true;
+        return false;
+    }
     
     private void viewDetailArchive(SyncArchive archive) {
         if (_detail != null) _detail.dispose();
@@ -672,33 +689,35 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             if (action.isScheduled()) {
                 actionItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_ASAP, "ASAP"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+            } else if (action.isReadKeyUnknown()) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_READKEYUNKNOWN, "Read key unknown"));
+            } else if (action.getPBEPrompt() != null) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_PBE, "Passphrase required: ") + action.getPBEPrompt());
+            } else if (action.isReplyKeyUnknown()) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_REPLYKEYUNKNOWN, "Reply key unknown"));
+            } else if (action.isCorrupt()) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_CORRUPT, "Message is corrupt"));
+            } else if (action.getFetchErrorMsg() != null) {
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_FAILED, "Fetch failed: ") + action.getFetchErrorMsg());
             } else if (action.isExecuting()) {
                 actionItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
             } else { // complete
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
-                if (action.isReadKeyUnknown()) {
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_READKEYUNKNOWN, "Read key unknown"));
-                } else if (action.isReplyKeyUnknown()) {
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_REPLYKEYUNKNOWN, "Reply key unknown"));
-                } else if (action.getPBEPrompt() != null) {
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_PBE, "Passphrase required: ") + action.getPBEPrompt());
-                } else if (action.isCorrupt()) {
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_CORRUPT, "Message is corrupt"));
-                } else if (action.getFetchErrorMsg() != null) {
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_FAILED, "Fetch failed: ") + action.getFetchErrorMsg());
-                } else { // ok                                
-                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
-                    actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_OK, "Imported"));
-                }
-                
-                resizeCols(actionItem);
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_OK, "Imported"));
             }
+            resizeCols(actionItem);
         }
     }
     
@@ -795,8 +814,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     }
     
     private void resizeCols(TreeItem item) {
-        setMinWidth(_colName, item.getText(0), 0, 100);
-        setMinWidth(_colTime, item.getText(1), 0, 100);
+        setMinWidth(_colName, item.getText(0), 0, 200);
+        setMinWidth(_colTime, item.getText(1), 0, 150);
         setMinWidth(_colStatus, item.getText(2), 0, 50);
         setMinWidth(_colSummary, item.getText(3), 0, 100);
     }

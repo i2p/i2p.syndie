@@ -51,7 +51,12 @@ public class SyncOutboundPusher {
                 
                 SyncArchive archive = getNextToPush(Runner.this);
                 if (archive != null) {
-                    push(Runner.this, archive);
+                    try {
+                        push(Runner.this, archive);
+                    } catch (Exception e) {
+                        synchronized (_runnerToArchive) { _runnerToArchive.remove(Runner.this); }
+                        archive.indexFetchFail("Internal error pushing", e, true);
+                    }
                 } else {
                     try {
                         synchronized (SyncOutboundPusher.this) {

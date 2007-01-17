@@ -35,6 +35,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.JobRunner;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.ThreadAccumulatorJWZ;
@@ -228,7 +229,7 @@ public class StatusBar implements Translatable, Themeable {
         if (onlineStateOnly) return;
         
         int newForums = refreshNewForums();
-        String unread = calcUnread();
+        calcUnread();
         int pbe = refreshPBE();
         String priv = refreshPrivateMessages();
         int postpone = refreshPostponed();
@@ -242,15 +243,6 @@ public class StatusBar implements Translatable, Themeable {
         } else {
             ((GridData)_newForum.getLayoutData()).exclude = true;
             _newForum.setVisible(false);
-        }
-        
-        if (unread != null) {
-            _unread.setText(registry.getText(T_UNREAD, "Unread: ") + unread);
-            ((GridData) _unread.getLayoutData()).exclude = false;
-            _unread.setVisible(true);
-        } else {
-            ((GridData) _unread.getLayoutData()).exclude = true;
-            _unread.setVisible(false);
         }
         
         if (pbe > 0) {
@@ -280,9 +272,13 @@ public class StatusBar implements Translatable, Themeable {
             _postpone.setVisible(false);
         }
         
+        // updated later
+        boolean unreadExcluded = ((GridData) _unread.getLayoutData()).exclude;
+            
         int cells = 1;
         if (newForums == 0) cells++;
-        if (unread == null) cells++;
+        //if (unread == null) cells++;
+        if (unreadExcluded) cells++;
         if (pbe == 0) cells++;
         if (priv == null) cells++;
         if (postpone == 0) cells++;
@@ -292,22 +288,43 @@ public class StatusBar implements Translatable, Themeable {
         _root.layout(true);
     }
     
-    private String calcUnread() {
-        _browser.getUI().debugMessage("calcUnread begin");
-        SyndieURI uri = _browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser));
-        ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
-        acc.setFilter(uri);
-        acc.gatherThreads();
-        Set forums = new HashSet();
-        int threads = 0;
-        for (int i = 0; i < acc.getThreadCount(); i++) {
-            ReferenceNode node = acc.getRootThread(i);
-            if (calcUnread(node, forums))
-                threads++;
+    private boolean _unreadCalcInProgress = false;
+    private void calcUnread() {
+        synchronized (StatusBar.this) {
+            if (_unreadCalcInProgress) return;
+            _unreadCalcInProgress = true;
         }
-        _browser.getUI().debugMessage("calcUnread end: " + forums.size() + " / " + threads);
-        
-        
+        _browser.getUI().debugMessage("calcUnread begin");
+        final SyndieURI uri = _browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser));
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
+                acc.setFilter(uri);
+                acc.gatherThreads();
+                final Set forums = new HashSet();
+                int threads = 0;
+                for (int i = 0; i < acc.getThreadCount(); i++) {
+                    ReferenceNode node = acc.getRootThread(i);
+                    if (calcUnread(node, forums))
+                        threads++;
+                }
+                final int unreadThreads = threads;
+                final Map sortedForums = sortForums(forums);
+                _browser.getUI().debugMessage("calcUnread end: " + forums.size() + " / " + threads);
+                
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() {
+                        renderUnread(sortedForums, unreadThreads);
+                        synchronized (StatusBar.this) {
+                            _unreadCalcInProgress = false;
+                        }
+                    }
+                });
+            }
+        });
+    }
+    
+    private void renderUnread(Map sortedForums, int threads) {
         MenuItem items[] = _unreadMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
@@ -326,7 +343,6 @@ public class StatusBar implements Translatable, Themeable {
             
             new MenuItem(_unreadMenu, SWT.SEPARATOR);
             
-            Map sortedForums = sortForums(forums);
             for (Iterator iter = sortedForums.entrySet().iterator(); iter.hasNext(); ) {
                 Map.Entry entry = (Map.Entry)iter.next();
                 String name = (String)entry.getKey();
@@ -345,11 +361,24 @@ public class StatusBar implements Translatable, Themeable {
             }
         }
         
-        if (threads == 0)
-            return null;
-        else
-            return forums.size() + "/" + threads;
+        GridData gd = (GridData)_unread.getLayoutData();
+        boolean wasExcluded = gd.exclude;
+        if (threads > 0) {
+            _unread.setText(_browser.getTranslationRegistry().getText(T_UNREAD, "Unread: ") + sortedForums.size() + "/" + threads);
+            gd.exclude = false;
+            _unread.setVisible(true);
+            if (wasExcluded)
+                ((GridData)_version.getLayoutData()).horizontalSpan = ((GridData)_version.getLayoutData()).horizontalSpan - 1;
+        } else {
+            gd.exclude = true;
+            _unread.setVisible(false);
+            if (!wasExcluded)
+                ((GridData)_version.getLayoutData()).horizontalSpan = ((GridData)_version.getLayoutData()).horizontalSpan + 1;
+        }
+        
+        _root.layout(true);
     }
+    
     private static final String T_UNREAD_ALL = "syndie.gui.statusbar.unread.all";
     private Map sortForums(Set forums) {
         Map rv = new TreeMap();

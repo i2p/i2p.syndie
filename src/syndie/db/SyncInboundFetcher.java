@@ -42,7 +42,12 @@ class SyncInboundFetcher {
                 
                 SyncArchive archive = getNextToFetch(Runner.this);
                 if (archive != null) {
-                    fetch(Runner.this, archive);
+                    try {
+                        fetch(Runner.this, archive);
+                    } catch (Exception e) {
+                        synchronized (_runnerToArchive) { _runnerToArchive.remove(Runner.this); }
+                        archive.indexFetchFail("Internal error fetching", e, true);
+                    }
                 } else {
                     try {
                         synchronized (SyncInboundFetcher.this) {
@@ -299,15 +304,15 @@ class SyncInboundFetcher {
             if (!ok) {
                 action.importCorrupt();
             } else {
-                if (imp.wasMissingKey()) {
+                if (imp.wasPBE()) {
+                    String prompt = imp.getPBEPrompt();
+                    action.importPBE(prompt);
+                } else if (imp.wasMissingKey()) {
                     if (imp.wasReply()) {
                         action.importMissingReplyKey();
                     } else {
-                        action.importMissingReplyKey();
+                        action.importMissingReadKey();
                     }
-                } else if (imp.wasPBE()) {
-                    String prompt = imp.getPBEPrompt();
-                    action.importPBE(prompt);
                 } else {
                     action.importSuccessful();
                 }
