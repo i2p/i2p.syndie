@@ -362,7 +362,21 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             });
         }
     }
-    private void buildMenuFetchIndex(TreeItem item) {}
+    private void buildMenuFetchIndex(final TreeItem item) {
+        final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
+        MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
+        clear.setText(_browser.getTranslationRegistry().getText(T_MENU_CLEAR_ACTION, "Clear"));
+        clear.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                // there isn't any associated element within the archive we need to clear
+                _items.remove(item);
+                _archiveNameToIndexItem.remove(archive.getName());
+                item.dispose();
+            }
+        });
+    }
     private void buildMenuIncoming(final SyncArchive.IncomingAction action) {
         if (action.isComplete()) {
             final SyndieURI uri = action.getURI();
@@ -440,6 +454,9 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private void viewDetailArchive(SyncArchive archive) {
         if (_detail != null) _detail.dispose();
         _sash.setMaximizedControl(null);
+        // SyndicatorDetailHTTPArchive deals with HTTP and Freenet archives (and though
+        // it covers for the file based archives, a separate file based archive config
+        // would be better).  down the line we may need to pick different ones here
         _detail = new SyndicatorDetailHTTPArchive(_browser, _detailRoot, archive);
         //_detailRoot.setExpandHorizontal(true);
         //_detailRoot.setExpandVertical(true);

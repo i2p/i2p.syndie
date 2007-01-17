@@ -486,8 +486,14 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
                 box.open();
                 //_ui.commandComplete(-1, null);
             } else {
-                targetPub.setText((String)rv.get("RequestURI"));
-                targetPriv.setText((String)rv.get("InsertURI"));
+                
+                // from http://wiki.freenetproject.org/FCP2p0SSKKeypair the response will
+                // have values like
+                //   InsertURI=freenet:SSK@AKTTKG6YwjrHzWo67laRcoPqibyiTdyYufjVg54fBlWr,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM/
+                //   RequestURI=freenet:SSK@BnHXXv3Fa43w~~iz1tNUd~cj4OpUuDjVouOWZ5XlpX0,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM,AQABAAE/
+                
+                targetPub.setText(getRequestURI((String)rv.get("RequestURI")));
+                targetPriv.setText(getInsertURI((String)rv.get("InsertURI")));
             }
             s.close();
         } catch (Exception e) {
@@ -502,6 +508,30 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     }
     private static final String T_FREENET_ERROR = "syndie.gui.syndicatordetailhttparchive.freenet.error";
     private static final String T_FREENET_ERROR_TITLE = "syndie.gui.syndicatordetailhttparchive.freenet.error.title";
+    
+    /** 
+     * turn the SSK public key retrieved from fred and make it a USK w/ version -1 
+     * RequestURI=freenet:SSK@BnHXXv3Fa43w~~iz1tNUd~cj4OpUuDjVouOWZ5XlpX0,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM,AQABAAE/
+     */
+    private String getRequestURI(String publicSSK) {
+        int index = publicSSK.indexOf("SSK@");
+        String key = publicSSK.substring(index+4);
+        while (key.endsWith("/"))
+            key = key.substring(0, key.length()-1);
+        return "USK@" + key + "/archive/-1/";
+    }
+    
+    /** 
+     * turn the SSK public key retrieved from fred and make it a USK w/ version 0
+     * InsertURI=freenet:SSK@AKTTKG6YwjrHzWo67laRcoPqibyiTdyYufjVg54fBlWr,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM/
+     */
+    private String getInsertURI(String privateSSK) {
+        int index = privateSSK.indexOf("SSK@");
+        String key = privateSSK.substring(index+4);
+        while (key.endsWith("/"))
+            key = key.substring(0, key.length()-1);
+        return "USK@" + key + "/archive/0/";
+    }
     
     private void save() {
         _archive.setName(_name.getText());
