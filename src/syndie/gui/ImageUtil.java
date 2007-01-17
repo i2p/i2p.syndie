@@ -119,6 +119,11 @@ public class ImageUtil {
     public static final Image ICON_EDITOR_PAGEADD = createImageFromResource("iconEdPageAdd.png");
     public static final Image ICON_EDITOR_PAGETYPE_TEXT = createImageFromResource("iconEdPageTypeText.png");
     public static final Image ICON_EDITOR_PAGETYPE_HTML = createImageFromResource("iconEdPageTypeHTML.png");
+    public static final Image ICON_EDITOR_ATTACH = createImageFromResource("iconEdAttach.png");
+    public static final Image ICON_EDITOR_LINK = createImageFromResource("iconEdLink.png");
+    public static final Image ICON_EDITOR_STYLE = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+    public static final Image ICON_EDITOR_SPELL = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+    public static final Image ICON_EDITOR_SEARCH = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
     
     public static final Image ICON_ONLINE = createImageFromResource("iconOnline.png");
     public static final Image ICON_OFFLINE = createImageFromResource("iconOffline.png");
@@ -206,6 +211,11 @@ public class ImageUtil {
         _indisposableImages.add(ICON_EDITOR_PAGEADD);
         _indisposableImages.add(ICON_EDITOR_PAGETYPE_TEXT);
         _indisposableImages.add(ICON_EDITOR_PAGETYPE_HTML);
+        _indisposableImages.add(ICON_EDITOR_ATTACH);
+        _indisposableImages.add(ICON_EDITOR_LINK);
+        _indisposableImages.add(ICON_EDITOR_STYLE);
+        _indisposableImages.add(ICON_EDITOR_SPELL);
+        _indisposableImages.add(ICON_EDITOR_SEARCH);
         
         _indisposableImages.add(ICON_ONLINE);
         _indisposableImages.add(ICON_OFFLINE);

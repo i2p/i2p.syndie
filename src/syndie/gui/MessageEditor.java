@@ -111,10 +111,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     // forum control
     private Group _forumGroup;
     private Button _forumButton;
+    private Image _forumAvatar;
     private Menu _forumMenu;
     // author control
     private Group _authorGroup;
     private Button _authorButton;
+    private Image _authorAvatar;
     private Menu _authorMenu;
     private MenuItem _authorMenuOther;
     // privacy control
@@ -278,7 +280,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (_styler != null) _styler.dispose();
         if (_spellchecker != null) _spellchecker.dispose();
         if (_finder != null) _finder.dispose();
+        while (_pageEditors.size() > 0)
+            ((PageEditor)_pageEditors.remove(0)).dispose();
         
+        ImageUtil.dispose(_forumAvatar);
+        ImageUtil.dispose(_authorAvatar);
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
@@ -1894,7 +1900,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 break;
             }
         }
-        ImageUtil.dispose(_forumButton.getImage());
+        ImageUtil.dispose(_forumAvatar);
         _forumButton.setImage(null);
         if (channelId >= 0) {
             // don't show the forum avatar unless the forum is bookmarked or we own the channel -
@@ -1903,8 +1909,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             if (isManaged || _browser.isBookmarked(SyndieURI.createScope(forum))) {
                 byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
                 if (avatar != null) {
-                    Image img = ImageUtil.createImage(avatar);
-                    _forumButton.setImage(img);
+                    _forumAvatar = ImageUtil.createImage(avatar);
+                    _forumButton.setImage(_forumAvatar);
                 } else {
                     _forumButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
                 }
@@ -2079,12 +2085,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 break;
             }
         }
-        ImageUtil.dispose(_authorButton.getImage());
+        ImageUtil.dispose(_authorAvatar);
         _authorButton.setImage(null);
         byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
         if (avatar != null) {
-            Image img = ImageUtil.createImage(avatar);
-            _authorButton.setImage(img);
+            _authorAvatar = ImageUtil.createImage(avatar);
+            _authorButton.setImage(_authorAvatar);
         } else {
             _authorButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
         }
@@ -2248,7 +2254,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _pageGroup.setLayout(new FillLayout());
         
         _pageButton = new Button(_pageGroup, SWT.PUSH);
-        _pageButton.setImage(ImageUtil.resize(ImageUtil.ICON_EDITOR_PAGEADD, 48, 48, false));
+        _pageButton.setImage(ImageUtil.ICON_EDITOR_PAGEADD);
         
         _pageMenu = new Menu(_pageButton);
         _pageGroup.setMenu(_pageMenu);
@@ -2298,7 +2304,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _attachGroup.setLayout(new FillLayout());
         
         _attachButton = new Button(_attachGroup, SWT.PUSH);
-        _attachButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
+        _attachButton.setImage(ImageUtil.ICON_EDITOR_ATTACH);
         
         _attachMenu = new Menu(_attachButton);
         _attachGroup.setMenu(_attachMenu);
@@ -2329,7 +2335,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _linkGroup.setLayout(new FillLayout());
         
         _linkButton = new Button(_linkGroup, SWT.PUSH);
-        _linkButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
+        _linkButton.setImage(ImageUtil.ICON_EDITOR_LINK);
         
         _linkMenu = new Menu(_linkButton);
         _linkGroup.setMenu(_linkMenu);
@@ -2428,7 +2434,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _styleGroup.setLayout(new FillLayout());
         
         _styleButton = new Button(_styleGroup, SWT.PUSH);
-        _styleButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
+        _styleButton.setImage(ImageUtil.ICON_EDITOR_STYLE);
         
         _styleMenu = new Menu(_styleButton);
         _styleGroup.setMenu(_styleMenu);
@@ -2526,7 +2532,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _spellGroup.setLayout(new FillLayout());
         
         _spellButton = new Button(_spellGroup, SWT.PUSH);
-        _spellButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
+        _spellButton.setImage(ImageUtil.ICON_EDITOR_SPELL);
         _spellButton.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { spellNext(); }
             public void widgetSelected(SelectionEvent selectionEvent) { spellNext(); }
@@ -2541,7 +2547,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _searchGroup.setLayout(new FillLayout());
         
         _searchButton = new Button(_searchGroup, SWT.PUSH);
-        _searchButton.setImage(ImageUtil.resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false));
+        _searchButton.setImage(ImageUtil.ICON_EDITOR_SEARCH);
         _searchButton.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { search(); }
             public void widgetSelected(SelectionEvent selectionEvent) { search(); }
@@ -3244,6 +3250,9 @@ class MessageEditorStyler implements Themeable, Translatable {
         _editor.getBrowser().getThemeRegistry().unregister(this);
         _editor.getBrowser().getTranslationRegistry().unregister(this);
         _txtShell.dispose();
+        if ( (_sampleFont != null) && (!_sampleFont.isDisposed()) )
+            _sampleFont.dispose();
+        _sampleFont = null;
     }
     
     public Color getControlFGColor() { return ifDiff(_txtFGColor.getBackground(), _txtFGColor.getParent().getBackground()); }
@@ -3387,7 +3396,8 @@ class MessageEditorStyler implements Themeable, Translatable {
             StyleRange range = new StyleRange(0, _sampleText.getCharCount(), fgColor, bgColor);
             range.strikeout = strikeout;
             range.underline = underline;
-            range.font = getSampleFont(bold, italic, font, sz);
+            _sampleFont = getSampleFont(bold, italic, font, sz);
+            range.font = _sampleFont;
             int align = SWT.LEFT;
             if (_txtAlignCenter.getSelection()) align = SWT.CENTER;
             else if (_txtAlignRight.getSelection()) align = SWT.RIGHT;
@@ -3414,6 +3424,8 @@ class MessageEditorStyler implements Themeable, Translatable {
     }
     
     private void resetTextStyle() {
+        if ( (_sampleFont != null) && (!_sampleFont.isDisposed()) ) _sampleFont.dispose();
+        _sampleFont = null;
         _sampleText.setStyleRanges(null, null);
         _sampleText.setLineAlignment(0, 1, SWT.LEFT);
         _txtBold.setSelection(false);

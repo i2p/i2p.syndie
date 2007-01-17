@@ -893,7 +893,7 @@ public class PageRenderer implements Themeable {
 
     private void pickMenu(int x, int y, boolean showMenu) {
         if (_disposed) return;
-        _browser.getUI().debugMessage("menu is visible? " + _text.getMenu().isVisible());
+        //_browser.getUI().debugMessage("menu is visible? " + _text.getMenu().isVisible());
         Point p = new Point(x, y);
         int off = -1;
         try {
@@ -1055,7 +1055,7 @@ public class PageRenderer implements Themeable {
     
     private void pickBodyMenu() {
         _text.setMenu(_bodyMenu);
-        _browser.getUI().debugMessage("pickBodyMenu");
+        //_browser.getUI().debugMessage("pickBodyMenu");
             
         _currentEventURI = null;
         _currentEventLinkTag = null;
@@ -1114,7 +1114,7 @@ public class PageRenderer implements Themeable {
     }
     
     private void pickImageMenu(HTMLTag imgTag) {
-        _browser.getUI().debugMessage("pickImageMenu: " + imgTag);
+        //_browser.getUI().debugMessage("pickImageMenu: " + imgTag);
         _text.setMenu(_imageMenu);
             
         _currentEventURI = null;
