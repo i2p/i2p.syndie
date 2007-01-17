@@ -1444,6 +1444,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 _browser.getUI().debugMessage("thread: " + roots);
                 _threadTree.setMessages(roots);
                 _threadTree.select(uri);
+                
+                if (_subject.getText().trim().length() <= 0) {
+                    String parentSubject = MessageView.calculateSubject(_browser, uri).trim();
+                    if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+                        _subject.setText("re: " + parentSubject);
+                    }
+                }
             } else {
                 _browser.getUI().debugMessage("parentMessage is " + uri + ", but we don't know it, so don't know its ancestors");
 
@@ -1457,6 +1464,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 _threadTree.setMessages(roots);
                 _threadTree.select(uri);
             }
+            
             modified();
         } else {
             _threadTree.dispose();

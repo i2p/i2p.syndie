@@ -138,7 +138,17 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void selected() {
                 TreeItem items[] = _tree.getSelection();
                 if ( (items != null) && (items.length == 1) )
-                    fireSelection(items[0]);
+                    fireSelection(items[0], false);
+            }
+            public void doubleclick() {
+                TreeItem items[] = _tree.getSelection();
+                if ( (items != null) && (items.length == 1) )
+                    fireSelection(items[0], true);
+            }
+            public void returnHit() {
+                TreeItem items[] = _tree.getSelection();
+                if ( (items != null) && (items.length == 1) )
+                    fireSelection(items[0], true);
             }
         };
         _tree.addKeyListener(lsnr);
@@ -177,8 +187,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                     TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
                     if (item != null) {
                         _tree.setSelection(item);
-                        fireSelection(item);
-                        viewDetailArchive(archive);
+                        viewDetailArchive(archive, false);
                     }
                     return;
                 }
@@ -189,7 +198,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             archive.setURL(uri.getURL());
             archive.setName(uri.getString("name"));
             _browser.getUI().debugMessage("editing as if we are viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
-            viewDetailArchive(archive);
+            viewDetailArchive(archive, false);
         }
     }
     
@@ -205,7 +214,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private void add() {
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
-        viewDetailArchive(new SyncArchive(mgr, _browser.getClient()));
+        viewDetailArchive(new SyncArchive(mgr, _browser.getClient()), false);
     }
     private void cancel() {
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
@@ -260,23 +269,23 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             _browser.getUI().debugMessage("Unknown type is selected: " + val + " for " + item);
         }
     }
-    private void fireSelection(TreeItem item) {
+    private void fireSelection(TreeItem item, boolean fireDefaultAction) {
         // depending on what type of item is selected, show a different details panel
         Object val = _items.get(item);
         if (val == null) return;
         if (val instanceof SyncArchive) {
-            viewDetailArchive((SyncArchive)val);
+            viewDetailArchive((SyncArchive)val, fireDefaultAction);
         } else if (val instanceof String) {
             if ("incoming".equals(val))
-                viewDetailIncoming(item);
+                viewDetailIncoming(item, fireDefaultAction);
             else if ("outgoing".equals(val))
-                viewDetailOutgoing(item);
+                viewDetailOutgoing(item, fireDefaultAction);
             else if ("fetchindex".equals(val))
-                viewDetailFetchIndex(item);
+                viewDetailFetchIndex(item, fireDefaultAction);
         } else if (val instanceof SyncArchive.IncomingAction) {
-            viewDetailIncoming((SyncArchive.IncomingAction)val);
+            viewDetailIncoming((SyncArchive.IncomingAction)val, fireDefaultAction);
         } else if (val instanceof SyncArchive.OutgoingAction) {
-            viewDetailOutgoing((SyncArchive.OutgoingAction)val);
+            viewDetailOutgoing((SyncArchive.OutgoingAction)val, fireDefaultAction);
         } else {
             // unknown type
             _browser.getUI().debugMessage("Unknown type is selected: " + val + " for " + item);
@@ -468,7 +477,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         return false;
     }
     
-    private void viewDetailArchive(SyncArchive archive) {
+    private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {
         if (_detail != null) _detail.dispose();
         _sash.setMaximizedControl(null);
         // SyndicatorDetailHTTPArchive deals with HTTP and Freenet archives (and though
@@ -486,11 +495,17 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         if (item != null) // null for new ones
             _tree.showItem(item);
     }
-    private void viewDetailIncoming(TreeItem item) {}
-    private void viewDetailOutgoing(TreeItem item) {}
-    private void viewDetailFetchIndex(TreeItem item) {}
-    private void viewDetailIncoming(SyncArchive.IncomingAction action) {}
-    private void viewDetailOutgoing(SyncArchive.OutgoingAction action) {}
+    private void viewDetailIncoming(TreeItem item, boolean fireDefaultAction) {}
+    private void viewDetailOutgoing(TreeItem item, boolean fireDefaultAction) {}
+    private void viewDetailFetchIndex(TreeItem item, boolean fireDefaultAction) {}
+    private void viewDetailIncoming(SyncArchive.IncomingAction action, boolean fireDefaultAction) {
+        if ( (action.getCompletionTime() > 0) && (action.getFetchErrorMsg() != null) )
+            _browser.view(action.getURI());
+    }
+    private void viewDetailOutgoing(SyncArchive.OutgoingAction action, boolean fireDefaultAction) {
+        if ( (action.getCompletionTime() > 0) && (action.getErrorMsg() != null) )
+            _browser.view(action.getURI());
+    }
     
     private void loadData() {
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
