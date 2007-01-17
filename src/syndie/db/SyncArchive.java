@@ -599,6 +599,8 @@ public class SyncArchive {
         
         if (notifyListeners)
             fireUpdated();
+        
+        _manager.wakeUpEngine();
     }
     
     public void delete() { delete(true); }
