@@ -244,7 +244,10 @@ class SyncInboundFetcher {
         
             url = url + query;
             
-            _manager.getUI().statusMessage("Fetching [" + url + "]");
+            if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+                _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+            else
+                _manager.getUI().statusMessage("Fetching [" + url + "]");
             try {
                 File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
                 EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);

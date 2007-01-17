@@ -436,7 +436,11 @@ public class SyncOutboundPusher {
         if (q > 0)
             url = url + query;
         
-        _manager.getUI().debugMessage("About to post messages to " + url);
+        
+        if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+            _manager.getUI().statusMessage("Pushing to [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+        else
+            _manager.getUI().statusMessage("Pushing to [" + url + "]");
         Socket s = null;
         try {
             if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) && (archive.getHTTPProxyPort() > 0) ) {

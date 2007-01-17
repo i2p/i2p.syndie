@@ -84,7 +84,10 @@ class IndexFetcher {
     
     private void fetchFreenetIndex(SyncArchive archive) {
         String url = getFreenetURL(archive);
-        _manager.getUI().statusMessage("Fetching [" + url + "]");
+        if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+            _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+        else
+            _manager.getUI().statusMessage("Fetching [" + url + "]");
         try {
             File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
             EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
@@ -182,7 +185,10 @@ class IndexFetcher {
             // already contains the shared-index.dat, so no need to rewrite it further
         }
         
-        _manager.getUI().statusMessage("Fetching [" + url + "]");
+        if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+            _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+        else
+            _manager.getUI().statusMessage("Fetching [" + url + "]");
         try {
             File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
             EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);

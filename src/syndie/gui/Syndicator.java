@@ -499,11 +499,11 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private void viewDetailOutgoing(TreeItem item, boolean fireDefaultAction) {}
     private void viewDetailFetchIndex(TreeItem item, boolean fireDefaultAction) {}
     private void viewDetailIncoming(SyncArchive.IncomingAction action, boolean fireDefaultAction) {
-        if ( (action.getCompletionTime() > 0) && (action.getFetchErrorMsg() != null) )
+        if ( fireDefaultAction && (action.getCompletionTime() > 0) && (action.getFetchErrorMsg() == null) )
             _browser.view(action.getURI());
     }
     private void viewDetailOutgoing(SyncArchive.OutgoingAction action, boolean fireDefaultAction) {
-        if ( (action.getCompletionTime() > 0) && (action.getErrorMsg() != null) )
+        if ( fireDefaultAction && (action.getCompletionTime() > 0) && (action.getErrorMsg() == null) )
             _browser.view(action.getURI());
     }
     
