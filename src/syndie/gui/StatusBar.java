@@ -451,6 +451,7 @@ public class StatusBar implements Translatable, Themeable {
             });
         }
         
+        /*
         final List readMsgIds = _browser.getPrivateMsgIds(true);
         if (readMsgIds.size() > 0) {
             MenuItem sub = new MenuItem(_privMenu, SWT.CASCADE);
@@ -476,13 +477,14 @@ public class StatusBar implements Translatable, Themeable {
                 });
             }
         }
+         */
         
         int unread = unreadMsgIds.size();
-        int read = readMsgIds.size();
-        if ( (unread == 0) && (read == 0) )
+        //int read = readMsgIds.size();
+        if (unread == 0) // && (read == 0) )
             return null;
         else
-            return unread + "/" + read;
+            return unread + ""; //+ "/" + read;
     }
     private static final String T_PRIV_MARKALLREAD = "syndie.gui.statusbar.priv.markallread";
     private static final String T_PRIV_READ = "syndie.gui.statusbar.priv.read";

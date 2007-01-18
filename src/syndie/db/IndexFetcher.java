@@ -36,8 +36,8 @@ class IndexFetcher {
                 }
                 
                 SyncArchive archive = getNextToFetch();
-                _manager.getUI().debugMessage("next index to fetch: " + archive);
                 if (archive != null) {
+                    _manager.getUI().debugMessage("next index to fetch: " + archive);
                     try {
                         fetch(archive);
                     } catch (Exception e) {
@@ -69,7 +69,7 @@ class IndexFetcher {
                 return archive;
             }
         }
-        _manager.getUI().debugMessage("no more archives to fetchIndex for");
+        //_manager.getUI().debugMessage("no more archives to fetchIndex for");
         return null;
     }
 

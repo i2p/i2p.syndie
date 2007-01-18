@@ -338,8 +338,8 @@ public class HighlightView implements Themeable, Translatable, MessageEditor.Mes
         _itemArchives.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_DETAIL_SUMMARY_PREFIX, "Total/pending sync") + ": " + archives + "/" + scheduled);
         rethemeArchives(_browser.getThemeRegistry().getTheme());
         
-        if ( (scheduled == 0) && (!_alreadyAskedToScheduleArchives) ) 
-            askScheduleDefaultArchives();
+        //if ( (scheduled == 0) && (!_alreadyAskedToScheduleArchives) ) 
+        //    askScheduleDefaultArchives();
     }
     
     private static final String T_SCHEDULE_MESSAGE = "syndie.gui.highlightview.schedule.message";

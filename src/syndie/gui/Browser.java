@@ -131,6 +131,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _forumMenuBookmarked;
     private MenuItem _forumMenuBrowse;
     private MenuItem _forumMenuBrowseForums;
+    private MenuItem _forumMenuReadPrivate;
     private MenuItem _forumMenuCreate;
     private MenuItem _forumMenuManageRoot;
     private Menu _forumMenuManageMenu;
@@ -557,6 +558,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _forumMenuBrowseForums.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewAllByForums(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewAllByForums(); }
+        });
+        _forumMenuReadPrivate = new MenuItem(forumMenu, SWT.PUSH);
+        _forumMenuReadPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewPrivate(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewPrivate(); }
         });
         _forumMenuCreate = new MenuItem(forumMenu, SWT.PUSH);
         _forumMenuCreate.addSelectionListener(new SelectionListener() {
@@ -1995,6 +2001,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         SyndieURI uri = new SyndieURI(defURI.getType(), attr);
         view(uri);
     }
+    private void viewPrivate() {
+        SyndieURI defURI = SyndieURI.DEFAULT_SEARCH_URI;
+        Map attr = new HashMap(defURI.getAttributes());
+        attr.put("byforum", "true");
+        attr.put("authorized", "false"); // don't include posts readable by authorized users
+        attr.put("pbe", "false"); // don't include passphrase protected posts
+        attr.put("public", "false"); // don't include posts readable by anyone
+        attr.put("private", "true"); // only include posts readable by the forum admin
+        attr.put("threaded", "true"); // organize in threads
+        SyndieURI uri = new SyndieURI(defURI.getType(), attr);
+        view(uri);
+    }
     
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
@@ -2289,6 +2307,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FORUM_MENU_BOOKMARKED = "syndie.gui.browser.forummenu.bookmarked";
     private static final String T_FORUM_MENU_BROWSE = "syndie.gui.browser.forummenu.browse";
     private static final String T_FORUM_MENU_BROWSEFORUMS = "syndie.gui.browser.forummenu.browseforums";
+    private static final String T_FORUM_MENU_READPRIVATE = "syndie.gui.browser.forummenu.readprivate";
     private static final String T_FORUM_MENU_CREATE = "syndie.gui.browser.forummenu.create";
     private static final String T_FORUM_MENU_MANAGE = "syndie.gui.browser.forummenu.manage";
     private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
@@ -2366,6 +2385,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &bookmarked"));
         _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
         _forumMenuBrowseForums.setText(registry.getText(T_FORUM_MENU_BROWSEFORUMS, "Read &all by forum"));
+        _forumMenuReadPrivate.setText(registry.getText(T_FORUM_MENU_READPRIVATE, "Read &private messages"));
         _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
         _forumMenuManageRoot.setText(registry.getText(T_FORUM_MENU_MANAGE, "&Manage"));
         

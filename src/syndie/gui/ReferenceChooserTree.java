@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -22,6 +23,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ChannelInfo;
@@ -328,10 +330,49 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                     _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
                     _ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
+                    if (shouldScheduleNow()) // only returns true once
+                        askScheduleArchives();
                 }
             });
         }
     }
+    
+    private static final String T_SCHEDULE_MESSAGE = "syndie.gui.referencechoosertree.schedule.message";
+    private static final String T_SCHEDULE_TITLE = "syndie.gui.referencechoosertree.schedule.title";
+    
+    private void askScheduleArchives() {
+        // rewrite this to detect whether the number of scheduled fetches is 0, and if so,
+        // to point the user at the syndication page to config/schedule 
+        _root.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                MessageBox box = new MessageBox(_tree.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+                box.setMessage(_browser.getTranslationRegistry().getText(T_SCHEDULE_MESSAGE, "To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
+                box.setText(_browser.getTranslationRegistry().getText(T_SCHEDULE_TITLE, "Schedule syndication?"));
+                int rc = box.open();
+                if (rc == SWT.YES)
+                    _browser.view(_browser.createSyndicationConfigURI());
+            }
+        });
+    }
+    
+    private boolean shouldScheduleNow() {
+        Properties prefs = _client.getNymPrefs();
+        String val = prefs.getProperty("browser.promptScheduleNow");
+        if (val == null) {
+            prefs.setProperty("browser.promptScheduleNow", Boolean.FALSE.toString());
+            _client.setNymPrefs(prefs);
+            return true;
+        } else {
+            if (Boolean.valueOf(val).booleanValue()) {
+                prefs.setProperty("browser.promptScheduleNow", Boolean.FALSE.toString());
+                _client.setNymPrefs(prefs);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    
     
     /** run from any thread */
     public void viewStartupItems() { 

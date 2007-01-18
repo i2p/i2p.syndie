@@ -23,6 +23,8 @@ public class ThreadBuilder {
     /** ThreadMsgId to Container */
     private Map _idTable;
     
+    private static final boolean DEBUG = false;
+    
     public ThreadBuilder(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
@@ -45,7 +47,7 @@ public class ThreadBuilder {
                 c.msg.id = tmi;
                 int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, tmi, tmiToAncestors);
                 c.msg.references = (List)tmiToAncestors.get(tmi);
-                _ui.debugMessage("ancestors for " + tmi + ": " + c.msg.references);
+                if (DEBUG) _ui.debugMessage("ancestors for " + tmi + ": " + c.msg.references);
             }
         }
         
@@ -57,11 +59,11 @@ public class ThreadBuilder {
             if ( (c != null) && (c.msg != null) && (c.msg.references != null) ) {
                 Container childContainer = c;
                 if (childContainer.parent != null) {
-                    _ui.debugMessage("existing thread container for " + tmi + ", already has a parent: " + c.parent);
+                    if (DEBUG) _ui.debugMessage("existing thread container for " + tmi + ", already has a parent: " + c.parent);
                     continue;
                 }
 
-                _ui.debugMessage("existing thread container for " + tmi + ", building through refs: " + c.msg.references);
+                if (DEBUG) _ui.debugMessage("existing thread container for " + tmi + ", building through refs: " + c.msg.references);
 
                 for (int j = 0; j < c.msg.references.size(); j++) {
                     ThreadMsgId ref = (ThreadMsgId)c.msg.references.get(j);
@@ -75,12 +77,12 @@ public class ThreadBuilder {
                     
                     // now insert it into the tree if it isn't a loop
                     if (childContainer.parent != null) {
-                        _ui.debugMessage("not updating the parent of " + childContainer.toString().trim());
+                        if (DEBUG) _ui.debugMessage("not updating the parent of " + childContainer.toString().trim());
                     } else if ( (childContainer.msg == null) || (!isLoop(ref, childContainer.msg.id)) ) {
                         // step 1.C (kind of): set the parent
                         childContainer.parent = refContainer;
                         if (refContainer.child == null) {
-                            _ui.debugMessage("setting parent of " + childId + " to " + ref + ": parent has no kids");
+                            if (DEBUG) _ui.debugMessage("setting parent of " + childId + " to " + ref + ": parent has no kids");
                             refContainer.child = childContainer;
                             childContainer.nextSibling = null;
                         } else {
@@ -90,15 +92,15 @@ public class ThreadBuilder {
                                 sibling = sibling.nextSibling;
                             sibling.nextSibling = childContainer;
                             childContainer.nextSibling = null;
-                            _ui.debugMessage("setting parent of " + childId + " to " + ref);
+                            if (DEBUG) _ui.debugMessage("setting parent of " + childId + " to " + ref);
                         }
                     } else {
-                        _ui.debugMessage("not setting the parent of " + childId + " to " + ref + ", loop: " + childContainer + " / " + _idTable.get(ref));
+                        if (DEBUG) _ui.debugMessage("not setting the parent of " + childId + " to " + ref + ", loop: " + childContainer + " / " + _idTable.get(ref));
                     }
                     childContainer = refContainer;
                 } // end looping over references
             } else {
-                _ui.debugMessage("thread container for " + tmi + ": " + c);
+                if (DEBUG) _ui.debugMessage("thread container for " + tmi + ": " + c);
             }
         }
         
@@ -215,7 +217,7 @@ public class ThreadBuilder {
         if ( (ancestorId == childId) || (ancestorId.equals(childId)) ) return true;
         Set ids = walk(ancestorId);
         if (ids.contains(childId)) {
-            _ui.debugMessage("loop detected.  ancestor=" + ancestorId + " child=" + childId + " ids=" + ids);
+            if (DEBUG) _ui.debugMessage("loop detected.  ancestor=" + ancestorId + " child=" + childId + " ids=" + ids);
             return true;
         }
         //ids = walk(childId);

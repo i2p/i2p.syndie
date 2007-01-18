@@ -18,7 +18,7 @@ public class BrowseForumTab extends BrowserTab {
     
     public BrowseForumTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri); 
-        debug("browseForum construct: super complete");
+        debug("browseForum construct: super complete: " + uri);
         if (uri.getScope() != null) {
             long chanId = getClient().getChannelId(uri.getScope());
             debug("browseForum construct: fetch chanId");
@@ -76,7 +76,7 @@ public class BrowseForumTab extends BrowserTab {
                 _browse.setFilter(uri.createSearch());
             }
         } else if (uri.isSearch()) {
-            getBrowser().getUI().debugMessage("browse forum w/ search");
+            getBrowser().getUI().debugMessage("browse forum w/ search: " + uri.toString());
             _browse = new BrowseForum(getRoot(), getBrowser(), new ForumListener(), false, byForum);
             _browse.setFilter(uri);
         } else {

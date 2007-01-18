@@ -586,6 +586,12 @@ public class MessageTree implements Translatable, Themeable {
                 _advancedScopeOther.setSelection(true);
             else
                 _advancedScopeAll.setSelection(true);
+            
+            _ctl.getUI().debugMessage("filterBar.setFilter(" + uri + ")");
+            _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
+            _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
+            _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
+            _advancedPrivacyPrivate.setSelection(uri.getBoolean("private", true));
         }
         
         
@@ -1192,8 +1198,12 @@ public class MessageTree implements Translatable, Themeable {
     
     public void applyFilter() {
         String filter = null;
-        for (int i = 0; i < _bars.size() && filter == null; i++)
-            filter = ((FilterBar)_bars.get(i)).buildFilter();
+        for (int i = 0; i < _bars.size() && filter == null; i++) {
+            String newfilter = ((FilterBar)_bars.get(i)).buildFilter();
+            if (filter != null)
+                _browser.getUI().debugMessage("overwriting filter [" + filter + "] with [" + newfilter + "]");
+            filter = newfilter;
+        }
         applyFilter(filter);
     }
     private transient boolean _filtering;
