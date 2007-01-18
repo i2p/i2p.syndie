@@ -123,51 +123,24 @@ class SyncInboundFetcher {
                 continue;
             }
         
-            String url = getFreenetURL(archive, uri);
+            String url = IndexFetcher.getFreenetURL(archive, uri);
             if (url == null) {
                 action.fetchFailed("Invalid freenet archive URL", null);
             } else {
                 _manager.getUI().statusMessage("Fetching [" + url + "]");
                 try {
                     File dataFile = File.createTempFile("freenetget", "dat", _manager.getClient().getTempDir());
-                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
+                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, dataFile.getAbsolutePath(), url);
+                    // the index fetch runs async, but these run synchronously, since we don't want to fire up e.g. 500 threads to pull
+                    // new messages.  much to optimize on this front though
                     GetListener lsnr = new GetListener(action, dataFile);
                     get.addStatusListener(lsnr);
-                    get.fetch();
+                    get.fetch(5*60*1000); // no retries, but let it sit for up to 5 minutes
                 } catch (IOException ioe) {
                     action.fetchFailed("Internal error writing temp file", ioe);
                 }
             }
         }
-    }
-    
-    private String getFreenetURL(SyncArchive archive, SyndieURI uri) {
-        String archiveURL = archive.getURL();
-        int keyStart = archiveURL.indexOf('@') - 3; // USK@/CHK@/SSK@ (fix if freenet ever gets other keys)
-        if (keyStart < 0) return null;
-        int end = archiveURL.indexOf('?', keyStart);
-        String key = null;
-        if (end < keyStart)
-            key = archiveURL.substring(keyStart);
-        else
-            key = archiveURL.substring(keyStart, end);
-        
-        // ok, now we have SSK@foo/bar/baz
-        // turn that into SSK@foo/bar/$scope/{$msgId,meta}.syndie
-        if (key.indexOf('/') > 0) {
-            if (!key.endsWith("/"))
-                key = key.substring(0, key.lastIndexOf('/')+1);
-        } else {
-            key = key + '/';
-        }
-        if (uri.getMessageId() != null)
-            key = key + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
-        else
-            key = key + "meta" + Constants.FILENAME_SUFFIX;
-        
-        key = key + "?forcedownload"; // don't give us a content type warning
-        
-        return IndexFetcher.getFProxyURL(archive) + key;
     }
     
     private void fetchFile(SyncArchive archive) {

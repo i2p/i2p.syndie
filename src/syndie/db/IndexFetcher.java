@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
+import syndie.Constants;
+import syndie.data.SyndieURI;
 
 class IndexFetcher {
     private SyncManager _manager;
@@ -30,9 +32,11 @@ class IndexFetcher {
                             IndexFetcher.this.wait(60*1000);
                         } 
                     } catch (InterruptedException ie) {}
+                    _manager.getUI().debugMessage("not fetching indexes, as we aren't online");
                 }
                 
                 SyncArchive archive = getNextToFetch();
+                _manager.getUI().debugMessage("next index to fetch: " + archive);
                 if (archive != null) {
                     try {
                         fetch(archive);
@@ -57,12 +61,15 @@ class IndexFetcher {
             SyncArchive archive = _manager.getArchive(i);
             if ( ( (archive.getNextPullTime() > 0) && (archive.getNextPullTime() <= now) ) || 
                  ( (archive.getNextPushTime() > 0) && (archive.getNextPushTime() <= now) ) ) {
-                if (archive.getIndexFetchInProgress() || archive.getIndexFetchComplete())
+                if (archive.getIndexFetchInProgress() || archive.getIndexFetchComplete()) {
+                    _manager.getUI().debugMessage("archive fetch already in progress: " + archive.getName() + " inprogress?" + archive.getIndexFetchInProgress() + " complete? " + archive.getIndexFetchComplete());
                     continue;
+                }
                 archive.setIndexFetchInProgress(true);
                 return archive;
             }
         }
+        _manager.getUI().debugMessage("no more archives to fetchIndex for");
         return null;
     }
 
@@ -90,18 +97,25 @@ class IndexFetcher {
             _manager.getUI().statusMessage("Fetching [" + url + "]");
         try {
             File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
+            final EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, indexFile.getAbsolutePath(), url);
             GetListener lsnr = new GetListener(archive, indexFile);
             get.addStatusListener(lsnr);
-            get.fetch(); // no timeout
+            Thread t = new Thread(new Runnable() { 
+                public void run() {
+                    get.fetch(5*60*1000); // 5 minutes is beyond reasonable, so disable the retries above
+                }
+            }, "IndexFetch " + url);
+            t.setDaemon(true);
+            t.start();
         } catch (IOException ioe) {
             archive.indexFetchFail("Internal error writing temp file", ioe, true);
         }
     }
     
-    private String getFreenetURL(SyncArchive archive) {
+    private String getFreenetURL(SyncArchive archive) { return getFreenetURL(archive, null); }
+    static String getFreenetURL(SyncArchive archive, SyndieURI uri) {
         String archiveURL = archive.getURL();
-        int keyStart = archiveURL.indexOf('@') - 3; // USK@/CHK@/SSK@ (fix if freenet ever gets other keys)
+        int keyStart = 0; // archiveURL.indexOf('@') - 3; // USK@/CHK@/SSK@ (fix if freenet ever gets other keys)
         if (keyStart < 0) return null;
         int end = archiveURL.indexOf('?', keyStart);
         String key = null;
@@ -110,8 +124,7 @@ class IndexFetcher {
         else
             key = archiveURL.substring(keyStart, end);
         
-        // ok, now we have SSK@foo/bar/baz
-        // turn that into SSK@foo/bar/shared-index.dat
+        // ok, now we have [http://foo.i2p/]SSK@foo/bar/baz
         if (key.indexOf('/') > 0) {
             if (!key.endsWith("/"))
                 key = key.substring(0, key.lastIndexOf('/')+1);
@@ -119,11 +132,26 @@ class IndexFetcher {
             key = key + '/';
         }
         
-        key = key + LocalArchiveManager.SHARED_INDEX_FILE;
+        if (uri == null) {
+            // turn the key into [http://foo.i2p/]SSK@foo/bar/shared-index.dat
+            key = key + LocalArchiveManager.SHARED_INDEX_FILE;
+        } else {
+            key = key + uri.getScope().toBase64() + "/";
+            if (uri.getMessageId() != null) {
+                // turn the key into [http://foo.i2p/]SSK@foo/bar/$scope/$messageId.syndie
+                key = key + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
+            } else {
+                // turn the key into [http://foo.i2p/]SSK@foo/bar/$scope/meta.syndie
+                key = key + "meta" + Constants.FILENAME_SUFFIX;
+            }
+        }
         
         key = key + "?forcedownload"; // don't give us a content type warning
         
-        return getFProxyURL(archive) + key;
+        if (key.startsWith("USK@") || key.startsWith("KSK@") || key.startsWith("SSK@"))
+            return getFProxyURL(archive) + key;
+        else // http://fproxy.tino.i2p/USK@foo/bar/shared-index.dat?forcedownload
+            return key;
     }
     
     /** http://localhost:8888/ or whatever */
