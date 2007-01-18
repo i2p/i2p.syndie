@@ -744,6 +744,8 @@ public class PageEditor {
                 rect = mon[0].getClientArea();
             else
                 rect = _root.getDisplay().getClientArea();
+            _shell.setSize(rect.width, rect.height);
+            _shell.setMaximized(true);
             
             _shell.addShellListener(new ShellListener() {
                 public void shellActivated(ShellEvent shellEvent) {}
@@ -756,7 +758,7 @@ public class PageEditor {
                 public void shellIconified(ShellEvent shellEvent) {}
             });
             
-            _shell.setSize(rect.width, rect.height);
+            
             _shell.open();
             _maxText.forceFocus();
         }
@@ -854,13 +856,14 @@ public class PageEditor {
                 public void keyReleased(KeyEvent keyEvent) {}
             });
             
-            
             Monitor mon[] = _root.getDisplay().getMonitors();
             Rectangle rect = null;
             if ( (mon != null) && (mon.length > 1) )
                 rect = mon[0].getClientArea();
             else
                 rect = _root.getDisplay().getClientArea();
+            _shell.setSize(rect.width, rect.height);
+            _shell.setMaximized(true);
             
             _shell.addShellListener(new ShellListener() {
                 public void shellActivated(ShellEvent shellEvent) {}
@@ -873,7 +876,6 @@ public class PageEditor {
                 public void shellIconified(ShellEvent shellEvent) {}
             });
             
-            _shell.setSize(rect.width, rect.height);
             _shell.open();
             _maxRenderer.forceFocus();
         }
