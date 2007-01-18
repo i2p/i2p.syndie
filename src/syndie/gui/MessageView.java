@@ -16,11 +16,16 @@ import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -36,6 +41,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Monitor;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -109,6 +116,8 @@ public class MessageView implements Translatable, Themeable {
     private ManageReferenceChooser _refTree;
     private AttachmentPreview _attachmentPreviews[];
     
+    private MaxView _maxView;
+    
     private SyndieURI _uri;
     private int _page;
     private Hash _author;
@@ -141,6 +150,8 @@ public class MessageView implements Translatable, Themeable {
             _preview.dispose();
         if (_refTree != null)
             _refTree.dispose();
+        if (_maxView != null)
+            _maxView.dispose();
         _avatar.disposeImage();
     }
     
@@ -387,6 +398,7 @@ public class MessageView implements Translatable, Themeable {
             _body[0].setListener(new PageListener());
             SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
             _body[0].renderPage(new PageRendererSource(_browser), uri);
+            _body[0].addKeyListener(new MaxViewListener(uri));
         } else {
             int tabs = pageCount + attachments;
             if ( (refs != null) && (refs.size() > 0) ) tabs++;
@@ -410,6 +422,7 @@ public class MessageView implements Translatable, Themeable {
                 _body[i].setListener(lsnr);
                 SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
                 _body[i].renderPage(new PageRendererSource(_browser), uri);
+                _body[i].addKeyListener(new MaxViewListener(uri));
             }
             int off = pageCount;
             if (threadSize > 1) {
@@ -483,6 +496,96 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_ATTACH_PREFIX = "syndie.gui.messageview.attachprefix";
     private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
+    
+    private class MaxViewListener implements KeyListener {
+        private SyndieURI _pageURI;
+        public MaxViewListener(SyndieURI pageURI) { _pageURI = pageURI; }
+        public void keyReleased(KeyEvent evt) { }
+        public void keyPressed(KeyEvent evt) {
+            switch (evt.character) {
+                case 0x0C: // ^L
+                    if ( (evt.stateMask & SWT.MOD1) != 0) {
+                        if (_maxView != null)
+                            _maxView.dispose();
+                        _maxView = new MaxView(_pageURI);
+                        evt.doit = false;
+                    }
+                    break;
+            }
+        }
+    }
+    
+    private static final String T_MAXVIEW_UNMAX = "syndie.gui.messageview.maxview.unmax";
+    private class MaxView {
+        private Shell _shell;
+        private PageRenderer _maxRenderer;
+        
+        public MaxView(SyndieURI pageURI) {
+            _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+            _shell.setLayout(new GridLayout(1, true));
+            Button unmax = new Button(_shell, SWT.PUSH);
+            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+            unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            
+            _maxRenderer = new PageRenderer(_shell, true, _browser);
+            _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+            
+            _maxRenderer.renderPage(new PageRendererSource(_browser), pageURI);
+            
+            unmax.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { unmax(); }
+                private void fire() { unmax(); }
+            });
+            
+            _maxRenderer.addKeyListener(new KeyListener() {
+                public void keyPressed(KeyEvent evt) {
+                    switch (evt.character) {
+                        case 0x0C: // ^L
+                            if ( (evt.stateMask & SWT.MOD1) != 0) {
+                                unmax();
+                                evt.doit = false;
+                            }
+                            break;
+                    }
+                }
+                public void keyReleased(KeyEvent keyEvent) {}
+            });
+            
+            Monitor mon[] = _root.getDisplay().getMonitors();
+            Rectangle rect = null;
+            if ( (mon != null) && (mon.length > 1) )
+                rect = mon[0].getClientArea();
+            else
+                rect = _root.getDisplay().getClientArea();
+            _shell.setSize(rect.width, rect.height);
+            _shell.setMaximized(true);
+            
+            _shell.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent evt) {
+                    evt.doit = false;
+                    unmax();
+                }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            
+            _shell.open();
+            _maxRenderer.forceFocus();
+        }
+        
+        private void unmax() {
+            MaxView pv = _maxView;
+            _maxView = null;
+            pv.dispose();
+        }
+        public void dispose() { 
+            _shell.dispose();
+            _maxRenderer.dispose();
+        }
+    }
     
     private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
     private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";

@@ -128,7 +128,9 @@ public class SyncOutboundPusher {
             uris.add(uri);
             actionsPushed.add(action);
         }
-        String err = pushFreenet(archive, uris);
+        String err = null;
+        if (uris.size() > 0)
+            err = pushFreenet(archive, uris);
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
                 SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
@@ -145,8 +147,17 @@ public class SyncOutboundPusher {
     private String pushFreenet(SyncArchive archive, List uris) {
         String error = null;
         // shove all of the files specified to the fcp host
+        String host = archive.getFCPHost();
+        int port = archive.getFCPPort();
+        if (host != null) host = host.trim();
+        if ( (host == null) || (port <= 0) )
+            return "No FCP settings defined";
+        if (archive.getPostKey() == null)
+            return "No posting key defined";
+        
+        _manager.getUI().statusMessage("Pushing to freenet (fcp host " + host + " port " + port + ")");
         try {
-            Socket s = new Socket(archive.getFCPHost(), archive.getFCPPort());
+            Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
             long msgId = System.currentTimeMillis();
             out.write(DataHelper.getUTF8("ClientHello\r\n" +
@@ -310,7 +321,7 @@ public class SyncOutboundPusher {
             }
             s.close();
         } catch (IOException ioe) {
-            error = "Error posting the archive to Freenet";
+            error = "Error posting the archive to Freenet (fcp " + host + ":"+ port + ")";
             _manager.getUI().errorMessage(error, ioe);
         }
         return error;
