@@ -371,6 +371,9 @@ public class PageRenderer implements Themeable {
     public Composite getComposite() { return _text; }
     public void setRender(boolean render) { _enableRender = render; }
     
+    void addKeyListener(KeyListener lsnr) { _text.addKeyListener(lsnr); }
+    void forceFocus() { _text.forceFocus(); }
+    
     private void showNoPage() {
         _text.setVisible(false);
         _text.setText("");
@@ -509,6 +512,7 @@ public class PageRenderer implements Themeable {
     }
     private void renderHTML(String html) {
         _browser.getUI().debugMessage("Beginning renderHTML");
+        if (_text.isDisposed()) return;
         _text.getDisplay().syncExec(new Runnable() {
             public void run() {
                 disposeFonts();
@@ -548,6 +552,7 @@ public class PageRenderer implements Themeable {
         final ArrayList linkTags = sbuilder.getLinkTags();
         final ArrayList imageTags = sbuilder.getImageTags();
         
+        if (_text.isDisposed()) return;
         _browser.getUI().debugMessage("before syncExec to write on the styledText");
         Display.getDefault().syncExec(new Runnable() {
             public void run() {

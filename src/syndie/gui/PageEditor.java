@@ -13,11 +13,21 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Monitor;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -35,7 +45,9 @@ public class PageEditor {
     private Composite _root;
     private SashForm _sash;
     private StyledText _text;
+    private MaxEditor _maxEditor;
     private PageRenderer _preview;
+    private MaxPreview _maxPreview;
     private boolean _isPreviewable;
     /** current search match is highlighted */
     private StyleRange _findHighlight;
@@ -53,7 +65,12 @@ public class PageEditor {
     }
     
     public Control getControl() { return _root; }
-    public String getContent() { return _text.getText(); }
+    public String getContent() { 
+        if (_maxText != null)
+            return _maxText.getText();
+        else
+            return _text.getText(); 
+    }
     public String getContentType() { return _isPreviewable ? "text/html" : "text/plain"; }
     public TabItem getItem() { return _item; }
     
@@ -70,6 +87,10 @@ public class PageEditor {
             _root.dispose();
         if (_item != null)
             _item.dispose();
+        if (_maxEditor != null)
+            _maxEditor.dispose();
+        if (_maxPreview != null)
+            _maxPreview.dispose();
     }
     
     private void initComponents() {
@@ -279,6 +300,22 @@ public class PageEditor {
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             _text.cut();
                             _editor.modified();
+                            evt.doit = false;
+                        }
+                        break;
+                    case 0x0B: // ^K
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            if (_maxEditor != null)
+                                _maxEditor.dispose();
+                            _maxEditor = new MaxEditor();
+                            evt.doit = false;
+                        }
+                        break;
+                    case 0x0C: // ^L
+                        if ( (evt.stateMask & SWT.MOD1) != 0) {
+                            if (_maxPreview != null)
+                                _maxPreview.dispose();
+                            _maxPreview = new MaxPreview();
                             evt.doit = false;
                         }
                         break;
@@ -644,6 +681,219 @@ public class PageEditor {
                     bodyTag.removeAttribValue("bgimage");
                 _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
             }
+        }
+    }
+
+    private static final String T_MAXEDITOR_UNMAX = "syndie.gui.pageeditor.maxeditor.unmax";
+    private static final String T_MAXEDITOR_PREVIEW = "syndie.gui.pageeditor.maxeditor.preview";
+    private StyledText _maxText;
+    private class MaxEditor {
+        private Shell _shell;
+        
+        public MaxEditor() {
+            _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+            _shell.setLayout(new GridLayout(2, true));
+            Button unmax = new Button(_shell, SWT.PUSH);
+            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXEDITOR_UNMAX, "Restore normal editor size"));
+            unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            Button preview = new Button(_shell, SWT.PUSH);
+            preview.setText(_browser.getTranslationRegistry().getText(T_MAXEDITOR_PREVIEW, "Show maximized preview"));
+            preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _maxText = new StyledText(_shell, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
+            _maxText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+            
+            _maxText.setText(_text.getText());
+
+            _maxText.setDoubleClickEnabled(true);
+            _maxText.setEditable(true);
+            
+            _maxText.addKeyListener(new KeyListener() {
+                public void keyPressed(KeyEvent evt) {
+                    switch (evt.character) {
+                        case 0x0B: // ^K 
+                            if ( (evt.stateMask & SWT.MOD1) != 0) {
+                                unmax();
+                                evt.doit = false;
+                            }
+                            break;
+                        case 0x0C: // ^L
+                            if ( (evt.stateMask & SWT.MOD1) != 0) {
+                                maxpreview();
+                                evt.doit = false;
+                            }
+                            break;
+                    }
+                }
+                public void keyReleased(KeyEvent keyEvent) {
+                }
+            });
+            
+            unmax.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { unmax(); }
+            });
+            
+            preview.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { maxpreview(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { maxpreview(); }
+            });
+            
+            Monitor mon[] = _root.getDisplay().getMonitors();
+            Rectangle rect = null;
+            if ( (mon != null) && (mon.length > 1) )
+                rect = mon[0].getClientArea();
+            else
+                rect = _root.getDisplay().getClientArea();
+            
+            _shell.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent evt) {
+                    evt.doit = false;
+                    unmax();
+                }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            
+            _shell.setSize(rect.width, rect.height);
+            _shell.open();
+            _maxText.forceFocus();
+        }
+        private void unmax() {
+            String val = _maxText.getText();
+            _maxText = null;
+            _text.setText(val);
+            _editor.modified();
+            _editor.saveState();
+            _shell.dispose();
+        }
+        private void maxpreview() {
+            String val = _maxText.getText();
+            _maxText = null;
+            _text.setText(val);
+            _editor.modified();
+            _editor.saveState();
+            _shell.dispose();
+            if (_maxPreview != null)
+                _maxPreview.dispose();
+            _maxPreview = new MaxPreview();
+        }
+        public void dispose() { _shell.dispose(); }
+    }
+    
+    private static final String T_MAXPREVIEW_UNMAX = "syndie.gui.pageeditor.maxpreview.unmax";
+    private static final String T_MAXPREVIEW_EDITOR = "syndie.gui.pageeditor.maxpreview.edit";
+    private class MaxPreview {
+        private Shell _shell;
+        private PageRenderer _maxRenderer;
+        
+        public MaxPreview() {
+            _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+            _shell.setLayout(new GridLayout(2, true));
+            Button unmax = new Button(_shell, SWT.PUSH);
+            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXPREVIEW_UNMAX, "Restore normal preview size"));
+            unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            Button edit = new Button(_shell, SWT.PUSH);
+            edit.setText(_browser.getTranslationRegistry().getText(T_MAXPREVIEW_EDITOR, "Show maximized editor"));
+            edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            
+            _maxRenderer = new PageRenderer(_shell, true, _browser);
+            _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+            
+            MessageInfo msgInfo = new MessageInfo();
+            msgInfo.setURI(_dummyURI);
+            msgInfo.setTargetChannel(_dummyURI.getScope());
+            msgInfo.setTargetChannelId(Long.MAX_VALUE);
+            msgInfo.setScopeChannelId(Long.MAX_VALUE);
+            msgInfo.setAuthorChannelId(Long.MAX_VALUE);
+            msgInfo.setInternalId(Long.MAX_VALUE);
+            msgInfo.setMessageId(_dummyURI.getMessageId().longValue());
+            msgInfo.setPageCount(1);
+            ArrayList pageData = new ArrayList();
+            pageData.add(getContent());
+            ArrayList attachments = new ArrayList();
+            ArrayList attachmentOrder = new ArrayList();
+            List names = _editor.getAttachmentNames();
+            for (int i = 0; i < names.size(); i++) {
+                String name = (String)names.get(i);
+                byte data[] = _editor.getAttachmentData(i+1);
+                attachmentOrder.add(name);
+                attachments.add(data);
+            }
+            PageRendererSourceMem src = new PageRendererSourceMem(_browser, null, msgInfo, pageData, attachments, attachmentOrder);
+            _maxRenderer.renderPage(src, _dummyURI);
+            
+            unmax.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { unmax(); }
+                private void fire() { unmax(); }
+            });
+            edit.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { maxedit(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { maxedit(); }
+            });
+            
+            _maxRenderer.addKeyListener(new KeyListener() {
+                public void keyPressed(KeyEvent evt) {
+                    switch (evt.character) {
+                        case 0x0B: // ^K 
+                            if ( (evt.stateMask & SWT.MOD1) != 0) {
+                                maxedit();
+                                evt.doit = false;
+                            }
+                            break;
+                        case 0x0C: // ^L
+                            if ( (evt.stateMask & SWT.MOD1) != 0) {
+                                unmax();
+                                evt.doit = false;
+                            }
+                            break;
+                    }
+                }
+                public void keyReleased(KeyEvent keyEvent) {}
+            });
+            
+            
+            Monitor mon[] = _root.getDisplay().getMonitors();
+            Rectangle rect = null;
+            if ( (mon != null) && (mon.length > 1) )
+                rect = mon[0].getClientArea();
+            else
+                rect = _root.getDisplay().getClientArea();
+            
+            _shell.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent evt) {
+                    evt.doit = false;
+                    unmax();
+                }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            
+            _shell.setSize(rect.width, rect.height);
+            _shell.open();
+            _maxRenderer.forceFocus();
+        }
+        
+        private void unmax() {
+            MaxPreview pv = _maxPreview;
+            _maxPreview = null;
+            pv.dispose();
+        }
+        private void maxedit() {
+            MaxPreview pv = _maxPreview;
+            _maxPreview = null;
+            pv.dispose();
+            if (_maxEditor != null)
+                _maxEditor.dispose();
+            _maxEditor = new MaxEditor();
+        }
+        public void dispose() { 
+            _shell.dispose();
+            _maxRenderer.dispose();
         }
     }
 }
