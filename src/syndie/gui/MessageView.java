@@ -807,12 +807,8 @@ public class MessageView implements Translatable, Themeable {
     }
     private void banAuthor() {
         if (_author != null) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_MSGAUTHOR, "Do you want to ban the author?  All of the messages they have written will be removed and you will never receive a message from them again, or any posts on their forum"));
-            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
-            int rc = box.open();
-            if (rc == SWT.YES)
-                _browser.getClient().ban(_author, _browser.getUI(), true);
+            if (_browser.ban(_author))
+                _browser.unview(_uri);
         }
     }
     private void viewForumMsgs() {
@@ -829,12 +825,9 @@ public class MessageView implements Translatable, Themeable {
     }
     private void banForum() {
         if (_target != null) {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_MSGFORUM, "Do you want to ban the forum?  All of the messages in it will be removed and you will never receive any messages in it again, or posts written by the forum's owner"));
-            box.setText(_browser.getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
-            int rc = box.open();
-            if (rc == SWT.YES)
-                _browser.getClient().ban(_target, _browser.getUI(), true);
+            if (_browser.ban(_target)) {
+                _browser.unview(_uri);
+            }
         }
     }
     
@@ -856,8 +849,10 @@ public class MessageView implements Translatable, Themeable {
                 _browser.bookmark(uri);
         }
         public void banScope(PageRenderer renderer, Hash scope) {
-            if (_browser != null)
-                _browser.ban(scope);
+            if (_browser != null) {
+                if (_browser.ban(scope))
+                    _browser.unview(_uri);
+            }
         }
         public void viewImage(PageRenderer renderer, Image img) {}
         public void ignoreImageScope(PageRenderer renderer, Hash scope) {}
@@ -927,10 +922,6 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_THREAD = "syndie.gui.messageview.thread";
 
     private static final String T_TITLE_PREFIX = "syndie.gui.messageview.title";
-
-    private static final String T_CONFIRMBAN_MSGFORUM = "syndie.gui.messageview.confirmbanforum";
-    private static final String T_CONFIRMBAN_MSGAUTHOR = "syndie.gui.messageview.confirmbanauthor";
-    private static final String T_CONFIRMBAN_NAME = "syndie.gui.messageview.confirmbanname";
     
     private static final String T_AUTHORBAN = "syndie.gui.messageview.authorban";
     private static final String T_AUTHORBOOKMARK = "syndie.gui.messageview.authorbookmark";

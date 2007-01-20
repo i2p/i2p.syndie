@@ -394,6 +394,27 @@ public class SharedArchiveBuilder {
                 if (fin != null) try { fin.close(); } catch (IOException ioe) {}
             }
         }
+        addBannedChannels(rv);
         return rv;
+    }
+       
+    /**
+     * add the SharedArchive.Channel instance relating to (recently?) banned channels so 
+     * that people don't send it to us 
+     */
+    private void addBannedChannels(List channels) {
+        List scopes = _client.getBannedChannels(false); // should this only list recent ones?
+        for (int i = 0; i < scopes.size(); i++) {
+            Hash scope = (Hash)scopes.get(i);
+            SharedArchive.Channel chan = new SharedArchive.Channel();
+            chan.setScope(scope);
+            chan.setVersion(0);
+            chan.setIsNew(false);
+            chan.setIsPBE(false);
+            chan.setIsPublic(false);
+            chan.setWantNewMeta(false);
+            chan.setWantNewMsgs(false);
+            channels.add(chan);
+        }
     }
 }

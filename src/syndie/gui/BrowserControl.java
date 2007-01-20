@@ -25,7 +25,7 @@ public interface BrowserControl {
 
     public List getPrivateMsgIds(boolean alreadyRead);
 
-    public void ban(Hash scope);
+    public boolean ban(Hash scope);
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);

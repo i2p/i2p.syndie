@@ -249,7 +249,9 @@ public class SharedArchiveEngine {
         SharedArchive.Channel channels[] = archive.getChannels();
         for (int i = 0; i < channels.length; i++) {
             Hash scope = new Hash(channels[i].getScope());
-            if (channels[i].isNew() && strategy.includeDupForPIR) {
+            if (!channels[i].wantNewMsg() && !channels[i].wantNewMeta() && (channels[i].getVersion() == 0) ) {
+                // the remote side has banned it, so they won't be able to give it to us, obviously
+            } else if (channels[i].isNew() && strategy.includeDupForPIR) {
                 uris.add(SyndieURI.createScope(scope));
             } else {
                 long knownVersion = client.getChannelVersion(scope);
@@ -387,13 +389,16 @@ public class SharedArchiveEngine {
                 continue;
             }
 
+            boolean refuseMeta = (remChan != null) && (!remChan.wantNewMeta());
+            boolean refuseMsg = (remChan != null) && (!remChan.wantNewMsg());
+            
             boolean sendMeta = false;
             if ( (remChan == null) || (remChan.getVersion() < version) )
                 sendMeta = true;
 
             SyndieURI metaURI = SyndieURI.createScope(scope);
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
-            if (sendMeta) {
+            if (sendMeta && !refuseMeta) {
                 if (metaFile.exists()) {
                     ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
                     rv.add(metaURI);
@@ -402,6 +407,9 @@ public class SharedArchiveEngine {
                     continue;
                 }
             }
+            
+            if (refuseMsg)
+                continue;
 
             File files[] = dirs[i].listFiles(new FileFilter() {
                 public boolean accept(File pathname) {

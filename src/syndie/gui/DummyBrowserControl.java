@@ -74,7 +74,7 @@ public class DummyBrowserControl implements BrowserControl {
 
     public boolean reimport(SyndieURI uri, String passphrase) { return false; }
     
-    public void ban(Hash scope) {}
+    public boolean ban(Hash scope) { return false; }
 
     public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) { return null; }
     public void messageImported() {}

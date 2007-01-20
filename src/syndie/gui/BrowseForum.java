@@ -216,8 +216,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         });
         
         _metaNameMenuBan.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _browser.ban(_scope); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                if (_browser.ban(_scope))
+                    _browser.unview(getURI());
+                    
+            }
         });
         
         _metaNameMenuCopyURI.addSelectionListener(new SelectionListener() {

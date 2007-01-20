@@ -1606,8 +1606,34 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private static final String T_BAN_TITLE = "syndie.gui.browser.ban.title";
     private static final String T_BAN_MSG = "syndie.gui.browser.ban.msg";
-    public void ban(Hash scope) { 
-        _client.ban(scope, getUI(), true, false); 
+    
+    
+    private static final String T_CONFIRMBAN = "syndie.gui.browser.confirmban";
+    private static final String T_CONFIRMBAN_NAME = "syndie.gui.browser.confirmbanname";
+    
+    public boolean ban(Hash scope) {
+        String scopeName = _client.getChannelName(scope);
+        if (scopeName == null)
+            scopeName = "";
+        scopeName = scopeName + " [" + scope.toBase64().substring(0,6) + "]";
+
+        MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+        box.setMessage(getTranslationRegistry().getText(T_CONFIRMBAN, 
+                "All of the messages in it will be removed and you will never receive " +
+                "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
+                + scopeName);
+        box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+        int rc = box.open();
+        if (rc == SWT.YES) {
+            doBan(scope);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private void doBan(Hash scope) {
+        _client.ban(scope, getUI(), true);
+        //_client.ban(scope, getUI(), true, false); 
         MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
         box.setText(getTranslationRegistry().getText(T_BAN_TITLE, "Banned"));
         box.setMessage(getTranslationRegistry().getText(T_BAN_MSG, "Selected forum/author banned"));

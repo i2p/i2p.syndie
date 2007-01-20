@@ -274,10 +274,15 @@ public class ArchiveManager implements Translatable, Themeable {
         s.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP, "Banned"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
-        desc.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
+        GridData gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
+        gd.widthHint = 400;
+        desc.setLayoutData(gd);
         desc.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP_DESC, "These authors and forums are completely ignored, with all of the associated messages refused"));
         final Table banned = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
-        banned.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
+        gd.widthHint = 400;
+        gd.heightHint = 200;
+        banned.setLayoutData(gd);
         List scopes = _bannedScopes;
         for (int i = 0; i < scopes.size(); i++) {
             Hash scope = (Hash)scopes.get(i);
@@ -302,7 +307,9 @@ public class ArchiveManager implements Translatable, Themeable {
         banned.setFont(theme.TABLE_FONT);
         ok.setFont(theme.BUTTON_FONT);
         
-        s.setSize(s.computeSize(400, 200));
+        //s.setSize(s.computeSize(400, SWT.DEFAULT));
+        //s.pack();
+        s.layout(true, true);
         s.open();
     }
     
