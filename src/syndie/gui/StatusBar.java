@@ -566,6 +566,10 @@ public class StatusBar implements Translatable, Themeable {
         for (int i = 0; i < channelIds.size(); i++) {
             Long channelId = (Long)channelIds.get(i);
             ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
+            if (info == null) {
+                _browser.getUI().debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
+                continue;
+            }
             int msgs = _browser.getClient().countUnreadMessages(info.getChannelHash());
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);

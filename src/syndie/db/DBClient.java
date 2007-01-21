@@ -3140,6 +3140,8 @@ public class DBClient {
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
     private static final String SQL_DELETE_READ_KEYS = "DELETE FROM channelReadKey WHERE channelId = ?";
+    private static final String SQL_DELETE_UNREAD_CHANNELS = "DELETE FROM nymUnreadChannel WHERE channelId = ?";
+    private static final String SQL_DELETE_UNREAD_MESSAGE = "DELETE FROM nymUnreadMessage WHERE msgId = ?";
     void deleteFromDB(SyndieURI uri, UI ui) {
         if (uri.getMessageId() == null) {
             // delete the whole channel, though all of the posts
@@ -3157,6 +3159,7 @@ public class DBClient {
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REF_URIS, scopeId);
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REFERENCES, scopeId);
                 exec(SQL_DELETE_CHANNEL, scopeId);
+                exec(SQL_DELETE_UNREAD_CHANNELS, scopeId);
                 ui.statusMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database");
             } catch (SQLException se) {
                 ui.errorMessage("Unable to delete the channel " + uri.getScope().toBase64(), se);
@@ -3176,6 +3179,7 @@ public class DBClient {
                 exec(ImportPost.SQL_DELETE_MESSAGE_PAGES, internalId);
                 exec(ImportPost.SQL_DELETE_MESSAGE_REF_URIS, internalId);
                 exec(ImportPost.SQL_DELETE_MESSAGE_REFS, internalId);
+                exec(SQL_DELETE_UNREAD_MESSAGE, internalId);
                 exec(SQL_DELETE_MESSAGE, internalId);
                 ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database");
             } catch (SQLException se) {
@@ -4124,6 +4128,8 @@ public class DBClient {
     }
     
     private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM nymUnreadChannel WHERE nymId = ?";
+    /** channels may have been deleted (banned), so drop 'em */
+    private static final String SQL_DELETE_REMOVED_CHANNELS = "DELETE FROM nymUnreadChannel WHERE nymId = ? AND channelId NOT IN (SELECT channelId FROM CHANNEL)";
     /** forums that haven't been marked as read */
     public List getNewChannelIds() { return getNewChannelIds(_nymId); }
     public List getNewChannelIds(long nymId) {
@@ -4131,6 +4137,7 @@ public class DBClient {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
+            exec(SQL_DELETE_REMOVED_CHANNELS, nymId);
             stmt = _con.prepareStatement(SQL_GET_NEW_CHANNEL_IDS);
             stmt.setLong(1, nymId);
             rs = stmt.executeQuery();
