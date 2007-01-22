@@ -29,7 +29,19 @@ public class ArchiveInfo {
     public SyndieURI getURI() { return _uri; }
     public void setURI(SyndieURI uri) { _uri = uri; }
     
-    public boolean equals(Object o) { return (o instanceof ArchiveInfo) ? ((ArchiveInfo)o)._archiveId == _archiveId : false; }
+    public boolean equals(Object o) { 
+        if (o instanceof ArchiveInfo) {
+            ArchiveInfo info = (ArchiveInfo)o;
+            if (info._archiveId != _archiveId)
+                return false;
+            else if (!("" + info._uri).equals("" + _uri) ) // "null" is never a valid URI, so there's no conflict
+                return false;
+            else
+                return true;
+        } else {
+            return false;
+        }
+    }
     public int hashCode() { return (int)_archiveId; }
     public String toString() { return "Archive " + _archiveId + ": " + _uri; }
 }

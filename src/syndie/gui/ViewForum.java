@@ -653,7 +653,9 @@ class ViewForum implements Translatable, Themeable {
                     SyndieURI uri = (SyndieURI)iter.next();
                     ArchiveInfo info = new ArchiveInfo(uri);
                     archives.add(info);
+                    _browser.getUI().debugMessage("getArchives: sz=" + archives.size() + " uri=" + uri);
                 }
+                _browser.getUI().debugMessage("getArchives(" + uris + "): found " + archives.size() + " archives");
                 return archives;
             }
 
@@ -898,6 +900,7 @@ class ViewForum implements Translatable, Themeable {
         List all = new ArrayList();
         all.addAll(_pubArchiveURIs);
         all.addAll(_privArchiveURIs);
+        _browser.getUI().debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
         for (int i = 0; i < all.size(); i++) {
             final SyndieURI uri = (SyndieURI)all.get(i);
             if (uri == null) continue;
