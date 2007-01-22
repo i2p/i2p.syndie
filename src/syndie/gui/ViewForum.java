@@ -87,17 +87,24 @@ class ViewForum implements Translatable, Themeable {
     private TableColumn _userName;
     private TableColumn _userPriv;
     private Map _userItemToHash;
-    private Button _userAdd;
-    private Button _keyManagementAdvanced;
+    //private Button _userAdd;
+    //private Button _keyManagementAdvanced;
     private Group _archiveGroup;
     private Table _archives;
     private TableColumn _archiveURL;
     private TableColumn _archiveIsPub;
     private Map _archiveItemToURI;
     private Button _archiveAdd;
+    private Group _authGroup;
+    private Label _authLabel;
+    private Button _authRead;
+    private Button _authPost;
+    private Button _authManage;
+    private Button _authReply;
     private Composite _actions;
     private Button _save;
     private Button _cancel;
+    /*
     private Shell _keyManagementShell;
     private Button _keyManagementOpen;
     private Label _keyManagementOpenInfo;
@@ -111,12 +118,17 @@ class ViewForum implements Translatable, Themeable {
     private Label _keyManagementPBEInfo;
     private Button _keyManagementNewReply;
     private Button _keyManagementOk;
+     */
     
     private boolean _editable;
     private boolean _initialized;
     private boolean _modified;
     
     private ManageReferenceChooserPopup _refPopup;
+    private ViewForumAuthRead _viewForumAuthRead;
+    private ViewForumAuthPost _viewForumAuthPost;
+    private ViewForumAuthManage _viewForumAuthManage;
+    private ViewForumAuthReply _viewForumAuthReply;
     
     private List _managerHashes;
     private List _posterHashes;
@@ -172,6 +184,8 @@ class ViewForum implements Translatable, Themeable {
         applyTheme(_browser.getThemeRegistry().getTheme()); 
         _parent.layout(true, true);
     }
+    
+    Composite getRoot() { return _root; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -269,7 +283,7 @@ class ViewForum implements Translatable, Themeable {
         
         _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
-        _userGroup.setLayout(new GridLayout(2, false));
+        _userGroup.setLayout(new GridLayout(1, false));
         
         _users = new Table(_userGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
         _users.setHeaderVisible(false);
@@ -282,12 +296,14 @@ class ViewForum implements Translatable, Themeable {
         
         final Menu userMenu = new Menu(_users);
         _users.setMenu(userMenu);
+        /*
         MenuItem addForum = new MenuItem(userMenu, SWT.PUSH);
         addForum.setText(_browser.getTranslationRegistry().getText(T_USER_ADDFORUM, "Add"));
         addForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
             public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
         });
+         */
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
         viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
@@ -315,6 +331,7 @@ class ViewForum implements Translatable, Themeable {
             }
         });
 
+        /*
         if (_editable) {
             final MenuItem manager = new MenuItem(userMenu, SWT.PUSH);
             manager.setText(_browser.getTranslationRegistry().getText(T_USER_MANAGE, "Toggle manager/poster"));
@@ -366,6 +383,7 @@ class ViewForum implements Translatable, Themeable {
                 }
             });
         }
+         */
         
         _archiveGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
@@ -463,6 +481,60 @@ class ViewForum implements Translatable, Themeable {
             });
         }
         
+        if (_editable) {
+            _authGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
+            _authGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+            _authGroup.setLayout(new GridLayout(4, true));
+        
+            _authLabel = new Label(_authGroup, SWT.WRAP);
+            _authLabel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 4, 1));
+            
+            _authRead = new Button(_authGroup, SWT.PUSH);
+            _authRead.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _authRead.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() { 
+                    if (_viewForumAuthRead == null)
+                        _viewForumAuthRead = new ViewForumAuthRead(_browser, ViewForum.this);
+                    _viewForumAuthRead.show();
+                }
+            });
+            _authPost = new Button(_authGroup, SWT.PUSH);
+            _authPost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _authPost.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() { 
+                    if (_viewForumAuthPost == null)
+                        _viewForumAuthPost = new ViewForumAuthPost(_browser, ViewForum.this);
+                    _viewForumAuthPost.show();
+                }
+            });
+            _authManage = new Button(_authGroup, SWT.PUSH);
+            _authManage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _authManage.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() { 
+                    if (_viewForumAuthManage == null)
+                        _viewForumAuthManage = new ViewForumAuthManage(_browser, ViewForum.this);
+                    _viewForumAuthManage.show();
+                }
+            });
+            _authReply = new Button(_authGroup, SWT.PUSH);
+            _authReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _authReply.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+                private void fire() { 
+                    if (_viewForumAuthReply == null)
+                        _viewForumAuthReply = new ViewForumAuthReply(_browser, ViewForum.this);
+                    _viewForumAuthReply.show();
+                }
+            });
+        }
+        
         _actions = new Composite(_root, SWT.NONE);
         _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -486,6 +558,7 @@ class ViewForum implements Translatable, Themeable {
             ((GridData)_actions.getLayoutData()).exclude = true;
         }
         
+        /*
         _keyManagementShell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(1, true);
         _keyManagementShell.setLayout(gl);
@@ -548,6 +621,7 @@ class ViewForum implements Translatable, Themeable {
         _keyManagementReset.setEnabled(false);
         _keyManagementPBE.setEnabled(false);
         _keyManagementNewReply.setEnabled(false);
+         */
         
         ChannelInfo info = _browser.getClient().getChannel(_scopeId);
         loadData();
@@ -578,6 +652,10 @@ class ViewForum implements Translatable, Themeable {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
         if (_refPopup != null) _refPopup.dispose();
+        if (_viewForumAuthRead != null) _viewForumAuthRead.dispose();
+        if (_viewForumAuthPost != null) _viewForumAuthPost.dispose();
+        if (_viewForumAuthManage != null) _viewForumAuthManage.dispose();
+        if (_viewForumAuthReply != null) _viewForumAuthReply.dispose();
     }
     
     /* called when the tab is closed */
@@ -684,7 +762,7 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_ERROR_TITLE = "syndie.gui.viewforum.error.title";
     private static final String T_ERROR_MSG = "syndie.gui.viewforum.error.msg";
     
-    private void modified() {
+    void modified() {
         if (!_initialized) return;
         if (!_modified) {
             _save.setEnabled(true);
@@ -1064,6 +1142,15 @@ class ViewForum implements Translatable, Themeable {
         if (_editable) {
             _save.setFont(theme.BUTTON_FONT);
             _cancel.setFont(theme.BUTTON_FONT);
+            
+            _authGroup.setFont(theme.DEFAULT_FONT);
+            _authLabel.setFont(theme.DEFAULT_FONT);
+            _authRead.setFont(theme.BUTTON_FONT);
+            _authPost.setFont(theme.BUTTON_FONT);
+            _authManage.setFont(theme.BUTTON_FONT);
+            _authReply.setFont(theme.BUTTON_FONT);
+        
+            /*
             _keyManagementShell.setFont(theme.SHELL_FONT);
             _keyManagementAdvanced.setFont(theme.BUTTON_FONT);
             _keyManagementOpenInfo.setFont(theme.DEFAULT_FONT);
@@ -1078,8 +1165,9 @@ class ViewForum implements Translatable, Themeable {
             _keyManagementPBE.setFont(theme.DEFAULT_FONT);
             _keyManagementNewReply.setFont(theme.DEFAULT_FONT);
             _keyManagementOk.setFont(theme.BUTTON_FONT);
+             */
             _avatarSelect.setFont(theme.BUTTON_FONT);
-            _userAdd.setFont(theme.BUTTON_FONT);
+            //_userAdd.setFont(theme.BUTTON_FONT);
             _archiveAdd.setFont(theme.BUTTON_FONT);
         }
         
@@ -1118,6 +1206,13 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_KEYMGMT_OK = "syndie.gui.viewforum.keymgmt.ok";
     private static final String T_KEYMGMT_ADVANCED = "syndie.gui.viewforum.keymgmt.advanced";
 
+    private static final String T_AUTHGROUP = "syndie.gui.viewforum.authgroup";
+    private static final String T_AUTHGROUP_LABEL = "syndie.gui.viewforum.authgroup.label";
+    private static final String T_AUTHGROUP_READ = "syndie.gui.viewforum.authgroup.read";
+    private static final String T_AUTHGROUP_POST = "syndie.gui.viewforum.authgroup.post";
+    private static final String T_AUTHGROUP_MANAGE = "syndie.gui.viewforum.authgroup.manage";
+    private static final String T_AUTHGROUP_REPLY = "syndie.gui.viewforum.authgroup.reply";
+
     private static final String T_AUTH_PUBLIC = "syndie.gui.viewforum.auth.public";
     private static final String T_AUTH_PUBREPLY = "syndie.gui.viewforum.auth.pubreply";
     private static final String T_AUTH_AUTH = "syndie.gui.viewforum.auth.auth";
@@ -1138,6 +1233,15 @@ class ViewForum implements Translatable, Themeable {
         if (_editable) {
             _save.setText(registry.getText(T_SAVE, "Save changes"));
             _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
+        
+            _authGroup.setText(registry.getText(T_AUTHGROUP, "Authorization and authentication"));
+            _authLabel.setText(registry.getText(T_AUTHGROUP_LABEL, "Forum authorization and authentication takes four forms - those allowed to read a forum's posts, those allowed to post to a forum, those allowed to manage a forum, and those allowed to read the private replies to forum administrators"));
+            _authRead.setText(registry.getText(T_AUTHGROUP_READ, "Who can read posts?"));
+            _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Who can create posts?"));
+            _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Who can manage?"));
+            _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Who can read forum feedback?"));
+        
+            /*
             _keyManagementShell.setText(registry.getText(T_KEYMGMT, "Forum key management"));
             _keyManagementOpen.setText(registry.getText(T_KEYMGMT_OPEN, "Open access"));
             _keyManagementOpenInfo.setText(registry.getText(T_KEYMGMT_OPEN_INFO, "This creates a new key for reading messages and publicizes it so that anyone can read with it"));
@@ -1151,10 +1255,11 @@ class ViewForum implements Translatable, Themeable {
             _keyManagementPBEInfo.setText(registry.getText(T_KEYMGMT_PBE_INFO, "If a passphrase is required, even already authorized users will need to know the passphrase, so consider posting that prior to a key rotation."));
             _keyManagementNewReply.setText(registry.getText(T_KEYMGMT_NEWREPLY, "Create a new forum reply key"));
             _keyManagementOk.setText(registry.getText(T_KEYMGMT_OK, "Ok"));
+             */
             
             _archiveAdd.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
-            _userAdd.setText(_browser.getTranslationRegistry().getText(T_USER_ADD, "Add"));
-            _keyManagementAdvanced.setText(_browser.getTranslationRegistry().getText(T_KEYMGMT_ADVANCED, "Advanced..."));
+            //_userAdd.setText(_browser.getTranslationRegistry().getText(T_USER_ADD, "Add"));
+            //_keyManagementAdvanced.setText(_browser.getTranslationRegistry().getText(T_KEYMGMT_ADVANCED, "Advanced..."));
             
             _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
         }
