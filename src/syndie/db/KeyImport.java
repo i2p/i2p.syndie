@@ -15,6 +15,7 @@ import syndie.data.NymKey;
  * --pass $pass
  * --keyfile $keyFile      // keytype: (manage|reply|read)\nscope: $base64(channelHash)\nraw: $base64(data)\n
  * [--authentic $boolean]
+ * [--expireExisting $boolean] // if true, expire all other existing keys of the same type for the scope
  */
 public class KeyImport extends CommandImpl {
     public KeyImport() {}
@@ -33,11 +34,12 @@ public class KeyImport extends CommandImpl {
         String pass = args.getOptValue("pass");
         String keyFile = args.getOptValue("keyfile");
         boolean authentic = args.getOptBoolean("authentic", false);
+        boolean expireExisting = args.getOptBoolean("expireExisting", false);
         
-        return importKey(ui, client, db, login, pass, keyFile, authentic);
+        return importKey(ui, client, db, login, pass, keyFile, authentic, expireExisting);
     }
     
-    private DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String keyFile, boolean authentic) {
+    private DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String keyFile, boolean authentic, boolean expireExisting) {
         File f = new File(keyFile);
         if (!f.exists()) {
             ui.errorMessage("Key file does not exist: " + keyFile);
@@ -47,7 +49,7 @@ public class KeyImport extends CommandImpl {
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(f);
-            return importKey(ui, client, db, login, pass, fin, authentic);
+            return importKey(ui, client, db, login, pass, fin, authentic, expireExisting);
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the key", ioe);
             ui.commandComplete(-1, null);
@@ -56,10 +58,10 @@ public class KeyImport extends CommandImpl {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
         }
     }
-    public static DBClient importKey(UI ui, DBClient client, InputStream fin, boolean authentic) throws IOException {
-        return importKey(ui, client, null, null, null, fin, authentic);
+    public static DBClient importKey(UI ui, DBClient client, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
+        return importKey(ui, client, null, null, null, fin, authentic, expireExisting);
     }
-    public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, InputStream fin, boolean authentic) throws IOException {
+    public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
         String line = DataHelper.readLine(fin);
         if (!line.startsWith("keytype: ") || (line.length() < ("keytype: ".length() + 1)))
             throw new IOException("Invalid type line: " + line);
@@ -81,7 +83,7 @@ public class KeyImport extends CommandImpl {
         byte rawData[] = Base64.decode(raw);
 
         //ui.debugMessage("importing from " + f.getPath() +": type=" + type + " scope=" + scope + " raw=" + raw);
-        client = importKey(ui, client, db, login, pass, type, new Hash(scopeData), rawData, authentic);
+        client = importKey(ui, client, db, login, pass, type, new Hash(scopeData), rawData, authentic, expireExisting);
         fin = null;
         return client;
     }
@@ -90,10 +92,11 @@ public class KeyImport extends CommandImpl {
                                                  "(nymId, keyChannel, keyFunction, keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd)" +
                                                  " VALUES " +
                                                  "(?, ?, ?, ?, ?, ?, ?, NULL, NULL)";
-    public static DBClient importKey(UI ui, DBClient client, String type, Hash scope, byte[] raw, boolean authenticated) {
-        return importKey(ui, client, null, null, null, type, scope, raw, authenticated);
+    private static final String SQL_EXPIRE = "UPDATE nymKey SET keyPeriodEnd = NOW() WHERE nymId = ? AND keyChannel = ? and keyFunction = ?";
+    public static DBClient importKey(UI ui, DBClient client, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
+        return importKey(ui, client, null, null, null, type, scope, raw, authenticated, expireExisting);
     }
-    public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated) {
+    public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
         PreparedStatement stmt = null;
         try {
             long nymId = -1;
@@ -122,6 +125,19 @@ public class KeyImport extends CommandImpl {
                     //ui.commandComplete(0, null);
                     return client;
                 }
+            }
+            
+            // wait until after the above already-exists check
+            if (expireExisting) {
+                Connection con = client.con();
+                //"UPDATE nymKey SET keyPeriodEnd = NOW() WHERE nymId = ? AND keyChannel = ? and keyFunction = ?";
+                stmt = con.prepareStatement(SQL_EXPIRE);
+                stmt.setLong(1, nymId);
+                stmt.setBytes(2, scope.getData());
+                stmt.setString(3, type);
+                stmt.executeUpdate();
+                stmt.close();
+                stmt = null;
             }
             
             if (Constants.KEY_FUNCTION_MANAGE.equals(type) || Constants.KEY_FUNCTION_POST.equals(type)) {

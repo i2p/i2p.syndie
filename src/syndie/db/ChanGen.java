@@ -38,6 +38,7 @@ import syndie.data.ReferenceNode;
  *                                  // wrapped metadata
  * [--explicitBodyKey $base64SessionKey]
  *                                  // explicitly specify the read key to use when encrypting the body
+ * [--createReplyKey $boolean]      // if true, create a new reply key
  *  --metaOut $metadataFile         // signed metadata file, ready to import
  *  --keyManageOut $keyFile         // signing private key to manage
  *  --keyReplyOut $keyFile          // decrypt private key to read replies
@@ -125,8 +126,12 @@ public class ChanGen extends CommandImpl {
             
             identPublic = ident;
             identPrivate = identPriv;
-            replyPublic = enc;
-            replyPrivate = encPriv; // may be null, in case we are allowed to manage but not receive replies
+            if (!args.getOptBoolean("createReplyKey", false)) {
+                replyPublic = enc;
+                replyPrivate = encPriv; // may be null, in case we are allowed to manage but not receive replies
+            } else {
+                // rotating keys
+            }
         
             keys = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), existing.getChannelHash(), Constants.KEY_FUNCTION_READ);
             if ( (keys != null) && (keys.size() > 0) ) {

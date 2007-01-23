@@ -12,6 +12,7 @@ package net.i2p.data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import net.i2p.I2PAppContext;
 
 import net.i2p.util.Log;
 
@@ -34,6 +35,14 @@ public class SessionKey extends DataStructureImpl {
     } 
     public SessionKey(byte data[]) {
         setData(data);
+    } 
+    public SessionKey(boolean create) {
+        this();
+        if (create) {
+            byte data[] = new byte[KEYSIZE_BYTES];
+            I2PAppContext.getGlobalContext().random().nextBytes(data);
+            setData(data);
+        }
     }
 
     public byte[] getData() {

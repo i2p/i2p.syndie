@@ -194,6 +194,11 @@ class ViewForumAuthRead implements Themeable, Translatable {
     }
     
     public boolean getEncryptMetadata() { return _choiceAnyone.getSelection(); }
+    public boolean getNewKey() { return _choiceNew.getSelection(); }
+    public ArrayList getSendExplicit() { return _sendSelectedForums; }
+    public boolean getPostPBE() { return _sendPBE.getSelection(); }
+    public String getSendPassphrase() { return getPostPBE() ? _sendPBEPass.getText().trim() : null; }
+    public String getSendPassphrasePrompt() { return getPostPBE() ? _sendPBEPrompt.getText().trim() : null; }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);

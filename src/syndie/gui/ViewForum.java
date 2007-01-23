@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.i2p.data.Hash;
+import net.i2p.data.PrivateKey;
+import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
@@ -45,6 +47,7 @@ import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
+import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
@@ -698,6 +701,35 @@ class ViewForum implements Translatable, Themeable {
     
     private void saveChanges() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), new ManageForumExecutor.ManageForumState() {
+            public boolean getCreateReadKey() {
+                if (_viewForumAuthRead != null) {
+                    return _viewForumAuthRead.getNewKey();
+                } else {
+                    return false;
+                }
+            }
+            public boolean getCreatePostIdentity() {
+                if (_viewForumAuthPost != null) {
+                    return _viewForumAuthPost.getNewIdentity();
+                } else {
+                    return false;
+                }
+            }
+            public boolean getCreateManageIdentity() {
+                if (_viewForumAuthManage != null) {
+                    return _viewForumAuthManage.getNewIdentity();
+                } else {
+                    return false;
+                }
+            }
+            public boolean getCreateReplyKey() {
+                if (_viewForumAuthReply != null) {
+                    return _viewForumAuthReply.getRotate();
+                } else {
+                    return false;
+                }
+            }
+            
             public Image getAvatar() { return _avatarImg; }
             public String getName() { return _name.getText(); }
             public String getDescription() { return _description.getText(); }
@@ -807,10 +839,70 @@ class ViewForum implements Translatable, Themeable {
             // ok, now create any of the posts we need to send keys to the right people, 
             // as defined by viewForumAuth*
             
+            SyndieURI uri = exec.getForum();
+            Hash scope = uri.getScope();
+            SessionKey readKey = exec.getCreatedReadKey();
+            Hash postIdentity = exec.getCreatedPostIdentity();
+            Hash manageIdentity = exec.getCreatedManageIdentity();
+            
             // done
             _browser.unview(_uri);
-            if (_scopeId < 0)
-                _browser.view(exec.getForum());
+            if (_scopeId < 0) {
+                _browser.view(uri);
+                // todo: lots to do here
+                if ( (readKey != null) && (_viewForumAuthRead != null) ) {
+                    // open a new post to the appropriate locations containing the read key
+                    List scopes = _viewForumAuthRead.getSendExplicit();
+                    for (int i = 0; i < scopes.size(); i++) {
+                        Hash to = (Hash)scopes.get(i);
+                        _browser.getUI().debugMessage("todo: pop up a window to post the read key to " + to.toBase64());
+                        //_browser.createPostURI(to, null, true, readKey);
+                    } 
+                    if (_viewForumAuthRead.getPostPBE()) {
+                        _browser.getUI().debugMessage("todo: pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
+                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                    }
+                }
+                if ( (postIdentity != null) && (_viewForumAuthPost != null) ) {
+                    // open a new post to the appropriate locations containing the post identity's keys
+                    List scopes = _viewForumAuthPost.getSendNewExplicit();
+                    for (int i = 0; i < scopes.size(); i++) {
+                        Hash to = (Hash)scopes.get(i);
+                        _browser.getUI().debugMessage("todo: pop up a window to post the post identity key to " + to.toBase64());
+                        //_browser.createPostURI(to, null, true, readKey);
+                    } 
+                    if (_viewForumAuthPost.getPostPBE()) {
+                        _browser.getUI().debugMessage("todo: pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
+                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                    }
+                }
+                if ( (manageIdentity != null) && (_viewForumAuthManage != null) ) {
+                    // open a new post to the appropriate locations containing the manage identity's keys
+                    List scopes = _viewForumAuthManage.getSendNewExplicit();
+                    for (int i = 0; i < scopes.size(); i++) {
+                        Hash to = (Hash)scopes.get(i);
+                        _browser.getUI().debugMessage("todo: pop up a window to post the manage identity key to " + to.toBase64());
+                        //_browser.createPostURI(to, null, true, readKey);
+                    } 
+                    if (_viewForumAuthManage.getPostPBE()) {
+                        _browser.getUI().debugMessage("todo: pop up a window to post the manage identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
+                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                    }
+                }
+                if ( (_viewForumAuthReply != null) && (_viewForumAuthReply.getRotate()) ) {
+                    // open a new post to the appropriate locations containing the reply keys
+                    List scopes = _viewForumAuthReply.getSendNewExplicit();
+                    for (int i = 0; i < scopes.size(); i++) {
+                        Hash to = (Hash)scopes.get(i);
+                        _browser.getUI().debugMessage("todo: pop up a window to post the reply key to " + to.toBase64());
+                        //_browser.createPostURI(to, null, true, readKey);
+                    } 
+                    if (_viewForumAuthReply.getPostPBE()) {
+                        _browser.getUI().debugMessage("todo: pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
+                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                    }
+                }
+            }
         }
     }
     private static final String T_ERROR_TITLE = "syndie.gui.viewforum.error.title";

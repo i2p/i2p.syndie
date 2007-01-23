@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWTException;
@@ -37,6 +38,9 @@ class ManageForumExecutor {
     private ManageForumState _state;
     private StringBuffer _errors;
     private SyndieURI _forum;
+    private Hash _createdManageIdent;
+    private Hash _createdPostIdent;
+    private SessionKey _createdReadKey;
     
     public ManageForumExecutor(DBClient client, UI ui, ManageForumState state) {
         _client = client;
@@ -65,10 +69,212 @@ class ManageForumExecutor {
         public String getPassphrase();
         public String getPassphrasePrompt();
         public List getCurrentReadKeys();
+        /** should we create a new read key? */
+        public boolean getCreateReadKey();
+        /** should we create a new forum and include its hash in our authorized-posters set? */
+        public boolean getCreatePostIdentity();
+        /** should we create a new forum and include its hash in our authorized-managers set? */
+        public boolean getCreateManageIdentity();
+        /** should we create a new reply key? */
+        public boolean getCreateReplyKey();
     }
     
     public String getErrors() { return _errors.toString(); }
     public SyndieURI getForum() { return _forum; }
+    
+    public SessionKey getCreatedReadKey() { return _createdReadKey; }
+    public Hash getCreatedPostIdentity() { return _createdPostIdent; }
+    public Hash getCreatedManageIdentity() { return _createdManageIdent; }
+    
+    private boolean createNewIdentities() {
+        if (_state.getCreateManageIdentity()) {
+            if (!createManageIdentity())
+                return false;
+        }
+        if (_state.getCreatePostIdentity()) {
+            if (!createPostIdentity())
+                return false;
+        }
+        return true;
+    }
+    private boolean createManageIdentity() {
+        _createdManageIdent = createNewChan();
+        if (_createdManageIdent != null)
+            return true;
+        else
+            return false;
+    }
+    private boolean createPostIdentity() {
+        _createdPostIdent = createNewChan();
+        if (_createdPostIdent != null)
+            return true;
+        else
+            return false;
+    }
+    /** create a stub channel for posting/managing */
+    private Hash createNewChan() {
+        String out = null;
+        File tmpDir = _client.getTempDir();
+        tmpDir.mkdirs();
+        File manageOut = null;
+        File replyOut = null;
+        File encPostOut = null;
+        File encMetaOut = null;
+        try {
+            manageOut = File.createTempFile("syndieNewManage", "dat", tmpDir);
+            replyOut = File.createTempFile("syndieNewReply", "dat", tmpDir);
+            encPostOut = File.createTempFile("syndieNewEncPost", "dat", tmpDir);
+            encMetaOut = File.createTempFile("syndieNewEncMeta", "dat", tmpDir);
+            if (out == null) {
+                out = File.createTempFile("syndieNewMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
+            }
+        } catch (IOException ioe) {
+            _errors.append("Unable to create temporary files: " + ioe.getMessage());
+            return null;
+        }
+        
+        Opts chanGenOpts = new Opts();
+        chanGenOpts.setCommand("changen");
+        chanGenOpts.setOptValue("name", "Shared");
+        chanGenOpts.setOptValue("description", "");
+        chanGenOpts.setOptValue("avatar", "");
+        chanGenOpts.setOptValue("edition", Long.toString(_client.createEdition(-1)));
+        chanGenOpts.setOptValue("publicPosting", Boolean.FALSE.toString());
+        chanGenOpts.setOptValue("publicReplies", Boolean.FALSE.toString());
+        chanGenOpts.setOptValue("refs", "");
+        chanGenOpts.setOptValue("encryptContent", Boolean.FALSE.toString());
+        chanGenOpts.setOptValue("metaOut", out);
+        chanGenOpts.setOptValue("keyManageOut", manageOut.getPath());
+        chanGenOpts.setOptValue("keyReplyOut", replyOut.getPath());
+        chanGenOpts.setOptValue("keyEncryptPostOut", encPostOut.getPath());
+        chanGenOpts.setOptValue("keyEncryptMetaOut", encMetaOut.getPath());
+        
+        ChanGen cmd = new ChanGen();
+        _ui.debugMessage("Generating new chan with options " + chanGenOpts);
+        NestedUI nestedUI = new NestedUI(_ui);
+        cmd.runCommand(chanGenOpts, nestedUI, _client);
+        
+        Hash identHash = null;
+        
+        if (nestedUI.getExitCode() >= 0) {
+            // ok, used the default dir - migrate it
+            FileInputStream fis = null;
+            FileOutputStream fos = null;
+            try {
+                fis = new FileInputStream(out);
+                Enclosure enc = new Enclosure(fis);
+                SigningPublicKey pub = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
+                if (pub == null) {
+                    _errors.append("Unable to pull the channel from the enclosure");
+                    return null;
+                } else {
+                    identHash = pub.calculateHash();
+                    _ui.debugMessage("Channel identity: " +identHash.toBase64());
+                }
+                File chanDir = new File(_client.getOutboundDir(), identHash.toBase64());
+                chanDir.mkdirs();
+                File mdFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
+                fos = new FileOutputStream(mdFile);
+                fis = new FileInputStream(out);
+                byte buf[] = new byte[4096];
+                int read = -1;
+                while ( (read = fis.read(buf)) != -1)
+                    fos.write(buf, 0, read);
+                fis.close();
+                fos.close();
+                fis = null;
+                fos = null;
+                File outFile = new File(out);
+                outFile.delete();
+                out = mdFile.getPath();
+                _ui.statusMessage("Sharable channel metadata saved to " + mdFile.getPath());
+            } catch (IOException ioe) {
+                _errors.append("Error migrating the channel metadata from " + out + ": " + ioe.getMessage());
+                return null;
+            } finally {
+                if (fis != null) try { fis.close(); } catch (IOException ioe) {}
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
+        }
+        
+        File outFile = new File(out);
+        if ( (nestedUI.getExitCode() >= 0) && (outFile.exists() && outFile.length() > 0) ) {
+            // channel created successfully, now import the metadata and keys, and delete
+            // the temporary files
+            _ui.statusMessage("Channel metadata created and stored in " + outFile.getPath());
+            
+            Importer msgImp = new Importer();
+            Opts msgImpOpts = new Opts();
+            msgImpOpts.setOptValue("in", out);
+            if (_state.getPBE() && (_state.getPassphrase() != null))
+                msgImpOpts.setOptValue("passphrase", CommandImpl.strip(_state.getPassphrase()));
+            msgImpOpts.setCommand("import");
+            NestedUI dataNestedUI = new NestedUI(_ui);
+            _ui.debugMessage("Importing with options " + msgImpOpts);
+            msgImp.runCommand(msgImpOpts, dataNestedUI, _client);
+            if (dataNestedUI.getExitCode() < 0) {
+                _errors.append("Failed in the nested import command");
+                return null;
+            }
+            _ui.statusMessage("Channel metadata imported");
+
+            KeyImport keyImp = new KeyImport();
+            Opts keyOpts = new Opts();
+            if (manageOut.length() > 0) {
+                keyOpts.setOptValue("keyfile", manageOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    return null;
+                }
+                _ui.statusMessage("Channel management key imported");
+            }
+            if (replyOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", replyOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    return null;
+                }
+                _ui.statusMessage("Channel reply key imported");
+            }
+            if (encPostOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", encPostOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    return null;
+                }
+                _ui.statusMessage("Channel post read key imported");
+            }
+            if (encMetaOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", encMetaOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    return null;
+                }
+                _ui.statusMessage("Channel metadata read key imported");
+            }
+            
+            manageOut.delete();
+            replyOut.delete();
+            encPostOut.delete();
+            encMetaOut.delete();
+        }
+        return identHash;
+    }
     
     /**
      * actually save the state to a new syndie metadata message, persisting it to
@@ -76,6 +282,8 @@ class ManageForumExecutor {
      * or if there were errors, getErrors().  this is a port of ManageMenu.processExecute
      */
     public void execute() {
+        boolean createIdentOk = createNewIdentities();
+        if (!createIdentOk) return;
         String out = null;
         File tmpDir = _client.getTempDir();
         tmpDir.mkdirs();
@@ -136,6 +344,10 @@ class ManageForumExecutor {
                 chanGenOpts.addOptValue("postKey", pub.toBase64());
             }
         }
+        if (_createdPostIdent != null) {
+            SigningPublicKey pub = _client.getChannelIdentKey(_createdPostIdent);
+            chanGenOpts.addOptValue("postKey", pub.toBase64());
+        }
         
         keys = _state.getAuthorizedManagers();
         if (keys != null) {
@@ -143,6 +355,10 @@ class ManageForumExecutor {
                 SigningPublicKey pub = (SigningPublicKey)iter.next();
                 chanGenOpts.addOptValue("manageKey", pub.toBase64());
             }
+        }
+        if (_createdManageIdent != null) {
+            SigningPublicKey pub = _client.getChannelIdentKey(_createdManageIdent);
+            chanGenOpts.addOptValue("manageKey", pub.toBase64());
         }
         
         chanGenOpts.setOptValue("refs", _state.getReferences());
@@ -185,6 +401,14 @@ class ManageForumExecutor {
                 SessionKey rk = (SessionKey)readKeys.get(i);
                 chanGenOpts.addOptValue("deliverReadKey", rk.toBase64());
             }
+        }
+        
+        if (_state.getCreateReplyKey())
+            chanGenOpts.addOptValue("createReplyKey", Boolean.TRUE.toString());
+        if (_state.getCreateReadKey()) {
+            SessionKey rk = new SessionKey(true);
+            _createdReadKey = rk;
+            chanGenOpts.addOptValue("deliverReadKey", rk.toBase64());
         }
         
         ChanGen cmd = new ChanGen();
@@ -276,6 +500,7 @@ class ManageForumExecutor {
                 keyOpts = new Opts();
                 keyOpts.setOptValue("keyfile", replyOut.getPath());
                 keyOpts.setOptValue("authentic", "true");
+                keyOpts.setOptValue("expireExisting", "true");
                 dataNestedUI = new NestedUI(_ui);
                 keyImp.runCommand(keyOpts, dataNestedUI, _client);
                 if (dataNestedUI.getExitCode() < 0) {

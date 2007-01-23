@@ -2358,6 +2358,34 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_REPLY_KEY = "SELECT encryptKey FROM channel WHERE channelHash = ?";
+    public PublicKey getChannelReplyKey(Hash scope) {
+        if (scope == null) return null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_REPLY_KEY);
+            stmt.setBytes(1, scope.getData());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                if ( (data != null) && (data.length == PublicKey.KEYSIZE_BYTES) )
+                    return new PublicKey(data);
+                else
+                    return null;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel reply key", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_IMPORT_DATE = "SELECT importDate FROM channel WHERE channelId = ?";
     /** when we imported the scope, or -1 if never */
     public long getChannelImportDate(Hash scope) {        

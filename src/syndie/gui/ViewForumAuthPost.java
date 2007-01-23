@@ -242,6 +242,11 @@ class ViewForumAuthPost implements Themeable, Translatable {
     public ArrayList getAuthorizedPosters() {
         return getAllowPublicPosts() ? new ArrayList() : _selectedForums;
     }
+    public boolean getNewIdentity() { return _sendNew.getSelection(); }
+    public ArrayList getSendNewExplicit() { return _sendNewForums; }
+    public boolean getPostPBE() { return _sendNewPBE.getSelection(); }
+    public String getSendPassphrase() { return getPostPBE() ? _sendNewPBEPass.getText().trim() : null; }
+    public String getSendPassphrasePrompt() { return getPostPBE() ? _sendNewPBEPrompt.getText().trim() : null; }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
