@@ -1,6 +1,8 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -16,6 +18,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 
 /**
@@ -189,15 +192,56 @@ class ViewForumAuthPost implements Themeable, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { delNewForum(); }
         });
         
-        pickChoiceAllowed();
+        loadData();
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
     }
     
+    private void loadData() {
+        ChannelInfo info = _view.getChannelInfo();
+        
+        if (info != null) {
+            if (info.getAllowPublicPosts())
+                pickChoiceAnyone();
+            else if (info.getAllowPublicReplies())
+                pickChoiceReplies();
+            else
+                pickChoiceAllowed();
+            
+            // managers are implicit, and managed via ViewForumAuthManage
+            /*
+            for (Iterator iter = info.getAuthorizedManagerHashes().iterator(); iter.hasNext(); ) {
+                Hash scope = (Hash)iter.next();
+                _selectedForums.add(scope);
+                String name = _browser.getClient().getChannelName(scope);
+                if (name != null)
+                    _selectedList.add(name + " [" + scope.toBase64().substring(0,6) + "]");
+                else
+                    _selectedList.add("[" + scope.toBase64().substring(0,6) + "]");
+            }
+             */
+            for (Iterator iter = info.getAuthorizedPosterHashes().iterator(); iter.hasNext(); ) {
+                Hash scope = (Hash)iter.next();
+                _selectedForums.add(scope);
+                String name = _browser.getClient().getChannelName(scope);
+                if (name != null)
+                    _selectedList.add(name + " [" + scope.toBase64().substring(0,6) + "]");
+                else
+                    _selectedList.add("[" + scope.toBase64().substring(0,6) + "]");
+            }
+        }
+    }
+    
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
     private void ok() { _view.modified(); hide(); }
+    
+    public boolean getAllowPublicReplies() { return _choiceReplies.getSelection(); }
+    public boolean getAllowPublicPosts() { return _choiceAnyone.getSelection(); }
+    public ArrayList getAuthorizedPosters() {
+        return getAllowPublicPosts() ? new ArrayList() : _selectedForums;
+    }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
@@ -250,20 +294,20 @@ class ViewForumAuthPost implements Themeable, Translatable {
         _choiceAnyone.setSelection(false);
         _choiceAllowed.setSelection(false);
         _choiceReplies.setSelection(true);
-        _selected.setEnabled(false);
-        _selectedList.setEnabled(false);
-        _selectedAdd.setEnabled(false);
-        _selectedDel.setEnabled(false);
-        _sendNew.setEnabled(false);
-        _sendNewLabel.setEnabled(false);
-        _sendNewAdd.setEnabled(false);
-        _sendNewDel.setEnabled(false);
-        _sendNewList.setEnabled(false);
-        _sendNewPBE.setEnabled(false);
-        _sendNewPBEPass.setEnabled(false);
-        _sendNewPBEPassLabel.setEnabled(false);
-        _sendNewPBEPrompt.setEnabled(false);
-        _sendNewPBEPromptLabel.setEnabled(false);
+        _selected.setEnabled(true);
+        _selectedList.setEnabled(true);
+        _selectedAdd.setEnabled(true);
+        _selectedDel.setEnabled(true);
+        _sendNew.setEnabled(true);
+        _sendNewLabel.setEnabled(_sendNew.getSelection());
+        _sendNewAdd.setEnabled(_sendNew.getSelection());
+        _sendNewDel.setEnabled(_sendNew.getSelection());
+        _sendNewList.setEnabled(_sendNew.getSelection());
+        _sendNewPBE.setEnabled(_sendNew.getSelection());
+        _sendNewPBEPass.setEnabled(_sendNew.getSelection() && _sendNewPBE.getSelection());
+        _sendNewPBEPassLabel.setEnabled(_sendNew.getSelection() && _sendNewPBE.getSelection());
+        _sendNewPBEPrompt.setEnabled(_sendNew.getSelection() && _sendNewPBE.getSelection());
+        _sendNewPBEPromptLabel.setEnabled(_sendNew.getSelection() && _sendNewPBE.getSelection());
     }
     
     private void addAuthorizedForum() {
@@ -380,7 +424,7 @@ class ViewForumAuthPost implements Themeable, Translatable {
         _selectedDel.setText(registry.getText(T_SELECTED_DELETE, "Delete"));
         
         _sendNew.setText(registry.getText(T_SEND_NEW, "Create a new identity and allow it to post"));
-        _sendNewLabel.setText(registry.getText(T_SEND_NEW_LABEL, "Send the new identity key to the administrators of the selected forums:"));
+        _sendNewLabel.setText(registry.getText(T_SEND_NEW_LABEL, "Send the new identity's key to the administrators of the selected forums:"));
         _sendNewAdd.setText(registry.getText(T_SEND_NEW_ADD, "Add"));
         _sendNewDel.setText(registry.getText(T_SEND_NEW_DELETE, "Delete"));
         _sendNewPBE.setText(registry.getText(T_SEND_NEW_PBE, "Post the new identity's key in a passphrase protected message to the forum"));

@@ -215,20 +215,23 @@ class ViewForum implements Translatable, Themeable {
         _descriptionLabel = new Label(_root, SWT.NONE);
         _descriptionLabel.setLayoutData(new GridData(GridData.END, GridData.BEGINNING, false, false));
         
+        int descWidth = (_editable ? 3 : 5);
         _description = new Text(_root, SWT.BORDER | SWT.SINGLE | (!_editable ? SWT.READ_ONLY : 0));
-        _description.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 5, 1));
+        _description.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, descWidth, 1));
         _description.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
-        _authorizationLabel = new Label(_root, SWT.NONE);
-        _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        
-        _authorization = new Combo(_root, SWT.READ_ONLY | SWT.DROP_DOWN);
-        _authorization.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        if (!_editable) _authorization.setEnabled(false);
-        _authorization.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
-        });
+        if (!_editable) {
+            _authorizationLabel = new Label(_root, SWT.NONE);
+            _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+
+            _authorization = new Combo(_root, SWT.READ_ONLY | SWT.DROP_DOWN);
+            _authorization.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+            _authorization.setEnabled(false);
+            _authorization.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { modified(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { modified(); }
+            });
+        }
         
         _expirationLabel = new Label(_root, SWT.NONE);
         _expirationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -238,21 +241,6 @@ class ViewForum implements Translatable, Themeable {
         gd.widthHint = 50;
         _expiration.setLayoutData(gd);
         _expiration.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
-        
-        if (_editable) {
-            _avatarSelect = new Button(_root, SWT.PUSH);
-            _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-            
-            _avatarMenu = new Menu(_avatar);
-            _avatar.setMenu(_avatarMenu);
-            
-            populateAvatarMenu();
-            
-            _avatarSelect.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-            });
-        }
         
         _referencesLabel = new Label(_root, SWT.NONE);
         _referencesLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -281,56 +269,74 @@ class ViewForum implements Translatable, Themeable {
             }
         });
         
-        _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
-        _userGroup.setLayout(new GridLayout(1, false));
+        if (_editable) {
+            _avatarSelect = new Button(_root, SWT.PUSH);
+            _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+            
+            _avatarMenu = new Menu(_avatar);
+            _avatar.setMenu(_avatarMenu);
+            
+            populateAvatarMenu();
+            
+            _avatarSelect.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+            });
+        }
         
-        _users = new Table(_userGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
-        _users.setHeaderVisible(false);
-        _users.setLinesVisible(true);
-        gd = new GridData(GridData.FILL, GridData.FILL, true, true, 1, 2);
-        _users.setLayoutData(gd);
-        
-        _userName = new TableColumn(_users, SWT.LEFT);
-        _userPriv = new TableColumn(_users, SWT.RIGHT);
-        
-        final Menu userMenu = new Menu(_users);
-        _users.setMenu(userMenu);
-        /*
-        MenuItem addForum = new MenuItem(userMenu, SWT.PUSH);
-        addForum.setText(_browser.getTranslationRegistry().getText(T_USER_ADDFORUM, "Add"));
-        addForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
-        });
-         */
-        MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
-        viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
-        viewForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
-            private void viewUser() {
-                TableItem items[] = _users.getSelection();
-                for (int i = 0; i < items.length; i++) {
-                    Hash scope = (Hash)_userItemToHash.get(items[i]);
-                    _browser.view(SyndieURI.createScope(scope));
-                }
-            }
-        });
-        MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
-        viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum profile"));
-        viewMeta.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
-            private void viewMeta() {
-                TableItem items[] = _users.getSelection();
-                for (int i = 0; i < items.length; i++) {
-                    Hash scope = (Hash)_userItemToHash.get(items[i]);
-                    _browser.view(_browser.createMetaURI(scope));
-                }
-            }
-        });
+        // if it is editable, there's the user popup
+        if (!_editable) {
+            _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
+            _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
+            _userGroup.setLayout(new GridLayout(1, false));
 
+            _users = new Table(_userGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
+            _users.setHeaderVisible(false);
+            _users.setLinesVisible(true);
+            gd = new GridData(GridData.FILL, GridData.FILL, true, true, 1, 2);
+            _users.setLayoutData(gd);
+
+            _userName = new TableColumn(_users, SWT.LEFT);
+            _userPriv = new TableColumn(_users, SWT.RIGHT);
+
+            final Menu userMenu = new Menu(_users);
+            _users.setMenu(userMenu);
+            /*
+            MenuItem addForum = new MenuItem(userMenu, SWT.PUSH);
+            addForum.setText(_browser.getTranslationRegistry().getText(T_USER_ADDFORUM, "Add"));
+            addForum.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
+            });
+             */
+            MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
+            viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
+            viewForum.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
+                private void viewUser() {
+                    TableItem items[] = _users.getSelection();
+                    for (int i = 0; i < items.length; i++) {
+                        Hash scope = (Hash)_userItemToHash.get(items[i]);
+                        _browser.view(SyndieURI.createScope(scope));
+                    }
+                }
+            });
+            MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
+            viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum profile"));
+            viewMeta.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
+                private void viewMeta() {
+                    TableItem items[] = _users.getSelection();
+                    for (int i = 0; i < items.length; i++) {
+                        Hash scope = (Hash)_userItemToHash.get(items[i]);
+                        _browser.view(_browser.createMetaURI(scope));
+                    }
+                }
+            });
+
+        }
         /*
         if (_editable) {
             final MenuItem manager = new MenuItem(userMenu, SWT.PUSH);
@@ -630,7 +636,7 @@ class ViewForum implements Translatable, Themeable {
         _browser.getThemeRegistry().register(this);
         
         // wait until after translate, since that populates _authorization
-        if (info != null) {
+        if ( (!_editable) && (info != null) ) {
             if (info.getAllowPublicPosts())
                 _authorization.select(AUTH_PUBLIC);
             else if (info.getAllowPublicReplies())
@@ -644,6 +650,8 @@ class ViewForum implements Translatable, Themeable {
         //    public void run() { applyTheme(_browser.getThemeRegistry().getTheme()); _parent.layout(true, true); }
         //});
     }
+    
+    ChannelInfo getChannelInfo() { return _browser.getClient().getChannel(_scopeId); }
     
     public void dispose() {
         ImageUtil.dispose(_avatarImgOrig);
@@ -700,8 +708,28 @@ class ViewForum implements Translatable, Themeable {
                     return -1;
             }
 
-            public boolean getAllowPublicPosts() { return _authorization.getSelectionIndex() == AUTH_PUBLIC; }
-            public boolean getAllowPublicReplies() { return _authorization.getSelectionIndex() == AUTH_PUBREPLY; }
+            public boolean getAllowPublicPosts() { 
+                if (_viewForumAuthPost != null) {
+                    return _viewForumAuthPost.getAllowPublicPosts();
+                } else {
+                    ChannelInfo info = getChannelInfo();
+                    if (info != null)
+                        return info.getAllowPublicPosts();
+                    else
+                        return false;
+                }
+            }
+            public boolean getAllowPublicReplies() { 
+                if (_viewForumAuthPost != null) {
+                    return _viewForumAuthPost.getAllowPublicReplies();
+                } else {
+                    ChannelInfo info = getChannelInfo();
+                    if (info != null)
+                        return info.getAllowPublicReplies();
+                    else
+                        return false;
+                }
+            }
             public Set getPublicTags() { return Collections.EMPTY_SET; }
             public Set getPrivateTags() { 
                 String tags[] = Constants.split(" \t\r\n,", _tags.getText(), false);
@@ -710,8 +738,28 @@ class ViewForum implements Translatable, Themeable {
                     rv.add(tags[i]);
                 return rv;
             }
-            public Set getAuthorizedPosters() { return getPubKeys(_posterHashes); }
-            public Set getAuthorizedManagers() { return getPubKeys(_managerHashes); }
+            public Set getAuthorizedPosters() { 
+                if (_viewForumAuthPost != null) {
+                    return getPubKeys(_viewForumAuthPost.getAuthorizedPosters());
+                } else {
+                    ChannelInfo info = getChannelInfo();
+                    if (info != null)
+                        return info.getAuthorizedPosters();
+                    else
+                        return new HashSet();
+                }
+            }
+            public Set getAuthorizedManagers() {
+                if (_viewForumAuthManage != null) {
+                    return getPubKeys(_viewForumAuthManage.getAuthorizedManagers());
+                } else {
+                    ChannelInfo info = getChannelInfo();
+                    if (info != null)
+                        return info.getAuthorizedManagers();
+                    else
+                        return new HashSet();
+                }
+            }
             private Set getPubKeys(List scopes) {
                 Set rv = new HashSet();
                 for (int i = 0; i < scopes.size(); i++) {
@@ -739,7 +787,9 @@ class ViewForum implements Translatable, Themeable {
 
             public long getChannelId() { return _scopeId; }
             
-            public boolean getEncryptContent() { return false; }
+            public boolean getEncryptContent() { 
+                return ((_viewForumAuthRead != null) && (_viewForumAuthRead.getEncryptMetadata()));
+            }
             public boolean getPBE() { return false; }
             public String getPassphrase() { return _passphrase; }
             public String getPassphrasePrompt() { return _prompt; }
@@ -754,6 +804,10 @@ class ViewForum implements Translatable, Themeable {
             box.setMessage(_browser.getTranslationRegistry().getText(T_ERROR_MSG, "Internal error saving the forum:") + errs);
             box.open();
         } else {
+            // ok, now create any of the posts we need to send keys to the right people, 
+            // as defined by viewForumAuth*
+            
+            // done
             _browser.unview(_uri);
             if (_scopeId < 0)
                 _browser.view(exec.getForum());
@@ -1030,6 +1084,7 @@ class ViewForum implements Translatable, Themeable {
     }
     
     private void loadUsers(ChannelInfo info) {
+        if (_editable) return;
         // add buttons w/ menus for the authorized managers and posters in _userGroup
         _managerHashes.clear();
         _posterHashes.clear();
@@ -1040,6 +1095,7 @@ class ViewForum implements Translatable, Themeable {
     }
     
     private void redrawUsers() {
+        if (_editable) return;
         _users.setRedraw(false);
         _users.removeAll();
         _userItemToHash.clear();
@@ -1128,15 +1184,11 @@ class ViewForum implements Translatable, Themeable {
         _tags.setFont(theme.DEFAULT_FONT);
         _descriptionLabel.setFont(theme.DEFAULT_FONT);
         _description.setFont(theme.DEFAULT_FONT);
-        _authorizationLabel.setFont(theme.DEFAULT_FONT);
-        _authorization.setFont(theme.DEFAULT_FONT);
         _expirationLabel.setFont(theme.DEFAULT_FONT);
         _expiration.setFont(theme.DEFAULT_FONT);
         _referencesLabel.setFont(theme.DEFAULT_FONT);
         _references.setFont(theme.DEFAULT_FONT);
-        _userGroup.setFont(theme.DEFAULT_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
-        _users.setFont(theme.TABLE_FONT);
         _archives.setFont(theme.TABLE_FONT);
         
         if (_editable) {
@@ -1169,6 +1221,11 @@ class ViewForum implements Translatable, Themeable {
             _avatarSelect.setFont(theme.BUTTON_FONT);
             //_userAdd.setFont(theme.BUTTON_FONT);
             _archiveAdd.setFont(theme.BUTTON_FONT);
+        } else {
+            _userGroup.setFont(theme.DEFAULT_FONT);
+            _users.setFont(theme.TABLE_FONT);
+            _authorizationLabel.setFont(theme.DEFAULT_FONT);
+            _authorization.setFont(theme.DEFAULT_FONT);
         }
         
         redrawArchives();
@@ -1225,10 +1282,8 @@ class ViewForum implements Translatable, Themeable {
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         if (_avatarSelect != null)
             _avatarSelect.setText(registry.getText(T_AVATAR_SELECT, "Select..."));
-        _authorizationLabel.setText(registry.getText(T_AUTH, "Authorization:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
         _referencesLabel.setText(registry.getText(T_REFERENCES, "References:"));
-        _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
         _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertized archives:"));
         if (_editable) {
             _save.setText(registry.getText(T_SAVE, "Save changes"));
@@ -1236,10 +1291,10 @@ class ViewForum implements Translatable, Themeable {
         
             _authGroup.setText(registry.getText(T_AUTHGROUP, "Authorization and authentication"));
             _authLabel.setText(registry.getText(T_AUTHGROUP_LABEL, "Forum authorization and authentication takes four forms - those allowed to read a forum's posts, those allowed to post to a forum, those allowed to manage a forum, and those allowed to read the private replies to forum administrators"));
-            _authRead.setText(registry.getText(T_AUTHGROUP_READ, "Who can read posts?"));
-            _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Who can create posts?"));
-            _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Who can manage?"));
-            _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Who can read forum feedback?"));
+            _authRead.setText(registry.getText(T_AUTHGROUP_READ, "Read posts"));
+            _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Create posts"));
+            _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Manage"));
+            _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Read forum feedback"));
         
             /*
             _keyManagementShell.setText(registry.getText(T_KEYMGMT, "Forum key management"));
@@ -1262,21 +1317,24 @@ class ViewForum implements Translatable, Themeable {
             //_keyManagementAdvanced.setText(_browser.getTranslationRegistry().getText(T_KEYMGMT_ADVANCED, "Advanced..."));
             
             _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
-        }
+        } else {
+            _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
+            _authorizationLabel.setText(registry.getText(T_AUTH, "Authorization:"));
 
-        int auth = -1;
-        if (_authorization.getItemCount() > 0)
-            auth = _authorization.getSelectionIndex();
-        else
-            auth = 1;
-        _authorization.setRedraw(false);
-        _authorization.removeAll();
-        // order correlates w/ AUTH_*
-        _authorization.add(registry.getText(T_AUTH_PUBLIC, "Allow anyone to post to the forum"));
-        _authorization.add(registry.getText(T_AUTH_PUBREPLY, "Allow anyone to reply to authorized posts"));
-        _authorization.add(registry.getText(T_AUTH_AUTH, "Only allow authorized posters to post"));
-        _authorization.select(auth);
-        _authorization.setRedraw(true);
+            int auth = -1;
+            if (_authorization.getItemCount() > 0)
+                auth = _authorization.getSelectionIndex();
+            else
+                auth = 1;
+            _authorization.setRedraw(false);
+            _authorization.removeAll();
+            // order correlates w/ AUTH_*
+            _authorization.add(registry.getText(T_AUTH_PUBLIC, "Allow anyone to post to the forum"));
+            _authorization.add(registry.getText(T_AUTH_PUBREPLY, "Allow anyone to reply to authorized posts"));
+            _authorization.add(registry.getText(T_AUTH_AUTH, "Only allow authorized posters to post"));
+            _authorization.select(auth);
+            _authorization.setRedraw(true);
+        }
     }
     
     private static final int AUTH_PUBLIC = 0;

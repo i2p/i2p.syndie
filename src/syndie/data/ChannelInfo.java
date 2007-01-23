@@ -35,6 +35,7 @@ public class ChannelInfo {
     private Set _privateArchives;
     /** set of SessionKey instances that posts can be encrypted with */
     private Set _readKeys;
+    private boolean _readKeysArePublic;
     /** publicly visible headers delivered with the metadata */
     private Properties _publicHeaders;
     /** privately visible headers delivered with the metadata */
@@ -67,6 +68,7 @@ public class ChannelInfo {
         _publicArchives = Collections.EMPTY_SET;
         _privateArchives = Collections.EMPTY_SET;
         _readKeys = Collections.EMPTY_SET;
+        _readKeysArePublic = true;
         _publicHeaders = new Properties();
         _privateHeaders = new Properties();
         _references = Collections.EMPTY_LIST;
@@ -117,6 +119,9 @@ public class ChannelInfo {
     /** set of SessionKey instances that posts can be encrypted with */
     public Set getReadKeys() { return _readKeys; }
     public void setReadKeys(Set keys) { _readKeys = keys; }
+    /** if true, the current read keys are/were publicly readable */
+    public boolean getReadKeysArePublic() { return _readKeysArePublic; }
+    public void setReadKeysArePublic(boolean pub) { _readKeysArePublic = pub; }
     /** publicly visible headers delivered with the metadata */
     public Properties getPublicHeaders() { return _publicHeaders; }
     public void setPublicHeaders(Properties headers) { _publicHeaders = headers; }

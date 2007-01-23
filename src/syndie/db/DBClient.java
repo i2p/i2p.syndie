@@ -1506,7 +1506,7 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_ARCHIVES = "SELECT archiveId, wasEncrypted FROM channelArchive WHERE channelId = ?";
-    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT DISTINCT keyData FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
+    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT DISTINCT keyData, wasPublic FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
     private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ? ORDER BY headerName";
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
@@ -1703,13 +1703,18 @@ public class DBClient {
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
             Set keys = new HashSet();
+            boolean pub = true;
             while (rs.next()) {
                 // readKey
                 byte key[] = rs.getBytes(1);
                 if (!rs.wasNull())
                     keys.add(new SessionKey(key));
+                boolean curPub = rs.getBoolean(2);
+                if (!rs.wasNull())
+                    pub = pub && curPub;
             }
             info.setReadKeys(keys);
+            info.setReadKeysArePublic(pub);
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);

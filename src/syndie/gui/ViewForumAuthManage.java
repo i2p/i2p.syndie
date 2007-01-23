@@ -1,6 +1,8 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -16,6 +18,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 
 /**
@@ -131,14 +134,12 @@ class ViewForumAuthManage implements Themeable, Translatable {
         });
         
         _sendNew.addSelectionListener(new SelectionListener() {
-            // pickChoiceAllowed refreshes the enable state of the related fields
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceAllowed(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickChoiceAllowed(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { refreshEnabled(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { refreshEnabled(); }
         });
         _sendNewPBE.addSelectionListener(new SelectionListener() {
-            // pickChoiceAllowed refreshes the enable state of the related fields
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceAllowed(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickChoiceAllowed(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { refreshEnabled(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { refreshEnabled(); }
         });
         
         _selectedAdd.addSelectionListener(new SelectionListener() {
@@ -157,16 +158,34 @@ class ViewForumAuthManage implements Themeable, Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { delNewForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { delNewForum(); }
         });
-        
-        pickChoiceAllowed();
+
+        loadData();
+        refreshEnabled();
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
     }
     
+    private void loadData() {
+        ChannelInfo info = _view.getChannelInfo();
+        
+        if (info != null) {
+            for (Iterator iter = info.getAuthorizedManagerHashes().iterator(); iter.hasNext(); ) {
+                Hash scope = (Hash)iter.next();
+                _selectedForums.add(scope);
+                String name = _browser.getClient().getChannelName(scope);
+                if (name != null)
+                    _selectedList.add(name + " [" + scope.toBase64().substring(0,6) + "]");
+                else
+                    _selectedList.add("[" + scope.toBase64().substring(0,6) + "]");
+            }
+        }
+    }
+    
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
     private void ok() { _view.modified(); hide(); }
+    public ArrayList getAuthorizedManagers() { return _selectedForums; }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
@@ -177,7 +196,7 @@ class ViewForumAuthManage implements Themeable, Translatable {
             _chooser.dispose();
     }
     
-    private void pickChoiceAllowed() {
+    private void refreshEnabled() {
         _sendNewLabel.setEnabled(_sendNew.getSelection());
         _sendNewAdd.setEnabled(_sendNew.getSelection());
         _sendNewDel.setEnabled(_sendNew.getSelection());

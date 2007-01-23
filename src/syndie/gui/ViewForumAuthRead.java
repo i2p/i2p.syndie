@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -15,6 +16,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.Constants;
+import syndie.data.ChannelInfo;
+import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 
 /**
@@ -159,8 +163,8 @@ class ViewForumAuthRead implements Themeable, Translatable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { delForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { delForum(); }
         });
-        
-        pickChoiceAllowed();
+
+        loadData();
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -169,6 +173,27 @@ class ViewForumAuthRead implements Themeable, Translatable {
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
     private void ok() { _view.modified(); hide(); }
+    
+    private void loadData() {
+        ChannelInfo info = _view.getChannelInfo();
+        if (info != null) {
+            Set readKeys = info.getReadKeys();
+            if ( (readKeys != null) && (readKeys.size() > 0) ) {
+                if (info.getReadKeysArePublic())
+                    pickChoiceAnyone();
+                else
+                    pickChoiceAllowed();
+            } else {
+                // there are no read keys... must be public
+                pickChoiceAnyone();
+            }
+        } else {
+            // new channel, assume publicly readable
+            pickChoiceAnyone();
+        }
+    }
+    
+    public boolean getEncryptMetadata() { return _choiceAnyone.getSelection(); }
     
     public void dispose() {
         _browser.getTranslationRegistry().unregister(this);
