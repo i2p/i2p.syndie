@@ -1434,6 +1434,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     _openTabURIs.put(tab.getTabItem(), uri);
                 }
                 debugMessage("tab built: " + tab);
+            } else {
+                debugMessage("canShow(" + uri + "): " + tab);
             }
         }
         if (tab != null) {
@@ -2044,6 +2046,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         return createPostURI(forum, parent, false);
     }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) {
+        return createPostURI(forum, parent, asPrivateReply, null);
+    }
+    
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references) {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
@@ -2052,10 +2058,30 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         if (parent != null)
             attributes.put("parent", parent.toString());
         attributes.put("reply", ""+asPrivateReply);
-        attributes.put("uniq", "" + System.currentTimeMillis()); // just a local uniq
+        if (references != null)
+            attributes.put("refs", ReferenceNode.walk(references));
+        attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references) {
+        Map attributes = new HashMap();
+        if (forum != null)
+            attributes.put("channel", forum.toBase64());
+        else if (parent != null)
+            attributes.put("channel", parent.getScope());
+        if (parent != null)
+            attributes.put("parent", parent.toString());
+        attributes.put("pbePass", pbePass);
+        attributes.put("pbePrompt", pbePrompt);
+        if (references != null)
+            attributes.put("refs", ReferenceNode.walk(references));
+        attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
+        return uri;
+    }
+    
+    
     public SyndieURI createPostURI(long postponeId, int postponeVersion) {
         Map attributes = new HashMap();
         attributes.put("postponeid", new Long(postponeId));

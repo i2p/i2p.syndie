@@ -40,6 +40,10 @@ public class ViewForumTab extends BrowserTab {
     
     public boolean canShow(SyndieURI uri) { 
         if (uri == null) return false;
+        String type = uri.getType();
+        if (!type.equals(BrowserTab.TYPE_MANAGE) && !type.equals(BrowserTab.TYPE_META) && !type.equals("channel"))
+            return false;
+        
         Hash scope = uri.getScope();
         if (scope == null)
             scope = uri.getHash("scope");

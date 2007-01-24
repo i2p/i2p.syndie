@@ -11,6 +11,7 @@ import java.util.Set;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
+import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
@@ -845,68 +846,130 @@ class ViewForum implements Translatable, Themeable {
             Hash postIdentity = exec.getCreatedPostIdentity();
             Hash manageIdentity = exec.getCreatedManageIdentity();
             
-            // done
-            _browser.unview(_uri);
-            if (_scopeId < 0) {
-                _browser.view(uri);
-                // todo: lots to do here        
-                if ( (readKey != null) && (_viewForumAuthRead != null) ) {
-                    // open a new post to the appropriate locations containing the read key
-                    List scopes = _viewForumAuthRead.getSendExplicit();
-                    for (int i = 0; i < scopes.size(); i++) {
-                        Hash to = (Hash)scopes.get(i);
-                        _browser.getUI().debugMessage("todo: pop up a window to post the read key to " + to.toBase64());
-                        //_browser.createPostURI(to, null, true, readKey);
-                    } 
-                    if (_viewForumAuthRead.getPostPBE()) {
-                        _browser.getUI().debugMessage("todo: pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
-                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
-                    }
-                }
-                if ( (postIdentity != null) && (_viewForumAuthPost != null) ) {
-                    // open a new post to the appropriate locations containing the post identity's keys
-                    List scopes = _viewForumAuthPost.getSendNewExplicit();
-                    for (int i = 0; i < scopes.size(); i++) {
-                        Hash to = (Hash)scopes.get(i);
-                        _browser.getUI().debugMessage("todo: pop up a window to post the post identity key to " + to.toBase64());
-                        //_browser.createPostURI(to, null, true, readKey);
-                    } 
-                    if (_viewForumAuthPost.getPostPBE()) {
-                        _browser.getUI().debugMessage("todo: pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
-                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
-                    }
-                }
-                if ( (manageIdentity != null) && (_viewForumAuthManage != null) ) {
-                    // open a new post to the appropriate locations containing the manage identity's keys
-                    List scopes = _viewForumAuthManage.getSendNewExplicit();
-                    for (int i = 0; i < scopes.size(); i++) {
-                        Hash to = (Hash)scopes.get(i);
-                        _browser.getUI().debugMessage("todo: pop up a window to post the manage identity key to " + to.toBase64());
-                        //_browser.createPostURI(to, null, true, readKey);
-                    } 
-                    if (_viewForumAuthManage.getPostPBE()) {
-                        _browser.getUI().debugMessage("todo: pop up a window to post the manage identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
-                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
-                    }
-                }
-                if ( (_viewForumAuthReply != null) && (_viewForumAuthReply.getRotate()) ) {
-                    // open a new post to the appropriate locations containing the reply keys
-                    List scopes = _viewForumAuthReply.getSendNewExplicit();
-                    for (int i = 0; i < scopes.size(); i++) {
-                        Hash to = (Hash)scopes.get(i);
-                        _browser.getUI().debugMessage("todo: pop up a window to post the reply key to " + to.toBase64());
-                        //_browser.createPostURI(to, null, true, readKey);
-                    } 
-                    if (_viewForumAuthReply.getPostPBE()) {
-                        _browser.getUI().debugMessage("todo: pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
-                        //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
-                    }
+            _browser.getUI().debugMessage("done updating, scope=" + scope + " readKey=" + readKey + " postIdent=" + postIdentity + " manageIdent=" + manageIdentity);
+            
+            if ( (readKey != null) && (_viewForumAuthRead != null) ) {
+                // open a new post to the appropriate locations containing the read key
+                List scopes = _viewForumAuthRead.getSendExplicit();
+                for (int i = 0; i < scopes.size(); i++) {
+                    Hash to = (Hash)scopes.get(i);
+                    _browser.getUI().debugMessage("pop up a window to post the read key to " + to.toBase64());
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), readKey)));
+                    //_browser.createPostURI(to, null, true, readKey);
+                } 
+                if (_viewForumAuthRead.getPostPBE()) {
+                    _browser.getUI().debugMessage("pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt(), createReferences(uri.getScope(), readKey)));
+                    //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
             }
+            if ( (postIdentity != null) && (_viewForumAuthPost != null) ) {
+                // open a new post to the appropriate locations containing the post identity's keys
+                List scopes = _viewForumAuthPost.getSendNewExplicit();
+                for (int i = 0; i < scopes.size(); i++) {
+                    Hash to = (Hash)scopes.get(i);
+                    _browser.getUI().debugMessage("pop up a window to post the post identity key to " + to.toBase64());
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST)));
+                    //_browser.createPostURI(to, null, true, readKey);
+                } 
+                if (_viewForumAuthPost.getPostPBE()) {
+                    _browser.getUI().debugMessage("pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthPost.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthPost.getSendPassphrase() + "]");
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthPost.getSendPassphrase(), _viewForumAuthPost.getSendPassphrasePrompt(), createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST)));
+                    //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                }
+            }
+            if ( (manageIdentity != null) && (_viewForumAuthManage != null) ) {
+                // open a new post to the appropriate locations containing the manage identity's keys
+                List scopes = _viewForumAuthManage.getSendNewExplicit();
+                for (int i = 0; i < scopes.size(); i++) {
+                    Hash to = (Hash)scopes.get(i);
+                    _browser.getUI().debugMessage("pop up a window to post the manage identity key to " + to.toBase64());
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE)));
+                    //_browser.createPostURI(to, null, true, readKey);
+                } 
+                if (_viewForumAuthManage.getPostPBE()) {
+                    _browser.getUI().debugMessage("pop up a window to post the manage identity keys to " + _scope + " with pbe prompt [" + _viewForumAuthManage.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthManage.getSendPassphrase() + "]");
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthManage.getSendPassphrase(), _viewForumAuthManage.getSendPassphrasePrompt(), createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE)));
+                    //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                }
+            }
+            if ( (_viewForumAuthReply != null) && (_viewForumAuthReply.getRotate()) ) {
+                // open a new post to the appropriate locations containing the reply keys
+                List scopes = _viewForumAuthReply.getSendNewExplicit();
+                for (int i = 0; i < scopes.size(); i++) {
+                    Hash to = (Hash)scopes.get(i);
+                    _browser.getUI().debugMessage("pop up a window to post the reply key to " + to.toBase64());
+                    _browser.view(_browser.createPostURI(to, null, true, createReplyReferences(uri.getScope())));
+                    //_browser.createPostURI(to, null, true, readKey);
+                } 
+                if (_viewForumAuthReply.getPostPBE()) {
+                    _browser.getUI().debugMessage("pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthReply.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthReply.getSendPassphrase() + "]");
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthReply.getSendPassphrase(), _viewForumAuthReply.getSendPassphrasePrompt(), createReplyReferences(uri.getScope())));
+                    //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
+                }
+            }
+            
+            // done
+            _browser.unview(_uri);
+            if (_scopeId < 0)
+                _browser.view(uri);
         }
     }
     private static final String T_ERROR_TITLE = "syndie.gui.viewforum.error.title";
     private static final String T_ERROR_MSG = "syndie.gui.viewforum.error.msg";
+    
+    private List createReferences(Hash scope, SessionKey readKey) { 
+        //_browser.getUI().debugMessage("todo: create references for the read key in " + scope + ": " + readKey);
+        SyndieURI uri = SyndieURI.createScope(scope);
+        Map attributes = uri.getAttributes();
+        attributes.put("readKey", readKey.toBase64());
+        ArrayList rv = new ArrayList();
+        ReferenceNode node = new ReferenceNode("key", uri, "", "key");
+        rv.add(node);
+        return rv;
+    }
+    private List createReferences(Hash scope, Hash postIdentity, String keyFunction) {
+        //_browser.getUI().debugMessage("todo: create references for the " + keyFunction + " key in " + scope + ": " + postIdentity);
+        SyndieURI uri = SyndieURI.createScope(scope);
+        Map attributes = uri.getAttributes();
+        List nymKeys = _browser.getClient().getNymKeys(postIdentity, Constants.KEY_FUNCTION_MANAGE);
+        SigningPrivateKey privKey = null;
+        for (int i = 0; i < nymKeys.size(); i++) {
+            NymKey k = (NymKey)nymKeys.get(i);
+            if (k.getData() != null)
+                privKey = new SigningPrivateKey(k.getData());
+        }
+        if (privKey == null) return new ArrayList();
+        
+        if (Constants.KEY_FUNCTION_POST.equals(keyFunction)) {
+            attributes.put("postKey", privKey.toBase64());
+        } else {
+            attributes.put("manageKey", privKey.toBase64());
+        }
+        ArrayList rv = new ArrayList();
+        ReferenceNode node = new ReferenceNode("key", uri, "", "key");
+        rv.add(node);
+        return rv;
+    }
+    private List createReplyReferences(Hash scope) {
+        //_browser.getUI().debugMessage("todo: create references for the reply key in " + scope);
+        SyndieURI uri = SyndieURI.createScope(scope);
+        Map attributes = uri.getAttributes();
+        List nymKeys = _browser.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_REPLY);
+        PrivateKey privKey = null;
+        for (int i = 0; i < nymKeys.size(); i++) {
+            NymKey k = (NymKey)nymKeys.get(i);
+            if (k.getData() != null)
+                privKey = new PrivateKey(k.getData());
+        }
+        if (privKey == null) return new ArrayList();
+        
+        attributes.put("replyKey", privKey.toBase64());
+        ArrayList rv = new ArrayList();
+        ReferenceNode node = new ReferenceNode("key", uri, "", "key");
+        rv.add(node);
+        return rv;
+    }
     
     void modified() {
         if (!_initialized) return;

@@ -212,7 +212,10 @@ abstract class BrowserTab implements Themeable {
     
     public boolean canShow(SyndieURI uri) { 
         if (uri == null) return false;
-        return getURI().equals(uri);
+        boolean eq = getURI().equals(uri);
+        if (eq)
+            _browser.getUI().debugMessage("tab is equal to the uri: " + getClass().getName() + " uri=" + getURI() + " newURI=" + uri);
+        return eq;
     }
     public void resized() {}
     

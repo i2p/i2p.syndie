@@ -1476,7 +1476,23 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (reply)
             pickPrivacy(PRIVACY_REPLY);
     }
-    public void configurationComplete() {
+    public void configurationComplete(SyndieURI uri) {
+        String pbePass = uri.getString("pbePass");
+        String pbePrompt = uri.getString("pbePrompt");
+        if ( (pbePass != null) && (pbePrompt != null) ) {
+            // a passphrase is provided in the ViewForum tab via Browser.createPostURI
+            pickPrivacy(PRIVACY_PBE, false);
+            _passphrase = pbePass;
+            _passphrasePrompt = pbePrompt;
+        }
+        String refs = uri.getString("refs");
+        if (refs != null) {
+            // refs may include private read/post/manage/reply keys for various forums
+            List refNodes = ReferenceNode.buildTree(new ByteArrayInputStream(DataHelper.getUTF8(refs)));
+            _referenceNodes.addAll(refNodes);
+            //rebuildRefs(); // called in updateToolbar below
+        }
+        
         updateAuthor();
         updateForum();
         rebuildAttachmentSummaries();

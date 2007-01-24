@@ -29,6 +29,8 @@ public interface BrowserControl {
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references);
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
     public SyndieURI createSQLURI();

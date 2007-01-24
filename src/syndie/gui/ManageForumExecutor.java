@@ -283,7 +283,12 @@ class ManageForumExecutor {
      */
     public void execute() {
         boolean createIdentOk = createNewIdentities();
-        if (!createIdentOk) return;
+        if (!createIdentOk) {
+            _ui.errorMessage("failed to create nested identities: " + _errors.toString());
+            return;
+        } else {
+            _ui.debugMessage("new identities created: " + _createdManageIdent + "/" + _createdPostIdent);
+        }
         String out = null;
         File tmpDir = _client.getTempDir();
         tmpDir.mkdirs();

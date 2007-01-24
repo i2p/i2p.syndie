@@ -984,25 +984,36 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     private SyndieURI updateURIWithOptions(SyndieURI orig) {
         TreeMap attributes = new TreeMap();
         attributes.putAll(orig.getAttributes());
-        if (_syndieReadKey.getSelection() && (_readKeys != null) && (_readKeys.size() > 0) ) {
+        if (orig.getReadKey() != null) {
+            attributes.put("readKey", SyndieURI.encodeKey(orig.getReadKey().getData()));
+        } else if (_syndieReadKey.getSelection() && (_readKeys != null) && (_readKeys.size() > 0) ) {
             NymKey key = (NymKey)_readKeys.get(_syndieReadKeyCombo.getSelectionIndex());
             attributes.put("readKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("readKey");
         }
-        if (_syndiePostKey.getSelection() && (_postKeys != null) && (_postKeys.size() > 0) ) {
+        
+        if (orig.getPostKey() != null) {
+            attributes.put("postKey", SyndieURI.encodeKey(orig.getPostKey().getData()));
+        } else if (_syndiePostKey.getSelection() && (_postKeys != null) && (_postKeys.size() > 0) ) {
             NymKey key = (NymKey)_postKeys.get(_syndiePostKeyCombo.getSelectionIndex());
             attributes.put("postKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("postKey");
         }
-        if (_syndieReplyKey.getSelection() && (_replyKeys != null) && (_replyKeys.size() > 0) ) {
+        
+        if (orig.getReplyKey() != null) {
+            attributes.put("replyKey", SyndieURI.encodeKey(orig.getReplyKey().getData()));
+        } else if (_syndieReplyKey.getSelection() && (_replyKeys != null) && (_replyKeys.size() > 0) ) {
             NymKey key = (NymKey)_replyKeys.get(_syndieReplyKeyCombo.getSelectionIndex());
             attributes.put("replyKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("replyKey");
         }
-        if (_syndieManageKey.getSelection() && (_manageKeys != null) && (_manageKeys.size() > 0) ) {
+        
+        if (orig.getManageKey() != null) {
+            attributes.put("manageKey", SyndieURI.encodeKey(orig.getManageKey().getData()));
+        } else if (_syndieManageKey.getSelection() && (_manageKeys != null) && (_manageKeys.size() > 0) ) {
             NymKey key = (NymKey)_manageKeys.get(_syndieManageKeyCombo.getSelectionIndex());
             attributes.put("manageKey", SyndieURI.encodeKey(key.getData()));
         } else {
@@ -1113,6 +1124,99 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                         if ( (_syndieReplyKeyCombo.getItemCount() == 1) || ( (priv != null) && (DataHelper.eq(priv.getData(), key.getData())) ) )
                             _syndieReplyKeyCombo.select(_syndieReplyKeyCombo.getItemCount()-1);
                     }
+                }
+                
+
+                if (uri.getReadKey() != null) {
+                    _syndieReadKey.setSelection(true);
+                    if (_readKeys == null)
+                        _readKeys = new ArrayList();
+                    int foundIndex = -1;
+                    for (int i = 0; i < _readKeys.size(); i++) {
+                        NymKey key = (NymKey)_readKeys.get(i);
+                        if (DataHelper.eq(key.getData(), uri.getReadKey().getData())) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex >= 0) {
+                        _syndieReadKeyCombo.select(foundIndex);
+                    } else {
+                        NymKey nk = new NymKey(Constants.KEY_TYPE_AES256, uri.getReadKey().getData(), true, Constants.KEY_FUNCTION_READ, _client.getLoggedInNymId(), uri.getScope());
+                        _readKeys.add(nk);
+                        _syndieReadKeyCombo.add(Constants.KEY_TYPE_AES256 + " - " + Constants.KEY_FUNCTION_READ);
+                    }
+                    _syndieReadKey.setEnabled(true);
+                    _syndieReadKeyCombo.setEnabled(true);
+                }
+                
+                if (uri.getPostKey() != null) {
+                    _syndiePostKey.setSelection(true);
+                    if (_postKeys == null)
+                        _postKeys = new ArrayList();
+                    int foundIndex = -1;
+                    for (int i = 0; i < _postKeys.size(); i++) {
+                        NymKey key = (NymKey)_postKeys.get(i);
+                        if (DataHelper.eq(key.getData(), uri.getPostKey().getData())) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex >= 0) {
+                        _syndiePostKeyCombo.select(foundIndex);
+                    } else {
+                        NymKey nk = new NymKey(Constants.KEY_TYPE_DSA, uri.getPostKey().getData(), true, Constants.KEY_FUNCTION_POST, _client.getLoggedInNymId(), uri.getScope());
+                        _postKeys.add(nk);
+                        _syndiePostKeyCombo.add(Constants.KEY_TYPE_DSA + " - " + Constants.KEY_FUNCTION_POST);
+                    }
+                    _syndiePostKey.setEnabled(true);
+                    _syndiePostKeyCombo.setEnabled(true);
+                }
+                
+                if (uri.getReplyKey() != null) {
+                    _syndieReplyKey.setSelection(true);
+                    if (_replyKeys == null)
+                        _replyKeys = new ArrayList();
+                    int foundIndex = -1;
+                    for (int i = 0; i < _replyKeys.size(); i++) {
+                        NymKey key = (NymKey)_replyKeys.get(i);
+                        if (DataHelper.eq(key.getData(), uri.getReplyKey().getData())) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex >= 0) {
+                        _syndieReplyKeyCombo.select(foundIndex);
+                    } else {
+                        NymKey nk = new NymKey(Constants.KEY_TYPE_ELGAMAL2048, uri.getReplyKey().getData(), true, Constants.KEY_FUNCTION_REPLY, _client.getLoggedInNymId(), uri.getScope());
+                        _replyKeys.add(nk);
+                        _syndieReplyKeyCombo.add(Constants.KEY_TYPE_ELGAMAL2048 + " - " + Constants.KEY_FUNCTION_REPLY);
+                    }
+                    _syndieReplyKey.setEnabled(true);
+                    _syndieReplyKeyCombo.setEnabled(true);
+                }
+                
+                if (uri.getManageKey() != null) {
+                    _syndieManageKey.setSelection(true);
+                    if (_manageKeys == null)
+                        _manageKeys = new ArrayList();
+                    int foundIndex = -1;
+                    for (int i = 0; i < _manageKeys.size(); i++) {
+                        NymKey key = (NymKey)_manageKeys.get(i);
+                        if (DataHelper.eq(key.getData(), uri.getManageKey().getData())) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex >= 0) {
+                        _syndieManageKeyCombo.select(foundIndex);
+                    } else {
+                        NymKey nk = new NymKey(Constants.KEY_TYPE_DSA, uri.getManageKey().getData(), true, Constants.KEY_FUNCTION_MANAGE, _client.getLoggedInNymId(), uri.getScope());
+                        _manageKeys.add(nk);
+                        _syndieManageKeyCombo.add(Constants.KEY_TYPE_DSA + " - " + Constants.KEY_FUNCTION_MANAGE);
+                    }
+                    _syndieManageKey.setEnabled(true);
+                    _syndieManageKeyCombo.setEnabled(true);
                 }
             } else {
                 _syndieForum.setText(uri.getScope().toBase64().substring(0,6));

@@ -18,7 +18,7 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
     
     public MessageEditorTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
-        _editor.configurationComplete();
+        _editor.configurationComplete(getURI());
     }
     public MessageEditorTab(BrowserControl browser, SyndieURI uri, Hash forum, SyndieURI parent, boolean asReply) {
         super(browser, uri);
@@ -32,7 +32,7 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
         if (_asReply)
             _editor.setAsReply(true);
         //updateTabInfo(scope, null);
-        _editor.configurationComplete();
+        _editor.configurationComplete(getURI());
     }
     
     protected void initComponents() {
