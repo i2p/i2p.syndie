@@ -223,18 +223,26 @@ public class KeyImport extends CommandImpl {
     }
     
     private static void importPostKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
-        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
-        if (authorized) {
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, uri.getPostKey().getData(), true, false);
-            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, uri.getPostKey().getData(), true, Constants.KEY_FUNCTION_POST, client.getLoggedInNymId(), scope, false));
+        SigningPrivateKey priv = uri.getPostKey();
+        SigningPublicKey pub = priv.toPublic();
+        importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, pub.calculateHash(), priv.getData(), true, false);
+        nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), pub.calculateHash()));
+        if (getKeyAuthorized(client, scope, uri.getScope())) {
+            // if the author is authorized to manage the scope, also tag this key as a posting key for the given channel
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, priv.getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_POST, client.getLoggedInNymId(), scope, false));
         }
     }
     
     private static void importManageKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
-        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
-        if (authorized) {
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, uri.getManageKey().getData(), true, false);
-            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, uri.getManageKey().getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), scope, false));
+        SigningPrivateKey priv = uri.getPostKey();
+        SigningPublicKey pub = priv.toPublic();
+        importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, pub.calculateHash(), priv.getData(), true, false);
+        nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), pub.calculateHash()));
+        if (getKeyAuthorized(client, scope, uri.getScope())) {
+            // if the author is authorized to manage the scope, also tag this key as a managing key for the given channel
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, priv.getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), scope, false));
         }
     }
     
