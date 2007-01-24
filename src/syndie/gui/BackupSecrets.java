@@ -333,7 +333,7 @@ public class BackupSecrets implements Themeable, Translatable {
                     if (name.startsWith("nymkey")) {
                         browser.getUI().debugMessage("importing key "+ name);
                         KeyImport imp = new KeyImport();
-                        imp.importKey(browser.getUI(), browser.getClient(), zin, true);
+                        imp.importKey(browser.getUI(), browser.getClient(), zin, true, false);
                         keysRead++;
                     } else if (name.startsWith("meta")) {
                         browser.getUI().debugMessage("importing meta "+ name);

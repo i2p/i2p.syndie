@@ -13,6 +13,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.Enclosure;
 import syndie.data.EnclosureBody;
 import syndie.data.MessageInfo;
+import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
@@ -901,6 +902,9 @@ public class ImportPost {
         _ui.debugMessage("Importing reference roots: " + refs.size());
         InsertRefVisitor visitor = new InsertRefVisitor(msgId);
         ReferenceNode.walk(refs, visitor);
+        List imported = visitor.getImportedNymKeys();
+        if (imported.size() > 0)
+            KeyImport.resolveWithNewKeys(_ui, _client, imported);
         if (visitor.getError() != null) {
             _ui.errorMessage(visitor.getError());
             if (visitor.getException() != null)
@@ -916,57 +920,85 @@ public class ImportPost {
         private int _node;
         private SQLException _exception;
         private String _err;
+        private List _nymKeys;
         public InsertRefVisitor(long msgId) {
             _msgId = msgId;
             _node = 0;
             _exception = null;
             _err = null;
+            _nymKeys = new ArrayList();
         }
         public SQLException getException() { return _exception; }
         public String getError() { return _err; }
+        public List getImportedNymKeys() { return _nymKeys; }
 
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
-            if (_err != null) return;
-            
-            int referenceId = node.getTreeIndexNum();
-            if (referenceId < 0) {
-                referenceId = _node;
-                node.setTreeIndexNum(referenceId);
+            if (_err == null) {
+                int referenceId = node.getTreeIndexNum();
+                if (referenceId < 0) {
+                    referenceId = _node;
+                    node.setTreeIndexNum(referenceId);
+                }
+                int parentReferenceId = -1;
+                if (node.getParent() != null)
+                    parentReferenceId = node.getParent().getTreeIndexNum();
+                String name = node.getName();
+                String desc = node.getDescription();
+                String type = node.getReferenceType();
+                if (type == null) type = "URL";
+                long uriId = _client.addURI(node.getURI());
+                _node++;
+
+                PreparedStatement stmt = null;
+                try {
+                    _ui.debugMessage("Importing reference: " + referenceId + ", uri " + uriId + ", type: " + type);
+                    stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_REF);
+                    // (msgId, referenceId, parentReferenceId, siblingOrder, name, description, uriId, refType)
+                    stmt.setLong(1, _msgId);
+                    stmt.setInt(2, referenceId);
+                    stmt.setInt(3, parentReferenceId);
+                    stmt.setInt(4, siblingOrder);
+                    stmt.setString(5, CommandImpl.strip(name));
+                    stmt.setString(6, CommandImpl.strip(desc));
+                    stmt.setLong(7, uriId);
+                    if (type != null)
+                        stmt.setString(8, type);
+                    else
+                        stmt.setNull(8, Types.VARCHAR);
+                    stmt.executeUpdate();
+                } catch (SQLException se) {
+                    _exception = se;
+                    _err = "Error inserting the reference";
+                } finally {
+                    if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+                }
             }
-            int parentReferenceId = -1;
-            if (node.getParent() != null)
-                parentReferenceId = node.getParent().getTreeIndexNum();
-            String name = node.getName();
-            String desc = node.getDescription();
-            String type = node.getReferenceType();
-            if (type == null) type = "URL";
-            long uriId = _client.addURI(node.getURI());
-            _node++;
-            
-            PreparedStatement stmt = null;
-            try {
-                _ui.debugMessage("Importing reference: " + referenceId + ", uri " + uriId + ", type: " + type);
-                stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_REF);
-                // (msgId, referenceId, parentReferenceId, siblingOrder, name, description, uriId, refType)
-                stmt.setLong(1, _msgId);
-                stmt.setInt(2, referenceId);
-                stmt.setInt(3, parentReferenceId);
-                stmt.setInt(4, siblingOrder);
-                stmt.setString(5, CommandImpl.strip(name));
-                stmt.setString(6, CommandImpl.strip(desc));
-                stmt.setLong(7, uriId);
-                if (type != null)
-                    stmt.setString(8, type);
-                else
-                    stmt.setNull(8, Types.VARCHAR);
-                stmt.executeUpdate();
-            } catch (SQLException se) {
-                _exception = se;
-                _err = "Error inserting the reference";
-            } finally {
-                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-            }
+
+            // import keys even if there is an error with earlier references
+            importKeys(node.getURI(), _nymKeys);
         }
+    }
+    
+    /**
+     * import any keys bundled in the URI that are authenticated (e.g. a channel read key
+     * bundled in an authenticated post from an authorized forum manager).  adds newly created
+     * NymKey instances to the provided list
+     */
+    private void importKeys(SyndieURI uri, List nymKeys) {
+        Hash keyScope = getKeyScope(uri);
+        KeyImport.importKeys(_ui, _client, keyScope, uri, nymKeys);
+    }
+    
+    private Hash getKeyScope(SyndieURI uri) {
+        Hash scope = uri.getScope();
+        if (scope == null) {
+            byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+            if (target != null)
+                scope = new Hash(target);
+        }
+        if (scope == null)
+            scope = _uri.getScope();
+        return scope;
     }
     
     private static void saveToArchive(DBClient client, UI ui, Hash ident, Enclosure enc) {

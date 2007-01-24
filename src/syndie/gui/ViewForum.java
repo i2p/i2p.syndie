@@ -849,7 +849,7 @@ class ViewForum implements Translatable, Themeable {
             _browser.unview(_uri);
             if (_scopeId < 0) {
                 _browser.view(uri);
-                // todo: lots to do here
+                // todo: lots to do here        
                 if ( (readKey != null) && (_viewForumAuthRead != null) ) {
                     // open a new post to the appropriate locations containing the read key
                     List scopes = _viewForumAuthRead.getSendExplicit();

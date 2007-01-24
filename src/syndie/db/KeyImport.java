@@ -2,11 +2,13 @@ package syndie.db;
 
 import java.io.*;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import net.i2p.I2PAppContext;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.NymKey;
+import syndie.data.SyndieURI;
 
 /**
  *CLI keyimport
@@ -191,6 +193,244 @@ public class KeyImport extends CommandImpl {
         }
 
         return client;
+    }
+    
+    public static void importKeys(UI ui, DBClient client, Hash keyScope, SyndieURI uri, List nymKeys) {
+        if (uri.getReadKey() != null)
+            importReadKey(ui, client, keyScope, uri, nymKeys);
+        if (uri.getReplyKey() != null)
+            importReplyKey(ui, client, keyScope, uri, nymKeys);
+        if (uri.getPostKey() != null)
+            importPostKey(ui, client, keyScope, uri, nymKeys);
+        if (uri.getManageKey() != null)
+            importManageKey(ui, client, keyScope, uri, nymKeys);
+    }
+    
+    private static void importReadKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
+        if (authorized) {
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_READ, scope, uri.getReadKey().getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_AES256, uri.getReadKey().getData(), true, Constants.KEY_FUNCTION_READ, client.getLoggedInNymId(), scope, false));
+        }
+    }
+    
+    private static void importReplyKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
+        if (authorized) {
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_REPLY, scope, uri.getReplyKey().getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_ELGAMAL2048, uri.getReplyKey().getData(), true, Constants.KEY_FUNCTION_REPLY, client.getLoggedInNymId(), scope, false));
+        }
+    }
+    
+    private static void importPostKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
+        if (authorized) {
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, uri.getPostKey().getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, uri.getPostKey().getData(), true, Constants.KEY_FUNCTION_POST, client.getLoggedInNymId(), scope, false));
+        }
+    }
+    
+    private static void importManageKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+        boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
+        if (authorized) {
+            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, uri.getManageKey().getData(), true, false);
+            nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, uri.getManageKey().getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), scope, false));
+        }
+    }
+    
+    private static boolean getKeyAuthorized(DBClient client, Hash scope, Hash author) {
+        // now lets make sure the author of the post is authorized to define reply keys
+        boolean authorized = false;
+        if (author.equals(scope)) {
+            authorized = true;
+        } else {
+            List pubKeys = client.getAuthorizedPosters(client.getChannelId(scope), false, true, false);
+            for (int i = 0; i < pubKeys.size(); i++) {
+                SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                Hash calc = key.calculateHash();
+                if (calc.equals(author)) {
+                    authorized = true;
+                    break;
+                }
+            }
+        }
+        return authorized;
+    }
+    
+    /**
+     * we may have received keys that can decrypt previously undecryptable messages / metadata, 
+     * so try to resolve those now.  these nymKeys can come from posts as part of their references,
+     * from metadata as part of their references, or from metadata as published read keys.
+     */
+    public static void resolveWithNewKeys(UI ui, DBClient client, List nymKeys) {
+        for (int i = 0; i < nymKeys.size(); i++) {
+            NymKey key = (NymKey)nymKeys.get(i);
+            if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
+                // noop.  manage keys don't decrypt anything
+            } else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
+                // noop.  same with post keys
+            } else if (Constants.KEY_FUNCTION_READ.equals(key.getFunction())) {
+                resolveWithReadKey(ui, client, key.getChannel(), new SessionKey(key.getData()));
+            } else if (Constants.KEY_FUNCTION_REPLY.equals(key.getFunction())) {
+                resolveWithReplyKey(ui, client, key.getChannel(), new PrivateKey(key.getData()));
+            }
+        }
+    }
+    
+    private static final String SQL_GET_UNDECRYPTABLE_READ = "SELECT msgId, messageId, channelHash FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE readKeyMissing = TRUE AND scopeChannelId = ?";
+    private static void resolveWithReadKey(UI ui, DBClient client, Hash channel, SessionKey key) {
+        Connection con = client.con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        ArrayList uris = new ArrayList();
+        long channelId = client.getChannelId(channel);
+        try {
+            stmt = con.prepareStatement(SQL_GET_UNDECRYPTABLE_READ);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (rs.wasNull()) continue;
+                long messageId = rs.getLong(2);
+                if (rs.wasNull()) continue;
+                byte chanHash[] = rs.getBytes(3);
+                if ( (chanHash == null) || (chanHash.length != Hash.HASH_LENGTH) ) continue;
+                SyndieURI uri = SyndieURI.createMessage(new Hash(chanHash), messageId);
+                if (!uris.contains(uri))
+                    uris.add(uri);
+            }
+        } catch (SQLException se) {
+            ui.errorMessage("Internal error resolving imported keys", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        ui.debugMessage("Messages pending decryption in the newly updated channel: " + uris);
+        if (uris.size() > 0) {
+            for (int i = 0; i < uris.size(); i++) {
+                SyndieURI uri = (SyndieURI)uris.get(i);
+                File chanDir = new File(client.getArchiveDir(), uri.getScope().toBase64());
+                File msgFile = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+                if (msgFile.exists()) {
+                    // lets try to import 'er
+                    Importer imp = new Importer(client);
+                    FileInputStream fin = null;
+                    try {
+                        fin = new FileInputStream(msgFile);
+                        boolean ok = imp.processMessage(ui, client, fin, null, true);
+                        if (ok) {
+                            if (imp.wasMissingKey())
+                                ui.debugMessage("Still not able to decrypt " + uri.toString());
+                            else
+                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri.toString());
+                        } else {
+                            ui.debugMessage("Still not able to decrypt " + uri.toString());
+                        }
+                    } catch (IOException ioe) {
+                        ui.debugMessage("Still not able to decrypt " + uri.toString());
+                    } finally {
+                        if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                    }
+                } else {
+                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri.toString());
+                }
+            }
+        }
+        
+        // ok the new read key may relate to a metadata message for the forum
+        String name = client.getChannelName(channelId);
+        if (name == null) {
+            // undecrypted meta... try to decrypt it
+            File chanDir = new File(client.getArchiveDir(), channel.toBase64());
+            File metaFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
+            if (metaFile.exists()) {
+                // lets try to import 'er
+                Importer imp = new Importer(client);
+                FileInputStream fin = null;
+                try {
+                    fin = new FileInputStream(metaFile);
+                    boolean ok = imp.processMessage(ui, client, fin, null, true);
+                    if (ok) {
+                        if (imp.wasMissingKey())
+                            ui.debugMessage("Still not able to decrypt " + channel.toString());
+                        else
+                            ui.debugMessage("Successful decryption of the channel metadata: " + channel.toString());
+                    } else {
+                        ui.debugMessage("Still not able to decrypt metadata for " + channel.toString());
+                    }
+                } catch (IOException ioe) {
+                    ui.debugMessage("Still not able to decrypt metadata for " + channel.toString());
+                } finally {
+                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                }
+            } else {
+                ui.debugMessage("We don't have the metadata file, so not attempting to redecrypt: " + channel.toString());
+            }            
+        }
+    }
+    
+    private static final String SQL_GET_UNDECRYPTABLE_REPLY = "SELECT msgId, messageId, channelHash FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE replyKeyMissing = TRUE AND (scopeChannelId = ? OR targetChannelId = ?)";
+    private static void resolveWithReplyKey(UI ui, DBClient client, Hash channel, PrivateKey key) {
+        Connection con = client.con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        ArrayList uris = new ArrayList();
+        long channelId = client.getChannelId(channel);
+        try {
+            stmt = con.prepareStatement(SQL_GET_UNDECRYPTABLE_REPLY);
+            stmt.setLong(1, channelId);
+            stmt.setLong(2, channelId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (rs.wasNull()) continue;
+                long messageId = rs.getLong(2);
+                if (rs.wasNull()) continue;
+                byte chanHash[] = rs.getBytes(3);
+                if ( (chanHash == null) || (chanHash.length != Hash.HASH_LENGTH) ) continue;
+                SyndieURI uri = SyndieURI.createMessage(new Hash(chanHash), messageId);
+                if (!uris.contains(uri))
+                    uris.add(uri);
+            }
+        } catch (SQLException se) {
+            ui.errorMessage("Internal error resolving imported keys", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        ui.debugMessage("Messages pending decryption in the newly updated channel: " + uris);
+        if (uris.size() > 0) {
+            for (int i = 0; i < uris.size(); i++) {
+                SyndieURI uri = (SyndieURI)uris.get(i);
+                File chanDir = new File(client.getArchiveDir(), uri.getScope().toBase64());
+                File msgFile = new File(chanDir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+                if (msgFile.exists()) {
+                    // lets try to import 'er
+                    Importer imp = new Importer(client);
+                    FileInputStream fin = null;
+                    try {
+                        fin = new FileInputStream(msgFile);
+                        boolean ok = imp.processMessage(ui, client, fin, null, true);
+                        if (ok) {
+                            if (imp.wasMissingKey())
+                                ui.debugMessage("Still not able to decrypt " + uri.toString());
+                            else
+                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri.toString());
+                        } else {
+                            ui.debugMessage("Still not able to decrypt " + uri.toString());
+                        }
+                    } catch (IOException ioe) {
+                        ui.debugMessage("Still not able to decrypt " + uri.toString());
+                    } finally {
+                        if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                    }
+                } else {
+                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri.toString());
+                }
+            }
+        }    
     }
     
     public static void main(String args[]) {

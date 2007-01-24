@@ -111,6 +111,10 @@ public class WelcomeScreen implements Themeable, Translatable {
             public String getPassphrase() { return null; }
             public String getPassphrasePrompt() { return null; }
             public List getCurrentReadKeys() { return Collections.EMPTY_LIST; }
+            public boolean getCreateReadKey() { return false; }
+            public boolean getCreatePostIdentity() { return false; }
+            public boolean getCreateManageIdentity() { return false; }
+            public boolean getCreateReplyKey() { return false; }
         });
         exec.execute();
         String errs = exec.getErrors();

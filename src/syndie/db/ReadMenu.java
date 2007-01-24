@@ -1021,7 +1021,7 @@ class ReadMenu implements TextEngine.Menu {
                         }
                     }
                 }
-                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_READ, scope, readKey.getData(), authenticated);
+                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_READ, scope, readKey.getData(), authenticated, false);
                 ui.statusMessage("Read key for channel " + scope.toBase64() + " imported (authentic? " + authenticated + ")");
                 ui.commandComplete(0, null);
                 return;
@@ -1051,7 +1051,7 @@ class ReadMenu implements TextEngine.Menu {
                     }
                 }
                 
-                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, postKey.getData(), authenticated);
+                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, postKey.getData(), authenticated, false);
                 ui.statusMessage("Post key for channel " + scope.toBase64() + " imported (authentic? " + authenticated + ")");
                 ui.commandComplete(0, null);
                 return;
@@ -1079,7 +1079,7 @@ class ReadMenu implements TextEngine.Menu {
                     }
                 }
                 
-                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, manageKey.getData(), authenticated);
+                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, manageKey.getData(), authenticated, false);
                 ui.statusMessage("Manage key for channel " + scope.toBase64() + " imported (authentic? " + authenticated + ")");
                 ui.commandComplete(0, null);
                 return;
@@ -1103,7 +1103,7 @@ class ReadMenu implements TextEngine.Menu {
                     }
                 }
                 
-                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_REPLY, scope, replyKey.getData(), authenticated);
+                KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_REPLY, scope, replyKey.getData(), authenticated, false);
                 ui.statusMessage("Reply key for channel " + scope.toBase64() + " imported (authentic? " + authenticated + ")");
                 ui.commandComplete(0, null);
                 return;
