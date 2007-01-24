@@ -848,8 +848,30 @@ class ViewForum implements Translatable, Themeable {
             
             _browser.getUI().debugMessage("done updating, scope=" + scope + " readKey=" + readKey + " postIdent=" + postIdentity + " manageIdent=" + manageIdentity);
             
-            if ( (readKey != null) && (_viewForumAuthRead != null) ) {
+            if (_viewForumAuthRead != null) {
                 // open a new post to the appropriate locations containing the read key
+                if (readKey == null) {
+                    // use the existing readkey to send
+                    List nks = _browser.getClient().getNymKeys(uri.getScope(), Constants.KEY_FUNCTION_READ);
+                    for (int i = 0; i < nks.size(); i++) {
+                        NymKey nk = (NymKey)nks.get(i);
+                        if (!nk.getIsExpired()) {
+                            readKey = new SessionKey(nk.getData());
+                            break;
+                        }
+                    }
+                    if (readKey == null) {
+                        // could be attached to the channel and not the nym, so try it there too
+                        List rks = _browser.getClient().getReadKeys(uri.getScope(), true);
+                        for (int i = 0; i < rks.size(); i++) {
+                            SessionKey rk = (SessionKey)rks.get(i);
+                            if (!_browser.getClient().getChannelReadKeyIsPublic(uri.getScope(), rk)) {
+                                readKey = rk;
+                                break;
+                            }
+                        }
+                    }
+                }
                 List scopes = _viewForumAuthRead.getSendExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);

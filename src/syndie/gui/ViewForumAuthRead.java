@@ -146,13 +146,13 @@ class ViewForumAuthRead implements Themeable, Translatable {
         
         _sendPBE.addSelectionListener(new SelectionListener() {
             // pickChoiceNew refreshes the enable state of the pbe fields
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceNew(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickChoiceNew(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickSendPBE(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickSendPBE(); }
         });
         _sendSelected.addSelectionListener(new SelectionListener() {
             // pickChoiceNew refreshes the enable state of the selected fields
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceNew(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickChoiceNew(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickSendSelected(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { pickSendSelected(); }
         });
         
         _sendSelectedAdd.addSelectionListener(new SelectionListener() {
@@ -193,7 +193,7 @@ class ViewForumAuthRead implements Themeable, Translatable {
         }
     }
     
-    public boolean getEncryptMetadata() { return _choiceAnyone.getSelection(); }
+    public boolean getEncryptMetadata() { return !_choiceAnyone.getSelection(); }
     public boolean getNewKey() { return _choiceNew.getSelection(); }
     public ArrayList getSendExplicit() { return _sendSelectedForums; }
     public boolean getPostPBE() { return _sendPBE.getSelection(); }
@@ -229,15 +229,26 @@ class ViewForumAuthRead implements Themeable, Translatable {
         _choiceAnyone.setSelection(false);
         _choiceNew.setSelection(false);
         _choiceAllowedRotate.setEnabled(true);
-        _sendSelected.setEnabled(false);
-        _sendSelectedList.setEnabled(false);
-        _sendSelectedAdd.setEnabled(false);
-        _sendSelectedDel.setEnabled(false);
-        _sendPBE.setEnabled(false);
-        _sendPBEPass.setEnabled(false);
-        _sendPBEPassLabel.setEnabled(false);
-        _sendPBEPrompt.setEnabled(false);
-        _sendPBEPromptLabel.setEnabled(false);
+        _sendSelected.setEnabled(true);
+        _sendSelectedList.setEnabled(_sendSelected.getSelection());
+        _sendSelectedAdd.setEnabled(_sendSelected.getSelection());
+        _sendSelectedDel.setEnabled(_sendSelected.getSelection());
+        _sendPBE.setEnabled(true);
+        _sendPBEPass.setEnabled(_sendPBE.getSelection());
+        _sendPBEPassLabel.setEnabled(_sendPBE.getSelection());
+        _sendPBEPrompt.setEnabled(_sendPBE.getSelection());
+        _sendPBEPromptLabel.setEnabled(_sendPBE.getSelection());
+    }
+    private void pickSendPBE() {
+        _sendPBEPass.setEnabled(_sendPBE.getSelection());
+        _sendPBEPassLabel.setEnabled(_sendPBE.getSelection());
+        _sendPBEPrompt.setEnabled(_sendPBE.getSelection());
+        _sendPBEPromptLabel.setEnabled(_sendPBE.getSelection());
+    }
+    private void pickSendSelected() {
+        _sendSelectedList.setEnabled(_sendSelected.getSelection());
+        _sendSelectedAdd.setEnabled(_sendSelected.getSelection());
+        _sendSelectedDel.setEnabled(_sendSelected.getSelection());
     }
     private void pickChoiceNew() {
         _choiceNew.setSelection(true);
@@ -324,10 +335,10 @@ class ViewForumAuthRead implements Themeable, Translatable {
         _choiceAllowed.setText(registry.getText(T_CHOICE_ALLOWED, "Those already allowed to read posts"));
         _choiceAllowedRotate.setText(registry.getText(T_CHOICE_ALLOWED_ROTATE, "Rotate the keys used"));
         _choiceNew.setText(registry.getText(T_CHOICE_NEW, "Anyone who has a newly created key"));
-        _sendSelected.setText(registry.getText(T_SEND_SELECTED, "Send the new key explicitly to the managers of the following forums:"));
+        _sendSelected.setText(registry.getText(T_SEND_SELECTED, "Send the key explicitly to the managers of the following forums:"));
         _sendSelectedAdd.setText(registry.getText(T_SEND_SELECTED_ADD, "Add"));
         _sendSelectedDel.setText(registry.getText(T_SEND_SELECTED_DEL, "Delete"));
-        _sendPBE.setText(registry.getText(T_PBE, "Post the new key in a passphrase protected message to the forum"));
+        _sendPBE.setText(registry.getText(T_PBE, "Post the key in a passphrase protected message to the forum"));
         _sendPBEPassLabel.setText(registry.getText(T_PBE_PASS_LABEL, "Passphrase:"));
         _sendPBEPromptLabel.setText(registry.getText(T_PBE_PROMPT_LABEL, "Prompt:"));
         _ok.setText(registry.getText(T_OK, "OK"));

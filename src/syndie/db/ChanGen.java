@@ -192,11 +192,13 @@ public class ChanGen extends CommandImpl {
                         readKeys.add(toAdd);
                 }
             }
+            ui.debugMessage("Explicitly including a set of read keys: " + readKeys);
             readKey = null;
         } else {
             // the read key wasn't explicitly selected, so use the one determined by
             // the above logic
             readKeys.add(readKey);
+            ui.debugMessage("Using implicit read keys: " + readKeys);
         }
         
         String explicitBody = args.getOptValue("explicitBodyKey");
@@ -205,6 +207,7 @@ public class ChanGen extends CommandImpl {
             if ( (k != null) && (k.length == SessionKey.KEYSIZE_BYTES) ) {
                 SessionKey newBody = new SessionKey(k);
                 bodyKey = newBody;
+                ui.debugMessage("Explicitly selecting the body key: " + bodyKey);
             }
         }
         

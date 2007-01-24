@@ -629,6 +629,9 @@ public class DBClient {
      * @param onlyIncludeForWriting if true, only list the read keys we can use for writing a post (meaning
      *        those that have not been deprecated)
      */
+    public List getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
+        return getReadKeys(identHash, _nymId, _pass, onlyIncludeForWriting);
+    }
     public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
         List rv = new ArrayList(1);
         PreparedStatement stmt = null;

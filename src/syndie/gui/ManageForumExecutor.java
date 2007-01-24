@@ -404,7 +404,7 @@ class ManageForumExecutor {
         if ( (readKeys != null) && (readKeys.size() > 0) ) {
             for (int i = 0; i < readKeys.size(); i++) {
                 SessionKey rk = (SessionKey)readKeys.get(i);
-                chanGenOpts.addOptValue("deliverReadKey", rk.toBase64());
+                chanGenOpts.addOptValue("deliverReadKeys", rk.toBase64());
             }
         }
         
@@ -413,7 +413,9 @@ class ManageForumExecutor {
         if (_state.getCreateReadKey()) {
             SessionKey rk = new SessionKey(true);
             _createdReadKey = rk;
-            chanGenOpts.addOptValue("deliverReadKey", rk.toBase64());
+            chanGenOpts.addOptValue("deliverReadKeys", rk.toBase64());
+            chanGenOpts.addOptValue("explicitBodyKey", rk.toBase64());
+            chanGenOpts.addOptValue("encryptContent", Boolean.TRUE.toString());
         }
         
         ChanGen cmd = new ChanGen();
