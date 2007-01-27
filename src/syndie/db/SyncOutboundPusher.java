@@ -377,33 +377,47 @@ public class SyncOutboundPusher {
         }
     }
     
+    /** send HTTP posts in batches of 100KB */
+    private static final int HTTP_SEND_BATCH_SIZE = 100*1024;
     private void pushHTTP(SyncArchive archive) {
-        int actions = archive.getOutgoingActionCount();
-        List uris = new ArrayList();
-        List actionsPushed = new ArrayList();
-        for (int i = 0; i < actions; i++) {
-            SyncArchive.OutgoingAction action = archive.getOutgoingAction(i);
-            if (action.getCompletionTime() > 0) continue; // already complete
-            if (action.isPaused()) continue; // dont wanna do it
-            if (!action.setIsExecuting(true)) continue; // someone else is doing it
+        while (true) {
+            int actions = archive.getOutgoingActionCount();
+            if (actions <= 0) return;
             
-            SyndieURI uri = action.getURI();
-            uris.add(uri);
-            actionsPushed.add(action);
-        }
-        String err = null;
-        if (uris.size() > 0)
-            err = pushHTTP(archive, uris);
-        
-        if (err == null) {
-            for (int i = 0; i < actionsPushed.size(); i++) {
-                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
-                action.pushOK();
+            List uris = new ArrayList();
+            List actionsPushed = new ArrayList();
+            int len = 0;
+            for (int i = 0; i < actions; i++) {
+                SyncArchive.OutgoingAction action = archive.getOutgoingAction(i);
+                if (action.getCompletionTime() > 0) continue; // already complete
+                if (action.isPaused()) continue; // dont wanna do it
+                if (!action.setIsExecuting(true)) continue; // someone else is doing it
+                
+                len += action.getSize();
+
+                SyndieURI uri = action.getURI();
+                uris.add(uri);
+                actionsPushed.add(action);
+                
+                if (len > HTTP_SEND_BATCH_SIZE)
+                    break;
             }
-        } else {
-            for (int i = 0; i < actionsPushed.size(); i++) {
-                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
-                action.pushFailed(err, null);
+            String err = null;
+            if (uris.size() > 0)
+                err = pushHTTP(archive, uris);
+            else
+                break; // all paused/complete/in flight/etc
+
+            if (err == null) {
+                for (int i = 0; i < actionsPushed.size(); i++) {
+                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    action.pushOK();
+                }
+            } else {
+                for (int i = 0; i < actionsPushed.size(); i++) {
+                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    action.pushFailed(err, null);
+                }
             }
         }
     }

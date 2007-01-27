@@ -233,20 +233,23 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     }
     private void redrawOut() {
         // add some newlines so when we scroll, we go to the beginning of a line
-        _outBuf.append("\n\n");
+        _outBuf.append("\n");
         final String str = _outBuf.toString();
-        _outBuf.setLength(str.length()-2);
-        Display.getDefault().syncExec(new Runnable() {
+        final int strlen = str.length();
+        _outBuf.setLength(strlen-1);
+        Display.getDefault().asyncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
-                _out.setRedraw(false);
+                //_out.setRedraw(false);
                 _out.setText(str);
                 // scroll to the end
-                _out.setSelection(str.length()-2, str.length()-1);
-                _out.showSelection();
-                _out.clearSelection();
+                if (strlen > 1) {
+                    _out.setSelection(strlen-2, strlen-1);
+                    _out.showSelection();
+                    _out.clearSelection();
+                }
                 
-                _out.setRedraw(true);
+                //_out.setRedraw(true);
             }
         });
     }
