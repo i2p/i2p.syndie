@@ -1645,11 +1645,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getIdentityChannel(i);
             
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
@@ -1688,12 +1692,16 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getManagedChannel(i);
 
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
-
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
+            
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
 
@@ -1731,11 +1739,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getPostChannel(i);
             
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
@@ -1774,11 +1786,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
@@ -1818,11 +1834,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 final ChannelInfo info = _browser.getClient().getChannel(id);
 
                 StringBuffer buf = new StringBuffer();
-                buf.append(info.getChannelHash().toBase64().substring(0,6));
                 if ( (info.getName() != null) && (info.getName().length() > 0) )
-                    buf.append(": ").append(info.getName());
+                    buf.append(info.getName());
+                if (buf.length() > 0)
+                    buf.append(": ");
                 if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                    buf.append(": ").append(info.getDescription());
+                    buf.append(info.getDescription());
+                if (buf.length() > 0)
+                    buf.append(": ");
+                buf.append(info.getChannelHash().toBase64().substring(0,6));
 
                 final String summary = buf.toString();
                 _browser.getUI().debugMessage("summary: " + summary);
@@ -1992,11 +2012,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getIdentityChannel(i);
             
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
@@ -2032,12 +2056,16 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             final ChannelInfo info = _nymChannels.getManagedChannel(i);
 
             StringBuffer buf = new StringBuffer();
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
             if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(": ").append(info.getName());
+                buf.append(info.getName());
+            if (buf.length() > 0)
+                buf.append(": ");
             if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(": ").append(info.getDescription());
-
+                buf.append(info.getDescription());
+            if (buf.length() > 0)
+                buf.append(": ");
+            buf.append(info.getChannelHash().toBase64().substring(0,6));
+            
             final String summary = buf.toString();
             _browser.getUI().debugMessage("summary: " + summary);
 

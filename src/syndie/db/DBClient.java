@@ -729,7 +729,7 @@ public class DBClient {
         }
     }
 
-    private static final String SQL_GET_CHANNEL_IDS = "SELECT channelId, channelHash FROM channel ORDER BY channelHash";
+    private static final String SQL_GET_CHANNEL_IDS = "SELECT channelId, channelHash FROM channel";
     /** retrieve a mapping of channelId (Long) to channel hash (Hash) */
     public Map getChannelIds() {
         Map rv = new HashMap();
@@ -1258,8 +1258,12 @@ public class DBClient {
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
         ChannelCollector rv = new ChannelCollector();
         
-        List pubKeys = new ArrayList();
+        List identIds = new ArrayList();
+        List manageIds = new ArrayList();
+        List postIds = new ArrayList();
+        List pubPostIds = new ArrayList();
         
+        List pubKeys = new ArrayList();
         List manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
         // first, go through and find all the 'identity' channels - those that we have
         // the actual channel signing key for
@@ -1273,10 +1277,7 @@ public class DBClient {
                     Hash chan = pub.calculateHash();
                     long chanId = getChannelId(chan);
                     if (chanId >= 0) {
-                        //ui.debugMessage("nym has the identity key for " + chan.toBase64());
-                        ChannelInfo info = getChannel(chanId);
-                        rv._identityChannels.add(info);
-                        rv._internalIds.add(new Long(chanId));
+                        identIds.add(new Long(chanId));
                     } else {
                         //ui.debugMessage("nym has a key that is not an identity key (" + chan.toBase64() + ")");
                     }
@@ -1302,17 +1303,8 @@ public class DBClient {
                         long chanId = rs.getLong(1);
                         if (!rs.wasNull()) {
                             Long id = new Long(chanId);
-                            if (!rv._internalIds.contains(id)) {
-                                ChannelInfo info = getChannel(chanId);
-                                if (info != null) {
-                                    _ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
-                                    rv._managedChannels.add(info);
-                                    rv._internalIds.add(id);
-                                    //_itemKeys.add(id);
-                                    //_itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                                } else {
-                                    _ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
-                                }
+                            if (!identIds.contains(id) && !manageIds.contains(id)) {
+                                manageIds.add(id);
                             }
                         }
                     }
@@ -1344,17 +1336,8 @@ public class DBClient {
                         long chanId = rs.getLong(1);
                         if (!rs.wasNull()) {
                             Long id = new Long(chanId);
-                            if (!rv._internalIds.contains(id)) {
-                                ChannelInfo info = getChannel(chanId);
-                                if (info != null) {
-                                    _ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
-                                    rv._postChannels.add(info);
-                                    rv._internalIds.add(id);
-                                    //_itemKeys.add(id);
-                                    //_itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                                } else {
-                                    _ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
-                                }
+                            if (!identIds.contains(id) && !manageIds.contains(id) && !postIds.contains(id)) {
+                                postIds.add(id);
                             }
                         }
                     }
@@ -1374,19 +1357,65 @@ public class DBClient {
             List channelIds = getPublicPostingChannelIds();
             for (int i = 0; i < channelIds.size(); i++) {
                 Long id = (Long)channelIds.get(i);
-                if (!rv._internalIds.contains(id)) {
-                    ChannelInfo info = getChannel(id.longValue());
-                    if (info != null) {
-                        rv._publicPostChannels.add(info);
-                        rv._internalIds.add(id);
-                        //_itemKeys.add(id);
-                        //_itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
-                    }
-                }            
+                if (!identIds.contains(id) && !manageIds.contains(id) && !postIds.contains(id) && !pubPostIds.contains(id)) {
+                    pubPostIds.add(id);
+                }
+            }
+        }
+        
+        // ok, now sort the identIds/manageIds/postIds/pubPostIds by their names
+        sortChannels(identIds);
+        sortChannels(manageIds);
+        sortChannels(postIds);
+        sortChannels(pubPostIds);
+        
+        for (int i = 0; i < identIds.size(); i++) {
+            Long chanId = (Long)identIds.get(i);
+            ChannelInfo info = getChannel(chanId.longValue());
+            if (info != null) {
+                rv._internalIds.add(chanId);
+                rv._identityChannels.add(info);
+            }
+        }
+        for (int i = 0; i < manageIds.size(); i++) {
+            Long chanId = (Long)manageIds.get(i);
+            ChannelInfo info = getChannel(chanId.longValue());
+            if (info != null) {
+                rv._internalIds.add(chanId);
+                rv._managedChannels.add(info);
+            }
+        }
+        for (int i = 0; i < postIds.size(); i++) {
+            Long chanId = (Long)postIds.get(i);
+            ChannelInfo info = getChannel(chanId.longValue());
+            if (info != null) {
+                rv._internalIds.add(chanId);
+                rv._postChannels.add(info);
+            }
+        }
+        for (int i = 0; i < pubPostIds.size(); i++) {
+            Long chanId = (Long)pubPostIds.get(i);
+            ChannelInfo info = getChannel(chanId.longValue());
+            if (info != null) {
+                rv._internalIds.add(chanId);
+                rv._publicPostChannels.add(info);
             }
         }
         
         return rv;
+    }
+    private void sortChannels(List chanIds) {
+        TreeMap nameToId = new TreeMap();
+        for (int i = 0; i < chanIds.size(); i++) {
+            Long id = (Long)chanIds.get(i);
+            String name = getChannelName(id.longValue());
+            if (name == null) name = "";
+            name = Constants.lowercase(name) + " " + id.toString(); // guaranteed to be unique
+            nameToId.put(name, id);
+        }
+        chanIds.clear();
+        for (Iterator iter = nameToId.values().iterator(); iter.hasNext(); )
+            chanIds.add(iter.next());
     }
 
     public static class ChannelSearchCriteria {
@@ -3020,7 +3049,7 @@ public class DBClient {
         return null;
     }
 
-    private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId FROM channel WHERE allowPubPost = TRUE";
+    private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name FROM channel WHERE allowPubPost = TRUE ORDER BY name ASC";
     /** list of channel ids (Long) that anyone is allowed to post to */
     public List getPublicPostingChannelIds() {
         ensureLoggedIn();

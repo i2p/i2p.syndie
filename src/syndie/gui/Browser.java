@@ -1121,7 +1121,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
@@ -1138,7 +1138,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
@@ -1158,7 +1158,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
@@ -1175,7 +1175,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
@@ -1204,7 +1204,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
@@ -1232,7 +1232,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
-                item.setText(info.getChannelHash().toBase64().substring(0,6) + ": " + name);
+                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
                 item.setText(info.getChannelHash().toBase64().substring(0,6));
             
