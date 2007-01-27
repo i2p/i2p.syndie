@@ -78,7 +78,7 @@ public class SyndieURI {
         if (channel != null)
             scopes = new String[] { channel.toBase64() };
         return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
-                            null, null, null, null, null, null, null, null, false, false, false, true, false);
+                            null, null, null, null, null, null, null, null, false, true, false, true, false);
     }
     public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded, boolean useImportDate) {
         String scopes[] = null;
@@ -91,7 +91,7 @@ public class SyndieURI {
         else
             postDays = new Long(7);
         return createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
-                            null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
+                            null, null, null, null, null, null, null, null, false, true, false, threaded, unreadOnly);
     }
     
     public static SyndieURI createBookmarked(List scopeHashes, boolean threaded, boolean unreadOnly, boolean useImportDate) {
@@ -104,8 +104,9 @@ public class SyndieURI {
             importDays = new Long(7);
         else
             postDays = new Long(7);
+        boolean pbe = true;
         SyndieURI uri = createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
-                                     null, null, null, null, null, null, null, null, false, false, false, threaded, unreadOnly);
+                                     null, null, null, null, null, null, null, null, false, pbe, false, threaded, unreadOnly);
         Map attr = uri.getAttributes();
         attr.put("byforum", "true");
         return uri;
