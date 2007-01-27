@@ -9,6 +9,8 @@ import java.util.Properties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -204,12 +206,63 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _manageRoot = new TreeItem(_tree, SWT.NONE);
         //_searchRoot = new TreeItem(_tree, SWT.NONE);
         
+        SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
+            /** the user doubleclicked on the selected row */
+            public void doubleclick() {
+                TreeItem item = getSelected();
+                if (item != null)
+                    fire(item);                
+            }
+            /** the user hit return on the selected row */
+            public void returnHit() {
+                TreeItem item = getSelected();
+                if (item != null)
+                    fire(item);
+            }
+            private void fire(TreeItem item) {
+                if (_acceptanceListener == null)
+                    return;
+                NymReferenceNode node = (NymReferenceNode)_bookmarkNodes.get(item);
+                if (node != null) {
+                    _acceptanceListener.referenceAccepted(node.getURI());
+                    return;
+                }
+                ChannelInfo info = (ChannelInfo)_postChannels.get(item);
+                if (info != null) {
+                    _acceptanceListener.referenceAccepted(SyndieURI.createScope(info.getChannelHash()));
+                    return;
+                }
+                info = (ChannelInfo)_manageChannels.get(item);
+                if (info != null) {
+                    _acceptanceListener.referenceAccepted(SyndieURI.createScope(info.getChannelHash()));
+                    return;
+                }
+            }
+        };
+        _tree.addTraverseListener(lsnr);
+        _tree.addSelectionListener(lsnr);
+        _tree.addMouseListener(lsnr);
+        _tree.addKeyListener(lsnr);
+        
         _searchList = new List(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true);
         _searchList.setLayoutData(gd);
         _searchList.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { searchSelected(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { searchSelected(); }
+            public void widgetDefaultSelected(SelectionEvent evt) { searchSelected(false); }
+            public void widgetSelected(SelectionEvent selectionEvent) { searchSelected(false); }
+        });
+        _searchList.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN)
+                    searchSelected(true);
+            }
+        });
+        _searchList.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {
+                searchSelected(true);
+            }
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) {}
         });
         if (!_showSearchList) {
             gd.exclude = true;
@@ -246,11 +299,13 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
     
-    private void searchSelected() {
+    private void searchSelected(boolean accept) {
         int idx = _searchList.getSelectionIndex();
         if (idx >= 0) {
             ReferenceNode node = (ReferenceNode)_searchResults.get(idx);
             _choiceListener.searchResultSelected(_searchList.getItem(idx), node);
+            if (accept && (_acceptanceListener != null))
+                _acceptanceListener.referenceAccepted(node.getURI());
         }
     }
     
