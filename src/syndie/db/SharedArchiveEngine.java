@@ -246,6 +246,8 @@ public class SharedArchiveEngine {
         if (strategy.pullNothing)
             return uris;
         
+        List banned = client.getBannedChannels();
+        
         SharedArchive.Channel channels[] = archive.getChannels();
         for (int i = 0; i < channels.length; i++) {
             Hash scope = new Hash(channels[i].getScope());
@@ -254,6 +256,8 @@ public class SharedArchiveEngine {
             } else if (channels[i].isNew() && strategy.includeDupForPIR) {
                 uris.add(SyndieURI.createScope(scope));
             } else {
+                if (banned.contains(scope))
+                    continue;
                 long knownVersion = client.getChannelVersion(scope);
                 if (strategy.knownChannelsOnly && (knownVersion < 0))
                     continue;
@@ -297,6 +301,9 @@ public class SharedArchiveEngine {
                     //ui.debugMessage("message is already known: " + messages[i]);
                     continue;
                 }
+                
+                if (banned.contains(scope) || banned.contains(target))
+                    continue;
                 
                 long targetChanId = client.getChannelId(target);
                 long scopeChanId = client.getChannelId(scope);

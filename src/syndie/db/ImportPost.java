@@ -306,6 +306,19 @@ public class ImportPost {
                 }
             }
         }
+                   
+        
+        byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+        Hash targetHash = null;
+        if (target != null) {
+            // may be separate from the author or scope
+            targetHash = new Hash(target);
+            if (_client.getBannedChannels().contains(targetHash)) {
+                _ui.errorMessage("Not importing banned post in " + _channel.toBase64() + ": " + _uri);
+                _ui.commandComplete(-1, null);
+                return false;
+            }
+        }
         
         // includes managers, posters, and the owner
         List signingPubKeys = _client.getAuthorizedPosters(_channel);
