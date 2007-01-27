@@ -95,6 +95,21 @@ public class StatusBar implements Translatable, Themeable {
         _nextSyncDate = new Label(_root, SWT.NONE);
         _nextSyncDate.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
         
+        _nextSyncLabel.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) {
+                _browser.view(_browser.createSyndicationConfigURI());
+            }
+        });
+        _nextSyncDate.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) {
+                _browser.view(_browser.createSyndicationConfigURI());
+            }
+        });
+        
         _newForum = new Button(_root, SWT.PUSH);
         _newForum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
