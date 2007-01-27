@@ -1534,43 +1534,58 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */
     public void bookmark(SyndieURI uri) {
-        debugMessage("bookmarking "+uri);
         String name = "bookmark name";
         String desc = "";
+        bookmark(uri, name, desc);
+    }
+    private void bookmark(SyndieURI uri, String name, String desc) {
+        debugMessage("bookmarking "+uri);
         int siblingOrder = -1;
         long parentGroupId = -1;
         boolean loadOnStart = false;
         
-        if (uri.isChannel() && (uri.getScope() != null)) {
-            long chanId = _client.getChannelId(uri.getScope());
-            if (uri.getMessageId() != null) {
-                MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
-                if (msg != null) {
-                    name = msg.getSubject();
-                    desc = "";
+        if (desc.length() <= 0) {
+            if (uri.isChannel() && (uri.getScope() != null)) {
+                long chanId = _client.getChannelId(uri.getScope());
+                if (uri.getMessageId() != null) {
+                    MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
+                    if (msg != null) {
+                        name = msg.getSubject();
+                        desc = "";
+                    } else {
+                        name = "";
+                        desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+                    }
                 } else {
-                    name = "";
-                    desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+                    ChannelInfo chan = _client.getChannel(chanId);
+                    if (chan != null) {
+                        name = chan.getName();
+                        desc = chan.getDescription();
+                    } else {
+                        name = "";
+                        desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+                    }
                 }
-            } else {
-                ChannelInfo chan = _client.getChannel(chanId);
-                if (chan != null) {
-                    name = chan.getName();
-                    desc = chan.getDescription();
-                } else {
-                    name = "";
-                    desc = uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId();
+            } else if (uri.isSearch()) {
+                Hash scopes[] = uri.getSearchScopes();
+                if ( (scopes != null) && (scopes.length == 1) ) {
+                    long chanId = _client.getChannelId(scopes[0]);
+                    ChannelInfo chan = _client.getChannel(chanId);
+                    if (chan != null) {
+                        name = chan.getName();
+                        desc = chan.getDescription();
+                    }
                 }
+            } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
+                name = _translation.getText(T_BOOKMARK_LOGS_NAME, "logs");
+                desc = _translation.getText(T_BOOKMARK_LOGS_DESC, "watch log messages");
+            } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
+                name = _translation.getText(T_BOOKMARK_POST_NAME, "post");
+                desc = _translation.getText(T_BOOKMARK_POST_DESC, "post a new message");
+            } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
+                name = _translation.getText(T_BOOKMARK_TEXTUI_NAME, "text UI");
+                desc = _translation.getText(T_BOOKMARK_TEXTUI_DESC, "text based interface");
             }
-        } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
-            name = _translation.getText(T_BOOKMARK_LOGS_NAME, "logs");
-            desc = _translation.getText(T_BOOKMARK_LOGS_DESC, "watch log messages");
-        } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
-            name = _translation.getText(T_BOOKMARK_POST_NAME, "post");
-            desc = _translation.getText(T_BOOKMARK_POST_DESC, "post a new message");
-        } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
-            name = _translation.getText(T_BOOKMARK_TEXTUI_NAME, "text UI");
-            desc = _translation.getText(T_BOOKMARK_TEXTUI_DESC, "text based interface");
         }
         
         // bookmark should always set these to false (ban/ignore would set them to true)
@@ -2168,7 +2183,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 BrowserTab tab = (BrowserTab)_openTabs.get(uri);
                 if (tab.getTabItem() == item) {
                     SyndieURI curURI = tab.getURI(); // may have changed since insert
-                    bookmark(curURI);
+                    bookmark(curURI, tab.getName(), tab.getDescription());
                     return;
                 }
             }

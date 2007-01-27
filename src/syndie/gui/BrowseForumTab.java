@@ -19,8 +19,14 @@ public class BrowseForumTab extends BrowserTab {
     public BrowseForumTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri); 
         debug("browseForum construct: super complete: " + uri);
-        if (uri.getScope() != null) {
-            long chanId = getClient().getChannelId(uri.getScope());
+        Hash scope = uri.getScope();
+        if (uri.isSearch()) {
+            Hash scopes[] = uri.getSearchScopes();
+            if ( (scopes != null) && (scopes.length == 1) )
+                scope = scopes[0];
+        }
+        if (scope != null) {
+            long chanId = getClient().getChannelId(scope);
             debug("browseForum construct: fetch chanId");
             if (chanId >= 0) {
                 ChannelInfo chan = getClient().getChannel(chanId);
@@ -32,8 +38,8 @@ public class BrowseForumTab extends BrowserTab {
                 }
             }
             if (_name == null) {
-                _name = uri.getScope().toBase64().substring(0,6);
-                _description = "forum: " + uri.getScope().toBase64();
+                _name = scope.toBase64().substring(0,6);
+                _description = "forum: " + scope.toBase64();
                 _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_INFORMATION);
             }
         } else {
@@ -97,17 +103,23 @@ public class BrowseForumTab extends BrowserTab {
         SyndieURI localURI = getURI();
         Hash scopes[] = null;
         Hash scope = null;
-        if (localURI.isChannel())
+        if (localURI.isChannel()) {
             scope = localURI.getScope();
-        else if (localURI.isSearch())
+        } else if (localURI.isSearch()) {
             scopes = localURI.getSearchScopes();
+            if ( (scopes != null) && (scopes.length == 1) )
+                scope = scopes[0];
+        }
         
         Hash newScopes[] = null;
         Hash newScope = null;
-        if (uri.isChannel())
+        if (uri.isChannel()) {
             newScope = uri.getScope();
-        else if (uri.isSearch())
+        } else if (uri.isSearch()) {
             newScopes = uri.getSearchScopes();
+            if ( (newScopes != null) && (newScopes.length == 1) )
+                newScope = newScopes[0];
+        }
         
         if ( (newScope == null) && (scope == null) && (newScopes == null) && (scopes == null) )
             return true;
