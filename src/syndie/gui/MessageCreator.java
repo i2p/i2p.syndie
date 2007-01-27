@@ -95,13 +95,13 @@ class MessageCreator {
         
         NestedUI ui = new NestedUI(_ui);
         
-        long msgId = MessageGen.createMessageId(client);
+        long messageId = MessageGen.createMessageId(client);
         
         String out = null;
         if (out == null) {
             File chanDir = new File(client.getOutboundDir(), scope.toBase64());
             chanDir.mkdirs();
-            File msgFile = new File(chanDir, msgId + Constants.FILENAME_SUFFIX);
+            File msgFile = new File(chanDir, messageId + Constants.FILENAME_SUFFIX);
             out = msgFile.getPath();
         }
         
@@ -246,7 +246,7 @@ class MessageCreator {
                 genOpts.setOptValue("postAsUnauthorized", "true");
         }
         
-        genOpts.setOptValue("messageId", Long.toString(msgId));
+        genOpts.setOptValue("messageId", Long.toString(messageId));
         genOpts.setOptValue("subject", _editor.getSubject().trim());
  
         String passphrase = (_editor.getPrivacyPBE() ? _editor.getPassphrase() : null);
@@ -365,10 +365,15 @@ class MessageCreator {
                 cleanup(tempFiles, refFile);
                 return false;
             } else {
-                _createdURI = SyndieURI.createMessage(scope, msgId);
+                _createdURI = SyndieURI.createMessage(scope, messageId);
                 ui.statusMessage("Post imported");
                 ui.commandComplete(0, null);
                 cleanup(tempFiles, refFile);
+                
+                long msgId = _editor.getBrowser().getClient().getMessageId(scope, messageId);
+                if (msgId >= 0)
+                    _editor.getBrowser().getClient().markMessageRead(msgId);
+                
                 _editor.getBrowser().messageImported();
                 return true;
             }
