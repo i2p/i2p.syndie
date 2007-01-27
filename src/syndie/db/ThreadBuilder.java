@@ -33,6 +33,15 @@ public class ThreadBuilder {
     
     public List buildThread(Set threadMsgIds) {
         Map tmiToAncestors = new HashMap();
+        Set newMsgIds = new HashSet();
+        
+        // find all children of the messages, in case they weren't included in the threadMsgIds
+        ThreadAccumulatorJWZ.buildChildren(_client, _ui, newMsgIds, threadMsgIds);
+        if (newMsgIds.size() > 0) {
+            if (DEBUG) _ui.debugMessage("children exposed under existing messages: " + newMsgIds);
+            threadMsgIds.addAll(newMsgIds);
+        }
+        
         // step 1: foreach msg
         for (Iterator iter = threadMsgIds.iterator(); iter.hasNext(); ) {
             ThreadMsgId tmi = (ThreadMsgId)iter.next();

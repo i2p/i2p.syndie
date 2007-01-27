@@ -288,29 +288,19 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
             long afterPrep = System.currentTimeMillis();
             List unread = _client.getUnread(msgIds);
+            int removed = 0;
             long beforeStrip = System.currentTimeMillis();
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 if (!unread.contains(new Long(tmi.msgId))) {
                     _ui.debugMessage("reject " + tmi + " because it was already read");
                     iter.remove();
+                    removed++;
                 }
             }
             long afterStrip = System.currentTimeMillis();
             _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
-                             " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip));
-            /* 
-            
-            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
-                ThreadMsgId tmi = (ThreadMsgId)iter.next();
-                //Long msgId = (Long)iter.next();
-                int status = _client.getMessageStatus(tmi.msgId); //msgId.longValue());
-                if (DBClient.MSG_STATUS_NEW_UNREAD != status) {
-                    _ui.debugMessage("reject " + tmi + " because status=" + status);
-                    iter.remove();
-                }
-            }
-            */
+                             " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip) + " removed: " + removed);
         }
         long afterFilterStatus = System.currentTimeMillis();
         _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
@@ -634,7 +624,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     String pbePrompt = rs.getString(6);
                     boolean replyKeyMissing = rs.getBoolean(7);
                     if (rs.wasNull()) replyKeyMissing = false;
-                    Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
+                    Boolean wasAuth = rs.getBoolean(8) ? Boolean.TRUE : Boolean.FALSE;
                     if (rs.wasNull()) wasAuth = null;
                     
                     ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
@@ -675,6 +665,104 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         //_ui.debugMessage("building ancestors, query " + queryRuns + " in " + queryTime + " w/ " + queryMatches + " matches");
         return queryMatches;
+    }
+
+    private static final String SQL_BUILD_CHILDREN =
+            "SELECT c.channelHash, cm.messageId, 0, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized " +
+            "FROM channelMessage parentMsg " +
+            "JOIN channel parentChannel ON parentMsg.scopeChannelId = parentChannel.channelId " +
+            "JOIN messageHierarchy mh ON mh.referencedMessageId = parentMsg.messageId AND mh.referencedChannelHash = parentChannel.channelHash " +
+            "JOIN channelMessage cm ON cm.msgId = mh.msgId " +
+            "JOIN channel c ON cm.scopeChannelId = c.channelId " +
+            "WHERE parentMsg.msgId IN (";
+            // msgId list) AND cm.msgId NOT IN (msgId list)
+    
+    /**
+     * find all of the children of the selected msgId, adding it to newMsgIds if its new
+     */
+    public static void buildChildren(DBClient client, UI ui, Set newMsgIds, Set existingMsgIds) {
+        if (existingMsgIds.size() <= 0) return;
+        
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        
+        StringBuffer buf = new StringBuffer(SQL_BUILD_CHILDREN);
+        int ids = 0;
+        for (Iterator iter = existingMsgIds.iterator(); iter.hasNext(); ) {
+            ThreadMsgId id = (ThreadMsgId)iter.next();
+            if (id.msgId >= 0) {
+                if (ids > 0)
+                    buf.append(", ");
+                buf.append(id.msgId);
+                ids++;
+            }
+        }
+        buf.append(") AND cm.msgId NOT IN (");
+        ids = 0;
+        for (Iterator iter = existingMsgIds.iterator(); iter.hasNext(); ) {
+            ThreadMsgId id = (ThreadMsgId)iter.next();
+            if (id.msgId >= 0) {
+                if (ids > 0)
+                    buf.append(", ");
+                buf.append(id.msgId);
+                ids++;
+            }
+        }
+        buf.append(")");
+        
+        String query = buf.toString();
+        ui.debugMessage("Children query: " + query);
+        
+        int queryRuns = 0;
+        long queryTime = 0;
+        int queryMatches = 0;
+        try {
+            stmt = client.con().prepareStatement(query);
+            long before = System.currentTimeMillis();
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                byte chanHash[] = rs.getBytes(1);
+                long messageId = rs.getLong(2);
+                int closeness = rs.getInt(3);
+                long ancestorMsgId = rs.getLong(4);
+                if (rs.wasNull()) ancestorMsgId = -1;
+                boolean readKeyMissing = rs.getBoolean(5);
+                if (rs.wasNull()) readKeyMissing = false;
+                String pbePrompt = rs.getString(6);
+                boolean replyKeyMissing = rs.getBoolean(7);
+                if (rs.wasNull()) replyKeyMissing = false;
+                Boolean wasAuth = rs.getBoolean(8) ? Boolean.TRUE : Boolean.FALSE;
+                if (rs.wasNull()) wasAuth = null;
+
+                ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
+                ancestor.messageId = messageId;
+                if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
+                    ancestor.scope = new Hash(chanHash);
+
+                // if we don't have the actual data, just use a dummy
+                if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {
+                    ancestor.unreadable = true;
+                    ancestor.authorized = null;
+                } else {
+                    ancestor.authorized = wasAuth;
+                }
+
+                if (!existingMsgIds.contains(ancestor))
+                    newMsgIds.add(ancestor);
+
+                long after = System.currentTimeMillis();
+                queryTime += (after-before);
+            }
+            rs.close();
+            rs = null;
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            ui.errorMessage("Internal error building ancestors", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
     }
     
     /**
