@@ -117,6 +117,7 @@ public class HTMLStateBuilder {
                             char ce = _html.charAt(j);
                             if (ce == ';') {
                                 appendBody(body, getCharacter(escapeCode.toString()));
+                                _prevWasWhitespace = false;
                                 i = j;
                                 escapeFound = true;
                                 break;
