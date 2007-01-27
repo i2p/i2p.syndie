@@ -76,7 +76,6 @@ public class MessageTree implements Translatable, Themeable {
     private Composite _parent;
     private Composite _root;
     private Tree _tree;
-    private TreeColumn _colType;
     protected TreeColumn _colSubject;
     private TreeColumn _colAuthor;
     private TreeColumn _colChannel;
@@ -131,8 +130,6 @@ public class MessageTree implements Translatable, Themeable {
     private Set _itemsNewUnread;
     /** item to msgId (Long) */
     private Map _itemToMsgId;
-    /** item to MessageFlagBar */
-    private Map _itemToMsgFlags;
     /** ordered list of ReferenceNode instances describing the tree */
     private List _threadReferenceNodes;
     /** TreeItem to ReferenceNode */
@@ -169,7 +166,6 @@ public class MessageTree implements Translatable, Themeable {
         _itemToURI = new HashMap();
         _itemsNewUnread = new HashSet();
         _itemToMsgId = new HashMap();
-        _itemToMsgFlags = new HashMap();
         _itemToNode = new HashMap();
         _tags = new HashSet();
         _bars = new ArrayList();
@@ -916,49 +912,10 @@ public class MessageTree implements Translatable, Themeable {
         });
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
-        _colType = new TreeColumn(_tree, SWT.LEFT);
         _colAuthor = new TreeColumn(_tree, SWT.LEFT);
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
         _colDate = new TreeColumn(_tree, SWT.LEFT);
         _colTags = new TreeColumn(_tree, SWT.LEFT);
-        
-        if (_showFlags)
-            _colType.setWidth(getMessageFlagBarWidth(_tree));
-        else
-            _colType.setWidth(1);
-        //_tree.addListener(SWT.MeasureItem, new Listener() {
-        //    public void handleEvent(Event evt) {
-        //        if (evt.index == 1) evt.width = getMessageFlagBarWidth(_tree);
-        //    }
-        //});
-        _tree.addListener(SWT.PaintItem, new Listener() {
-            public void handleEvent(Event evt) {
-                if (!_showFlags) return;
-                if (evt.index == 1) {
-                    MessageFlagBar bar = (MessageFlagBar)_itemToMsgFlags.get(evt.item);
-                    if (bar == null) {
-                        Long msgId = (Long)_itemToMsgId.get(evt.item);
-                        MessageInfo msg = _client.getMessage(msgId.longValue());
-                        bar = new MessageFlagBar(_browser, _tree, false);
-                        bar.setMessage(msg);
-                        _itemToMsgFlags.put(evt.item, bar);
-                    }
-                    Image imgs[] = bar.getFlags();
-                    //String tt = bar.getTooltip();
-                    int off = evt.x;
-                    //_browser.getUI().debugMessage("paint height:" + evt.height + " y:" + evt.y + " x:" + evt.x);
-                    for (int i = 0; i < imgs.length; i++) {
-                        Rectangle sz = imgs[i].getBounds();
-                        int excess = evt.height-sz.height;
-                        if (excess > 1)
-                            evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
-                        else
-                            evt.gc.drawImage(imgs[i], off, evt.y + excess/2);
-                        off += imgs[i].getBounds().width + FLAG_SPACING;
-                    }
-                }
-            }
-        });
         
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
@@ -1123,13 +1080,6 @@ public class MessageTree implements Translatable, Themeable {
         bookmark.name = item.getText(0);
         bookmark.desc = "";
         return bookmark;
-    }
-
-    private static final int getMessageFlagBarWidth(Tree tree) {
-        // to avoid a bunch of messageflagbar calcs, lets just assume 8 flags
-        int width = tree.getGridLineWidth() * 2;
-        width += 8 * (ImageUtil.ICON_MSG_FLAG_AUTHENTICATED.getBounds().width + FLAG_SPACING);
-        return width;
     }
     
     private void toggleSort(TreeColumn column) {
@@ -1349,10 +1299,6 @@ public class MessageTree implements Translatable, Themeable {
         _tree.removeAll();
         _itemToURI.clear();
         _itemToMsgId.clear();
-        // MessageFlagBar instances may allocate icons
-        for (Iterator iter = _itemToMsgFlags.values().iterator(); iter.hasNext(); )
-            ((MessageFlagBar)iter.next()).dispose();
-        _itemToMsgFlags.clear();
         _itemsNewUnread.clear();
         _tags.clear();
         _itemToNode.clear();
@@ -1501,19 +1447,10 @@ public class MessageTree implements Translatable, Themeable {
             item.setText(0, MessageView.calculateSubject(_browser, uri));
         else
             item.setText(0, subj);
-        // msgbar stuff
-        // defer this to the paint() - we only paint the rows we need (which may be << total rows, expanded)
-        //MessageFlagBar bar = new MessageFlagBar(_browser, _tree, false);
-        //bar.setMessage(msg);
-        //_itemToMsgFlags.put(item, bar);
-        //if ( (msg != null) && (msg.getWasPrivate()) )
-        //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_PRIVATE);
-        //else
-        //    item.setImage(1, ImageUtil.ICON_MSG_TYPE_NORMAL);
-        item.setText(2, auth);
-        item.setText(3, chan);
-        item.setText(4, date);
-        item.setText(5, tags);
+        item.setText(1, auth);
+        item.setText(2, chan);
+        item.setText(3, date);
+        item.setText(4, tags);
         Font f = null;
         if ( (status == DBClient.MSG_STATUS_READ) || (uri == null) ) {
             f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
@@ -1545,6 +1482,8 @@ public class MessageTree implements Translatable, Themeable {
         int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
         if (width < min)
             width = min;
+        if (width > 400)
+            width = 400;
         int existing = col.getWidth();
         if (width > existing)
             col.setWidth(width);
@@ -1807,6 +1746,12 @@ public class MessageTree implements Translatable, Themeable {
         _colChannel.setText(registry.getText(T_FORUM, "Forum"));
         _colDate.setText(registry.getText(T_DATE, "Date"));
         _colTags.setText(registry.getText(T_TAGS, "Tags"));
+        
+        _colSubject.pack();
+        _colAuthor.pack();
+        _colChannel.pack();
+        _colDate.pack();
+        _colTags.pack();
         
         _view.setText(registry.getText(T_VIEW, "View the message"));
         _reply.setText(registry.getText(T_VIEW, "Reply to the message"));
