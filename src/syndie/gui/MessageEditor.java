@@ -3103,10 +3103,17 @@ class MessageEditorSpell implements Themeable, Translatable {
         _spellShell.dispose();
     }
     
-    public String getSpellWordOrig() { return _spellWord.getText().trim(); }
-    public String getSuggestion() { return _spellSuggestions.getText().trim(); }
+    public String getSpellWordOrig() {
+        if (_spellShell.isDisposed()) return null;
+        return _spellWord.getText().trim();
+    }
+    public String getSuggestion() { 
+        if (_spellShell.isDisposed()) return null;
+        return _spellSuggestions.getText().trim();
+    }
     public List getIgnoreAllList() { return _spellIgnoreAllList; }
     public void updateSuggestions(ArrayList suggestions, String lineText, String word) {
+        if (_spellShell.isDisposed()) return;
         _spellWord.setText(word);
         _spellSuggestions.removeAll();
         for (int i = 0; i < suggestions.size(); i++)
@@ -3115,11 +3122,12 @@ class MessageEditorSpell implements Themeable, Translatable {
         _spellContext.setText(lineText);
     }
     public void showSpell(boolean wordSet) {
+        if (_spellShell.isDisposed()) return;
         if (wordSet) {
             _spellContext.setLineBackground(0, 1, null);
             _spellWord.setEnabled(true);
             _spellSuggestions.setEnabled(true);
-            _spellAdd.setEnabled(true);
+            _spellAdd.setEnabled(false); // todo: user-specific dictionary
             _spellCancel.setEnabled(true);
             _spellCancel.setText(_editor.getBrowser().getTranslationRegistry().getText(T_SPELL_CANCEL, "cancel"));
             _spellIgnore.setEnabled(true);
@@ -3220,6 +3228,7 @@ class MessageEditorSpell implements Themeable, Translatable {
     }
     void cancelSpell() {
         resetSpellcheck();
+        if (_spellShell.isDisposed()) return;
         _spellShell.setVisible(false); 
     }
     

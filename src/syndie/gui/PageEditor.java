@@ -550,7 +550,7 @@ public class PageEditor {
             int curWord = 0;
             int cur = off;
             int len = lineText.length();
-            while (true) {
+            while (!_root.isDisposed()) {
                 if ( (cur >= len) && (wordStart == -1) )
                     break;
                 char c = 0;

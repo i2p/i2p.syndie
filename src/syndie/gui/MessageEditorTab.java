@@ -109,6 +109,19 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
     public String getName() { return getBrowser().getTranslationRegistry().getText(T_TITLE, "Post"); }
     public String getDescription() { return getBrowser().getTranslationRegistry().getText(T_DESC, "Post a new message"); }
     
+    public boolean canShow(SyndieURI uri) {
+        if (uri == null) return false;
+        boolean rv = super.canShow(uri);
+        if (!rv) {
+            SyndieURI curURI = getURI();
+            Long curPostponeId = curURI.getLong("postponeid");
+            Long postponeId = uri.getLong("postponeid");
+            if ( (postponeId != null) && (curPostponeId != null) && (curPostponeId.longValue() == postponeId.longValue()) )
+                return true; // only resume once per postponeId (even if they are different versions
+        }
+        return rv;
+    }
+    
     public void translate(TranslationRegistry registry) {
         reconfigItem(); // queries getName/getDescription
     }
