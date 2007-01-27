@@ -29,6 +29,7 @@ import java.util.zip.ZipOutputStream;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
@@ -66,6 +67,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
+import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
@@ -2069,6 +2071,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         redrawAuthorAvatar(_author, authorId, authorSummary);
     }
+    
     private void pickAuthor(Hash author) {
         modified();
         _author = author;
@@ -2206,6 +2209,28 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 // not allowed
                 _browser.getUI().debugMessage("forum not allowed");
                 ok = false;
+            }
+        }
+        
+        if (!ok && (forum != null)) {
+            // the author may not be allowed, but the nym may have an explicitly authorized private key
+            // for posting or managing the forum
+            List nymKeys = _browser.getClient().getNymKeys(forum.getChannelHash(), null);
+            for (int i = 0; i < nymKeys.size(); i++) {
+                NymKey key = (NymKey)nymKeys.get(i);
+                if (key.getAuthenticated()) {
+                    if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
+                        String keyChan = new SigningPrivateKey(key.getData()).toPublic().calculateHash().toBase64();
+                        _browser.getUI().debugMessage("explicitly authorized management key is known to the nym (" + keyChan + "), so allow the author to post: " + author.toBase64());
+                        ok = true;
+                        break;
+                    } else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
+                        String keyChan = new SigningPrivateKey(key.getData()).toPublic().calculateHash().toBase64();
+                        _browser.getUI().debugMessage("explicitly authorized posting key is known to the nym (" + keyChan + "), so allow the author to post: " + author.toBase64());
+                        ok = true;
+                        break;
+                    }
+                }
             }
         }
         

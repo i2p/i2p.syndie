@@ -1305,13 +1305,13 @@ public class DBClient {
                             if (!rv._internalIds.contains(id)) {
                                 ChannelInfo info = getChannel(chanId);
                                 if (info != null) {
-                                    //ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
+                                    _ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
                                     rv._managedChannels.add(info);
                                     rv._internalIds.add(id);
                                     //_itemKeys.add(id);
                                     //_itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
                                 } else {
-                                    //ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
+                                    _ui.debugMessage("nym has a key that is an explicit management key for an unknown channel (" + chanId + ")");
                                 }
                             }
                         }
@@ -1347,13 +1347,13 @@ public class DBClient {
                             if (!rv._internalIds.contains(id)) {
                                 ChannelInfo info = getChannel(chanId);
                                 if (info != null) {
-                                    //ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
+                                    _ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
                                     rv._postChannels.add(info);
                                     rv._internalIds.add(id);
                                     //_itemKeys.add(id);
                                     //_itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
                                 } else {
-                                    //ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
+                                    _ui.debugMessage("nym has a key that is an explicit post key for an unknown channel (" + chanId + ")");
                                 }
                             }
                         }
