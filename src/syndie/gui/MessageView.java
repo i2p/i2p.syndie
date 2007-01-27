@@ -69,6 +69,8 @@ public class MessageView implements Translatable, Themeable {
     
     private ImageCanvas _avatar;
     private Label _headerSubject;
+    private Button _headerGoToNextInThread;
+    private Button _headerGoToPrevInThread;
     private Button _headerReply;
     private Menu _headerReplyMenu;
     private MenuItem _headerReplyAuthorPrivate;
@@ -490,6 +492,7 @@ public class MessageView implements Translatable, Themeable {
                 _attachmentPreviews[i].showURI(uri);
             }
         }
+        configGoTo(msgs, id, threadSize);
         _root.layout(true, true);
     }
     private static final String T_PAGE_PREFIX = "syndie.gui.messageview.pageprefix";
@@ -738,8 +741,14 @@ public class MessageView implements Translatable, Themeable {
         _headerSubject = new Label(_root, SWT.WRAP);
         _headerSubject.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 7, 1));
         
-        _headerReply = new Button(_root, SWT.PUSH);
-        _headerReply.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        Composite buttons = new Composite(_root, SWT.NONE);
+        buttons.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
+        buttons.setLayout(new FillLayout(SWT.HORIZONTAL));
+        
+        _headerGoToPrevInThread = new Button(buttons, SWT.PUSH);
+        _headerGoToNextInThread = new Button(buttons, SWT.PUSH);
+        
+        _headerReply = new Button(buttons, SWT.PUSH);
         
         _headerReplyMenu = new Menu(_headerReply);
         _headerReply.setMenu(_headerReplyMenu);
@@ -778,6 +787,77 @@ public class MessageView implements Translatable, Themeable {
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+    
+    private static class ThreadLocator implements ReferenceNode.Visitor {
+        private ThreadMsgId _target;
+        private SyndieURI _prevURI;
+        private SyndieURI _nextURI;
+        private boolean _found;
+        public ThreadLocator(ThreadMsgId target) { 
+            _target = target;
+            _prevURI = null;
+            _nextURI = null;
+            _found = false;
+        }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            if (_nextURI != null) return;
+            if (_found) {
+                _nextURI = node.getURI();
+                return;
+            }
+            if (node.getUniqueId() == _target.msgId) {
+                _found = true;
+            } else {
+                _prevURI = node.getURI();
+            }
+        }
+        public SyndieURI getPrevURI() { return _prevURI; }
+        public SyndieURI getNextURI() { return _nextURI; }
+    }
+    
+    
+    private void configGoTo(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize) {
+        // enable/disable based on whether there is another message in the thread
+        if (threadSize > 1) {
+            ThreadLocator loc = new ThreadLocator(curMsg);
+            ReferenceNode.walk(threadReferenceNodes, loc);
+            final SyndieURI nextURI = loc.getNextURI();
+            final SyndieURI prevURI = loc.getPrevURI();
+            if (nextURI != null) {
+                _headerGoToNextInThread.setEnabled(true);
+                _headerGoToNextInThread.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                        _browser.unview(_uri);
+                        _browser.view(nextURI);
+                    }
+                    public void widgetSelected(SelectionEvent selectionEvent) {
+                        _browser.unview(_uri);
+                        _browser.view(nextURI);
+                    }
+                });
+            } else {
+                _headerGoToNextInThread.setEnabled(false);
+            }
+            if (prevURI != null) {
+                _headerGoToPrevInThread.setEnabled(true);
+                _headerGoToPrevInThread.addSelectionListener(new SelectionListener() {
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                        _browser.unview(_uri);
+                        _browser.view(prevURI);
+                    }
+                    public void widgetSelected(SelectionEvent selectionEvent) {
+                        _browser.unview(_uri);
+                        _browser.view(prevURI);
+                    }
+                });
+            } else {
+                _headerGoToPrevInThread.setEnabled(false);
+            }
+        } else {
+            _headerGoToNextInThread.setEnabled(false);
+            _headerGoToPrevInThread.setEnabled(false);
+        }
     }
     
     private void replyPrivateAuthor() {
@@ -895,6 +975,8 @@ public class MessageView implements Translatable, Themeable {
     
     public void applyTheme(Theme theme) {
         _headerSubject.setFont(theme.DEFAULT_FONT);
+        _headerGoToNextInThread.setFont(theme.BUTTON_FONT);
+        _headerGoToPrevInThread.setFont(theme.BUTTON_FONT);
         _headerReply.setFont(theme.BUTTON_FONT);
         _headerAuthorLabel.setFont(theme.DEFAULT_FONT);
         _headerAuthor.setFont(theme.DEFAULT_FONT);
@@ -937,6 +1019,9 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_FORUMREPLYPUB = "syndie.gui.messageview.forumreplypub";
     private static final String T_FORUMREPLYPRIV = "syndie.gui.messageview.forumreplypriv";
     
+    private static final String T_NEXTINTHREAD = "syndie.gui.messageview.nextinthread";
+    private static final String T_PREVINTHREAD = "syndie.gui.messageview.previnthread";
+    
     public void translate(TranslationRegistry registry) {
         _headerReply.setText(registry.getText(T_REPLY, "Reply..."));
         _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
@@ -961,5 +1046,8 @@ public class MessageView implements Translatable, Themeable {
         _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
         _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View forum profile"));
         _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
+        
+        _headerGoToNextInThread.setText(registry.getText(T_NEXTINTHREAD, "Next"));
+        _headerGoToPrevInThread.setText(registry.getText(T_PREVINTHREAD, "Prev"));
     }
 }
