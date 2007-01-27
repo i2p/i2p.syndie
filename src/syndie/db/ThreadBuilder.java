@@ -70,6 +70,14 @@ public class ThreadBuilder {
                     Container refContainer = (Container)_idTable.get(ref);
                     if (refContainer == null) {
                         refContainer = new Container();
+                        // lets prefill...
+                        refContainer.msg = new Message();
+                        refContainer.msg.id = ref;
+                        
+                        int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, ref, tmiToAncestors);
+                        refContainer.msg.references = (List)tmiToAncestors.get(ref);
+                        if (DEBUG) _ui.debugMessage("ancestors for " + ref + ": " + refContainer.msg.references);
+                        
                         _idTable.put(ref, refContainer);
                     }
                     ThreadMsgId childId = null;

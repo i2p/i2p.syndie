@@ -1418,6 +1418,9 @@ public class MessageTree implements Translatable, Themeable {
             // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
 
             long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+            
+            _browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
+            
             if (msgId >= 0) {
                 _itemToMsgId.put(item, new Long(msgId));
                 subj = _client.getMessageSubject(msgId);

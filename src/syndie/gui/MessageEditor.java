@@ -814,6 +814,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 }
             }
             List roots = builder.buildThread(msgIds);
+            _browser.getUI().debugMessage("setting message ancestry tree to: \n" + roots);
             _threadTree.setMessages(roots);
             _threadTree.select((SyndieURI)_parents.get(0));
         } else {
