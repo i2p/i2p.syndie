@@ -1096,6 +1096,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     
+    public void forumCreated() {
+        populatePostMenus();
+        _bookmarks.localForumCreated();
+    }
+    
     private void populatePostMenus() {
         final DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true);
         Display.getDefault().asyncExec(new Runnable() {

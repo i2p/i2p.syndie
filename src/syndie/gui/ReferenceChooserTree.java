@@ -195,6 +195,21 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         }
     }
     
+    public void localForumCreated() {
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                refetchNymChannels();
+                Display.getDefault().asyncExec(new Runnable() {
+                   public void run() {
+                       redrawPostable();
+                       redrawManageable();
+                       redrawSearchResults(false);
+                   } 
+                });
+            }
+        });
+    }
+    
     protected void initComponents(boolean register) {
         long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);

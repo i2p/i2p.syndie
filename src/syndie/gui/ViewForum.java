@@ -935,6 +935,7 @@ class ViewForum implements Translatable, Themeable {
             _browser.unview(_uri);
             if (_scopeId < 0)
                 _browser.view(uri);
+            _browser.forumCreated();
         }
     }
     private static final String T_ERROR_TITLE = "syndie.gui.viewforum.error.title";

@@ -82,4 +82,5 @@ public class DummyBrowserControl implements BrowserControl {
     public void messageImported() {}
     public void metaImported() {}
     public void readStatusUpdated() {}
+    public void forumCreated() {}
 }
