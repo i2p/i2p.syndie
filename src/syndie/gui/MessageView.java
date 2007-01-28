@@ -124,8 +124,10 @@ public class MessageView implements Translatable, Themeable {
     private int _page;
     private Hash _author;
     private Hash _target;
+    private boolean _enabled;
     
     public MessageView(BrowserControl browser, Composite parent, SyndieURI uri) {
+        _enabled = false;
         _browser = browser;
         _client = browser.getClient();
         _parent = parent;
@@ -140,6 +142,14 @@ public class MessageView implements Translatable, Themeable {
     }
     
     public Control getControl() { return _root; }
+    void enable() { 
+        // wtf.  workaround for swt3.3M4 on linux/gtk where it fires the first button it finds
+        // as part of an extra event when hitting return on a MessageTree.  by adding a new
+        // event, this lets us ignore any previous events (since they're executed sequentially)
+        _root.getDisplay().asyncExec(new Runnable() {
+            public void run() { _enabled = true; }
+        });
+    }
     
     public void dispose() {
         _headerFlags.dispose();
@@ -827,11 +837,19 @@ public class MessageView implements Translatable, Themeable {
             if (nextURI != null) {
                 _headerGoToNextInThread.setEnabled(true);
                 _headerGoToNextInThread.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    public void widgetDefaultSelected(SelectionEvent evt) {
+                        if (!_enabled) {
+                            // gobble the extra event. see enable()
+                            return;
+                        }
                         _browser.unview(_uri);
                         _browser.view(nextURI);
                     }
-                    public void widgetSelected(SelectionEvent selectionEvent) {
+                    public void widgetSelected(SelectionEvent evt) {
+                        if (!_enabled) {
+                            // gobble the extra event. see enable()
+                            return;
+                        }
                         _browser.unview(_uri);
                         _browser.view(nextURI);
                     }
@@ -842,11 +860,19 @@ public class MessageView implements Translatable, Themeable {
             if (prevURI != null) {
                 _headerGoToPrevInThread.setEnabled(true);
                 _headerGoToPrevInThread.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    public void widgetDefaultSelected(SelectionEvent evt) {
+                        if (!_enabled) {
+                            // gobble the extra event. see enable()
+                            return;
+                        }
                         _browser.unview(_uri);
                         _browser.view(prevURI);
                     }
-                    public void widgetSelected(SelectionEvent selectionEvent) {
+                    public void widgetSelected(SelectionEvent evt) {
+                        if (!_enabled) {
+                            // gobble the extra event. see enable()
+                            return;
+                        }
                         _browser.unview(_uri);
                         _browser.view(prevURI);
                     }
