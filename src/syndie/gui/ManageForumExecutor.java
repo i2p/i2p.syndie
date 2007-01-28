@@ -138,7 +138,7 @@ class ManageForumExecutor {
         chanGenOpts.setOptValue("name", "Shared");
         chanGenOpts.setOptValue("description", "");
         chanGenOpts.setOptValue("avatar", "");
-        chanGenOpts.setOptValue("edition", Long.toString(_client.createEdition(-1)));
+        chanGenOpts.setOptValue("edition", "0");
         chanGenOpts.setOptValue("publicPosting", Boolean.FALSE.toString());
         chanGenOpts.setOptValue("publicReplies", Boolean.FALSE.toString());
         chanGenOpts.setOptValue("refs", "");
@@ -217,7 +217,7 @@ class ManageForumExecutor {
                 return null;
             }
             _ui.statusMessage("Channel metadata imported");
-
+            
             KeyImport keyImp = new KeyImport();
             Opts keyOpts = new Opts();
             if (manageOut.length() > 0) {

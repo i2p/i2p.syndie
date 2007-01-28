@@ -1502,6 +1502,19 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         updateToolbar();
         if (_pageEditors.size() > 0)
             viewPage(0);
+        
+        Long attach = uri.getLong("attachments");
+        _browser.getUI().debugMessage("configuration complete, with attachments: " + attach);
+        if (attach != null) {
+            for (int i = 0; i < attach.intValue(); i++) {
+                String filename = uri.getString("attachment" + i);
+                if (filename == null) break;
+                File f = new File(filename);
+                if (!f.exists()) break;
+                addAttachment(f);
+            }
+        }
+        
         enableAutoSave();
         if (!validateAuthorForum()) {
             // ugly, yet it lets us delay long enough to show the tab (assuming an unauthorized reply)
@@ -2243,7 +2256,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         if (!ok && (forum != null)) {
             // the author may not be allowed, but the nym may have an explicitly authorized private key
-            // for posting or managing the forum
+            // for posting or managing the forum.  note that the *nym* may have the key, but where they got
+            // the key may only be possible for one or more of the nym's channels, and using another channel
+            // as the author would link the channel that was authorized to receive the private key and the
+            // channel that posted with the key.  the safe way to behave would be to run different unlinkable
+            // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
             List nymKeys = _browser.getClient().getNymKeys(forum.getChannelHash(), null);
             for (int i = 0; i < nymKeys.size(); i++) {
                 NymKey key = (NymKey)nymKeys.get(i);
@@ -2726,14 +2743,20 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         String name = Constants.stripFilename(fname, false);
         String type = WebRipRunner.guessContentType(fname);
 
+        _browser.getUI().debugMessage("add attachment(" + fname + ") sz= " + file.length());
+        
         if (!isValidSize(file.length()))
             return;
         
         byte data[] = new byte[(int)file.length()];
         try {
             int read = DataHelper.read(new FileInputStream(file), data);
-            if (read != data.length) return;
+            if (read != data.length) {
+                _browser.getUI().debugMessage("attachment was the wrong size (" + read + "/" + data.length + ")");
+                return;
+            }
         } catch (IOException ioe) {
+            _browser.getUI().debugMessage("Unable to read the attachment", ioe);
             return;
         }
         Properties cfg = new Properties();
@@ -2743,6 +2766,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _attachmentData.add(data);
         rebuildAttachmentSummaries();
         updateToolbar();
+        _browser.getUI().debugMessage("Attachment read and added");
     }
     public int addAttachment(String contentType, String name, byte[] data) {
         if (data == null) return -1;

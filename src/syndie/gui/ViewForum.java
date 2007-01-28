@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -845,6 +846,12 @@ class ViewForum implements Translatable, Themeable {
             SessionKey readKey = exec.getCreatedReadKey();
             Hash postIdentity = exec.getCreatedPostIdentity();
             Hash manageIdentity = exec.getCreatedManageIdentity();
+            File postFile = null;
+            if (postIdentity != null)
+                postFile = new File(new File(_browser.getClient().getOutboundDir(), postIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
+            File manageFile = null;
+            if (manageIdentity != null)
+                manageFile = new File(new File(_browser.getClient().getOutboundDir(), manageIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             
             _browser.getUI().debugMessage("done updating, scope=" + scope + " readKey=" + readKey + " postIdent=" + postIdentity + " manageIdent=" + manageIdentity);
             
@@ -876,12 +883,12 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
                     _browser.getUI().debugMessage("pop up a window to post the read key to " + to.toBase64());
-                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), readKey)));
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), readKey), null));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_viewForumAuthRead.getPostPBE()) {
                     _browser.getUI().debugMessage("pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthRead.getSendPassphrase() + "]");
-                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt(), createReferences(uri.getScope(), readKey)));
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt(), createReferences(uri.getScope(), readKey), null));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
             }
@@ -891,12 +898,12 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
                     _browser.getUI().debugMessage("pop up a window to post the post identity key to " + to.toBase64());
-                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST)));
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST), new File[] { postFile }));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_viewForumAuthPost.getPostPBE()) {
                     _browser.getUI().debugMessage("pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthPost.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthPost.getSendPassphrase() + "]");
-                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthPost.getSendPassphrase(), _viewForumAuthPost.getSendPassphrasePrompt(), createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST)));
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthPost.getSendPassphrase(), _viewForumAuthPost.getSendPassphrasePrompt(), createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST), new File[] { postFile }));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
             }
@@ -906,12 +913,12 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
                     _browser.getUI().debugMessage("pop up a window to post the manage identity key to " + to.toBase64());
-                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE)));
+                    _browser.view(_browser.createPostURI(to, null, true, createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE), new File[] { manageFile }));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_viewForumAuthManage.getPostPBE()) {
                     _browser.getUI().debugMessage("pop up a window to post the manage identity keys to " + _scope + " with pbe prompt [" + _viewForumAuthManage.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthManage.getSendPassphrase() + "]");
-                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthManage.getSendPassphrase(), _viewForumAuthManage.getSendPassphrasePrompt(), createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE)));
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthManage.getSendPassphrase(), _viewForumAuthManage.getSendPassphrasePrompt(), createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE), new File[] { manageFile }));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
             }
@@ -921,12 +928,12 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
                     _browser.getUI().debugMessage("pop up a window to post the reply key to " + to.toBase64());
-                    _browser.view(_browser.createPostURI(to, null, true, createReplyReferences(uri.getScope())));
+                    _browser.view(_browser.createPostURI(to, null, true, createReplyReferences(uri.getScope()), null));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_viewForumAuthReply.getPostPBE()) {
                     _browser.getUI().debugMessage("pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _viewForumAuthReply.getSendPassphrasePrompt() + "] for pass [" + _viewForumAuthReply.getSendPassphrase() + "]");
-                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthReply.getSendPassphrase(), _viewForumAuthReply.getSendPassphrasePrompt(), createReplyReferences(uri.getScope())));
+                    _browser.view(_browser.createPostURI(uri.getScope(), null, _viewForumAuthReply.getSendPassphrase(), _viewForumAuthReply.getSendPassphrasePrompt(), createReplyReferences(uri.getScope()), null));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
             }

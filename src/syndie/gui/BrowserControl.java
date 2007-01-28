@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.File;
 import java.util.List;
 import java.util.TreeMap;
 import syndie.data.NymReferenceNode;
@@ -29,8 +30,8 @@ public interface BrowserControl {
 
     public SyndieURI createPostURI(Hash forum, SyndieURI parent);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references);
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references);
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]);
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
     public SyndieURI createSQLURI();

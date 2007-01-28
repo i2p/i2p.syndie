@@ -1,5 +1,6 @@
 package syndie.db;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -771,14 +772,15 @@ public class ImportPost {
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA = "INSERT INTO messageAttachmentData (msgId, attachmentNum, dataBinary) VALUES (?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_CONFIG = "INSERT INTO messageAttachmentConfig (msgId, attachmentNum, dataString) VALUES (?, ?, ?)";
     private void insertAttachment(long msgId, int attachmentId) throws SQLException {
+        byte data[] = _body.getAttachment(attachmentId);
+        Properties attachConfig = _body.getAttachmentConfig(attachmentId);
+        String type = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_CONTENT_TYPE);
+        String name = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_NAME);
+        String desc = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_DESCRIPTION);
+
         PreparedStatement stmt = null;
         try {
-            byte data[] = _body.getAttachment(attachmentId);
-            String type = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_CONTENT_TYPE);
-            String name = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_NAME);
-            String desc = _body.getAttachmentConfigString(attachmentId, Constants.MSG_ATTACH_DESCRIPTION);
-            
-            String cfg = formatConfig(_body.getAttachmentConfig(attachmentId));
+            String cfg = formatConfig(attachConfig);
             
             stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_ATTACHMENT);
             //(msgId, attachmentNum, attachmentSize, contentType, name, description)
@@ -817,6 +819,23 @@ public class ImportPost {
             stmt.executeUpdate();
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if ( (type != null) && ("application/x-syndie".equals(type)) ) {
+            // attachment is a .syndie file - try to import it automatically
+            // (though of course still honoring the bans/etc)
+            importMsg(data);
+        }
+    }
+    
+    private void importMsg(byte data[]) {
+        _ui.debugMessage("Post had a .syndie file attached to it, attempting to import that file");
+        Importer imp = new Importer(_client);
+        try {
+            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(), _client.getPass(), null, false);
+            _ui.debugMessage("Attachment import complete.  success? " + ok);
+        } catch (IOException ioe) {
+            _ui.debugMessage("Attachment was corrupt", ioe);
         }
     }
     

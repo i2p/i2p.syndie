@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.File;
 import java.util.List;
 import java.util.TreeMap;
 import net.i2p.data.Hash;
@@ -28,8 +29,8 @@ public class DummyBrowserControl implements BrowserControl {
     public void unview(SyndieURI uri) {}
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) { return null; }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) { return null; }
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references) { return null; }
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references) { return null; }
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]) { return null; }
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]) { return null; }
     public SyndieURI createTextUIURI() { return null; }
     public SyndieURI createLogsURI() { return null; }
     public SyndieURI createManageURI(Hash forum) { return null; }

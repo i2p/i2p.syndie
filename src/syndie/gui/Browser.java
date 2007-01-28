@@ -2102,10 +2102,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         return createPostURI(forum, parent, false);
     }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) {
-        return createPostURI(forum, parent, asPrivateReply, null);
+        return createPostURI(forum, parent, asPrivateReply, null, null);
     }
     
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references) {
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]) {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
@@ -2116,11 +2116,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         attributes.put("reply", ""+asPrivateReply);
         if (references != null)
             attributes.put("refs", ReferenceNode.walk(references));
+        if (attachments != null) {
+            attributes.put("attachments", new Long(attachments.length));
+            for (int i = 0; i < attachments.length; i++)
+                attributes.put("attachment" + i, attachments[i].getAbsolutePath());
+        }
         attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references) {
+    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]) {
         Map attributes = new HashMap();
         if (forum != null)
             attributes.put("channel", forum.toBase64());
@@ -2132,6 +2137,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         attributes.put("pbePrompt", pbePrompt);
         if (references != null)
             attributes.put("refs", ReferenceNode.walk(references));
+        if (attachments != null) {
+            attributes.put("attachments", new Long(attachments.length));
+            for (int i = 0; i < attachments.length; i++)
+                attributes.put("attachment" + i, attachments[i].getAbsolutePath());
+        }
         attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
