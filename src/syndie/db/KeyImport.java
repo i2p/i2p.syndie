@@ -235,7 +235,7 @@ public class KeyImport extends CommandImpl {
     }
     
     private static void importManageKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
-        SigningPrivateKey priv = uri.getPostKey();
+        SigningPrivateKey priv = uri.getManageKey();
         SigningPublicKey pub = priv.toPublic();
         importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, pub.calculateHash(), priv.getData(), true, false);
         nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), pub.calculateHash()));
