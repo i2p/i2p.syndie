@@ -192,6 +192,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private List _bookmarkCache;
     
+    private UIListenerPusher _uiListenerPusher;
     private List _uiListeners;
     private List _commands;
     private volatile boolean _initialized;
@@ -203,6 +204,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _uiListeners = new ArrayList();
         _commands = new ArrayList();
         _initialized = false;
+        _uiListenerPusher = new UIListenerPusher();
+        Thread t = new Thread(_uiListenerPusher, "UI msg pusher");
+        t.setDaemon(true);
+        t.start();
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
         _editorListener = new MsgEditorListener();
@@ -2322,43 +2327,151 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
     }
     public Opts readCommand(boolean displayPrompt) { return readCommand(); }
+    
+    private static final Exception NO_CAUSE = new Exception();
+    private static final List NO_LOCATIONS = new ArrayList(0);
+    private class UIListenerPusher implements Runnable {
+        private List _errMsgs;
+        private List _errCauses;
+        private List _statusMsgs;
+        private List _debugMsgs;
+        private List _debugCauses;
+        private List _completeStatus;
+        private List _completeLocations;
+        private List _typeOrder;
+        
+        public UIListenerPusher() {
+            _errMsgs = new ArrayList(4);
+            _errCauses = new ArrayList(4);
+            _statusMsgs = new ArrayList(4);
+            _debugMsgs = new ArrayList(4);
+            _debugCauses = new ArrayList(4);
+            _completeStatus = new ArrayList(4);
+            _completeLocations = new ArrayList(4);
+            _typeOrder = new ArrayList();
+        }
+        
+        public void run() {
+            while (true) {
+                String errMsg = null;
+                Exception errCause = null;
+                String statusMsg = null;
+                String debugMsg = null;
+                Exception debugCause = null;
+                Integer completeStatus = null;
+                List completeLocation = null;
+                
+                try {
+                    synchronized (UIListenerPusher.this) {
+                        if (_typeOrder.size() <= 0) {
+                            UIListenerPusher.this.wait();
+                        } else {
+                            int type = ((Integer)_typeOrder.remove(0)).intValue();
+                            switch (type) {
+                                case 0: // errors
+                                    errMsg = (String)_errMsgs.remove(0);
+                                    errCause = (Exception)_errCauses.remove(0);
+                                    if (errCause == NO_CAUSE)
+                                        errCause = null;
+                                    break;
+                                case 1: // status msgs
+                                    statusMsg = (String)_statusMsgs.remove(0);
+                                    break;
+                                case 2: // debug
+                                    debugMsg = (String)_debugMsgs.remove(0);
+                                    debugCause = (Exception)_debugCauses.remove(0);
+                                    if (debugCause == NO_CAUSE)
+                                        debugCause = null;
+                                    break;
+                                case 3: // complete
+                                    completeStatus = (Integer)_completeStatus.remove(0);
+                                    completeLocation = (List)_completeLocations.remove(0);
+                                    if (completeLocation == NO_LOCATIONS)
+                                        completeLocation = null;
+                                    break;
+                            }
+                        }
+                    }
+                    if (errMsg != null) {
+                        for (int i = 0; i < _uiListeners.size(); i++)
+                            ((UIListener)_uiListeners.get(i)).errorMessage(errMsg, errCause);
+                    } else if (statusMsg != null) {
+                        for (int i = 0; i < _uiListeners.size(); i++)
+                            ((UIListener)_uiListeners.get(i)).statusMessage(statusMsg);
+                    } else if (debugMsg != null) {
+                        for (int i = 0; i < _uiListeners.size(); i++)
+                            ((UIListener)_uiListeners.get(i)).debugMessage(debugMsg, debugCause);
+                    } else if (completeStatus != null) {
+                        for (int i = 0; i < _uiListeners.size(); i++)
+                            ((UIListener)_uiListeners.get(i)).commandComplete(completeStatus.intValue(), completeLocation);
+                    }
+                } catch (InterruptedException ie) {}
+            }
+        }
+        
+        void errorMessage(String msg, Exception cause) {
+            synchronized (UIListenerPusher.this) {
+                _typeOrder.add(new Integer(0));
+                _errMsgs.add(msg);
+                if (cause == null)
+                    _errCauses.add(NO_CAUSE);
+                else
+                    _errCauses.add(cause);
+                UIListenerPusher.this.notifyAll();
+            }
+        }
+        void statusMessage(String msg) {
+            synchronized (UIListenerPusher.this) {
+                _typeOrder.add(new Integer(1));
+                _statusMsgs.add(msg);
+                UIListenerPusher.this.notifyAll();
+            }
+        }
+        void debugMessage(String msg, Exception cause) {
+            synchronized (UIListenerPusher.this) {
+                _typeOrder.add(new Integer(2));
+                _debugMsgs.add(msg);
+                if (cause == null)
+                    _debugCauses.add(NO_CAUSE);
+                else
+                    _debugCauses.add(cause);
+                UIListenerPusher.this.notifyAll();
+            }
+        }
+        void commandComplete(int status, List location) {
+            synchronized (UIListenerPusher.this) {
+                _typeOrder.add(new Integer(3));
+                _completeStatus.add(new Integer(status));
+                if (location == null)
+                    _completeLocations.add(NO_LOCATIONS);
+                else
+                    _completeLocations.add(location);
+                UIListenerPusher.this.notifyAll();
+            }
+        }
+    }
+    
     public void errorMessage(String msg) { errorMessage(msg, null); }
     public void errorMessage(String msg, Exception cause) {
-        // todo: make this async too
-        synchronized (_uiListeners) {
-            for (int i = 0; i < _uiListeners.size(); i++)
-                ((UIListener)_uiListeners.get(i)).errorMessage(msg, cause);
-        }
+        _uiListenerPusher.errorMessage(msg, cause);
         if ( (msg != null) || (cause != null) )
             _client.logError(msg, cause);
     }
 
     public void statusMessage(String msg) {
-        // todo: make this async too
-        synchronized (_uiListeners) {
-            for (int i = 0; i < _uiListeners.size(); i++)
-                ((UIListener)_uiListeners.get(i)).statusMessage(msg);
-        }
+        _uiListenerPusher.statusMessage(msg);
         if (msg != null)
             _client.logInfo(msg);
     }
     public void debugMessage(String msg) { debugMessage(msg, null); }
     public void debugMessage(String msg, Exception cause) {
-        // todo: make this async too
-        synchronized (_uiListeners) {
-            for (int i = 0; i < _uiListeners.size(); i++)
-                ((UIListener)_uiListeners.get(i)).debugMessage(msg, cause);
-        }
+        _uiListenerPusher.debugMessage(msg, cause);
         if ( (msg != null) || (cause != null) )
             _client.logDebug(msg, cause);
     }
 
     public void commandComplete(int status, List location) {
-        // todo: make this async too
-        synchronized (_uiListeners) {
-            for (int i = 0; i < _uiListeners.size(); i++)
-                ((UIListener)_uiListeners.get(i)).commandComplete(status, location);
-        }
+        _uiListenerPusher.commandComplete(status, location);
     }
     public boolean toggleDebug() { return true; }
     public boolean togglePaginate() { return false; }
