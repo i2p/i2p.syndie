@@ -1502,8 +1502,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             gd.widthHint = 400;
             msg.setLayoutData(gd);
             
+            String urlStr = uri.getURL();
+            if (urlStr == null) urlStr = "";
+            
             Text url = new Text(shell, SWT.BORDER | SWT.SINGLE);
-            url.setText(uri.getURL());
+            url.setText(urlStr);
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             url.setLayoutData(gd);
