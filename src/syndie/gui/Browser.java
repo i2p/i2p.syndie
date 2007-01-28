@@ -65,9 +65,11 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
@@ -457,11 +459,37 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         } else {
             long t1 = System.currentTimeMillis();
             _themes.loadTheme();
+            
+            enableKeyFilters();
+            
             long t2 = System.currentTimeMillis();
             if (!_shell.isVisible())
                 _shell.open();
             long t3 = System.currentTimeMillis();
             System.out.println("start: theme: " + (t2-t1) + " open: " +(t3-t2));
+        }
+    }
+    
+    private void enableKeyFilters() {
+        Display d = _shell.getDisplay();
+        d.addFilter(SWT.KeyDown, new Listener() {
+            public void handleEvent(Event evt) {
+                // this *should* fire every time a key is pressed when the Syndie
+                // window has focus
+                if (evt.keyCode == SWT.F5) {
+                    refreshTab();
+                }
+                //System.out.println("keyDown: " + (int)evt.character + " / " + evt.detail + " / " + evt.keyCode + " / " + evt.stateMask);
+            }
+        });
+    }
+    private void refreshTab() {
+        CTabItem item = _tabs.getSelection();
+        if (item != null) {
+            SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
+            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            if (tab != null)
+                tab.refresh();
         }
     }
     

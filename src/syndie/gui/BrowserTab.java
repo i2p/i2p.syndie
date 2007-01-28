@@ -220,6 +220,7 @@ abstract class BrowserTab implements Themeable {
     public void resized() {}
     
     public void show(SyndieURI uri) {}
+    public void refresh() {}
     
     protected void debug(String msg) { _browser.getUI().debugMessage(msg); }
     protected void debug(String msg, Exception e) { _browser.getUI().debugMessage(msg, e); }

@@ -142,6 +142,7 @@ public class BrowseForumTab extends BrowserTab {
     public void show(SyndieURI uri) {
         setFilter(uri);
     }
+    public void refresh() { _browse.refresh(); }
     
     private static class ForumListener implements MessageTree.MessageTreeListener {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {}
