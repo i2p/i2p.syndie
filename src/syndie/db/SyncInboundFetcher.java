@@ -276,7 +276,7 @@ class SyncInboundFetcher {
         InputStream src = null;
         try {
             src = new FileInputStream(datafile);
-            boolean ok = imp.processMessage(_manager.getUI(), _manager.getClient(), src, null, false);
+            boolean ok = imp.processMessage(_manager.getUI(), _manager.getClient(), src, null, false, null, null);
             if (!ok) {
                 action.importCorrupt();
             } else {

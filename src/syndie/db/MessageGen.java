@@ -45,13 +45,18 @@ import syndie.data.SyndieURI;
  * [--expiration $yyyymmdd]        // date after which the post should be dropped
  * [--forceNewThread $boolean]     // if true, this post begins a new thread, even if there are references
  * [--refuseReplies $boolean]      // if true, only the author can reply to this post
+ * [--authorHidden $boolean]       // if true, the author should be permuted and stored in the encrypted headers
+ * [--author ($base64(pubKeyHash)|anon)]
+ *                                 // if set, explicitly use the given author (or no author)
  * [--simple $boolean]             // if true, default the $channel and $authenticationKey to the nym's blog,
  *                                 // the $authorizationKey to the nym's blog (or if the nym has a post or manage key for the target channel,
  *                                 // one of those keys), default --encryptContent to true if a readKey is known
  * --out $filename
  */
 public class MessageGen extends CommandImpl {
+    private byte _replyIV[];
     public MessageGen() {}
+    public byte[] getReplyIV() { return _replyIV; }
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "out" });
@@ -128,11 +133,20 @@ public class MessageGen extends CommandImpl {
                 return client;
             }
             
+            boolean signAsHidden = args.getOptBoolean("signAsHidden", false);
+            byte signAsB[] = args.getOptBytes("signAs");
+            Hash signAs = (signAsB != null ? new Hash(signAsB) : null);
+            
+            byte sessKey[] = args.getOptBytes("replySessionKey");
+            SessionKey replySessionKey = null;
+            if (sessKey != null)
+                replySessionKey = new SessionKey(sessKey);
+            
             boolean ok = false;
             if (args.getOptBoolean("postAsReply", false))
-                ok = genMessage(client, ui, nymId, chanId, targetChanId, scopeChannel, targetChannel, args, client.getReplyKey(targetChanId));
+                ok = genMessage(client, ui, nymId, chanId, targetChanId, scopeChannel, targetChannel, args, client.getReplyKey(targetChanId), signAs, signAsHidden, replySessionKey);
             else
-                ok = genMessage(client, ui, nymId, chanId, targetChanId, scopeChannel, targetChannel, args, null);
+                ok = genMessage(client, ui, nymId, chanId, targetChanId, scopeChannel, targetChannel, args, null, signAs, signAsHidden, null);
             
             if (ok)
                 ui.commandComplete(0, null);
@@ -147,7 +161,7 @@ public class MessageGen extends CommandImpl {
         return client;
     }
     
-    private boolean genMessage(DBClient client, UI ui, long nymId, long scopeChannelId, long targetChannelId, Hash scopeChannel, Hash targetChannel, Opts args, PublicKey to) throws SQLException {
+    private boolean genMessage(DBClient client, UI ui, long nymId, long scopeChannelId, long targetChannelId, Hash scopeChannel, Hash targetChannel, Opts args, PublicKey to, Hash signAs, boolean signAsHidden, SessionKey replySessionKey) throws SQLException {
         List readKeys = client.getReadKeys(targetChannel, nymId, client.getPass(), true);
         SessionKey bodyKey = null;
         boolean postAsUnauthorized = args.getOptBoolean("postAsUnauthorized", false);
@@ -211,7 +225,7 @@ public class MessageGen extends CommandImpl {
                     return false;
                 }
             }
-            if (!unauthorized && false) { // disable permutation for the moment (only used for externally anon yet authorized posts)
+            if (!unauthorized && signAsHidden) {
                 authenticationMask = new byte[Signature.SIGNATURE_BYTES];
                 client.ctx().random().nextBytes(authenticationMask);
             }
@@ -262,7 +276,7 @@ public class MessageGen extends CommandImpl {
         byte avatar[] = read(ui, args.getOptValue("avatar"), Constants.MAX_AVATAR_SIZE);
         try {
             byte zipped[] = prepareBody(args, ui, privateHeaders, refStr, avatar);
-            boolean written = writeMessage(client, ui, out, authorizationPrivate, authenticationPrivate, authenticationMask, to, bodyKey, publicHeaders, avatar, zipped);
+            boolean written = writeMessage(client, ui, out, authorizationPrivate, authenticationPrivate, authenticationMask, to, bodyKey, publicHeaders, avatar, zipped, replySessionKey);
             if (!written)
                 return false;
             else
@@ -273,7 +287,7 @@ public class MessageGen extends CommandImpl {
         }
     }
     
-    private boolean writeMessage(DBClient client, UI ui, String out, SigningPrivateKey authorizationPrivate, SigningPrivateKey authenticationPrivate, byte[] authenticationMask, PublicKey to, SessionKey bodyKey, Map pubHeaders, byte[] avatar, byte[] zipped) throws IOException {
+    private boolean writeMessage(DBClient client, UI ui, String out, SigningPrivateKey authorizationPrivate, SigningPrivateKey authenticationPrivate, byte[] authenticationMask, PublicKey to, SessionKey bodyKey, Map pubHeaders, byte[] avatar, byte[] zipped, SessionKey replySessionKey) throws IOException {
         FileOutputStream fos = null;
         try {
             byte encBody[] = null;
@@ -282,7 +296,9 @@ public class MessageGen extends CommandImpl {
                 encBody = encryptBody(client.ctx(), zipped, bodyKey);
             } else {
                 ui.debugMessage("Encrypting the message to the reply key " + to.calculateHash().toBase64());
-                encBody = encryptBody(client.ctx(), zipped, to);
+                byte iv[] = new byte[16];
+                encBody = encryptBody(client.ctx(), zipped, to, iv, replySessionKey);
+                _replyIV = iv;
             }
             fos = new FileOutputStream(out);
             Sha256Standalone hash = new Sha256Standalone();

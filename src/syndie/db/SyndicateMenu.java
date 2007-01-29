@@ -567,7 +567,7 @@ class SyndicateMenu implements TextEngine.Menu {
         boolean ok;
         try {
             NestedUI nested = new NestedUI(ui);
-            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null, forceReimport);
+            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null, forceReimport, null, null);
             if (ok && (nested.getExitCode() >= 0) ) {
                 if (nested.getExitCode() == 1) {
                     ui.errorMessage("Imported but could not decrypt " + f.getPath());

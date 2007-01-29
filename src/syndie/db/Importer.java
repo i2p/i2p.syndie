@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
 import syndie.Constants;
@@ -96,7 +97,12 @@ public class Importer extends CommandImpl {
             
             _client = client;
             _passphrase = client.getPass();
-            boolean ok = processMessage(ui, new FileInputStream(file), nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false));
+            byte sk[] = args.getOptBytes("replySessionKey");
+            SessionKey replySessionKey = null;
+            if (sk != null)
+                replySessionKey = new SessionKey(sk);
+            byte replyIV[] = args.getOptBytes("replyIV");
+            boolean ok = processMessage(ui, new FileInputStream(file), nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false), replyIV, replySessionKey);
             ui.debugMessage("Metadata processed");
             if (!ok) // successful imports specify whether they were decrypted (exit code of 0) or undecryptable (exit code of 1)
                 ui.commandComplete(-1, null);
@@ -148,8 +154,8 @@ public class Importer extends CommandImpl {
         }
     }
     
-    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase, boolean forceReimport) throws IOException {
-        return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport);
+    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
+        return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport, replyIV, replySessionKey);
     }
 
     /** 
@@ -159,7 +165,7 @@ public class Importer extends CommandImpl {
      * and read, it will fire ui.commandComplete with an exit value of 0.  otherwise,
      * it will not fire an implicit ui.commandComplete.
      */
-    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase, boolean forceReimport) throws IOException {
+    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         if (bodyPassphrase != null)
             ui.debugMessage("Processing message with body passphrase " + bodyPassphrase);
         else
@@ -183,10 +189,10 @@ public class Importer extends CommandImpl {
                 rv = importMeta(ui, enc, nymId, bodyPassphrase);
                 isMeta = true;
             } else if (Constants.MSG_TYPE_POST.equals(type)) { // validate and import content message
-                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport, null, null);
                 _wasReply = false;
             } else if (Constants.MSG_TYPE_REPLY.equals(type)) { // validate and import reply message
-                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+                rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
                 _wasReply = true;
             } else {
                 throw new IOException("Invalid message type: " + type);
@@ -248,8 +254,8 @@ public class Importer extends CommandImpl {
         return ok;
     }
     
-    protected boolean importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
-        ImportPost post = new ImportPost(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+    protected boolean importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
+        ImportPost post = new ImportPost(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         boolean rv = post.process();
         _wasAlreadyImported = post.getAlreadyImported();
         _noKey = post.getNoKey();

@@ -169,6 +169,70 @@ public class EnclosureBody {
         parse(new ByteArrayInputStream(dec, off, internalSize));
     }
     
+    /**
+     * Decrypt and parse up the enclosure body that was encrypted with a reply key, but we know
+     * the IV and session key used but not necessarily the reply key.  Throw a DFE if
+     * the decryption or parsing fails
+     */
+    public EnclosureBody(I2PAppContext ctx, InputStream data, int size, byte explicitIV[], SessionKey explicitSessionKey) throws IOException, DataFormatException {
+        this(ctx);
+        //if (true) throw new RuntimeException("Not yet implemented");
+        byte asym[] = new byte[514];
+        int read = DataHelper.read(data, asym);
+        if (read != asym.length) throw new IOException("Not enough data for the asym block (" + read + ")");
+        //System.out.println("Asym block[" + asym.length + "]:\n" + Base64.encode(asym) + "\npubKey:\n" + Base64.encode(ctx.keyGenerator().getPublicKey(key).getData()));
+        //byte decrypted[] = ctx.elGamalEngine().decrypt(asym, key);
+        //if (decrypted == null) throw new DataFormatException("Decrypt failed");
+        
+        //Hash ivCalc = ctx.sha().calculateHash(decrypted, 0, 16);
+        //byte bodyKeyData[] = new byte[SessionKey.KEYSIZE_BYTES];
+        //System.arraycopy(decrypted, 16, bodyKeyData, 0, bodyKeyData.length);
+        Hash ivCalc = new Hash(explicitIV);
+        SessionKey bodyKey = explicitSessionKey; //new SessionKey(bodyKeyData);
+        
+        if (_log.shouldLog(Log.DEBUG))
+            _log.debug("explicit IV: " + Base64.encode(explicitIV) + " explicit sessionKey: " + explicitSessionKey.toBase64());
+        
+        byte enc[] = new byte[size-asym.length-32];
+        read = DataHelper.read(data, enc);
+        if (read != size-asym.length-32) throw new IOException("Not enough data for the payload (size=" + (size-asym.length) + ", read=" + read);
+        byte macRead[] = new byte[32];
+        read = DataHelper.read(data, macRead);
+        if (read != macRead.length) throw new IOException("Not enough data for the mac");
+        byte dec[] = new byte[enc.length];
+        if ((enc.length % 16) != 0)
+            throw new DataFormatException("Undecryptable, size=" + size + " asym.length=" + asym.length + " enc.length=" + enc.length);
+        ctx.aes().decrypt(enc, 0, dec, 0, bodyKey, ivCalc.getData(), 0, enc.length);
+        
+        int start = 0;
+        while ((start < dec.length + 9) && dec[start] != 0x0)
+            start++;
+        start++;
+        int off = start;
+        int internalSize = (int)DataHelper.fromLong(dec, off, 4);
+        off += 4;
+        int totalSize = (int)DataHelper.fromLong(dec, off, 4);
+        off += 4;
+        if (totalSize != (size-asym.length)) throw new DataFormatException("Invalid total size (" + totalSize + "/" + size + ")");
+        if (internalSize + start + 8 > totalSize) throw new DataFormatException("Invalid internal size (" + internalSize + "), start (" + start + ")");
+
+        // check the hmac
+        byte hmacPreKey[] = new byte[SessionKey.KEYSIZE_BYTES+16];
+        System.arraycopy(bodyKey.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
+        System.arraycopy(ivCalc.getData(), 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, 16);
+        byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
+        boolean hmacOK = ctx.hmac256().verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
+        if (!hmacOK) {
+            if (_log.shouldLog(Log.DEBUG)) {
+                _log.debug("borked hmac: hmacKey: " + Base64.encode(hmacKey));
+                _log.debug("borked hmac: readMAC: " + Base64.encode(macRead));
+            }
+            throw new DataFormatException("Invalid HMAC, but valid sizes");
+        }
+        
+        parse(new ByteArrayInputStream(dec, off, internalSize));
+    }
+    
     public int getPages() { return _pages; }
     public int getAttachments() { return _attachments; }
     public InputStream getAvatar() {
@@ -303,7 +367,7 @@ public class EnclosureBody {
         CommandImpl.parseProps(data, rv);
         return rv;
     }
-    
+
     public static void main(String args[]) {
         Properties props = new Properties();
         CommandImpl.parseProps("a=b\nc=d".getBytes(), props);

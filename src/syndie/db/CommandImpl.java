@@ -174,9 +174,13 @@ public abstract class CommandImpl implements CLI.Command {
      * ElGamal/2048 encrypted AES/256 key and IV block, followed by the 
      * AES/256/CBC encrypted raw data
      */
-    byte[] encryptBody(I2PAppContext ctx, byte raw[], PublicKey encryptTo) {
+    byte[] encryptBody(I2PAppContext ctx, byte raw[], PublicKey encryptTo, byte ivOut[], SessionKey replySessionKey) {
         byte data[] = new byte[32+16];
-        SessionKey key = ctx.keyGenerator().generateSessionKey();
+        SessionKey key = null;
+        if (replySessionKey != null)
+            key = replySessionKey;
+        else
+            key = ctx.keyGenerator().generateSessionKey();
         byte preIV[] = new byte[16];
         ctx.random().nextBytes(preIV);
         System.arraycopy(preIV, 0, data, 0, preIV.length);
@@ -188,6 +192,8 @@ public abstract class CommandImpl implements CLI.Command {
         byte iv[] = new byte[16];
         Hash ivH = ctx.sha().calculateHash(preIV);
         System.arraycopy(ivH.getData(), 0, iv, 0, iv.length);
+        
+        System.arraycopy(iv, 0, ivOut, 0, iv.length);
 
         byte hmac[] = new byte[Hash.HASH_LENGTH];
         

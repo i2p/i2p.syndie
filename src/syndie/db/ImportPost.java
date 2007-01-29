@@ -38,8 +38,10 @@ public class ImportPost {
     private String _bodyPassphrase;
     private boolean _forceReimport;
     private boolean _alreadyImported;
+    private SessionKey _replySessionKey;
+    private byte _replyIV[];
     
-    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
+    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         _client = client;
         _ui = ui;
         _enc = enc;
@@ -49,6 +51,8 @@ public class ImportPost {
         _bodyPassphrase = bodyPassphrase;
         _forceReimport = forceReimport;
         _alreadyImported = false;
+        _replySessionKey = replySessionKey;
+        _replyIV = replyIV;
     }
     
     public boolean getAlreadyImported() { return _alreadyImported; }
@@ -61,8 +65,8 @@ public class ImportPost {
      * or the post's authentication key.  the exit code in ui.commandComplete is
      * -1 if unimportable, 0 if imported fully, or 1 if imported but not decryptable
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport) {
-        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport);
+    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
+        ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         return imp.process();
     }
     public boolean process() {
@@ -89,69 +93,86 @@ public class ImportPost {
         _publishedBodyKey = false;
         _body = null;
         if (_enc.isReply()) {
-            List privKeys = _client.getReplyKeys(_channel, _nymId, _pass);
-            _ui.debugMessage("post is a reply in scope " + _channel.toBase64() + " and we have " + privKeys.size() + " keys");
-
-            byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-            Hash targetHash = null;
-            if (target != null) {
-                targetHash = new Hash(target);
-                List targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
-                privKeys.addAll(targetKeys);
-                _ui.debugMessage("post is a reply targetting " + targetHash.toBase64() + " and we have " + targetKeys.size() + " keys");
-            }
-            if ( (privKeys != null) && (privKeys.size() > 0) ) {
-                for (int i = 0; i < privKeys.size(); i++) {
-                    PrivateKey priv = (PrivateKey)privKeys.get(i);
-                    _ui.debugMessage("Attempting decrypt with key " + KeyGenerator.getPublicKey(priv).calculateHash().toBase64());
-                    try {
-                        _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), priv);
-                        _privateMessage = true;
-                        _ui.debugMessage("Private decryption successful with key " + i);
-                        break;
-                    } catch (IOException ioe) {
-                        // ignore
-                        _ui.debugMessage("IO error attempting decryption " + i, ioe);
-                    } catch (DataFormatException dfe) {
-                        // ignore
-                        _ui.debugMessage("DFE attempting decryption " + i, dfe);
-                    }
+            if (_replySessionKey != null) {
+                _ui.debugMessage("post is a reply in scope " + _channel.toBase64() + " and we have an explicit reply session key");
+                try {
+                    _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), _replyIV, _replySessionKey);
+                    _privateMessage = true;
+                    _ui.debugMessage("Private decryption successful with explicit reply session key");
+                } catch (IOException ioe) {
+                    // ignore
+                    _ui.debugMessage("IO error attempting decryption with explicit reply session key", ioe);
+                } catch (DataFormatException dfe) {
+                    // ignore
+                    _ui.debugMessage("DFE attempting decryption with explicit reply session key", dfe);
                 }
-                if (_body == null)
-                    _ui.debugMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
             }
 
             if (_body == null) {
-                String prompt = _enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
-                byte promptSalt[] = _enc.getHeaderBytes(Constants.MSG_HEADER_PBE_PROMPT_SALT);
-                if ( (prompt != null) && (promptSalt != null) && (promptSalt.length != 0) ) {
-                    String passphrase = _bodyPassphrase; //args.getOptValue("passphrase");
-                    if (passphrase == null) {
-                        _ui.errorMessage("Passphrase required to extract this message");
-                        _ui.errorMessage("Please use --passphrase 'passphrase value', where the passphrase value is the answer to:");
-                        _ui.errorMessage(CommandImpl.strip(prompt));
-                        _body = new UnreadableEnclosureBody(_client.ctx());
-                    } else {
-                        SessionKey key = _client.ctx().keyGenerator().generateSessionKey(promptSalt, DataHelper.getUTF8(passphrase));
+                List privKeys = _client.getReplyKeys(_channel, _nymId, _pass);
+                _ui.debugMessage("post is a reply in scope " + _channel.toBase64() + " and we have " + privKeys.size() + " keys");
+
+                byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+                Hash targetHash = null;
+                if (target != null) {
+                    targetHash = new Hash(target);
+                    List targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
+                    privKeys.addAll(targetKeys);
+                    _ui.debugMessage("post is a reply targetting " + targetHash.toBase64() + " and we have " + targetKeys.size() + " keys");
+                }
+                if ( (privKeys != null) && (privKeys.size() > 0) ) {
+                    for (int i = 0; i < privKeys.size(); i++) {
+                        PrivateKey priv = (PrivateKey)privKeys.get(i);
+                        _ui.debugMessage("Attempting decrypt with key " + KeyGenerator.getPublicKey(priv).calculateHash().toBase64());
                         try {
-                            // decrypt it with that key
-                            _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), key);
-                        } catch (DataFormatException dfe) {
-                            _ui.errorMessage("Invalid passphrase");
-                            _ui.debugMessage("Invalid passphrase cause", dfe);
-                            _body = new UnreadableEnclosureBody(_client.ctx());
+                            _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), priv);
+                            _privateMessage = true;
+                            _ui.debugMessage("Private decryption successful with key " + i);
+                            break;
                         } catch (IOException ioe) {
-                            _ui.errorMessage("Invalid passphrase");
-                            _ui.debugMessage("Invalid passphrase cause", ioe);
+                            // ignore
+                            _ui.debugMessage("IO error attempting decryption " + i, ioe);
+                        } catch (DataFormatException dfe) {
+                            // ignore
+                            _ui.debugMessage("DFE attempting decryption " + i, dfe);
+                        }
+                    }
+                    if (_body == null)
+                        _ui.debugMessage("None of the reply keys we have work for the message (we have " + privKeys.size() + " keys)");
+                }
+
+                if (_body == null) {
+                    String prompt = _enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
+                    byte promptSalt[] = _enc.getHeaderBytes(Constants.MSG_HEADER_PBE_PROMPT_SALT);
+                    if ( (prompt != null) && (promptSalt != null) && (promptSalt.length != 0) ) {
+                        String passphrase = _bodyPassphrase; //args.getOptValue("passphrase");
+                        if (passphrase == null) {
+                            _ui.errorMessage("Passphrase required to extract this message");
+                            _ui.errorMessage("Please use --passphrase 'passphrase value', where the passphrase value is the answer to:");
+                            _ui.errorMessage(CommandImpl.strip(prompt));
                             _body = new UnreadableEnclosureBody(_client.ctx());
+                        } else {
+                            SessionKey key = _client.ctx().keyGenerator().generateSessionKey(promptSalt, DataHelper.getUTF8(passphrase));
+                            try {
+                                // decrypt it with that key
+                                _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), key);
+                            } catch (DataFormatException dfe) {
+                                _ui.errorMessage("Invalid passphrase");
+                                _ui.debugMessage("Invalid passphrase cause", dfe);
+                                _body = new UnreadableEnclosureBody(_client.ctx());
+                            } catch (IOException ioe) {
+                                _ui.errorMessage("Invalid passphrase");
+                                _ui.debugMessage("Invalid passphrase cause", ioe);
+                                _body = new UnreadableEnclosureBody(_client.ctx());
+                            }
                         }
                     }
                 }
-            }
-            
-            if (_body == null) {
-                _ui.debugMessage("Cannot import a reply that we do not have the private key to read");
-                _body = new UnreadableEnclosureBody(_client.ctx());
+
+                if (_body == null) {
+                    _ui.debugMessage("Cannot import a reply that we do not have the private key to read");
+                    _body = new UnreadableEnclosureBody(_client.ctx());
+                }
             }
         } else if (_enc.isPost()) {
             // it can either be encrypted with a key in the public header or encrypted
@@ -322,7 +343,11 @@ public class ImportPost {
         }
         
         // includes managers, posters, and the owner
-        List signingPubKeys = _client.getAuthorizedPosters(_channel);
+        List signingPubKeys = null;
+        if (targetHash != null)
+            signingPubKeys = _client.getAuthorizedPosters(targetHash);
+        else
+            signingPubKeys = _client.getAuthorizedPosters(_channel);
         if (signingPubKeys == null) {
             _ui.errorMessage("Internal error getting authorized posters for the channel");
             _ui.commandComplete(-1, null);
@@ -447,14 +472,14 @@ public class ImportPost {
         if (target != null) {
             Hash targetHash = new Hash(target);
             long targetId = _client.getChannelId(targetHash);
-            if (isAuthorizedFor(targetHash, targetId, author, forceNewThread)) {
+            if (_authorized) {
+                targetChannelId = targetId;
+            } else if (isAuthorizedFor(targetHash, targetId, author, forceNewThread)) {
                 targetChannelId = targetId;
                 _authorized = true;
             }
-        } else {
-            if (isAuthorizedFor(_channel, targetChannelId, author, forceNewThread)) {
-                _authorized = true;
-            }
+        } else if (!_authorized && isAuthorizedFor(_channel, targetChannelId, author, forceNewThread)) {
+            _authorized = true;
         }
         
         if ( (!_authorized) && (_enc.isReply()) ) {
@@ -832,7 +857,7 @@ public class ImportPost {
         _ui.debugMessage("Post had a .syndie file attached to it, attempting to import that file");
         Importer imp = new Importer(_client);
         try {
-            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(), _client.getPass(), null, false);
+            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
             _ui.debugMessage("Attachment import complete.  success? " + ok);
         } catch (IOException ioe) {
             _ui.debugMessage("Attachment was corrupt", ioe);

@@ -1646,7 +1646,7 @@ class ReadMenu implements TextEngine.Menu {
         NestedUI nestedUI = new NestedUI(ui);
         try {
             ui.debugMessage("Importing from " + archivedFile.getPath());
-            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(), client.getPass(), passphrase, false);
+            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(), client.getPass(), passphrase, false, null, null);
             if (ok) {
                 if (nestedUI.getExitCode() == 0) {
                     ui.statusMessage("Decrypted successfully");

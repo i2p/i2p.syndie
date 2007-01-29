@@ -11,8 +11,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
+import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -48,7 +51,13 @@ class MessageCreator {
      * if we are authorized to post in the target channel, then do 
      * so.  otherwise, post in the author's channel
      */
-    private Hash getScope(Hash author, Hash target) {
+    private Hash getScope(Hash author, Hash target, Hash signAs, boolean authorHidden) {
+        if (signAs != null) {
+            if (authorHidden || (author == null))
+                return signAs;
+            else
+                return author;
+        }
         //System.out.println("getScope [author = " + author + " target = " + target + "]");
         if (target == null) {
             return author;
@@ -91,7 +100,9 @@ class MessageCreator {
         DBClient client = _editor.getClient();
         Hash author = _editor.getAuthor();
         Hash target = _editor.getTarget();
-        Hash scope = getScope(author, target);
+        Hash signAs = _editor.getSignAs();
+        boolean authorHidden = _editor.getAuthorHidden();
+        Hash scope = getScope(author, target, signAs, authorHidden);
         
         NestedUI ui = new NestedUI(_ui);
         
@@ -118,6 +129,14 @@ class MessageCreator {
             genOpts.setOptValue("targetChannel", target.toBase64());
         }
         genOpts.addOptValue("scopeChannel", scope.toBase64());
+        if (signAs != null) {
+            if (author != null)
+                genOpts.addOptValue("author", author.toBase64());
+            else
+                genOpts.addOptValue("author", "anon");
+            //genOpts.addOptValue("signAs", signAs.toBase64());
+        }
+        genOpts.addOptValue("authorHidden", authorHidden ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         
         for (int i = 0; i < _editor.getPageCount(); i++) {
             String content = _editor.getPageContent(i);
@@ -197,20 +216,42 @@ class MessageCreator {
         List targetKeys = client.getNymKeys(target, null);
         for (int i = 0; i < targetKeys.size(); i++) {
             NymKey key = (NymKey)targetKeys.get(i);
-            if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()) ||
-                Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
-                authorizationKey = client.sha256(key.getData());
-                break;
+            if (signAs != null) {
+                if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
+                    SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                    SigningPublicKey pub = priv.toPublic();
+                    if (pub.calculateHash().equals(signAs)) {
+                        authorizationKey = priv.calculateHash();
+                        break;
+                    }
+                }
+            } else {
+                if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()) ||
+                    Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
+                    authorizationKey = client.sha256(key.getData());
+                    break;
+                }
             }
         }
-        List authorKeys = client.getNymKeys(author, Constants.KEY_FUNCTION_MANAGE);
-        for (int i = 0; i < authorKeys.size(); i++) {
-            NymKey key = (NymKey)authorKeys.get(i);
-            if (key.isIdentity()) {
-                authenticationKey = client.sha256(key.getData());
-                break;
+        
+        if (author != null) {
+            List authorKeys = client.getNymKeys(author, Constants.KEY_FUNCTION_MANAGE);
+            for (int i = 0; i < authorKeys.size(); i++) {
+                NymKey key = (NymKey)authorKeys.get(i);
+                if (author != null) {
+                    SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                    SigningPublicKey pub = priv.toPublic();
+                    if (author.equals(pub.calculateHash())) {
+                        authenticationKey = priv.calculateHash();
+                    }
+                } else {
+                    if (key.isIdentity()) {
+                        authenticationKey = client.sha256(key.getData());
+                        break;
+                    }
+                }
             }
-        }
+        } // author may be null if signAs is set
         
         long targetChanId = client.getChannelId(target);
         ChannelInfo targetChan = client.getChannel(targetChanId);
@@ -254,8 +295,10 @@ class MessageCreator {
         if ( (_editor.getPrivacyPBE()) && (passphrase != null) && (passphrasePrompt != null) ) {
             genOpts.setOptValue("bodyPassphrase", CommandImpl.strip(passphrase));
             genOpts.setOptValue("bodyPassphrasePrompt", CommandImpl.strip(passphrasePrompt));
-        } else if (_editor.getPrivacyPublic ()) {
+        } else if (_editor.getPrivacyPublic()) {
             genOpts.setOptValue("encryptContent", "false"); // if true, encrypt the content with a known read key for the channel
+        } else {
+            genOpts.setOptValue("encryptContent", "true"); // if true, encrypt the content with a known read key for the channel
         }
         
         String avatarFilename = _editor.getAvatarUnmodifiedFilename();
@@ -280,8 +323,13 @@ class MessageCreator {
         if (avatarFilename != null)
             genOpts.setOptValue("avatar", avatarFilename);
         
-        if (_editor.getPrivacyReply())
+        SessionKey replySessionKey = new SessionKey(true);
+        if (_editor.getPrivacyReply()) {
             genOpts.setOptValue("postAsReply", "true"); // if true, the post should be encrypted to the channel's reply key
+            genOpts.setOptValue("replySessionKey", replySessionKey.toBase64());
+        } else {
+            replySessionKey = null;
+        }
         
         String tags[] = _editor.getPublicTags();
         for (int i = 0; i < tags.length; i++) {
@@ -325,8 +373,6 @@ class MessageCreator {
         //    genOpts.setOptValue("overwrite", SyndieURI.createMessage(_currentMessage.getOverwriteChannel(), _currentMessage.getOverwriteMessage()).toString());
 
         StringBuffer parentBuf = new StringBuffer();
-        // todo: rework this to include parents of parents (of parents of parents, etc), up to a certain
-        // depth (so the structure can remain intact even with messages missing from the middle)
         for (int i = 0; i < _editor.getParentCount(); i++) {
             SyndieURI uri = _editor.getParent(i);
             parentBuf.append(uri.toString());
@@ -345,9 +391,14 @@ class MessageCreator {
         
         genOpts.setOptValue("out", out);
         
+        // we are explicit above regarding the keys to use
+        genOpts.setOptValue("simple", Boolean.FALSE.toString());
+        
         NestedUI nestedUI = new NestedUI(ui);
         ui.debugMessage("generating with opts: " + genOpts);
         cmd.runCommand(genOpts, nestedUI, client);
+        byte replyIV[] = cmd.getReplyIV();
+        
         if (nestedUI.getExitCode() >= 0) {
             // generated fine, so lets import 'er
             ui.statusMessage("Message generated and written to " + out);
@@ -357,6 +408,12 @@ class MessageCreator {
             msgImpOpts.setOptValue("in", out);
             if (passphrase != null)
                 msgImpOpts.setOptValue("passphrase", CommandImpl.strip(passphrase));
+            
+            if ( (replySessionKey != null) && (replyIV != null) ) {
+                msgImpOpts.setOptValue("replySessionKey", replySessionKey.toBase64());
+                msgImpOpts.setOptValue("replyIV", Base64.encode(replyIV));
+            }
+                    
             msgImpOpts.setCommand("import");
             NestedUI dataNestedUI = new NestedUI(ui);
             msgImp.runCommand(msgImpOpts, dataNestedUI, client);
@@ -397,6 +454,13 @@ class MessageCreator {
         public UI getUI();
         public Hash getAuthor();
         public Hash getTarget();
+        /** if not null, contains the hash of the public key that should be used to sign the post */
+        public Hash getSignAs();
+        /** 
+         * if true, the author should be hidden within the encrypted block (only makes sense if
+         * getSignAs() is set and not equal to getAuthor())
+         */
+        public boolean getAuthorHidden();
         public int getPageCount();
         public String getPageContent(int page);
         public String getPageType(int page);

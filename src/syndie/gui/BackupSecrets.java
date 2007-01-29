@@ -338,7 +338,7 @@ public class BackupSecrets implements Themeable, Translatable {
                     } else if (name.startsWith("meta")) {
                         browser.getUI().debugMessage("importing meta "+ name);
                         Importer imp = new Importer(browser.getClient());
-                        boolean ok = imp.processMessage(browser.getUI(), zin, browser.getClient().getLoggedInNymId(), null, null, false);
+                        boolean ok = imp.processMessage(browser.getUI(), zin, browser.getClient().getLoggedInNymId(), null, null, false, null, null);
                         browser.getUI().debugMessage("import meta result: " + ok + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
                         if (ok && !imp.wasMissingKey() && !imp.wasPBE())
                             metaRead++;

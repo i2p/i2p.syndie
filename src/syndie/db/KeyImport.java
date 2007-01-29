@@ -326,7 +326,7 @@ public class KeyImport extends CommandImpl {
                     FileInputStream fin = null;
                     try {
                         fin = new FileInputStream(msgFile);
-                        boolean ok = imp.processMessage(ui, client, fin, null, true);
+                        boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
                         if (ok) {
                             if (imp.wasMissingKey())
                                 ui.debugMessage("Still not able to decrypt " + uri.toString());
@@ -358,7 +358,7 @@ public class KeyImport extends CommandImpl {
                 FileInputStream fin = null;
                 try {
                     fin = new FileInputStream(metaFile);
-                    boolean ok = imp.processMessage(ui, client, fin, null, true);
+                    boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
                     if (ok) {
                         if (imp.wasMissingKey())
                             ui.debugMessage("Still not able to decrypt " + channel.toString());
@@ -420,7 +420,7 @@ public class KeyImport extends CommandImpl {
                     FileInputStream fin = null;
                     try {
                         fin = new FileInputStream(msgFile);
-                        boolean ok = imp.processMessage(ui, client, fin, null, true);
+                        boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
                         if (ok) {
                             if (imp.wasMissingKey())
                                 ui.debugMessage("Still not able to decrypt " + uri.toString());

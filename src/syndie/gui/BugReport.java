@@ -278,6 +278,8 @@ public class BugReport implements Themeable, Translatable {
                     return (Hash)_signAsChans.get(idx);
                 }
             }
+            public Hash getSignAs() { return null; }
+            public boolean getAuthorHidden() { return false; }
 
             public Hash getTarget() {
                 int idx = _target.getSelectionIndex();

@@ -52,6 +52,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -86,8 +87,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private Composite _parent;
     private Composite _root;
     private Composite _toolbar;
-    private Label _fromLabel;
-    private Combo _from;
+    private Label _authorLabel;
+    private Combo _authorCombo;
+    // sometimes _signAs is not _authorCombo
+    private Label _signAsLabel;
+    private Combo _signAs;
+    private List _signAsHashes;
+    private Button _authorHidden;
     private Label _toLabel;
     private Combo _to;
     private Label _subjectLabel;
@@ -248,6 +254,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _referenceNodes = new ArrayList();
         _referenceNodeSource = new HashMap();
         _parents = new ArrayList();
+        _signAsHashes = new ArrayList();
         _modified = true;
         _enableSave = false;
         _postponeId = -1;
@@ -416,6 +423,18 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         public DBClient getClient() { return _browser.getClient(); }
         public UI getUI() { return _browser.getUI(); }
         public Hash getAuthor() { return _author; }
+        public Hash getSignAs() {
+            if (_signAsHashes.size() > 0) {
+                int idx = _signAs.getSelectionIndex();
+                if ( (idx >= 0) && (idx < _signAsHashes.size()) ) {
+                    return (Hash)_signAsHashes.get(idx);
+                }
+            }
+            return null;
+        }
+        public boolean getAuthorHidden() {
+            return (_signAsHashes.size() > 0) && (_authorHidden.getSelection());
+        }
         public Hash getTarget() { return _forum; }
         public int getPageCount() { return _pageEditors.size(); }
         public String getPageContent(int page) { return ((PageEditor)_pageEditors.get(page)).getContent(); }
@@ -712,6 +731,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             viewPage(0);
         updateAuthor();
         updateForum();
+        refreshAuthors();
         updateToolbar();
     }
     
@@ -1551,29 +1571,43 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     private void initHeader() {
         Composite header = new Composite(_root, SWT.NONE);
-        header.setLayout(new GridLayout(4, false));
+        header.setLayout(new GridLayout(5, false));
         header.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _fromLabel = new Label(header, SWT.NONE);
-        _fromLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _authorLabel = new Label(header, SWT.NONE);
+        _authorLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _from = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _from.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        _from.addSelectionListener(new SelectionListener() {
+        _authorCombo = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _authorCombo.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 4, 1));
+        _authorCombo.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickFrom(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickFrom(); }
             private void pickFrom() {
-                int idx = _from.getSelectionIndex();
+                int idx = _authorCombo.getSelectionIndex();
                 if ( (idx >= 0) && (idx < _authorHashes.size()) )
                     pickAuthor((Hash)_authorHashes.get(idx));
             }
         });
         
+        _signAsLabel = new Label(header, SWT.NONE);
+        _signAsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _signAs = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
+        _signAs.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        _authorHidden = new Button(header, SWT.CHECK);
+        _authorHidden.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        _signAsLabel.setVisible(false);
+        ((GridData)_signAsLabel.getLayoutData()).exclude = true;
+        _signAs.setVisible(false);
+        ((GridData)_signAs.getLayoutData()).exclude = true;
+        _authorHidden.setVisible(false);
+        ((GridData)_authorHidden.getLayoutData()).exclude = true;
+        
         _toLabel = new Label(header, SWT.NONE);
         _toLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _to = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         _to.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickTo(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickTo(); }
@@ -1590,7 +1624,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _subjectLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _subject = new Text(header, SWT.BORDER | SWT.SINGLE);
-        _subject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _subject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         
         _tagLabel = new Label(header, SWT.NONE);
         _tagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -1602,7 +1636,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _privacyLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _privacy = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _privacy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         _privacy.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
@@ -1610,7 +1644,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         _subjectLabel.setText("Subject:");
         _tagLabel.setText("Tags:");
-        _from.setText("Author:");
+        _authorLabel.setText("Author:");
+        _signAsLabel.setText("Signed by:");
+        _authorHidden.setText("Hidden?");
         _to.setText("Forum:");
         _privacyLabel.setText("Privacy:");
     }
@@ -1914,6 +1950,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     _forum = uri.getScope();
                     _browser.getUI().debugMessage("other forum picked: " + uri);
                     updateForum();
+                    refreshAuthors();
                     if (!validateAuthorForum())
                         showUnauthorizedWarning();
                 }
@@ -1941,6 +1978,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 break;
             }
         }
+        refreshAuthors();
         if (!validateAuthorForum())
             showUnauthorizedWarning();
     }
@@ -1948,6 +1986,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _browser.getUI().debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
         redrawForumAvatar(forum, channelId, summary, isManaged);
+        refreshAuthors();
         if (!validateAuthorForum())
             showUnauthorizedWarning();
     }
@@ -2003,7 +2042,82 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _forumGroup.setText("Post to:");
         _forumGroup.setToolTipText("Select the forum to post in");
     }
-
+    
+    private void refreshAuthors() {
+        List signAsKeys = null;
+        boolean explicitKey = false;
+        if (_forum != null) {
+            List nymKeys = _browser.getClient().getNymKeys(_forum, null);
+            for (int i = 0; i < nymKeys.size(); i++) {
+                NymKey key = (NymKey)nymKeys.get(i);
+                if (!key.getAuthenticated()) {
+                    _browser.getUI().debugMessage("key is not authenticated: " + key);
+                    continue;
+                }
+                if (key.getIsExpired()) {
+                    _browser.getUI().debugMessage("key is expired: " + key);
+                    continue;
+                }
+                if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()) ||
+                    Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
+                    if (signAsKeys == null) signAsKeys = new ArrayList();
+                    signAsKeys.add(key);
+                    if (!key.isIdentity())
+                        explicitKey = true;
+                }
+            }
+        }
+        _browser.getUI().debugMessage("refreshing authors: forum=" + _forum + " signAs keys: " + signAsKeys);
+        
+        GridData authorGD = (GridData)_authorCombo.getLayoutData();
+        GridData signAsGD = (GridData)_signAs.getLayoutData();
+        GridData signAsLabelGD = (GridData)_signAsLabel.getLayoutData();
+        GridData authorHiddenGD = (GridData)_authorHidden.getLayoutData();
+        if ( (signAsKeys != null) && ( (signAsKeys.size() > 1) || explicitKey) ) {
+            // multiple possible authors, so we need to populate and show the _signAs* fields
+            signAsGD.exclude = false;
+            signAsLabelGD.exclude = false;
+            authorHiddenGD.exclude = false;
+            _signAs.setVisible(true);
+            _signAsLabel.setVisible(true);
+            _authorHidden.setVisible(true);
+            authorGD.horizontalSpan = 1;
+            
+            _signAs.removeAll();
+            _signAsHashes.clear();
+            boolean selected = false;
+            for (int i = 0; i < signAsKeys.size(); i++) {
+                NymKey key = (NymKey)signAsKeys.get(i);
+                SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                Hash pubHash = priv.toPublic().calculateHash();
+                String name = _browser.getClient().getChannelName(pubHash);
+                if (name != null)
+                    _signAs.add(name + " (" + pubHash.toBase64().substring(0,6) + ")");
+                else
+                    _signAs.add("(" + pubHash.toBase64().substring(0,6) + ")");
+                _signAsHashes.add(pubHash);
+                if (pubHash.equals(_forum)) {
+                    _signAs.select(i);
+                    selected = true;
+                }
+            }
+            if (!selected)
+                _signAs.select(0);
+        } else {
+            // only one (or zero) possible authors, so hide the _from* fields and make sure
+            // _signBy contains all of the known authors
+            signAsGD.exclude = true;
+            signAsLabelGD.exclude = true;
+            authorHiddenGD.exclude = true;
+            _signAs.setVisible(false);
+            _signAsLabel.setVisible(false);
+            _authorHidden.setVisible(false);
+            authorGD.horizontalSpan = 4;
+        }
+        // relayout the header
+        _signAs.getParent().layout(true, true);
+    }
+    
     private List _authorHashes = new ArrayList();
     private void updateAuthor() {
         MenuItem items[] = _authorMenu.getItems();
@@ -2011,7 +2125,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             items[i].dispose();
         
         _authorHashes.clear();
-        _from.removeAll();
+        _authorCombo.removeAll();
         boolean authorFound = false;
         
         long authorId = -1;
@@ -2048,7 +2162,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             }
             
             _authorHashes.add(info.getChannelHash());
-            _from.add(summary);
+            _authorCombo.add(summary);
                     
             MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
             item.setText(summary);
@@ -2092,7 +2206,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             }
 
             _authorHashes.add(info.getChannelHash());
-            _from.add(summary);
+            _authorCombo.add(summary);
             
             MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
             item.setText(summary);
@@ -2150,7 +2264,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         for (int i = 0; i < _authorHashes.size(); i++) {
             Hash h = (Hash)_authorHashes.get(i);
             if (h.equals(author)) {
-                _from.select(i);
+                _authorCombo.select(i);
                 break;
             }
         }
@@ -2183,7 +2297,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             public void widgetSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
         });
         
-        _authorGroup.setText("Sign as:");
+        _authorGroup.setText("Author:");
         _authorGroup.setToolTipText("Who do you want to sign the post as?");
     }
     
@@ -2254,27 +2368,29 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             }
         }
         
-        if (!ok && (forum != null)) {
-            // the author may not be allowed, but the nym may have an explicitly authorized private key
-            // for posting or managing the forum.  note that the *nym* may have the key, but where they got
-            // the key may only be possible for one or more of the nym's channels, and using another channel
-            // as the author would link the channel that was authorized to receive the private key and the
-            // channel that posted with the key.  the safe way to behave would be to run different unlinkable
-            // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
-            List nymKeys = _browser.getClient().getNymKeys(forum.getChannelHash(), null);
-            for (int i = 0; i < nymKeys.size(); i++) {
-                NymKey key = (NymKey)nymKeys.get(i);
-                if (key.getAuthenticated()) {
-                    if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
-                        String keyChan = new SigningPrivateKey(key.getData()).toPublic().calculateHash().toBase64();
-                        _browser.getUI().debugMessage("explicitly authorized management key is known to the nym (" + keyChan + "), so allow the author to post: " + author.toBase64());
-                        ok = true;
-                        break;
-                    } else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {
-                        String keyChan = new SigningPrivateKey(key.getData()).toPublic().calculateHash().toBase64();
-                        _browser.getUI().debugMessage("explicitly authorized posting key is known to the nym (" + keyChan + "), so allow the author to post: " + author.toBase64());
-                        ok = true;
-                        break;
+        if (!ok && (forum != null) && (_signAsHashes.size() > 0)) {
+            int idx = _signAs.getSelectionIndex();
+            if ( (idx >= 0) && (idx < _signAsHashes.size()) ) {
+                Hash signAs = (Hash)_signAsHashes.get(idx);
+            
+                // the author may not be allowed, but the nym has an explicitly authorized private key
+                // for posting or managing the forum.  note that the *nym* may have the key, but where they got
+                // the key may only be possible for one or more of the nym's channels, and using another channel
+                // as the author would link the channel that was authorized to receive the private key and the
+                // channel that posted with the key.  the safe way to behave would be to run different unlinkable
+                // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
+                List nymKeys = _browser.getClient().getNymKeys(forum.getChannelHash(), null);
+                for (int i = 0; i < nymKeys.size(); i++) {
+                    NymKey key = (NymKey)nymKeys.get(i);
+                    if (!key.getAuthenticated()) continue;
+                    if (key.getIsExpired()) continue;
+                    if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
+                        SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                        if (priv.toPublic().calculateHash().equals(signAs)) {
+                            _browser.getUI().debugMessage("Explicitly authorized 'sign as' key selected: " + signAs);
+                            ok = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -2653,8 +2769,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     public void applyTheme(Theme theme) {
-        _fromLabel.setFont(theme.DEFAULT_FONT);
-        _from.setFont(theme.DEFAULT_FONT);
+        _authorLabel.setFont(theme.DEFAULT_FONT);
+        _authorCombo.setFont(theme.DEFAULT_FONT);
+        _signAs.setFont(theme.DEFAULT_FONT);
+        _authorHidden.setFont(theme.DEFAULT_FONT);
+        _signAsLabel.setFont(theme.DEFAULT_FONT);
         _toLabel.setFont(theme.DEFAULT_FONT);
         _to.setFont(theme.DEFAULT_FONT);
         _subjectLabel.setFont(theme.DEFAULT_FONT);
@@ -2688,7 +2807,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_TO_LINE = "syndie.gui.messageeditor.toline";
     
     public void translate(TranslationRegistry registry) {
-        _fromLabel.setText(registry.getText(T_FROM_LINE, "Sign as:"));
+        _authorLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
         _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
         
         _refTab.setText(_browser.getTranslationRegistry().getText(T_REFTAB, "References"));

@@ -1395,7 +1395,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(msgFile);
-            boolean ok = imp.processMessage(getUI(), _client, fin, passphrase, true);
+            boolean ok = imp.processMessage(getUI(), _client, fin, passphrase, true, null, null);
             fin.close();
             fin = null;
             debugMessage("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
@@ -2002,7 +2002,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         File f = new File(path, filename);
         if (f.exists()) {
             try {
-                boolean rv = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false);
+                boolean rv = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false, null, null);
                 messageImported();
                 return rv;
             } catch (IOException ioe) {

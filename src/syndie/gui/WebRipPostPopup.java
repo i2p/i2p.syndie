@@ -147,6 +147,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
             public UI getUI() { return _browser.getUI(); }
             public Hash getAuthor() { return author; }
             public Hash getTarget() { return target; }
+            public Hash getSignAs() { return null; }
+            public boolean getAuthorHidden() { return false; }
             public int getPageCount() { return 1; }
             public String getPageContent(int page) { return html; }
             public String getPageType(int page) { return "text/html"; }

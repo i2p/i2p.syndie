@@ -563,7 +563,9 @@ public class PageRenderer implements Themeable {
                 _images = images;
                 _linkTags = linkTags;
                 _imageTags = imageTags;
-        
+
+                if (_text.isDisposed()) return;
+                
                 _text.setRedraw(false);
                 _text.setEnabled(true);
                 _text.setText(text);
