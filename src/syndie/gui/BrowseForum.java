@@ -60,6 +60,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private MenuItem _metaNameMenuMarkRead;
     private MenuItem _metaNameMenuDeleteRead;
     private MenuItem _metaNameMenuCopyURI;
+    private MenuItem _metaNameMenuReply;
     private MenuItem _metaNameMenuDeleteAll;
     private MenuItem _metaNameMenuBan;
     private Button _metaIconManageable;
@@ -179,6 +180,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaNameMenuMarkRead = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuDeleteRead = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuCopyURI = new MenuItem(_metaNameMenu, SWT.PUSH);
+        _metaNameMenuReply = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuBan = new MenuItem(_metaNameMenu, SWT.PUSH);
         
@@ -240,6 +242,15 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                     clip.setContents(data, xf);
                     clip.dispose();
                 }
+            }
+        });
+        
+        _metaNameMenuReply.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { reply(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { reply(); }
+            private void reply() {
+                if (_scope != null)
+                    _browser.view(_browser.createPostURI(_scope, null, true));
             }
         });
         
@@ -588,6 +599,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private static final String T_MANAGE = "syndie.gui.browseforum.manage";
     private static final String T_POST = "syndie.gui.browseforum.post";
     
+    private static final String T_REPLY = "syndie.gui.browseforum.reply";
+    
     public void translate(TranslationRegistry registry) {
         _metaIconManageable.setToolTipText(registry.getText(T_MANAGEABLE_TOOLTIP, "You can manage this forum"));
         _metaIconPostable.setToolTipText(registry.getText(T_POSTABLE_TOOLTIP, "You can post in this forum"));
@@ -603,6 +616,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
         _metaNameMenuDeleteRead.setText(registry.getText(T_DELETEREAD, "Delete read messages"));
         _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));
+        _metaNameMenuReply.setText(registry.getText(T_REPLY, "Send the forum administrators a private message"));
         _metaNameMenuDeleteAll.setText(registry.getText(T_DELETEALL, "Delete all messages"));
         _metaNameMenuBan.setText(registry.getText(T_BAN, "Ban this forum"));
         _meta.layout(true, true);
