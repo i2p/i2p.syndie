@@ -1962,7 +1962,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             String transDefaultVal = "Forum chooser";
             _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, new ReferenceChooserTree.AcceptanceListener() {
                 public void referenceAccepted(SyndieURI uri) {
-                    _forum = uri.getScope();
+                    if (uri.isSearch()) {
+                        Hash scopes[] = uri.getSearchScopes();
+                        if ( (scopes != null) && (scopes.length > 0) )
+                            _forum = scopes[0];
+                    } else if (uri.isChannel()) {
+                        _forum = uri.getScope();
+                    }
                     _browser.getUI().debugMessage("other forum picked: " + uri);
                     updateForum();
                     refreshAuthors();
