@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -346,7 +347,7 @@ public class StatusBar implements Translatable, Themeable {
         
         if (threads > 0) {
             MenuItem item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_ALL, "View all"));
+            item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
@@ -355,6 +356,19 @@ public class StatusBar implements Translatable, Themeable {
                     _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
                 }
             });
+            
+            item = new MenuItem(_unreadMenu, SWT.PUSH);
+            item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_ALL, "View unread in all forums"));
+            item.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                    _browser.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_browser)));
+                }
+                public void widgetSelected(SelectionEvent selectionEvent) {
+                    _browser.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_browser)));
+                }
+            });
+            
+
             
             new MenuItem(_unreadMenu, SWT.SEPARATOR);
             
@@ -395,6 +409,7 @@ public class StatusBar implements Translatable, Themeable {
     }
     
     private static final String T_UNREAD_ALL = "syndie.gui.statusbar.unread.all";
+    private static final String T_UNREAD_BOOKMARKED = "syndie.gui.statusbar.unread.bookmarked";
     private Map sortForums(Set forums) {
         Map rv = new TreeMap();
         for (Iterator iter = forums.iterator(); iter.hasNext(); ) {

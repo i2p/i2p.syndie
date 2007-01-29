@@ -4043,7 +4043,7 @@ public class DBClient {
         }
         
         long afterMatch = System.currentTimeMillis();
-        _ui.debugMessage("getRead in bulk took " + (afterMatch-begin) + "/" +(afterMatch-afterExec)
+        _ui.debugMessage("getUnread in bulk took " + (afterMatch-begin) + "/" +(afterMatch-afterExec)
                          + "/" + (afterExec-afterPrep) + "/" + (afterPrep-beforePrep) 
                          + ": found matches: " + rv.size() + "/" + msgIds.length);
         return rv;
