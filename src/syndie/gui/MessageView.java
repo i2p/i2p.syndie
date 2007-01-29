@@ -614,13 +614,17 @@ public class MessageView implements Translatable, Themeable {
                            box.setText(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
                            box.setMessage(_browser.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
-                           if (rc == SWT.YES)
-                               showPage();
-                           else
+                           if (rc == SWT.YES) {
                                _browser.unview(_uri);
-                           return;
+                               _browser.view(_uri);
+                               //showPage();
+                           } else {
+                               _browser.unview(_uri);
+                           }
                        } else {
-                           showPage();
+                           _browser.unview(_uri);
+                           _browser.view(_uri);
+                           //showPage();
                        }
                    }
                 });
