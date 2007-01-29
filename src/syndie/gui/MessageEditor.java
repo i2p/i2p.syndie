@@ -191,6 +191,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     // search control
     private Group _searchGroup;
     private Button _searchButton;
+    // quote control
+    private Group _quoteGroup;
+    private Button _quoteButton;
     
     // state info
     private List _pageEditors;
@@ -926,6 +929,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             _finder.open();
     }
     
+    void quote() {
+        if (_parents.size() > 0) {
+            SyndieURI parent = (SyndieURI)_parents.get(0);
+            PageEditor editor = getPageEditor();
+            if (editor != null)
+                editor.quote(parent);
+        }
+    }
+    
     // these four are proxies from the finder to the current page editor */
     void findNext() {
         PageEditor editor = getPageEditor();
@@ -1402,6 +1414,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _spellGroup.setEnabled(pageLoaded);
         _searchButton.setEnabled(pageLoaded);
         _searchGroup.setEnabled(pageLoaded);
+        _quoteButton.setEnabled(pageLoaded && _parents.size() > 0);
+        _quoteGroup.setEnabled(pageLoaded && _parents.size() > 0);
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -1668,6 +1682,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         initStyleControl();
         initSpellControl();
         initSearchControl();
+        initQuoteControl();
     }
     
     private List _forumHashes = new ArrayList();
@@ -2768,6 +2783,21 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _searchButton.setToolTipText("Find or replace text in the current page");
     }
     
+    private void initQuoteControl() {
+        _quoteGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
+        _quoteGroup.setLayout(new FillLayout());
+        
+        _quoteButton = new Button(_quoteGroup, SWT.PUSH);
+        _quoteButton.setImage(ImageUtil.ICON_EDITOR_SEARCH);
+        _quoteButton.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { quote(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { quote(); }
+        });
+        
+        _quoteGroup.setText("Quote:");
+        _quoteButton.setToolTipText("Quote a section of the previous message");
+    }
+    
     public void applyTheme(Theme theme) {
         _authorLabel.setFont(theme.DEFAULT_FONT);
         _authorCombo.setFont(theme.DEFAULT_FONT);
@@ -2797,6 +2827,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _styleGroup.setFont(theme.DEFAULT_FONT);
         _spellGroup.setFont(theme.DEFAULT_FONT);
         _searchGroup.setFont(theme.DEFAULT_FONT);
+        _quoteGroup.setFont(theme.DEFAULT_FONT);
         
         _root.layout(true);
     }

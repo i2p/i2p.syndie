@@ -1,7 +1,11 @@
 package syndie.gui;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -31,9 +35,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
+import syndie.Constants;
+import syndie.data.HTMLStateBuilder;
 import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
+import syndie.db.CommandImpl;
 
 /**
  *
@@ -898,5 +905,61 @@ public class PageEditor {
             _shell.dispose();
             _maxRenderer.dispose();
         }
+    }
+    
+    void quote(SyndieURI parent) {
+        long msgId = _browser.getClient().getMessageId(parent.getScope(), parent.getMessageId());
+        if (msgId >= 0) {
+            int pageNum = 0;
+            String page = _browser.getClient().getMessagePageData(msgId, pageNum);
+            if (page != null) {
+                String cfg = _browser.getClient().getMessagePageConfig(msgId, pageNum);
+                boolean html = false;
+                Properties props = new Properties();
+                CommandImpl.parseProps(cfg, props);
+                String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
+                if ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType))
+                    html = true;
+                quote(page, html);
+            }
+        }
+    }
+    void quote(String content, boolean contentIsHTML) {
+        boolean quoteAsHTML = _isPreviewable;
+        insert(getQuotable(content, contentIsHTML, quoteAsHTML), true);
+    }
+    private String getQuotable(String src, boolean srcIsHTML, boolean quoteAsHTML) {
+        if (src == null) return "";
+        String plainQuote = src;
+        if (srcIsHTML) {
+            HTMLStateBuilder sb = new HTMLStateBuilder(src);
+            sb.buildState();
+            plainQuote = sb.getAsText();
+        }
+        StringReader in = new StringReader(plainQuote);
+        StringBuffer buf = new StringBuffer(plainQuote.length() + 64);
+        if (quoteAsHTML)
+            buf.append("<quote>");
+        
+        try {
+            BufferedReader br = new BufferedReader(in);
+            String line = null;
+            while ( (line = br.readLine()) != null) {
+                if (quoteAsHTML) {
+                    if (line.trim().length() > 0)
+                        buf.append("<p>").append(line.trim()).append("</p>\n");
+                } else {
+                    buf.append("> ").append(line.trim()).append("\n");
+                }
+            }
+            buf.append("\n");
+        } catch (IOException ioe) {
+            // wtf?
+        }
+        
+        if (quoteAsHTML)
+            buf.append("</quote>");
+        
+        return buf.toString();
     }
 }
