@@ -78,6 +78,8 @@ public class PageRenderer implements Themeable {
     private MenuItem _bodyViewAuthorForum;
     private MenuItem _bodyViewAuthorMetadata;
     private MenuItem _bodyBookmarkAuthor;
+    private MenuItem _bodyMarkAsRead;
+    private MenuItem _bodyMarkAsUnread;
     private MenuItem _bodyReplyToForum;
     private MenuItem _bodyReplyToAuthor;
     private MenuItem _bodyBanForum;
@@ -1321,6 +1323,26 @@ public class PageRenderer implements Themeable {
             public void fireEvent() { 
                 if ( (_listener != null) && (_msg != null) )
                     _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getScopeChannel()));
+            }
+        });
+        
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        
+        _bodyMarkAsRead = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyMarkAsRead.setText("Mark as read");
+        _bodyMarkAsRead.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                _browser.getClient().markMessageRead(_msg.getInternalId());
+                _browser.readStatusUpdated();
+            }
+        });
+        
+        _bodyMarkAsUnread = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyMarkAsUnread.setText("Mark as unread");
+        _bodyMarkAsUnread.addSelectionListener(new FireEventListener() { 
+            public void fireEvent() { 
+                _browser.getClient().markMessageUnread(_msg.getInternalId());
+                _browser.readStatusUpdated();
             }
         });
         

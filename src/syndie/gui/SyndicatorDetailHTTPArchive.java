@@ -77,11 +77,13 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private Button _backOffOnFailures;
     private Button _save;
     private Button _cancel;
+    private Syndicator.SyndicationDetailListener _listener;
     
-    public SyndicatorDetailHTTPArchive(BrowserControl browser, Composite parent, SyncArchive archive) {
+    public SyndicatorDetailHTTPArchive(BrowserControl browser, Composite parent, SyncArchive archive, Syndicator.SyndicationDetailListener lsnr) {
         _browser = browser;
         _parent = parent;
         _archive = archive;
+        _listener = lsnr;
         initComponents();
         _archive.addListener(this);
     }
@@ -299,6 +301,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
                 _archive.setNextPullOneOff(false);
                 _archive.setNextPushOneOff(false);
                 _archive.store(true);
+                _listener.scheduleUpdated();
             }
         });
         _nextSyncNow.addSelectionListener(new SelectionListener() {
@@ -310,6 +313,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
                 _archive.setNextPullOneOff(false);
                 _archive.setNextPushOneOff(false);
                 _archive.store(true);
+                _listener.scheduleUpdated();
             }
         });
         _nextSyncOneOff.addSelectionListener(new SelectionListener() {
@@ -321,16 +325,17 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
                 _archive.setNextPullOneOff(true);
                 _archive.setNextPushOneOff(true);
                 _archive.store(true);
+                _listener.scheduleUpdated();
             }
         });
         
         _cancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadData(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { loadData(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadData(); _listener.cancelled(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { loadData(); _listener.cancelled(); }
         });
         _save.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { save(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); _listener.cancelled(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { save(); _listener.cancelled(); }
         });
     }
     

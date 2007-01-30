@@ -592,6 +592,7 @@ public class StatusBar implements Translatable, Themeable {
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
 
+        int active = 0;
         List channelIds = _browser.getClient().getNewChannelIds();
         for (int i = 0; i < channelIds.size(); i++) {
             Long channelId = (Long)channelIds.get(i);
@@ -601,6 +602,9 @@ public class StatusBar implements Translatable, Themeable {
                 continue;
             }
             int msgs = _browser.getClient().countUnreadMessages(info.getChannelHash());
+            if (msgs <= 0)
+                continue; // only list new forums with content
+            active++;
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);
             
@@ -610,8 +614,7 @@ public class StatusBar implements Translatable, Themeable {
             else
                 name = name + " - " + info.getChannelHash().toBase64().substring(0,6);
             
-            if (msgs > 0)
-                name = name + " (" + msgs + ")";
+            name = name + " (" + msgs + ")";
             item.setText(name);
             item.setImage(ImageUtil.ICON_MSG_TYPE_META);
             final Hash scope = info.getChannelHash();
@@ -625,7 +628,7 @@ public class StatusBar implements Translatable, Themeable {
             });
         }
         
-        return channelIds.size();
+        return active;
     }
     
     private void displayOnlineState(boolean online) {

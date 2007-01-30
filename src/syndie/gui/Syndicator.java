@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
@@ -93,6 +94,12 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _disposed = false;
 
         initComponents();
+    }
+    
+    interface SyndicationDetailListener {
+        public void cancelled();
+        public void saved();
+        public void scheduleUpdated();
     }
     
     private void initComponents() {
@@ -169,6 +176,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         
         _sash.setWeights(new int[] { 50, 50 });
         _sash.setMaximizedControl(_tree);
+        //_sash.setMaximizedControl(null);
         
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
@@ -204,6 +212,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     public void dispose() {
         _disposed = true;
+        if (_detail != null) _detail.dispose();
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
         mgr.removeListener(this);
         int idx = mgr.getArchiveCount();
@@ -479,18 +488,30 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {
         if (_detail != null) _detail.dispose();
-        _sash.setMaximizedControl(null);
+        //_sash.setMaximizedControl(null);
         // SyndicatorDetailHTTPArchive deals with HTTP and Freenet archives (and though
         // it covers for the file based archives, a separate file based archive config
         // would be better).  down the line we may need to pick different ones here
-        _detail = new SyndicatorDetailHTTPArchive(_browser, _detailRoot, archive);
+        
+        final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        s.setText(_browser.getTranslationRegistry().getText(T_DETAIL_HTTPARCHIVE, "HTTP archive"));
+        s.setFont(_browser.getThemeRegistry().getTheme().SHELL_FONT);
+        s.setLayout(new FillLayout());
+        //_detail = new SyndicatorDetailHTTPArchive(_browser, _detailRoot, archive);
+        _detail = new SyndicatorDetailHTTPArchive(_browser, s, archive, new SyndicationDetailListener() {
+            public void cancelled() { s.dispose(); }
+            public void saved() { s.dispose(); }
+            public void scheduleUpdated() { s.dispose(); }
+        });
+        s.pack();
+        s.open();
         //_detailRoot.setExpandHorizontal(true);
         //_detailRoot.setExpandVertical(true);
-        _detailRoot.setContent(_detail.getControl());
-        Rectangle rect = _tree.getClientArea();
-        Point dSz = _detail.getControl().computeSize(rect.width-50, SWT.DEFAULT);
-        _detail.getControl().setSize(dSz);
-        _root.layout(true, true);
+        ////_detailRoot.setContent(_detail.getControl());
+        //Rectangle rect = _tree.getClientArea();
+        //Point dSz = _detail.getControl().computeSize(rect.width-50, SWT.DEFAULT);
+        //_detail.getControl().setSize(dSz);
+        //_root.layout(true, true);
         TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
         if (item != null) // null for new ones
             _tree.showItem(item);
@@ -883,6 +904,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_CANCEL = "syndie.gui.syndicator.cancel";
     private static final String T_DELETE = "syndie.gui.syndicator.delete";
     
+    private static final String T_DETAIL_HTTPARCHIVE = "syndie.gui.syndicator.detail.httparchive";
+    
     public void translate(TranslationRegistry registry) {
         _colName.setText(registry.getText(T_COLNAME, ""));
         _colTime.setText(registry.getText(T_COLTIME, "Time"));
@@ -901,6 +924,10 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _colTime.pack();
         _colStatus.pack();
         _colSummary.pack();
+        
+        _add.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
+        _delete.setFont(theme.BUTTON_FONT);
     }
 
     //
