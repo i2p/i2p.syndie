@@ -767,8 +767,15 @@ public class MessageView implements Translatable, Themeable {
         _headerReplyMenu = new Menu(_headerReply);
         _headerReply.setMenu(_headerReplyMenu);
         _headerReply.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { _headerReplyMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent evt) { _headerReplyMenu.setVisible(true); }
+            public void widgetDefaultSelected(SelectionEvent evt) { fire(); }
+            public void widgetSelected(SelectionEvent evt) { fire(); }
+            private void fire() {
+                if (!_enabled) {
+                    // gobble the extra event. see enable()
+                    return;
+                }
+                _headerReplyMenu.setVisible(true);
+            }
         });
         
         _headerReplyForumPublic = new MenuItem(_headerReplyMenu, SWT.PUSH);

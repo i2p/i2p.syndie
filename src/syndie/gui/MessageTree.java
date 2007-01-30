@@ -1254,6 +1254,19 @@ public class MessageTree implements Translatable, Themeable {
     private void applyFilter(final String txt, final SyndieURI uri, final List nodes) {
         _tree.getDisplay().asyncExec(new Runnable() {
             public void run() { 
+                if (uri.isChannel()) {
+                    _showChannel = false;
+                } else if (uri.isSearch()) {
+                    Hash scopes[] = uri.getSearchScopes();
+                    if ( (scopes != null) && (scopes.length == 1) )
+                        _showChannel = false;
+                    else
+                        _showChannel = true;
+                } else {
+                    _showChannel = true;
+                }
+                if (!_showChannel) _colChannel.setWidth(1);
+                
                 _browser.getUI().debugMessage("nodes calculated, setting them");
                 setMessages(nodes);
                 _browser.getUI().debugMessage("nodes set w/ " + uri);
