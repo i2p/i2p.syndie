@@ -426,7 +426,7 @@ public class HighlightView implements Themeable, Translatable, MessageEditor.Mes
     
     private void sync() { _browser.view(_browser.createSyndicationArchiveURI()); }
     
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final String getDateTime(long ts) {
         synchronized (_fmt) { return _fmt.format(new Date(ts)); }
     }

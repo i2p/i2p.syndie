@@ -94,8 +94,8 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
     }
 
     private static final SimpleDateFormat _dateFmt = new SimpleDateFormat("yyyy/MM/dd");
-    private static final SimpleDateFormat _timeFmt = new SimpleDateFormat("hh:mm:ss.SSS");
-    private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
+    private static final SimpleDateFormat _timeFmt = new SimpleDateFormat("HH:mm:ss.SSS");
+    private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final String getDate(Date date) {
         if (date == null) return "[null]";
         synchronized (_dateFmt) { return _dateFmt.format(date); }

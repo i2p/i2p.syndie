@@ -1374,7 +1374,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _statusBar.refreshDisplay();
     }
     
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final String getVersionTime(long ts) {
         synchronized (_fmt) { return _fmt.format(new Date(ts)); }
     }

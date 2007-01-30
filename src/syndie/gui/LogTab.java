@@ -184,7 +184,7 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         }
     }
     
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final String ts(long when) { 
         synchronized (_fmt) {
             return _fmt.format(new Date(when));
