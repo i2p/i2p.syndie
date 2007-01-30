@@ -3085,6 +3085,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (editor != null)
             editor.insertAtCaret(html);
     }
+
+    boolean isModified() { return _modified; }
     
     /** simple hook to inert a buffer at the caret */
     private class InsertListener implements SelectionListener {

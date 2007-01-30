@@ -730,7 +730,13 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     public void incomingUpdated(SyncArchive.IncomingAction action) {}
     public void outgoingUpdated(SyncArchive.OutgoingAction action) {}
     public void archiveUpdated(SyncArchive archive) { 
-        Display.getDefault().asyncExec(new Runnable() { public void run() { loadData(); _root.layout(true, true); } });
+        Display.getDefault().asyncExec(new Runnable() { 
+            public void run() { 
+                loadData(); 
+                if (!_root.isDisposed())
+                    _root.layout(true, true); 
+            } 
+        });
     }
     
     public void applyTheme(Theme theme) {    
