@@ -283,6 +283,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         Object val = _items.get(item);
         if (val == null) return;
         if (val instanceof SyncArchive) {
+            if (!fireDefaultAction)
+                return;
             viewDetailArchive((SyncArchive)val, fireDefaultAction);
         } else if (val instanceof String) {
             if ("incoming".equals(val))
@@ -303,6 +305,16 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
     private void buildMenuArchive(final SyncArchive archive) {
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
+        item.setText(_browser.getTranslationRegistry().getText(T_MENU_ARCHIVE_CFG, "Settings..."));
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                viewDetailArchive(archive, true);
+            }
+        });
+        
+        item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_browser.getTranslationRegistry().getText(T_MENU_SYNC_NOW, "Sync now (recurring)"));
         item.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
@@ -354,6 +366,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             });
         }
     }
+    private static final String T_MENU_ARCHIVE_CFG = "syndie.gui.syndicator.menu.archive.cfg";
     private static final String T_MENU_SYNC_NOW = "syndie.gui.syndicator.menu.sync.now";
     private static final String T_MENU_SYNC_ONEOFF = "syndie.gui.syndicator.menu.sync.oneoff";
     private static final String T_MENU_SYNC_CANCEL = "syndie.gui.syndicator.menu.sync.cancel";
