@@ -119,9 +119,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuOpen;
     private MenuItem _fileMenuHighlights;
     private MenuItem _fileMenuMinimize;
-    private MenuItem _fileMenuNextTab;
-    private MenuItem _fileMenuPrevTab;
-    private MenuItem _fileMenuCloseTab;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
@@ -483,8 +480,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 // window has focus
                 if (evt.keyCode == SWT.F5) {
                     refreshTab();
+                } else if ( (evt.keyCode == SWT.ARROW_RIGHT) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^->
+                    nextTab();
+                } else if ( (evt.keyCode == SWT.ARROW_LEFT) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^<-
+                    prevTab();
+                } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
+                    closeTab();
                 }
-                //System.out.println("keyDown: " + (int)evt.character + " / " + evt.detail + " / " + evt.keyCode + " / " + evt.stateMask);
+                //System.out.println("keyDown: " + (int)evt.character + " / " + evt.detail + " / " + evt.keyCode + " / " + evt.stateMask);                
             }
         });
     }
@@ -520,25 +523,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
             public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
         });
-        new MenuItem(fileMenu, SWT.SEPARATOR);
-        _fileMenuNextTab = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuNextTab.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { nextTab(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { nextTab(); }
-        });
-        _fileMenuNextTab.setAccelerator(SWT.MOD3 + SWT.ARROW_RIGHT); // alt-right
-        _fileMenuPrevTab = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuPrevTab.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { prevTab(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { prevTab(); }
-        });
-        _fileMenuPrevTab.setAccelerator(SWT.MOD3 + SWT.ARROW_LEFT); // alt-left
-        _fileMenuCloseTab = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuCloseTab.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { closeTab(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { closeTab(); }
-        });
-        _fileMenuCloseTab.setAccelerator(SWT.MOD1 + 'w');
         new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.addSelectionListener(new SelectionListener() {
@@ -2517,9 +2501,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
     private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
     private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
-    private static final String T_FILE_MENU_PREVTAB = "syndie.gui.browser.filemenu.prevtab";
-    private static final String T_FILE_MENU_CLOSETAB = "syndie.gui.browser.filemenu.closetab";
-    private static final String T_FILE_MENU_NEXTTAB = "syndie.gui.browser.filemenu.nexttab";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_BACKUP_SECRETS = "syndie.gui.browser.filemenu.backupsecrets";
@@ -2596,9 +2577,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
         _fileMenuHighlights.setText(registry.getText(T_FILE_MENU_HIGHLIGHTS, "&Highlights"));
         _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
-        _fileMenuNextTab.setText(registry.getText(T_FILE_MENU_NEXTTAB, "&Next tab"));
-        _fileMenuPrevTab.setText(registry.getText(T_FILE_MENU_PREVTAB, "&Previous tab"));
-        _fileMenuCloseTab.setText(registry.getText(T_FILE_MENU_CLOSETAB, "&Close tab"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
