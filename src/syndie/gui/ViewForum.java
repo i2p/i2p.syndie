@@ -64,7 +64,7 @@ class ViewForum implements Translatable, Themeable {
     private long _scopeId;
     
     private Composite _root;
-    private ImageCanvas _avatar;
+    private Label _avatar;
     private Image _avatarImgOrig;
     private Image _avatarImg;
     private List _avatarImgStandard;
@@ -198,8 +198,8 @@ class ViewForum implements Translatable, Themeable {
         
         loadOrigAvatar();
         
-        _avatar = new ImageCanvas(_root, false);
-        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.END, false, false, 1, 3));
+        _avatar = new Label(_root, SWT.NONE);
+        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, (_editable ? 2 : 3)));
         
         _nameLabel = new Label(_root, SWT.NONE);
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -247,6 +247,21 @@ class ViewForum implements Translatable, Themeable {
         _expiration.setLayoutData(gd);
         _expiration.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
+        if (_editable) {
+            _avatarSelect = new Button(_root, SWT.PUSH);
+            _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+            
+            _avatarMenu = new Menu(_avatar);
+            _avatar.setMenu(_avatarMenu);
+            
+            populateAvatarMenu();
+            
+            _avatarSelect.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
+            });
+        }
+        
         _referencesLabel = new Label(_root, SWT.NONE);
         _referencesLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
@@ -273,21 +288,6 @@ class ViewForum implements Translatable, Themeable {
                 _refPopup.show();
             }
         });
-        
-        if (_editable) {
-            _avatarSelect = new Button(_root, SWT.PUSH);
-            _avatarSelect.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-            
-            _avatarMenu = new Menu(_avatar);
-            _avatar.setMenu(_avatarMenu);
-            
-            populateAvatarMenu();
-            
-            _avatarSelect.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { _avatarMenu.setVisible(true); }
-            });
-        }
         
         // if it is editable, there's the user popup
         if (!_editable) {
@@ -1071,8 +1071,9 @@ class ViewForum implements Translatable, Themeable {
     
     private void pickAvatar(Image img) {
         Image old = _avatarImg;
-        if (!_avatarImgStandard.contains(old) && (old != _avatarImgOrig) )
-            _avatar.disposeImage();
+        if (!_avatarImgStandard.contains(old) && (old != _avatarImgOrig) ) {
+            ImageUtil.dispose(old);
+        }
         _avatarImg = img;
         _avatar.setImage(img);
         _avatar.redraw();

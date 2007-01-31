@@ -50,7 +50,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private SashForm _sash;
     private Composite _top;
     private Composite _meta;
-    private ImageCanvas _metaAvatar;
+    //private ImageCanvas _metaAvatar;
+    private Label _metaAvatar;
     private Label _metaName;
     private Menu _metaNameMenu;
     private Button _metaAction;
@@ -128,8 +129,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         gl.verticalSpacing = 0;
         _meta.setLayout(gl);
 
-        _metaAvatar = new ImageCanvas(_meta, false);
-        _metaAvatar.forceSize(1, 1);
+        _metaAvatar = new Label(_meta, SWT.NONE);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.exclude = true;
         _metaAvatar.setLayoutData(gd);
@@ -425,10 +425,6 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = (img == null);
             _metaAvatar.setVisible(img != null);
-            if (img == null)
-                _metaAvatar.forceSize(1, 1);
-            else
-                _metaAvatar.unforceSize();
             
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
@@ -477,7 +473,6 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = true;
             _metaAvatar.setVisible(false);
-            _metaAvatar.forceSize(1, 1);
             _top.layout(true, true);
         }
         _scope = scope;
