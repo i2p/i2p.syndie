@@ -499,16 +499,16 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         }
     }
     
-    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
         //if (toView)
         //    _shell.setVisible(false);
         _ui.debugMessage("message selected: " + uri);
         if (toView)
             _browser.view(uri);
         else
-            preview(uri, false);
+            preview(uri, false, nodelay);
         if (_listener != null)
-            _listener.messageSelected(tree, uri, toView);
+            _listener.messageSelected(tree, uri, toView, nodelay);
     }
 
     public void filterApplied(MessageTree tree, SyndieURI searchURI) {
@@ -521,16 +521,22 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private SyndieURI _toPreview;
     private static final int PREVIEW_DELAY = 500;
     // only actually preview if 500ms passes w/out trying to preview something else
-    void preview(final SyndieURI uri, final boolean fullscreen) {
+    void preview(final SyndieURI uri, final boolean fullscreen) { preview(uri, fullscreen, false); }
+    void preview(final SyndieURI uri, final boolean fullscreen, boolean nodelay) {
         if ( (uri == null) || (uri.getMessageId() == null) ) return;
         _browser.getUI().debugMessage("preview request for " + uri);
         _toPreview = uri;
-        _root.getDisplay().timerExec(PREVIEW_DELAY, new Runnable() { 
+        Runnable r = new Runnable() { 
             public void run() { 
                 if (uri == _toPreview)
                     doPreview(uri, fullscreen); 
             } 
-        });
+        };
+        
+        if (nodelay)
+            _root.getDisplay().asyncExec(r);
+        else
+            _root.getDisplay().timerExec(PREVIEW_DELAY, r);
     }
     
     // actually preview

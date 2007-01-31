@@ -1571,7 +1571,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _threadTabRoot.setLayout(new FillLayout());
         _threadTab.setControl(_threadTabRoot);
         _threadTree = new MessageTree(_browser, _threadTabRoot, new MessageTree.MessageTreeListener() {
-            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                 if (toView)
                     _browser.view(uri);
             }

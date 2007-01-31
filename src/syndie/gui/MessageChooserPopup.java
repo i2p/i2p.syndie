@@ -55,14 +55,14 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
                 if (uri == null)
                     hide();
                 else
-                    messageSelected(_tree, uri, true);
+                    messageSelected(_tree, uri, true, true);
             }
             public void widgetSelected(SelectionEvent selectionEvent) {
                 SyndieURI uri = _tree.getSelected();
                 if (uri == null)
                     hide();
                 else
-                    messageSelected(_tree, uri, true);
+                    messageSelected(_tree, uri, true, true);
             }
         });
         
@@ -99,11 +99,11 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
 
-    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
         if (toView)
             _shell.setVisible(false);
         if (_listener != null)
-            _listener.messageSelected(tree, uri, toView);
+            _listener.messageSelected(tree, uri, toView, nodelay);
     }
 
     public void filterApplied(MessageTree tree, SyndieURI searchURI) {

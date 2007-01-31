@@ -447,7 +447,7 @@ public class MessageView implements Translatable, Themeable {
                     // show a preview pane too
                     final SashForm sash = new SashForm(_tabRoots[off], SWT.VERTICAL);
                     _threadTree = new MessageTree(_browser, sash, new MessageTree.MessageTreeListener() {
-                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                                 if (toView) {
                                     _browser.view(uri);
                                 } else {
@@ -466,7 +466,7 @@ public class MessageView implements Translatable, Themeable {
                     sash.setMaximizedControl(_threadTree.getControl());
                 } else {
                     _threadTree = new MessageTree(_browser, _tabRoots[off], new MessageTree.MessageTreeListener() {
-                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+                            public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                                 if (toView)
                                     _browser.view(uri);
                             }

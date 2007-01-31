@@ -244,7 +244,7 @@ public class MessageTree implements Translatable, Themeable {
          *        though they'd probably be ok with some contextual info regarding the
          *        selected message
          */
-        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView);
+        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay);
         /** the new filter was applied */
         public void filterApplied(MessageTree tree, SyndieURI searchURI);
     }
@@ -1024,9 +1024,9 @@ public class MessageTree implements Translatable, Themeable {
         }
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
-            public void selected() { fireSelected(false); }
-            public void returnHit() { fireSelected(true); }
-            public void doubleclick() { fireSelected(true); }
+            public void selected() { fireSelected(false, false); }
+            public void returnHit() { fireSelected(true, true); }
+            public void doubleclick() { fireSelected(true, true); }
             public boolean collapseOnReturn() { return false; }
             public void keyReleased(KeyEvent evt) {
                 // refresh the pane on ^R
@@ -1502,13 +1502,13 @@ public class MessageTree implements Translatable, Themeable {
             col.setWidth(width);
     }
     
-    private void fireSelected(boolean toView) {
+    private void fireSelected(boolean toView, boolean nodelay) {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if (_listener != null)
-                    _listener.messageSelected(this, uri, toView);
+                    _listener.messageSelected(this, uri, toView, nodelay);
             }
         }
     }

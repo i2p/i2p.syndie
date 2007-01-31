@@ -58,7 +58,7 @@ public class BrowseForumCommand implements CLI.Command {
     }
     
     private static class Listener implements MessageTree.MessageTreeListener {
-        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
             if ( (uri != null) && (uri.getScope() != null) ) {
                 if (toView)
                     System.out.println("view " + uri.getScope().toBase64().substring(0,6) + ":" + uri.getMessageId());

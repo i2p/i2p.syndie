@@ -1338,7 +1338,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
 
     public void referenceChoiceAborted() {}
 
-    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView) {
+    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
         if (toView)
             displaySyndieURI(uri);
     }
