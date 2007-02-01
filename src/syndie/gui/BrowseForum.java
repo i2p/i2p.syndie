@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.List;
 import net.i2p.data.Hash;
+import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.Clipboard;
@@ -35,6 +36,7 @@ import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
+import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
@@ -433,9 +435,27 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             String desc = info.getDescription();
             if (desc == null) desc = scope.toBase64();
             _metaDesc.setText(desc);
-            boolean manage = (_client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE).size() > 0);
+            boolean manage = false;
+            boolean post = info.getAllowPublicPosts();
+            
+            List nymKeys = _client.getNymKeys(null, null);
+            for (int i = 0; i < nymKeys.size(); i++) {
+                NymKey key = (NymKey)nymKeys.get(i);
+                if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
+                    SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                    Hash pub = priv.toPublic().calculateHash();
+                    if (info.getAuthorizedManagerHashes().contains(pub)) {
+                        manage = true;
+                        post = true;
+                        break;
+                    } else if (info.getAuthorizedPosterHashes().contains(pub)) {
+                        post = true;
+                        break;
+                    }
+                }
+            }
+
             _metaIconManageable.setVisible(manage);
-            boolean post = manage || info.getAllowPublicPosts() || (_client.getNymKeys(scope, Constants.KEY_FUNCTION_POST).size() > 0);
             _metaIconPostable.setVisible(post);
             boolean hasArchives = info.getPublicArchives().size() > 0;
             if (!hasArchives && (info.getPrivateArchives().size() > 0))

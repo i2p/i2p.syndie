@@ -64,6 +64,10 @@ class MessageCreator {
         } else if (target.equals(author)) {
             return target;
         }
+        
+        if (!authorHidden)
+            return author;
+        
         DBClient client = _editor.getClient();
         
         long chanId = client.getChannelId(target);
