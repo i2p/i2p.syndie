@@ -433,6 +433,8 @@ class HTMLStyleBuilder {
                         sz = sz.substring(1).trim();
                     try {
                         int offset = Integer.parseInt(sz);
+                        if (offset < -5) offset = -5;
+                        else if (offset > 5) offset = 5;
                         sizeModifier += offset;
                         break;
                     } catch (NumberFormatException nfe) {

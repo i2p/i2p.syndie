@@ -470,13 +470,6 @@ public class PageEditor {
         _text.setStyleRanges(null, null);
     }
     
-    
-    
-    
-    
-    
-    
-    
     /** line in the text buffer we are spellchecking */
     private int _spellLine;
     /** word in the line that we are spellchecking */
@@ -971,7 +964,7 @@ public class PageEditor {
         if (srcIsHTML) {
             HTMLStateBuilder sb = new HTMLStateBuilder(src);
             sb.buildState();
-            plainQuote = sb.getAsText();
+            plainQuote = HTMLStateBuilder.stripPlaceholders(sb.getAsText());
         }
         StringReader in = new StringReader(plainQuote);
         StringBuffer buf = new StringBuffer(plainQuote.length() + 64);

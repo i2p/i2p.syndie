@@ -139,7 +139,9 @@ public class BugReport implements Themeable, Translatable {
         _severityLabel = new Label(_root, SWT.NONE);
         _severityLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _severity = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _severity.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 100;
+        _severity.setLayoutData(gd);
         _severity.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _selectedSeverityId = (String)_severities.get(_severity.getSelectionIndex()); }
             public void widgetSelected(SelectionEvent selectionEvent) { _selectedSeverityId = (String)_severities.get(_severity.getSelectionIndex()); }
@@ -148,7 +150,9 @@ public class BugReport implements Themeable, Translatable {
         _signAsLabel = new Label(_root, SWT.NONE);
         _signAsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _signAs = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _signAs.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        gd = new GridData(GridData.FILL, GridData.CENTER, false, false);
+        gd.widthHint = 100;
+        _signAs.setLayoutData(gd);
         
         _attachmentsLabel = new Label(_root, SWT.NONE);
         _attachmentsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -185,7 +189,7 @@ public class BugReport implements Themeable, Translatable {
         _logGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _logGroup.setLayout(new FillLayout());
         _logGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 4, 1));
-        _log = new Text(_logGroup, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+        _log = new Text(_logGroup, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.WRAP);
 
         Composite revRow = new Composite(_root, SWT.NONE);
         revRow.setLayout(new GridLayout(8, false));
@@ -194,22 +198,30 @@ public class BugReport implements Themeable, Translatable {
         _syndieLabel = new Label(revRow, SWT.NONE);
         _syndieLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _syndie = new Text(revRow, SWT.SINGLE | SWT.BORDER);
-        _syndie.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 50;
+        _syndie.setLayoutData(gd);
         
         _osLabel = new Label(revRow, SWT.NONE);
         _osLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _os = new Text(revRow, SWT.SINGLE | SWT.BORDER);
-        _os.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 50;
+        _os.setLayoutData(gd);
         
         _jvmLabel = new Label(revRow, SWT.NONE);
         _jvmLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _jvm = new Text(revRow, SWT.SINGLE | SWT.BORDER);
-        _jvm.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 50;
+        _jvm.setLayoutData(gd);
         
         _swtLabel = new Label(revRow, SWT.NONE);
         _swtLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _swt = new Text(revRow, SWT.SINGLE | SWT.BORDER);
-        _swt.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 50;
+        _swt.setLayoutData(gd);
 
         Composite action = new Composite(_root, SWT.NONE);
         action.setLayout(new GridLayout(3, false));
@@ -226,7 +238,9 @@ public class BugReport implements Themeable, Translatable {
         _targetLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _target = new Combo(action, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _target.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, false, false);
+        gd.widthHint = 100;
+        _target.setLayoutData(gd);
         _target.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { targetSelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { targetSelected(); }
