@@ -118,13 +118,12 @@ public class MessageView implements Translatable, Themeable {
     private ManageReferenceChooser _refTree;
     private AttachmentPreview _attachmentPreviews[];
     
-    private MaxView _maxView;
-    
     private SyndieURI _uri;
     private int _page;
     private Hash _author;
     private Hash _target;
     private boolean _enabled;
+    private long _msgId;
     
     public MessageView(BrowserControl browser, Composite parent, SyndieURI uri) {
         _enabled = false;
@@ -132,6 +131,7 @@ public class MessageView implements Translatable, Themeable {
         _client = browser.getClient();
         _parent = parent;
         _uri = uri;
+        _msgId = -1;
         Long page = uri.getPage();
         if (page == null)
             _page = 1;
@@ -186,7 +186,10 @@ public class MessageView implements Translatable, Themeable {
         if ( (_uri == null) || (_uri.getScope() == null) )
             return null;
         long chanId = _client.getChannelId(_uri.getScope());
-        return _client.getMessage(chanId, _uri.getMessageId());
+        MessageInfo msg = _client.getMessage(chanId, _uri.getMessageId());
+        if (msg != null)
+            _msgId = msg.getInternalId();
+        return msg;
     }
     
     private void showPage() {
@@ -410,7 +413,7 @@ public class MessageView implements Translatable, Themeable {
             _body[0].setListener(new PageListener());
             SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
             _body[0].renderPage(new PageRendererSource(_browser), uri);
-            _body[0].addKeyListener(new MaxViewListener(uri));
+            //_body[0].addKeyListener(new MaxViewListener(uri));
         } else {
             int tabs = pageCount + attachments;
             if ( (refs != null) && (refs.size() > 0) ) tabs++;
@@ -434,7 +437,7 @@ public class MessageView implements Translatable, Themeable {
                 _body[i].setListener(lsnr);
                 SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
                 _body[i].renderPage(new PageRendererSource(_browser), uri);
-                _body[i].addKeyListener(new MaxViewListener(uri));
+                //_body[i].addKeyListener(new MaxViewListener(uri));
             }
             int off = pageCount;
             if (threadSize > 1) {
@@ -510,24 +513,59 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
     
-    private class MaxViewListener implements KeyListener {
-        private SyndieURI _pageURI;
-        public MaxViewListener(SyndieURI pageURI) { _pageURI = pageURI; }
-        public void keyReleased(KeyEvent evt) { }
-        public void keyPressed(KeyEvent evt) {
-            switch (evt.character) {
-                case 0x0C: // ^L
-                    if ( (evt.stateMask & SWT.MOD1) != 0) {
-                        if (_maxView != null)
-                            _maxView.dispose();
-                        _maxView = new MaxView(_pageURI);
-                        evt.doit = false;
-                    }
-                    break;
+    /*
+    public void toggleMaxView() {
+        if (_maxView != null) {
+            _maxView.unmax();
+        } else {
+            int page = 0;
+            if (_tabFolder != null) {
+                page = _tabFolder.getSelectionIndex();
+            }
+            // page may be beyond the last page
+            if (_browser.getClient().getMessagePageConfig(_msgId, page) != null) {
+                SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), page);
+                _maxView = new MaxView(uri);
+            }
+        }
+    }
+     */
+    
+        
+    private MaxView _maxView;
+    public void toggleMaxView() {
+        _browser.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _uri);
+        synchronized (this) {
+            if (_maxView != null) {
+                _maxView.dispose();
+                _maxView = null;
+            } else {
+                int page = 0;
+                if (_tabFolder != null) {
+                    page = _tabFolder.getSelectionIndex();
+                }
+
+                // page may be beyond the last page
+                if (_browser.getClient().getMessagePageConfig(_msgId, page) != null) {
+                    SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), page);
+                    _maxView = new MaxView(_browser, _root.getShell(), uri, new MaxView.MaxListener() {
+                        public void unmax(MaxView view) {
+                            synchronized (MessageView.this) {
+                                _maxView = null;
+                            }
+                            view.dispose();
+                        }
+                    });
+                } else {
+                    //_browser.getUI().debugMessage("no pages?");
+                }
             }
         }
     }
     
+    public void toggleMaxEditor() { }
+
+    /*
     private static final String T_MAXVIEW_UNMAX = "syndie.gui.messageview.maxview.unmax";
     private class MaxView {
         private Shell _shell;
@@ -549,20 +587,6 @@ public class MessageView implements Translatable, Themeable {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { unmax(); }
                 private void fire() { unmax(); }
-            });
-            
-            _maxRenderer.addKeyListener(new KeyListener() {
-                public void keyPressed(KeyEvent evt) {
-                    switch (evt.character) {
-                        case 0x0C: // ^L
-                            if ( (evt.stateMask & SWT.MOD1) != 0) {
-                                unmax();
-                                evt.doit = false;
-                            }
-                            break;
-                    }
-                }
-                public void keyReleased(KeyEvent keyEvent) {}
             });
             
             Monitor mon[] = _root.getDisplay().getMonitors();
@@ -589,7 +613,7 @@ public class MessageView implements Translatable, Themeable {
             _maxRenderer.forceFocus();
         }
         
-        private void unmax() {
+        public void unmax() {
             MaxView pv = _maxView;
             _maxView = null;
             pv.dispose();
@@ -599,6 +623,7 @@ public class MessageView implements Translatable, Themeable {
             _maxRenderer.dispose();
         }
     }
+     */
     
     private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
     private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";

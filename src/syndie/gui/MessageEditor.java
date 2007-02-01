@@ -1026,6 +1026,20 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             editor.insertStyle(buf, insert, begin, end);
     }
     
+    public void toggleMaxView() {
+        PageEditor ed = getPageEditor();
+        if (ed != null) {
+            ed.toggleMaxView();
+        }
+    }
+    public void toggleMaxEditor() { 
+        PageEditor ed = getPageEditor();
+        if (ed != null) {
+            ed.toggleMaxEditor();
+        } else {
+            _browser.getUI().debugMessage("messageEditor.toggleMaxEditor()");
+        }
+    }
     
     // gui stuff..
     private void initComponents() {

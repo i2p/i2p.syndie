@@ -123,6 +123,9 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
         return rv;
     }
     
+    public void toggleMaxView() { _editor.toggleMaxView(); }
+    public void toggleMaxEditor() { _editor.toggleMaxEditor(); }
+    
     public void translate(TranslationRegistry registry) {
         reconfigItem(); // queries getName/getDescription
     }

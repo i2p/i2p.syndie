@@ -486,8 +486,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     prevTab();
                 } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
                     closeTab();
+                } else if ( (evt.character == 0x0B) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^K
+                    toggleMaxEditor();
+                } else if ( (evt.character == 0x0C) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^L
+                    toggleMaxView();
                 }
-                //System.out.println("keyDown: " + (int)evt.character + " / " + evt.detail + " / " + evt.keyCode + " / " + evt.stateMask);                
+                //System.out.println("keyDown: " + (int)evt.character + " / " + evt.detail + " / " + evt.keyCode + " / " + evt.stateMask);
             }
         });
     }
@@ -1938,6 +1942,29 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         //_tabs.getSelection().dispose();
         // need to verify if they want to close, then remove 'em from _openTabs and dispose the tab
+    }
+    
+    private void toggleMaxView() {
+        CTabItem cur = _tabs.getSelection();
+        SyndieURI uri = null;
+        BrowserTab tab = null;
+        synchronized (_openTabs) {
+            uri = (SyndieURI)_openTabURIs.get(cur);
+            tab = (BrowserTab)_openTabs.get(uri);
+        }
+        if (tab != null)
+            tab.toggleMaxView();
+    }
+    private void toggleMaxEditor() {
+        CTabItem cur = _tabs.getSelection();
+        SyndieURI uri = null;
+        BrowserTab tab = null;
+        synchronized (_openTabs) {
+            uri = (SyndieURI)_openTabURIs.get(cur);
+            tab = (BrowserTab)_openTabs.get(uri);
+        }
+        if (tab != null)
+            tab.toggleMaxEditor();
     }
 
     private static final String T_IMPORT_SYNDIE_TITLE = "syndie.gui.browser.importsyndietitle";

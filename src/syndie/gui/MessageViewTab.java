@@ -68,6 +68,8 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
             _view.viewPage(uri.getPage().intValue());
     }
     
+    public void toggleMaxView() { _view.toggleMaxView(); }
+    public void toggleMaxEditor() { _view.toggleMaxEditor(); }
     
     public Image getIcon() { return ImageUtil.ICON_TAB_MSG; }
     public String getName() { return _view.getTitle(); }

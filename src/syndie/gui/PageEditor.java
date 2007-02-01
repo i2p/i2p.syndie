@@ -311,6 +311,7 @@ public class PageEditor {
                             evt.doit = false;
                         }
                         break;
+                        /*
                     case 0x0B: // ^K
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             if (_maxEditor != null)
@@ -327,6 +328,7 @@ public class PageEditor {
                             evt.doit = false;
                         }
                         break;
+                        */
                 }
             }
         });
@@ -692,6 +694,33 @@ public class PageEditor {
         }
     }
 
+    public void toggleMaxView() {
+        _browser.getUI().debugMessage("toggleMaxView of a page editor");
+        if (_maxPreview != null) {
+            _maxPreview.unmax();
+            _maxPreview = null;
+        } else if (_maxEditor != null) {
+            _maxEditor.unmax();
+            _maxEditor = null;
+            _maxPreview = new MaxPreview();
+        } else {
+            _maxPreview = new MaxPreview();
+        }
+    }
+    public void toggleMaxEditor() { 
+        _browser.getUI().debugMessage("toggleMaxEditor of a page editor");
+        if (_maxEditor != null) {
+            _maxEditor.unmax();
+            _maxEditor = null;
+        } else if (_maxPreview != null) {
+            _maxPreview.unmax();
+            _maxPreview = null;
+            _maxEditor = new MaxEditor();
+        } else {
+            _maxEditor = new MaxEditor();
+        }
+    }
+    
     private static final String T_MAXEDITOR_UNMAX = "syndie.gui.pageeditor.maxeditor.unmax";
     private static final String T_MAXEDITOR_PREVIEW = "syndie.gui.pageeditor.maxeditor.preview";
     private StyledText _maxText;
@@ -717,6 +746,7 @@ public class PageEditor {
             
             _maxText.addKeyListener(new KeyListener() {
                 public void keyPressed(KeyEvent evt) {
+                    /*
                     switch (evt.character) {
                         case 0x0B: // ^K 
                             if ( (evt.stateMask & SWT.MOD1) != 0) {
@@ -731,6 +761,7 @@ public class PageEditor {
                             }
                             break;
                     }
+                     */
                 }
                 public void keyReleased(KeyEvent keyEvent) {
                 }
@@ -770,18 +801,22 @@ public class PageEditor {
             _shell.open();
             _maxText.forceFocus();
         }
-        private void unmax() {
-            String val = _maxText.getText();
-            _maxText = null;
-            _text.setText(val);
+        public void unmax() {
+            if (_maxText != null) {
+                String val = _maxText.getText();
+                _maxText = null;
+                _text.setText(val);
+            }
             _editor.modified();
             _editor.saveState();
             _shell.dispose();
         }
         private void maxpreview() {
-            String val = _maxText.getText();
-            _maxText = null;
-            _text.setText(val);
+            if (_maxText != null) {
+                String val = _maxText.getText();
+                _maxText = null;
+                _text.setText(val);
+            }
             _editor.modified();
             _editor.saveState();
             _shell.dispose();
@@ -846,6 +881,7 @@ public class PageEditor {
             
             _maxRenderer.addKeyListener(new KeyListener() {
                 public void keyPressed(KeyEvent evt) {
+                    /*
                     switch (evt.character) {
                         case 0x0B: // ^K 
                             if ( (evt.stateMask & SWT.MOD1) != 0) {
@@ -860,6 +896,7 @@ public class PageEditor {
                             }
                             break;
                     }
+                     */
                 }
                 public void keyReleased(KeyEvent keyEvent) {}
             });
@@ -888,7 +925,7 @@ public class PageEditor {
             _maxRenderer.forceFocus();
         }
         
-        private void unmax() {
+        public void unmax() {
             MaxPreview pv = _maxPreview;
             _maxPreview = null;
             pv.dispose();

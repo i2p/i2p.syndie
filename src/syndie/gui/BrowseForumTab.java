@@ -144,6 +144,8 @@ public class BrowseForumTab extends BrowserTab {
     }
     public void refresh() { _browse.refresh(); }
     
+    public void toggleMaxView() { _browse.toggleMaxView(); }
+    
     private static class ForumListener implements MessageTree.MessageTreeListener {
         public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {}
         public void filterApplied(MessageTree tree, SyndieURI searchURI) {}

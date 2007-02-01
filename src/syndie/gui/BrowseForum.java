@@ -102,6 +102,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     public SyndieURI getURI() { return (_tree != null ? _tree.getCurrentFilter() : null); }
     
     void refresh() { if (_tree != null) _tree.applyFilter(); }
+    public void toggleMaxView() {
+        if (_preview != null)
+            _preview.toggleMaxView();
+    }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);

@@ -16,7 +16,10 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -30,6 +33,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Monitor;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -88,6 +93,35 @@ public class MessagePreview implements Themeable, Translatable {
     public void dispose() { 
         _body.dispose();
         _headerIcons.dispose();
+        if (_maxView != null) _maxView.dispose();
+    }
+    
+    private MaxView _maxView;
+    public void toggleMaxView() {
+        _browser.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _msgURI);
+        synchronized (this) {
+            if (_maxView != null) {
+                _maxView.dispose();
+                _maxView = null;
+            } else {
+                int page = 0;
+                // page may be beyond the last page
+                if (_browser.getClient().getMessagePageConfig(_msgId, page) != null) {
+                    SyndieURI uri = SyndieURI.createMessage(_msgURI.getScope(), _msgURI.getMessageId().longValue(), page);
+                    _maxView = new MaxView(_browser, _root.getShell(), uri, new MaxView.MaxListener() {
+                        public void unmax(MaxView view) {
+                            synchronized (MessagePreview.this) {
+                                _maxView = null;
+                            }
+                            view.dispose();
+                        }
+                        
+                    });
+                } else {
+                    //_browser.getUI().debugMessage("no pages?");
+                }
+            }
+        }
     }
 
     private MessageInfo getMessage() {
@@ -97,9 +131,14 @@ public class MessagePreview implements Themeable, Translatable {
         return _client.getMessage(chanId, _uri.getMessageId());
     }
     
+    private long _msgId;
+    private SyndieURI _msgURI;
+    
     private void updatePreview() {
         MessageInfo msg = getMessage();
         if (msg != null) {
+            _msgId = msg.getInternalId();
+            _msgURI = msg.getURI();
             updateMeta(msg);
             _target = msg.getTargetChannel();
             _author = _browser.getClient().getChannelHash(msg.getAuthorChannelId());
@@ -109,6 +148,8 @@ public class MessagePreview implements Themeable, Translatable {
                     _browser.getClient().markMessageRead(msg.getInternalId());
             }
         } else {
+            _msgId = -1;
+            _msgURI = null;
             _target = null;
             _author = null;
             _headerIcons.setMessage(null);

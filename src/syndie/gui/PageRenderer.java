@@ -325,7 +325,7 @@ public class PageRenderer implements Themeable {
                         }
                         break;
                 }
-                _browser.getUI().debugMessage("keyCode: " + evt.keyCode + " char=" + (int)evt.character + " state=" + evt.stateMask + " pgDown=" + SWT.PAGE_DOWN + "/" + ST.PAGE_DOWN + " pgUp=" + SWT.PAGE_UP + "/" + ST.PAGE_UP);
+                //_browser.getUI().debugMessage("keyCode: " + evt.keyCode + " char=" + (int)evt.character + " state=" + evt.stateMask + " pgDown=" + SWT.PAGE_DOWN + "/" + ST.PAGE_DOWN + " pgUp=" + SWT.PAGE_UP + "/" + ST.PAGE_UP);
                 if (evt.keyCode == SWT.PAGE_DOWN)
                     pageDown(false);
                 else if (evt.keyCode == SWT.PAGE_UP)
@@ -457,6 +457,7 @@ public class PageRenderer implements Themeable {
         }
         _text.getDisplay().asyncExec(new Runnable() {
             public void run() {
+                if (_text.isDisposed()) return;
                 _text.setRedraw(false);
                 disposeFonts();
                 disposeColors();
