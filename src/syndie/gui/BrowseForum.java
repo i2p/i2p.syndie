@@ -521,7 +521,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
         //if (toView)
         //    _shell.setVisible(false);
-        _ui.debugMessage("message selected: " + uri);
+        //_ui.debugMessage("message selected: " + uri);
         if (toView)
             _browser.view(uri);
         else

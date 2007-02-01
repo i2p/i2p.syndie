@@ -25,6 +25,8 @@ import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -51,6 +53,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
@@ -75,6 +78,14 @@ public class MessageTree implements Translatable, Themeable {
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
+    private Composite _top;
+    private Button _navStart;
+    private Button _navPrev;
+    private Label _navState;
+    private Label _navPageSizeLabel;
+    private Spinner _navPageSize;
+    private Button _navNext;
+    private Button _navEnd;
     private Tree _tree;
     protected TreeColumn _colSubject;
     private TreeColumn _colAuthor;
@@ -135,6 +146,10 @@ public class MessageTree implements Translatable, Themeable {
     /** TreeItem to ReferenceNode */
     private Map _itemToNode;
     
+    /** orered list of ReferenceNodes matching the filter - aka all pages of the tree */
+    private List _fullNodes;
+    private int _currentPage;
+    
     /** column we are sorting on */
     private TreeColumn _currentSortColumn;
     /** SWT.UP or SWT.DOWN */
@@ -170,6 +185,7 @@ public class MessageTree implements Translatable, Themeable {
         _tags = new HashSet();
         _bars = new ArrayList();
         _filterable = true;
+        _currentPage = 0;
         initComponents();
     }
     
@@ -882,8 +898,95 @@ public class MessageTree implements Translatable, Themeable {
         gl.marginWidth = 0;
         gl.verticalSpacing = 0;
         _root.setLayout(gl);
-        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION | SWT.VIRTUAL);
+        
+        _top = new Composite(_root, SWT.NONE);
+        _top.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _top.setLayout(new GridLayout(7, false));
+        
+        _navStart = new Button(_top, SWT.PUSH);
+        _navStart.setText("<<");
+        _navStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _navStart.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                _currentPage = 0;
+                setMessages(_fullNodes);
+            }
+        });
+        _navPrev = new Button(_top, SWT.PUSH);
+        _navPrev.setText("<");
+        _navPrev.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _navPrev.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                _currentPage = Math.max(0, _currentPage-1);
+                setMessages(_fullNodes);
+            }
+        });
+        
+        _navState = new Label(_top, SWT.NONE);
+        _navState.setText("");
+        _navState.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, true, false));
+        
+        _navPageSizeLabel = new Label(_top, SWT.NONE);
+        _navPageSizeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _navPageSize = new Spinner(_top, SWT.DROP_DOWN | SWT.BORDER); // editable
+        _navPageSize.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _navPageSize.setDigits(0);
+        _navPageSize.setIncrement(5);
+        _navPageSize.setMaximum(200);
+        _navPageSize.setMinimum(0);
+        _navPageSize.setSelection(20);
+        _navPageSize.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                _currentPage = 0;
+                setMessages(_fullNodes);
+            }
+        });
+        _navPageSize.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+                _currentPage = 0;
+                setMessages(_fullNodes);
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {
+                _currentPage = 0;
+                setMessages(_fullNodes);
+            }
+        });
+        
+        _navNext = new Button(_top, SWT.PUSH);
+        _navNext.setText(">");
+        _navNext.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _navNext.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                _currentPage = Math.max(0, _currentPage+1);
+                setMessages(_fullNodes);
+            }
+        });
+        _navEnd = new Button(_top, SWT.PUSH);
+        _navEnd.setText(">>");
+        _navEnd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _navEnd.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() {
+                int sz = _navPageSize.getSelection();
+                if (sz > 0) {
+                    int pages = (_fullNodes.size() + sz-1)/sz;
+                    _currentPage = Math.max(0, pages-1);
+                }
+                setMessages(_fullNodes);
+            }
+        });
+        
+        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        /*
         _tree.addListener(SWT.SetData, new Listener() {
             public void handleEvent(Event evt) {
                 TreeItem item = (TreeItem)evt.item;
@@ -910,6 +1013,7 @@ public class MessageTree implements Translatable, Themeable {
                         renderHighlight(item);
             }
         });
+         */
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
         _colAuthor = new TreeColumn(_tree, SWT.LEFT);
@@ -1067,8 +1171,9 @@ public class MessageTree implements Translatable, Themeable {
             }
             public void dragStart(DragSourceEvent evt) {
                 SyndieURI uri = getSelected();
-                if (uri == null)
+                if (uri == null) {
                     evt.doit = false; // don't drag when nothing is selected
+                }
             }
         });
     }
@@ -1307,7 +1412,53 @@ public class MessageTree implements Translatable, Themeable {
         return threads;
     }
     
-    void setMessages(List referenceNodes) {
+    private List getCurrentPageNodes(List referenceNodes) {
+        int sz = _navPageSize.getSelection();
+        _fullNodes = referenceNodes;
+        if (sz <= 0) {
+            StringBuffer buf = new StringBuffer();
+            buf.append(_browser.getTranslationRegistry().getText(T_NAV_PAGE_PREFIX, "Page: "));
+            buf.append(1);
+            buf.append("/");
+            buf.append(1);
+            _navState.setText(buf.toString());
+            
+            _navNext.setEnabled(false);
+            _navEnd.setEnabled(false);
+            _navPrev.setEnabled(false);
+            _navStart.setEnabled(false);
+            return referenceNodes;
+        }
+        
+        int start = _currentPage * sz;
+        int end = (_currentPage+1) * sz;
+        int max = referenceNodes.size();
+        if (end >= max)
+            end = max;
+        
+        int pages = (max + sz - 1)/sz;
+        
+        boolean atEnd = (end >= referenceNodes.size());
+        boolean atBeginning = (start == 0);
+        _navNext.setEnabled(!atEnd);
+        _navEnd.setEnabled(!atEnd);
+        _navPrev.setEnabled(!atBeginning);
+        _navStart.setEnabled(!atBeginning);
+        
+        StringBuffer buf = new StringBuffer();
+        buf.append(_browser.getTranslationRegistry().getText(T_NAV_PAGE_PREFIX, "Page: "));
+        buf.append(_currentPage+1);
+        buf.append("/");
+        buf.append(pages);
+        _navState.setText(buf.toString());
+        
+        _browser.getUI().debugMessage("currentPage[" + _currentPage + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
+        return referenceNodes.subList(start, end);
+    }
+    private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
+    
+    void setMessages(List allNodes) {
+        List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
@@ -1318,14 +1469,15 @@ public class MessageTree implements Translatable, Themeable {
         _threadReferenceNodes = referenceNodes;
         long totalDBTime = 0;
         long before = System.currentTimeMillis();
-        _tree.setItemCount(referenceNodes != null ? referenceNodes.size() : 0);
+        
+        //_tree.setItemCount(referenceNodes != null ? referenceNodes.size() : 0);
         // done on-demand via the virtual tree
-        /*
+        
         for (int i = 0; i < referenceNodes.size(); i++) {
             ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
             totalDBTime += add(node, null);
         }
-         */
+        
         long after = System.currentTimeMillis();
         _browser.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
@@ -1340,6 +1492,30 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
+    }
+    
+    /** build up the thread in a nonvirtual tree */
+    private long add(ReferenceNode node, TreeItem parent) {
+        long dbTime = 0;
+        TreeItem item = null;
+        if (parent == null)
+            item = new TreeItem(_tree, SWT.NONE);
+        else
+            item = new TreeItem(parent, SWT.NONE);
+        dbTime = renderNode(node, item);
+        
+        _itemToNode.put(item, node);
+        _itemToURI.put(item, node.getURI());
+        _itemToMsgId.put(item, new Long(node.getUniqueId()));
+        
+        if ( _expandAll || ( (parent == null) && (_expandRoots) ) ) {
+            if (node.getChildCount() > 0)
+                item.setExpanded(true);
+        }
+        
+        for (int i = 0; i < node.getChildCount(); i++)
+            dbTime += add(node.getChild(i), item);
+        return dbTime;
     }
     
     private Set getTags(List nodes) {
@@ -1753,6 +1929,8 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_BOOKMARKFORUM = "syndie.gui.messagetree.bookmarkforum";
     private static final String T_BOOKMARKAUTHOR = "syndie.gui.messagetree.bookmarkauthor";
     
+    private static final String T_PAGESIZE = "syndie.gui.messagetree.pagesize";
+    
     public void translate(TranslationRegistry registry) {
         _colSubject.setText(registry.getText(T_SUBJECT, "Subject"));
         _colAuthor.setText(registry.getText(T_AUTHOR, "Author"));
@@ -1778,9 +1956,19 @@ public class MessageTree implements Translatable, Themeable {
         _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark the forum as read"));
+        
+        _navPageSizeLabel.setText(registry.getText(T_PAGESIZE, "Page size:"));
     }
     
     public void applyTheme(Theme theme) {
+        _navStart.setFont(theme.BUTTON_FONT);
+        _navPrev.setFont(theme.BUTTON_FONT);
+        _navState.setFont(theme.DEFAULT_FONT);
+        _navPageSizeLabel.setFont(theme.DEFAULT_FONT);
+        _navPageSize.setFont(theme.DEFAULT_FONT);
+        _navNext.setFont(theme.BUTTON_FONT);
+        _navEnd.setFont(theme.BUTTON_FONT);
+        
         synchronized (this) {
             _tree.setFont(theme.TREE_FONT);
             if (_filterEditorShell != null) {
