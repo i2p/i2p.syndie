@@ -1076,7 +1076,9 @@ class ViewForum implements Translatable, Themeable {
         }
         _avatarImg = img;
         _avatar.setImage(img);
+        _avatar.setVisible(true);
         _avatar.redraw();
+        _avatar.getParent().layout(new Control[] { _avatar });
         if (img != _avatarImgOrig)
             modified();
     }

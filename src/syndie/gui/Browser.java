@@ -480,9 +480,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 // window has focus
                 if (evt.keyCode == SWT.F5) {
                     refreshTab();
-                } else if ( (evt.keyCode == SWT.ARROW_RIGHT) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^->
+                } else if ( (evt.keyCode == SWT.ARROW_RIGHT) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT->
                     nextTab();
-                } else if ( (evt.keyCode == SWT.ARROW_LEFT) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^<-
+                } else if ( (evt.keyCode == SWT.ARROW_LEFT) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT<-
                     prevTab();
                 } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
                     closeTab();
