@@ -681,11 +681,13 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             ((GridData)_text.getLayoutData()).exclude = true;
             _textLabel.setVisible(false);
             ((GridData)_textLabel.getLayoutData()).exclude = true;
+            //_shell.layout(true, true);
+            _shell.pack(true);
         }
     }
     
     /** limit what type of link can be built */
-    public void limitOptions(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+    public void limitOptions(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive, boolean showKeys) { 
         _fieldsLimited = true;
         _shell.setRedraw(false);
         // web
@@ -724,21 +726,21 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         
         // syndie bundled keys
         // - read keys
-        ((GridData)_syndieReadKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieReadKey.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieReadKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReadKeyLine.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieReadKey.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieReadKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
         // - post keys
-        ((GridData)_syndiePostKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndiePostKey.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndiePostKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndiePostKeyLine.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndiePostKey.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndiePostKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
         // - reply keys
-        ((GridData)_syndieReplyKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieReplyKey.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieReplyKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieReplyKeyLine.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieReplyKey.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieReplyKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
         // - manage keys
-        ((GridData)_syndieManageKeyLine.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieManageKey.getLayoutData()).exclude = !forum && !message && !submessage;
-        ((GridData)_syndieManageKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage;
+        ((GridData)_syndieManageKeyLine.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieManageKey.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
+        ((GridData)_syndieManageKeyCombo.getLayoutData()).exclude = !forum && !message && !submessage || !showKeys;
         
         // freenet links
         ((GridData)_linkTypeFreenet.getLayoutData()).exclude = !freenet;
@@ -840,7 +842,12 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     
     private void adjustVisibility(Control ctl) { ctl.setVisible(!((GridData)ctl.getLayoutData()).exclude); }
     
-    public void showPopup() { showPopup(null); }
+    public void showPopup() { showPopup(null, _text.getText()); }
+    public void showPopup(String title) { 
+        if (title != null)
+            _shell.setText(title);
+        showPopup(null, _text.getText()); 
+    }
     public void showPopup(SyndieURI uri) { showPopup(uri, _text.getText()); }
     public void showPopup(SyndieURI uri, String text) {
         if (uri != null) {

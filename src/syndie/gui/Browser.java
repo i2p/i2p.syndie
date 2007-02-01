@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -534,7 +535,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { importMessage(); }
         });
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuExport.setEnabled(false);
+        _fileMenuExport.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { exportMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { exportMessage(); }
+        });
         new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuExit = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExit.addSelectionListener(new SelectionListener() {
@@ -2024,6 +2028,68 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             return false;
         }
     }
+    
+    private void exportMessage() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(this, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+            public void uriBuilt(SyndieURI uri, String text) {
+                exportMessage(uri);
+            }
+            public int getPageCount() { return 0; }
+            public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
+        });
+        popup.setShowText(false);
+        popup.limitOptions(false, false, false, true, true, false, false, false, false, false, false);
+        popup.showPopup(_translation.getText(T_EXPORT_TITLE, "Export..."));
+    }
+    private static final String T_EXPORT_TITLE = "syndie.gui.browser.export.title";
+    private void exportMessage(SyndieURI uri) {
+        Hash scope = uri.getScope();
+        Long messageId = uri.getMessageId();
+        if (scope == null) return;
+        File dir = new File(_client.getArchiveDir(), scope.toBase64());
+        if (!dir.exists()) return;
+        File src = null;
+        if (messageId == null)
+            src = new File(dir, "meta" + Constants.FILENAME_SUFFIX);
+        else
+            src = new File(dir, messageId.toString() + Constants.FILENAME_SUFFIX);
+        if (!src.exists()) return;
+        
+        FileDialog dialog = new FileDialog(_shell, SWT.SAVE | SWT.SINGLE);
+        dialog.setFileName(src.getName());
+        dialog.setText(_translation.getText(T_EXPORT_SAVE_DIALOG, "Export to"));
+        String filename = dialog.open();
+        
+        if (filename != null) {
+            File target = null;
+            if (filename.indexOf(File.separator) >= 0) {
+                target = new File(filename);
+            } else {
+                String path = dialog.getFilterPath();
+                target = new File(path, filename);
+            }
+            FileInputStream fis = null;
+            FileOutputStream fos = null;
+            try {
+                byte buf[] = new byte[4096];
+                int read = 0;
+                fis = new FileInputStream(src);
+                fos = new FileOutputStream(target);
+                while ( (read = fis.read(buf)) != -1)
+                    fos.write(buf, 0, read);
+                fos.close();
+                fos = null;
+                fis.close();
+                fis = null;
+            } catch (IOException ioe) {
+                getUI().errorMessage("Error saving the export", ioe);
+            } finally {
+                if (fis != null) try { fis.close(); } catch (IOException ioe) {}
+                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+            }
+        }
+    }
+    private static final String T_EXPORT_SAVE_DIALOG = "syndie.gui.browser.export.save.dialog";
     
     private void backupSecrets() { view(createBackupSecretsURI()); }
     private void restoreSecrets() {

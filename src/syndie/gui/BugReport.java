@@ -371,45 +371,6 @@ public class BugReport implements Themeable, Translatable {
         boolean posted = creator.execute();
         if (posted) {
             SyndieURI uri = creator.getCreatedURI();
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_POST_OK_MSG, "If you are having trouble with syndication, you may want to send the report as a file (through email, etc).  Do you want to export your report as a file now too?"));
-            box.setText(_browser.getTranslationRegistry().getText(T_POST_OK, "Report posted"));
-            int rc = box.open();
-            if (rc == SWT.YES) {
-                FileDialog dialog = new FileDialog(_root.getShell(), SWT.SAVE | SWT.SINGLE);
-                dialog.setFileName("report.syndie");
-                String filename = dialog.open();
-                if (filename != null) {
-                    File target = null;
-                    if (filename.indexOf(File.separator) >= 0) {
-                        target = new File(filename);
-                    } else {
-                        String path = dialog.getFilterPath();
-                        target = new File(path, filename);
-                    }
-                    File chanDir = new File(_browser.getClient().getArchiveDir(), uri.getScope().toBase64());
-                    File src = new File(chanDir, uri.getMessageId() + Constants.FILENAME_SUFFIX);
-                    FileInputStream fis = null;
-                    FileOutputStream fos = null;
-                    try {
-                        byte buf[] = new byte[4096];
-                        int read = 0;
-                        fis = new FileInputStream(src);
-                        fos = new FileOutputStream(target);
-                        while ( (read = fis.read(buf)) != -1)
-                            fos.write(buf, 0, read);
-                        fos.close();
-                        fos = null;
-                        fis.close();
-                        fis = null;
-                    } catch (IOException ioe) {
-                        _browser.getUI().errorMessage("Error saving the export", ioe);
-                    } finally {
-                        if (fis != null) try { fis.close(); } catch (IOException ioe) {}
-                        if (fos != null) try { fos.close(); } catch (IOException ioe) {}
-                    }
-                }
-            }
             _browser.view(uri);
             _browser.unview(_uri);
         } else {

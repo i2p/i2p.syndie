@@ -1266,7 +1266,7 @@ class ViewForum implements Translatable, Themeable {
                 public int getPageCount() { return 0; }
                 public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
             });
-        popup.limitOptions(false, false, false, false, false, false, false, false, false, true);
+        popup.limitOptions(false, false, false, false, false, false, false, false, false, true, false);
         popup.setShowText(false);
         popup.showPopup();
     }

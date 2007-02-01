@@ -1466,7 +1466,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 public int getPageCount() { return _pageEditors.size(); }
                 public List getAttachmentDescriptions() { return MessageEditor.this.getAttachmentDescriptions(); }
             });
-        _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive);
+        _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive, true);
         _linkPopup.showPopup();
     }
     
