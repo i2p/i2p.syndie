@@ -927,7 +927,6 @@ public class MessageTree implements Translatable, Themeable {
         });
         
         _navState = new Label(_top, SWT.NONE);
-        _navState.setText("");
         _navState.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, true, false));
         
         _navPageSizeLabel = new Label(_top, SWT.NONE);
@@ -940,10 +939,12 @@ public class MessageTree implements Translatable, Themeable {
         _navPageSize.setMaximum(200);
         _navPageSize.setMinimum(0);
         _navPageSize.setSelection(20);
-        _navPageSize.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent modifyEvent) {
-                _currentPage = 0;
-                setMessages(_fullNodes);
+        _navPageSize.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) ) {
+                    _currentPage = 0;
+                    setMessages(_fullNodes);
+                }
             }
         });
         _navPageSize.addSelectionListener(new SelectionListener() {
@@ -1452,7 +1453,8 @@ public class MessageTree implements Translatable, Themeable {
         buf.append(pages);
         _navState.setText(buf.toString());
         
-        _browser.getUI().debugMessage("currentPage[" + _currentPage + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
+        _top.layout(true, true);
+        _browser.getUI().debugMessage("currentPage[" + _currentPage + "/" + pages + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
         return referenceNodes.subList(start, end);
     }
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
@@ -1552,7 +1554,10 @@ public class MessageTree implements Translatable, Themeable {
             // simple optimization: use the fact that these ReferenceNode instances are really
             // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
 
-            long msgId = _client.getMessageId(chanId, uri.getMessageId().longValue());
+            long messageId = -1;
+            if (uri.getMessageId() != null)
+                messageId = uri.getMessageId().longValue();
+            long msgId = _client.getMessageId(chanId, messageId);
             
             _browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
             
@@ -1625,7 +1630,10 @@ public class MessageTree implements Translatable, Themeable {
                 else
                     auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
                 chan = "";
-                date = Constants.getDate(uri.getMessageId().longValue());
+                if (messageId >= 0)
+                    date = Constants.getDate(uri.getMessageId().longValue());
+                else
+                    date = "";
                 tags = "";
             }
         }
