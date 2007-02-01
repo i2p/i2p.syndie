@@ -847,10 +847,19 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         _passphrase = cfg.getProperty(SER_PASS);
         _passphrasePrompt = cfg.getProperty(SER_PASSPROMPT);
-        if (cfg.containsKey(SER_SUBJECT))
+        if (cfg.containsKey(SER_SUBJECT)) {
             _subject.setText(cfg.getProperty(SER_SUBJECT));
-        else
+        } else if ( (_parents != null) && (_parents.size() > 0) ) {
+            SyndieURI parent = (SyndieURI)_parents.get(0);
+            String parentSubject = MessageView.calculateSubject(_browser, parent).trim();
+            if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+                _subject.setText("re: " + parentSubject);
+            } else {
+                _subject.setText(parentSubject);
+            }
+        } else {
             _subject.setText("");
+        }
         if (cfg.containsKey(SER_TAGS))
             _tag.setText(cfg.getProperty(SER_TAGS));
         else
@@ -1500,6 +1509,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     String parentSubject = MessageView.calculateSubject(_browser, uri).trim();
                     if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
                         _subject.setText("re: " + parentSubject);
+                    } else {
+                        _subject.setText(parentSubject);
                     }
                 }
             } else {

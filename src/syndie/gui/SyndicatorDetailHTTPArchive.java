@@ -296,6 +296,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
+                save(false);
                 _archive.setNextPullTime(-1);
                 _archive.setNextPushTime(-1);
                 _archive.setNextPullOneOff(false);
@@ -308,6 +309,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
+                save(false);
                 _archive.setNextPullTime(System.currentTimeMillis());
                 _archive.setNextPushTime(System.currentTimeMillis());
                 _archive.setNextPullOneOff(false);
@@ -320,6 +322,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
+                save(false);
                 _archive.setNextPullTime(System.currentTimeMillis());
                 _archive.setNextPushTime(System.currentTimeMillis());
                 _archive.setNextPullOneOff(true);
@@ -542,7 +545,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         return "USK@" + key + "/archive/0/";
     }
     
-    private void save() {
+    private void save() { save(true); }
+    private void save(boolean store) {
         _archive.setName(_name.getText());
         String host = _proxyHost.getText().trim();
         int port = -1;
@@ -567,7 +571,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         _archive.setURL(_location.getText().trim());
         
-        _archive.store(true);
+        if (store)
+            _archive.store(true);
     }
     
     private SharedArchiveEngine.PullStrategy createPullStrategy() {

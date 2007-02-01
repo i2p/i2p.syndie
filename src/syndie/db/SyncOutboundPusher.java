@@ -510,7 +510,7 @@ public class SyncOutboundPusher {
             _manager.getUI().errorMessage("Error posting", dfe);
             _manager.getUI().commandComplete(-1, null);
         } catch (IOException ioe) {
-            error = "Internal error: " + ioe.getMessage();
+            error = ioe.getMessage();
             _manager.getUI().errorMessage("Error posting", ioe);
             _manager.getUI().commandComplete(-1, null);
         }
