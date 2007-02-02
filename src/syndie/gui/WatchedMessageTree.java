@@ -22,9 +22,6 @@ import syndie.db.ThreadAccumulatorJWZ;
  * message tree that organizes threads first by forum, then by thread
  */
 public class WatchedMessageTree extends MessageTree {
-    /** map from ReferenceNode to forum (Hash) the node represents */
-    private Map _forumNodes;
-    
     public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
     public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
         this(browser, parent, lsnr, true, true, true, true, hideFilter);
@@ -32,12 +29,10 @@ public class WatchedMessageTree extends MessageTree {
     public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         // don't show the forum column, don't show the flags column, don't expand anything by default
         super(browser, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
-        _forumNodes = new HashMap();
     }
     
     /** given the list of thread roots, munge them into forums w/ threads underneath */
     void setMessages(List referenceNodes) {
-        _forumNodes.clear();
         Map forumToNodeList = new HashMap();
         Map forumNameToForum = new TreeMap();
         Map forumToDesc = new HashMap();
@@ -74,7 +69,6 @@ public class WatchedMessageTree extends MessageTree {
             for (int i = 0; i < nodes.size(); i++)
                 node.addChild((ReferenceNode)nodes.get(i));
             forumNodes.add(node);
-            _forumNodes.put(node, forum);
         }
         super.setMessages(forumNodes);
     }
@@ -111,7 +105,7 @@ public class WatchedMessageTree extends MessageTree {
     }
     
     protected long renderNode(ReferenceNode node, TreeItem item) {
-        if (_forumNodes.containsKey(node))
+        if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) )
             return renderForumNode(node, item);
         else
             return super.renderNode(node, item);
@@ -125,8 +119,8 @@ public class WatchedMessageTree extends MessageTree {
     }
        
     protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
-        if (_forumNodes.containsKey(node)) {
-            Hash forum = (Hash)_forumNodes.get(node);
+        if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) ) {
+            Hash forum = getForum(node);
             if (forum == null) return null;
             String name = _browser.getClient().getChannelName(forum);
             if (name == null) name = "";

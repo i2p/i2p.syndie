@@ -911,7 +911,7 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 _currentPage = 0;
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
         });
         _navPrev = new Button(_top, SWT.PUSH);
@@ -922,7 +922,7 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 _currentPage = Math.max(0, _currentPage-1);
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
         });
         
@@ -943,18 +943,18 @@ public class MessageTree implements Translatable, Themeable {
             public void keyTraversed(TraverseEvent evt) {
                 if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) ) {
                     _currentPage = 0;
-                    setMessages(_fullNodes);
+                    setMessages(_fullNodes, false);
                 }
             }
         });
         _navPageSize.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _currentPage = 0;
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
             public void widgetSelected(SelectionEvent selectionEvent) {
                 _currentPage = 0;
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
         });
         
@@ -966,7 +966,7 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 _currentPage = Math.max(0, _currentPage+1);
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
         });
         _navEnd = new Button(_top, SWT.PUSH);
@@ -981,7 +981,7 @@ public class MessageTree implements Translatable, Themeable {
                     int pages = (_fullNodes.size() + sz-1)/sz;
                     _currentPage = Math.max(0, pages-1);
                 }
-                setMessages(_fullNodes);
+                setMessages(_fullNodes, false);
             }
         });
         
@@ -1459,14 +1459,21 @@ public class MessageTree implements Translatable, Themeable {
     }
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
     
-    void setMessages(List allNodes) {
+    void setMessages(List allNodes) { 
+        // this method is overridden in WatchedMessageTree to rewrite allNodes, injecting parents.
+        // on page traversals, we don't call this again though, but instead call w/ recalcTags param,
+        // so it won't inject the (already injected) parents
+        setMessages(allNodes, true); 
+    }
+    void setMessages(List allNodes, boolean recalcTags) {
         List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
         _itemToMsgId.clear();
         _itemsNewUnread.clear();
-        _tags.clear();
+        if (recalcTags)
+            _tags.clear();
         _itemToNode.clear();
         _threadReferenceNodes = referenceNodes;
         long totalDBTime = 0;
@@ -1484,7 +1491,8 @@ public class MessageTree implements Translatable, Themeable {
         _browser.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
         long beforeGetTags = System.currentTimeMillis();
-        _tags.addAll(getTags(referenceNodes));
+        if (recalcTags)
+            _tags.addAll(getTags(allNodes));
         long afterGetTags = System.currentTimeMillis();
         _browser.getUI().debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
         
@@ -1498,6 +1506,7 @@ public class MessageTree implements Translatable, Themeable {
     
     /** build up the thread in a nonvirtual tree */
     private long add(ReferenceNode node, TreeItem parent) {
+        _browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
         long dbTime = 0;
         TreeItem item = null;
         if (parent == null)
@@ -1559,7 +1568,7 @@ public class MessageTree implements Translatable, Themeable {
                 messageId = uri.getMessageId().longValue();
             long msgId = _client.getMessageId(chanId, messageId);
             
-            _browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
+            //_browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
             
             if (msgId >= 0) {
                 _itemToMsgId.put(item, new Long(msgId));
@@ -1616,10 +1625,10 @@ public class MessageTree implements Translatable, Themeable {
                 long postDate = uri.getMessageId().longValue();
                 if ( (_appliedFilter == null) || (_appliedFilter.getString("agelocal") != null) ) {
                     date = Constants.getDate(importDate);
-                    _browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
+                    //_browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
                 } else {
                     date = Constants.getDate(postDate);
-                    _browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
+                    //_browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
                 }
                 status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
