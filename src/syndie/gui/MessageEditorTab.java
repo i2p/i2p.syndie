@@ -123,6 +123,15 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
         return rv;
     }
     
+    public SyndieURI getURI() { 
+        SyndieURI uri = _editor.getURI();
+        if (uri != null) {
+            return uri;
+        } else {
+            return super.getURI();
+        }
+    }
+    
     public void toggleMaxView() { _editor.toggleMaxView(); }
     public void toggleMaxEditor() { _editor.toggleMaxEditor(); }
     

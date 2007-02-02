@@ -31,6 +31,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) { return null; }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]) { return null; }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]) { return null; }
+    public SyndieURI createPostURI(long postponeId, int postponeVersion) { return null; }
     public SyndieURI createTextUIURI() { return null; }
     public SyndieURI createLogsURI() { return null; }
     public SyndieURI createManageURI(Hash forum) { return null; }
@@ -54,8 +55,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createSyndicationConfigURI() { return null; }
     public SyndieURI createSyndicationDiffURI() { return null; }
     public SyndieURI createSyndicationStatusURI() { return null; }
-    public SyndieURI createHighlightURI() { return null; }
-
+    
     public SyndieURI createMetaURI(Hash forum) { return null; }
     public SyndieURI createMetaRefsURI(Hash forum) { return createMetaURI(forum); }
     public SyndieURI createMetaArchivesURI(Hash forum) { return createMetaURI(forum); }

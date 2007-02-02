@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -392,8 +393,6 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                     _ui.debugMessage("view? " + view);
                     if (view) {
                         int started = viewStartupItems(getBookmarkRoot());
-                        if (started == 0)
-                            _browser.view(_browser.createHighlightURI());
                         Splash.dispose();
                     }
                     getBookmarkRoot().setExpanded(true);
@@ -443,6 +442,41 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         }
     }
     
+    static void savePrevTabs(BrowserControl browser, ArrayList uris) {
+        Properties props = browser.getClient().getNymPrefs();
+        props.setProperty("browser.prevTabs", Integer.toString(uris.size()));
+        for (int i = 0; i < uris.size(); i++)
+            props.setProperty("browser.prevTab." + i, ((SyndieURI)uris.get(i)).toString());
+        browser.getClient().setNymPrefs(props);
+    }
+    
+    private SyndieURI[] getPrevTabs() {
+        Properties props = _browser.getClient().getNymPrefs();
+        String numTabs = props.getProperty("browser.prevTabs");
+        int num = -1;
+        if (numTabs != null) {
+            try {
+                int val = Integer.parseInt(numTabs);
+                num = val;
+            } catch (NumberFormatException nfe) {
+                num = -1;
+            }
+        }
+        if (num < 0)
+            return null;
+        
+        SyndieURI rv[] = new SyndieURI[num];
+        for (int i = 0; i < num; i++) {
+            String val = props.getProperty("browser.prevTab." + i);
+            if (val != null) {
+                try {
+                    rv[i] = new SyndieURI(val);
+                } catch (URISyntaxException use) {}
+            }
+        }
+        
+        return rv;
+    }
     
     /** run from any thread */
     public void viewStartupItems() { 
@@ -456,9 +490,20 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         }
         if (rebuild)
             rebuildBookmarks();
+        
+        SyndieURI prevTabs[] = getPrevTabs();
+        if (prevTabs == null) {
+            _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+        } else {
+            for (int i = 0; i < prevTabs.length; i++) {
+                if (prevTabs[i] != null)
+                    _browser.view(prevTabs[i]);
+            }
+        }       
     }
     // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
     private int viewStartupItems(TreeItem item) {
+        if (true) return 0; // dont use these, use the "last viewed" tabs
         if (item == null) {
             _ui.debugMessage("view startup items - no root? " + item);
             return 0;

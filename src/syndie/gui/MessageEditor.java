@@ -314,8 +314,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         long stateId = _postponeId;
         if (stateId < 0)
             stateId = System.currentTimeMillis();
-        _browser.getUI().debugMessage("saving state for postponeId " + _postponeId);
+        _browser.getUI().debugMessage("saving state for postponeId " + _postponeId + "/" + stateId);
         String state = serializeStateToB64(stateId); // increments the version too
+        _browser.getUI().debugMessage("serialized state for postponeId " + stateId + " / " + _postponeVersion);
         if (state == null) {
             _browser.getUI().errorMessage("Internal error serializing message state");
             return;
@@ -337,6 +338,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        _browser.getUI().debugMessage("done saving state.  " + _postponeId + "/" + _postponeVersion);
         _modified = false;
     }
     
@@ -3114,6 +3116,17 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
 
     boolean isModified() { return _modified; }
+    SyndieURI getURI() {
+        long prevVersion = _postponeVersion;
+        saveState();
+        SyndieURI rv = null;
+        if (_postponeId >= 0) {
+            rv = _browser.createPostURI(_postponeId, _postponeVersion);
+        } else {
+            rv = null;
+        }
+        return rv;
+    }
     
     /** simple hook to inert a buffer at the caret */
     private class InsertListener implements SelectionListener {

@@ -32,6 +32,7 @@ public interface BrowserControl {
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]);
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]);
+    public SyndieURI createPostURI(long postponeId, int postponeVersion);
     public SyndieURI createTextUIURI();
     public SyndieURI createLogsURI();
     public SyndieURI createSQLURI();
@@ -52,7 +53,6 @@ public interface BrowserControl {
     public SyndieURI createSyndicationConfigURI();
     public SyndieURI createSyndicationDiffURI();
     public SyndieURI createSyndicationStatusURI();
-    public SyndieURI createHighlightURI();
     public SyndieURI createBugReportURI();
     public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate);
     public void showWaitCursor(boolean wait);

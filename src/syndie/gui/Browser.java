@@ -118,7 +118,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _bookmarkTab;
     private MenuItem _fileMenuRoot;
     private MenuItem _fileMenuOpen;
-    private MenuItem _fileMenuHighlights;
     private MenuItem _fileMenuMinimize;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
@@ -482,8 +481,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 if (evt.keyCode == SWT.F5) {
                     refreshTab();
                 } else if ( (evt.keyCode == SWT.ARROW_RIGHT) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT->
+                    evt.type = SWT.NONE;
                     nextTab();
                 } else if ( (evt.keyCode == SWT.ARROW_LEFT) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT<-
+                    evt.type = SWT.NONE;
                     prevTab();
                 } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
                     closeTab();
@@ -517,11 +518,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuOpen.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { openPrompt(); }
             public void widgetSelected(SelectionEvent selectionEvent) { openPrompt(); }
-        });
-        _fileMenuHighlights = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuHighlights.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createHighlightsURI()); }
         });
         _fileMenuMinimize = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuMinimize.addSelectionListener(new SelectionListener() {
@@ -1074,7 +1070,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _systrayRoot.dispose();
             _systray.dispose();
             _shell.setVisible(false);
+            
             JobRunner.instance().stop();
+            
+            CTabItem tabs[] = _tabs.getItems();
+            ArrayList uris = new ArrayList(tabs.length);
+            for (int i = 0; i < tabs.length; i++) {
+                SyndieURI baseURI = (SyndieURI)_openTabURIs.get(tabs[i]);
+                BrowserTab tab = (BrowserTab)_openTabs.get(baseURI);
+                SyndieURI curURI = tab.getURI();
+                if (!uris.contains(curURI))
+                    uris.add(curURI);
+            }
+            ReferenceChooserTree.savePrevTabs(this, uris);
+            _client.close();
             System.exit(0);
         }
     }
@@ -1927,6 +1936,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             nxt -= tot;
         debugMessage("switch tab to " + nxt);
         _tabs.setSelection(nxt);
+        int sel = _tabs.getSelectionIndex();
     }
     private void closeTab() {
         CTabItem cur = _tabs.getSelection();
@@ -2283,12 +2293,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
     public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
     public SyndieURI createTranslateURI() { return new SyndieURI(BrowserTab.TYPE_TRANSLATE, new HashMap()); }
-    public SyndieURI createHighlightsURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
     public SyndieURI createSyndicationArchiveURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_ARCHIVES, new HashMap()); }
     public SyndieURI createSyndicationConfigURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_CONFIG, new HashMap()); }
     public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
-    public SyndieURI createHighlightURI() { return new SyndieURI(BrowserTab.TYPE_HIGHLIGHT, new HashMap()); }
     public SyndieURI createBugReportURI() { 
         HashMap attr = new HashMap();
         // not really random, just (likely) different from other values, so multiple instances of the bug report
@@ -2592,7 +2600,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
     private static final String T_FILE_MENU_TITLE_ACCELERATOR = "syndie.gui.browser.filemenu.title.accelerator";
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
-    private static final String T_FILE_MENU_HIGHLIGHTS = "syndie.gui.browser.filemenu.highlights";
     private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
@@ -2668,7 +2675,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "&File"));
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
-        _fileMenuHighlights.setText(registry.getText(T_FILE_MENU_HIGHLIGHTS, "&Highlights"));
         _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));

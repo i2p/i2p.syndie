@@ -1437,7 +1437,7 @@ public class MessageTree implements Translatable, Themeable {
         if (end >= max)
             end = max;
         
-        int pages = (max + sz - 1)/sz;
+        int pages = (max + sz)/sz;
         
         boolean atEnd = (end >= referenceNodes.size());
         boolean atBeginning = (start == 0);
@@ -1638,12 +1638,12 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
 
+        if ( (subj == null) || (subj.trim().length() <= 0) )
+            subj = MessageView.calculateSubject(_browser, uri);
+        
         long dbEnd = System.currentTimeMillis();
 
-        if ( (subj == null) || (subj.trim().length() <= 0) )
-            item.setText(0, MessageView.calculateSubject(_browser, uri));
-        else
-            item.setText(0, subj);
+        item.setText(0, subj);
         item.setText(1, auth);
         item.setText(2, chan);
         item.setText(3, date);
