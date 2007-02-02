@@ -28,6 +28,8 @@ public class TranslationRegistry {
     private String _lang;
     private Properties _text;
     private Map _images;
+    private Properties _baseText;
+    private Map _baseImages;
     private Map _embeddedTranslations;
     private Map _fileTranslations;
     
@@ -37,6 +39,8 @@ public class TranslationRegistry {
         _lang = "default";
         _text = new Properties();
         _images = new HashMap();
+        _baseText = new Properties();
+        _baseImages = new HashMap();
     }
     
     public void register(Translatable entry) { _translatable.add(entry); entry.translate(this); }
@@ -44,7 +48,22 @@ public class TranslationRegistry {
     
     public String getTranslation() { return _lang; }
     public String getText(String key, String defaultVal) { return _text.getProperty(key, defaultVal); }
-    public Image getImage(String key) { return (Image)_images.get(key); }
+    /** 
+     * get the translation for the given key, using the current language selected and falling
+     * back on the base language if it isn't known
+     */
+    public String getText(String key) {
+        String val = _text.getProperty(key);
+        if (val == null)
+            val = _baseText.getProperty(key);
+        return val;
+    }
+    public Image getImage(String key) {
+        Image img = (Image)_images.get(key);
+        if (img == null)
+            img = (Image)_baseImages.get(key);
+        return img;
+    }
     
     private void switchTranslation(String newLang, Properties newText, Map newImages) {
         _lang = newLang;
@@ -77,12 +96,13 @@ public class TranslationRegistry {
                 }
             }
         }
-        
     }
     
     private static final String KEY_LANG = "LANG";
+    private static final String KEY_ISBASE = "ISBASE";
     
     private void refreshEmbeddedTranslations() {
+        Properties baseText = null;
         Map translations = new HashMap();
         int translation = 0;
         while (true) {
@@ -106,6 +126,8 @@ public class TranslationRegistry {
                         String val = line.substring(split+1).trim();
                         if (key.equals(KEY_LANG))
                             lang = val;
+                        else if (key.equals(KEY_ISBASE))
+                            baseText = props;
                         else
                             props.setProperty(key, val);
                     }
@@ -123,6 +145,8 @@ public class TranslationRegistry {
                 if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
         }
+        if (baseText != null)
+            _baseText = baseText;
         _embeddedTranslations = translations;
     }
     private void refreshFileTranslations() {
@@ -136,6 +160,7 @@ public class TranslationRegistry {
                 return name.startsWith("translation_");
             }
         });
+        Properties defaultText = null;
         for (int i = 0; i < files.length; i++) {
             BufferedReader reader = null;
             try {
@@ -157,6 +182,8 @@ public class TranslationRegistry {
                         String val = line.substring(split+1).trim();
                         if (key.equals(KEY_LANG))
                             lang = val;
+                        else if (key.equals(KEY_ISBASE))
+                            defaultText = props;
                         else
                             props.setProperty(key, val);
                     }
@@ -171,12 +198,15 @@ public class TranslationRegistry {
                 if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
         }
+        
+        if (defaultText != null)
+            _baseText = defaultText;
     }
     
     public List getTranslations() {
         refreshEmbeddedTranslations();
         refreshFileTranslations();
-        
+
         ArrayList rv = new ArrayList();
         rv.add("default");
         TreeSet ordered = new TreeSet();
@@ -186,5 +216,18 @@ public class TranslationRegistry {
             rv.add(iter.next());
         
         return rv;
+    }
+    
+    public void loadTranslations() {
+        refreshEmbeddedTranslations();
+        refreshFileTranslations();
+        
+        if (_baseImages == null)
+            _baseImages = new HashMap();
+        if (_baseText == null)
+            _baseText = new Properties();
+        
+        _text = _baseText;
+        _images = _baseImages;
     }
 }

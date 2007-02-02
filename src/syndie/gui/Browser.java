@@ -207,6 +207,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         t.start();
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
+        _translation.loadTranslations();
         _editorListener = new MsgEditorListener();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
