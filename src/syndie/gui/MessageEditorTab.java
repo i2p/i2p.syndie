@@ -103,6 +103,11 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
     public void messagePostponed(long postponementId) { closeTab(); }
     public void messageCancelled() { closeTab(); }
 
+    public void closeTab() {
+        SyndieURI uri = super.getURI();
+        getBrowser().unview(uri);
+    }
+    
     private static final String T_TITLE = "syndie.gui.messageeditortab.title";
     private static final String T_DESC = "syndie.gui.messageeditortab.desc";
     
