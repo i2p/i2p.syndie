@@ -37,6 +37,8 @@
       to 5 minutes (infinity is just too big a number...)
     - clean up the freenet fetch url handling to properly support proxied
       fetches (up to 5m per message fetch, no retries)
+    - add in a slew of icons from Eclipse's set, plus a few custom icons made
+      by jadeSerpent
     - a whole bunch of bugfixes and tweaks
 
 * 2007-01-17  1.002a released

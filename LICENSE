@@ -23,4 +23,6 @@ LGPL licensed.
 SWT is used for the GUI, and is either bundled with various installers
 or is linked by the end user.  The bundled releases are distributed
 under SWT's terms (the Eclipse Public License) - see the EPL for more
-details at http://www.eclipse.org/legal/epl-v10.html.
+details at http://www.eclipse.org/legal/epl-v10.html.  Most icons
+included in Syndie's GUI come from Eclipse and are licensed under the
+EPL as well.
