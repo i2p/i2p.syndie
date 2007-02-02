@@ -1,5 +1,44 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-02-02  1.003a released
+    - enable more advanced authentication and authorization policies in the
+      forum management GUI, controlling both who should have certain
+      capabilities and automating the delivery of keys necessary to accomplish
+      that.  This includes the creation of transient shared identities for
+      forum authorization
+    - in forums where it is possible, enable control of both who the message 
+      should be authenticated from ("Author") and who the message should be
+      authorized by ("Sign as")
+    - reenable "hidden authors" when posting under an explicitly authorized
+      forum, allowing a forum to operate without letting those not authorized to
+      read the forum know who is posting
+    - transparently import keys passed as references and .syndie messages
+      attached to posts and forum metadata when imported.  In addition, if the
+      keys imported could serve to decrypt previously undecryptable posts,
+      transparently attempt to decrypt those.
+    - more aggressively avoid banned forums, and for archive operators, list
+      banned forums as scopes they are not interested in receiving
+    - drop the 'highlights' tab, and remember the open tabs on restart
+    - some redesign work for browsing threads and forums to ease navigation and
+      improve performance
+    - address some resource leaks
+    - make the integrated HTTP archive server and syndication code more
+      resiliant
+    - simplify the syndication controls
+    - add a keyboard shortcut to view the page (^L) or editor (^K) in
+      fullscreen mode
+    - enable F5 to serve as a refresh key along side ^R
+    - add in some simple quoting functionality when replying
+    - keep track of the private messages we send
+    - improved threading display
+    - split large HTTP pushes into sequential batches of around 100KB to reduce
+      the pain of transient failures
+    - run the fproxy index fetch in a separate thread, and increase its timeout
+      to 5 minutes (infinity is just too big a number...)
+    - clean up the freenet fetch url handling to properly support proxied
+      fetches (up to 5m per message fetch, no retries)
+    - a whole bunch of bugfixes and tweaks
+
 * 2007-01-17  1.002a released
     - fix private and passphrase protected messages
     - redesign the syndication tab and revamp the code powering it
