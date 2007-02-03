@@ -89,7 +89,7 @@ public class StatusBar implements Translatable, Themeable {
         });
         
         _onlineState = new Label(_root, SWT.SHADOW_OUT | SWT.BORDER);
-        _onlineState.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _onlineState.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _nextSyncLabel = new Label(_root, SWT.NONE);
         _nextSyncLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));

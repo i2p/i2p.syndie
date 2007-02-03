@@ -31,7 +31,7 @@ abstract class BrowserTab implements Themeable {
     private SyndieURI _uri;
     private Composite _root;
     
-    private static final int TAB_ICON_SIZE = 16;
+    //private static final int TAB_ICON_SIZE = 16;
     static final String TYPE_POST = "post";
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
@@ -166,8 +166,8 @@ abstract class BrowserTab implements Themeable {
         Image icon = getIcon();
         if ( (icon != null) && (!icon.isDisposed()) ) {
             Rectangle bounds = icon.getBounds();
-            if ( (bounds.width > TAB_ICON_SIZE) || (bounds.height > TAB_ICON_SIZE) )
-                icon = ImageUtil.resize(icon, TAB_ICON_SIZE, TAB_ICON_SIZE, true);
+            //if ( (bounds.width > TAB_ICON_SIZE) || (bounds.height > TAB_ICON_SIZE) )
+            //    icon = ImageUtil.resize(icon, TAB_ICON_SIZE, TAB_ICON_SIZE, true);
             _item.setImage(icon);
         } else {
             _item.setImage(null);

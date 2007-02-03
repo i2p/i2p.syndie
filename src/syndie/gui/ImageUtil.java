@@ -100,15 +100,17 @@ public class ImageUtil {
     public static final Image ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
     public static final Image ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
     
-    public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, 16, 16, false);
-    public static final Image ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, 16, 16, false);
+    private static final int TAB_ICON_SIZE = 24;
+    
+    public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static final Image ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
 
     public static final Image ICON_EDITOR_PRIVACY_PUBLIC = createImageFromResource("iconPrivPublic.png");
     public static final Image ICON_EDITOR_PRIVACY_PBE = createImageFromResource("iconPrivPBE.png");

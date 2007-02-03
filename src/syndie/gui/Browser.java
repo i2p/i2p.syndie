@@ -248,11 +248,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         long t5 = System.currentTimeMillis();
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
-        _tabs.setSimple(false);
+        _tabs.setSimple(true);
         _tabs.setMinimizeVisible(false);
         _tabs.setMinimumCharacters(20);
         _tabs.setUnselectedImageVisible(true);
         _tabs.setBorderVisible(true);
+        _tabs.marginHeight = 0;
+        _tabs.marginWidth = 0;
         
         _tabMenu = new Menu(_tabs);
         _tabs.setMenu(_tabMenu);

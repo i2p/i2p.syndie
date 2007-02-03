@@ -114,6 +114,7 @@ public class Version {
         <delete file="syndie-${syndie.version}.jar" />
         <delete dir="logs" />
         <delete dir="build" />
+        <delete dir="pkgosx" />
     </target>
 
 <!--
@@ -681,6 +682,71 @@ public class Version {
             <zipfileset dir="." includes="lib/syndie.jar" />
         </zip>
     </target>
+    <target name="pkgosx" depends="jar">
+        <loadproperties srcfile="VERSION" />
+        <delete dir="pkgosx" />
+        <mkdir dir="doc/web/dist" />
+	<mkdir dir="pkgosx" />
+	<mkdir dir="pkgosx/syndie-${syndie.version}" />
+	<mkdir dir="pkgosx/syndie-${syndie.version}/Syndie.app" />
+	<mkdir dir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents" />
+	<mkdir dir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS" />
+	<mkdir dir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/Resources" />
+        <copy todir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS/" file="lib/syndie.jar" />
+        <copy todir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS/" file="lib/hsqldb.jar" />
+        <copy todir="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS/" file="${swt.osx}" />
+        <copy tofile="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/syndie.icns" file="resources/osx.icns" />
+        <echo file="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS/launchsyndie.sh"><![CDATA[#!/bin/sh
+BASEDIR=`dirname $0`
+exec java -XstartOnFirstThread \
+	-classpath $BASEDIR/swt.jar:$BASEDIR/syndie.jar:$BASEDIR/hsqldb.jar \
+	-Djava.library.path=$BASEDIR:. \
+	syndie.gui.SWTUI
+]]></echo>
+	<chmod file="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/MacOS/launchsyndie.sh" perm="755" />
+	<echo file="pkgosx/syndie-${syndie.version}/Syndie.app/Contents/Info.plist"><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+        <string>launchsyndie.sh</string>
+    <key>CFBundleGetInfoString</key>
+        <string>Syndie ${syndie.version} for Mac OS X</string>
+    <key>CFBundleIconFile</key>
+        <string>syndie.icns</string>
+    <key>CFBundleIdentifier</key>
+        <string>syndie.gui.SWTUI</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+    <key>CFBundleName</key>
+        <string>Syndie</string>
+    <key>CFBundlePackageType</key>
+        <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+    <key>CFBundleSignature</key>
+        <string>?????</string>
+    <key>CFBundleVersion</key>
+        <string>1.0</string>
+    <key>NSPrincipalClass</key>
+        <string>NSApplication</string>
+</dict>
+</plist>
+]]></echo>
+        <!-- now its built... package the app up in a .tar.bz2 -->
+	<!-- we use tar explicitly because ant's tar doesn't support permissions -->
+	<exec command="tar cjvpf ./doc/web/dist/syndie-${syndie.version}.bin.osx.tar.bz2 -C pkgosx ." />
+	<!-- alternately, we could call:
+	     hdiutil create -srcfolder pkgosx/syndie-1.003a/Syndie.app Syndie.dmg
+	     hdiutil internet-enable -yes Syndie.dmg
+	  -->
+	<echo>syndie-${syndie.version}.bin.osx.tar.bz2 extracts to syndie-${syndie.version}/Syndie.app/
+Alternately, to build a syndie-${syndie.version}.dmg, run the following on OSX:
+	hdiutil create -srcfolder pkgosx/syndie-${syndie.version}/Syndie.app syndie-${syndie.version}.dmg
+	hdiutil internet-enable -yes syndie-${syndie.version}.dmg
+</echo>
+    </target>
     <target name="dist">
       <ant target="distclean" />
       <ant target="source-package" />
@@ -689,5 +755,6 @@ public class Version {
       <ant target="java-package-exe" />
       <ant target="jar-package" />
 <!--      <ant target="java-package" /> -->
+      <ant target="pkgosx" />
     </target>
 </project>
