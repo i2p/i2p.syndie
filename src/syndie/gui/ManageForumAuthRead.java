@@ -24,9 +24,9 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class ViewForumAuthRead implements Themeable, Translatable {
+class ManageForumAuthRead implements Themeable, Translatable {
     private BrowserControl _browser;
-    private ViewForum _view;
+    private ManageForum _manage;
     
     private Shell _shell;
     private Composite _root;
@@ -52,15 +52,15 @@ class ViewForumAuthRead implements Themeable, Translatable {
     /** channels (Hash) to receive posts, ordered by the _sendSelectedList */
     private ArrayList _sendSelectedForums;
     
-    public ViewForumAuthRead(BrowserControl browser, ViewForum view) {
+    public ManageForumAuthRead(BrowserControl browser, ManageForum manage) {
         _browser = browser;
-        _view = view;
+        _manage = manage;
         _sendSelectedForums = new ArrayList();
         initComponents();
     }
     
     private void initComponents() {
-        _shell = new Shell(_view.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _shell = new Shell(_manage.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new FillLayout());
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -172,10 +172,10 @@ class ViewForumAuthRead implements Themeable, Translatable {
     
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
-    private void ok() { _view.modified(); hide(); }
+    private void ok() { _manage.modified(); hide(); }
     
     private void loadData() {
-        ChannelInfo info = _view.getChannelInfo();
+        ChannelInfo info = _manage.getChannelInfo();
         if (info != null) {
             Set readKeys = info.getReadKeys();
             if ( (readKeys != null) && (readKeys.size() > 0) ) {

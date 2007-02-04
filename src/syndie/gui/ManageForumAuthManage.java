@@ -24,9 +24,9 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class ViewForumAuthManage implements Themeable, Translatable {
+class ManageForumAuthManage implements Themeable, Translatable {
     private BrowserControl _browser;
-    private ViewForum _view;
+    private ManageForum _manage;
     
     private Shell _shell;
     private Composite _root;
@@ -53,16 +53,16 @@ class ViewForumAuthManage implements Themeable, Translatable {
     /** channels (Hash) to receive the new management key, ordered by the _sendNewList */
     private ArrayList _sendNewForums;
     
-    public ViewForumAuthManage(BrowserControl browser, ViewForum view) {
+    public ManageForumAuthManage(BrowserControl browser, ManageForum manage) {
         _browser = browser;
-        _view = view;
+        _manage = manage;
         _selectedForums = new ArrayList();
         _sendNewForums = new ArrayList();
         initComponents();
     }
     
     private void initComponents() {
-        _shell = new Shell(_view.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _shell = new Shell(_manage.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new FillLayout());
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -167,7 +167,7 @@ class ViewForumAuthManage implements Themeable, Translatable {
     }
     
     private void loadData() {
-        ChannelInfo info = _view.getChannelInfo();
+        ChannelInfo info = _manage.getChannelInfo();
         
         if (info != null) {
             for (Iterator iter = info.getAuthorizedManagerHashes().iterator(); iter.hasNext(); ) {
@@ -184,7 +184,7 @@ class ViewForumAuthManage implements Themeable, Translatable {
     
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
-    private void ok() { _view.modified(); hide(); }
+    private void ok() { _manage.modified(); hide(); }
     public ArrayList getAuthorizedManagers() { return _selectedForums; }
     public boolean getNewIdentity() { return _sendNew.getSelection(); }
     public ArrayList getSendNewExplicit() { return _sendNewForums; }

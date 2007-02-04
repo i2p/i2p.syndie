@@ -21,9 +21,9 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class ViewForumAuthReply implements Themeable, Translatable {
+class ManageForumAuthReply implements Themeable, Translatable {
     private BrowserControl _browser;
-    private ViewForum _view;
+    private ManageForum _manage;
     
     private Shell _shell;
     private Composite _root;
@@ -45,15 +45,15 @@ class ViewForumAuthReply implements Themeable, Translatable {
     /** channels (Hash) allowed to manage, ordered by the _sendNewSelectedList */
     private ArrayList _sendNewSelectedForums;
     
-    public ViewForumAuthReply(BrowserControl browser, ViewForum view) {
+    public ManageForumAuthReply(BrowserControl browser, ManageForum manage) {
         _browser = browser;
-        _view = view;
+        _manage = manage;
         _sendNewSelectedForums = new ArrayList();
         initComponents();
     }
     
     private void initComponents() {
-        _shell = new Shell(_view.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _shell = new Shell(_manage.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new FillLayout());
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -145,7 +145,7 @@ class ViewForumAuthReply implements Themeable, Translatable {
     
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
-    private void ok() { _view.modified(); hide(); }
+    private void ok() { _manage.modified(); hide(); }
     
     public boolean getRotate() { return _rotate.getSelection(); }
     public ArrayList getSendNewExplicit() { return _sendNewSelectedForums; }

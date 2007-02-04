@@ -24,9 +24,9 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class ViewForumAuthPost implements Themeable, Translatable {
+class ManageForumAuthPost implements Themeable, Translatable {
     private BrowserControl _browser;
-    private ViewForum _view;
+    private ManageForum _manage;
     
     private Shell _shell;
     private Composite _root;
@@ -58,16 +58,16 @@ class ViewForumAuthPost implements Themeable, Translatable {
     /** channels (Hash) to receive the new posting key, ordered by the _sendNewList */
     private ArrayList _sendNewForums;
     
-    public ViewForumAuthPost(BrowserControl browser, ViewForum view) {
+    public ManageForumAuthPost(BrowserControl browser, ManageForum manage) {
         _browser = browser;
-        _view = view;
+        _manage = manage;
         _selectedForums = new ArrayList();
         _sendNewForums = new ArrayList();
         initComponents();
     }
     
     private void initComponents() {
-        _shell = new Shell(_view.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        _shell = new Shell(_manage.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new FillLayout());
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -199,7 +199,7 @@ class ViewForumAuthPost implements Themeable, Translatable {
     }
     
     private void loadData() {
-        ChannelInfo info = _view.getChannelInfo();
+        ChannelInfo info = _manage.getChannelInfo();
         
         if (info != null) {
             if (info.getAllowPublicPosts())
@@ -235,7 +235,7 @@ class ViewForumAuthPost implements Themeable, Translatable {
     
     public void show() { _shell.pack(); _shell.open(); }
     private void hide() { _shell.setVisible(false); }
-    private void ok() { _view.modified(); hide(); }
+    private void ok() { _manage.modified(); hide(); }
     
     public boolean getAllowPublicReplies() { return _choiceReplies.getSelection(); }
     public boolean getAllowPublicPosts() { return _choiceAnyone.getSelection(); }
