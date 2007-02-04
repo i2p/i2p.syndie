@@ -16,6 +16,8 @@ import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -43,8 +45,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TabFolder;
-import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -106,9 +106,9 @@ public class MessageView implements Translatable, Themeable {
      */
     private Composite _bodyContainer;
     /** the tabFolder exists if there are multiple pages, refs, attachments, or threads */
-    private TabFolder _tabFolder;
+    private CTabFolder _tabFolder;
     /** the tabs exist only if there are multiple pages, refs, attachments, or threads */
-    private TabItem _tabs[];
+    private CTabItem _tabs[];
     /** the tabRoots are the composites for each tab */
     private Composite _tabRoots[];
     private PageRenderer _body[];
@@ -421,14 +421,14 @@ public class MessageView implements Translatable, Themeable {
             
             _browser.getUI().debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
             
-            _tabFolder = new TabFolder(_bodyContainer, SWT.BORDER);
-            _tabs = new TabItem[tabs];
+            _tabFolder = new CTabFolder(_bodyContainer, SWT.BORDER | SWT.MULTI);
+            _tabs = new CTabItem[tabs];
             _tabRoots = new Composite[tabs];
             _body = new PageRenderer[pageCount];
             _tabFolder.setFont(_browser.getThemeRegistry().getTheme().TAB_FONT);
             PageListener lsnr = new PageListener();
             for (int i = 0; i < pageCount; i++) {
-                _tabs[i] = new TabItem(_tabFolder, SWT.NONE);
+                _tabs[i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[i].setControl(_tabRoots[i]);
                 _tabs[i].setText(_browser.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
@@ -441,7 +441,7 @@ public class MessageView implements Translatable, Themeable {
             }
             int off = pageCount;
             if (threadSize > 1) {
-                _tabs[off] = new TabItem(_tabFolder, SWT.NONE);
+                _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off].setControl(_tabRoots[off]);
                 _tabs[off].setText(_browser.getTranslationRegistry().getText(T_TAB_THREAD, "Thread"));
@@ -482,7 +482,7 @@ public class MessageView implements Translatable, Themeable {
                 off++;
             }
             if ( (refs != null) && (refs.size() > 0) ) {
-                _tabs[off] = new TabItem(_tabFolder, SWT.NONE);
+                _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off].setControl(_tabRoots[off]);
                 _tabs[off].setText(_browser.getTranslationRegistry().getText(T_TAB_REFS, "References"));
@@ -494,7 +494,7 @@ public class MessageView implements Translatable, Themeable {
             if (attachments > 0)
                 _attachmentPreviews = new AttachmentPreview[attachments];
             for (int i = 0; i < attachments; i++) {
-                _tabs[off+i] = new TabItem(_tabFolder, SWT.NONE);
+                _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off+i].setControl(_tabRoots[off+i]);
                 _tabs[off+i].setText(_browser.getTranslationRegistry().getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));

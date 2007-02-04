@@ -11,6 +11,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
@@ -32,8 +34,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TabFolder;
-import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.HTMLStateBuilder;
@@ -48,7 +48,7 @@ import syndie.db.CommandImpl;
 public class PageEditor {
     private BrowserControl _browser;
     private MessageEditor _editor;
-    private TabItem _item;
+    private CTabItem _item;
     private Composite _root;
     private SashForm _sash;
     private StyledText _text;
@@ -79,7 +79,7 @@ public class PageEditor {
             return _text.getText(); 
     }
     public String getContentType() { return _isPreviewable ? "text/html" : "text/plain"; }
-    public TabItem getItem() { return _item; }
+    public CTabItem getItem() { return _item; }
     
     public void setContent(String body) { _text.setText(body); }
     public void setContentType(String type) {
@@ -101,8 +101,8 @@ public class PageEditor {
     }
     
     private void initComponents() {
-        TabFolder parent = _editor.getPageRoot();
-        _item = new TabItem(parent, SWT.NONE, _pageNum);
+        CTabFolder parent = _editor.getPageRoot();
+        _item = new CTabItem(parent, SWT.NONE, _pageNum);
         _root = new Composite(parent, SWT.NONE);
         _root.setLayout(new FillLayout());
         _item.setControl(_root);

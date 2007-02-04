@@ -59,6 +59,12 @@ public class SWTUI {
         String root = TextEngine.getRootPath();
         if (args.length > 0)
             root = args[0];
+        
+        File rootFile = new File(root);
+        if (rootFile.exists() && !rootFile.isDirectory()) {
+            System.err.println("Syndie data directory is not a directory: " + rootFile);
+            System.exit(-1);
+        }
         // this way the logs won't go to ./logs/log-#.txt (i2p's default)
         // (this has to be set before the I2PAppContext instantiates the LogManager)
         System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");

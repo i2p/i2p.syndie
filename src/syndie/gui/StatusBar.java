@@ -754,16 +754,16 @@ public class StatusBar implements Translatable, Themeable {
     }
     
     public void applyTheme(Theme theme) {
-        _bookmark.setFont(theme.BUTTON_FONT);
-        _nextSyncDate.setFont(theme.DEFAULT_FONT);
-        _nextSyncLabel.setFont(theme.DEFAULT_FONT);
-        _onlineState.setFont(theme.DEFAULT_FONT);
-        _version.setFont(theme.DEFAULT_FONT);
+        _bookmark.setFont(theme.FINEPRINT_FONT);
+        _nextSyncDate.setFont(theme.FINEPRINT_FONT);
+        _nextSyncLabel.setFont(theme.FINEPRINT_FONT);
+        _onlineState.setFont(theme.FINEPRINT_FONT);
+        _version.setFont(theme.FINEPRINT_FONT);
         
-        _newForum.setFont(theme.BUTTON_FONT);
-        _unread.setFont(theme.BUTTON_FONT);
-        _pbe.setFont(theme.BUTTON_FONT);
-        _priv.setFont(theme.BUTTON_FONT);
-        _postpone.setFont(theme.BUTTON_FONT);        
+        _newForum.setFont(theme.FINEPRINT_FONT);
+        _unread.setFont(theme.FINEPRINT_FONT);
+        _pbe.setFont(theme.FINEPRINT_FONT);
+        _priv.setFont(theme.FINEPRINT_FONT);
+        _postpone.setFont(theme.FINEPRINT_FONT);        
     }
 }

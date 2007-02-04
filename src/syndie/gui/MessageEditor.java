@@ -31,6 +31,8 @@ import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.custom.StyleRange;
@@ -61,8 +63,6 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TabFolder;
-import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
@@ -102,15 +102,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private Text _tag;
     private Label _privacyLabel;
     private Combo _privacy;
-    private TabFolder _pageTabs;
+    private CTabFolder _pageTabs;
     private Button _post;
     private Button _postpone;
     private Button _cancel;
     
-    private TabItem _refTab;
+    private CTabItem _refTab;
     private Composite _refTabRoot;
     private ManageReferenceChooser _refs;
-    private TabItem _threadTab;
+    private CTabItem _threadTab;
     private Composite _threadTabRoot;
     private MessageTree _threadTree;
     
@@ -302,7 +302,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     // PageEditors ask for these:
-    TabFolder getPageRoot() { return _pageTabs; }//_pageRoot; }
+    CTabFolder getPageRoot() { return _pageTabs; }//_pageRoot; }
     void modified() { _modified = true; }
     void enableAutoSave() { _enableSave = true; }
     void disableAutoSave() { _enableSave = false;}
@@ -1586,16 +1586,16 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private void initPage() {
-        _pageTabs = new TabFolder(_root, SWT.BORDER);
+        _pageTabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP);
         _pageTabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        _refTab = new TabItem(_pageTabs, SWT.NONE);
+        _refTab = new CTabItem(_pageTabs, SWT.NONE);
         _refTabRoot = new Composite(_pageTabs, SWT.NONE);
         _refTabRoot.setLayout(new FillLayout());
         _refTab.setControl(_refTabRoot);
         _refs = new ManageReferenceChooser(_refTabRoot, _browser, true);
 
-        _threadTab = new TabItem(_pageTabs, SWT.NONE);
+        _threadTab = new CTabItem(_pageTabs, SWT.NONE);
         _threadTabRoot = new Composite(_pageTabs, SWT.NONE);
         _threadTabRoot.setLayout(new FillLayout());
         _threadTab.setControl(_threadTabRoot);

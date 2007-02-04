@@ -32,6 +32,7 @@ public class Theme {
         MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -4, Boolean.TRUE, null);
         HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -4, null, Boolean.TRUE);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -4, null, null);
+        FINEPRINT_FONT = adjustHeight("initfineprint", SYSFONT, -8, null, null);
         DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -4);
     }
     
@@ -65,6 +66,8 @@ public class Theme {
     public Font HIGHLIGHT_INACTIVE_FONT;
     /** row in the highlight tree that should be brought to attention */
     public Font HIGHLIGHT_ACTIVE_FONT;
+    /** the fine print is small */
+    public Font FINEPRINT_FONT;
     /** used for anything else */
     public Font DEFAULT_FONT;
     
@@ -91,6 +94,7 @@ public class Theme {
         dispose(MSG_NEW_UNREAD_FONT);
         dispose(HIGHLIGHT_INACTIVE_FONT);
         dispose(HIGHLIGHT_ACTIVE_FONT);
+        dispose(FINEPRINT_FONT);
         dispose(DEFAULT_FONT);
     }
     
@@ -162,6 +166,7 @@ public class Theme {
         MSG_NEW_UNREAD_FONT = increaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
         HIGHLIGHT_ACTIVE_FONT = increaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = increaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
+        FINEPRINT_FONT = increaseFont("fineprint", FINEPRINT_FONT);
     }
     public void decreaseFont() {
         TAB_FONT = decreaseFont("tab", TAB_FONT);
@@ -180,6 +185,7 @@ public class Theme {
         MSG_NEW_UNREAD_FONT = decreaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
         HIGHLIGHT_ACTIVE_FONT = decreaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = decreaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
+        FINEPRINT_FONT = decreaseFont("fineprint", FINEPRINT_FONT);
     }
     
     public void store(Properties props) {
@@ -201,6 +207,7 @@ public class Theme {
         store(props, MSG_NEW_UNREAD_FONT, face, size, "theme.msgnewunreadfont");
         store(props, HIGHLIGHT_INACTIVE_FONT, face, size, "theme.highlightinactive");
         store(props, HIGHLIGHT_ACTIVE_FONT, face, size, "theme.highlightactive");
+        store(props, FINEPRINT_FONT, face, size, "theme.fineprint");
         store(props, DEFAULT_FONT, face, size, "theme.defaultfont");
     }
     private void store(Properties props, Font font, String defaultFace, int baselineSize, String prefPrefix) {
@@ -237,6 +244,7 @@ public class Theme {
         MSG_NEW_UNREAD_FONT = load(props, MSG_NEW_UNREAD_FONT, "theme.msgnewunreadfont");
         HIGHLIGHT_INACTIVE_FONT = load(props, HIGHLIGHT_INACTIVE_FONT, "theme.highlightinactive");
         HIGHLIGHT_ACTIVE_FONT = load(props, HIGHLIGHT_ACTIVE_FONT, "theme.highlightactive");
+        FINEPRINT_FONT = load(props, FINEPRINT_FONT, "theme.fineprint");
         DEFAULT_FONT = load(props, DEFAULT_FONT, "theme.defaultfont");
     }
     private Font load(Properties props, Font old, String prefPrefix) {
@@ -245,7 +253,7 @@ public class Theme {
 
             String defaultFace = getFace(old);
             int baselineSize = getSize(SYSFONT); //getSize(old);
-
+            
             String face = props.getProperty(prefPrefix + ".face");
             String szModStr = props.getProperty(prefPrefix + ".size");
             int szMod = 0; //baselineSize;
@@ -253,6 +261,8 @@ public class Theme {
                 try {
                     szMod = Integer.parseInt(szModStr);
                 } catch (NumberFormatException nfe) {}
+            } else if ( (szMod == 0) && ("theme.fineprint".equals(prefPrefix)) ) {
+                szMod -= 2;
             }
 
             String str = props.getProperty(prefPrefix + ".bold");
@@ -289,8 +299,8 @@ public class Theme {
                 height = sysHeight + mod;
             else
                 height = oldData[i].getHeight() + mod;
-            if (height < 6)
-                height = 6;
+            if (height < 2)
+                height = 2;
             newData[i].setHeight(height);
             int style = oldData[i].getStyle();
             if (bold != null)

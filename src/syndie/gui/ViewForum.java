@@ -92,8 +92,6 @@ class ViewForum implements Translatable, Themeable {
     private TableColumn _userName;
     private TableColumn _userPriv;
     private Map _userItemToHash;
-    //private Button _userAdd;
-    //private Button _keyManagementAdvanced;
     private Group _archiveGroup;
     private Table _archives;
     private TableColumn _archiveURL;
@@ -109,22 +107,7 @@ class ViewForum implements Translatable, Themeable {
     private Composite _actions;
     private Button _save;
     private Button _cancel;
-    /*
-    private Shell _keyManagementShell;
-    private Button _keyManagementOpen;
-    private Label _keyManagementOpenInfo;
-    private Button _keyManagementKeep;
-    private Label _keyManagementKeepInfo;
-    private Button _keyManagementRotate;
-    private Label _keyManagementRotateInfo;
-    private Button _keyManagementReset;
-    private Label _keyManagementResetInfo;
-    private Button _keyManagementPBE;
-    private Label _keyManagementPBEInfo;
-    private Button _keyManagementNewReply;
-    private Button _keyManagementOk;
-     */
-    
+
     private boolean _editable;
     private boolean _initialized;
     private boolean _modified;
@@ -306,14 +289,6 @@ class ViewForum implements Translatable, Themeable {
 
             final Menu userMenu = new Menu(_users);
             _users.setMenu(userMenu);
-            /*
-            MenuItem addForum = new MenuItem(userMenu, SWT.PUSH);
-            addForum.setText(_browser.getTranslationRegistry().getText(T_USER_ADDFORUM, "Add"));
-            addForum.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
-            });
-             */
             MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
             viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
             viewForum.addSelectionListener(new SelectionListener() {
@@ -342,59 +317,6 @@ class ViewForum implements Translatable, Themeable {
             });
 
         }
-        /*
-        if (_editable) {
-            final MenuItem manager = new MenuItem(userMenu, SWT.PUSH);
-            manager.setText(_browser.getTranslationRegistry().getText(T_USER_MANAGE, "Toggle manager/poster"));
-            manager.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent evt) { toggleManager(); }
-                public void widgetSelected(SelectionEvent evt) { toggleManager(); }
-                private void toggleManager() {
-                    TableItem items[] = _users.getSelection();
-                    for (int i = 0; i < items.length; i++) {
-                        Hash scope = (Hash)_userItemToHash.get(items[i]);
-                        toggleUserManagement(scope);
-                    }
-                }
-            });
-            
-            MenuItem delete = new MenuItem(userMenu, SWT.PUSH);
-            delete.setText(_browser.getTranslationRegistry().getText(T_USER_DELETE, "Delete"));
-            delete.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
-                private void delete() {
-                    TableItem items[] = _users.getSelection();
-                    for (int i = 0; i < items.length; i++) {
-                        Hash scope = (Hash)_userItemToHash.get(items[i]);
-                        deleteUser(scope);
-                    }
-                }
-            });
-            
-            _userAdd = new Button(_userGroup, SWT.PUSH);
-            _userAdd.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
-            _userAdd.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
-            _userAdd.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { addUser(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { addUser(); }
-            });
-            
-            _keyManagementAdvanced = new Button(_userGroup, SWT.PUSH);
-            _keyManagementAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.END, false, false));
-            _keyManagementAdvanced.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { showShell(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { showShell(); }
-                private void showShell() {
-                    _keyManagementShell.pack();
-                    Point sz = _keyManagementShell.computeSize(600, SWT.DEFAULT);
-                    //_browser.getUI().debugMessage("packed size: " + sz);
-                    _keyManagementShell.setSize(sz);
-                    _keyManagementShell.open();
-                }
-            });
-        }
-         */
         
         _archiveGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
@@ -569,71 +491,6 @@ class ViewForum implements Translatable, Themeable {
             ((GridData)_actions.getLayoutData()).exclude = true;
         }
         
-        /*
-        _keyManagementShell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        GridLayout gl = new GridLayout(1, true);
-        _keyManagementShell.setLayout(gl);
-        _keyManagementShell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) {
-                evt.doit = false;
-                _keyManagementShell.setVisible(false);
-            }
-            public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
-        });
-        
-        _keyManagementOpen = new Button(_keyManagementShell, SWT.RADIO);
-        _keyManagementOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementOpenInfo = new Label(_keyManagementShell, SWT.WRAP);
-        _keyManagementOpenInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementKeep = new Button(_keyManagementShell, SWT.RADIO);
-        _keyManagementKeep.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementKeepInfo = new Label(_keyManagementShell, SWT.WRAP);
-        _keyManagementKeepInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementRotate = new Button(_keyManagementShell, SWT.RADIO);
-        _keyManagementRotate.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementRotateInfo = new Label(_keyManagementShell, SWT.WRAP);
-        _keyManagementRotateInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementReset = new Button(_keyManagementShell, SWT.RADIO);
-        _keyManagementReset.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementResetInfo = new Label(_keyManagementShell, SWT.WRAP);
-        _keyManagementResetInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementPBE = new Button(_keyManagementShell, SWT.CHECK);
-        _keyManagementPBE.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementPBEInfo = new Label(_keyManagementShell, SWT.WRAP);
-        _keyManagementPBEInfo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementNewReply = new Button(_keyManagementShell, SWT.CHECK);
-        _keyManagementNewReply.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementOk = new Button(_keyManagementShell, SWT.PUSH);
-        _keyManagementOk.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _keyManagementOk.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _keyManagementShell.setVisible(false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _keyManagementShell.setVisible(false); }
-        });
-        
-        _keyManagementKeep.setSelection(true);
-        
-        _keyManagementPBE.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                if (_keyManagementPBE.getSelection())
-                    promptForPBE();
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                if (_keyManagementPBE.getSelection())
-                    promptForPBE();
-            }
-        });
-    
-        _keyManagementOpen.setEnabled(false);
-        _keyManagementKeep.setEnabled(false);
-        _keyManagementRotate.setEnabled(false);
-        _keyManagementReset.setEnabled(false);
-        _keyManagementPBE.setEnabled(false);
-        _keyManagementNewReply.setEnabled(false);
-         */
-        
         ChannelInfo info = _browser.getClient().getChannel(_scopeId);
         loadData();
         
@@ -649,11 +506,7 @@ class ViewForum implements Translatable, Themeable {
             else
                 _authorization.select(AUTH_AUTH);
         }
-        
-        // ugly hack
-        //_root.getDisplay().timerExec(100, new Runnable() {
-        //    public void run() { applyTheme(_browser.getThemeRegistry().getTheme()); _parent.layout(true, true); }
-        //});
+    
     }
     
     ChannelInfo getChannelInfo() { return _browser.getClient().getChannel(_scopeId); }
@@ -1389,25 +1242,7 @@ class ViewForum implements Translatable, Themeable {
             _authPost.setFont(theme.BUTTON_FONT);
             _authManage.setFont(theme.BUTTON_FONT);
             _authReply.setFont(theme.BUTTON_FONT);
-        
-            /*
-            _keyManagementShell.setFont(theme.SHELL_FONT);
-            _keyManagementAdvanced.setFont(theme.BUTTON_FONT);
-            _keyManagementOpenInfo.setFont(theme.DEFAULT_FONT);
-            _keyManagementRotateInfo.setFont(theme.DEFAULT_FONT);
-            _keyManagementKeepInfo.setFont(theme.DEFAULT_FONT);
-            _keyManagementResetInfo.setFont(theme.DEFAULT_FONT);
-            _keyManagementPBEInfo.setFont(theme.DEFAULT_FONT);
-            _keyManagementOpen.setFont(theme.DEFAULT_FONT);
-            _keyManagementRotate.setFont(theme.DEFAULT_FONT);
-            _keyManagementKeep.setFont(theme.DEFAULT_FONT);
-            _keyManagementReset.setFont(theme.DEFAULT_FONT);
-            _keyManagementPBE.setFont(theme.DEFAULT_FONT);
-            _keyManagementNewReply.setFont(theme.DEFAULT_FONT);
-            _keyManagementOk.setFont(theme.BUTTON_FONT);
-             */
             _avatarSelect.setFont(theme.BUTTON_FONT);
-            //_userAdd.setFont(theme.BUTTON_FONT);
             _archiveAdd.setFont(theme.BUTTON_FONT);
         } else {
             _userGroup.setFont(theme.DEFAULT_FONT);
@@ -1436,21 +1271,7 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_PRIVARCHIVE = "syndie.gui.viewforum.privarchive";
     private static final String T_SAVE = "syndie.gui.viewforum.save";
     private static final String T_CANCEL = "syndie.gui.viewforum.cancel";
-    private static final String T_KEYMGMT = "syndie.gui.viewforum.keymgmt";
-    private static final String T_KEYMGMT_OPEN = "syndie.gui.viewforum.keymgmt.open";
-    private static final String T_KEYMGMT_OPEN_INFO = "syndie.gui.viewforum.keymgmt.open.info";
-    private static final String T_KEYMGMT_KEEP = "syndie.gui.viewforum.keymgmt.keep";
-    private static final String T_KEYMGMT_KEEP_INFO = "syndie.gui.viewforum.keymgmt.keep.info";
-    private static final String T_KEYMGMT_ROTATE = "syndie.gui.viewforum.keymgmt.rotate";
-    private static final String T_KEYMGMT_ROTATE_INFO = "syndie.gui.viewforum.keymgmt.rotate.info";
-    private static final String T_KEYMGMT_RESET = "syndie.gui.viewforum.keymgmt.reset";
-    private static final String T_KEYMGMT_RESET_INFO = "syndie.gui.viewforum.keymgmt.reset.info";
-    private static final String T_KEYMGMT_PBE = "syndie.gui.viewforum.keymgmt.pbe";
-    private static final String T_KEYMGMT_PBE_INFO = "syndie.gui.viewforum.keymgmt.pbe.info";
-    private static final String T_KEYMGMT_NEWREPLY = "syndie.gui.viewforum.keymgmt.newreply";
-    private static final String T_KEYMGMT_OK = "syndie.gui.viewforum.keymgmt.ok";
-    private static final String T_KEYMGMT_ADVANCED = "syndie.gui.viewforum.keymgmt.advanced";
-
+    
     private static final String T_AUTHGROUP = "syndie.gui.viewforum.authgroup";
     private static final String T_AUTHGROUP_LABEL = "syndie.gui.viewforum.authgroup.label";
     private static final String T_AUTHGROUP_READ = "syndie.gui.viewforum.authgroup.read";
@@ -1483,26 +1304,7 @@ class ViewForum implements Translatable, Themeable {
             _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Create posts"));
             _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Manage"));
             _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Read forum feedback"));
-        
-            /*
-            _keyManagementShell.setText(registry.getText(T_KEYMGMT, "Forum key management"));
-            _keyManagementOpen.setText(registry.getText(T_KEYMGMT_OPEN, "Open access"));
-            _keyManagementOpenInfo.setText(registry.getText(T_KEYMGMT_OPEN_INFO, "This creates a new key for reading messages and publicizes it so that anyone can read with it"));
-            _keyManagementKeep.setText(registry.getText(T_KEYMGMT_KEEP, "Keep existing keys"));
-            _keyManagementKeepInfo.setText(registry.getText(T_KEYMGMT_KEEP_INFO, "This uses existing keys, publicizing them if they used to be public.  If the keys were passphrase protected before however, new users will not be able to enter the passphrase and gain access to these existing keys.  To do so, require a passphrase again here as well."));
-            _keyManagementRotate.setText(registry.getText(T_KEYMGMT_ROTATE, "Rotate keys for authorized readers"));
-            _keyManagementRotateInfo.setText(registry.getText(T_KEYMGMT_ROTATE_INFO, "This creates a new key, encrypted so that only already authorized readers can access the new key"));
-            _keyManagementReset.setText(registry.getText(T_KEYMGMT_RESET, "Reset all keys"));
-            _keyManagementResetInfo.setText(registry.getText(T_KEYMGMT_RESET_INFO, "This creates a new key encrypted with another new key.  The key used can either be distributed to authorized readers manually (with links in private messages, keyfiles, etc) or shared in a passphrase encrypted post."));
-            _keyManagementPBE.setText(registry.getText(T_KEYMGMT_PBE, "Require a passphrase to access the keys"));
-            _keyManagementPBEInfo.setText(registry.getText(T_KEYMGMT_PBE_INFO, "If a passphrase is required, even already authorized users will need to know the passphrase, so consider posting that prior to a key rotation."));
-            _keyManagementNewReply.setText(registry.getText(T_KEYMGMT_NEWREPLY, "Create a new forum reply key"));
-            _keyManagementOk.setText(registry.getText(T_KEYMGMT_OK, "Ok"));
-             */
-            
             _archiveAdd.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
-            //_userAdd.setText(_browser.getTranslationRegistry().getText(T_USER_ADD, "Add"));
-            //_keyManagementAdvanced.setText(_browser.getTranslationRegistry().getText(T_KEYMGMT_ADVANCED, "Advanced..."));
             
             _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
         } else {
