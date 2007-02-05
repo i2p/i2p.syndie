@@ -398,6 +398,37 @@ public class EepGet {
         }
     }
     
+    private class DisconnectIfIdle implements SimpleTimer.TimedEvent {
+        private long _lastActivity;
+        private long _timeout;
+        private boolean _cancelled;
+        public DisconnectIfIdle(long timeout) {
+            _lastActivity = System.currentTimeMillis();
+            _timeout = timeout;
+            _cancelled = false;
+        }
+        public void resetTimeout() { _lastActivity = System.currentTimeMillis(); }
+        public void cancelTimeout() { _cancelled = true; }
+        public void timeReached() {
+            if (_cancelled) return;
+            
+            if (_lastActivity + _timeout < System.currentTimeMillis()) {
+                _aborted = true;
+                if (_proxyIn != null)
+                    try { _proxyIn.close(); } catch (IOException ioe) {}
+                _proxyIn = null;
+                if (_proxyOut != null)
+                    try { _proxyOut.close(); } catch (IOException ioe) {}
+                _proxyOut = null;
+                if (_proxy != null)
+                    try { _proxy.close(); } catch (IOException ioe) {}
+                _proxy = null;
+            } else {
+                SimpleTimer.getInstance().addEvent(DisconnectIfIdle.this, 10*1000);
+            }
+        }
+    }
+    
     /** return true if the URL was completely retrieved */
     private void doFetch() throws IOException {
         _headersRead = false;
@@ -448,18 +479,22 @@ public class EepGet {
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Headers read completely, reading " + _bytesRemaining);
         
+        DisconnectIfIdle idle = new DisconnectIfIdle(_fetchHeaderTimeout);
+        
         boolean strictSize = (_bytesRemaining >= 0);
             
         int remaining = (int)_bytesRemaining;
         byte buf[] = new byte[1024];
-        while (_keepFetching && ( (remaining > 0) || !strictSize )) {
+        while (_keepFetching && ( (remaining > 0) || !strictSize ) && !_aborted) {
             int toRead = buf.length;
             if (strictSize && toRead > remaining)
                 toRead = remaining;
             int read = _proxyIn.read(buf, 0, toRead);
             if (read == -1)
                 break;
+            idle.resetTimeout();
             _out.write(buf, 0, read);
+            idle.resetTimeout();
             _bytesTransferred += read;
             remaining -= read;
             if (remaining==0 && _encodingChunked) {
@@ -482,6 +517,7 @@ public class EepGet {
                     read++;
                 }
             }
+            idle.resetTimeout();
             if (read > 0) 
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).bytesTransferred(
@@ -491,10 +527,15 @@ public class EepGet {
                             _encodingChunked?-1:_bytesRemaining, 
                             _url);
         }
-
+            
         if (_out != null)
             _out.close();
         _out = null;
+        
+        if (_aborted)
+            throw new IOException("Timed out reading the HTTP data");
+        
+        idle.cancelTimeout();
         
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Done transferring " + _bytesTransferred + " (ok? " + !_transferFailed + ")");

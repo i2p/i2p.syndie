@@ -177,8 +177,7 @@ public class HTTPServ implements CLI.Command {
         String line = null;
         line = DataHelper.readLine(in);
         if (line == null) {
-            fail(socket, in, out);
-            timeout.cancel();
+            fail(socket, in, out, timeout);
             return;
         }
         
@@ -188,12 +187,10 @@ public class HTTPServ implements CLI.Command {
             else if (line.startsWith("POST "))
                 handlePost(socket, in, out, timeout);
             else
-                fail(socket, in, out);
-            timeout.cancel();
+                fail(socket, in, out, timeout);
         } catch (RuntimeException re) {
             _ui.errorMessage("Error handling", re);
-            fail(socket, in, out);
-            timeout.cancel();
+            fail(socket, in, out, timeout);
         }
     }
     
@@ -244,13 +241,13 @@ public class HTTPServ implements CLI.Command {
             sub = "index.html";
         
         if ( (chan.length() <= 0) && (LocalArchiveManager.SHARED_INDEX_FILE.equals(sub)) ) {
-            send(socket, in, out, new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE));
+            send(socket, in, out, new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE), timeout);
             return;
         } else if ("index.html".equals(sub)) {
-            send(socket, in, out, new File(_client.getArchiveDir(), "index.html"));
+            send(socket, in, out, new File(_client.getArchiveDir(), "index.html"), timeout);
             return;
         } else {
-            sendIfAllowed(chan, sub, socket, in, out);
+            sendIfAllowed(chan, sub, socket, in, out, timeout);
         }
     }
     
@@ -280,12 +277,12 @@ public class HTTPServ implements CLI.Command {
         return _archive;
     }
     
-    private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out) throws IOException {
+    private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         // we only send a file if it is in our published shared archive index, which
         // doesn't necessarily contain everything we have (for anonymity reasons)
         SharedArchive archive = getSharedArchive();
         if (archive == null) {
-            fail404(socket, in, out);
+            fail404(socket, in, out, timeout);
             return;
         }
         
@@ -295,15 +292,15 @@ public class HTTPServ implements CLI.Command {
                 Hash chanHash = new Hash(hash);
                 if (archive.getChannel(chanHash) != null) {
                     // ok, metadata is published, allow the send
-                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), "meta" + Constants.FILENAME_SUFFIX));
+                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), "meta" + Constants.FILENAME_SUFFIX), timeout);
                     return;
                 } else {
                     // we may even have it, but its not in our published index, so dont give it to them
-                    fail404(socket, in, out);
+                    fail404(socket, in, out, timeout);
                 }
             } else {
                 // bad channel name
-                fail404(socket, in, out);
+                fail404(socket, in, out, timeout);
             }
         } else {
             byte hash[] = Base64.decode(chan);
@@ -311,23 +308,23 @@ public class HTTPServ implements CLI.Command {
                 Hash chanHash = new Hash(hash);
                 long messageId = SharedArchiveBuilder.getMessageId(sub);
                 if (messageId < 0) {
-                    fail404(socket, in, out);
+                    fail404(socket, in, out, timeout);
                 } else if (archive.isKnown(chanHash, messageId)) {
                     // ok, message is published, allow the send
-                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), messageId + Constants.FILENAME_SUFFIX));
+                    send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), messageId + Constants.FILENAME_SUFFIX), timeout);
                     return;
                 } else {
                     // we may even have it, but its not in our published index, so dont give it to them
-                    fail404(socket, in, out);
+                    fail404(socket, in, out, timeout);
                 }
             } else {
                 // bad channel name
-                fail404(socket, in, out);
+                fail404(socket, in, out, timeout);
             }
         }
     }
     
-    private void send(Socket socket, InputStream in, OutputStream out, File file) throws IOException {
+    private void send(Socket socket, InputStream in, OutputStream out, File file, Timeout timeout) throws IOException {
         String type = "application/octet-stream";
         String name = file.getName();
         if (name.endsWith(".html"))
@@ -344,6 +341,8 @@ public class HTTPServ implements CLI.Command {
         buf.append("\r\n");
         out.write(DataHelper.getUTF8(buf.toString()));
         
+        timeout.resetTimer();
+        
         int len = 0;
         //Sha256Standalone hash = new Sha256Standalone();
         FileInputStream fin = null;
@@ -355,48 +354,57 @@ public class HTTPServ implements CLI.Command {
                 out.write(dbuf, 0, read);
                 //hash.update(dbuf, 0, read);
                 len += read;
+                timeout.resetTimer();
             }
+            timeout.resetTimer();
             
             fin.close();
             fin = null;
             
             out.flush();
+            timeout.resetTimer();
             
             _ui.debugMessage("Sent " + file.getPath() + ": " + len + "/" + file.length());// +", sha256 = " + Base64.encode(hash.digest()));
         } finally {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
-            close(socket, in, out);
+            close(socket, in, out, timeout);
         }
     }
     
-    private static void close(Socket socket, InputStream in, OutputStream out) throws IOException {
+    private static void close(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         try {
             long dieAfter = System.currentTimeMillis() + 30*1000;
-            socket.setSoTimeout(10*1000);
-            try {
-                // we dont care what they send. just give them time to spew at us and then kill 'em
-                while ( (in.read() != -1) && (System.currentTimeMillis() < dieAfter) )
-                    ; // noop
-            } catch (IOException ioe) {
-                //_ui.debugMessage("closing socket, error on the read (good)");
+            if (!socket.isClosed()) {
+                if (timeout == null)
+                    socket.setSoTimeout(10*1000);
+                try {
+                    // we dont care what they send. just give them time to spew at us and then kill 'em
+                    while ( (in.read() != -1) && (System.currentTimeMillis() < dieAfter) ) {
+                        if (timeout != null)
+                            timeout.resetTimer();
+                    }
+                } catch (IOException ioe) {
+                    //_ui.debugMessage("closing socket, error on the read (good)");
+                }
+                in.close();
+                in = null;
+                out.close();
+                out = null;
+                socket.close();
+                socket = null;
             }
-            in.close();
-            in = null;
-            out.close();
-            out = null;
-            socket.close();
-            socket = null;
         } finally {
             if (in != null) try { in.close(); } catch (IOException ioe) {}
             if (out != null) try { in.close(); } catch (IOException ioe) {}
             if (out != null) try { out.close(); } catch (IOException ioe) {}
             if (socket != null) try { socket.close(); } catch (IOException ioe) {}
+            if (timeout != null) timeout.cancel();
         }
     }
     
     private void handlePost(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         if (!_allowPost) {
-            fail403(socket, in, out);
+            fail403(socket, in, out, timeout);
             return;
         }
         _ui.debugMessage("handlePost");
@@ -413,7 +421,7 @@ public class HTTPServ implements CLI.Command {
                 try {
                     contentLength = Long.parseLong(str.substring("content-length:".length()).trim());
                 } catch (NumberFormatException nfe) {
-                    fail(socket, in, out);
+                    fail(socket, in, out, timeout);
                     return;
                 }
             }
@@ -429,7 +437,7 @@ public class HTTPServ implements CLI.Command {
             byte header[] = new byte[headerSize];
             int read = DataHelper.read(in, header);
             if (read != headerSize) {
-                fail(socket, in, out);
+                fail(socket, in, out, timeout);
                 return;
             }
 
@@ -440,7 +448,8 @@ public class HTTPServ implements CLI.Command {
             SessionKey authKey = getAuthorizationKey(header);
             SessionKey encKey = getEncryptionKey(header);
             if (!authorized(authKey)) {
-                fail403(socket, in, out);
+                fail403(socket, in, out, timeout);
+                return;
             }
             
             timeout.resetTimer();
@@ -454,7 +463,7 @@ public class HTTPServ implements CLI.Command {
                 //if ( (sz > ArchiveIndex.DEFAULT_MAX_SIZE) || (sz > remaining{
                 if (sz > remaining) {
                     _ui.debugMessage(msgNum + ": invalid size: " + sz + " remaining: " + remaining);
-                    fail(socket, in, out);
+                    fail(socket, in, out, timeout);
                     return;
                 }
                  
@@ -463,7 +472,7 @@ public class HTTPServ implements CLI.Command {
                 byte msg[] = new byte[(int)sz];
                 read = DataHelper.read(in, msg);
                 if (read != (int)sz) {
-                    fail(socket, in, out);
+                    fail(socket, in, out, timeout);
                     return;
                 }
                 
@@ -485,7 +494,7 @@ public class HTTPServ implements CLI.Command {
             
             _ui.debugMessage(msgNum + ": handlePost: read complete " + contentLength + " to " + importDir.getPath());
             out.write(DataHelper.getUTF8("HTTP/1.0 200 OK\r\nConnection: close\r\n\r\n"));
-            close(socket, in, out);
+            close(socket, in, out, timeout);
             if (msgNum > 0) {
                 _ui.statusMessage("HTTP server received " + msgNum + " messages, scheduling bulk import");
                 _ui.insertCommand("menu syndicate");
@@ -518,17 +527,17 @@ public class HTTPServ implements CLI.Command {
         dir.delete();
     }
     
-    private void fail404(Socket socket, InputStream in, OutputStream out) throws IOException {
+    private void fail404(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         out.write(ERR_404);
-        fail(socket, in, out);
+        fail(socket, in, out, timeout);
     }
-    private void fail403(Socket socket, InputStream in, OutputStream out) throws IOException {
+    private void fail403(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         out.write(ERR_403);
-        fail(socket, in, out);
+        fail(socket, in, out, timeout);
     }
-    private void fail(Socket socket, InputStream in, OutputStream out) throws IOException {
+    private void fail(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
         _ui.debugMessage("failing socket", new Exception("source"));
-        close(socket, in, out);
+        close(socket, in, out, timeout);
     }
     
     private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n");
@@ -539,8 +548,7 @@ public class HTTPServ implements CLI.Command {
         Timeout timeout = new Timeout(socket, 20*1000);
         OutputStream out = socket.getOutputStream();
         out.write(TOO_BUSY);
-        close(socket, socket.getInputStream(), out);
-        timeout.cancel();
+        close(socket, socket.getInputStream(), out, timeout);
     }
     
     private static class Timeout implements SimpleTimer.TimedEvent {
