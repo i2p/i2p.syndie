@@ -78,18 +78,17 @@ class ManageForum implements Translatable, Themeable {
     private Text _description;
     private Label _expirationLabel;
     private Text _expiration;
-    private Label _referencesLabel;
-    private Combo _references;
-    /** ReferenceNode instances correlating with the entries in _references (may be null) */
-    private List _referenceNodes;
     /** just the roots of the _references */
     private List _referenceNodeRoots;
     private Group _archiveGroup;
-    private Table _archives;
-    private TableColumn _archiveURL;
-    private TableColumn _archiveIsPub;
-    private Map _archiveItemToURI;
-    private Button _archiveAdd;
+    private Button _archiveSelect;
+    private Button _archiveRemoveAll;
+    private Group _forumGroup;
+    private Button _forumSelect;
+    private Button _forumRemoveAll;
+    private Group _banGroup;
+    private Button _banSelect;
+    private Button _banRemoveAll;
     private Group _authGroup;
     private Label _authLabel;
     private Button _authRead;
@@ -103,7 +102,6 @@ class ManageForum implements Translatable, Themeable {
     private boolean _initialized;
     private boolean _modified;
     
-    private ManageReferenceChooserPopup _refPopup;
     private ManageForumAuthRead _manageForumAuthRead;
     private ManageForumAuthPost _manageForumAuthPost;
     private ManageForumAuthManage _manageForumAuthManage;
@@ -124,7 +122,6 @@ class ManageForum implements Translatable, Themeable {
         _scopeId = -1;
         _initialized = false;
         _avatarImgStandard = new ArrayList();
-        _archiveItemToURI = new HashMap();
         _privArchiveURIs = new ArrayList();
         _pubArchiveURIs = new ArrayList();
         _managerHashes = new ArrayList();
@@ -161,7 +158,7 @@ class ManageForum implements Translatable, Themeable {
         loadOrigAvatar();
         
         _avatar = new Button(_root, SWT.PUSH);
-        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, 3));
+        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, 2));
         
         _avatarMenu = new Menu(_avatar);
         _avatar.setMenu(_avatarMenu);
@@ -206,120 +203,43 @@ class ManageForum implements Translatable, Themeable {
         _expiration.setLayoutData(gd);
         _expiration.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
-        _referencesLabel = new Label(_root, SWT.NONE);
-        _referencesLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        Composite refRow = new Composite(_root, SWT.NONE);
+        refRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        refRow.setLayout(new FillLayout(SWT.HORIZONTAL));
         
-        _references = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        int colspan = 5;
-        _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, colspan, 1));
+        _archiveGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _archiveGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
         
-        _references.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewRef(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewRef(); }
-            private void viewRef() {
-                if (_refPopup == null)
-                    _refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell(), true);
-                _refPopup.setReferences(_referenceNodeRoots);
-                _refPopup.addCloseListener(new ManageReferenceChooserPopup.CloseListener() {
-                    public void closed(List refRoots) {
-                        _referenceNodeRoots = refRoots;
-                        modified();
-                        redrawReferences();
-                    }
-                });
-                _refPopup.show();
-            }
+        _archiveSelect = new Button(_archiveGroup, SWT.PUSH);
+        _archiveRemoveAll = new Button(_archiveGroup, SWT.PUSH);
+        _archiveSelect.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() { new ManageForumArchives(_browser, ManageForum.this); }
         });
-        
-        _archiveGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
-        _archiveGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
-        _archiveGroup.setLayout(new GridLayout(2, false));
-        
-        _archives = new Table(_archiveGroup, SWT.SINGLE | SWT.FULL_SELECTION | SWT.BORDER);
-        _archives.setLinesVisible(true);
-        _archives.setHeaderVisible(false);
-        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
-        _archives.setLayoutData(gd);
-        
-        _archiveURL = new TableColumn(_archives, SWT.LEFT);
-        _archiveIsPub = new TableColumn(_archives, SWT.RIGHT);
-
-        final Menu archiveMenu = new Menu(_archives);
-        _archives.setMenu(archiveMenu);
-        MenuItem add = new MenuItem(archiveMenu, SWT.PUSH);
-        add.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
-        add.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addArchive(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addArchive(); }
-        });
-        MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
-        view.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_VIEW, "View"));
-        view.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewArchive(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewArchive(); }
-            private void viewArchive() {
-                TableItem items[] = _archives.getSelection();
-                for (int i = 0; i < items.length; i++) {
-                    SyndieURI uri = (SyndieURI)_archiveItemToURI.get(items[i]);
-                    if (uri != null) {
-                        if (uri.isArchive())
-                            _browser.view(uri);
-                        else
-                            _browser.view(SyndieURI.createArchive(uri.getURL(), null));
-                    }
-                }
-            }
-        });
-        MenuItem delete = new MenuItem(archiveMenu, SWT.PUSH);
-        delete.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_DELETE, "Delete"));
-        delete.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { deleteArchive(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { deleteArchive(); }
-            private void deleteArchive() {
-                TableItem items[] = _archives.getSelection();
-                for (int i = 0; i < items.length; i++) {
-                    SyndieURI uri = (SyndieURI)_archiveItemToURI.get(items[i]);
-                    _pubArchiveURIs.remove(uri);
-                    _privArchiveURIs.remove(uri);
-                    modified();
-                }
+        _archiveRemoveAll.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
+            private void fire() { 
+                _pubArchiveURIs.clear();
+                _privArchiveURIs.clear();
                 redrawArchives();
-                _root.layout(true, true);
             }
         });
-        MenuItem isPub = new MenuItem(archiveMenu, SWT.PUSH);
-        isPub.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ISPUB, "Toggle share publicly"));
-        isPub.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { toggleArchivePub(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { toggleArchivePub(); }
-            private void toggleArchivePub() {
-                TableItem items[] = _archives.getSelection();
-                for (int i = 0; i < items.length; i++) {
-                    SyndieURI uri = (SyndieURI)_archiveItemToURI.get(items[i]);
-
-                    if (_pubArchiveURIs.contains(uri)) {
-                        _pubArchiveURIs.remove(uri);
-                        if (!_privArchiveURIs.contains(uri))
-                            _privArchiveURIs.add(uri);
-                    } else {
-                        _privArchiveURIs.remove(uri);
-                        if (!_pubArchiveURIs.contains(uri))
-                            _pubArchiveURIs.add(uri);
-                    }
-                }
-                modified();
-                redrawArchives();
-                _root.layout(true, true);
-            }
-        });
-
-        _archiveAdd = new Button(_archiveGroup, SWT.PUSH);
-        _archiveAdd.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
-        _archiveAdd.setLayoutData(new GridData(GridData.BEGINNING, GridData.BEGINNING, false, false));
-        _archiveAdd.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addArchive(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addArchive(); }
-        });
+        
+        _forumGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _forumGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
+        
+        _forumSelect = new Button(_forumGroup, SWT.PUSH);
+        _forumSelect.setEnabled(false);
+        _forumRemoveAll = new Button(_forumGroup, SWT.PUSH);
+        
+        _banGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _banGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
+        
+        _banSelect = new Button(_banGroup, SWT.PUSH);
+        _banSelect.setEnabled(false);
+        _banRemoveAll = new Button(_banGroup, SWT.PUSH);
         
         _authGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _authGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -375,7 +295,7 @@ class ManageForum implements Translatable, Themeable {
         
         _actions = new Composite(_root, SWT.NONE);
         _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
+        _actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 7, 1));
         _save = new Button(_actions, SWT.PUSH);
         _cancel = new Button(_actions, SWT.PUSH);
         _save.setEnabled(false);
@@ -400,13 +320,26 @@ class ManageForum implements Translatable, Themeable {
     
     ChannelInfo getChannelInfo() { return _browser.getClient().getChannel(_scopeId); }
     
+    List getPublicArchiveURIs() { return new ArrayList(_pubArchiveURIs); }
+    List getPrivateArchiveURIs() { return new ArrayList(_privArchiveURIs); }
+    
+    void setArchives(List pubURIs, List privURIs) {
+        _pubArchiveURIs.clear();
+        _pubArchiveURIs.addAll(pubURIs);
+        _privArchiveURIs.clear();
+        _privArchiveURIs.addAll(privURIs);
+        
+        modified();
+        
+        redrawArchives();
+    }
+    
     public void dispose() {
         ImageUtil.dispose(_avatarImgOrig);
         for (int i = 0; i < _avatarImgStandard.size(); i++)
             ImageUtil.dispose((Image)_avatarImgStandard.get(i));
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
-        if (_refPopup != null) _refPopup.dispose();
         if (_manageForumAuthRead != null) _manageForumAuthRead.dispose();
         if (_manageForumAuthPost != null) _manageForumAuthPost.dispose();
         if (_manageForumAuthManage != null) _manageForumAuthManage.dispose();
@@ -882,6 +815,8 @@ class ManageForum implements Translatable, Themeable {
                 pickAvatar(_avatarImgOrig);
             
             loadArchives(info);
+            loadForums(info);
+            loadBans(info);
             loadUsers(info);
             _root.layout(true, true);
         }
@@ -893,43 +828,6 @@ class ManageForum implements Translatable, Themeable {
     private static final String str(String orig) { return (orig != null ? orig : ""); }
     private void loadReferences(ChannelInfo info) {
         _referenceNodeRoots = info.getReferences();
-        redrawReferences();
-    }
-    private void redrawReferences() {
-        _references.setRedraw(false);
-        _references.removeAll();
-        // place a depth first walk of the references into _references
-        final List dfsNodes = new ArrayList();
-        ReferenceNode.Visitor walker = new ReferenceNode.Visitor() {
-            public void visit(ReferenceNode node, int depth, int siblingOrder) {
-                dfsNodes.add(node);
-                ReferenceNode parent = node.getParent();
-                String parentString = null;
-                if (parent != null)
-                    parentString = _references.getItem(dfsNodes.indexOf(parent));
-                String name = node.getName();
-                String desc = node.getDescription();
-                SyndieURI uri = node.getURI();
-                StringBuffer buf = new StringBuffer();
-                if (parentString != null) 
-                    buf.append(parentString).append(" > ");
-                if (name != null)
-                    buf.append(name);
-                else if (desc != null)
-                    buf.append(desc);
-                else if (uri != null)
-                    buf.append(uri.toString());
-                _references.add(buf.toString());
-            }
-        };
-        ReferenceNode.walk(_referenceNodeRoots, walker);
-        _referenceNodes = dfsNodes;
-        if (_referenceNodes.size() <= 0) {
-            _references.add(_browser.getTranslationRegistry().getText(T_REFERENCES_ADD, "Add new references"));
-        } else {
-            _references.add(_browser.getTranslationRegistry().getText(T_REFERENCES_EDIT, "Manage references"));
-        }
-        _references.setRedraw(true);
     }
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
@@ -947,9 +845,7 @@ class ManageForum implements Translatable, Themeable {
         redrawArchives();
     }
     private void redrawArchives() {
-        _archives.setRedraw(false);
-        _archives.removeAll();
-        _archiveItemToURI.clear();
+        int numSelected = 0;
         
         List all = new ArrayList();
         all.addAll(_pubArchiveURIs);
@@ -960,51 +856,43 @@ class ManageForum implements Translatable, Themeable {
             if (uri == null) continue;
             String url = uri.getURL();
             if ( (url == null) || (url.trim().length() <= 0) ) continue;
-            TableItem item = new TableItem(_archives, SWT.NONE);
-            item.setText(0, url.trim());
-            if (_pubArchiveURIs.contains(uri))
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_PUBLIC, "Public"));
-            else
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_PRIVATE, "Authorized readers only"));
-            
-            _archiveItemToURI.put(item, uri);
+            numSelected++;
         }
         
-        _archiveURL.pack();
-        _archiveIsPub.pack();
-    
-        _archives.setRedraw(true);
+        _archiveGroup.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_PREFIX, "Archives: ") + numSelected + " ");
+        _archiveRemoveAll.setEnabled(numSelected > 0);
+        
+        _archiveGroup.getParent().layout(new Control[] { _archiveGroup });
     }
+    private static final String T_ARCHIVE_PREFIX = "syndie.gui.manageforum.archive.prefix";
+    
+    private void loadForums(ChannelInfo info) {
+        redrawForums();
+    }
+    private void redrawForums() {
+        int numSelected = 0;
+        _forumGroup.setText(_browser.getTranslationRegistry().getText(T_FORUM_PREFIX, "Forums/Authors: ") + numSelected + " ");
+        _forumRemoveAll.setEnabled(numSelected > 0);
+        _forumGroup.getParent().layout(new Control[] { _forumGroup });
+    }
+    private static final String T_FORUM_PREFIX = "syndie.gui.manageforum.forum.prefix";
+
+    private void loadBans(ChannelInfo info) {
+        redrawBans();
+    }
+    private void redrawBans() {
+        int numSelected = 0;
+        _banGroup.setText(_browser.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + numSelected + " ");
+        _banRemoveAll.setEnabled(numSelected > 0);
+        _banGroup.getParent().layout(new Control[] { _banGroup });
+    }
+    private static final String T_BAN_PREFIX = "syndie.gui.manageforum.ban.prefix";
 
     private void loadUsers(ChannelInfo info) {
         _managerHashes.clear();
         _posterHashes.clear();
         _managerHashes.addAll(info.getAuthorizedManagerHashes());
         _posterHashes.addAll(info.getAuthorizedPosterHashes());
-    }
-    
-    private static final String T_ARCHIVE_VIEW = "syndie.gui.manageforum.archive.view";
-    private static final String T_ARCHIVE_DELETE = "syndie.gui.manageforum.archive.delete";
-    private static final String T_ARCHIVE_ISPUB = "syndie.gui.manageforum.archive.ispub";
-    private static final String T_ARCHIVE_ADD = "syndie.gui.manageforum.archive.add";
-    private static final String T_ARCHIVE_PUBLIC = "syndie.gui.manageforum.archive.public";
-    private static final String T_ARCHIVE_PRIVATE = "syndie.gui.manageforum.archive.private";
-    
-    private void addArchive() {
-        LinkBuilderPopup popup = new LinkBuilderPopup(_browser, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
-                public void uriBuilt(SyndieURI uri, String text) {
-                    if (uri != null) {
-                        _privArchiveURIs.add(uri);
-                        redrawArchives();
-                        modified();
-                    }
-                }
-                public int getPageCount() { return 0; }
-                public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
-            });
-        popup.limitOptions(false, false, false, false, false, false, false, false, false, true, false);
-        popup.setShowText(false);
-        popup.showPopup();
     }
     
     public void applyTheme(Theme theme) {
@@ -1016,10 +904,15 @@ class ManageForum implements Translatable, Themeable {
         _description.setFont(theme.DEFAULT_FONT);
         _expirationLabel.setFont(theme.DEFAULT_FONT);
         _expiration.setFont(theme.DEFAULT_FONT);
-        _referencesLabel.setFont(theme.DEFAULT_FONT);
-        _references.setFont(theme.DEFAULT_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
-        _archives.setFont(theme.TABLE_FONT);
+        _archiveRemoveAll.setFont(theme.DEFAULT_FONT);
+        _archiveSelect.setFont(theme.DEFAULT_FONT);
+        _forumGroup.setFont(theme.DEFAULT_FONT);
+        _forumRemoveAll.setFont(theme.DEFAULT_FONT);
+        _forumSelect.setFont(theme.DEFAULT_FONT);
+        _banGroup.setFont(theme.DEFAULT_FONT);
+        _banRemoveAll.setFont(theme.DEFAULT_FONT);
+        _banSelect.setFont(theme.DEFAULT_FONT);
         
         _save.setFont(theme.BUTTON_FONT);
         _cancel.setFont(theme.BUTTON_FONT);
@@ -1030,7 +923,6 @@ class ManageForum implements Translatable, Themeable {
         _authPost.setFont(theme.BUTTON_FONT);
         _authManage.setFont(theme.BUTTON_FONT);
         _authReply.setFont(theme.BUTTON_FONT);
-        _archiveAdd.setFont(theme.BUTTON_FONT);
         
         redrawArchives();
 
@@ -1042,9 +934,6 @@ class ManageForum implements Translatable, Themeable {
     private static final String T_DESC = "syndie.gui.manageforum.desc";
     private static final String T_AUTH = "syndie.gui.manageforum.auth";
     private static final String T_EXPIRATION = "syndie.gui.manageforum.expiration";
-    private static final String T_REFERENCES = "syndie.gui.manageforum.references";
-    private static final String T_REFERENCES_ADD = "syndie.gui.manageforum.references.add";
-    private static final String T_REFERENCES_EDIT = "syndie.gui.manageforum.references.edit";
     private static final String T_USERS = "syndie.gui.manageforum.users";
     private static final String T_PUBARCHIVE = "syndie.gui.manageforum.pubarchive";
     private static final String T_PRIVARCHIVE = "syndie.gui.manageforum.privarchive";
@@ -1062,6 +951,16 @@ class ManageForum implements Translatable, Themeable {
     private static final String T_AUTH_PUBREPLY = "syndie.gui.manageforum.auth.pubreply";
     private static final String T_AUTH_AUTH = "syndie.gui.manageforum.auth.auth";
     
+    private static final String T_ARCHIVE_REMOVEALL = "syndie.gui.manageforum.archive.removeall";
+    private static final String T_ARCHIVE_SELECTALL = "syndie.gui.manageforum.archive.selectall";
+    private static final String T_ARCHIVE_SELECT = "syndie.gui.manageforum.archive.select";
+    private static final String T_FORUM_REMOVEALL = "syndie.gui.manageforum.forum.removeall";
+    private static final String T_FORUM_SELECTALL = "syndie.gui.manageforum.forum.selectall";
+    private static final String T_FORUM_SELECT = "syndie.gui.manageforum.forum.select";
+    private static final String T_BAN_REMOVEALL = "syndie.gui.manageforum.ban.removeall";
+    private static final String T_BAN_SELECTALL = "syndie.gui.manageforum.ban.selectall";
+    private static final String T_BAN_SELECT = "syndie.gui.manageforum.ban.select";
+    
     private static final String T_AVATAR_OTHER = "syndie.gui.manageforum.avatar.other";
 
     public void translate(TranslationRegistry registry) {
@@ -1069,8 +968,6 @@ class ManageForum implements Translatable, Themeable {
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
-        _referencesLabel.setText(registry.getText(T_REFERENCES, "References:"));
-        _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertized archives:"));
         _save.setText(registry.getText(T_SAVE, "Save changes"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
 
@@ -1080,8 +977,16 @@ class ManageForum implements Translatable, Themeable {
         _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Create posts"));
         _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Manage"));
         _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Read forum feedback"));
-        _archiveAdd.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_ADD, "Add"));
 
+        _archiveRemoveAll.setText(registry.getText(T_ARCHIVE_REMOVEALL, "Remove all"));
+        _archiveSelect.setText(registry.getText(T_ARCHIVE_SELECT, "Select..."));
+        
+        _forumRemoveAll.setText(registry.getText(T_FORUM_REMOVEALL, "Remove all"));
+        _forumSelect.setText(registry.getText(T_FORUM_SELECT, "Select..."));
+        
+        _banRemoveAll.setText(registry.getText(T_BAN_REMOVEALL, "Remove all"));
+        _banSelect.setText(registry.getText(T_BAN_SELECT, "Select..."));
+    
         _avatarOther.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
     }
 }
