@@ -191,8 +191,6 @@ public class SyncOutboundPusher {
                 else
                     f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
                 if (!f.exists()) {
-                    
-                if (uri.getMessageId() == null)
                     if (uri.getMessageId() == null)
                         f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
                     else
@@ -224,10 +222,10 @@ public class SyncOutboundPusher {
             File sharedIndex = new File(_manager.getClient().getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
             if (sharedIndex.exists()) {
                 _manager.getUI().debugMessage("including shared index");
-                out.write(("Files." + uris.size() + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +
-                           "Files." + uris.size() + ".UploadFrom=direct\r\n" +
-                           "Files." + uris.size() + ".Metadata.ContentType=application/x-syndie-index\r\n" +
-                           "Files." + uris.size() + ".DataLength=" + sharedIndex.length() + "\r\n").getBytes());
+                out.write(("Files." + (uris.size()+1) + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +
+                           "Files." + (uris.size()+1) + ".UploadFrom=direct\r\n" +
+                           "Files." + (uris.size()+1) + ".Metadata.ContentType=application/x-syndie-index\r\n" +
+                           "Files." + (uris.size()+1) + ".DataLength=" + sharedIndex.length() + "\r\n").getBytes());
             }
             out.write(DataHelper.getUTF8("EndMessage\r\n"));
             
@@ -240,8 +238,6 @@ public class SyncOutboundPusher {
                 else
                     f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
                 if (!f.exists()) {
-                    
-                if (uri.getMessageId() == null)
                     if (uri.getMessageId() == null)
                         f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
                     else
@@ -329,8 +325,10 @@ public class SyncOutboundPusher {
     }
     
     private String getTarget(String privateSSK) {
-        int index = privateSSK.indexOf("SSK@");
-        String key = privateSSK.substring(index+4);
+	String key = privateSSK;
+	if ( privateSSK.indexOf("SSK@")==0 || privateSSK.indexOf("USK@")==0 ) {
+            key = key.substring(4);
+	}
         while (key.endsWith("/"))
             key = key.substring(0, key.length()-1);
         return "USK@" + key + "/archive/0/";

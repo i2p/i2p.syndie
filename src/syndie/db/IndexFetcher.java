@@ -80,7 +80,7 @@ class IndexFetcher {
             archive.indexFetchFail("No URL", null, false);
             return;
         }
-        if ( (url.indexOf("USK@") >= 0) || (url.indexOf("SSK@") >= 0) || (url.indexOf("KSK@") >= 0) ) {
+        if ( (url.indexOf("USK@") >= 0) || (url.indexOf("SSK@") >= 0) || (url.indexOf("KSK@") >= 0) || (url.indexOf("CHK@") >= 0)) {
             fetchFreenetIndex(archive);
         } else if (url.startsWith("/") || url.startsWith("file://") || url.startsWith("C:\\")) {
             fetchFileIndex(archive);
@@ -91,67 +91,102 @@ class IndexFetcher {
     
     private void fetchFreenetIndex(SyncArchive archive) {
         String url = getFreenetURL(archive);
-        if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
-            _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
-        else
-            _manager.getUI().statusMessage("Fetching [" + url + "]");
-        try {
-            File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            final EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, indexFile.getAbsolutePath(), url);
-            GetListener lsnr = new GetListener(archive, indexFile);
-            get.addStatusListener(lsnr);
-            Thread t = new Thread(new Runnable() { 
-                public void run() {
-                    get.fetch(5*60*1000); // 5 minutes is beyond reasonable, so disable the retries above
-                }
-            }, "IndexFetch " + url);
-            t.setDaemon(true);
-            t.start();
-        } catch (IOException ioe) {
-            archive.indexFetchFail("Internal error writing temp file", ioe, true);
+        if (url == null) {
+            //URL is not a freenet key
+            archive.indexFetchFail("URL is not a valid freenet key", null, false);
+        } else {
+            //URL seems to be correct, go on
+            if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+                _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+            else
+                _manager.getUI().statusMessage("Fetching [" + url + "]");
+            try {
+                File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
+                final EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, indexFile.getAbsolutePath(), url);
+                GetListener lsnr = new GetListener(archive, indexFile);
+                get.addStatusListener(lsnr);
+                Thread t = new Thread(new Runnable() { 
+                    public void run() {
+                        get.fetch(5*60*1000); // 5 minutes is beyond reasonable, so disable the retries above
+                    }
+                }, "IndexFetch " + url);
+                t.setDaemon(true);
+                t.start();
+            } catch (IOException ioe) {
+                archive.indexFetchFail("Internal error writing temp file", ioe, true);
+            }
         }
     }
     
     private String getFreenetURL(SyncArchive archive) { return getFreenetURL(archive, null); }
     static String getFreenetURL(SyncArchive archive, SyndieURI uri) {
+        String finalURI = "";
         String archiveURL = archive.getURL();
-        int keyStart = 0; // archiveURL.indexOf('@') - 3; // USK@/CHK@/SSK@ (fix if freenet ever gets other keys)
-        if (keyStart < 0) return null;
-        int end = archiveURL.indexOf('?', keyStart);
-        String key = null;
-        if (end < keyStart)
-            key = archiveURL.substring(keyStart);
-        else
-            key = archiveURL.substring(keyStart, end);
-        
-        // ok, now we have [http://foo.i2p/]SSK@foo/bar/baz
-        if (key.indexOf('/') > 0) {
-            if (!key.endsWith("/"))
-                key = key.substring(0, key.lastIndexOf('/')+1);
+
+        //split prefix and keytype from everything else
+        int keyTypePos = archiveURL.indexOf("@");
+        String keyType = archiveURL.substring(keyTypePos-3, keyTypePos+1); //Keytype, USK@/CHK@/...
+        String prefix = archiveURL.substring(0, keyTypePos-3); //anything before the USK@/CHK@/SSK@/KSK@
+        archiveURL = archiveURL.substring(keyTypePos+1);
+	
+        //strip any existing parameters from the end of the URL
+        int end = archiveURL.indexOf("?");
+        if (end >= 0) { 
+            archiveURL = archiveURL.substring(0, end);
+        } 
+
+        if ( !keyType.equals("USK@") ) {
+            //not a USK key, so further parsing is futile. Stick everything back together
+            finalURI = keyType + archiveURL;
+            if ( !finalURI.endsWith("/") ) {
+                finalURI = finalURI + "/";
+            }
         } else {
-            key = key + '/';
+            //USK key, procede with getting the raw key and the name
+            int firstSlash = archiveURL.indexOf("/");
+            if ( firstSlash == -1 ) { 
+                return null; //invalid url
+            } else {
+                String key = archiveURL.substring(0, firstSlash);
+                archiveURL = archiveURL.substring(firstSlash+1);
+
+                int secondSlash = archiveURL.indexOf("/");
+                if ( secondSlash == -1 ) {
+                    return null; //invalid url
+                } else {
+                    String name = archiveURL.substring(0, secondSlash);
+
+                    //now build the (nearly) final URI depending on the fetch request
+                    if ( uri == null ) {
+                        //shared-index.dat fetch, use -1 as edition
+                        finalURI = keyType + key + "/" + name + "/-1/";
+                    } else {
+                        //other fetch use the normal edition
+                        finalURI = keyType + key + "/" + name + "/0/";
+                    }
+                }
+            }
         }
-        
         if (uri == null) {
             // turn the key into [http://foo.i2p/]SSK@foo/bar/shared-index.dat
-            key = key + LocalArchiveManager.SHARED_INDEX_FILE;
+            finalURI = finalURI + LocalArchiveManager.SHARED_INDEX_FILE;
         } else {
-            key = key + uri.getScope().toBase64() + "/";
+            finalURI = finalURI + uri.getScope().toBase64() + "/";
             if (uri.getMessageId() != null) {
                 // turn the key into [http://foo.i2p/]SSK@foo/bar/$scope/$messageId.syndie
-                key = key + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
+                finalURI = finalURI + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
             } else {
                 // turn the key into [http://foo.i2p/]SSK@foo/bar/$scope/meta.syndie
-                key = key + "meta" + Constants.FILENAME_SUFFIX;
+                finalURI = finalURI + "meta" + Constants.FILENAME_SUFFIX;
             }
         }
         
-        key = key + "?forcedownload"; // don't give us a content type warning
+        finalURI = finalURI + "?forcedownload"; // don't give us a content type warning
         
-        if (key.startsWith("USK@") || key.startsWith("KSK@") || key.startsWith("SSK@"))
-            return getFProxyURL(archive) + key;
+        if ( prefix.equals("") )
+            return getFProxyURL(archive) + finalURI;
         else // http://fproxy.tino.i2p/USK@foo/bar/shared-index.dat?forcedownload
-            return key;
+            return prefix + finalURI;
     }
     
     /** http://localhost:8888/ or whatever */
