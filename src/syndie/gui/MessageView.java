@@ -399,6 +399,7 @@ public class MessageView implements Translatable, Themeable {
         ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
         id.messageId = msg.getMessageId();
         id.scope = msg.getScopeChannel();
+        id.authorScopeId = msg.getAuthorChannelId();
         msgs.add(builder.buildThread(id));
         int threadSize = countMessages(msgs);
         _browser.getUI().debugMessage("thread for " + _uri + ":\n" + msgs);

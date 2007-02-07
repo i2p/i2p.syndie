@@ -15,6 +15,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
@@ -99,6 +100,8 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
         _browser.getTranslationRegistry().register(this);
     }
 
+    
+    public void watchedChannelSelected(TreeItem item, WatchedChannel channel) { _info.watchedChannelSelected(item, channel); }
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) { _info.bookmarkSelected(item, node); }
     public void manageChannelSelected(TreeItem item, ChannelInfo channel) { _info.manageChannelSelected(item, channel); }
     public void postChannelSelected(TreeItem item, ChannelInfo channel) { _info.postChannelSelected(item, channel); }

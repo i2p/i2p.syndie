@@ -68,6 +68,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private Set _requiredTags;
     private Set _wantedTags;
     private Set _rejectedTags;
+    private Set _postByScopeIds;
     
     private int _sortField;
     private boolean _sortOrderAscending;
@@ -100,6 +101,22 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     chans.add(new Hash(b));
             }
             _channelHashes = chans;
+        }
+        
+        String postBy[] = criteria.getStringArray("postbyscope");
+        if ( (postBy == null) || (postBy.length == 0) ) {
+            _postByScopeIds = null;
+        } else {
+            Set chanIds = new HashSet();
+            for (int i = 0; i < postBy.length; i++) {
+                byte b[] = Base64.decode(postBy[i]);
+                if ( (b != null) && (b.length == Hash.HASH_LENGTH) ) {
+                    long id = _client.getChannelId(new Hash(b));
+                    if (id >= 0)
+                        chanIds.add(new Long(id));
+                }
+            }
+            _postByScopeIds = chanIds;
         }
         
         String author = criteria.getString("author");
@@ -418,24 +435,24 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("threads: " + _roots);
     }
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId, wasAuthorized FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.isCancelled = FALSE AND m.readKeyMissing = false " +
                 "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId, wasAuthorized FROM channelMessage " +
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE importDate > ? AND messageId > ? " +
                 "AND isCancelled = FALSE AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
     
-    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId, wasAuthorized FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL";
-    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId, wasAuthorized FROM channelMessage m " +
+    private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL";
@@ -476,11 +493,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         if (rs.wasNull()) continue;
                         Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
                         if (rs.wasNull()) wasAuth = null;
+                        long author = rs.getLong(5);
+                        if (rs.wasNull()) author = -1;
                         
                         ThreadMsgId tmi = new ThreadMsgId(msgId);
                         tmi.scope = new Hash(scope);
                         tmi.messageId = messageId;
                         tmi.authorized = wasAuth;
+                        tmi.authorScopeId = author;
                         matchingThreadMsgIds.add(tmi);
                     }
                     rs.close();
@@ -509,11 +529,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (rs.wasNull()) continue;
                     Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
                     if (rs.wasNull()) wasAuth = null;
+                    long author = rs.getLong(5);
+                    if (rs.wasNull()) author = -1;
 
                     ThreadMsgId tmi = new ThreadMsgId(msgId);
                     tmi.scope = new Hash(scope);
                     tmi.messageId = messageId;
                     tmi.authorized = wasAuth;
+                    tmi.authorScopeId = author;
                     matchingThreadMsgIds.add(tmi);
                 }
                 rs.close();
@@ -526,6 +549,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if ( (_postByScopeIds != null) && (_postByScopeIds.size() > 0) ) {
+            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId id = (ThreadMsgId)iter.next();
+                if (!_postByScopeIds.contains(new Long(id.authorScopeId)))
+                    iter.remove();
+            }
         }
         return matchingThreadMsgIds;
     }
@@ -583,7 +614,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
-            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized " +
+            "SELECT referencedChannelHash, referencedMessageId, referencedCloseness, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized, cm.authorChannelId " +
             "FROM messageHierarchy mh " +
             "LEFT OUTER JOIN channel c ON channelHash = referencedChannelHash " +
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
@@ -626,9 +657,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (rs.wasNull()) replyKeyMissing = false;
                     Boolean wasAuth = rs.getBoolean(8) ? Boolean.TRUE : Boolean.FALSE;
                     if (rs.wasNull()) wasAuth = null;
+                    long author = rs.getLong(9);
+                    if (rs.wasNull()) author = -1;
                     
                     ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
                     ancestor.messageId = messageId;
+                    ancestor.authorScopeId = author;
                     if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
                         ancestor.scope = new Hash(chanHash);
                     
@@ -668,7 +702,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
 
     private static final String SQL_BUILD_CHILDREN =
-            "SELECT c.channelHash, cm.messageId, 0, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized " +
+            "SELECT c.channelHash, cm.messageId, 0, cm.msgId, cm.readKeyMissing, cm.pbePrompt, cm.replyKeyMissing, cm.wasAuthorized, cm.authorChannelId " +
             "FROM channelMessage parentMsg " +
             "JOIN channel parentChannel ON parentMsg.scopeChannelId = parentChannel.channelId " +
             "JOIN messageHierarchy mh ON mh.referencedMessageId = parentMsg.messageId AND mh.referencedChannelHash = parentChannel.channelHash " +
@@ -733,9 +767,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (rs.wasNull()) replyKeyMissing = false;
                 Boolean wasAuth = rs.getBoolean(8) ? Boolean.TRUE : Boolean.FALSE;
                 if (rs.wasNull()) wasAuth = null;
+                long author = rs.getLong(9);
+                if (rs.wasNull()) author = -1;
 
                 ThreadMsgId ancestor = new ThreadMsgId(ancestorMsgId);
                 ancestor.messageId = messageId;
+                ancestor.authorScopeId = author;
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
                     ancestor.scope = new Hash(chanHash);
 

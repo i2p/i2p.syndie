@@ -708,12 +708,14 @@ public class MessageTree implements Translatable, Themeable {
                     days = 1; 
                     break;
             }
-            if (_advancedDateImport.getSelection()) {
-                attributes.put("agelocal", new Integer(days));
-                attributes.remove("age");
-            } else {
-                attributes.put("age", new Integer(days));
-                attributes.remove("agelocal");
+            if (!uri.getBoolean("keepdate", false)) {
+                if (_advancedDateImport.getSelection()) {
+                    attributes.put("agelocal", new Integer(days));
+                    attributes.remove("age");
+                } else {
+                    attributes.put("age", new Integer(days));
+                    attributes.remove("agelocal");
+                }
             }
 
             String tag = _filterTag.getText().trim();

@@ -23,6 +23,7 @@ import syndie.data.MessageInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 
 /**
@@ -345,6 +346,14 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         }
     }
     
+    public void watchedChannelSelected(TreeItem item, WatchedChannel channel) {
+        Hash scope = _browser.getClient().getChannelHash(channel.getChannelId());
+        if (scope != null) {
+            _curReference = SyndieURI.createScope(scope);
+            refSelected();
+            _root.layout();
+        }
+    }
     public void bookmarkSelected(TreeItem item, NymReferenceNode node) {
         //System.out.println("bookmark selected [" + item.getText() + "]: " + node);
         _curReference = node.getURI();

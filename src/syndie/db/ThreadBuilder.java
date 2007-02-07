@@ -285,7 +285,7 @@ public class ThreadBuilder {
         else
             return null;
     }
-    private static final String SQL_GET_CHILDREN = "SELECT cm.msgId, messageId, channelHash, cm.wasAuthorized FROM channelMessage cm JOIN channel ON scopeChannelId = channelId JOIN messageHierarchy mh ON cm.msgId = mh.msgId WHERE referencedMessageId = ? AND referencedChannelHash = ?";
+    private static final String SQL_GET_CHILDREN = "SELECT cm.msgId, messageId, channelHash, cm.wasAuthorized, cm.authorChannelId FROM channelMessage cm JOIN channel ON scopeChannelId = channelId JOIN messageHierarchy mh ON cm.msgId = mh.msgId WHERE referencedMessageId = ? AND referencedChannelHash = ?";
     private void addChildren(Set msgIds) {
         List toQuery = new ArrayList(msgIds);
         PreparedStatement stmt = null;
@@ -306,10 +306,13 @@ public class ThreadBuilder {
                     if ( (chan == null) && (chan.length != Hash.HASH_LENGTH) ) continue;
                     Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
                     if (rs.wasNull()) wasAuth = null;
+                    long author = rs.getLong(5);
+                    if (rs.wasNull()) author = -1;
                     ThreadMsgId child = new ThreadMsgId(msgId);
                     child.messageId = messageId;
                     child.scope = new Hash(chan);
                     child.authorized = wasAuth;
+                    child.authorScopeId = author;
                     if (!msgIds.contains(child)) {
                         msgIds.add(child);
                         if (!toQuery.contains(child))

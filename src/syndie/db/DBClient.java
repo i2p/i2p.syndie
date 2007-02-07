@@ -29,6 +29,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import net.i2p.I2PAppContext;
 import net.i2p.util.Log;
+import syndie.data.WatchedChannel;
 
 public class DBClient {
     private static final Class[] _gcjKludge = new Class[] { 
@@ -3375,7 +3376,7 @@ public class DBClient {
         return rv;
     }
 
-    private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
+    private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
     public List getNymReferences(long nymId) {
         ensureLoggedIn();
@@ -3387,8 +3388,7 @@ public class DBClient {
             stmt.setLong(1, nymId);
             rs = stmt.executeQuery();
             while (rs.next()) {
-                // groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, 
-                // isBanned, loadOnStartup
+                // groupId, parentGroupId, siblingOrder, name, description, uriId
                 long groupId = rs.getLong(1);
                 if (rs.wasNull()) groupId = -1;
                 long parentGroupId = rs.getLong(2);
@@ -3399,15 +3399,9 @@ public class DBClient {
                 String desc = rs.getString(5);
                 long uriId = rs.getLong(6);
                 if (rs.wasNull()) uriId = -1;
-                boolean isIgnored = rs.getBoolean(7);
-                if (rs.wasNull()) isIgnored = false;
-                boolean isBanned = rs.getBoolean(8);
-                if (rs.wasNull()) isBanned = false;
-                boolean onStartup = rs.getBoolean(9);
-                if (rs.wasNull()) onStartup = false;
                 
                 SyndieURI uri = getURI(uriId);
-                NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, isIgnored, isBanned, onStartup);
+                NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, false, false, false);
                 groupIdToNode.put(new Long(groupId), ref);
             }
         } catch (SQLException se) {
@@ -3483,7 +3477,7 @@ public class DBClient {
     }
     
     private static final String SQL_DELETE_URI = "DELETE FROM uriAttribute WHERE uriId = ?";
-    private static final String SQL_UPDATE_NYM_REFERENCE = "UPDATE resourceGroup SET parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ? WHERE groupId = ?";
+    private static final String SQL_UPDATE_NYM_REFERENCE = "UPDATE resourceGroup SET parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ? WHERE groupId = ?";
     /** update the reference in the database, keyed off the nymId and newValue's getGroupId() field */
     public void updateNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
@@ -3514,8 +3508,7 @@ public class DBClient {
         PreparedStatement stmt = null;
         try {
             stmt = _con.prepareStatement(SQL_UPDATE_NYM_REFERENCE);
-            //"parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, 
-            //uriId = ?, isIgnored = ?, isBanned = ?, loadOnStartup = ?
+            //"parentGroupId = ?, siblingOrder = ?, name = ?, description = ?, uriId = ?
             //WHERE groupId = ?";
             stmt.setLong(1, newValue.getParentGroupId());
             stmt.setInt(2, newValue.getSiblingOrder());
@@ -3531,10 +3524,7 @@ public class DBClient {
                 stmt.setLong(5, uriId);
             else
                 stmt.setNull(5, Types.INTEGER);
-            stmt.setBoolean(6, newValue.getIsIgnored());
-            stmt.setBoolean(7, newValue.getIsBanned());
-            stmt.setBoolean(8, newValue.getLoadOnStart());
-            stmt.setLong(9, newValue.getGroupId());
+            stmt.setLong(6, newValue.getGroupId());
             
             if (_ui != null)
                 _ui.debugMessage("updating ref w/ parent=" + newValue.getParentGroupId() + ", sibling=" + newValue.getSiblingOrder() + " groupId=" + newValue.getGroupId());
@@ -3552,7 +3542,7 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, isIgnored, isBanned, loadOnStartup, nymId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, nymId) VALUES (?, ?, ?, ?, ?, ?, ?)";
     /** add a new reference recursively, then updating the groupId, uriId, and siblingOrder fields in newValue */
     public void addNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
@@ -3579,7 +3569,7 @@ public class DBClient {
         PreparedStatement stmt = null;
         try {
             stmt = _con.prepareStatement(SQL_ADD_NYM_REFERENCE);
-            // (groupId,parentGroupId,siblingOrder,name,description,uriId,isIgnored,isBanned,loadOnStartup,nymId)
+            // (groupId,parentGroupId,siblingOrder,name,description,uriId,nymId)
             stmt.setLong(1, groupId);
             stmt.setLong(2, newValue.getParentGroupId());
             stmt.setInt(3, siblingOrder);
@@ -3592,10 +3582,7 @@ public class DBClient {
             else
                 stmt.setNull(5, Types.VARCHAR);
             stmt.setLong(6, uriId);
-            stmt.setBoolean(7, newValue.getIsIgnored());
-            stmt.setBoolean(8, newValue.getIsBanned());
-            stmt.setBoolean(9, newValue.getLoadOnStart());
-            stmt.setLong(10, nymId);
+            stmt.setLong(7, nymId);
             
             int rc = stmt.executeUpdate();
             if (rc == 1) {
@@ -3656,6 +3643,159 @@ public class DBClient {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+    }
+    
+    /*
+     * CREATE TABLE nymWatchedChannel (
+     *        nymId                   INTEGER
+     *        , channelId             BIGINT
+     *        , importKeys            BOOLEAN
+     *        , importBookmarks       BOOLEAN
+     *        , importBans            BOOLEAN
+     *        , importArchives        BOOLEAN
+     *        , highlightUnread       BOOLEAN
+     *);
+     */
+    
+    private static final String SQL_GET_WATCHED_CHANNELS = "SELECT channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread FROM nymWatchedChannel nwc JOIN channel c ON c.channelId = nwc.channelId WHERE nymId = ? ORDER BY UPPER(name) ASC";
+    
+    /** get a list of WatchedChannel for the nym, ordered by the channel's name */
+    public List getWatchedChannels() { return getWatchedChannels(_nymId); }
+    public List getWatchedChannels(long nymId) {
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_WATCHED_CHANNELS);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread
+                long channelId = rs.getLong(1);
+                boolean keys = rs.getBoolean(2);
+                if (rs.wasNull()) keys = false;
+                boolean bookmarks = rs.getBoolean(3);
+                if (rs.wasNull()) bookmarks = false;
+                boolean bans = rs.getBoolean(4);
+                if (rs.wasNull()) bans = false;
+                boolean archives = rs.getBoolean(5);
+                if (rs.wasNull()) archives = false;
+                boolean highlight = rs.getBoolean(6);
+                if (rs.wasNull()) highlight = true;
+                
+                rv.add(new WatchedChannel(channelId, highlight, keys, bookmarks, bans, archives));
+            }
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+    
+    
+    /*
+     * CREATE TABLE nymWatchedChannel (
+     *        nymId                   INTEGER
+     *        , channelId             BIGINT
+     *        , importKeys            BOOLEAN
+     *        , importBookmarks       BOOLEAN
+     *        , importBans            BOOLEAN
+     *        , importArchives        BOOLEAN
+     *        , highlightUnread       BOOLEAN
+     *);
+     */
+    private static final String SQL_WATCH_CHANNEL = "INSERT INTO nymWatchedChannel (nymId, channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public void watchChannel(Hash scope, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
+        watchChannel(_nymId, scope, highlight, impArchives, impBookmarks, impBans, impKeys);
+    }
+    public void watchChannel(long nymId, Hash scope, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
+        ensureLoggedIn();
+        long channelId = getChannelId(scope);
+        watchChannel(nymId, channelId, highlight, impArchives, impBookmarks, impBans, impKeys);
+    }
+    public void watchChannel(long channelId, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
+        watchChannel(_nymId, channelId, highlight, impArchives, impBookmarks, impBans, impKeys);
+    }
+    public void watchChannel(long nymId, long channelId, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
+        ensureLoggedIn();
+        if (channelId < 0) return;
+        
+        unwatchChannel(nymId, channelId, false);
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_WATCH_CHANNEL);
+            // nymId, channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, channelId);
+            stmt.setBoolean(3, impKeys);
+            stmt.setBoolean(4, impBookmarks);
+            stmt.setBoolean(5, impBans);
+            stmt.setBoolean(6, impArchives);
+            stmt.setBoolean(7, highlight);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        notifyWatchListeners();
+    }
+    
+    private static final String SQL_UNWATCH_CHANNEL = "DELETE FROM nymWatchedChannel WHERE nymId = ? AND channelId = ?";
+    public void unwatchChannel(Hash scope) { unwatchChannel(_nymId, scope, true); }
+    public void unwatchChannel(long nymId, Hash scope) { unwatchChannel(nymId, scope, true); }
+    public void unwatchChannel(WatchedChannel channel) { unwatchChannel(_nymId, channel.getChannelId(), true); }
+    public void unwatchChannels(WatchedChannel channels[]) {
+        if ( (channels != null) && (channels.length > 0) ) {
+            for (int i = 0; i < channels.length; i++)
+                unwatchChannel(_nymId, channels[i].getChannelId(), false);
+            notifyWatchListeners();
+        }
+    }
+    private void unwatchChannel(long nymId, Hash scope, boolean notifyListeners) { 
+        long channelId = getChannelId(scope);
+        if (channelId < 0) return;
+        unwatchChannel(nymId, channelId, notifyListeners);
+    }
+    private void unwatchChannel(long nymId, long channelId, boolean notifyListeners) { 
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_UNWATCH_CHANNEL);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, channelId);
+            int rows = stmt.executeUpdate();
+            if (_ui != null)
+                _ui.debugMessage("unwatch channel " + channelId + " for nym " + nymId + ": " + rows);
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        if (notifyListeners)
+            notifyWatchListeners();
+    }
+    private void notifyWatchListeners() {
+        List toNotify = new ArrayList();
+        synchronized (_watchListeners) { toNotify.addAll(_watchListeners); }
+        for (int i = 0; i < toNotify.size(); i++)
+            ((WatchEventListener)toNotify.get(i)).watchesUpdated();
+    }
+    
+    public interface WatchEventListener {
+        public void watchesUpdated();
+    }
+    private List _watchListeners = new ArrayList();
+    public void addWatchEventListener(WatchEventListener lsnr) { 
+        synchronized (_watchListeners) { _watchListeners.add(lsnr); }
+    }
+    public void removeWatchEventListener(WatchEventListener lsnr) {
+        synchronized (_watchListeners) { _watchListeners.remove(lsnr); }
     }
     
     private void ensureLoggedIn() throws IllegalStateException {

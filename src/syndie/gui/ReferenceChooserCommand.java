@@ -15,6 +15,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WatchedChannel;
 import syndie.db.*;
 
 /**
@@ -113,6 +114,7 @@ public class ReferenceChooserCommand implements CLI.Command {
     private static class RefListener implements ReferenceChooserTree.ChoiceListener {
         private UI _ui;
         public RefListener(UI ui) { _ui = ui; }
+        public void watchedChannelSelected(TreeItem item, WatchedChannel watched) {}
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) {
             _ui.statusMessage("bookmark selected [" + item.getText() + "]: " + node);
         }

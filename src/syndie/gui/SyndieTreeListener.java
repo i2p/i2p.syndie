@@ -11,6 +11,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
@@ -33,6 +34,8 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void resized() {}
     /** always expand on return, but we may not always want to collapse on return.  default is to do so though */
     public boolean collapseOnReturn() { return true; }
+    /** when traversing by the keyboard, position us horizontally at the beginning of the row */
+    public boolean keyToFirstColumn() { return true; }
     public void selectionUpdated() {}
     
     // remaining are the implementations of the listeners
@@ -43,6 +46,7 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void widgetSelected(SelectionEvent evt) { selected(evt); }
     
     public void keyTraversed(TraverseEvent evt) {
+        _tree.setRedraw(false);
         if (evt.detail == SWT.TRAVERSE_RETURN) {
             TreeItem selected = getSelected();
             if (collapseOnReturn() && selected.getExpanded() && (selected.getItemCount() > 0)) {
@@ -56,12 +60,17 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
             returnHit();
         }
         selectionUpdated();
+        if (keyToFirstColumn())
+            scrollHorizontalBeginning();
+        _tree.setRedraw(true);
     }
     
     public void keyPressed(KeyEvent keyEvent) {}
     public void keyReleased(KeyEvent evt) {
         TreeItem selected = getSelected();
         if (selected == null) return;
+        
+        _tree.setRedraw(false);
         
         selectionUpdated();
         if (evt.keyCode == SWT.ARROW_LEFT) {
@@ -87,6 +96,9 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
             else
                 collapsed();
         }
+        if (keyToFirstColumn())
+            scrollHorizontalBeginning();
+        _tree.setRedraw(true);
     }
 
     public void controlMoved(ControlEvent controlEvent) {}
@@ -99,6 +111,12 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     public void mouseUp(MouseEvent evt) {}
     public void collapsed() {}
     public void expanded() {}
+    
+    private void scrollHorizontalBeginning() {
+        ScrollBar bar = _tree.getHorizontalBar();
+        if (bar != null)
+            bar.setSelection(bar.getMinimum());
+    }
     
     protected TreeItem getSelected() { if (_tree.getSelectionCount() > 0) return _tree.getSelection()[0]; return null; }
 }

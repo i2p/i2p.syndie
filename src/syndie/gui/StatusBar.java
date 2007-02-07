@@ -36,6 +36,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
@@ -44,7 +45,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 /**
  *
  */
-public class StatusBar implements Translatable, Themeable {
+public class StatusBar implements Translatable, Themeable, DBClient.WatchEventListener {
     private BrowserControl _browser;
     private Composite _parent;
     private Composite _root;
@@ -193,6 +194,7 @@ public class StatusBar implements Translatable, Themeable {
     
         doRefreshDisplay();
         
+        _browser.getClient().addWatchEventListener(this);
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
         
@@ -311,7 +313,7 @@ public class StatusBar implements Translatable, Themeable {
             _unreadCalcInProgress = true;
         }
         _browser.getUI().debugMessage("calcUnread begin");
-        final SyndieURI uri = _browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser));
+        final SyndieURI uri = _browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser));
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
@@ -340,6 +342,9 @@ public class StatusBar implements Translatable, Themeable {
         });
     }
     
+    /** set set of watched forums has changed */
+    public void watchesUpdated() { calcUnread(); }
+    
     private void renderUnread(Map sortedForums, int threads) {
         MenuItem items[] = _unreadMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -350,10 +355,10 @@ public class StatusBar implements Translatable, Themeable {
             item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
                 }
             });
             

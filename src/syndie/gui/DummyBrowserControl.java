@@ -79,7 +79,7 @@ public class DummyBrowserControl implements BrowserControl {
     
     public boolean ban(Hash scope) { return false; }
 
-    public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) { return null; }
+    public SyndieURI createHighlightWatchedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) { return null; }
     public void messageImported() {}
     public void metaImported() {}
     public void readStatusUpdated() {}

@@ -54,7 +54,7 @@ public interface BrowserControl {
     public SyndieURI createSyndicationDiffURI();
     public SyndieURI createSyndicationStatusURI();
     public SyndieURI createBugReportURI();
-    public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate);
+    public SyndieURI createHighlightWatchedURI(boolean threaded, boolean unreadOnly, boolean useImportDate);
     public void showWaitCursor(boolean wait);
     
     public UI getUI();

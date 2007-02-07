@@ -269,6 +269,7 @@ public class PageRenderer implements Themeable {
                     for (int i = 0; i < _imageIndexes.size(); i++) {
                         int offset = ((Integer)_imageIndexes.get(i)).intValue();
                         if (start == offset) {
+                            if (i >= _images.size()) return;
                             Image img = (Image)_images.get(i);
                             int x = evt.x;
                             int y = evt.y + evt.ascent - range.metrics.ascent;

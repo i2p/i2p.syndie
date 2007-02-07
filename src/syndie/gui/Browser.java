@@ -83,6 +83,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.NymKey;
+import syndie.data.WatchedChannel;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
 import syndie.db.JobRunner;
@@ -322,7 +323,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private void initDnD() {
         initDnDTabs();
-        initDnDBookmarks();
     }
     private void initDnDTabs() {
         int ops = DND.DROP_COPY | DND.DROP_LINK;
@@ -392,47 +392,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             }
         });
     }
-    private void initDnDBookmarks() {
-        int ops = DND.DROP_COPY | DND.DROP_LINK;
-        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
-        DropTarget target = new DropTarget(_bookmarks.getControl(), ops);
-        target.setTransfer(transfer);
-        target.addDropListener(new DropTargetListener() {
-            public void dragEnter(DropTargetEvent evt) {
-                // we can take the element
-                evt.detail = evt.operations | DND.DROP_COPY;
-            }
-            public void dragLeave(DropTargetEvent evt) {}
-            public void dragOperationChanged(DropTargetEvent evt) {}
-            public void dragOver(DropTargetEvent evt) {}
-            public void drop(DropTargetEvent evt) {
-                if (evt.data == null) {
-                    evt.detail = DND.DROP_NONE;
-                    return;
-                } else {
-                    BookmarkDnD bookmark = new BookmarkDnD();
-                    bookmark.fromString(evt.data.toString());
-                    if (bookmark.uri != null) { // parsed fine
-                        NymReferenceNode parent = StatusBar.getParent(Browser.this, bookmark);
-                        long parentGroupId = -1;
-                        if (parent != null)
-                            parentGroupId = parent.getGroupId();
-                        bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
-                    } else { // wasn't in bookmark syntax, try as a uri
-                        String str = evt.data.toString();
-                        try {
-                            SyndieURI uri = new SyndieURI(str);
-                            bookmark(uri);
-                        } catch (URISyntaxException use) {
-                            getUI().debugMessage("invalid uri: " + str, use);
-                        }
-                    }
-                }
-            }
-            public void dropAccept(DropTargetEvent evt) {}
-        });
-    }
-    
     private void resized() {
         for (Iterator iter = _openTabs.values().iterator(); iter.hasNext(); ) {
             ((BrowserTab)iter.next()).resized();
@@ -468,8 +427,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             enableKeyFilters();
             
             long t2 = System.currentTimeMillis();
-            if (!_shell.isVisible())
+            if (!_shell.isVisible()) {
+                // todo: make this remember the last size (from the nymPrefs)
+                _shell.setMaximized(true);
                 _shell.open();
+                _shell.forceActive();
+                _shell.forceFocus();
+            }
             long t3 = System.currentTimeMillis();
             System.out.println("start: theme: " + (t2-t1) + " open: " +(t3-t2));
         }
@@ -2136,36 +2100,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         popup.show();
     }
     
-    private void viewBookmarked() { view(createBookmarkedURI(true, false, true)); }
-    public SyndieURI createBookmarkedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) {
+    private void viewBookmarked() { view(createHighlightWatchedURI(true, false, true)); }
+    public SyndieURI createHighlightWatchedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) {
         List scopes = new ArrayList();
-        List nodes = getBookmarks();
-        for (int i = 0; i < nodes.size(); i++) {
-            NymReferenceNode node = (NymReferenceNode)nodes.get(i);
-            getScopes(scopes, node);
+        List watched = _client.getWatchedChannels();
+        for (int i = 0; i < watched.size(); i++) {
+            WatchedChannel chan = (WatchedChannel)watched.get(i);
+            if (chan.getHighlight())
+                scopes.add(_client.getChannelHash(chan.getChannelId()));
         }
         SyndieURI uri = SyndieURI.createBookmarked(scopes, threaded, unreadOnly, useImportDate);
         return uri;
-    }
-    private void getScopes(List scopes, ReferenceNode node) {
-        SyndieURI uri = node.getURI();
-        if (uri != null) {
-            if (uri.isChannel()) {
-                Hash scope = (Hash)uri.getScope();
-                if ( (scope != null) && (!scopes.contains(scope)) )
-                        scopes.add(scope);
-            } else if (uri.isSearch()) {
-                Hash vals[] = uri.getSearchScopes();
-                if (vals != null) {
-                    for (int i = 0; i < vals.length; i++) {
-                        if ( (vals[i] != null) && (!scopes.contains(vals[i])) )
-                            scopes.add(vals[i]);
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < node.getChildCount(); i++)
-            getScopes(scopes, node.getChild(i));
     }
     
     private void viewAllByForums() {
@@ -2400,6 +2345,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private class BookmarkChoiceListener implements ReferenceChooserTree.ChoiceListener {
+        public void watchedChannelSelected(TreeItem item, WatchedChannel watched) { 
+            Hash scope = getClient().getChannelHash(watched.getChannelId());
+            if (scope != null)
+                view(SyndieURI.createScope(scope)); 
+        }
         public void bookmarkSelected(TreeItem item, NymReferenceNode node) { view(node.getURI()); }
         public void manageChannelSelected(TreeItem item, ChannelInfo channel) { view(SyndieURI.createScope(channel.getChannelHash())); }
         public void postChannelSelected(TreeItem item, ChannelInfo channel) { view(SyndieURI.createScope(channel.getChannelHash())); }
@@ -2408,6 +2358,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private class BookmarkAcceptListener implements ReferenceChooserTree.AcceptanceListener {
+        // fired on bookmark/etc doubleclick/return
         public void referenceAccepted(SyndieURI uri) { debugMessage("accepted"); view(uri); }
         public void referenceChoiceAborted() {}        
     }

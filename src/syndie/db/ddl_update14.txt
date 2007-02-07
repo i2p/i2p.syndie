@@ -1,0 +1,23 @@
+-- update the database from schema version 14
+-- this version 15 revamps the bookmarking design
+--
+
+UPDATE appVersion SET versionNum = 15, visibleVersion = 'Bookmarking cleanup';
+
+CREATE TABLE nymWatchedChannel (
+	nymId			INTEGER
+	, channelId		BIGINT
+	, importKeys		BOOLEAN
+	, importBookmarks	BOOLEAN
+	, importBans		BOOLEAN
+	, importArchives	BOOLEAN
+	, highlightUnread	BOOLEAN
+);
+
+-- not honored
+ALTER TABLE resourceGroup DROP isIgnored;
+-- banned is handled in the banned table
+ALTER TABLE resourceGroup DROP isBanned;
+-- not honored
+ALTER TABLE resourceGroup DROP loadOnStartup;
+

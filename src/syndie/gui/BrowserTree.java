@@ -1,12 +1,27 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -14,6 +29,7 @@ import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -22,6 +38,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
@@ -30,6 +47,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 
 /**
@@ -37,10 +55,7 @@ import syndie.db.DBClient;
  */
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
     private Browser _browser;
-    private Menu _bookmarkMenu;
-    private Menu _postMenu;
-    private Menu _manageMenu;
-    //private Menu _searchMenu;
+    private Menu _menu;
     
     private Button _searchAdvanced;
     
@@ -48,13 +63,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private ReferenceChooserSearch _searchDetail;
     private Shell _searchDetailPopup;
 
-    private MenuItem _bookmarkMenuView;
-    private MenuItem _bookmarkMenuEdit;
-    private MenuItem _bookmarkMenuDelete;
-    private MenuItem _bookmarkMenuAdd;
-    private MenuItem _postMenuItem;
-    private MenuItem _manageMenuItem;
-    //private MenuItem _searchMenuView;
     private long _startInit;
     private long _superInit;
     
@@ -91,6 +99,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
         
         //createSearchDetailPopup();
+        
+        initDnD();
         
         getBrowser().getTranslationRegistry().register(this);
         getBrowser().getThemeRegistry().register(this);
@@ -148,53 +158,87 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         tree.addSelectionListener(lsnr);
         tree.addControlListener(lsnr);
         tree.addMouseListener(lsnr);
+
+        _menu = new Menu(tree);
+        _menu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent evt) { buildMenu(); }
+        });
+        tree.setMenu(_menu);
+    }
     
-        _bookmarkMenu = new Menu(tree);
-        _bookmarkMenuView = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        _bookmarkMenuView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBookmarkURI(getSelectedItem())); }
-            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBookmarkURI(getSelectedItem())); }
+    private void buildMenu() {
+        MenuItem items[] = _menu.getItems();
+        for (int i = 0; i < items.length; i++) items[i].dispose();
+        
+        TreeItem item = getSelectedItem();
+        
+        NymReferenceNode bookmark = getBookmark(item);
+        if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
+            buildBookmarkMenu(bookmark, item);
+            return;
+        }
+        ChannelInfo chan = getPostChannel(item);
+        if ( (chan != null) || (item.equals(getPostRoot())) ) {
+            buildPostMenu(chan);
+            return;
+        }
+        chan = getManageChannel(item);
+        if ( (chan != null) || (item.equals(getManageRoot())) ) {
+            buildManageMenu(chan);
+            return;
+        }
+        WatchedChannel watched = getWatchedChannel(item);
+        if (watched != null) {
+            buildWatchedMenu(watched);
+            return;
+        }
+    }
+    
+    private void buildManageMenu(final ChannelInfo chan) {
+        MenuItem item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(chan.getChannelHash())); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(chan.getChannelHash())); }
         });
-        _bookmarkMenuEdit = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        _bookmarkMenuEdit.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { editBookmark(getSelectedItem()); }
-            public void widgetSelected(SelectionEvent evt) { editBookmark(getSelectedItem()); }
+        item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_TITLE, "Manage"));
+    }
+    private void buildPostMenu(final ChannelInfo chan) {
+        MenuItem item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(chan.getChannelHash(), null, false)); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(chan.getChannelHash(), null, false)); }
+        });        
+        item.setText(_browser.getTranslationRegistry().getText(T_POST_TITLE, "Post"));
+    }
+    private void buildBookmarkMenu(final NymReferenceNode bookmark, final TreeItem selected) {
+        MenuItem item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(bookmark.getURI()); }
+            public void widgetSelected(SelectionEvent evt) { getBrowser().view(bookmark.getURI()); }
         });
-        _bookmarkMenuDelete = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        _bookmarkMenuDelete.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { deleteBookmark(getSelectedItem()); }
-            public void widgetSelected(SelectionEvent evt) { deleteBookmark(getSelectedItem()); }
+        item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_VIEW, "View"));
+        
+        item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { editBookmark(selected); }
+            public void widgetSelected(SelectionEvent evt) { editBookmark(selected); }
         });
-        _bookmarkMenuAdd = new MenuItem(_bookmarkMenu, SWT.PUSH);
-        _bookmarkMenuAdd.addSelectionListener(new SelectionListener() {
+        item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_EDIT, "Edit"));
+        
+        item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent evt) { deleteBookmark(selected); }
+            public void widgetSelected(SelectionEvent evt) { deleteBookmark(selected); }
+        });
+        item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_DELETE, "Delete"));
+        
+        item = new MenuItem(_menu, SWT.PUSH);
+        item.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { addBookmark(); }
             public void widgetSelected(SelectionEvent evt) { addBookmark(); }
         });
-        
-        _postMenu = new Menu(tree);
-        _postMenuItem = new MenuItem(_postMenu, SWT.PUSH);
-        _postMenuItem.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(getPostScope(getSelectedItem()), null, false)); }
-            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createPostURI(getPostScope(getSelectedItem()), null, false)); }
-        });
-        
-        _manageMenu = new Menu(tree);
-        _manageMenuItem = new MenuItem(_manageMenu, SWT.PUSH);
-        _manageMenuItem.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(getManageScope(getSelectedItem()))); }
-            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getBrowser().createManageURI(getManageScope(getSelectedItem()))); }
-        });
-        
-        /*
-        _searchMenu = new Menu(tree);
-        _searchMenuView = new MenuItem(_searchMenu, SWT.PUSH);
-        _searchMenuView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
-            public void widgetSelected(SelectionEvent evt) { getBrowser().view(getSearchResultURI(getSelectedItem())); }
-        });
-         */
-        
-        tree.setMenu(null);
+        item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_ADD, "Add"));
     }
 
     private SyndieURI getBookmarkURI(TreeItem item) {
@@ -232,16 +276,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         }
     }
     
-    /*
-    private SyndieURI getSearchResultURI(TreeItem item) {
-        ReferenceNode node = getSearchResult(item);
-        if (node != null)
-            return node.getURI();
-        else
-            return null;
-    }
-     */
-
     private Hash getPostScope(TreeItem item) {
         ChannelInfo chan = getPostChannel(item);
         if (chan != null)
@@ -265,35 +299,76 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         else
             return null;
     }
+
+    private static final String T_WATCH_VIEW = "syndie.gui.browsertree.watch.view";
+    private static final String T_WATCH_HIGHLIGHT = "syndie.gui.browsertree.watch.highlight";
+    private static final String T_WATCH_IMPBOOKMARKS = "syndie.gui.browsertree.watch.impbookmarks";
+    private static final String T_WATCH_IMPARCHIVES = "syndie.gui.browsertree.watch.imparchives";
+    private static final String T_WATCH_IMPKEYS = "syndie.gui.browsertree.watch.impkeys";
+    private static final String T_WATCH_IMPBANS = "syndie.gui.browsertree.watch.impbans";
+    private static final String T_WATCH_UNWATCH = "syndie.gui.browsertree.watch.unwatch";
     
-    private void pickMenu(Tree tree, TreeItem item) {
-        if (item == null) {
-            tree.setMenu(null);
-            return;
-        }
+    private void buildWatchedMenu(final WatchedChannel watched) {
+        final Hash scope = _browser.getClient().getChannelHash(watched.getChannelId());
+        _browser.getUI().debugMessage("Building watch menu for " + scope + "/" + watched.getChannelId(), new Exception("source"));
+        MenuItem item = new MenuItem(_menu, SWT.PUSH);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_VIEW, "View the selected forum"));
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { _browser.view(SyndieURI.createScope(scope)); }
+        });
+        new MenuItem(_menu, SWT.SEPARATOR);
+        item = new MenuItem(_menu, SWT.CHECK);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_HIGHLIGHT, "Highlight the forum's unread messages"));
+        item.setSelection(watched.getHighlight());
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { 
+                _browser.getClient().watchChannel(watched.getChannelId(), !watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
+            }
+        });
+
+        item = new MenuItem(_menu, SWT.CHECK);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_IMPBOOKMARKS, "Import their recommended bookmarks"));
+        item.setSelection(watched.getImportBookmarks());
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { 
+                _browser.getClient().watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), !watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
+            }
+        });
+
+        item = new MenuItem(_menu, SWT.CHECK);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_IMPARCHIVES, "Import their recommended archives"));
+        item.setSelection(watched.getImportArchives());
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { 
+                _browser.getClient().watchChannel(watched.getChannelId(), watched.getHighlight(), !watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
+            }
+        });
         
-        NymReferenceNode bookmark = getBookmark(item);
-        if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
-            tree.setMenu(_bookmarkMenu);
-            return;
-        }
-        ChannelInfo chan = getPostChannel(item);
-        if ( (chan != null) || (item.equals(getPostRoot())) ) {
-            tree.setMenu(_postMenu);
-            return;
-        }
-        chan = getManageChannel(item);
-        if ( (chan != null) || (item.equals(getManageRoot())) ) {
-            tree.setMenu(_manageMenu);
-            return;
-        }
-        /*
-        ReferenceNode search = getSearchResult(item);
-        if ( (search != null) || (item.equals(getSearchRoot())) ) {
-            tree.setMenu(_searchMenu);
-            return;
-        }
-         */
+        item = new MenuItem(_menu, SWT.CHECK);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_IMPKEYS, "Import keys they recommended"));
+        item.setSelection(watched.getImportKeys());
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { 
+                _browser.getClient().watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), !watched.getImportKeys());
+            }
+        });
+        
+        item = new MenuItem(_menu, SWT.CHECK);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_IMPBANS, "Import and honor bans they recommended"));
+        item.setSelection(watched.getImportBans());
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { 
+                _browser.getClient().watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), !watched.getImportBans(), watched.getImportKeys());
+            }
+        });
+        
+        new MenuItem(_menu, SWT.SEPARATOR);
+        
+        item = new MenuItem(_menu, SWT.PUSH);
+        item.setText(_browser.getTranslationRegistry().getText(T_WATCH_UNWATCH, "Stop watching the selected forum"));
+        item.addSelectionListener(new FireSelectionListener() {
+            void fire() { _browser.getClient().unwatchChannel(watched); }
+        });
     }
     
     private class BrowserTreeListener extends SyndieTreeListener {
@@ -310,14 +385,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             TreeItem item = getSelected();
             if (item != null)
                 fireDefaultAction(item);
-        }
-        public void mouseDoubleClick(MouseEvent evt) {
-            pickMenu(getTree(), getTree().getItem(new Point(evt.x, evt.y)));
-            super.mouseDoubleClick(evt);
-        }
-        public void mouseDown(MouseEvent evt) {
-            pickMenu(getTree(), getTree().getItem(new Point(evt.x, evt.y)));
-            super.mouseDown(evt);
         }
     }
     
@@ -337,13 +404,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             getBrowser().view(SyndieURI.createScope(chan.getChannelHash()));
             return;
         }
-        /*
-        ReferenceNode search = getSearchResult(item);
-        if (search != null) {
-            getBrowser().view(search.getURI());
-            return;
-        }
-         */
     }
 
     protected void bookmarksRebuilt(ArrayList nymRefs) {
@@ -368,12 +428,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
-        _bookmarkMenuView.setText(registry.getText(T_BOOKMARK_VIEW, "View"));
-        _bookmarkMenuEdit.setText(registry.getText(T_BOOKMARK_EDIT, "Edit"));
-        _bookmarkMenuDelete.setText(registry.getText(T_BOOKMARK_DELETE, "Delete"));
-        _bookmarkMenuAdd.setText(registry.getText(T_BOOKMARK_ADD, "Add"));
-        _postMenuItem.setText(registry.getText(T_POST_TITLE, "Post"));
-        _manageMenuItem.setText(registry.getText(T_MANAGE_TITLE, "Manage"));
         //_searchMenuView.setText(registry.getText(T_SEARCH_VIEW, "View"));
         _searchAdvanced.setText(registry.getText(T_SEARCH_ADVANCED, "Search..."));
         if (_searchDetailPopup != null)
@@ -385,5 +439,292 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (_searchDetailPopup != null)
             _searchDetailPopup.setFont(theme.SHELL_FONT);
         _searchAdvanced.setFont(theme.BUTTON_FONT);
+    }
+    
+    private void initDnD() {
+        initDnDTarget();
+        initDnDSource();
+    }
+    private void initDnDSource() {
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        int ops = DND.DROP_COPY | DND.DROP_MOVE;
+        DragSource source = new DragSource(getTree(), ops);
+        source.setTransfer(transfer);
+        source.addDragListener(new DragSourceListener() {
+            public void dragFinished(DragSourceEvent evt) {
+                System.out.println("dragFinished");
+                if ( (evt.detail & DND.DROP_MOVE) == DND.DROP_MOVE) {
+                    // remove the old item
+                }
+            }
+            public void dragSetData(DragSourceEvent evt) {
+                TreeItem item = getSelectedItem();
+                System.out.println("dragSetData: " + item);
+                if (item == null) {
+                    evt.doit = false;
+                    return;
+                }
+
+                BookmarkDnD src = null;
+                
+                NymReferenceNode bookmark = getBookmark(item);
+                if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
+                    src = new BookmarkDnD();
+                    src.desc = bookmark.getDescription();
+                    String name = bookmark.getName();
+                    src.name = name;
+                    src.uri = bookmark.getURI();
+                }
+                if (src == null) {
+                    ChannelInfo chan = getPostChannel(item);
+                    if ( (chan != null) || (item.equals(getPostRoot())) ) {
+                        src = new BookmarkDnD();
+                        src.desc = chan.getDescription();
+                        String name = chan.getName();
+                        if (name == null)
+                            name = chan.getChannelHash().toBase64();
+                        src.name = name;
+                        src.uri = SyndieURI.createScope(chan.getChannelHash());
+                    }
+                }
+                if (src == null) {
+                    ChannelInfo chan = getManageChannel(item);
+                    if ( (chan != null) || (item.equals(getManageRoot())) ) {
+                        src = new BookmarkDnD();
+                        src.desc = chan.getDescription();
+                        String name = chan.getName();
+                        if (name == null)
+                            name = chan.getChannelHash().toBase64();
+                        src.name = name;
+                        src.uri = SyndieURI.createScope(chan.getChannelHash());
+                    }
+                }
+                if (src == null) {
+                    WatchedChannel watched = getWatchedChannel(item);
+                    if (watched != null) {
+                        Hash scope = _browser.getClient().getChannelHash(watched.getChannelId());
+                        src = new BookmarkDnD();
+                        src.desc = "";
+                        String name = _browser.getClient().getChannelName(watched.getChannelId());
+                        if (name == null)
+                            name = scope.toBase64();
+                        src.name = name;
+                        src.uri = SyndieURI.createScope(scope);
+                    }
+                }
+                
+                //BookmarkDnD bookmark = getBookmark(sel[0], (ReferenceNode)_itemToNode.get(sel[0]));
+                if (src != null) {
+                    evt.data = src.toString();
+                    evt.doit = true;
+                } else {
+                    evt.doit = false;
+                }
+                System.out.println("dragSetData: " + evt.data);
+            }
+            public void dragStart(DragSourceEvent evt) {
+                if (!isDraggable()) 
+                    evt.doit = false; // don't drag when nothing is selected
+                System.out.println("dragStart: " + evt.doit);
+            }
+        });
+    }
+    
+    private boolean isDraggable() {
+        TreeItem item = getSelectedItem();
+        if (item == null) return false;
+        
+        NymReferenceNode bookmark = getBookmark(item);
+        if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
+            return bookmark.getURI() != null;
+        }
+        ChannelInfo chan = getPostChannel(item);
+        if ( (chan != null) || (item.equals(getPostRoot())) ) {
+            return true;
+        }
+        chan = getManageChannel(item);
+        if ( (chan != null) || (item.equals(getManageRoot())) ) {
+            return true;
+        }
+        WatchedChannel watched = getWatchedChannel(item);
+        if (watched != null) {
+            return true;
+        }
+        return false;
+    }
+    
+    // we expand a node if we are hovering over it for a half second or more
+    private long _dndHoverBegin;
+    private TreeItem _dndHoverCurrent;
+    
+    private void initDnDTarget() {
+        getTree().addMouseTrackListener(new MouseTrackListener() {
+            public void mouseEnter(MouseEvent mouseEvent) { 
+                getTree().setInsertMark(null, true);
+            }
+            public void mouseExit(MouseEvent mouseEvent) { 
+                getTree().setInsertMark(null, true); 
+            }
+            public void mouseHover(MouseEvent mouseEvent) {}
+        });
+        int ops = DND.DROP_COPY | DND.DROP_LINK | DND.DROP_MOVE;
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        DropTarget target = new DropTarget(getControl(), ops);
+        target.setTransfer(transfer);
+        target.addDropListener(new DropTargetListener() {
+            public void dragEnter(DropTargetEvent evt) {
+                // we can take the element
+                if (false && (evt.operations & DND.DROP_MOVE) == DND.DROP_MOVE) {
+                    evt.detail = evt.operations | DND.DROP_MOVE;
+                    System.out.println("dragEnter: move");
+                } else {
+                    evt.detail = evt.operations | DND.DROP_COPY;
+                    System.out.println("dragEnter: copy");
+                }
+                evt.feedback |= DND.FEEDBACK_EXPAND | DND.FEEDBACK_SCROLL | DND.FEEDBACK_SELECT;
+            }
+            public void dragLeave(DropTargetEvent evt) {
+                getTree().setInsertMark(null, true);
+            }
+            public void dragOperationChanged(DropTargetEvent evt) {
+                System.out.println("dragOperationChanged: " + evt);
+            }
+            public void dragOver(DropTargetEvent evt) {
+                Tree tree = getTree();
+                //tree.setInsertMark(null, true);
+                Point pt = tree.toControl(evt.x, evt.y);
+                TreeItem item = tree.getItem(pt);
+                System.out.println("dragOver: " + item);
+                setFeedback(item, evt, pt);
+                scroll(tree, item, evt, pt);
+            }
+            private void setFeedback(TreeItem item, DropTargetEvent evt, Point pt) {
+                if (item != null) {
+                    if (item.getItemCount() > 0) {
+                        if (!item.getExpanded()) {
+                            if ( (_dndHoverBegin > 0) && (_dndHoverBegin + 500 < System.currentTimeMillis()) && (_dndHoverCurrent == item) ) {
+                                item.setExpanded(true);
+                                evt.feedback |= DND.FEEDBACK_SCROLL | DND.FEEDBACK_INSERT_AFTER;
+                                _dndHoverBegin = -1;
+                                _dndHoverCurrent = null;
+                                System.out.println("dragOver: setFeedback: expand");
+                            } else if (_dndHoverCurrent != item) {
+                                evt.feedback |= DND.FEEDBACK_EXPAND | DND.FEEDBACK_SCROLL;
+                                _dndHoverBegin = System.currentTimeMillis();
+                                _dndHoverCurrent = item;
+                                System.out.println("dragOver: setFeedback: delay before expand");
+                            }
+                        } else {
+                            System.out.println("dragOver: setFeedback: expanded");
+                        }
+                        getTree().setInsertMark(null, true);
+                    } else {
+                        if (isPointFirstHalf(getTree(), pt, item)) {
+                            getTree().setInsertMark(item, true);
+                            evt.feedback = DND.FEEDBACK_INSERT_BEFORE;
+                            System.out.println("dragOver: setFeedback: insertBefore");
+                        } else {
+                            getTree().setInsertMark(item, false);
+                            evt.feedback = DND.FEEDBACK_INSERT_AFTER;
+                            System.out.println("dragOver: setFeedback: insertAfter");
+                        }
+                        evt.feedback |= DND.FEEDBACK_SCROLL;
+                        _dndHoverBegin = -1;
+                        _dndHoverCurrent = null;
+                    }
+                } else {
+                    evt.feedback |= DND.FEEDBACK_EXPAND | DND.FEEDBACK_SCROLL;
+                    _dndHoverBegin = -1;
+                    _dndHoverCurrent = null;
+                    getTree().setInsertMark(null, true);
+                    System.out.println("dragOver: setFeedback: no item");
+                }
+            }
+            private void scroll(Tree tree, TreeItem item, DropTargetEvent evt, Point pt) {
+                int height = tree.getClientArea().height;
+                // scroll up/down when over items at the top/bottom 5% of the height
+                int margin = height/20;
+                if (pt.y <= margin) {
+                    scrollUp(tree);
+                } else if (pt.y >= height-margin) {
+                    scrollDown(tree);
+                }
+            }
+            private void scrollUp(Tree tree) {
+                ScrollBar bar = tree.getVerticalBar();
+                if ( (bar != null) && (bar.getSelection() > bar.getMinimum()) ) {
+                    bar.setSelection(bar.getSelection() - bar.getIncrement());
+                }
+            }
+            private void scrollDown(Tree tree) {
+                ScrollBar bar = tree.getVerticalBar();
+                if ( (bar != null) && (bar.getSelection() < bar.getMaximum()) ) {
+                    bar.setSelection(bar.getSelection() + bar.getIncrement());
+                }
+            }
+            private boolean isPointFirstHalf(Tree tree, Point point, TreeItem item) {
+                Rectangle loc = item.getBounds();
+                int margin = loc.height / 2;
+                return (point.y < (loc.y + margin));
+            }
+            public void drop(DropTargetEvent evt) {
+                System.out.println("drop: " + evt);
+                getTree().setInsertMark(null, true);
+                
+                Tree tree = getTree();
+                //tree.setInsertMark(null, true);
+                Point pt = tree.toControl(evt.x, evt.y);
+                TreeItem item = tree.getItem(pt);
+                boolean before = isPointFirstHalf(tree, pt, item);
+                
+                boolean isWatch = false;
+                TreeItem root = item;
+                while (root.getParentItem() != null)
+                    root = root.getParentItem();
+                
+                if (evt.data == null) {
+                    evt.detail = DND.DROP_NONE;
+                    return;
+                } else {
+                    BookmarkDnD bookmark = new BookmarkDnD();
+                    bookmark.fromString(evt.data.toString());
+                    if (bookmark.uri != null) { // parsed fine
+                        if (root == getWatchedRoot()) {
+                            watch(bookmark.uri, item);
+                        } else if (root == getBookmarkRoot()) {
+                            NymReferenceNode parent = StatusBar.getParent(_browser, bookmark);
+                            long parentGroupId = -1;
+                            if (parent != null)
+                                parentGroupId = parent.getGroupId();
+                            _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
+                        }
+                    } else { // wasn't in bookmark syntax, try as a uri
+                        String str = evt.data.toString();
+                        try {
+                            SyndieURI uri = new SyndieURI(str);
+                            if (root == getWatchedRoot()) {
+                                watch(uri, item);
+                            } else if (root == getBookmarkRoot()) {
+                                _browser.bookmark(uri);
+                            }
+                        } catch (URISyntaxException use) {
+                            _browser.getUI().debugMessage("invalid uri: " + str, use);
+                            byte val[] = Base64.decode(str);
+                            if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
+                                SyndieURI uri = SyndieURI.createScope(new Hash(val));
+                                if (root == getWatchedRoot()) {
+                                    watch(uri, item);
+                                } else if (root == getBookmarkRoot()) {
+                                    _browser.bookmark(uri);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            public void dropAccept(DropTargetEvent evt) {
+                System.out.println("dropAccept: " + evt);
+            }
+        });
     }
 }

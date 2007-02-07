@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -33,17 +34,31 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
 
 /**
- * The reference chooser tree has three roots, plus a search results list
- *  - the nym's bookmarks
- *  - the channels the nym can post to
- *  - the channels the nym can manage
+ * The reference chooser tree has five roots, plus a search results list
+ * - Watched forums
+ *  - $forumName
+ *  - $forumName
+ * - manageable forums
+ *   - $forumName
+ * - postable forums
+ *   - $forumName
+ * - Categorized bookmarks
+ *   - $forumName
+ *   - $categoryName
+ *     - $forumName
+ *     - $categoryName
+ *       - $otherResource
+ * - Imported resources
+ *  - $forumName
+ *   - $archive|$ban|$bookmark
  */
-public class ReferenceChooserTree implements Translatable, Themeable {
+public class ReferenceChooserTree implements Translatable, Themeable, DBClient.WatchEventListener {
     private BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
@@ -57,10 +72,15 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     private DBClient.ChannelCollector _nymChannels;
     /** list of ReferenceNode instances matching the search criteria */
     private ArrayList _searchResults;
+    private Map _watchedItemToWatchedChannel;
     
     private Composite _root;
     private Tree _tree;
     private List _searchList;
+
+    private TreeItem _watchedRoot;
+    private TreeItem _importedRoot;
+    
     private TreeItem _bookmarkRoot;
     /** map of TreeItem to NymReferenceNode */
     private Map _bookmarkNodes;
@@ -89,6 +109,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         _acceptanceListener = accept;
         _chooseAllStartupItems = chooseAllStartupItems;
         _nymRefs = new ArrayList();
+        _watchedItemToWatchedChannel = new HashMap();
         _bookmarkNodes = new HashMap();
         _postChannels = new HashMap();
         _manageChannels = new HashMap();
@@ -119,8 +140,12 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected AcceptanceListener getAcceptanceListener() { return _acceptanceListener; }
     protected Tree getTree() { return _tree; }
     protected BrowserControl getBrowser() { return _browser; }
+    protected WatchedChannel getWatchedChannel(TreeItem item) {
+        return (WatchedChannel)_watchedItemToWatchedChannel.get(item);
+    }
     
     public interface ChoiceListener {
+        public void watchedChannelSelected(TreeItem item, WatchedChannel channel);
         public void bookmarkSelected(TreeItem item, NymReferenceNode node);
         public void manageChannelSelected(TreeItem item, ChannelInfo channel);
         public void postChannelSelected(TreeItem item, ChannelInfo channel);
@@ -211,15 +236,81 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         });
     }
     
+    protected void watch(SyndieURI uri, TreeItem item) {
+        Hash scope = uri.getScope();
+        if (scope == null) {
+            Hash scopes[] = uri.getSearchScopes();
+            if ( (scopes == null) || (scopes.length != 1) )
+                return;
+            scope = scopes[0];
+        }
+        boolean highlight = true;
+        boolean impArchives = true;
+        boolean impBookmarks = true;
+        boolean impBans = false;
+        boolean impKeys = false;
+        
+        long chanId = _browser.getClient().getChannelId(scope);
+        Collection chans = _browser.getClient().getWatchedChannels();
+        WatchedChannel chan = null;
+        for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
+            WatchedChannel cur = (WatchedChannel)iter.next();
+            if (cur.getChannelId() == chanId) {
+                chan = cur;
+                break;
+            }
+        }
+        
+        if (chan != null) { // already watched, so just make it highlighted
+            highlight = true;
+            impArchives = chan.getImportArchives();
+            impBans = chan.getImportBans();
+            impBookmarks = chan.getImportBookmarks();
+            impKeys = chan.getImportKeys();
+        } else { 
+            // new, so use defaults from above
+        }
+        
+        _browser.getClient().watchChannel(scope, highlight, impArchives, impBookmarks, impBans, impKeys);
+    }
+    
+    private void rebuildWatched() {
+        _tree.setRedraw(false);
+        boolean wasExpanded = _watchedRoot.getExpanded();
+        _watchedItemToWatchedChannel.clear();
+        _watchedRoot.removeAll();
+        ArrayList watched = new ArrayList(_browser.getClient().getWatchedChannels());
+        for (int i = 0; i < watched.size(); i++) {
+            WatchedChannel chan = (WatchedChannel)watched.get(i);
+            String name = _browser.getClient().getChannelName(chan.getChannelId());
+            Hash hash = _browser.getClient().getChannelHash(chan.getChannelId());
+            if (hash == null) continue;
+            
+            if (name == null) name = "";
+            name = name + " [" + hash.toBase64().substring(0,6) + "]";
+            
+            TreeItem item = new TreeItem(_watchedRoot, SWT.NONE);
+            item.setText(name);
+            item.setImage(ImageUtil.ICON_MSG_FLAG_BOOKMARKED);
+            _watchedItemToWatchedChannel.put(item, chan);
+        }
+        if (wasExpanded && watched.size() > 0)
+            _watchedRoot.setExpanded(true);
+        _tree.setRedraw(true);
+    }
+    
     protected void initComponents(boolean register) {
         long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
         _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        
+        _watchedRoot = new TreeItem(_tree, SWT.NONE);
         _bookmarkRoot = new TreeItem(_tree, SWT.NONE);
         _postRoot = new TreeItem(_tree, SWT.NONE);
         _manageRoot = new TreeItem(_tree, SWT.NONE);
+        _importedRoot = new TreeItem(_tree, SWT.NONE);
         //_searchRoot = new TreeItem(_tree, SWT.NONE);
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
@@ -252,6 +343,11 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                 if (info != null) {
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(info.getChannelHash()));
                     return;
+                }
+                WatchedChannel chan = (WatchedChannel)_watchedItemToWatchedChannel.get(item);
+                if (chan != null) {
+                    Hash scope = _browser.getClient().getChannelHash(chan.getChannelId());
+                    _acceptanceListener.referenceAccepted(SyndieURI.createScope(scope));
                 }
             }
         };
@@ -300,6 +396,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                        redrawPostable();
                        redrawManageable();
                        redrawSearchResults(false);
+                       rebuildWatched();
                    } 
                 });
             }
@@ -311,6 +408,8 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             _browser.getTranslationRegistry().register(this);
             _browser.getThemeRegistry().register(this);
         }
+        
+        _browser.getClient().addWatchEventListener(this);
         long t9 = System.currentTimeMillis();
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
@@ -326,6 +425,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     }
     
     public void dispose() {
+        _browser.getClient().removeWatchEventListener(this);
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
     }
@@ -355,6 +455,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     protected TreeItem getManageRoot() { return _manageRoot; }
     protected TreeItem getPostRoot() { return _postRoot; }
     protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
+    protected TreeItem getWatchedRoot() { return _watchedRoot; }
     
     protected void bookmarksRebuilt(ArrayList nymRefs) {}
     
@@ -395,7 +496,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                         int started = viewStartupItems(getBookmarkRoot());
                         Splash.dispose();
                     }
-                    getBookmarkRoot().setExpanded(true);
+                    //getBookmarkRoot().setExpanded(true);
                     _tree.setRedraw(true);
                     long t6 = System.currentTimeMillis();
                     _ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
@@ -493,7 +594,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
         
         SyndieURI prevTabs[] = getPrevTabs();
         if (prevTabs == null) {
-            _browser.view(_browser.createBookmarkedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+            _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
         } else {
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null)
@@ -615,7 +716,7 @@ public class ReferenceChooserTree implements Translatable, Themeable {
             if (_choiceListener != null)
                 _choiceListener.bookmarkSelected(childItem, child);
         }
-        String desc = child.getDescription();
+        String desc = null; //child.getDescription();
         if ( (desc != null) && (desc.trim().length() > 0) )
             childItem.setText(child.getName() + "-" + child.getDescription());
         else
@@ -683,11 +784,18 @@ public class ReferenceChooserTree implements Translatable, Themeable {
                     lsnr.postChannelSelected(items[i], info);
                     continue;
                 }
+                WatchedChannel watched = (WatchedChannel)_watchedItemToWatchedChannel.get(items[i]);
+                if (watched != null) {
+                    lsnr.watchedChannelSelected(items[i], watched);
+                    continue;
+                }
                 // if reached, its one of the meta-entries (roots, etc)
                 lsnr.otherSelected(items[i]);
             }
         }
     }
+    
+    public void watchesUpdated() { rebuildWatched(); }
 
     private static final String T_BOOKMARK_ROOT = "syndie.gui.refchoosertree.bookmarkroot";
     private static final String T_POST_ROOT = "syndie.gui.refchoosertree.postroot";
@@ -702,10 +810,15 @@ public class ReferenceChooserTree implements Translatable, Themeable {
     private static final String T_POST_PREFIX = "syndie.gui.refchoosertree.post.prefix";
     private static final String T_POST_PUBLIC_PREFIX = "syndie.gui.refchoosertree.post.publicprefix";
     
+    private static final String T_WATCHED_ROOT = "syndie.gui.refchoosertree.watched.root";
+    private static final String T_IMPORTED_ROOT = "syndie.gui.refchoosertree.imported.root";
+    
     public void translate(TranslationRegistry registry) {
         _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));
         _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
         _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
+        _watchedRoot.setText(registry.getText(T_WATCHED_ROOT, "Watched forums"));
+        _importedRoot.setText(registry.getText(T_IMPORTED_ROOT, "Imported resources"));
         //_searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
         //refreshBookmarks();
         //redrawPostable();

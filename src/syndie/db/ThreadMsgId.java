@@ -4,12 +4,14 @@ import net.i2p.data.Hash;
 public final class ThreadMsgId {
     public long msgId;
     public long messageId;
+    public long authorScopeId;
     public Hash scope;
     public boolean unreadable;
     public Boolean authorized;
     public ThreadMsgId(long id) {
         msgId = id;
         messageId = -1;
+        authorScopeId = -1;
         scope = null;
         unreadable = false;
         authorized = null;
