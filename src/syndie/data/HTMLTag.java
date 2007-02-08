@@ -108,6 +108,7 @@ public class HTMLTag {
     }
     
     public String getAttribValue(String name) { return attributes.getProperty(Constants.lowercase(name)); }
+    public String getAttribValueLC(String name) { return attributes.getProperty(name); }
     public void setAttribValue(String name, String value) { attributes.setProperty(Constants.lowercase(name), value); }
     public void removeAttribValue(String name) { attributes.remove(Constants.lowercase(name)); }
     public boolean wasConsumed() { return consumed; }
@@ -131,5 +132,23 @@ public class HTMLTag {
         }
         rv.append('>');
         return rv.toString();
+    }
+    
+    public int hashCode() {
+        int rv = 0;
+        if (name != null) rv += name.hashCode();
+        rv += startIndex;
+        rv += endIndex;
+        rv += srcLine;
+        return rv;
+    }
+    public boolean equals(Object o) {
+        HTMLTag tag = (HTMLTag)o;
+        return ( (tag.name.equals(name)) &&
+                 (tag.startIndex == startIndex) &&
+                 (tag.endIndex == endIndex) &&
+                 (tag.srcLine == srcLine) &&
+                 ((tag.attributes != null) && (tag.attributes.equals(attributes)))
+                 );
     }
 }

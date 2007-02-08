@@ -1,6 +1,8 @@
 package syndie.gui;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -110,13 +112,13 @@ class HTMLStyleBuilder {
         TreeMap breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
-            if ("a".equals(tag.name) && (tag.getAttribValue("href") != null)) {
+            if (("a".equals(tag.name)) && (tag.getAttribValueLC("href") != null)) {
                 _linkTags.add(tag);
             } else if ("img".equals(tag.name)) {
                 _imageTags.add(tag);
             } else if ("body".equals(tag.name)) {
-                bodyBgImage = tag.getAttribValue("bgimage");
-                bodyBgColor = tag.getAttribValue("bgcolor");
+                bodyBgImage = tag.getAttribValueLC("bgimage");
+                bodyBgColor = tag.getAttribValueLC("bgcolor");
             }
             List tags = (List)breakPointTags.get(new Integer(tag.startIndex));
             if (tags == null) {
@@ -142,7 +144,7 @@ class HTMLStyleBuilder {
         insertCharBreakpoints(HTMLStateBuilder.PLACEHOLDER_LISTITEM, breakPointTags, _listItemIndexes);
         _ui.debugMessage("list item indexes: " + _listItemIndexes);
 
-        ts("character breakpoints inserted");
+        ts("character breakpoints inserted: " + breakPointTags.size());
         
         // make sure it covers the whole schebang
         List startTags = (List)breakPointTags.get(new Integer(0));
@@ -154,21 +156,32 @@ class HTMLStyleBuilder {
         
         int bps = breakPointTags.size();
         _ui.debugMessage("breakpoints: " + bps);
-        // now go through the breakpoints and check what other tags are applicable there.
-        // the list of tags will contain all tags that are in that set, but it can contain
-        // tags that should not be
+        ts("before organizing tags into breakpoints");
+        int bpIndexes[] = new int[breakPointTags.size()];
+        List bpTags[] = new List[bpIndexes.length];
+        int bpOff = 0;
         for (Iterator iter = breakPointTags.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             Integer bp = (Integer)entry.getKey();
             List tags = (List)entry.getValue();
-            int orig = tags.size();
-            for (int i = 0; i < tags.size(); i++) {
-                HTMLTag tag = (HTMLTag)tags.get(i);
+            bpIndexes[bpOff] = bp.intValue();
+            bpTags[bpOff] = tags;
+            bpOff++;
+        }
+        
+        // now go through the breakpoints and check what other tags are applicable there.
+        // the list of tags will contain all tags that are in that set, but it can contain
+        // tags that should not be
+        /*
+        for (int i = 0; i < bpIndexes.length; i++) {
+            int orig = bpTags[i].size();
+            for (int j = 0; j < bpTags[i].size(); j++) {
+                HTMLTag tag = (HTMLTag)bpTags[i].get(j);
                 while (tag.parent != null) {
                     HTMLTag cParent = tag.parent;
-                    if (!tags.contains(cParent)) {
-                        if ( (cParent.startIndex <= bp.intValue()) && (cParent.endIndex >= bp.intValue()) ) {
-                            tags.add(cParent);
+                    if (!bpTags[i].contains(cParent)) {
+                        if ( (cParent.startIndex <= bpIndexes[i]) && (cParent.endIndex >= bpIndexes[i]) ) {
+                            bpTags[i].add(cParent);
                         } else {
                             break;
                         }
@@ -176,26 +189,18 @@ class HTMLStyleBuilder {
                     tag = cParent;
                 }
             }
-            /*
-            int num = tags.size();
-            if (num < 10) {
-                //System.out.print("0");
-            } else if (num < 20) {
-                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
-                System.out.print("1");
-            } else if (num < 30) {
-                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
-                System.out.print("2");
-            } else if (num < 40) {
-                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
-                System.out.print("3");
-            } else if (num < 50) {
-                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
-                System.out.print("4");
-            } else {
-                System.out.println("\n# bp @ " + bp.intValue() + " tags: " + num + "/" + orig + " tags: " + tags);
+        }
+        */
+        for (int i = 0; i < _htmlTags.size(); i++) {
+            HTMLTag tag = (HTMLTag)_htmlTags.get(i);
+            // find all breakpoints that this tag applies to
+            for (int j = 0; j < bpIndexes.length; j++) {
+                if (tag.startIndex > bpIndexes[j]) break; // bpIndexes is ordered
+                if ( (tag.startIndex <= bpIndexes[j]) && (tag.endIndex >= bpIndexes[j]) ) {
+                    if (!bpTags[j].contains(tag))
+                        bpTags[j].add(tag);
+                }
             }
-             */
         }
         
         ts("tag children found in thread: " + Thread.currentThread().getName());
@@ -204,6 +209,8 @@ class HTMLStyleBuilder {
         
         long buildTime = 0;
         int buildInstances = 0;
+        long prepareTime = 0;
+        long selectTagTime = 0;
         // iterate across those points, building a new StyleRange out of all tags applicable there
         _styleRanges = new StyleRange[breakPointTags.size()];
         int rangeIndex = 0;
@@ -257,9 +264,11 @@ class HTMLStyleBuilder {
                 buildInstances++;
                 buildTime += (t4-t3);
             }
+            prepareTime += (t3-t1);
+            selectTagTime += (t3-t2);
         }
         
-        ts("done iterating over breakpoints: " + breakPointTags.size() + " build:" + buildInstances+"/"+buildTime);
+        ts("done iterating over breakpoints: " + breakPointTags.size() + " build:" + buildInstances+"/"+buildTime + " prepare: " + prepareTime + " selectTag: " + selectTagTime);
         
         if (_enableImages) {
             // put images in for all the <img> tags
@@ -356,6 +365,7 @@ class HTMLStyleBuilder {
     }
     
     private StyleRange buildStyle(List tags, int start, int length) {
+        /*
         StringBuffer buf = new StringBuffer();
         buf.append("building style for [" + start + " through " + (start+length) + "]: ");
         for (int i = 0; i < tags.size(); i++)
@@ -365,6 +375,7 @@ class HTMLStyleBuilder {
         else
             buf.append("\n");
         //ts(buf.toString());
+         */
         
         return getStyle(start, length, tags);
     }
@@ -377,56 +388,63 @@ class HTMLStyleBuilder {
                 return true;
         return false;
     }
+    static boolean containsTagLC(List tags, String tagName) {
+        for (int i = 0; i < tags.size(); i++)
+            if (((HTMLTag)tags.get(i)).name.equals(tagName))
+                return true;
+        return false;
+    }
     
     private StyleRange getStyle(int start, int length, List tags) {
+        long begin = System.currentTimeMillis();
         // turn the given tags into a style
         StyleRange style = new StyleRange();
         style.start = start;
         style.length = length;
-        if (containsTag(tags, "h1")) {
+        if (containsTagLC(tags, "h1")) {
             style.font = _fontH1;
-        } else if (containsTag(tags, "h2")) {
+        } else if (containsTagLC(tags, "h2")) {
             style.font = _fontH2;
-        } else if (containsTag(tags, "h3")) {
+        } else if (containsTagLC(tags, "h3")) {
             style.font = _fontH3;
-        } else if (containsTag(tags, "h4")) {
+        } else if (containsTagLC(tags, "h4")) {
             style.font = _fontH4;
-        } else if (containsTag(tags, "h5")) {
+        } else if (containsTagLC(tags, "h5")) {
             style.font = _fontH5;
-        } else if (containsTag(tags, "code")) {
+        } else if (containsTagLC(tags, "code")) {
             style.font = _fontCODE;
-        } else if (containsTag(tags, "pre")) {
+        } else if (containsTagLC(tags, "pre")) {
             style.font = _fontPRE;
-        } else if (containsTag(tags, "li")) {
+        } else if (containsTagLC(tags, "li")) {
             style.font = _fontLI;
-        } else if (containsTag(tags, "a")) {
+        } else if (containsTagLC(tags, "a")) {
             style.font = _fontA;
             style.underline = true;
-        } else if (containsTag(tags, "p")) {
+        } else if (containsTagLC(tags, "p")) {
             style.font = _fontP;
         }
         
         // these two props (U and SO) are separate from the font, so no trouble
-        if (containsTag(tags, "u"))
+        if (containsTagLC(tags, "u"))
             style.underline = true;
-        if (containsTag(tags, "so"))
+        if (containsTagLC(tags, "so"))
             style.strikeout = true;
         
         if (style.font == null)
             style.font = _fontDefault;
         
         int customStyle = 0;
-        if (containsTag(tags, "i"))
+        if (containsTagLC(tags, "i"))
             customStyle |= SWT.ITALIC;
-        if (containsTag(tags, "b") || containsTag(tags, "em"))
+        if (containsTagLC(tags, "b") || containsTagLC(tags, "em"))
             customStyle |= SWT.BOLD;
         
         int sizeModifier = 0;
         // innermost font size is used
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            if (tag.name.equalsIgnoreCase("font")) {
-                String sz = tag.getAttribValue("size");
+            if (tag.name.equals("font")) {
+                String sz = tag.getAttribValueLC("size");
                 if (sz != null) {
                     sz = sz.trim();
                     if (sz.startsWith("+") && (sz.length() > 1))
@@ -449,10 +467,10 @@ class HTMLStyleBuilder {
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
             String name = null;
-            if (tag.name.equalsIgnoreCase("font"))
-                name = tag.getAttribValue("name");
+            if (tag.name.equals("font"))
+                name = tag.getAttribValueLC("name");
             else
-                name = tag.getAttribValue("font");
+                name = tag.getAttribValueLC("font");
             if (name != null) {
                 fontName = name.trim();
                 break;
@@ -465,9 +483,11 @@ class HTMLStyleBuilder {
         //System.out.println("Looking for a bgcolor in " + tags);
         for (int i = 0; (bgColor == null) && (i < tags.size()); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            bgColor = ColorUtil.getColor(tag.getAttribValue("bgcolor"), _customColors);
+            String str = tag.getAttribValueLC("bgcolor");
+            if (str == null) continue;
+            bgColor = ColorUtil.getColor(str, _customColors);
         }
-        if ((bgColor == null) && (containsTag(tags, "quote"))) {
+        if ((bgColor == null) && (containsTagLC(tags, "quote"))) {
             bgColor = _bgColorQuote;
             fgColor = ColorUtil.getColor("black");
         }
@@ -479,9 +499,9 @@ class HTMLStyleBuilder {
         //System.out.println("Looking for a fgcolor in " + tags);
         for (int i = 0; i < tags.size(); i++) {
             HTMLTag tag = (HTMLTag)tags.get(i);
-            String color = tag.getAttribValue("fgcolor");
+            String color = tag.getAttribValueLC("fgcolor");
             if (color == null)
-                color = tag.getAttribValue("color");
+                color = tag.getAttribValueLC("color");
             if (color == null)
                 continue;
             
@@ -505,11 +525,13 @@ class HTMLStyleBuilder {
         }
         
         // images are built later
+        
+        //System.out.println("getStyle("+start+","+length+",#"+ tags.size()+") took " + (System.currentTimeMillis()-begin));
         return style;
     }
     
     private void includeImage(final StyleRange style, final HTMLTag imgTag) {
-        final SyndieURI srcURI = getURI(imgTag.getAttribValue("src"));
+        final SyndieURI srcURI = getURI(imgTag.getAttribValueLC("src"));
         if ( (imgTag == null) || (srcURI == null) || (!srcURI.isChannel()) || (srcURI.getAttachment() == null)) {
             _images.add(ImageUtil.ICON_IMAGE_UNKNOWN);
             return;
@@ -531,6 +553,7 @@ class HTMLStyleBuilder {
     }
     
     private Image getImage(SyndieURI imgURI) {
+        if (_source == null) return null;
         Image img = null;
         if (imgURI != null) {
             Long attachmentId = imgURI.getLong("attachment");
@@ -645,26 +668,34 @@ class HTMLStyleBuilder {
     
     private Properties getDefaultConfig() {
         Properties rv = new Properties();
-        Theme theme = _source.getTheme();
+        String standardFace = "Times";
+        int standardSize = 12;
+        String linkFace = "Times";
+        int linkSize = 12;
         
-        String face = Theme.getFace(theme.CONTENT_FONT);
-        int size = Theme.getSize(theme.CONTENT_FONT);
+        if (_source != null) {
+            Theme theme = _source.getTheme();
         
-        rv.setProperty("default", face + ';' + size + ";NORMAL");
-        rv.setProperty("p", face + ';' + size + ";NORMAL");
-        rv.setProperty("li", face + ';' + size + ";NORMAL");
+            standardFace = Theme.getFace(theme.CONTENT_FONT);
+            standardSize = Theme.getSize(theme.CONTENT_FONT);
         
-        rv.setProperty("h1", face + ';' + (size+16) + ";BOLD");
-        rv.setProperty("h2", face + ';' + (size+8) + ";BOLD");
-        rv.setProperty("h3", face + ';' + size + ";BOLD");
-        rv.setProperty("h4", face + ';' + Math.max(size-4, 6) + ";BOLD");
-        rv.setProperty("h5", face + ';' + Math.max(size-8, 6) + ";BOLD");
-        rv.setProperty("pre", "Courier;" + size + ";NORMAL");
-        rv.setProperty("code", "Courier;" + size + ";NORMAL");
+            linkFace = Theme.getFace(theme.LINK_FONT);
+            linkSize = Theme.getSize(theme.LINK_FONT);
+        }
         
-        face = Theme.getFace(theme.LINK_FONT);
-        size = Theme.getSize(theme.LINK_FONT);
-        rv.setProperty("a", face + ';' + size + ";NORMAL");
+        rv.setProperty("default", standardFace + ';' + standardSize + ";NORMAL");
+        rv.setProperty("p", standardFace + ';' + standardSize + ";NORMAL");
+        rv.setProperty("li", standardFace + ';' + standardSize + ";NORMAL");
+        
+        rv.setProperty("h1", standardFace + ';' + (standardSize+16) + ";BOLD");
+        rv.setProperty("h2", standardFace + ';' + (standardSize+8) + ";BOLD");
+        rv.setProperty("h3", standardFace + ';' + standardSize + ";BOLD");
+        rv.setProperty("h4", standardFace + ';' + Math.max(standardSize-4, 6) + ";BOLD");
+        rv.setProperty("h5", standardFace + ';' + Math.max(standardSize-8, 6) + ";BOLD");
+        rv.setProperty("pre", "Courier;" + standardSize + ";NORMAL");
+        rv.setProperty("code", "Courier;" + standardSize + ";NORMAL");
+        
+        rv.setProperty("a", linkFace + ';' + linkSize + ";NORMAL");
         
         return rv;
     }
@@ -767,12 +798,33 @@ class HTMLStyleBuilder {
     }
 
     public static void main(String args[]) {
+        /*
+        try {
+            StringBuffer buf = new StringBuffer();
+            BufferedReader in = new BufferedReader(new FileReader("/home/jrandom/guardian.html"));
+            String line = null;
+            while ( (line = in.readLine()) != null) buf.append(line).append('\n');
+            in.close();
+            in = null;
+            String str = buf.toString();
+            buf = null;
+            System.gc();
+            Thread.sleep(5000);
+            System.gc();
+            long before = System.currentTimeMillis();
+            test(str);
+            long after = System.currentTimeMillis();
+            System.out.println("test time: " + (after-before));
+        } catch (Exception e) { e.printStackTrace(); }
+        */
+        /*
         test("<html><body>hi<br />how are you?</body></html>");
         test("<html><body>hi<br />how are you?</html>");
         test("hi<br />how are you?");
         test("a b  c   d\n\n\t\re");
         test("<!-- you can't see me -->now you can<br /><!-- -->la la la");
         test(HTMLStateBuilder.COMPREHENSIVE_TEST);
+         */
     }
     
     private static void test(String body) {
