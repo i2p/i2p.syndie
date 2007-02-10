@@ -248,7 +248,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         long t5 = System.currentTimeMillis();
         
-        _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE);
+        _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE | SWT.BORDER);
         _tabs.setSimple(true);
         _tabs.setMinimizeVisible(false);
         _tabs.setMinimumCharacters(20);

@@ -158,7 +158,10 @@ class ManageForum implements Translatable, Themeable {
         loadOrigAvatar();
         
         _avatar = new Button(_root, SWT.PUSH);
-        _avatar.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, 2));
+        GridData gd = new GridData(GridData.CENTER, GridData.CENTER, false, false, 1, 2);
+        gd.widthHint = 54;
+        gd.heightHint = 54;
+        _avatar.setLayoutData(gd);
         
         _avatarMenu = new Menu(_avatar);
         _avatar.setMenu(_avatarMenu);
@@ -174,7 +177,7 @@ class ManageForum implements Translatable, Themeable {
         _nameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _name = new Text(_root, SWT.BORDER | SWT.SINGLE);
-        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         //gd.widthHint = 100;
         _name.setLayoutData(gd);
         _name.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
@@ -813,13 +816,21 @@ class ManageForum implements Translatable, Themeable {
             
             if (_avatarImgOrig != null)
                 pickAvatar(_avatarImgOrig);
-            
-            loadArchives(info);
-            loadForums(info);
-            loadBans(info);
-            loadUsers(info);
-            _root.layout(true, true);
+        } else {
+            if (_avatarImgStandard.size() > 0) {
+                Image img = (Image)_avatarImgStandard.get(0);
+                _avatarImgOrig = img;
+                _avatar.setImage(img);
+                _avatar.redraw();
+            }
         }
+        
+        loadArchives(info);
+        loadForums(info);
+        loadBans(info);
+        loadUsers(info);
+        _root.layout(true, true);
+        
         _initialized = true;
         _modified = false;
         _save.setEnabled(false);
@@ -832,14 +843,16 @@ class ManageForum implements Translatable, Themeable {
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
         _privArchiveURIs.clear();
-        for (Iterator iter = info.getPrivateArchives().iterator(); iter.hasNext(); ) {
-            ArchiveInfo archive = (ArchiveInfo)iter.next();
-            _privArchiveURIs.add(archive.getURI());
-        }
-        _pubArchiveURIs.clear();
-        for (Iterator iter = info.getPublicArchives().iterator(); iter.hasNext(); ) {
-            ArchiveInfo archive = (ArchiveInfo)iter.next();
-            _pubArchiveURIs.add(archive.getURI());
+        if (info != null) {
+            for (Iterator iter = info.getPrivateArchives().iterator(); iter.hasNext(); ) {
+                ArchiveInfo archive = (ArchiveInfo)iter.next();
+                _privArchiveURIs.add(archive.getURI());
+            }
+            _pubArchiveURIs.clear();
+            for (Iterator iter = info.getPublicArchives().iterator(); iter.hasNext(); ) {
+                ArchiveInfo archive = (ArchiveInfo)iter.next();
+                _pubArchiveURIs.add(archive.getURI());
+            }
         }
         
         redrawArchives();
@@ -891,8 +904,10 @@ class ManageForum implements Translatable, Themeable {
     private void loadUsers(ChannelInfo info) {
         _managerHashes.clear();
         _posterHashes.clear();
-        _managerHashes.addAll(info.getAuthorizedManagerHashes());
-        _posterHashes.addAll(info.getAuthorizedPosterHashes());
+        if (info != null) {
+            _managerHashes.addAll(info.getAuthorizedManagerHashes());
+            _posterHashes.addAll(info.getAuthorizedPosterHashes());
+        }
     }
     
     public void applyTheme(Theme theme) {

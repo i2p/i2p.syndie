@@ -1586,7 +1586,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private void initPage() {
-        _pageTabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP);
+        _pageTabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP | SWT.BORDER);
         _pageTabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _refTab = new CTabItem(_pageTabs, SWT.NONE);
