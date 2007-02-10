@@ -428,8 +428,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             long t2 = System.currentTimeMillis();
             if (!_shell.isVisible()) {
-                // todo: make this remember the last size (from the nymPrefs)
-                _shell.setMaximized(true);
+                loadPosition();
                 _shell.open();
                 _shell.forceActive();
                 _shell.forceFocus();
@@ -1030,6 +1029,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         confirm.setMessage(_translation.getText(T_CONFIRM_EXIT_MESSAGE, "Are you sure you want to exit Syndie?"));
         int rv = confirm.open();
         if (rv == SWT.YES) {
+            // save before hiding/disposing anything
+            savePosition();
+            
             // windows doesn't clean up the systray icon so quickly on exit, so
             // lets force it to show nothing explicitly
             _systrayRoot.setImage(null);
@@ -1049,9 +1051,64 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 if (!uris.contains(curURI))
                     uris.add(curURI);
             }
+            
             ReferenceChooserTree.savePrevTabs(this, uris);
             _client.close();
             System.exit(0);
+        }
+    }
+    
+    private void savePosition() {
+        boolean max = _shell.getMaximized();
+        Properties prefs = _client.getNymPrefs();
+        prefs.setProperty("browser.maximize", Boolean.toString(max));
+        
+        boolean showBookmarks = (_sash.getMaximizedControl() == null);
+        prefs.setProperty("browser.showBookmarks", Boolean.toString(showBookmarks));
+        
+        Rectangle rect = _shell.getBounds();
+        prefs.setProperty("browser.bounds.x", Integer.toString(rect.x));
+        prefs.setProperty("browser.bounds.y", Integer.toString(rect.y));
+        prefs.setProperty("browser.bounds.width", Integer.toString(rect.width));
+        prefs.setProperty("browser.bounds.height", Integer.toString(rect.height));
+
+        _client.setNymPrefs(prefs);
+    }
+    private void loadPosition() {
+        Properties prefs = _client.getNymPrefs();
+        boolean max = Boolean.valueOf(prefs.getProperty("browser.maximize", "true")).booleanValue();
+        _shell.setMaximized(max);
+        
+        boolean showBookmarks = Boolean.valueOf(prefs.getProperty("browser.showBookmarks", "false")).booleanValue();
+        _sash.setMaximizedControl(showBookmarks ? null : _tabs);
+        
+        Rectangle rect = getRect(prefs, "browser.bounds.");
+        if (rect != null)
+            _shell.setBounds(rect);
+    }
+    
+    private Rectangle getRect(Properties prefs, String prefix) {
+        String xStr = prefs.getProperty(prefix + "x");
+        String yStr = prefs.getProperty(prefix + "y");
+        String widthStr = prefs.getProperty(prefix + "width");
+        String heightStr = prefs.getProperty(prefix + "height");
+        
+        if ( (xStr != null) && (yStr != null) && (widthStr != null) && (heightStr != null) ) {
+            try {
+                int x = Integer.parseInt(xStr);
+                int y = Integer.parseInt(yStr);
+                int width = Integer.parseInt(widthStr);
+                int height = Integer.parseInt(heightStr);
+                
+                if ( (width > 0) && (height > 0) && (x >= 0) && (y >= 0) )
+                    return new Rectangle(x, y, width, height);
+                else
+                    return null;
+            } catch (NumberFormatException nfe) {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
     
