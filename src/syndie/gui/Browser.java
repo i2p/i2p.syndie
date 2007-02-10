@@ -1545,12 +1545,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public void bookmark(SyndieURI uri) {
         String name = "bookmark name";
         String desc = "";
-        bookmark(uri, name, desc);
+        bookmark(uri, name, desc, -1, true);
     }
-    private void bookmark(SyndieURI uri, String name, String desc) {
+    
+    /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+    public void bookmark(SyndieURI uri, long parentGroupId) {
+        String name = "bookmark name";
+        String desc = "";
+        bookmark(uri, name, desc, parentGroupId, false);
+    }
+    private void bookmark(SyndieURI uri, String name, String desc, long parentGroupId, boolean pickParent) {
         debugMessage("bookmarking "+uri);
         int siblingOrder = -1;
-        long parentGroupId = -1;
         boolean loadOnStart = false;
         
         if (desc.length() <= 0) {
@@ -1609,6 +1615,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
         BookmarkEditorPopup editor = getBookmarkEditor();
         editor.setBookmark(node);
+        editor.pickParent(pickParent);
         editor.open();
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
@@ -1619,6 +1626,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     public void deleteBookmark(long bookmarkGroupId) {
         _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
+        _bookmarks.refreshBookmarks();
+    }
+    public void deleteBookmarks(List bookmarkGroupIds) {
+        for (int i = 0; i < bookmarkGroupIds.size(); i++) {
+            Long groupId = (Long)bookmarkGroupIds.get(i);
+            _client.deleteNymReference(_client.getLoggedInNymId(), groupId.longValue());
+        }
         _bookmarks.refreshBookmarks();
     }
     public void updateBookmark(NymReferenceNode bookmark) {
@@ -2267,7 +2281,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 BrowserTab tab = (BrowserTab)_openTabs.get(uri);
                 if (tab.getTabItem() == item) {
                     SyndieURI curURI = tab.getURI(); // may have changed since insert
-                    bookmark(curURI, tab.getName(), tab.getDescription());
+                    bookmark(curURI, tab.getName(), tab.getDescription(), -1, true);
                     return;
                 }
             }

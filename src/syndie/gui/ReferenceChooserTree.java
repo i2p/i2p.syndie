@@ -115,7 +115,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         _manageChannels = new HashMap();
         _searchResults = new ArrayList();
         _showSearchList = showSearchList;
-        initComponents(true);
+        initComponents(true, false);
     }
 
     DBClient getClient() { return _client; }
@@ -167,6 +167,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
         }
         rebuildBookmarks();
+        _browser.getUI().debugMessage("refresh bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
         if (rootWasOpen) {
             _bookmarkRoot.setExpanded(true);
             ArrayList pending = new ArrayList();
@@ -299,11 +300,11 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         _tree.setRedraw(true);
     }
     
-    protected void initComponents(boolean register) {
+    protected void initComponents(boolean register, boolean multipleSelections) {
         long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
-        _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE);
+        _tree = new Tree(_root, SWT.BORDER | (multipleSelections ? SWT.MULTI : SWT.SINGLE));
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _watchedRoot = new TreeItem(_tree, SWT.NONE);
@@ -701,12 +702,46 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         }
     }
     private void redrawBookmarks() {
+        boolean rootWasOpen = _bookmarkRoot.getExpanded();
+        ArrayList openGroupIds = new ArrayList();
+        if (rootWasOpen) {
+            for (int i = 0; i < _bookmarkRoot.getItemCount(); i++)
+                getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
+        }
+        
         _bookmarkRoot.removeAll();
         _bookmarkNodes.clear();
         for (int i = 0; i < _nymRefs.size(); i++) {
             NymReferenceNode ref = (NymReferenceNode)_nymRefs.get(i);
             _ui.debugMessage("redrawBookmarks: add root ref " + i + ": " + ref.getGroupId());
             add(_bookmarkRoot, ref);
+        }
+        
+        _browser.getUI().debugMessage("redraw bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
+        if (rootWasOpen) {
+            _bookmarkRoot.setExpanded(true);
+            ArrayList pending = new ArrayList();
+            TreeItem cur = _bookmarkRoot;
+            while (cur != null) {
+                boolean includeChildren = false;
+                if (cur != _bookmarkRoot) {
+                    NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
+                    if ( (curNode != null) && (openGroupIds.contains(new Long(curNode.getGroupId()))) ) {
+                        cur.setExpanded(true);
+                        includeChildren = true;
+                    }
+                } else {
+                    includeChildren = true; 
+                }
+                if (includeChildren) {
+                    for (int i = 0; i < cur.getItemCount(); i++)
+                        pending.add(cur.getItem(i));
+                }
+                if (pending.size() > 0)
+                    cur = (TreeItem)pending.remove(0);
+                else
+                    cur = null;
+            }
         }
     }
     private void add(TreeItem parent, NymReferenceNode child) {

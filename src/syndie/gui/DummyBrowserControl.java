@@ -40,7 +40,9 @@ public class DummyBrowserControl implements BrowserControl {
     public void removeUIListener(Browser.UIListener lsnr) {}
 
     public void bookmark(SyndieURI uri) {}
+    public void bookmark(SyndieURI uri, long parentGroupId) {}
     public void deleteBookmark(long bookmarkGroupId) {}
+    public void deleteBookmarks(List bookmarkGroupIds) {}
     public void updateBookmark(NymReferenceNode bookmark) {}
     public void bookmark(NymReferenceNode node) {}
     public void bookmarkCurrentTab() {}

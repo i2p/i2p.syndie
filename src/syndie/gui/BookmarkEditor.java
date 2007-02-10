@@ -37,7 +37,6 @@ class BookmarkEditor implements Translatable {
     private List _roots;
     private Label _siblingOrderLabel;
     private Combo _siblingOrder;
-    private Button _loadOnStart;
     private Label _uriLabel;
     private Text _uri;
     private Button _uriBrowse;
@@ -47,11 +46,42 @@ class BookmarkEditor implements Translatable {
     private LinkBuilderPopup _refPopup;
     private BookmarkEditorListener _lsnr;
     
+    private boolean _pickParent;
+    private boolean _pickOrder;
+    private boolean _pickTarget;
+    
     public BookmarkEditor(BrowserControl control, Composite parent, BookmarkEditorListener lsnr) {
         _browser = control;
         _parent = parent;
         _lsnr = lsnr;
+        _pickParent = true;
+        _pickOrder = true;
+        _pickTarget = true;
         initComponents();
+    }
+    
+    public void pickParent(boolean pick) { 
+        _pickParent = pick;
+        ((GridData)_parentGroup.getLayoutData()).exclude = !pick;
+        ((GridData)_parentGroupLabel.getLayoutData()).exclude = !pick;
+        _parentGroup.setVisible(pick);
+        _parentGroupLabel.setVisible(pick);
+    }
+    public void pickOrder(boolean pick) { 
+        _pickOrder = pick;
+        ((GridData)_siblingOrder.getLayoutData()).exclude = !pick;
+        ((GridData)_siblingOrderLabel.getLayoutData()).exclude = !pick;
+        _siblingOrder.setVisible(pick);
+        _siblingOrderLabel.setVisible(pick);
+    }
+    public void pickTarget(boolean pick) { 
+        _pickTarget = pick;
+        ((GridData)_uri.getLayoutData()).exclude = !pick;
+        ((GridData)_uriLabel.getLayoutData()).exclude = !pick;
+        ((GridData)_uriBrowse.getLayoutData()).exclude = !pick;
+        _uri.setVisible(pick);
+        _uriLabel.setVisible(pick);
+        _uriBrowse.setVisible(pick);
     }
     
     public interface BookmarkEditorListener {
@@ -116,9 +146,6 @@ class BookmarkEditor implements Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { browse(); }
         });
         
-        _loadOnStart = new Button(_root, SWT.CHECK);
-        _loadOnStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
-        
         Composite actions = new Composite(_root, SWT.NONE);
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
@@ -168,13 +195,20 @@ class BookmarkEditor implements Translatable {
     }
     
     private SyndieURI getURI() {
-        String uriStr = _uri.getText().trim();
-        if (uriStr.length() > 0) {
-            try {
-                return new SyndieURI(uriStr);
-            } catch (URISyntaxException use) {}
+        if (!_pickTarget) {
+            if (_node != null)
+                return _node.getURI();
+            else
+                return null;
+        } else {
+            String uriStr = _uri.getText().trim();
+            if (uriStr.length() > 0) {
+                try {
+                    return new SyndieURI(uriStr);
+                } catch (URISyntaxException use) {}
+            }
+            return null;
         }
-        return null;
     }
     
     private NymReferenceNode getState() {
@@ -187,56 +221,80 @@ class BookmarkEditor implements Translatable {
         int order = 0;
         boolean ignored = false;
         boolean banned = false;
-        boolean onStart = false;
         
         _browser.getUI().debugMessage("getState for node " + _node);
         
         name = _name.getText().trim();
         desc = _description.getText().trim();
         
-        String uriStr = _uri.getText().trim();
-        if (_node != null) {
-            SyndieURI orig = _node.getURI();
-            SyndieURI newURI = null;
-            if (uriStr.length() > 0) {
-                try {
-                    newURI = new SyndieURI(uriStr);
-                } catch (URISyntaxException use) {
-                    _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
-                    newURI = null;
+        if (_pickTarget) {
+            String uriStr = _uri.getText().trim();
+            if (_node != null) {
+                SyndieURI orig = _node.getURI();
+                SyndieURI newURI = null;
+                if (uriStr.length() > 0) {
+                    try {
+                        newURI = new SyndieURI(uriStr);
+                    } catch (URISyntaxException use) {
+                        _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
+                        newURI = null;
+                    }
                 }
-            }
-            if ( (orig != null) && (orig.equals(newURI)) ) {
-                uriId = _node.getURIId();
+                if ( (orig != null) && (orig.equals(newURI)) ) {
+                    uriId = _node.getURIId();
+                } else {
+                    uriId = -1;
+                }
+                uri = newURI;
             } else {
                 uriId = -1;
-            }
-            uri = newURI;
-        } else {
-            uriId = -1;
-            if (uriStr.length() > 0) {
-                try {
-                    uri = new SyndieURI(uriStr);
-                } catch (URISyntaxException use) {
-                    _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
-                    uri = null;
+                if (uriStr.length() > 0) {
+                    try {
+                        uri = new SyndieURI(uriStr);
+                    } catch (URISyntaxException use) {
+                        _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
+                        uri = null;
+                    }
                 }
             }
+        } else if (_node != null) {
+            uri = _node.getURI();
+            uriId = _node.getURIId();
         }
         if (_node != null)
             groupId = _node.getGroupId();
-        int idx = _parentGroup.getSelectionIndex() - 1;
-        if (idx >= 0) {
-            NymReferenceNode parent = (NymReferenceNode)_parentNodes.get(idx);
-            parentGroupId = parent.getGroupId();
-        } else {
+        if (_pickParent) {
+            int idx = _parentGroup.getSelectionIndex() - 1;
+            if (idx >= 0) {
+                NymReferenceNode parent = (NymReferenceNode)_parentNodes.get(idx);
+                parentGroupId = parent.getGroupId();
+            } else {
+                parentGroupId = -1;
+            }
+        } else if (_node != null) {
+            parentGroupId = _node.getParentGroupId();
+        } else{
             parentGroupId = -1;
         }
         order = _siblingOrder.getSelectionIndex();
-        onStart = _loadOnStart.getSelection();
         
         _browser.getUI().debugMessage("uri: " + uri + " uriId: " + uriId + " groupId: " + groupId + " order: " + order);
-        return new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, ignored, banned, onStart);
+        
+        NymReferenceNode rv = _node;
+        if (rv == null) {
+            rv = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, ignored, banned, false);
+        } else {
+            rv.setName(name);
+            rv.setDescription(desc);
+            rv.setURI(uri);
+            rv.setURIId(uriId);
+            rv.setParentGroupId(parentGroupId);
+            rv.setSiblingOrder(order);
+            rv.setIsIgnored(ignored);
+            rv.setIsBanned(banned);
+            rv.setLoadOnStart(false);
+        }
+        return rv;
     }
     
     /** _node to ui elements */
@@ -249,7 +307,6 @@ class BookmarkEditor implements Translatable {
             updateSiblingOrder();
             
             _uri.setText("");
-            _loadOnStart.setSelection(false);
         } else {
             if (_node.getName() != null)
                 _name.setText(_node.getName());
@@ -267,12 +324,11 @@ class BookmarkEditor implements Translatable {
                 _uri.setText(_node.getURI().toString());
             else
                 _uri.setText("");
-            
-            _loadOnStart.setSelection(_node.getLoadOnStart());
         }
     }
     
     private void updateSiblingOrder() {
+        if (!_pickOrder) return;
         // populate the _siblingOrder w/ the children of the currently selected _parentGroup
         _siblingOrder.setRedraw(false);
         _siblingOrder.removeAll();
@@ -373,7 +429,6 @@ class BookmarkEditor implements Translatable {
     private static final String T_SIBLINGORDER = "syndie.gui.bookmarkeditor.siblingorder";
     private static final String T_URILABEL = "syndie.gui.bookmarkeditor.urilabel";
     private static final String T_URIBROWSE = "syndie.gui.bookmarkeditor.uribrowse";
-    private static final String T_LOADONSTARTUP = "syndie.gui.bookmarkeditor.loadonstartup";
     private static final String T_OK = "syndie.gui.bookmarkeditor.ok";
     private static final String T_CANCEL = "syndie.gui.bookmarkeditor.cancel";
     private static final String T_SIBLINGORDER_BEGINNING = "syndie.gui.bookmarkeditor.siblingorder.beginning";
@@ -389,7 +444,6 @@ class BookmarkEditor implements Translatable {
         _siblingOrderLabel.setText(registry.getText(T_SIBLINGORDER, "After:"));
         _uriLabel.setText(registry.getText(T_URILABEL, "Target:"));
         _uriBrowse.setText(registry.getText(T_URIBROWSE, "Browse..."));
-        _loadOnStart.setText(registry.getText(T_LOADONSTARTUP, "Load on startup?"));
         _save.setText(registry.getText(T_OK, "OK"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         updateUI();

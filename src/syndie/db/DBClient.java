@@ -3546,6 +3546,8 @@ public class DBClient {
     /** add a new reference recursively, then updating the groupId, uriId, and siblingOrder fields in newValue */
     public void addNymReference(long nymId, NymReferenceNode newValue) {
         ensureLoggedIn();
+        if (newValue == null) return;
+        if (!isNewNymReference(nymId, newValue)) return;
         addNymReferenceDetail(nymId, newValue);
         for (int i = 0; i < newValue.getChildCount(); i++) {
             NymReferenceNode child = (NymReferenceNode)newValue.getChild(i);
@@ -3595,6 +3597,59 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+    }
+    private boolean isNewNymReference(long nymId, NymReferenceNode node) {
+        long parentId = node.getParentGroupId();
+        if ( (parentId < 0) && (node.getParent() != null) )
+            parentId = ((NymReferenceNode)node.getParent()).getGroupId();
+        
+        List siblings = getNymSiblings(nymId, parentId);
+        if (node.getURI() == null) {
+            String name = node.getName();
+            if (name == null) name = "";
+            for (int i = 0; i < siblings.size(); i++) {
+                NymReferenceNode sib = (NymReferenceNode)siblings.get(i);
+                if ( (sib.getURI() == null) && (sib.getName() != null) && (sib.getName().equals(name)) )
+                    return false;
+            }
+            return true;
+        } else {
+            for (int i = 0; i < siblings.size(); i++) {
+                NymReferenceNode sib = (NymReferenceNode)siblings.get(i);
+                if ( (sib.getURI() != null) && (sib.getURI().equals(node.getURI())) )
+                    return false;
+            }
+            return true;
+        }
+    }
+    private List getNymSiblings(long nymId, long parentGroupId) {
+        List refs = getNymReferences(nymId);
+        if (parentGroupId == -1) {
+            return refs;
+        } else {
+            for (int i = 0; i < refs.size(); i++) {
+                NymReferenceNode node = (NymReferenceNode)refs.get(i);
+                List rv = getNymSiblings(parentGroupId, node);
+                if (rv != null)
+                    return rv;
+            }
+        }
+        return new ArrayList();
+    }
+    private List getNymSiblings(long parentGroupId, NymReferenceNode node) {
+        if (node.getGroupId() == parentGroupId) {
+            List rv = new ArrayList();
+            for (int i = 0; i < node.getChildCount(); i++)
+                rv.add(node.getChild(i));
+            return rv;
+        } else {
+            for (int i = 0; i < node.getChildCount(); i++) {
+                List rv = getNymSiblings(parentGroupId, (NymReferenceNode)node.getChild(i));
+                if (rv != null)
+                    return rv;
+            }
+        }
+        return null;
     }
     
     private static final String SQL_DELETE_NYM_REFERENCE = "DELETE FROM resourceGroup WHERE groupId = ?";

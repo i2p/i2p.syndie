@@ -49,9 +49,13 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     
     public void setBookmark(NymReferenceNode node) { _editor.setBookmark(node); }
     public void open() { 
+        _shell.layout(true, true);
         _shell.setSize(_shell.computeSize(300, SWT.DEFAULT));
         _shell.open();
     }
+    public void pickParent(boolean pick) { _editor.pickParent(pick); }
+    public void pickOrder(boolean pick) { _editor.pickOrder(pick); }
+    public void pickTarget(boolean pick) { _editor.pickTarget(pick); }
     private void cancel() { _shell.setVisible(false); }
 
     public void updateBookmark(BookmarkEditor editor, NymReferenceNode bookmark, boolean delete) {
