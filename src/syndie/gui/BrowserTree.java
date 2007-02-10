@@ -105,6 +105,57 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         
         initDnD();
         
+        getTree().addMouseTrackListener(new MouseTrackListener() {
+            public void mouseEnter(MouseEvent mouseEvent) {}
+            public void mouseExit(MouseEvent mouseEvent) {}
+            public void mouseHover(MouseEvent evt) {
+                TreeItem item = getTree().getItem(new Point(evt.x, evt.y));
+                if (item != null) {
+                    NymReferenceNode bookmark = getBookmark(item);
+                    if (bookmark != null) {
+                        if (bookmark.getDescription() != null)
+                            getTree().setToolTipText(bookmark.getDescription());
+                        else if (bookmark.getName() != null)
+                            getTree().setToolTipText(bookmark.getName());
+                        else
+                            getTree().setToolTipText("");
+                        return;
+                    }
+                    ChannelInfo chan = getPostChannel(item);
+                    if (chan != null) {
+                        if (chan.getDescription() != null)
+                            getTree().setToolTipText(chan.getDescription());
+                        else if (chan.getName() != null)
+                            getTree().setToolTipText(chan.getName());
+                        else
+                            getTree().setToolTipText("");
+                        return;
+                    }
+                    chan = getManageChannel(item);
+                    if (chan != null) {
+                        if (chan.getDescription() != null)
+                            getTree().setToolTipText(chan.getDescription());
+                        else if (chan.getName() != null)
+                            getTree().setToolTipText(chan.getName());
+                        else
+                            getTree().setToolTipText("");
+                        return;
+                    }
+                    WatchedChannel watched = getWatchedChannel(item);
+                    if (watched != null) {
+                        Hash scope = _browser.getClient().getChannelHash(watched.getChannelId());
+                        String name = _browser.getClient().getChannelName(watched.getChannelId());
+                        if (name == null)
+                            name = scope.toBase64();
+                        getTree().setToolTipText(name);
+                        return;
+                    }
+                    
+                    getTree().setToolTipText("");
+                }
+            }
+        });
+        
         getBrowser().getTranslationRegistry().register(this);
         getBrowser().getThemeRegistry().register(this);
     }
