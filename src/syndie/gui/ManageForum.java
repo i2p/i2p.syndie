@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,14 +79,13 @@ class ManageForum implements Translatable, Themeable {
     private Text _description;
     private Label _expirationLabel;
     private Text _expiration;
-    /** just the roots of the _references */
     private List _referenceNodeRoots;
     private Group _archiveGroup;
     private Button _archiveSelect;
     private Button _archiveRemoveAll;
-    private Group _forumGroup;
-    private Button _forumSelect;
-    private Button _forumRemoveAll;
+    private Group _refGroup;
+    private Button _refSelect;
+    private Button _refRemoveAll;
     private Group _banGroup;
     private Button _banSelect;
     private Button _banRemoveAll;
@@ -126,6 +126,7 @@ class ManageForum implements Translatable, Themeable {
         _pubArchiveURIs = new ArrayList();
         _managerHashes = new ArrayList();
         _posterHashes = new ArrayList();
+        _referenceNodeRoots = new ArrayList();
         Hash scope = uri.getScope();
         if (scope == null)
             scope = uri.getHash("scope");
@@ -215,27 +216,28 @@ class ManageForum implements Translatable, Themeable {
         
         _archiveSelect = new Button(_archiveGroup, SWT.PUSH);
         _archiveRemoveAll = new Button(_archiveGroup, SWT.PUSH);
-        _archiveSelect.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() { new ManageForumArchives(_browser, ManageForum.this); }
+        _archiveSelect.addSelectionListener(new FireSelectionListener() {
+            public void fire() { new ManageForumArchives(_browser, ManageForum.this); }
         });
-        _archiveRemoveAll.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() { 
+        _archiveRemoveAll.addSelectionListener(new FireSelectionListener() {
+            public void fire() { 
                 _pubArchiveURIs.clear();
                 _privArchiveURIs.clear();
                 redrawArchives();
             }
         });
         
-        _forumGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
-        _forumGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _refGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _refGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
         
-        _forumSelect = new Button(_forumGroup, SWT.PUSH);
-        _forumSelect.setEnabled(false);
-        _forumRemoveAll = new Button(_forumGroup, SWT.PUSH);
+        _refSelect = new Button(_refGroup, SWT.PUSH);
+        _refSelect.addSelectionListener(new FireSelectionListener() {
+            public void fire() { new ManageForumReferences(_browser, ManageForum.this); }
+        });
+        _refRemoveAll = new Button(_refGroup, SWT.PUSH);
+        _refRemoveAll.addSelectionListener(new FireSelectionListener() {
+            public void fire() { removeRefs(); }
+        });
         
         _banGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
         _banGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -805,8 +807,6 @@ class ManageForum implements Translatable, Themeable {
             
             _name.setText(str(info.getName()));
             
-            loadReferences(info);
-            
             StringBuffer buf = new StringBuffer();
             for (Iterator iter = info.getPublicTags().iterator(); iter.hasNext(); )
                 buf.append((String)iter.next()).append(" ");
@@ -826,7 +826,7 @@ class ManageForum implements Translatable, Themeable {
         }
         
         loadArchives(info);
-        loadForums(info);
+        loadRefs(info);
         loadBans(info);
         loadUsers(info);
         _root.layout(true, true);
@@ -837,9 +837,6 @@ class ManageForum implements Translatable, Themeable {
         _cancel.setEnabled(false);
     }
     private static final String str(String orig) { return (orig != null ? orig : ""); }
-    private void loadReferences(ChannelInfo info) {
-        _referenceNodeRoots = info.getReferences();
-    }
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
         _privArchiveURIs.clear();
@@ -879,17 +876,64 @@ class ManageForum implements Translatable, Themeable {
     }
     private static final String T_ARCHIVE_PREFIX = "syndie.gui.manageforum.archive.prefix";
     
-    private void loadForums(ChannelInfo info) {
-        redrawForums();
+    private void loadRefs(ChannelInfo info) {
+        _referenceNodeRoots.clear();
+        if (info != null) {
+            List refs = info.getReferences();
+            if (refs != null)
+                _referenceNodeRoots.addAll(refs);
+        }
+        redrawRefs();
     }
-    private void redrawForums() {
+    private void redrawRefs() {
         int numSelected = 0;
-        _forumGroup.setText(_browser.getTranslationRegistry().getText(T_FORUM_PREFIX, "Forums/Authors: ") + numSelected + " ");
-        _forumRemoveAll.setEnabled(numSelected > 0);
-        _forumGroup.getParent().layout(new Control[] { _forumGroup });
+        Counter counter = new Counter();
+        ReferenceNode.walk(_referenceNodeRoots, counter);
+        numSelected = counter.getCount();
+        _refGroup.setText(_browser.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + numSelected + " ");
+        _refRemoveAll.setEnabled(numSelected > 0);
+        _refGroup.getParent().layout(new Control[] { _refGroup });
     }
-    private static final String T_FORUM_PREFIX = "syndie.gui.manageforum.forum.prefix";
-
+    void setReferences(Collection refs) {
+        _referenceNodeRoots.clear();
+        if (refs != null)
+            _referenceNodeRoots.addAll(refs);
+        redrawRefs();
+    }
+    List getRefs() { return _referenceNodeRoots; }
+    
+    private static final String T_REF_PREFIX = "syndie.gui.manageforum.ref.prefix";
+    
+    private class Counter implements ReferenceNode.Visitor {
+        private int _count;
+        public int getCount() { return _count; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) { _count++; }
+    }
+    
+    private void removeRefs() {
+        TrimRefs trim = new TrimRefs(false);
+        ReferenceNode.walk(_referenceNodeRoots, trim);
+        _refGroup.setText(_browser.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + 0 + " ");
+        _refRemoveAll.setEnabled(false);
+        _refGroup.getParent().layout(new Control[] { _refGroup });        
+    }
+    
+    private class TrimRefs implements ReferenceNode.Visitor {
+        private boolean _removeBanned;
+        public TrimRefs(boolean removeBanned) { _removeBanned = removeBanned; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            String type = node.getReferenceType();
+            if (_removeBanned && !Constants.REF_TYPE_BANNED.equals(type)) {
+                // keep it if we only want to remove banned ones and this isn't banned
+            } else {
+                if (node.getParent() != null)
+                    node.getParent().removeChild(node);
+                else
+                    _referenceNodeRoots.remove(node);
+            }
+        }
+    }
+    
     private void loadBans(ChannelInfo info) {
         redrawBans();
     }
@@ -922,9 +966,9 @@ class ManageForum implements Translatable, Themeable {
         _archiveGroup.setFont(theme.DEFAULT_FONT);
         _archiveRemoveAll.setFont(theme.DEFAULT_FONT);
         _archiveSelect.setFont(theme.DEFAULT_FONT);
-        _forumGroup.setFont(theme.DEFAULT_FONT);
-        _forumRemoveAll.setFont(theme.DEFAULT_FONT);
-        _forumSelect.setFont(theme.DEFAULT_FONT);
+        _refGroup.setFont(theme.DEFAULT_FONT);
+        _refRemoveAll.setFont(theme.DEFAULT_FONT);
+        _refSelect.setFont(theme.DEFAULT_FONT);
         _banGroup.setFont(theme.DEFAULT_FONT);
         _banRemoveAll.setFont(theme.DEFAULT_FONT);
         _banSelect.setFont(theme.DEFAULT_FONT);
@@ -996,8 +1040,8 @@ class ManageForum implements Translatable, Themeable {
         _archiveRemoveAll.setText(registry.getText(T_ARCHIVE_REMOVEALL, "Remove all"));
         _archiveSelect.setText(registry.getText(T_ARCHIVE_SELECT, "Select..."));
         
-        _forumRemoveAll.setText(registry.getText(T_FORUM_REMOVEALL, "Remove all"));
-        _forumSelect.setText(registry.getText(T_FORUM_SELECT, "Select..."));
+        _refRemoveAll.setText(registry.getText(T_FORUM_REMOVEALL, "Remove all"));
+        _refSelect.setText(registry.getText(T_FORUM_SELECT, "Select..."));
         
         _banRemoveAll.setText(registry.getText(T_BAN_REMOVEALL, "Remove all"));
         _banSelect.setText(registry.getText(T_BAN_SELECT, "Select..."));

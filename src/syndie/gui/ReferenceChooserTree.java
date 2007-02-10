@@ -143,6 +143,14 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     protected WatchedChannel getWatchedChannel(TreeItem item) {
         return (WatchedChannel)_watchedItemToWatchedChannel.get(item);
     }
+    protected TreeItem getSelectedItem() {
+        TreeItem selected[] = getTree().getSelection();
+        if ( (selected != null) && (selected.length == 1) )
+            return selected[0];
+        else
+            return null;
+    }
+
     
     public interface ChoiceListener {
         public void watchedChannelSelected(TreeItem item, WatchedChannel channel);
@@ -451,6 +459,9 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         else
             return null;
     }
+    protected ArrayList getBookmarks() { return new ArrayList(_bookmarkNodes.values()); }
+    protected ArrayList getManageableChannels() { return new ArrayList(_manageChannels.values()); }
+    protected ArrayList getPostableChannels() { return new ArrayList(_postChannels.values()); }
     
     //protected TreeItem getSearchRoot() { return _searchRoot; }
     protected TreeItem getManageRoot() { return _manageRoot; }

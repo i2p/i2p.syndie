@@ -126,6 +126,8 @@ public class Constants {
     public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";
 
     public static final long MAX_ATTACHMENT_SIZE = 4*1024*1024;
+    
+    public static final String REF_TYPE_BANNED = "banned";
 
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }

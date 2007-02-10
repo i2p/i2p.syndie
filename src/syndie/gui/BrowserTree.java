@@ -506,14 +506,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             return null;
     }
     
-    private TreeItem getSelectedItem() {
-        TreeItem selected[] = getTree().getSelection();
-        if ( (selected != null) && (selected.length == 1) )
-            return selected[0];
-        else
-            return null;
-    }
-
     private static final String T_WATCH_VIEW = "syndie.gui.browsertree.watch.view";
     private static final String T_WATCH_HIGHLIGHT = "syndie.gui.browsertree.watch.highlight";
     private static final String T_WATCH_IMPBOOKMARKS = "syndie.gui.browsertree.watch.impbookmarks";
@@ -662,106 +654,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         initDnDSource();
     }
     private void initDnDSource() {
-        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
-        int ops = DND.DROP_COPY;
-        DragSource source = new DragSource(getTree(), ops);
-        source.setTransfer(transfer);
-        source.addDragListener(new DragSourceListener() {
-            public void dragFinished(DragSourceEvent evt) {}
-            public void dragSetData(DragSourceEvent evt) {
-                TreeItem item = getSelectedItem();
-                //System.out.println("dragSetData: " + item);
-                if (item == null) {
-                    // maybe we should find a way to transfer trees instead of just individual bookmarks?
-                    evt.doit = false;
-                    return;
-                }
-
-                BookmarkDnD src = null;
-                
-                NymReferenceNode bookmark = getBookmark(item);
-                if (bookmark != null) {
-                    src = new BookmarkDnD();
-                    src.desc = bookmark.getDescription();
-                    String name = bookmark.getName();
-                    src.name = name;
-                    src.uri = bookmark.getURI();
-                }
-                if (src == null) {
-                    ChannelInfo chan = getPostChannel(item);
-                    if (chan != null) {
-                        src = new BookmarkDnD();
-                        src.desc = chan.getDescription();
-                        String name = chan.getName();
-                        if (name == null)
-                            name = chan.getChannelHash().toBase64();
-                        src.name = name;
-                        src.uri = SyndieURI.createScope(chan.getChannelHash());
-                    }
-                }
-                if (src == null) {
-                    ChannelInfo chan = getManageChannel(item);
-                    if (chan != null) {
-                        src = new BookmarkDnD();
-                        src.desc = chan.getDescription();
-                        String name = chan.getName();
-                        if (name == null)
-                            name = chan.getChannelHash().toBase64();
-                        src.name = name;
-                        src.uri = SyndieURI.createScope(chan.getChannelHash());
-                    }
-                }
-                if (src == null) {
-                    WatchedChannel watched = getWatchedChannel(item);
-                    if (watched != null) {
-                        Hash scope = _browser.getClient().getChannelHash(watched.getChannelId());
-                        src = new BookmarkDnD();
-                        src.desc = "";
-                        String name = _browser.getClient().getChannelName(watched.getChannelId());
-                        if (name == null)
-                            name = scope.toBase64();
-                        src.name = name;
-                        src.uri = SyndieURI.createScope(scope);
-                    }
-                }
-                
-                //BookmarkDnD bookmark = getBookmark(sel[0], (ReferenceNode)_itemToNode.get(sel[0]));
-                if (src != null) {
-                    evt.data = src.toString();
-                    evt.doit = true;
-                } else {
-                    evt.doit = false;
-                }
-                //System.out.println("dragSetData: " + evt.data);
-            }
-            public void dragStart(DragSourceEvent evt) {
-                evt.doit = isDraggable(); // don't drag when nothing is selected
-                //System.out.println("dragStart: " + evt.doit);
-            }
-        });
-    }
-    
-    private boolean isDraggable() {
-        TreeItem item = getSelectedItem();
-        if (item == null) return false;
-        
-        NymReferenceNode bookmark = getBookmark(item);
-        if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
-            return bookmark.getURI() != null;
-        }
-        ChannelInfo chan = getPostChannel(item);
-        if ( (chan != null) || (item.equals(getPostRoot())) ) {
-            return true;
-        }
-        chan = getManageChannel(item);
-        if ( (chan != null) || (item.equals(getManageRoot())) ) {
-            return true;
-        }
-        WatchedChannel watched = getWatchedChannel(item);
-        if (watched != null) {
-            return true;
-        }
-        return false;
+        new ReferenceChooserTreeDnDSource(_browser, this);
     }
     
     // we expand a node if we are hovering over it for a half second or more

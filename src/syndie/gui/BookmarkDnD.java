@@ -19,9 +19,18 @@ class BookmarkDnD {
     
     public String toString() {
         StringBuffer buf = new StringBuffer();
-        buf.append(uri.toString()).append('\n');
-        buf.append(name).append('\n');
-        buf.append(desc);
+        if (uri != null)
+            buf.append(uri.toString()).append('\n');
+        else
+            buf.append('\n');
+        if (name != null)
+            buf.append(name).append('\n');
+        else
+            buf.append('\n');
+        if (desc != null)
+            buf.append(desc);
+        else
+            buf.append('\n');
         return buf.toString();
     }
     public void fromString(String str) {
