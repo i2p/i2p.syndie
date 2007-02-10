@@ -474,7 +474,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _browser.getUI().debugMessage("addFolder underneath " + parentGroupId);
         String folderName = getBrowser().getTranslationRegistry().getText(T_NEWFOLDER_NAME, "New folder") + " " + (System.currentTimeMillis()%1000);
         NymReferenceNode node = new NymReferenceNode(folderName, null, "", -1, -1, parentGroupId, -1, false, false, false);
-        _browser.bookmark(node);
+        _browser.bookmark(node, true);
     }
     private static final String T_NEWFOLDER_NAME = "syndie.gui.browsertree.newfoldername";
     
@@ -936,7 +936,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                         if (isWatch) {
                             watch(bookmark.uri, item);
                         } else if (isBookmark) {
-                            _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
+                            _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false), true);
                         }
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();

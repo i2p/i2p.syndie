@@ -706,7 +706,9 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                         long parentGroupId = -1;
                         if (parent != null)
                             parentGroupId = parent.getGroupId();
-                        _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
+                        NymReferenceNode node = new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false);
+                        _browser.bookmark(node, true);
+                        _browser.getUI().debugMessage("bookmark the target w/ parentGroupId=" + parentGroupId + " resulting in " + node.getGroupId());
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
                         try {
@@ -739,7 +741,8 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         }
         // does not exist.  create it
         NymReferenceNode node = new NymReferenceNode(wantedName, null, "", -1, -1, -1, 0, false, false, false);
-        browser.bookmark(node);
+        browser.bookmark(node, false);
+        browser.getUI().debugMessage("created parent for the bookmark: " + wantedName + " as groupId=" + node.getGroupId());
         return node;
     }
     

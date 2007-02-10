@@ -61,7 +61,7 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     public void updateBookmark(BookmarkEditor editor, NymReferenceNode bookmark, boolean delete) {
         _shell.setVisible(false);
         if (bookmark.getGroupId() < 0)
-            _browser.bookmark(bookmark);
+            _browser.bookmark(bookmark, true);
         else if (delete)
             _browser.deleteBookmark(bookmark.getGroupId());
         else

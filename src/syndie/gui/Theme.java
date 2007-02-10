@@ -32,7 +32,7 @@ public class Theme {
         MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -4, Boolean.TRUE, null);
         HIGHLIGHT_INACTIVE_FONT = adjustHeight("inithighlightinactive", SYSFONT, -4, null, Boolean.TRUE);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight("inithighlightactive", SYSFONT, -4, null, null);
-        FINEPRINT_FONT = adjustHeight("initfineprint", SYSFONT, -8, null, null);
+        FINEPRINT_FONT = adjustHeight("initfineprint", SYSFONT, -4, null, null);
         DEFAULT_FONT = adjustHeight("initdefault", SYSFONT, -4);
     }
     
@@ -261,8 +261,6 @@ public class Theme {
                 try {
                     szMod = Integer.parseInt(szModStr);
                 } catch (NumberFormatException nfe) {}
-            } else if ( (szMod == 0) && ("theme.fineprint".equals(prefPrefix)) ) {
-                szMod -= 2;
             }
 
             String str = props.getProperty(prefPrefix + ".bold");

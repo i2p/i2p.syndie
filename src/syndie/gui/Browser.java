@@ -1537,7 +1537,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             long parentGroupId = -1;
             if (parent != null)
                 parentGroupId = parent.getGroupId();
-            bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false));
+            bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false), true);
         }
     }
     
@@ -1619,10 +1619,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         editor.open();
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
-    public void bookmark(NymReferenceNode node) {
+    public void bookmark(NymReferenceNode node, boolean doneBookmarking) {
         _client.addNymReference(_client.getLoggedInNymId(), node);
-        _bookmarks.refreshBookmarks();
-        debugMessage("bookmarks refreshed");
+        if (doneBookmarking) {
+            _bookmarks.refreshBookmarks();
+            debugMessage("bookmarks refreshed");
+        }
     }
     public void deleteBookmark(long bookmarkGroupId) {
         _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);

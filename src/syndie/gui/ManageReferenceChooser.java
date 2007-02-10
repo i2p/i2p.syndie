@@ -285,12 +285,14 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     private void importBookmarksToLocal(boolean all) {
         // import FROM the forum TO our bookmarks
         if (all) {
-            for (int i = 0; i < _refs.size(); i++)
-                _browser.bookmark(NymReferenceNode.deepCopyNym((ReferenceNode)_refs.get(i)));
+            for (int i = 0; i < _refs.size(); i++) {
+                boolean last = (i + 1 == _refs.size());
+                _browser.bookmark(NymReferenceNode.deepCopyNym((ReferenceNode)_refs.get(i)), last);
+            }
         } else {
             ReferenceNode node = getSelectedNode();
             if (node != null)
-                _browser.bookmark(NymReferenceNode.deepCopyNym(node));
+                _browser.bookmark(NymReferenceNode.deepCopyNym(node), true);
         }
     }
     
