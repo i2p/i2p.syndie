@@ -206,6 +206,16 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     
     public boolean isBookmarked(SyndieURI uri) {
         if (uri == null) return false;
+        Hash scope = uri.getScope();
+        long chanId = _browser.getClient().getChannelId(scope);
+        if (chanId >= 0) {
+            ArrayList watched = new ArrayList(_browser.getClient().getWatchedChannels());
+            for (int i = 0; i < watched.size(); i++) {
+                WatchedChannel chan = (WatchedChannel)watched.get(i);
+                if (chan.getChannelId() == chanId)
+                    return true;
+            }
+        }
         for (int i = 0; i < _nymRefs.size(); i++) {
             ReferenceNode ref = (ReferenceNode)_nymRefs.get(i);
             if (isBookmarked(ref, uri))

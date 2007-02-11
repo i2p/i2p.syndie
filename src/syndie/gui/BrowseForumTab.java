@@ -40,12 +40,12 @@ public class BrowseForumTab extends BrowserTab {
             if (_name == null) {
                 _name = scope.toBase64().substring(0,6);
                 _description = "forum: " + scope.toBase64();
-                _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_INFORMATION);
+                _icon = ImageUtil.ICON_TAB_BROWSE;
             }
         } else {
             _name = "browse";
             _description = "browse forums";
-            _icon = getRoot().getDisplay().getSystemImage(SWT.ICON_INFORMATION);
+            _icon = ImageUtil.ICON_TAB_BROWSE;
         }
         debug("browseForum construct: done, now reconfig");
         reconfigItem();

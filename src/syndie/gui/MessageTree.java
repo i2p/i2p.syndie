@@ -117,6 +117,8 @@ public class MessageTree implements Translatable, Themeable {
     private MenuItem _viewAuthor;
     private MenuItem _viewAuthorMeta;
     private MenuItem _bookmarkAuthor;
+    private MenuItem _expandThread;
+    private MenuItem _collapseThread;
     private MenuItem _markRead;
     private MenuItem _markUnread;
     private MenuItem _markThreadRead;
@@ -1102,6 +1104,13 @@ public class MessageTree implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
         });
         new MenuItem(_menu, SWT.SEPARATOR);
+        
+        _expandThread = new MenuItem(_menu, SWT.PUSH);
+        _expandThread.addSelectionListener(new FireSelectionListener() { public void fire() { expandThread(); } });
+        _collapseThread = new MenuItem(_menu, SWT.PUSH);
+        _collapseThread.addSelectionListener(new FireSelectionListener() { public void fire() { collapseThread(); } });
+        
+        new MenuItem(_menu, SWT.SEPARATOR);
         _markRead = new MenuItem(_menu, SWT.PUSH);
         _markRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markRead(); }
@@ -1801,6 +1810,35 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
     
+    private void expandThread() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                TreeItem root = getThreadRoot(selected[i]);
+                if (root != null) {
+                    List remaining = new ArrayList();
+                    remaining.add(root);
+                    while (remaining.size() > 0) {
+                        TreeItem cur = (TreeItem)remaining.remove(0);
+                        cur.setExpanded(true);
+                        for (int j = 0; j < cur.getItemCount(); j++)
+                            remaining.add(cur.getItem(j));
+                    }
+                }
+            }
+        }
+    }
+    private void collapseThread() {
+        TreeItem selected[] = _tree.getSelection();
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                TreeItem root = getThreadRoot(selected[i]);
+                if (root != null)
+                    root.setExpanded(false);
+            }
+        }
+    }
+    
     private void markRead() {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
@@ -1947,6 +1985,8 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
     private static final String T_BOOKMARKFORUM = "syndie.gui.messagetree.bookmarkforum";
     private static final String T_BOOKMARKAUTHOR = "syndie.gui.messagetree.bookmarkauthor";
+    private static final String T_EXPANDTHREAD = "syndie.gui.messagetree.expandthread";
+    private static final String T_COLLAPSETHREAD = "syndie.gui.messagetree.collapsethread";
     
     private static final String T_PAGESIZE = "syndie.gui.messagetree.pagesize";
     
@@ -1971,6 +2011,8 @@ public class MessageTree implements Translatable, Themeable {
         _viewAuthorMeta.setText(registry.getText(T_VIEWAUTHORMETA, "View the author's profile"));
         _bookmarkForum.setText(registry.getText(T_BOOKMARKFORUM, "Bookmark the forum"));
         _bookmarkAuthor.setText(registry.getText(T_BOOKMARKAUTHOR, "Bookmark the author"));
+        _expandThread.setText(registry.getText(T_EXPANDTHREAD, "Expand the thread fully"));
+        _collapseThread.setText(registry.getText(T_COLLAPSETHREAD, "Collapse the thread fully"));
         _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
         _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));

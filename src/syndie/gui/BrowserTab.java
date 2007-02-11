@@ -229,7 +229,7 @@ abstract class BrowserTab implements Themeable {
     protected void error(String msg, Exception e) { _browser.getUI().errorMessage(msg, e); }
     
     protected Image createAvatar(ChannelInfo chan) {
-        return ImageUtil.resize(ImageUtil.ICON_QUESTION, 16, 16, false);
+        return ImageUtil.resize(ImageUtil.ICON_QUESTION, ImageUtil.TAB_ICON_SIZE, ImageUtil.TAB_ICON_SIZE, false);
     }
     
     public void applyTheme(Theme theme) { 
