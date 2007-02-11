@@ -34,6 +34,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -57,6 +59,8 @@ class ManageForumReferences implements Themeable, Translatable {
     private TreeColumn _colName;
     private TreeColumn _colDesc;
     private TreeColumn _colTarget;
+    private Menu _targetMenu;
+    private MenuItem _targetMenuRemove;
     private List _targetReferenceNodes;
     private Map _targetItemToNode;
     private Button _ok;
@@ -98,6 +102,25 @@ class ManageForumReferences implements Themeable, Translatable {
             }
             public void widgetSelected(SelectionEvent evt) {
                 editTarget((TreeItem)evt.item);
+            }
+        });
+        _targetMenu = new Menu(_targetTree);
+        _targetTree.setMenu(_targetMenu);
+        
+        _targetMenuRemove = new MenuItem(_targetMenu, SWT.PUSH);
+        _targetMenuRemove.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                TreeItem items[] = _targetTree.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    ReferenceNode node = (ReferenceNode)_targetItemToNode.get(items[i]);
+                    if (node != null) {
+                        if (node.getParent() != null)
+                            node.getParent().removeChild(node);
+                        else
+                            _targetReferenceNodes.remove(node);
+                    }
+                    items[i].dispose();
+                }
             }
         });
         
@@ -471,6 +494,7 @@ class ManageForumReferences implements Themeable, Translatable {
     private static final String T_COLTARGET = "syndie.gui.manageforumchannels.coltarget";
     private static final String T_SHELL = "syndie.gui.manageforumchannels.shell";
     private static final String T_OK = "syndie.gui.manageforumchannels.ok";
+    private static final String T_TARGET_REMOVE = "syndie.gui.manageforumchannels.target.remove";
     
     public void translate(TranslationRegistry registry) {
         _colDesc.setText(registry.getText(T_COLDESC, "Description"));
@@ -478,5 +502,6 @@ class ManageForumReferences implements Themeable, Translatable {
         _colTarget.setText(registry.getText(T_COLTARGET, "Target"));
         _shell.setText(registry.getText(T_SHELL, "References"));
         _ok.setText(registry.getText(T_OK, "OK"));
+        _targetMenuRemove.setText(registry.getText(T_TARGET_REMOVE, "Remove reference"));
     }
 }
