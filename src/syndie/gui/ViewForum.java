@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.i2p.data.Hash;
@@ -15,10 +14,18 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -38,6 +45,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
@@ -46,6 +54,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
@@ -67,7 +77,7 @@ class ViewForum implements Translatable, Themeable {
     private Label _avatar;
     private Image _avatarImgOrig;
     private Image _avatarImg;
-    private List _avatarImgStandard;
+    private ArrayList _avatarImgStandard;
     private Label _nameLabel;
     private Text _name;
     private Label _tagsLabel;
@@ -79,12 +89,16 @@ class ViewForum implements Translatable, Themeable {
     private Label _authorization;
     private Label _expirationLabel;
     private Text _expiration;
-    private Label _referencesLabel;
-    private Combo _references;
-    /** ReferenceNode instances correlating with the entries in _references (may be null) */
-    private List _referenceNodes;
-    /** just the roots of the _references */
-    private List _referenceNodeRoots;
+    private Group _refGroup;
+    private Tree _refTree;
+    private ArrayList _refRoots;
+    private Map _refItemToNode;
+    private Group _banGroup;
+    private List _banList;
+    private Menu _banMenu;
+    private MenuItem _banView;
+    private MenuItem _banImport;
+    private ArrayList _banScopes;
     private Group _userGroup;
     private Table _users;
     private TableColumn _userName;
@@ -98,12 +112,10 @@ class ViewForum implements Translatable, Themeable {
 
     private boolean _initialized;
 
-    private ManageReferenceChooserPopup _refPopup;
-    
-    private List _managerHashes;
-    private List _posterHashes;
-    private List _pubArchiveURIs;
-    private List _privArchiveURIs;
+    private ArrayList _managerHashes;
+    private ArrayList _posterHashes;
+    private ArrayList _pubArchiveURIs;
+    private ArrayList _privArchiveURIs;
     
     private int _auth = 1;
     
@@ -121,6 +133,9 @@ class ViewForum implements Translatable, Themeable {
         _pubArchiveURIs = new ArrayList();
         _managerHashes = new ArrayList();
         _posterHashes = new ArrayList();
+        _refItemToNode = new HashMap();
+        _banScopes = new ArrayList();
+        _refRoots = new ArrayList();
         Hash scope = uri.getScope();
         if (scope == null)
             scope = uri.getHash("scope");
@@ -187,25 +202,91 @@ class ViewForum implements Translatable, Themeable {
         _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
 
         _authorization = new Label(_root, SWT.NONE);
-        _authorization.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        _authorization.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 5, 1));
         
-        _referencesLabel = new Label(_root, SWT.NONE);
-        _referencesLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        Composite refRow = new Composite(_root, SWT.NONE);
+        refRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
+        refRow.setLayout(new FillLayout(SWT.HORIZONTAL));
         
-        _references = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        int colspan = 6;
-        _references.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, colspan, 1));
-        
-        _references.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewRef(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewRef(); }
-            private void viewRef() {
-                if (_refPopup == null)
-                    _refPopup = new ManageReferenceChooserPopup(_browser, _root.getShell(), false);
-                _refPopup.setReferences(_referenceNodeRoots);
-                _refPopup.show();
+        _refGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _refGroup.setLayout(new FillLayout());
+        _refTree = new Tree(_refGroup, SWT.MULTI | SWT.BORDER);
+        _refTree.addMouseTrackListener(new MouseTrackListener() {
+            public void mouseEnter(MouseEvent mouseEvent) {}
+            public void mouseExit(MouseEvent mouseEvent) {
+                _refTree.setToolTipText("");
+            }
+            public void mouseHover(MouseEvent evt) {
+                TreeItem item = _refTree.getItem(new Point(evt.x, evt.y));
+                if (item != null) {
+                    ReferenceNode node = (ReferenceNode)_refItemToNode.get(item);
+                    if (node != null) {
+                        if (node.getDescription() != null)
+                            _refTree.setToolTipText(node.getDescription());
+                        else if (node.getURI() != null)
+                            _refTree.setToolTipText(node.getURI().toString());
+                        else
+                            _refTree.setToolTipText("");
+                    } else {
+                        _refTree.setToolTipText("");
+                    }
+                }
             }
         });
+        SyndieTreeListener lsnr = new SyndieTreeListener(_refTree) {
+            /** the user doubleclicked on the selected row */
+            public void doubleclick() {
+                TreeItem items[] = _refTree.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    ReferenceNode node = (ReferenceNode)_refItemToNode.get(items[i]);
+                    if ( (node != null) && (node.getURI() != null) )
+                        _browser.view(node.getURI());
+                }
+            }
+            /** the user hit return on the selected row */
+            public void returnHit() {
+                TreeItem items[] = _refTree.getSelection();
+                for (int i = 0; i < items.length; i++) {
+                    ReferenceNode node = (ReferenceNode)_refItemToNode.get(items[i]);
+                    if ( (node != null) && (node.getURI() != null) )
+                        _browser.view(node.getURI());
+                }
+            }
+        };
+        _refTree.addKeyListener(lsnr);
+        _refTree.addMouseListener(lsnr);
+        _refTree.addSelectionListener(lsnr);
+        _refTree.addTraverseListener(lsnr);
+        
+        _banGroup = new Group(refRow, SWT.SHADOW_ETCHED_IN);
+        _banGroup.setLayout(new FillLayout());
+        _banList = new List(_banGroup, SWT.MULTI | SWT.BORDER);
+        _banMenu = new Menu(_banList);
+        _banList.setMenu(_banMenu);
+        
+        _banView = new MenuItem(_banMenu, SWT.PUSH);
+        _banView.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                int indexes[] = _banList.getSelectionIndices();
+                for (int i = 0; i < indexes.length; i++) {
+                    Hash scope = (Hash)_banScopes.get(indexes[i]);
+                    if (_browser.getClient().getChannelId(scope) >= 0)
+                        _browser.view(SyndieURI.createScope(scope));
+                }
+            }
+        });
+        _banImport = new MenuItem(_banMenu, SWT.PUSH);
+        _banImport.addSelectionListener(new FireSelectionListener() {
+             public void fire() {
+                int indexes[] = _banList.getSelectionIndices();
+                for (int i = 0; i < indexes.length; i++) {
+                    Hash scope = (Hash)_banScopes.get(indexes[i]);
+                    _browser.ban(scope);
+                }
+            }
+        });
+        
+        initDnD();
         
         _userGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _userGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 7, 1));
@@ -309,11 +390,95 @@ class ViewForum implements Translatable, Themeable {
             ImageUtil.dispose((Image)_avatarImgStandard.get(i));
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
-        if (_refPopup != null) _refPopup.dispose();
     }
     
     /* called when the tab is closed */
     public boolean confirmClose() { return true; }
+    
+    private void initDnD() {
+        initDnDBan();
+        initDnDRefs();
+    }
+    
+    private void initDnDBan() {
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        int ops = DND.DROP_COPY;
+        DragSource source = new DragSource(_banList, ops);
+        source.setTransfer(transfer);
+        source.addDragListener(new DragSourceListener() {
+            public void dragFinished(DragSourceEvent evt) {}
+            public void dragSetData(DragSourceEvent evt) {
+                Hash scope = null;
+                int sel[] = _banList.getSelectionIndices();
+                
+                if ( (sel != null) && (sel.length == 1) )
+                    scope = (Hash)_banScopes.get(sel[0]);
+                
+                if (scope == null) {
+                    // maybe we should find a way to transfer trees instead of just individual bookmarks?
+                    evt.doit = false;
+                    _browser.getUI().debugMessage("dragSetData to null");
+                    return;
+                }
+
+                BookmarkDnD src = null;
+                src = new BookmarkDnD();
+                src.desc = "";
+                String name = scope.toBase64().substring(0,6);
+                src.name = name;
+                src.uri = SyndieURI.createScope(scope);
+                
+                evt.data = src.toString();
+                evt.doit = true;
+            }
+            public void dragStart(DragSourceEvent evt) { evt.doit = _banList.getSelectionCount() > 0; }
+        });
+    }
+    private void initDnDRefs() {
+        Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
+        int ops = DND.DROP_COPY;
+        DragSource source = new DragSource(_refTree, ops);
+        source.setTransfer(transfer);
+        source.addDragListener(new DragSourceListener() {
+            public void dragFinished(DragSourceEvent evt) {}
+            public void dragSetData(DragSourceEvent evt) {
+                ReferenceNode node = null;
+                TreeItem sel[] = _refTree.getSelection();
+                
+                if ( (sel != null) && (sel.length == 1) )
+                    node = (ReferenceNode)_refItemToNode.get(sel[0]);
+                
+                if (node == null) {
+                    // maybe we should find a way to transfer trees instead of just individual bookmarks?
+                    evt.doit = false;
+                    _browser.getUI().debugMessage("dragSetData to null");
+                    return;
+                }
+
+                BookmarkDnD src = null;
+                src = new BookmarkDnD();
+                src.desc = node.getDescription();
+                String name = node.getName();
+                src.name = name;
+                src.uri = node.getURI();
+                
+                evt.data = src.toString();
+                evt.doit = true;
+            }
+            public void dragStart(DragSourceEvent evt) { 
+                ReferenceNode node = null;
+                TreeItem sel[] = _refTree.getSelection();
+                
+                if ( (sel != null) && (sel.length == 1) )
+                    node = (ReferenceNode)_refItemToNode.get(sel[0]);
+                
+                if ( (node != null) && (node.getURI() != null) )
+                    evt.doit = true;
+                else
+                    evt.doit = false;
+            }
+        });
+    }
     
     private void loadOrigAvatar() {
         byte avatar[] = _browser.getClient().getChannelAvatar(_scopeId);
@@ -383,10 +548,91 @@ class ViewForum implements Translatable, Themeable {
     }
     private static final String str(String orig) { return (orig != null ? orig : ""); }
     private void loadReferences(ChannelInfo info) {
-        _referenceNodeRoots = info.getReferences();
+        final ArrayList refs = new ArrayList(info.getReferences());
+        final ArrayList banned = new ArrayList();
+        final ArrayList unbannedRoots = new ArrayList();
+        ReferenceNode.walk(refs, new ReferenceNode.Visitor() {
+            public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                String type = node.getReferenceType();
+                if ( (type != null) && (Constants.REF_TYPE_BANNED.equals(type)) ) {
+                    SyndieURI uri = node.getURI();
+                    if (uri != null) {
+                        if (uri.isSearch()) {
+                            Hash scopes[] = uri.getSearchScopes();
+                            if (scopes != null) {
+                                for (int i = 0; i < scopes.length; i++) {
+                                    if (!banned.contains(scopes[i]))
+                                        banned.add(scopes[i]);
+                                }
+                            }
+                        } else if (uri.isChannel()) {
+                            Hash scope = uri.getScope();
+                            if ( (scope != null) && (!banned.contains(scope)) )
+                                banned.add(scope);
+                        }
+                    }
+                } else if (depth == 0) {
+                    unbannedRoots.add(node);
+                }
+            }
+        });
+        _banScopes.clear();
+        _banScopes.addAll(banned);
+        _refRoots.addAll(unbannedRoots);
+        redrawRefRow();
+    }
+    private void redrawRefRow() {
+        redrawBanned();
         redrawReferences();
+        boolean hide = (_banScopes.size() <= 0) && (_refRoots.size() <= 0);
+        ((GridData)_refGroup.getParent().getLayoutData()).exclude = hide;
+        _refGroup.getParent().setVisible(!hide);
+        _root.layout(true, true);
+    }
+    private void redrawBanned() {
+        _banList.setRedraw(false);
+        _banList.removeAll();
+        for (int i = 0; i < _banScopes.size(); i++) {
+            Hash scope = (Hash)_banScopes.get(i);
+            String name = _browser.getClient().getChannelName(scope);
+            if (name != null)
+                _banList.add(name + " [" + scope.toBase64() + "]");
+            else
+                _banList.add(scope.toBase64());
+        }
+        _banList.setRedraw(true);
+    }
+    private void addRef(ReferenceNode node, TreeItem parent) {
+        TreeItem item = null;
+        if (parent == null)
+            item = new TreeItem(_refTree, SWT.NONE);
+        else
+            item = new TreeItem(parent, SWT.NONE);
+        if (node.getName() != null)
+            item.setText(node.getName());
+        else if (node.getDescription() != null)
+            item.setText(node.getDescription());
+        else if (node.getURI() != null)
+            item.setText(node.getURI().toString());
+        else
+            item.setText("");
+        
+        if (node.getURI() != null)
+            item.setImage(ImageUtil.getTypeIcon(node.getURI()));
+        
+        _refItemToNode.put(item, node);
+        
+        for (int i = 0; i < node.getChildCount(); i++)
+            addRef(node.getChild(i), item);
     }
     private void redrawReferences() {
+        _refTree.setRedraw(false);
+        for (int i = 0; i < _refRoots.size(); i++) {
+            ReferenceNode node = (ReferenceNode)_refRoots.get(i);
+            addRef(node, null);
+        }
+        _refTree.setRedraw(true);
+        /*
         _references.setRedraw(false);
         _references.removeAll();
         // place a depth first walk of the references into _references
@@ -424,6 +670,7 @@ class ViewForum implements Translatable, Themeable {
             _referencesLabel.setVisible(false);
         }
         _references.setRedraw(true);
+        */
     }
     private void loadArchives(ChannelInfo info) {
         // add buttons w/ menus for the archives in _archiveGroup
@@ -445,7 +692,7 @@ class ViewForum implements Translatable, Themeable {
         _archives.removeAll();
         _archiveItemToURI.clear();
         
-        List all = new ArrayList();
+        ArrayList all = new ArrayList();
         all.addAll(_pubArchiveURIs);
         all.addAll(_privArchiveURIs);
         _browser.getUI().debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
@@ -494,7 +741,7 @@ class ViewForum implements Translatable, Themeable {
         _users.removeAll();
         _userItemToHash.clear();
         
-        List all = new ArrayList();
+        ArrayList all = new ArrayList();
         all.addAll(_managerHashes);
         all.addAll(_posterHashes);
         
@@ -553,8 +800,6 @@ class ViewForum implements Translatable, Themeable {
         _description.setFont(theme.DEFAULT_FONT);
         _expirationLabel.setFont(theme.DEFAULT_FONT);
         _expiration.setFont(theme.DEFAULT_FONT);
-        _referencesLabel.setFont(theme.DEFAULT_FONT);
-        _references.setFont(theme.DEFAULT_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
         _archives.setFont(theme.TABLE_FONT);
         
@@ -562,6 +807,11 @@ class ViewForum implements Translatable, Themeable {
         _users.setFont(theme.TABLE_FONT);
         _authorizationLabel.setFont(theme.DEFAULT_FONT);
         _authorization.setFont(theme.DEFAULT_FONT);
+        
+        _banGroup.setFont(theme.DEFAULT_FONT);
+        _banList.setFont(theme.DEFAULT_FONT);
+        _refGroup.setFont(theme.DEFAULT_FONT);
+        _refTree.setFont(theme.TREE_FONT);
         
         redrawArchives();
         redrawUsers();
@@ -575,10 +825,9 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_AVATAR_SELECT = "syndie.gui.viewforum.avatar.select";
     private static final String T_AUTH = "syndie.gui.viewforum.auth";
     private static final String T_EXPIRATION = "syndie.gui.viewforum.expiration";
-    private static final String T_REFERENCES = "syndie.gui.viewforum.references";
-    private static final String T_REFERENCES_ADD = "syndie.gui.viewforum.references.add";
-    private static final String T_REFERENCES_EDIT = "syndie.gui.viewforum.references.edit";
     private static final String T_USERS = "syndie.gui.viewforum.users";
+    private static final String T_BANNED = "syndie.gui.viewforum.banned";
+    private static final String T_REFS = "syndie.gui.viewforum.refs";
     private static final String T_PUBARCHIVE = "syndie.gui.viewforum.pubarchive";
     private static final String T_PRIVARCHIVE = "syndie.gui.viewforum.privarchive";
     private static final String T_SAVE = "syndie.gui.viewforum.save";
@@ -596,17 +845,24 @@ class ViewForum implements Translatable, Themeable {
     private static final String T_AUTH_AUTH = "syndie.gui.viewforum.auth.auth";
     
     private static final String T_AVATAR_OTHER = "syndie.gui.viewforum.avatar.other";
+    
+    private static final String T_BAN_VIEW = "syndie.gui.viewforum.ban.view";
+    private static final String T_BAN_IMPORT = "syndie.gui.viewforum.ban.import";
 
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
-        _referencesLabel.setText(registry.getText(T_REFERENCES, "References:"));
-        _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertized archives:"));
+        _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertised archives:"));
         _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
+        _banGroup.setText(registry.getText(T_BANNED, "Banned forums/authors:"));
+        _refGroup.setText(registry.getText(T_REFS, "Advertised references:"));
         _authorizationLabel.setText(registry.getText(T_AUTH, "Authorization:"));
 
+        _banView.setText(registry.getText(T_BAN_VIEW, "View the selected forum"));
+        _banImport.setText(registry.getText(T_BAN_IMPORT, "Ban the selected forum"));
+        
         // order correlates w/ AUTH_*
         if (_auth == 1)
             _authorization.setText(registry.getText(T_AUTH_PUBLIC, "Allow anyone to post to the forum"));
