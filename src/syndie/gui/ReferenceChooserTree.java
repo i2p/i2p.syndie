@@ -59,7 +59,7 @@ import syndie.db.UI;
  *   - $archive|$ban|$bookmark
  */
 public class ReferenceChooserTree implements Translatable, Themeable, DBClient.WatchEventListener {
-    private BrowserControl _browser;
+    protected BrowserControl _browser;
     private DBClient _client;
     private Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */

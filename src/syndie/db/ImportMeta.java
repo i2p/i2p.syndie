@@ -837,6 +837,7 @@ class ImportMeta {
          * NymKey instances to the provided list
          */
         private void importKeys(SyndieURI uri, List nymKeys) {
+            if (uri == null) return;
             Hash keyScope = getKeyScope(uri);
             KeyImport.importKeys(_ui, _client, keyScope, uri, nymKeys);
         }

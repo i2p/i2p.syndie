@@ -3078,15 +3078,15 @@ public class DBClient {
     
     private static final String SQL_GET_BANNED = "SELECT channelHash, bannedOn FROM banned";
     /** list of channels (Hash) that this archive wants nothing to do with */
-    public List getBannedChannels() { return getBannedChannels(false); }
-    public List getBannedChannels(boolean newOnly) {
+    public ArrayList getBannedChannels() { return getBannedChannels(false); }
+    public ArrayList getBannedChannels(boolean newOnly) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_BANNED);
             rs = stmt.executeQuery();
-            List rv = new ArrayList();
+            ArrayList rv = new ArrayList();
             while (rs.next()) {
                 byte chan[] = rs.getBytes(1);
                 Date when = rs.getDate(2);
@@ -3100,7 +3100,7 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the banned channels", se);
-            return Collections.EMPTY_LIST;
+            return new ArrayList(0);
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}

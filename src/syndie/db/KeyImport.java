@@ -196,6 +196,8 @@ public class KeyImport extends CommandImpl {
     }
     
     public static void importKeys(UI ui, DBClient client, Hash keyScope, SyndieURI uri, List nymKeys) {
+        if (uri == null)
+            return;
         if (uri.getReadKey() != null)
             importReadKey(ui, client, keyScope, uri, nymKeys);
         if (uri.getReplyKey() != null)

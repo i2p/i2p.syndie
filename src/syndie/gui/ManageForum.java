@@ -79,7 +79,7 @@ class ManageForum implements Translatable, Themeable {
     private Text _description;
     private Label _expirationLabel;
     private Text _expiration;
-    private List _referenceNodeRoots;
+    private ArrayList _referenceNodeRoots;
     private Group _archiveGroup;
     private Button _archiveSelect;
     private Button _archiveRemoveAll;
@@ -243,8 +243,13 @@ class ManageForum implements Translatable, Themeable {
         _banGroup.setLayout(new FillLayout(SWT.HORIZONTAL));
         
         _banSelect = new Button(_banGroup, SWT.PUSH);
-        _banSelect.setEnabled(false);
+        _banSelect.addSelectionListener(new FireSelectionListener() {
+            public void fire() { new ManageForumBans(_browser, ManageForum.this); }
+        });
         _banRemoveAll = new Button(_banGroup, SWT.PUSH);
+        _banRemoveAll.addSelectionListener(new FireSelectionListener() {
+            public void fire() { removeBans(); }
+        });
         
         _authGroup = new Group(_root, SWT.SHADOW_ETCHED_IN);
         _authGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -887,7 +892,7 @@ class ManageForum implements Translatable, Themeable {
     }
     private void redrawRefs() {
         int numSelected = 0;
-        Counter counter = new Counter();
+        Counter counter = new Counter(false);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         numSelected = counter.getCount();
         _refGroup.setText(_browser.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + numSelected + " ");
@@ -899,15 +904,67 @@ class ManageForum implements Translatable, Themeable {
         if (refs != null)
             _referenceNodeRoots.addAll(refs);
         redrawRefs();
+        modified();
     }
-    List getRefs() { return _referenceNodeRoots; }
+    void setBanned(ArrayList scopes) {
+        // remove all the old ban refs, and add in new banned refs
+        TrimRefs trim = new TrimRefs(true);
+        ReferenceNode.walk(_referenceNodeRoots, trim);
+        for (int i = 0; i < scopes.size(); i++)
+            _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
+        _banGroup.setText(_browser.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + scopes.size() + " ");
+        _banRemoveAll.setEnabled(scopes.size() > 0);
+        _banGroup.getParent().layout(new Control[] { _banGroup });
+        modified();
+    }
+    ArrayList getRefs() { return _referenceNodeRoots; }
+    ArrayList getBanned() { 
+        BannedRefs banned = new BannedRefs();
+        ReferenceNode.walk(_referenceNodeRoots, banned);
+        return banned.getScopes();
+    }
+    
+    private class BannedRefs implements ReferenceNode.Visitor {
+        private ArrayList _scopes;
+        public BannedRefs() { _scopes = new ArrayList(); }
+        public ArrayList getScopes() { return _scopes; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            if (node.getURI() == null) return;
+            String type = node.getReferenceType();
+            if (Constants.REF_TYPE_BANNED.equals(type)) {
+                Hash scope = node.getURI().getScope();
+                if (scope != null) {
+                    if (!_scopes.contains(scope))
+                        _scopes.add(scope);
+                } else {
+                    Hash scopes[] = node.getURI().getSearchScopes();
+                    if (scopes != null) {
+                        for (int i = 0; i < scopes.length; i++) {
+                            if (!_scopes.contains(scopes[i]))
+                                _scopes.add(scopes[i]);
+                        }
+                    }
+                }
+            }
+        }
+    }
     
     private static final String T_REF_PREFIX = "syndie.gui.manageforum.ref.prefix";
     
     private class Counter implements ReferenceNode.Visitor {
         private int _count;
+        private boolean _countBanned;
+        public Counter(boolean banned) { _countBanned = banned; }
         public int getCount() { return _count; }
-        public void visit(ReferenceNode node, int depth, int siblingOrder) { _count++; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) { 
+            String type = node.getReferenceType();
+            if (_countBanned) {
+                if ((type != null) && (type.equals(Constants.REF_TYPE_BANNED)))
+                    _count++;
+            } else if ((type == null) || (!type.equals(Constants.REF_TYPE_BANNED))) {
+                _count++;
+            }
+        }
     }
     
     private void removeRefs() {
@@ -915,7 +972,17 @@ class ManageForum implements Translatable, Themeable {
         ReferenceNode.walk(_referenceNodeRoots, trim);
         _refGroup.setText(_browser.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + 0 + " ");
         _refRemoveAll.setEnabled(false);
-        _refGroup.getParent().layout(new Control[] { _refGroup });        
+        _refGroup.getParent().layout(new Control[] { _refGroup });
+        modified();
+    }
+    
+    private void removeBans() {
+        TrimRefs trim = new TrimRefs(true);
+        ReferenceNode.walk(_referenceNodeRoots, trim);
+        _banGroup.setText(_browser.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + 0 + " ");
+        _banRemoveAll.setEnabled(false);
+        _banGroup.getParent().layout(new Control[] { _banGroup });
+        modified();
     }
     
     private class TrimRefs implements ReferenceNode.Visitor {
@@ -938,7 +1005,9 @@ class ManageForum implements Translatable, Themeable {
         redrawBans();
     }
     private void redrawBans() {
-        int numSelected = 0;
+        Counter counter = new Counter(true);
+        ReferenceNode.walk(_referenceNodeRoots, counter);
+        int numSelected = counter.getCount();
         _banGroup.setText(_browser.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + numSelected + " ");
         _banRemoveAll.setEnabled(numSelected > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
