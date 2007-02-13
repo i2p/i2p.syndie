@@ -230,8 +230,9 @@ public class TextUI implements UI {
         TextUI ui = new TextUI(args);
         ui.run();
     }
-    public TextUI(String args[]) {
-        this(false);
+    public TextUI(String args[]) { this(args, null, false); }
+    public TextUI(String args[], TextEngine.ScriptListener listener, boolean debug) {
+        this(debug);
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
         
@@ -269,7 +270,7 @@ public class TextUI implements UI {
             }
         }
         _readStdin = readStdin;
-        _engine = new TextEngine(rootDir, this);
+        _engine = new TextEngine(rootDir, this, listener);
     }
     
     public TextEngine getEngine() { return _engine; }
