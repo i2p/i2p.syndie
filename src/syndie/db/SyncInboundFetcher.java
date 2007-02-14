@@ -42,13 +42,15 @@ class SyncInboundFetcher {
                 
                 SyncArchive archive = getNextToFetch(Runner.this);
                 if (archive != null) {
+                    //_manager.getUI().debugMessage("next fetch inbound for " + archive);
                     try {
                         fetch(Runner.this, archive);
                     } catch (Exception e) {
                         synchronized (_runnerToArchive) { _runnerToArchive.remove(Runner.this); }
-                        archive.indexFetchFail("Internal error fetching", e, true);
+                        archive.indexFetchFail("Internal error fetching inbound", e, true);
                     }
                 } else {
+                    //_manager.getUI().debugMessage("no next to fetch inbound for, waiting 60s");
                     try {
                         synchronized (SyncInboundFetcher.this) {
                             SyncInboundFetcher.this.wait(60*1000);
@@ -66,11 +68,12 @@ class SyncInboundFetcher {
             SyncArchive archive = _manager.getArchive(i);
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
-                if ( (archive.getNextPullTime() > 0) && (archive.getNextPullTime() <= now) ) {
+                if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
                     if (archive.getIndexFetchComplete()) {
                         // there's stuff to be done
                         if (_runnerToArchive.containsValue(archive)) {
                             // but someone else is doing it
+                            //_manager.getUI().debugMessage("inbound fetch wanted for " + archive + " but its already in progress");
                             continue;
                         } else {
                             _runnerToArchive.put(runner, archive);

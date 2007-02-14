@@ -1048,6 +1048,8 @@ public class MessageTree implements Translatable, Themeable {
                 boolean enable = _tree.getSelectionCount() > 0;
                 _bookmarkAuthor.setEnabled(enable);
                 _bookmarkForum.setEnabled(enable);
+                _expandThread.setEnabled(enable);
+                _collapseThread.setEnabled(enable);
                 _markAllRead.setEnabled(enable);
                 _markRead.setEnabled(enable);
                 _markThreadRead.setEnabled(enable);

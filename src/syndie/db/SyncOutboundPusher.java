@@ -76,7 +76,7 @@ public class SyncOutboundPusher {
             SyncArchive archive = _manager.getArchive(i);
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
-                if ( (archive.getNextPushTime() > 0) && (archive.getNextPushTime() <= now) ) {
+                if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
                     if (archive.getIndexFetchComplete()) {
                         // there's stuff to be done
                         if (_runnerToArchive.containsValue(archive)) {

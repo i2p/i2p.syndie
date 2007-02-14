@@ -91,10 +91,10 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     public Control getControl() { return _root; }
     
     public void dispose() {
-        if (!_root.isDisposed()) _root.dispose();
-        _archive.removeListener(this);
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
+        if (!_root.isDisposed()) _root.dispose();
+        _archive.removeListener(this);
     }
     
     private void initComponents() {
@@ -297,10 +297,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 save(false);
-                _archive.setNextPullTime(-1);
-                _archive.setNextPushTime(-1);
-                _archive.setNextPullOneOff(false);
-                _archive.setNextPushOneOff(false);
+                _archive.setNextSyncTime(-1);
+                _archive.setNextSyncOneOff(false);
                 _archive.store(true);
                 _listener.scheduleUpdated();
             }
@@ -310,10 +308,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 save(false);
-                _archive.setNextPullTime(System.currentTimeMillis());
-                _archive.setNextPushTime(System.currentTimeMillis());
-                _archive.setNextPullOneOff(false);
-                _archive.setNextPushOneOff(false);
+                _archive.setNextSyncTime(System.currentTimeMillis());
+                _archive.setNextSyncOneOff(false);
                 _archive.store(true);
                 _listener.scheduleUpdated();
             }
@@ -323,10 +319,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
                 save(false);
-                _archive.setNextPullTime(System.currentTimeMillis());
-                _archive.setNextPushTime(System.currentTimeMillis());
-                _archive.setNextPullOneOff(true);
-                _archive.setNextPushOneOff(true);
+                _archive.setNextSyncTime(System.currentTimeMillis());
+                _archive.setNextSyncOneOff(true);
                 _archive.store(true);
                 _listener.scheduleUpdated();
             }
@@ -712,13 +706,13 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _pullPrivateLocalOnly.setEnabled(false);
         _pullPBE.setSelection(pull.includePBEMessages);
         
-        long last = Math.max(_archive.getLastPullTime(), _archive.getLastPushTime());
+        long last = _archive.getLastSyncTime();
         if (last > 0)
             _lastSync.setText(Constants.getDateTime(last));
         else
             _lastSync.setText(_browser.getTranslationRegistry().getText(T_NEVER, "Never"));
         
-        long nxt = Math.max(_archive.getNextPullTime(), _archive.getNextPushTime());
+        long nxt = _archive.getNextSyncTime();
         if (nxt > 0) {
             if (nxt <= System.currentTimeMillis())
                 _nextSync.setText(_browser.getTranslationRegistry().getText(T_ASAP, "ASAP"));
@@ -750,6 +744,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     }
     
     public void applyTheme(Theme theme) {    
+        if (_root.isDisposed()) return;
         _nameLabel.setFont(theme.DEFAULT_FONT);
         _name.setFont(theme.DEFAULT_FONT);
         _locationLabel.setFont(theme.DEFAULT_FONT);

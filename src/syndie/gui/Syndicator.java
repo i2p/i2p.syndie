@@ -214,8 +214,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         _disposed = true;
         if (_detail != null) _detail.dispose();
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
-        mgr.removeListener(this);
-        int idx = mgr.getArchiveCount();
+        mgr.removeListener(this, this);
         
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
@@ -320,10 +319,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                archive.setNextPullOneOff(false);
-                archive.setNextPullTime(System.currentTimeMillis());
-                archive.setNextPushOneOff(false);
-                archive.setNextPushTime(System.currentTimeMillis());
+                archive.setNextSyncOneOff(false);
+                archive.setNextSyncTime(System.currentTimeMillis());
                 archive.store(true);
             }
         });
@@ -334,15 +331,13 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                archive.setNextPullOneOff(true);
-                archive.setNextPullTime(System.currentTimeMillis());
-                archive.setNextPushOneOff(true);
-                archive.setNextPushTime(System.currentTimeMillis());
+                archive.setNextSyncOneOff(true);
+                archive.setNextSyncTime(System.currentTimeMillis());
                 archive.store(true);
             }
         });
         
-        if ( (archive.getNextPullTime() > 0) || (archive.getNextPushTime() > 0) ) {
+        if (archive.getNextSyncTime() > 0) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_browser.getTranslationRegistry().getText(T_MENU_SYNC_CANCEL, "Cancel next sync"));
             item.addSelectionListener(new SelectionListener() {
@@ -492,9 +487,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     private static final String T_MENU_PBE = "syndie.gui.syndicator.menu.pbe";
     
     private boolean syncRunning(SyncArchive archive) {
-        if ( (archive.getNextPullTime() > 0) && (archive.getNextPullTime() <= System.currentTimeMillis()) )
-            return true;
-        if ( (archive.getNextPushTime() > 0) && (archive.getNextPushTime() <= System.currentTimeMillis()) )
+        if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= System.currentTimeMillis()) && (archive.getIndexFetchComplete() || archive.getIndexFetchInProgress()) )
             return true;
         return false;
     }
@@ -561,19 +554,11 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     // cleared on demand
     private void loadData(SyncArchive archive) {
         TreeItem rootItem = loadDataRoot(archive);
-        loadDataIndex(archive, rootItem);
         loadDataFetches(archive, rootItem);
         loadDataPushes(archive);
     }
     
-    private long getNextTime(SyncArchive archive) {
-        if (archive.getNextPullTime() <= 0)
-            return archive.getNextPushTime();
-        else if (archive.getNextPushTime() <= 0)
-            return archive.getNextPullTime();
-        else
-            return Math.min(archive.getNextPullTime(), archive.getNextPushTime());
-    }
+    private long getNextTime(SyncArchive archive) { return archive.getNextSyncTime(); }
     
     private TreeItem loadDataRoot(SyncArchive archive) {
         long nextTime = getNextTime(archive);
@@ -610,6 +595,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     
         resizeCols(rootItem);
         
+        loadDataIndex(archive, rootItem);
+        
         return rootItem;
     }
     
@@ -625,10 +612,13 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             //    _items.remove(indexItem);
             //}
             //_archiveNameToIndexItem.remove(archive.getName());
-            return;
+            
+            // use the later to redraw the error/etc
+            //return;
         }
         
         if (indexItem == null) {
+            if (nextTime <= 0) return;
             indexItem = new TreeItem(rootItem, SWT.NONE);
             _archiveNameToIndexItem.put(archive.getName(), indexItem);
             _items.put(indexItem, "fetchindex");
@@ -641,7 +631,8 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
             indexItem.setText(3, _browser.getTranslationRegistry().getText(T_SUMMARY_INDEXFETCH, "Index fetch in progress"));
         } else {
-            indexItem.setText(1, Constants.getDateTime(nextTime));
+            if (nextTime > 0) // otherwise, keep the previous value
+                indexItem.setText(1, Constants.getDateTime(nextTime));
 
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
@@ -649,12 +640,12 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             } else if (!SyncManager.getInstance(_browser.getClient(), _browser.getUI()).isOnline()) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
-            } else if ( (nextTime > 0) && (nextTime <= System.currentTimeMillis()) && (archive.getIndexFetchComplete()) ) {
-                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
-                indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_COMPLETE, "Fetch complete"));
-            } else {
+            } else if ( (nextTime > 0) && (nextTime <= System.currentTimeMillis()) && (!archive.getIndexFetchComplete()) && (!archive.getIndexFetchInProgress()) ) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_SCHEDULED, "Scheduled"));
+            } else { //( /*(nextTime > 0) && */ (nextTime <= System.currentTimeMillis()) && (archive.getIndexFetchComplete()) ) {
+                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_COMPLETE, "Fetch complete"));
             }
         }
         resizeCols(indexItem);

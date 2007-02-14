@@ -32,7 +32,7 @@ class IndexFetcher {
                             IndexFetcher.this.wait(60*1000);
                         } 
                     } catch (InterruptedException ie) {}
-                    _manager.getUI().debugMessage("not fetching indexes, as we aren't online");
+                    //_manager.getUI().debugMessage("not fetching indexes, as we aren't online");
                 }
                 
                 SyncArchive archive = getNextToFetch();
@@ -44,6 +44,7 @@ class IndexFetcher {
                         archive.indexFetchFail("Internal error fetching the index", e, true);
                     }
                 } else {
+                    //_manager.getUI().debugMessage("no next index to fetch, waiting 60s");
                     try {
                         synchronized (IndexFetcher.this) {
                             IndexFetcher.this.wait(60*1000);
@@ -59,8 +60,8 @@ class IndexFetcher {
         long now = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
             SyncArchive archive = _manager.getArchive(i);
-            if ( ( (archive.getNextPullTime() > 0) && (archive.getNextPullTime() <= now) ) || 
-                 ( (archive.getNextPushTime() > 0) && (archive.getNextPushTime() <= now) ) ) {
+            //_manager.getUI().debugMessage("indexFetch.getNextToFetch: " + archive + " nextSyncTime: " + archive.getNextSyncTime());
+            if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
                 if (archive.getIndexFetchInProgress() || archive.getIndexFetchComplete()) {
                     _manager.getUI().debugMessage("archive fetch already in progress: " + archive.getName() + " inprogress?" + archive.getIndexFetchInProgress() + " complete? " + archive.getIndexFetchComplete());
                     continue;

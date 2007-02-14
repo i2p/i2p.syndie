@@ -161,41 +161,43 @@ public class TranslationRegistry {
             }
         });
         Properties defaultText = null;
-        for (int i = 0; i < files.length; i++) {
-            BufferedReader reader = null;
-            try {
-                InputStream in = new FileInputStream(files[i]);
-                if (in != null) {
-                    reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                    Properties props = new Properties();
-                    String line = null;
-                    String lang = null;
-                    while ( (line = reader.readLine()) != null) {
-                        int split = line.indexOf(':');
-                        if (split <= 0)
-                            split = line.indexOf('=');
-                        if (split <= 0)
-                            continue;
-                        if (line.startsWith("/") || line.startsWith("#") || line.startsWith("--")) 
-                            continue;
-                        String key = line.substring(0, split).trim();
-                        String val = line.substring(split+1).trim();
-                        if (key.equals(KEY_LANG))
-                            lang = val;
-                        else if (key.equals(KEY_ISBASE))
-                            defaultText = props;
-                        else
-                            props.setProperty(key, val);
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
+                BufferedReader reader = null;
+                try {
+                    InputStream in = new FileInputStream(files[i]);
+                    if (in != null) {
+                        reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                        Properties props = new Properties();
+                        String line = null;
+                        String lang = null;
+                        while ( (line = reader.readLine()) != null) {
+                            int split = line.indexOf(':');
+                            if (split <= 0)
+                                split = line.indexOf('=');
+                            if (split <= 0)
+                                continue;
+                            if (line.startsWith("/") || line.startsWith("#") || line.startsWith("--")) 
+                                continue;
+                            String key = line.substring(0, split).trim();
+                            String val = line.substring(split+1).trim();
+                            if (key.equals(KEY_LANG))
+                                lang = val;
+                            else if (key.equals(KEY_ISBASE))
+                                defaultText = props;
+                            else
+                                props.setProperty(key, val);
+                        }
+                        reader.close();
+                        reader = null;
+                        if (lang != null)
+                            translations.put(lang, props);
                     }
-                    reader.close();
-                    reader = null;
-                    if (lang != null)
-                        translations.put(lang, props);
+                } catch (IOException ioe) {
+                    _browser.getUI().errorMessage("problem getting the file translations", ioe);
+                } finally {
+                    if (reader != null) try { reader.close(); } catch (IOException ioe) {}
                 }
-            } catch (IOException ioe) {
-                _browser.getUI().errorMessage("problem getting the file translations", ioe);
-            } finally {
-                if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
         }
         

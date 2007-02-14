@@ -217,8 +217,11 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private void registerListen(SyncArchive archive) {
         archive.addListener(new SyncArchive.SyncArchiveListener() {
             public void incomingUpdated(SyncArchive.IncomingAction action) {
-                if (action.isComplete() || (action.getPBEPrompt() != null))
-                    refreshDisplay(false); // new import may require updating the counts
+                // we have callbacks now to know when new messages are imported, so ignore
+                // this
+                
+                //if (action.isComplete() || (action.getPBEPrompt() != null))
+                //    refreshDisplay(false); // new import may require updating the counts
             }
             public void outgoingUpdated(SyncArchive.OutgoingAction action) {}
             public void archiveUpdated(SyncArchive archive) {
@@ -309,7 +312,10 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private boolean _unreadCalcInProgress = false;
     private void calcUnread() {
         synchronized (StatusBar.this) {
-            if (_unreadCalcInProgress) return;
+            if (_unreadCalcInProgress) {
+                //_browser.getUI().debugMessage("skipping calcUnread");
+                return;
+            }
             _unreadCalcInProgress = true;
         }
         _browser.getUI().debugMessage("calcUnread begin");

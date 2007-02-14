@@ -416,10 +416,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads, matchingThreadMsgIds);
         long afterPrune = System.currentTimeMillis();
-        _ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
+        //_ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
         ThreadReferenceNode sorted[] = sort(pruned);
         long afterSort = System.currentTimeMillis();
-        _ui.debugMessage("threads sorted: " + (pruned != null ? pruned.length +"" : "none"));
+        //_ui.debugMessage("threads sorted: " + (pruned != null ? pruned.length +"" : "none"));
         storePruned(sorted);
         long afterStore = System.currentTimeMillis();
            
@@ -597,7 +597,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             long before = System.currentTimeMillis();
             rv = b.buildThread(matchingThreadMsgIds);
             long after = System.currentTimeMillis();
-            _ui.debugMessage("build threads took " + (after-before) + " to build: \n" + rv);
+            _ui.debugMessage("build threads took " + (after-before) + " to build: " + rv.size());
         } else {
             long before = System.currentTimeMillis();
             rv = new ArrayList(matchingThreadMsgIds.size());
@@ -745,7 +745,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         buf.append(")");
         
         String query = buf.toString();
-        ui.debugMessage("Children query: " + query);
+        //ui.debugMessage("Children query: " + query);
         
         int queryRuns = 0;
         long queryTime = 0;
@@ -861,7 +861,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 node.setIsDummy(true);
             }
         } else {
-            _ui.debugMessage("node is a dummy: " + node.getMsgId());
+            //_ui.debugMessage("node is a dummy: " + node.getMsgId());
         }
         if (!node.isDummy())
             rv = false;
@@ -912,7 +912,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterPrivacy((ThreadReferenceNode)node.getChild(i));
             rv = rv && childIsEmpty;
         }
-        _ui.debugMessage("filter privacy rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
+        //_ui.debugMessage("filter privacy rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
         return rv;
     }
     
@@ -982,7 +982,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             keyToNode.put(key, peers[i]);
             sorted.add(key);
         }
-        _ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers");
+        //_ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1005,7 +1005,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             keyToNode.put(key, peers[i]);
             sorted.add(key);
         }
-        _ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers");
+        //_ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1029,7 +1029,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             keyToNode.put(key, peers[i]);
             sorted.add(key);
         }
-        _ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers");
+        //_ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
@@ -1054,7 +1054,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             keyToNode.put(new Long(when), peers[i]);
             sorted.add(new Long(when));
         }
-        _ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers");
+        //_ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
         for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)

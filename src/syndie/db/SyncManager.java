@@ -55,8 +55,11 @@ public class SyncManager {
             SyncListener lsnr = (SyncListener)_listeners.get(i);
             lsnr.archiveRemoved(archive);
         }
+        _archives.remove(archive);
     }
     void added(SyncArchive archive) {
+        if (!_archives.contains(archive))
+            _archives.add(archive);
         for (int i = 0; i < _listeners.size(); i++) {
             SyncListener lsnr = (SyncListener)_listeners.get(i);
             lsnr.archiveAdded(archive);
@@ -64,6 +67,7 @@ public class SyncManager {
     }
     
     void wakeUpEngine() {
+        //_ui.debugMessage("wakeup sync engine");
         if (_indexFetcher != null) _indexFetcher.wakeUp();
         if (_inboundFetcher != null) _inboundFetcher.wakeUp();
         if (_outboundPusher != null) _outboundPusher.wakeUp();
@@ -73,12 +77,7 @@ public class SyncManager {
         long earliest = -1;
         for (int i = 0; i < getArchiveCount(); i++) {
             SyncArchive archive = getArchive(i);
-            long pull = archive.getNextPullTime();
-            long push = archive.getNextPushTime();
-            long when = -1;
-            if (pull <= 0) when = push;
-            else if (push <= 0) when = pull;
-            else when = Math.min(pull, push);
+            long when = archive.getNextSyncTime();
             
             if (earliest <= 0) earliest = when;
             else if (when > 0) earliest = Math.min(earliest, when);
@@ -109,7 +108,13 @@ public class SyncManager {
     }
     
     public void addListener(SyncListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
-    public void removeListener(SyncListener lsnr) { _listeners.remove(lsnr); }
+    public void removeListener(SyncListener lsnr, SyncArchive.SyncArchiveListener alsnr) { 
+        _listeners.remove(lsnr);
+        for (int i = 0; i < _archives.size(); i++) {
+            SyncArchive archive = (SyncArchive)_archives.get(i);
+            archive.removeListener(alsnr);
+        }
+    }
     
     public int getArchiveCount() { return _archives.size(); }
     public SyncArchive getArchive(int idx) { return (SyncArchive)_archives.get(idx); }

@@ -532,8 +532,8 @@ public class DBClient {
         }
     }
     public int exec(String sql, long param1) throws SQLException {
-        if (_log.shouldLog(Log.DEBUG))
-            _log.debug("Exec param [" + sql + "]");
+        //if (_log.shouldLog(Log.DEBUG))
+        //    _log.debug("Exec param [" + sql + "]");
         PreparedStatement stmt = null;
         try {
             stmt = _con.prepareStatement(sql);
@@ -4209,7 +4209,7 @@ public class DBClient {
         
         buf.append(")");
         String query = buf.toString();
-        _ui.debugMessage("getUnread query: [" + nymId + "]: " + query);
+        //_ui.debugMessage("getUnread query: [" + nymId + "]: " + query);
         
         long beforePrep = System.currentTimeMillis();
         long afterPrep = -1;

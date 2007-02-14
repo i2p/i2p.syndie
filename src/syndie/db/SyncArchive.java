@@ -29,13 +29,10 @@ public class SyncArchive {
     private String _fcpHost;
     private int _fcpPort;
     private int _consecutiveFailures;
-    private long _nextPullTime;
-    private long _nextPushTime;
-    private long _lastPullTime;
-    private long _lastPushTime;
+    private long _nextSyncTime;
+    private long _lastSyncTime;
     private long _uriId;
-    private boolean _nextPullOneOff;
-    private boolean _nextPushOneOff;
+    private boolean _nextSyncOneOff;
     private List _incomingActions;
     private List _outgoingActions;
     private List _listeners;
@@ -54,12 +51,9 @@ public class SyncArchive {
         _name = name;
         _oldName = name;
         _uriId = -1;
-        _lastPullTime = -1;
-        _lastPushTime = -1;
-        _nextPullTime = -1;
-        _nextPushTime = -1;
-        _nextPullOneOff = false;
-        _nextPushOneOff = false;
+        _lastSyncTime = -1;
+        _nextSyncTime = -1;
+        _nextSyncOneOff = false;
         _consecutiveFailures = 0;
         _incomingActions = new ArrayList();
         _outgoingActions = new ArrayList();
@@ -71,7 +65,7 @@ public class SyncArchive {
      * this creates the actions to be run as a result of fetching the specified archive index
      */
     public void indexFetched(UI ui, SharedArchive archive) {
-        if ( (_nextPullTime <= 0) && (_nextPushTime <= 0) ) {
+        if (_nextSyncTime <= 0) {
             ui.debugMessage("cancel during fetch, so even though we got the index, don't build actions");
             setIndexFetchInProgress(false);
             setConsecutiveFailures(0);
@@ -144,8 +138,7 @@ public class SyncArchive {
         
         if ( (pushURIs.size() <= 0) && (pullURIs.size() <= 0) ) {
             // nothing to do, so reschedule the next sync
-            updateSchedule(true, true); // pull
-            updateSchedule(true, false); // push
+            updateSchedule(true);
         }
         
         ui.debugMessage("index fetch complete, notify " + _listeners);
@@ -156,6 +149,14 @@ public class SyncArchive {
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
             lsnr.archiveUpdated(this);
+        }
+        for (int i = 0; i < _incomingActions.size(); i++) {
+            IncomingAction action = (IncomingAction)_incomingActions.get(i);
+            notifyUpdate(action);
+        }
+        for (int i = 0; i < _outgoingActions.size(); i++) {
+            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+            notifyUpdate(action);
         }
         _manager.wakeUpEngine();
     }
@@ -391,15 +392,14 @@ public class SyncArchive {
     }
     
     public void stop(String cancelReason) {
+        _manager.getUI().debugMessage("stop " + toString() + ": " + cancelReason);
         if (!_indexFetchComplete) {
             _indexFetching = false;
             _indexFetchErrorMsg = cancelReason;
             _indexFetchError = null;
         }
-        setNextPullOneOff(false);
-        setNextPushOneOff(false);
-        setNextPullTime(-1);
-        setNextPushTime(-1);
+        setNextSyncOneOff(false);
+        setNextSyncTime(-1);
         for (int i = 0; i < _incomingActions.size(); i++) {
             IncomingAction action = (IncomingAction)_incomingActions.get(i);
             if (!action.isComplete())
@@ -480,10 +480,19 @@ public class SyncArchive {
                 
                 _consecutiveFailures = consecFailures;
                 
-                _nextPullTime = (nextPull != null ? nextPull.getTime() : -1);
-                _nextPushTime = (nextPush != null ? nextPush.getTime() : -1);
-                _lastPullTime = (lastPull != null ? lastPull.getTime() : -1);
-                _lastPushTime = (lastPush != null ? lastPush.getTime() : -1);
+                long nxt = -1;
+                if (nextPull != null)
+                    nxt = nextPull.getTime();
+                if ( (nextPush != null) && (nextPush.getTime() > 0) && ( (nextPush.getTime() < nxt) || (nxt <= 0) ) )
+                    nxt = nextPush.getTime();
+                _nextSyncTime = nxt;
+                
+                long last = -1;
+                if (lastPull != null)
+                    last = lastPull.getTime();
+                if ( (lastPush != null) && (lastPush.getTime() > 0) && ( (lastPush.getTime() < last) || (last <= 0) ) )
+                    last = lastPush.getTime();
+                _lastSyncTime = last;
                 
                 _pullStrategy = new SharedArchiveEngine.PullStrategy(pullPolicy);
                 _pushStrategy = new SharedArchiveEngine.PushStrategy(pushPolicy);
@@ -555,21 +564,21 @@ public class SyncArchive {
                     stmt.setNull(10, Types.INTEGER);
                 }
 
-                if (_nextPullTime > 0)
-                    stmt.setTimestamp(11, new Timestamp(_nextPullTime));
+                if ( (_nextSyncTime > 0) && (!_nextSyncOneOff) )
+                    stmt.setTimestamp(11, new Timestamp(_nextSyncTime ));
                 else
                     stmt.setNull(11, Types.TIMESTAMP);
-                if (_nextPushTime > 0)
-                    stmt.setTimestamp(12, new Timestamp(_nextPushTime));
+                if ( (_nextSyncTime > 0) && (!_nextSyncOneOff) )
+                    stmt.setTimestamp(12, new Timestamp(_nextSyncTime));
                 else
                     stmt.setNull(12, Types.TIMESTAMP);
 
-                if (_lastPullTime > 0)
-                    stmt.setTimestamp(13, new Timestamp(_lastPullTime));
+                if (_lastSyncTime > 0)
+                    stmt.setTimestamp(13, new Timestamp(_lastSyncTime));
                 else
                     stmt.setNull(13, Types.TIMESTAMP);
-                if (_lastPushTime > 0)
-                    stmt.setTimestamp(14, new Timestamp(_lastPushTime));
+                if (_lastSyncTime > 0)
+                    stmt.setTimestamp(14, new Timestamp(_lastSyncTime ));
                 else
                     stmt.setNull(14, Types.TIMESTAMP);
 
@@ -657,18 +666,12 @@ public class SyncArchive {
     public void setFCPPort(int port) { _fcpPort = port; }
     public int getConsecutiveFailures() { return _consecutiveFailures; }
     public void setConsecutiveFailures(int num) { _consecutiveFailures = num; }
-    public long getNextPullTime() { return _nextPullTime; }
-    public void setNextPullTime(long when) { _nextPullTime = when; }
-    public long getNextPushTime() { return _nextPushTime; }
-    public void setNextPushTime(long when) { _nextPushTime = when; }
-    public long getLastPullTime() { return _lastPullTime; }
-    public void setLastPullTime(long when) { _lastPullTime = when; }
-    public long getLastPushTime() { return _lastPushTime; }
-    public void setLastPushTime(long when) { _lastPushTime = when; }
-    public boolean getNextPullOneOff() { return _nextPullOneOff; }
-    public void setNextPullOneOff(boolean oneOff) { _nextPullOneOff = oneOff; }
-    public boolean getNextPushOneOff() { return _nextPushOneOff; }
-    public void setNextPushOneOff(boolean oneOff) { _nextPushOneOff = oneOff; }
+    public long getNextSyncTime() { return _nextSyncTime; }
+    public long getLastSyncTime() { return _lastSyncTime; }
+    public void setNextSyncTime(long when) { _nextSyncTime = when; }
+    public void setLastSyncTime(long when) { _lastSyncTime = when; }
+    public boolean getNextSyncOneOff() { return _nextSyncOneOff; }
+    public void setNextSyncOneOff(boolean oneOff) { _nextSyncOneOff = oneOff; }
     public SharedArchiveEngine.PullStrategy getPullStrategy() { return _pullStrategy; }
     public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _pullStrategy = strategy; }
     public SharedArchiveEngine.PushStrategy getPushStrategy() { return _pushStrategy; }
@@ -734,15 +737,11 @@ public class SyncArchive {
         
         if (allowReschedule) {
             // which index fetch are we failing here?
-            if (_nextPullTime < System.currentTimeMillis())
-                updateSchedule(false, true);
-            if (_nextPushTime < System.currentTimeMillis())
-                updateSchedule(false, false);
+            if (_nextSyncTime < System.currentTimeMillis())
+                updateSchedule(false);
         } else {
-            _nextPullTime = -1;
-            _nextPushTime = -1;
-            _nextPullOneOff = false;
-            _nextPushOneOff = false;
+            _nextSyncTime = -1;
+            _nextSyncOneOff = false;
             store();
         }
         
@@ -753,26 +752,30 @@ public class SyncArchive {
         if (_incomingActions.size() > 0) {
             int ok = 0;
             int err = 0;
+            int incomplete = 0;
             for (int i = 0; i < _incomingActions.size(); i++) {
                 IncomingAction action = (IncomingAction)_incomingActions.get(i);
-                if (!action.isComplete()) continue;
-                if ( (action.getFetchErrorMsg() != null) || (action.isCorrupt()) )
+                if (!action.isComplete()) {
+                    incomplete++;
+                } else if ( (action.getFetchErrorMsg() != null) || (action.isCorrupt()) ) {
                     err++;
-                else
+                } else {
                     ok++;
+                }
             }
-            updateSchedule(ok > 0, true);
+            if (incomplete == 0)
+                updateSchedule(ok > 0 || err == 0);
         } else {
-            updateSchedule(true, true);
+            updateSchedule(true);
         }
         fireUpdated();
     }
     public void pushActionComplete() {
-        updateSchedule(true, false);
+        updateSchedule(true);
         fireUpdated();
     }
     
-    private void updateSchedule(boolean success, boolean inbound) {
+    private void updateSchedule(boolean success) {
         long delay = 0;
         int hours = 1;
         if (!success)
@@ -784,28 +787,15 @@ public class SyncArchive {
         if (hours > 24) hours = 24;
         delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
         
-        if (inbound) {
-            if ( (getNextPullTime() > 0) && (getNextPullTime() <= System.currentTimeMillis()) ) {
-                if (getNextPullOneOff())
-                    setNextPullTime(-1);
-                else
-                    setNextPullTime(System.currentTimeMillis() + delay);
-                setNextPullOneOff(false);
-            }
-            if (success)
-                setLastPullTime(System.currentTimeMillis());
-        } else {
-            if ( (getNextPushTime() > 0) && (getNextPushTime() <= System.currentTimeMillis()) ) {
-                if (getNextPushOneOff())
-                    setNextPushTime(-1);
-                else
-                    setNextPushTime(System.currentTimeMillis() + delay);
-                setNextPushOneOff(false);
-            }
-            if (success)
-                setLastPushTime(System.currentTimeMillis());
-        }
+        if (getNextSyncOneOff())
+            setNextSyncTime(-1);
+        else
+            setNextSyncTime(System.currentTimeMillis() + delay);
         
+        if (success)
+            setLastSyncTime(System.currentTimeMillis());
+        
+        _manager.getUI().debugMessage("updateSchedule(" + success + "): next sync: " + Constants.getDateTime(getNextSyncTime()));
         store();
     }
 }
