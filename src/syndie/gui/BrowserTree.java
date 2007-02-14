@@ -235,6 +235,11 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         } else if (selected.length == 1) {
             TreeItem item = selected[0];
 
+            if (item == getBookmarkRoot()) {
+                buildBookmarkMenu(null, item);
+                return;
+            }
+            
             NymReferenceNode bookmark = getBookmark(item);
             if ( (bookmark != null) || (item.equals(getBookmarkRoot())) ) {
                 buildBookmarkMenu(bookmark, item);
@@ -346,6 +351,22 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     }
     private void buildBookmarkMenu(final NymReferenceNode bookmark, final TreeItem selected) {
         MenuItem item = null;
+
+        if (bookmark == null) {
+            item = new MenuItem(_menu, SWT.PUSH);
+            item.addSelectionListener(new FireSelectionListener() {
+                public void fire() { addBookmark(-1); }
+            });
+            item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_ADD, "Add bookmark"));
+
+            item = new MenuItem(_menu, SWT.PUSH);
+            item.addSelectionListener(new FireSelectionListener() {
+                public void fire() { addFolder(-1); }
+            });
+            item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_ADDFOLDER, "Add folder"));
+            return;
+        }
+
         
         if (bookmark.getURI() != null) {
             item = new MenuItem(_menu, SWT.PUSH);
