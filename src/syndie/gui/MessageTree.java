@@ -1732,6 +1732,7 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                if (uri.getMessageId() == null) continue;
                 long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
                 long targetId = _browser.getClient().getMessageTarget(msgId);
                 Hash target = _browser.getClient().getChannelHash(targetId);
@@ -1744,10 +1745,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long targetId = _client.getMessageTarget(msgId);
-                Hash scope = _client.getChannelHash(targetId);
-                _browser.view(SyndieURI.createScope(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.view(uri);
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long targetId = _client.getMessageTarget(msgId);
+                    Hash scope = _client.getChannelHash(targetId);
+                    _browser.view(SyndieURI.createScope(scope));
+                }
             }
         }
     }
@@ -1756,10 +1761,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long targetId = _client.getMessageTarget(msgId);
-                Hash scope = _client.getChannelHash(targetId);
-                _browser.view(_browser.createMetaURI(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.view(_browser.createMetaURI(uri.getScope()));
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long targetId = _client.getMessageTarget(msgId);
+                    Hash scope = _client.getChannelHash(targetId);
+                    _browser.view(_browser.createMetaURI(scope));
+                }
             }
         }
     }
@@ -1768,10 +1777,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long targetId = _client.getMessageTarget(msgId);
-                Hash scope = _client.getChannelHash(targetId);
-                _browser.bookmark(SyndieURI.createScope(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.bookmark(uri);
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long targetId = _client.getMessageTarget(msgId);
+                    Hash scope = _client.getChannelHash(targetId);
+                    _browser.bookmark(SyndieURI.createScope(scope));
+                }
             }
         }
     }
@@ -1780,10 +1793,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long authorId = _client.getMessageAuthor(msgId);
-                Hash scope = _client.getChannelHash(authorId);
-                _browser.view(SyndieURI.createScope(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.view(uri);
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long authorId = _client.getMessageAuthor(msgId);
+                    Hash scope = _client.getChannelHash(authorId);
+                    _browser.view(SyndieURI.createScope(scope));
+                }
             }
         }
     }
@@ -1792,10 +1809,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long authorId = _client.getMessageAuthor(msgId);
-                Hash scope = _client.getChannelHash(authorId);
-                _browser.view(_browser.createMetaURI(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.view(_browser.createMetaURI(uri.getScope()));
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long authorId = _client.getMessageAuthor(msgId);
+                    Hash scope = _client.getChannelHash(authorId);
+                    _browser.view(_browser.createMetaURI(scope));
+                }
             }
         }
     }
@@ -1804,10 +1825,14 @@ public class MessageTree implements Translatable, Themeable {
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
-                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                long authorId = _client.getMessageAuthor(msgId);
-                Hash scope = _client.getChannelHash(authorId);
-                _browser.bookmark(SyndieURI.createScope(scope));
+                if (uri.getMessageId() == null) {
+                    _browser.bookmark(SyndieURI.createScope(uri.getScope()));
+                } else {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    long authorId = _client.getMessageAuthor(msgId);
+                    Hash scope = _client.getChannelHash(authorId);
+                    _browser.bookmark(SyndieURI.createScope(scope));
+                }
             }
         }
     }
