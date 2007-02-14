@@ -87,6 +87,7 @@ public class PageRenderer implements Themeable {
     private MenuItem _bodyEnable;
     private MenuItem _bodyDisable;
     private MenuItem _bodyViewAsText;
+    private MenuItem _bodyViewUnstyled;
     private MenuItem _bodyViewStyled;
     private MenuItem _bodySaveAll;
     
@@ -1086,14 +1087,17 @@ public class PageRenderer implements Themeable {
             _bodyEnable.setEnabled(false);
             _bodyDisable.setEnabled(false);
             //_bodyViewAsText.setEnabled(false);
+            _bodyViewUnstyled.setEnabled(false);
             _bodyViewStyled.setEnabled(false);
             _bodySaveAll.setEnabled(false);
         } else {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
-            _bodyViewAsText.setSelection(_viewAsText);
             _bodySaveAll.setEnabled(true);
+            _bodyViewAsText.setSelection(_viewAsText);
+            _bodyViewUnstyled.setEnabled(true);
             _bodyViewStyled.setEnabled(true);
+            
             long targetId = _msg.getTargetChannelId();
             long authorId = _msg.getAuthorChannelId();
             if ( (targetId == authorId) || (authorId < 0) ) {
@@ -1257,7 +1261,16 @@ public class PageRenderer implements Themeable {
         _viewAsText = !_viewAsText;
         rerender();
     }
-    private void toggleViewStyled() { rerender(); }
+    private void toggleViewStyled() {
+        if (_bodyViewStyled.getSelection())
+            _viewAsText = false;
+        rerender();
+    }
+    private void toggleViewUnstyled() { 
+        if (_bodyViewUnstyled.getSelection())
+            _viewAsText = false;
+        rerender();
+    }
     
     private abstract class FireEventListener implements SelectionListener {
         public void widgetSelected(SelectionEvent selectionEvent) { fireEvent(); }
@@ -1390,13 +1403,18 @@ public class PageRenderer implements Themeable {
                 toggleImages();
             }
         });
-        _bodyViewAsText = new MenuItem(_bodyMenu, SWT.CHECK);
-        _bodyViewAsText.setText("View as text");
+        _bodyViewAsText = new MenuItem(_bodyMenu, SWT.RADIO);
+        _bodyViewAsText.setText("View as plain text");
         _bodyViewAsText.addSelectionListener(new FireEventListener() {
             public void fireEvent() { toggleViewAsText(); }
         });
-        _bodyViewStyled = new MenuItem(_bodyMenu, SWT.CHECK);
-        _bodyViewStyled.setText("View styled");
+        _bodyViewUnstyled = new MenuItem(_bodyMenu, SWT.RADIO);
+        _bodyViewUnstyled.setText("View as unstyled HTML");
+        _bodyViewUnstyled.addSelectionListener(new FireEventListener() {
+            public void fireEvent() { toggleViewUnstyled(); }
+        });
+        _bodyViewStyled = new MenuItem(_bodyMenu, SWT.RADIO);
+        _bodyViewStyled.setText("View as styled HTML");
         _bodyViewStyled.addSelectionListener(new FireEventListener() {
             public void fireEvent() { toggleViewStyled(); }
         });
