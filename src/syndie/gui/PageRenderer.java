@@ -592,7 +592,7 @@ public class PageRenderer implements Themeable {
                 _bgColor = sbuilder.getBackgroundColor();
                 if (_styled && _bgColor != null)
                     _text.setBackground(_bgColor);
-                //else
+                else
                 //    _text.setBackground(ColorUtil.getColor("white")); //null);
                     _text.setBackground(null); // perhaps this'll work properly sans the INHERIT_DEFAULT above
                 
