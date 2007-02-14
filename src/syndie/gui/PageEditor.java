@@ -977,7 +977,7 @@ public class PageEditor {
             while ( (line = br.readLine()) != null) {
                 if (quoteAsHTML) {
                     if (line.trim().length() > 0)
-                        buf.append("<p>").append(line.trim()).append("</p>\n");
+                        buf.append(line.trim()).append("<br />\n");
                 } else {
                     buf.append("> ").append(line.trim()).append("\n");
                 }

@@ -328,8 +328,8 @@ public class HTMLStateBuilder {
             if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
                 tag.startIndex++;
-                _prevWasWhitespace = true;
             }
+            _prevWasWhitespace = true;
         } else if ("pre".equals(tagName)) {
             // make sure the <pre>foo</pre> starts off on a new line
             if (!isStartOfLine(body, bodyIndex)) {
