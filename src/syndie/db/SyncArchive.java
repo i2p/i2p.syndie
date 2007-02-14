@@ -465,8 +465,8 @@ public class SyncArchive {
                 byte readKey[] = null;
                 if ( (readKeyEncr != null) && (readKeySalt != null) )
                     readKey = _client.pbeDecrypt(readKeyEncr, readKeySalt);
-                if (postKey != null) _postKey = Base64.encode(postKey);
-                if (readKey != null) _readKey = Base64.encode(readKey);
+                if (postKey != null) _postKey = DataHelper.getUTF8(postKey); //Base64.encode(postKey);
+                if (readKey != null) _readKey = DataHelper.getUTF8(postKey); //Base64.encode(readKey);
                 
                 if ( (proxyHost != null) && (proxyPort > 0) ) {
                     _httpProxyHost = proxyHost;

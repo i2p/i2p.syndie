@@ -441,7 +441,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
                 _archive.setFCPPort(getInt(fcpPort.getText().trim()));
                 _archive.setURL(pub.getText().trim());
                 dialog.dispose();
-                loadData();
+                //loadData();
             }
         });
         Button cancel = new Button(row, SWT.PUSH);
