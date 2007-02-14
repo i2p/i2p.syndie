@@ -19,10 +19,14 @@ import syndie.data.SyndieURI;
  */
 public class MessageViewTab extends BrowserTab implements Translatable, Themeable {
     private MessageView _view;
+    private String _name;
     private String _desc;
     
-    public MessageViewTab(BrowserControl browser, SyndieURI uri) {
+    public MessageViewTab(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDesc) {
         super(browser, uri);
+        _name = suggestedName;
+        _desc = suggestedDesc;
+        reconfigItem();
     }
     
     protected void initComponents() {
@@ -73,8 +77,8 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     public void toggleMaxEditor() { _view.toggleMaxEditor(); }
     
     public Image getIcon() { return ImageUtil.ICON_TAB_MSG; }
-    public String getName() { return _view.getTitle(); }
-    public String getDescription() { return getURI().toString(); }
+    public String getName() { return _name != null ? _name : _view.getTitle(); }
+    public String getDescription() { return _desc != null ? _desc : getURI().toString(); }
 
     public void translate(TranslationRegistry registry) {
         // nothing translatable

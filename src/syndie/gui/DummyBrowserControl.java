@@ -26,6 +26,7 @@ public class DummyBrowserControl implements BrowserControl {
     public DBClient getClient() { return _client; }
     
     public void view(SyndieURI uri) {}
+    public void view(SyndieURI uri, String suggestedName, String suggestedDescription) {}
     public void unview(SyndieURI uri) {}
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) { return null; }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) { return null; }

@@ -48,7 +48,7 @@ abstract class BrowserTab implements Themeable {
     static final String TYPE_VIEWFORUM = "viewforum";
     static final String TYPE_SYNC = "sync";
     
-    public static BrowserTab build(BrowserControl browser, SyndieURI uri) {
+    public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {
         // build a new browser tab based on the uri pointed to
         if (TYPE_POST.equalsIgnoreCase(uri.getType())) {
             Long postponeId = uri.getLong("postponeid");
@@ -72,10 +72,10 @@ abstract class BrowserTab implements Themeable {
             if (uri.getScope() != null) {
                 if (uri.getMessageId() == null) {
                     // browse the forum as a whole
-                    return new BrowseForumTab(browser, uri);
+                    return new BrowseForumTab(browser, uri, suggestedName, suggestedDescription);
                 } else {
                     // view a specific message
-                    return new MessageViewTab(browser, uri);
+                    return new MessageViewTab(browser, uri, suggestedName, suggestedDescription);
                 }
             }
         } else if (TYPE_MANAGE.equalsIgnoreCase(uri.getType())) {
@@ -106,7 +106,7 @@ abstract class BrowserTab implements Themeable {
         } else if (uri.isText()) {
             return new PageRendererTab(browser, uri);
         } else if (uri.isSearch()) {
-            return new BrowseForumTab(browser, uri);
+            return new BrowseForumTab(browser, uri, suggestedName, suggestedDescription);
         } else if (TYPE_ARCHIVEMGR.equals(uri.getType())) {
             return new ArchiveManagerTab(browser, uri);
         } else if (TYPE_BUGREPORT.equals(uri.getType())) {

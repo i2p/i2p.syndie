@@ -16,7 +16,7 @@ public class BrowseForumTab extends BrowserTab {
     private String _description;
     private Image _icon;
     
-    public BrowseForumTab(BrowserControl browser, SyndieURI uri) {
+    public BrowseForumTab(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDesc) {
         super(browser, uri); 
         debug("browseForum construct: super complete: " + uri);
         Hash scope = uri.getScope();
@@ -48,6 +48,11 @@ public class BrowseForumTab extends BrowserTab {
             _icon = ImageUtil.ICON_TAB_BROWSE;
         }
         debug("browseForum construct: done, now reconfig");
+        
+        if (suggestedName != null)
+            _name = suggestedName;
+        if (suggestedDesc != null)
+            _description = suggestedDesc;
         reconfigItem();
     }
     

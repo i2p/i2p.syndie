@@ -1459,10 +1459,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _shell.setCursor(null);
     }
     
-    public void view(SyndieURI uri) {
+    public void view(SyndieURI uri) { view(uri, null, null); }
+    public void view(SyndieURI uri, String suggestedName, String suggestedDescription) {
         showWaitCursor(true);
         try {
-            doView(uri);
+            doView(uri, suggestedName, suggestedDescription);
         } catch (Exception e) {
             errorMessage("Internal error viewing " + uri, e);
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR);
@@ -1472,7 +1473,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         showWaitCursor(false);
     }
-    private void doView(SyndieURI uri) {
+    private void doView(SyndieURI uri, String suggestedName, String suggestedDescription) {
         debugMessage("Viewing [" + uri + "]");
         if (uri == null) return;
         BrowserTab tab = null;
@@ -1502,7 +1503,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             if (tab == null) {
                 debugMessage("building tab");
                 debugMessage("building normal URI: " + uri);
-                tab = BrowserTab.build(this, uri);
+                tab = BrowserTab.build(this, uri, suggestedName, suggestedDescription);
                 if (tab != null) {
                     _openTabs.put(uri, tab);
                     _openTabURIs.put(tab.getTabItem(), uri);

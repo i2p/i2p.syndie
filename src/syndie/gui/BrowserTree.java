@@ -371,7 +371,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (bookmark.getURI() != null) {
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
-                public void fire() { getBrowser().view(bookmark.getURI()); }
+                public void fire() { getBrowser().view(bookmark.getURI(), bookmark.getName(), bookmark.getDescription()); }
             });
             item.setText(_browser.getTranslationRegistry().getText(T_BOOKMARK_VIEW, "View selected"));
         } else if (bookmark.getChildCount() > 0) {
@@ -379,9 +379,10 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     for (int i = 0; i < bookmark.getChildCount(); i++) {
-                        SyndieURI uri = bookmark.getChild(i).getURI();
+                        ReferenceNode child = bookmark.getChild(i);
+                        SyndieURI uri = child.getURI();
                         if (uri != null)
-                            getBrowser().view(uri);
+                            getBrowser().view(uri, child.getName(), child.getDescription());
                     }
                 }
             });
@@ -618,7 +619,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private void fireDefaultAction(TreeItem item) {
         NymReferenceNode bookmark = getBookmark(item);
         if (bookmark != null) {
-            getBrowser().view(bookmark.getURI());
+            getBrowser().view(bookmark.getURI(), bookmark.getName(), bookmark.getDescription());
             return;
         }
         ChannelInfo chan = getPostChannel(item);

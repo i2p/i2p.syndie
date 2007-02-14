@@ -13,6 +13,7 @@ import org.eclipse.swt.custom.CTabFolder;
 /** enable browser components to tell the browser to do things */
 public interface BrowserControl {
     public void view(SyndieURI uri);
+    public void view(SyndieURI uri, String suggestedName, String suggestedDescription);
     public void unview(SyndieURI uri);
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */
     public void bookmark(SyndieURI uri);
