@@ -640,7 +640,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
             } else if (!SyncManager.getInstance(_browser.getClient(), _browser.getUI()).isOnline()) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
-            } else if ( (nextTime > 0) && (nextTime <= System.currentTimeMillis()) && (!archive.getIndexFetchComplete()) && (!archive.getIndexFetchInProgress()) ) {
+            } else if ( (nextTime > 0) /* && (nextTime <= System.currentTimeMillis()) */ && (!archive.getIndexFetchComplete()) && (!archive.getIndexFetchInProgress()) ) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 indexItem.setText(3, _browser.getTranslationRegistry().getText(T_INDEX_SCHEDULED, "Scheduled"));
             } else { //( /*(nextTime > 0) && */ (nextTime <= System.currentTimeMillis()) && (archive.getIndexFetchComplete()) ) {

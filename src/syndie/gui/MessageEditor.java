@@ -208,8 +208,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private List _attachmentSummary;
     private String _selectedPageBGColor;
     private String _selectedPageBGImage;
-    /** has it been modified */
-    private boolean _modified;
+    /** has it been modified since it was last persisted */
+    private boolean _modifiedSinceSave;
+    /** has it been modified since opening the editor */
+    private boolean _modifiedSinceOpen;
     /** set to false to disable temporary save points (during automated updates) */
     private boolean _enableSave;
     
@@ -258,7 +260,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _referenceNodeSource = new HashMap();
         _parents = new ArrayList();
         _signAsHashes = new ArrayList();
-        _modified = true;
+        _modifiedSinceOpen = false;
+        _modifiedSinceSave = false;
         _enableSave = false;
         _postponeId = -1;
         _postponeVersion = -1;
@@ -274,6 +277,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _listeners = new ArrayList();
         if (lsnr != null) _listeners.add(lsnr);
         initComponents();
+        _modifiedSinceOpen = false;
+        _modifiedSinceSave = false;
     }
     
     public void addListener(MessageEditor.MessageEditorListener lsnr) { _listeners.add(lsnr); }
@@ -303,14 +308,17 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     // PageEditors ask for these:
     CTabFolder getPageRoot() { return _pageTabs; }//_pageRoot; }
-    void modified() { _modified = true; }
+    void modified() {
+        _modifiedSinceSave = true; 
+        _modifiedSinceOpen = true; 
+    }
     void enableAutoSave() { _enableSave = true; }
     void disableAutoSave() { _enableSave = false;}
     
     /** save the state of the message so if there is a crash / exit / etc, it is resumeable */
     private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
     void saveState() {
-        if (!_modified || !_enableSave) return;
+        if (!_modifiedSinceSave || !_enableSave) return;
         long stateId = _postponeId;
         if (stateId < 0)
             stateId = System.currentTimeMillis();
@@ -339,7 +347,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         _browser.getUI().debugMessage("done saving state.  " + _postponeId + "/" + _postponeVersion);
-        _modified = false;
+        _modifiedSinceSave = false;
     }
     
     private static final String SQL_RESUME = "SELECT encryptedData FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion = ?";
@@ -369,7 +377,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         if (state != null) {
             deserializeStateFromB64(state, postponeId, version);
-            _modified = false;
+            _modifiedSinceSave = false;
+            _modifiedSinceOpen = false;
             return true;
         } else {
             return false;
@@ -1583,6 +1592,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             // ugly, yet it lets us delay long enough to show the tab (assuming an unauthorized reply)
             _root.getDisplay().timerExec(500, new Runnable() { public void run() { showUnauthorizedWarning(); } });
         }
+        _modifiedSinceOpen = false;
     }
     
     private void initPage() {
@@ -3115,7 +3125,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             editor.insertAtCaret(html);
     }
 
-    boolean isModified() { return _modified; }
+    boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
     SyndieURI getURI() {
         long prevVersion = _postponeVersion;
         saveState();

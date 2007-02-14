@@ -78,7 +78,7 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
     private static final String T_CONFIRM_CLOSE_MESSAGE = "syndie.gui.editmessagetab.confirm.message";
     
     protected boolean allowClose() {
-        if (!_editor.isModified()) return true;
+        if (!_editor.isModifiedSinceOpen()) return true;
         MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
         confirm.setText(getBrowser().getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Postpone message?"));
         confirm.setMessage(getBrowser().getTranslationRegistry().getText(T_CONFIRM_CLOSE_MESSAGE, "Do you want to postpone this message to resume it later?"));
