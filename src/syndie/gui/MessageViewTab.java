@@ -43,6 +43,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
             return;
         }    
         _view.enable();
+        super.tabShown();
     }
     
     private static final String T_NOMSG_TITLE = "syndie.gui.messageview.nomsg.title";

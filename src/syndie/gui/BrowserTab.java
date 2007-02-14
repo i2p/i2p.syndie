@@ -141,7 +141,7 @@ abstract class BrowserTab implements Themeable {
     
     protected abstract void initComponents();
     protected boolean allowClose() { return true; }
-    protected void tabShown() {}
+    protected void tabShown() { _root.layout(true); }
     protected void configItem() {
         reconfigItem();
         _item.addDisposeListener(new DisposeListener() {

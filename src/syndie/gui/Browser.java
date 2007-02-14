@@ -260,6 +260,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _tabMenu = new Menu(_tabs);
         _tabs.setMenu(_tabMenu);
         
+        _tabs.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                CTabItem item = _tabs.getSelection();
+                Object uri = _openTabURIs.get(item);
+                if (uri == null) return;
+                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                if (tab == null) return;
+                tab.tabShown();
+            }
+        });
+        
         _copyTabLocation = new MenuItem(_tabMenu, SWT.PUSH);
         _copyTabLocation.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { copyTabLocation(); }
