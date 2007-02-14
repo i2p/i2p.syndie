@@ -99,6 +99,17 @@ public class HTMLTag {
                 // name not known, and we haven't reached whitespace yet.  keep going
             }
         } // end looping over the tag body
+        
+        if (attribValueStart > 0) {
+            // eg <a href=foo>
+            String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+            String val = tagBody.substring(attribValueStart).trim();
+            attributes.setProperty(name, val);
+            attribNameStart = -1;
+            attribNameEnd = -1;
+            attribValueStart = -1;            
+        }
+        
         if ((name == null) || (name.trim().length() <= 0)) {
             //System.out.println("name is empty for tag [" + tagBody + "] @ " + startIndex);
             name = Constants.lowercase(tagBody);
