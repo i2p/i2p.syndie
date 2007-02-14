@@ -425,7 +425,7 @@ public class MessageGen extends CommandImpl {
             String dataFile = args.getOptValue("attach" + attachment);
             String cfgFile = args.getOptValue("attach" + attachment + "-config");
             if (dataFile != null) {
-                byte data[] = read(ui, dataFile, 256*1024);
+                byte data[] = read(ui, dataFile, 4*1024*1024);
                 if (data == null)
                     throw new IOException("Data for attachment " + attachment + " not found in " + dataFile);
                 
