@@ -3,6 +3,7 @@ package syndie.db;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
 import syndie.Constants;
@@ -82,7 +83,19 @@ class IndexFetcher {
             return;
         }
         if ( (url.indexOf("USK@") >= 0) || (url.indexOf("SSK@") >= 0) || (url.indexOf("KSK@") >= 0) || (url.indexOf("CHK@") >= 0)) {
-            fetchFreenetIndex(archive);
+            if (archive.getPostKey() != null) {
+                // fake it
+                SharedArchive shared = new SharedArchive();
+                SharedArchiveEngine.PullStrategy strategy = archive.getPullStrategy();
+                if (strategy == null)
+                    strategy = _manager.getDefaultPullStrategy();
+                shared.setAbout(LocalArchiveManager.getLocalAbout(_manager.getClient(), strategy));
+                shared.setChannels(new ArrayList());
+                shared.setMessages(new ArrayList());
+                archive.indexFetched(_manager.getUI(), shared);
+            } else {
+                fetchFreenetIndex(archive);
+            }
         } else if (url.startsWith("/") || url.startsWith("file://") || url.startsWith("C:\\")) {
             fetchFileIndex(archive);
         } else { // use http as the fallthrough, for "http://foo/" as well as "foo/"
