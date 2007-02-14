@@ -76,18 +76,14 @@ public class SyncOutboundPusher {
             SyncArchive archive = _manager.getArchive(i);
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
-                if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
-                    if (archive.getIndexFetchComplete()) {
-                        // there's stuff to be done
-                        if (_runnerToArchive.containsValue(archive)) {
-                            // but someone else is doing it
-                            continue;
-                        } else {
-                            _runnerToArchive.put(runner, archive);
-                            return archive;
-                        }
+                if (archive.getIncompleteOutgoingActionCount() > 0) {
+                    // there's stuff to be done
+                    if (_runnerToArchive.containsValue(archive)) {
+                        // but someone else is doing it
+                        continue;
                     } else {
-                        // still fetching the index
+                        _runnerToArchive.put(runner, archive);
+                        return archive;
                     }
                 } else {
                     // not scheduled, or scheduled for the future

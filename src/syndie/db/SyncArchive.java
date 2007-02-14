@@ -715,6 +715,15 @@ public class SyncArchive {
     
     public int getOutgoingActionCount() { return _outgoingActions.size(); }
     public OutgoingAction getOutgoingAction(int num) { return (OutgoingAction)_outgoingActions.get(num); }
+    public int getIncompleteOutgoingActionCount() {
+        int rv = 0;
+        for (int i = 0; i < _outgoingActions.size(); i++) {
+            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+            if (action.getCompletionTime() <= 0)
+                rv++;
+        }
+        return rv;
+    }
     
     OutgoingAction createOutgoingAction(SyndieURI uri) { 
         for (int i = 0; i < _outgoingActions.size(); i++) {
