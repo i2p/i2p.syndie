@@ -526,7 +526,23 @@ public class BugReport implements Themeable, Translatable {
         else
             _target.select(0);
         targetSelected();
-        _signAs.select(0);
+        
+        Properties prefs = _browser.getClient().getNymPrefs();
+        String val = prefs.getProperty("editor.defaultAuthor");
+        if (val != null) {
+            byte hash[] = Base64.decode(val);
+            if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
+                idx = _signAsChans.indexOf(new Hash(hash));
+                if (idx >= 0)
+                    _signAs.select(idx);
+                else
+                    _signAs.select(0);
+            } else {
+                _signAs.select(0);
+            }
+        } else {
+            _signAs.select(0);
+        }
     }
     
     private void rebuildComponentMenu(BugConfig cfg) {
