@@ -285,7 +285,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         }
         
         if (postpone > 0) {
-            _postpone.setText(registry.getText(T_POSTPONE, "Postponed: ") + postpone);
+            _postpone.setText(registry.getText(T_POSTPONE, "Drafts: ") + postpone);
             ((GridData)_postpone.getLayoutData()).exclude = false;
             _postpone.setVisible(true);
         } else {

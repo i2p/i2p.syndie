@@ -2734,7 +2734,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
         _postMenuWebRip.setText(registry.getText(T_POST_MENU_WEBRIP, "Post &web rip"));
-        _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume existing"));
+        _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume draft"));
 
         _postMenuManageableRoot.setText(registry.getText(T_POST_MENU_MANAGEABLE, "&Manageable forums"));
         _postMenuPostableRoot.setText(registry.getText(T_POST_MENU_POSTABLE, "&Postable forums"));

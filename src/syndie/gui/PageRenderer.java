@@ -575,8 +575,11 @@ public class PageRenderer implements Themeable {
                 _text.setEnabled(true);
                 _text.setText(text);
                 _browser.getUI().debugMessage("syncExec to write on the styledText: text written: list indexes: " + _liIndexes);
-                _text.setStyleRanges(sbuilder.getStyleRanges());
-                _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set");
+                StyleRange ranges[] = sbuilder.getStyleRanges();
+                long beforeSet = System.currentTimeMillis();
+                _text.setStyleRanges(ranges);
+                long afterSet = System.currentTimeMillis();
+                _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set w/ " + ranges.length + " in " + (afterSet-beforeSet));
                 long before = System.currentTimeMillis();
                 setLineProperties(builder, sbuilder);
                 long after = System.currentTimeMillis();
@@ -614,11 +617,13 @@ public class PageRenderer implements Themeable {
     private void setLineProperties(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder) {
         long prep = System.currentTimeMillis();
         int lines = _text.getLineCount();
+        /*
         _text.setLineAlignment(0, lines, SWT.LEFT);
         _text.setLineBackground(0, lines, null);
         _text.setLineBullet(0, lines, null);
         _text.setLineIndent(0, lines, 0);
         _text.setLineJustify(0, lines, false);
+         */
         
         // this is only an estimate used for indentation, so the fact that it doesn't
         // actually take into account the actual fonts used can probably be overlooked
