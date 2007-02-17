@@ -34,6 +34,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.ScrollBar;
@@ -64,6 +65,7 @@ class ManageForumReferences implements Themeable, Translatable {
     private List _targetReferenceNodes;
     private Map _targetItemToNode;
     private Button _ok;
+    private Button _cancel;
     
     public ManageForumReferences(BrowserControl browser, ManageForum manage) {
         _browser = browser;
@@ -124,11 +126,17 @@ class ManageForumReferences implements Themeable, Translatable {
             }
         });
         
-        _ok = new Button(_shell, SWT.PUSH);
+        Composite actions = new Composite(_shell, SWT.NONE);
+        actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        actions.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _ok = new Button(actions, SWT.PUSH);
         _ok.addSelectionListener(new FireSelectionListener() {
             public void fire() { save(); }
         });
-        _ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _cancel = new Button(actions, SWT.PUSH);
+        _cancel.addSelectionListener(new FireSelectionListener() {
+            public void fire() { dispose(); }
+        });
         
         initDnDTarget();
         
@@ -487,14 +495,16 @@ class ManageForumReferences implements Themeable, Translatable {
     public void applyTheme(Theme theme) {
         _targetTree.setFont(theme.TREE_FONT);
         _ok.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_COLDESC = "syndie.gui.manageforumchannels.coldesc";
-    private static final String T_COLNAME = "syndie.gui.manageforumchannels.colname";
-    private static final String T_COLTARGET = "syndie.gui.manageforumchannels.coltarget";
-    private static final String T_SHELL = "syndie.gui.manageforumchannels.shell";
-    private static final String T_OK = "syndie.gui.manageforumchannels.ok";
-    private static final String T_TARGET_REMOVE = "syndie.gui.manageforumchannels.target.remove";
+    private static final String T_COLDESC = "syndie.gui.manageforumreferences.coldesc";
+    private static final String T_COLNAME = "syndie.gui.manageforumreferences.colname";
+    private static final String T_COLTARGET = "syndie.gui.manageforumreferences.coltarget";
+    private static final String T_SHELL = "syndie.gui.manageforumreferences.shell";
+    private static final String T_OK = "syndie.gui.manageforumreferences.ok";
+    private static final String T_CANCEL = "syndie.gui.manageforumreferences.cancel";
+    private static final String T_TARGET_REMOVE = "syndie.gui.manageforumreferences.target.remove";
     
     public void translate(TranslationRegistry registry) {
         _colDesc.setText(registry.getText(T_COLDESC, "Description"));
@@ -502,6 +512,7 @@ class ManageForumReferences implements Themeable, Translatable {
         _colTarget.setText(registry.getText(T_COLTARGET, "Target"));
         _shell.setText(registry.getText(T_SHELL, "References"));
         _ok.setText(registry.getText(T_OK, "OK"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         _targetMenuRemove.setText(registry.getText(T_TARGET_REMOVE, "Remove reference"));
     }
 }

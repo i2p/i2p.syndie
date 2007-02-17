@@ -64,6 +64,7 @@ class ManageForumBans implements Themeable, Translatable {
     private List _targetBans;
     private ArrayList _targetBanHashes;
     private Button _ok;
+    private Button _cancel;
     
     public ManageForumBans(BrowserControl browser, ManageForum manage) {
         _browser = browser;
@@ -96,11 +97,17 @@ class ManageForumBans implements Themeable, Translatable {
         _refTree = new RefTree(_browser, lhs);
         _targetBans = new List(_sash, SWT.BORDER | SWT.MULTI);
         
-        _ok = new Button(_shell, SWT.PUSH);
+        Composite actions = new Composite(_shell, SWT.NONE);
+        actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        actions.setLayout(new FillLayout(SWT.HORIZONTAL));
+        _ok = new Button(actions, SWT.PUSH);
         _ok.addSelectionListener(new FireSelectionListener() {
             public void fire() { save(); }
         });
-        _ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _cancel = new Button(actions, SWT.PUSH);
+        _cancel.addSelectionListener(new FireSelectionListener() {
+            public void fire() { dispose(); }
+        });
         
         initDnDBanListSrc();
         initDnDTarget();
@@ -291,15 +298,18 @@ class ManageForumBans implements Themeable, Translatable {
         _localBans.setFont(theme.DEFAULT_FONT);
         _targetBans.setFont(theme.DEFAULT_FONT);
         _ok.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_BANGROUP = "syndie.gui.manageforumchannels.bangroup";
-    private static final String T_SHELL = "syndie.gui.manageforumchannels.shell";
-    private static final String T_OK = "syndie.gui.manageforumchannels.ok";
+    private static final String T_BANGROUP = "syndie.gui.manageforumbans.bangroup";
+    private static final String T_SHELL = "syndie.gui.manageforumbans.shell";
+    private static final String T_OK = "syndie.gui.manageforumbans.ok";
+    private static final String T_CANCEL = "syndie.gui.manageforumbans.cancel";
     
     public void translate(TranslationRegistry registry) {
         _banGroup.setText(registry.getText(T_BANGROUP, "Locally banned scopes"));
         _shell.setText(registry.getText(T_SHELL, "Banned scopes"));
         _ok.setText(registry.getText(T_OK, "OK"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
     }
 }
