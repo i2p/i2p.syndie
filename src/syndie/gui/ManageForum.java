@@ -390,7 +390,7 @@ class ManageForum implements Translatable, Themeable {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), new ManageForumExecutor.ManageForumState() {
             public boolean getCreateReadKey() {
                 if (_manageForumAuthRead != null) {
-                    return _manageForumAuthRead.getNewKey();
+                    return _manageForumAuthRead.getNewKey() || (_scopeId < 0);
                 } else {
                     return false;
                 }
@@ -411,7 +411,7 @@ class ManageForum implements Translatable, Themeable {
             }
             public boolean getCreateReplyKey() {
                 if (_manageForumAuthReply != null) {
-                    return _manageForumAuthReply.getRotate();
+                    return _manageForumAuthReply.getRotate() || (_scopeId < 0);
                 } else {
                     return false;
                 }

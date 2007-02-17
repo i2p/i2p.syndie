@@ -473,6 +473,63 @@ class ManageForumExecutor {
             // the temporary files
             _ui.statusMessage("Channel metadata created and stored in " + outFile.getPath());
             
+            KeyImport keyImp = new KeyImport();
+            Opts keyOpts = new Opts();
+            if (manageOut.length() > 0) {
+                keyOpts.setOptValue("keyfile", manageOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                NestedUI dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
+                    return;
+                }
+                _ui.statusMessage("Channel management key imported");
+            }
+            if (replyOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", replyOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                keyOpts.setOptValue("expireExisting", "true");
+                NestedUI dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
+                    return;
+                }
+                _ui.statusMessage("Channel reply key imported");
+            }
+            if (encPostOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", encPostOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                NestedUI dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
+                    return;
+                }
+                _ui.statusMessage("Channel post read key imported");
+            }
+            if (encMetaOut.length() > 0) {
+                keyOpts = new Opts();
+                keyOpts.setOptValue("keyfile", encMetaOut.getPath());
+                keyOpts.setOptValue("authentic", "true");
+                NestedUI dataNestedUI = new NestedUI(_ui);
+                keyImp.runCommand(keyOpts, dataNestedUI, _client);
+                if (dataNestedUI.getExitCode() < 0) {
+                    _errors.append("Failed in the nested key import command");
+                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
+                    return;
+                }
+                _ui.statusMessage("Channel metadata read key imported");
+            }
+            
+            // import the meta *after* importing the keys (so we don't have to reimport if
+            // encrypted, etc)
             Importer msgImp = new Importer();
             Opts msgImpOpts = new Opts();
             msgImpOpts.setOptValue("in", out);
@@ -489,61 +546,6 @@ class ManageForumExecutor {
             }
             _ui.statusMessage("Channel metadata imported");
 
-            KeyImport keyImp = new KeyImport();
-            Opts keyOpts = new Opts();
-            if (manageOut.length() > 0) {
-                keyOpts.setOptValue("keyfile", manageOut.getPath());
-                keyOpts.setOptValue("authentic", "true");
-                dataNestedUI = new NestedUI(_ui);
-                keyImp.runCommand(keyOpts, dataNestedUI, _client);
-                if (dataNestedUI.getExitCode() < 0) {
-                    _errors.append("Failed in the nested key import command");
-                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
-                    return;
-                }
-                _ui.statusMessage("Channel management key imported");
-            }
-            if (replyOut.length() > 0) {
-                keyOpts = new Opts();
-                keyOpts.setOptValue("keyfile", replyOut.getPath());
-                keyOpts.setOptValue("authentic", "true");
-                keyOpts.setOptValue("expireExisting", "true");
-                dataNestedUI = new NestedUI(_ui);
-                keyImp.runCommand(keyOpts, dataNestedUI, _client);
-                if (dataNestedUI.getExitCode() < 0) {
-                    _errors.append("Failed in the nested key import command");
-                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
-                    return;
-                }
-                _ui.statusMessage("Channel reply key imported");
-            }
-            if (encPostOut.length() > 0) {
-                keyOpts = new Opts();
-                keyOpts.setOptValue("keyfile", encPostOut.getPath());
-                keyOpts.setOptValue("authentic", "true");
-                dataNestedUI = new NestedUI(_ui);
-                keyImp.runCommand(keyOpts, dataNestedUI, _client);
-                if (dataNestedUI.getExitCode() < 0) {
-                    _errors.append("Failed in the nested key import command");
-                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
-                    return;
-                }
-                _ui.statusMessage("Channel post read key imported");
-            }
-            if (encMetaOut.length() > 0) {
-                keyOpts = new Opts();
-                keyOpts.setOptValue("keyfile", encMetaOut.getPath());
-                keyOpts.setOptValue("authentic", "true");
-                dataNestedUI = new NestedUI(_ui);
-                keyImp.runCommand(keyOpts, dataNestedUI, _client);
-                if (dataNestedUI.getExitCode() < 0) {
-                    _errors.append("Failed in the nested key import command");
-                    _ui.commandComplete(dataNestedUI.getExitCode(), null);
-                    return;
-                }
-                _ui.statusMessage("Channel metadata read key imported");
-            }
-            
             manageOut.delete();
             replyOut.delete();
             encPostOut.delete();
