@@ -173,7 +173,9 @@ public class PageRenderer implements Themeable {
         });
         _text.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
-            public void mouseDown(MouseEvent mouseEvent) { pickMenu(mouseEvent.x, mouseEvent.y, true); }
+            public void mouseDown(MouseEvent mouseEvent) { 
+                pickMenu(mouseEvent.x, mouseEvent.y, true, mouseEvent.button != 1); 
+            }
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         _text.addMouseTrackListener(new MouseTrackListener() {
@@ -919,7 +921,8 @@ public class PageRenderer implements Themeable {
     public int getCurrentPage() { return _page; }
     //public DBClient getCurrentClient() { return _client; }
 
-    private void pickMenu(int x, int y, boolean showMenu) {
+    private void pickMenu(int x, int y, boolean showMenu) { pickMenu(x, y, showMenu, false); }
+    private void pickMenu(int x, int y, boolean showMenu, boolean isRightClick) {
         if (_disposed) return;
         //_browser.getUI().debugMessage("menu is visible? " + _text.getMenu().isVisible());
         Point p = new Point(x, y);
@@ -945,7 +948,7 @@ public class PageRenderer implements Themeable {
             if ( (imgTag != null) && (linkTag != null) ) {
                 _text.getMenu().setVisible(false);
                 pickImageLinkMenu(linkTag, imgTag);
-                if (showMenu) _text.getMenu().setVisible(true);
+                if (showMenu && isRightClick) _text.getMenu().setVisible(true);
                 return;
             } else if (linkTag != null) {
                 _text.getMenu().setVisible(false);
@@ -955,7 +958,7 @@ public class PageRenderer implements Themeable {
             } else if (imgTag != null) {
                 _text.getMenu().setVisible(false);
                 pickImageMenu(imgTag);
-                if (showMenu) _text.getMenu().setVisible(true);
+                if (showMenu && isRightClick) _text.getMenu().setVisible(true);
                 return;
             }
         } catch (IllegalArgumentException iae) {
