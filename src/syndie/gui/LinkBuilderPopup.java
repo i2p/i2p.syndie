@@ -1340,7 +1340,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             _syndieMessage.setText("");
         }
         
-        _shell.pack();
+        //_shell.pack();
     }
 
     public void referenceChoiceAborted() {}
