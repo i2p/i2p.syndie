@@ -140,6 +140,8 @@ public class PageRenderer implements Themeable {
     /** top index to scroll to when rendered */
     private int _wantedTop;
     
+    private long _lastMouseMove;
+    
     public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
     public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
         _parent = parent;
@@ -152,6 +154,8 @@ public class PageRenderer implements Themeable {
         _colors = null;
         _imageTags = new ArrayList();
         _linkTags = new ArrayList();
+        
+        _lastMouseMove = System.currentTimeMillis();
         
         _enableImages = true;
         _enableRender = true;
@@ -180,7 +184,6 @@ public class PageRenderer implements Themeable {
             public void mouseHover(MouseEvent mouseEvent) {
                 if (_disposed) return;
                 pickMenu(mouseEvent.x, mouseEvent.y, false);
-                _text.setToolTipText("");
                 Point p = new Point(mouseEvent.x, mouseEvent.y);
                 int off = -1;
                 boolean link = false;
@@ -215,6 +218,8 @@ public class PageRenderer implements Themeable {
                     } else if (linkTag != null) {
                         hoverLink(linkRange, off, linkTag);
                         link = true;
+                    } else {
+                        _text.setToolTipText("");
                     }
                 } catch (IllegalArgumentException iae) {
                     // no char at that point (why doesn't swt just return -1?)
@@ -222,6 +227,7 @@ public class PageRenderer implements Themeable {
                 //System.out.println("hoover [" + mouseEvent.x + " to " + mouseEvent.y + "] / " + off);
                 if (!link)
                     _text.setCursor(null);
+                _lastMouseMove = System.currentTimeMillis();
             }
         });
         
@@ -256,6 +262,11 @@ public class PageRenderer implements Themeable {
                     _text.setCursor(null);
                 else
                     _text.setCursor(_text.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+                
+                
+                if (System.currentTimeMillis() - _lastMouseMove > 500)
+                    setTooltip(_text, null);
+                _lastMouseMove = System.currentTimeMillis();
             }
         });
         
@@ -1193,8 +1204,17 @@ public class PageRenderer implements Themeable {
         }
         if (href != null)
             buf.append('(').append(CommandImpl.strip(href)).append(')');
-        if (buf.length() > 0) {
-            _text.setToolTipText(buf.toString());
+        setTooltip(_text, buf.toString());
+    }
+    private static void setTooltip(StyledText text, String val) {
+        if ( (val == null) || (val.length() == 0) ) {
+            text.setToolTipText(null);
+        } else {
+            String existing = text.getToolTipText();
+            if ( (existing == null) || (!existing.equals(val)))
+                text.setToolTipText(val);
+            else
+                text.setToolTipText(null);
         }
     }
     private void hoverImage(StyleRange range, int offset, HTMLTag tag) {
@@ -1209,8 +1229,7 @@ public class PageRenderer implements Themeable {
         }
         if (src != null)
             buf.append('(').append(CommandImpl.strip(src)).append(')');
-        if (buf.length() > 0)
-            _text.setToolTipText(buf.toString());
+        setTooltip(_text, buf.toString());
     }
     private void hoverImageLink(StyleRange imgRange, HTMLTag imgTag, StyleRange linkRange, HTMLTag linkTag, int off) {
         StringBuffer buf = new StringBuffer();
@@ -1238,8 +1257,7 @@ public class PageRenderer implements Themeable {
         if (href != null)
             buf.append('(').append(CommandImpl.strip(href)).append(')');
 
-        if (buf.length() > 0)
-            _text.setToolTipText(buf.toString());        
+        setTooltip(_text, buf.toString());
     }
     
     
