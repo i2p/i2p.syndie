@@ -232,12 +232,29 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         return false;
     }
     
-    private void getOpenGroupIds(TreeItem base, ArrayList openGroupIds) {
+    private long getOpenGroupIds(TreeItem base, ArrayList openGroupIds) {
+        NymReferenceNode node = (NymReferenceNode)_bookmarkNodes.get(base);
+        long sel = -1;
         if (base.getExpanded()) {
-            openGroupIds.add(new Long((((NymReferenceNode)_bookmarkNodes.get(base)).getGroupId())));
-            for (int i = 0; i < base.getItemCount(); i++)
-                getOpenGroupIds(base.getItem(i), openGroupIds);
+            openGroupIds.add(new Long(node.getGroupId()));
+            for (int i = 0; i < base.getItemCount(); i++) {
+                long id = getOpenGroupIds(base.getItem(i), openGroupIds);
+                if (id >= 0)
+                    sel = id;
+            }
         }
+        if (node != null) {
+            TreeItem selection[] = _tree.getSelection();
+            if (selection != null) {
+                for (int i = 0; i < selection.length; i++) {
+                    if (selection[i] == base) {
+                        sel = node.getGroupId();
+                        break;
+                    }
+                }
+            }
+        }
+        return sel;
     }
     
     public void localForumCreated() {
@@ -724,18 +741,25 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     }
     private void redrawBookmarks() {
         boolean rootWasOpen = _bookmarkRoot.getExpanded();
+        long selectedGroupId = -1;
         ArrayList openGroupIds = new ArrayList();
         if (rootWasOpen) {
-            for (int i = 0; i < _bookmarkRoot.getItemCount(); i++)
-                getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
+            for (int i = 0; i < _bookmarkRoot.getItemCount(); i++) {
+                long id = getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
+                if (id >= 0)
+                    selectedGroupId = id;
+            }
         }
         
         _bookmarkRoot.removeAll();
         _bookmarkNodes.clear();
+        TreeItem sel = null;
         for (int i = 0; i < _nymRefs.size(); i++) {
             NymReferenceNode ref = (NymReferenceNode)_nymRefs.get(i);
             _ui.debugMessage("redrawBookmarks: add root ref " + i + ": " + ref.getGroupId());
-            add(_bookmarkRoot, ref);
+            TreeItem found = add(_bookmarkRoot, ref, selectedGroupId);
+            if (found != null)
+                sel = found;
         }
         
         _browser.getUI().debugMessage("redraw bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
@@ -764,8 +788,13 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                     cur = null;
             }
         }
+        
+        if (sel != null) {
+            _tree.showItem(sel);
+            _tree.setSelection(sel);
+        }
     }
-    private void add(TreeItem parent, NymReferenceNode child) {
+    private TreeItem add(TreeItem parent, NymReferenceNode child, long wantedGroupId) {
         _ui.debugMessage("redrawBookmarks: parent = " + parent.getText() + ", child = " + child.getGroupId() + "/" + child.getParentGroupId() + "/" + child.getName() + "/" + child.getChildCount());
         TreeItem childItem = new TreeItem(parent, SWT.NONE);
         if (_chooseAllStartupItems && child.getLoadOnStart()) {
@@ -779,11 +808,17 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
             childItem.setText(child.getName());
         childItem.setImage(ImageUtil.getTypeIcon(child.getURI()));
         _bookmarkNodes.put(childItem, child);
+        TreeItem rv = null;
+        if (child.getGroupId() == wantedGroupId)
+            rv = childItem;
         for (int i = 0; i < child.getChildCount(); i++) {
             NymReferenceNode sub = (NymReferenceNode)child.getChild(i);
             _ui.debugMessage("redrawBookmarks: add child ref " + i + " of " + child.getGroupId() +": " + sub.getGroupId());
-            add(childItem, sub);
+            TreeItem val = add(childItem, sub, wantedGroupId);
+            if (val != null)
+                rv = val;
         }
+        return rv;
     }
     private void redrawSearchResults(boolean forceExpand) {
         _searchList.setRedraw(false);
