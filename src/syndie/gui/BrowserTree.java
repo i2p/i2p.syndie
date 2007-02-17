@@ -57,7 +57,8 @@ import syndie.db.DBClient;
  *
  */
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
-    private Browser _browser;
+    /** we need to access the actual Browser, not the BrowserControl (our parent has BrowserControl _browser) */
+    private Browser _browserInstance;
     private Menu _menu;
     
     private Button _searchAdvanced;
@@ -73,13 +74,13 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     public BrowserTree(Browser browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         super(browser, parent, lsnr, accept, false, false);
-        _browser = browser;
+        _browserInstance = browser;
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
         long t2 = System.currentTimeMillis();
         //System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
         if (_nymRefs != null)
-            _browser.bookmarksUpdated(_nymRefs);
+            _browserInstance.bookmarksUpdated(_nymRefs);
         _nymRefs = null;
     }
     private BookmarkEditorPopup getBookmarkEditor() {
@@ -635,8 +636,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     }
 
     protected void bookmarksRebuilt(ArrayList nymRefs) {
-        if (_browser != null)
-            _browser.bookmarksUpdated(nymRefs);
+        if (_browserInstance != null)
+            _browserInstance.bookmarksUpdated(nymRefs);
         else
             _nymRefs = nymRefs;
     }
