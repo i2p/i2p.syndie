@@ -1325,7 +1325,7 @@ public class MessageTree implements Translatable, Themeable {
     
     private static final String T_FILTERING_LABEL = "syndie.gui.messagetree.filtering";
     private Shell showFilteringWidget() {
-        Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP);
+        Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.APPLICATION_MODAL); // | SWT.ON_TOP);
         s.setLayout(new FillLayout());
         Composite c = new Composite(s, SWT.BORDER);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
