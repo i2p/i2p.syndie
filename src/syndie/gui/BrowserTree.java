@@ -495,11 +495,64 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private void addFolder(long parentGroupId) {
         _browser.getUI().debugMessage("addFolder underneath " + parentGroupId);
-        String folderName = getBrowser().getTranslationRegistry().getText(T_NEWFOLDER_NAME, "New folder") + " " + (System.currentTimeMillis()%1000);
+        String prefix = getBrowser().getTranslationRegistry().getText(T_NEWFOLDER_NAME, "New folder") + " ";
+        String folderName = getFolderName(prefix, parentGroupId);
         NymReferenceNode node = new NymReferenceNode(folderName, null, "", -1, -1, parentGroupId, -1, false, false, false);
         _browser.bookmark(node, true);
     }
     private static final String T_NEWFOLDER_NAME = "syndie.gui.browsertree.newfoldername";
+    
+    private String getFolderName(String prefix, long parentGroupId) {
+        if (_nymRefs == null) return prefix + 1;
+        ReferenceNode parent = null;
+        if (parentGroupId >= 0)
+            parent = getParent(parentGroupId);
+        if (parent == null) {
+            int idx = 1;
+            while (true) {
+                boolean found = false;
+                for (int i = 0; i < _nymRefs.size(); i++) {
+                    ReferenceNode node = (ReferenceNode)_nymRefs.get(i);
+                    String name = prefix + idx;
+                    if (name.equals(node.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return prefix + idx;
+                else
+                    idx++;
+            }
+        } else {
+            int idx = 1;
+            while (true) {
+                boolean found = false;
+                for (int i = 0; i < parent.getChildCount(); i++) {
+                    ReferenceNode node = parent.getChild(i);
+                    String name = prefix + idx;
+                    if (name.equals(node.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return prefix + idx;
+                else
+                    idx++;
+            }
+        }
+    }
+    private ReferenceNode getParent(long parentGroupId) {
+        if (_nymRefs == null) return null;
+        for (int i = 0; i < _nymRefs.size(); i++) {
+            ReferenceNode node = (ReferenceNode)_nymRefs.get(i);
+            ReferenceNode found = node.getByUniqueId(parentGroupId);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
     
     private void deleteBookmark(TreeItem item) {
         NymReferenceNode node = getBookmark(item);
@@ -638,8 +691,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     protected void bookmarksRebuilt(ArrayList nymRefs) {
         if (_browserInstance != null)
             _browserInstance.bookmarksUpdated(nymRefs);
-        else
-            _nymRefs = nymRefs;
+        _nymRefs = nymRefs;
     }
     
     private static final String T_BOOKMARK_VIEW = "syndie.gui.browsertree.bookmark.view";
