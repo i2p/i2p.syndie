@@ -592,6 +592,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     public void saveBookmarks() {
         ReferenceNode.walk(_nymRefs, new Renumberer());
         _browser.getClient().setNymReferences(_nymRefs);
+        refreshBookmarks();
     }
     
     /**

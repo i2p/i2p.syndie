@@ -74,15 +74,13 @@ public class NymReferenceNode extends ReferenceNode {
             NymReferenceNode r = (NymReferenceNode)ref;
             r.setParentGroupId(_groupId);
             int order = r.getSiblingOrder();
-            if (order < 0) {
-                order = _children.size();
-                r.setSiblingOrder(order);
-                _children.add(r);
-            } else if (order > _children.size()) {
+            if ( (order < 0) || (order > _children.size()) ) {
                 order = _children.size();
                 r.setSiblingOrder(order);
                 _children.add(r);
             } else {
+                for (int i = order; i < _children.size(); i++)
+                    ((NymReferenceNode)_children.get(i)).setSiblingOrder(i+1);
                 _children.add(order, r);
             }
             r._treeIndex = _treeIndex + "." + order;
