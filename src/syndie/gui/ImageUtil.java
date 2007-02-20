@@ -22,6 +22,8 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
+import syndie.db.NullUI;
 
 /**
  *
@@ -30,6 +32,10 @@ public class ImageUtil {
     private static final Set _indisposableImages = Collections.synchronizedSet(new HashSet());
     /** resource name to Image */
     private static final Map _loadedResources = new HashMap();
+    
+    private static final Timer _timer = new Timer("image util init", new NullUI() {
+        //public void debugMessage(String msg) { System.out.println(msg); }
+    }, false, -1);
     
     public static void dispose(Image img) {
         if ( (img == null) || (img.isDisposed()) || (_indisposableImages.contains(img)) )
@@ -135,6 +141,7 @@ public class ImageUtil {
     
     private static boolean _initialized = false;
     public static void init() {
+        _timer.addEvent("init begin");
         synchronized (ImageUtil.class) {
             if (_initialized) return;
             _initialized = true;
@@ -222,6 +229,8 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_ONLINE);
         _indisposableImages.add(ICON_OFFLINE);
+        _timer.addEvent("init complete");
+        _timer.complete();
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {
@@ -260,14 +269,18 @@ public class ImageUtil {
     }
     
     public static Image createImageFromResource(String resource) {
+        if (false) return Display.getDefault().getSystemImage(SWT.ICON_WARNING);
         synchronized (_loadedResources) {
             Image img = (Image)_loadedResources.get(resource);
             if (img != null)
                 return img;
+            _timer.addEvent("before getResource("+resource+")");
             InputStream in = ImageUtil.class.getResourceAsStream(resource);
+            _timer.addEvent("after getResource("+resource+")");
             if (in != null) {
                 try {
                     img = new Image(Display.getDefault(), in);
+                    _timer.addEvent("after image instantiation ("+resource+")");
                     _indisposableImages.add(img);
                     _loadedResources.put(resource, img);
                     return img;

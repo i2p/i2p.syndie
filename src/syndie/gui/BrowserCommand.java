@@ -9,7 +9,7 @@ public class BrowserCommand implements CLI.Command {
     public BrowserCommand() {}
     public DBClient runCommand(Opts opts, UI ui, DBClient client) {
         Browser browser = new Browser(client);
-        browser.startup();
+        browser.startup(null);
         return client;
     }
 }

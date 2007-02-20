@@ -36,6 +36,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.SyncArchive;
@@ -46,7 +47,7 @@ import syndie.db.ThreadAccumulatorJWZ;
  *
  */
 public class StatusBar implements Translatable, Themeable, DBClient.WatchEventListener {
-    private BrowserControl _browser;
+    private Browser _browser;
     private Composite _parent;
     private Composite _root;
     private Button _bookmark;
@@ -65,15 +66,15 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private Menu _postponeMenu;
     private Label _version;
     
-    public StatusBar(BrowserControl browser, Composite parent) {
+    public StatusBar(Browser browser, Composite parent, Timer timer) {
         _browser = browser;
         _parent = parent;
-        initComponents();
+        initComponents(timer);
     }
     
     public Control getControl() { return _root; }
     
-    private void initComponents() {
+    private void initComponents(Timer timer) {
         _root = new Composite(_parent, SWT.NONE);
         GridLayout gl = new GridLayout(10, false);
         _root.setLayout(gl);
@@ -172,6 +173,8 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         
+        timer.addEvent("status bar: gui constructed");
+        
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
         mgr.addListener(new SyncManager.SyncListener() {
             public void archiveAdded(SyncArchive archive) {
@@ -189,18 +192,30 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 });
             }
         });
+        timer.addEvent("status bar: sync manager registered");
         for (int i = 0; i < mgr.getArchiveCount(); i++)
             registerListen(mgr.getArchive(i));
     
-        doRefreshDisplay();
+        timer.addEvent("status bar: sync archive registered");
+        initDisplay(); // refreshes the display assuming no interesting attributes
+        // but update the display in a second w/ any real attributes
+        _browser.runAfterStartup(new Runnable() { public void run() { doRefreshDisplay(true); } });
+        //_root.getDisplay().timerExec(500, new Runnable() {
+        //    public void run() { doRefreshDisplay(true); }
+        //});
+        doRefreshDisplay(true); // only the online state (no queries)
+        timer.addEvent("status bar: doRefreshDisplay");
         
         _browser.getClient().addWatchEventListener(this);
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
         
+        timer.addEvent("status bar: themed");
         initDnD();
+        timer.addEvent("status bar: dnd initialized");
         
         delayedRefresh();
+        timer.addEvent("status bar: delayed refresh");
     }
     
     // periodically update the online state section, since that includes a timer
@@ -303,6 +318,29 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         if (pbe == 0) cells++;
         if (priv == null) cells++;
         if (postpone == 0) cells++;
+        
+        ((GridData)_version.getLayoutData()).horizontalSpan = cells;
+        
+        _root.layout(true);
+    }
+    
+    private void initDisplay() {
+        ((GridData)_newForum.getLayoutData()).exclude = true;
+        _newForum.setVisible(false);
+        
+        ((GridData)_pbe.getLayoutData()).exclude = true;
+        _pbe.setVisible(false);
+        
+        ((GridData)_priv.getLayoutData()).exclude = true;
+        _priv.setVisible(false);
+        
+        ((GridData)_postpone.getLayoutData()).exclude = true;
+        _postpone.setVisible(false);
+        
+        ((GridData)_unread.getLayoutData()).exclude = true;
+        _unread.setVisible(false);
+            
+        int cells = 6;
         
         ((GridData)_version.getLayoutData()).horizontalSpan = cells;
         

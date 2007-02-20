@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.InputStream;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -16,9 +17,11 @@ import org.eclipse.swt.widgets.Shell;
 public class Splash {
     private static Shell _shell;
     private static Image _img;
+    private static final boolean DISABLED = false;
     public static void show(Display display) {
+        if (DISABLED) return;
         _shell = new Shell(display, SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-        _img = ImageUtil.createImageFromResource("splash.png");
+        _img = /*ImageUtil.*/createImageFromResource("splash.png");
         _shell.setLayout(new FillLayout());
         Label l = new Label(_shell,  SWT.NO_BACKGROUND);
         l.setImage(_img);
@@ -31,6 +34,7 @@ public class Splash {
         _shell.open();
     }
     public static void dispose() {
+        if (DISABLED) return;
         if (!_shell.isDisposed())
             _shell.dispose();
         ImageUtil.dispose(_img);
@@ -47,4 +51,19 @@ public class Splash {
             return monitors[0].getBounds();
         }
     }
+    
+    /** copied from ImageUtil to avoid invoking ImageUtil's statics */
+    private static Image createImageFromResource(String resource) {
+        InputStream in = ImageUtil.class.getResourceAsStream(resource);
+        if (in != null) {
+            try {
+                return new Image(Display.getDefault(), in);
+            } catch (IllegalArgumentException iae) {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
 }

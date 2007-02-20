@@ -16,11 +16,13 @@ public class ThemeRegistry {
     private Browser _browser;
     private ArrayList _listeners;
     private Theme _cur;
+    private boolean _themeLoaded;
     
     public ThemeRegistry(Browser browser) {
         _browser = browser;
         _listeners = new ArrayList();
         _cur = Theme.getDefault();
+        _themeLoaded = false;
         //loadTheme();
         // the SWT.Settings event is fired when the user adjust their OSes system
         // theme (adjusting fonts, colors, etc).  we may want to revamp our fonts
@@ -34,8 +36,10 @@ public class ThemeRegistry {
     
     public void register(Themeable lsnr) { 
         _browser.getUI().debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
-        synchronized (_listeners) {
-            _listeners.add(lsnr);
+        if (lsnr != _browser) {
+            synchronized (_listeners) {
+                _listeners.add(lsnr);
+            }
         }
         lsnr.applyTheme(_cur); 
     }
@@ -114,7 +118,9 @@ public class ThemeRegistry {
         }
         _cur = Theme.getTheme(prefs);
         notifyAll(_cur);
+        _themeLoaded = true;
     }
+    public boolean themeLoaded() { return _themeLoaded; }
     public void resetTheme() {
         Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
         for (Iterator iter = prefs.keySet().iterator(); iter.hasNext(); ) {

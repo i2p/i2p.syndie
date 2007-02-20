@@ -34,6 +34,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
@@ -619,28 +620,36 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     }
     
     /** run from any thread */
-    public void viewStartupItems() { 
+    public void viewStartupItems(Timer timer) { 
+        timer.addEvent("begin view startup items");
         boolean rebuild = false;
         boolean scheduled = false;
         synchronized (_nymRefs) {
-            if (!_rebuilding) {
+            if (!_rebuilding && (_nymRefs.size() <= 0)) {
                 rebuild = true;
             }
             _viewOnStartup = true;
         }
-        if (rebuild)
+        if (rebuild) {
             rebuildBookmarks();
+            timer.addEvent("startup items: rebuild bookmarks fired");
+        }
         
         SyndieURI prevTabs[] = getPrevTabs();
+        timer.addEvent("startup items: previous tabs identified");
         if (prevTabs == null) {
             _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
         } else {
             for (int i = 0; i < prevTabs.length; i++) {
-                if (prevTabs[i] != null)
-                    _browser.view(prevTabs[i]);
+                if (prevTabs[i] != null) {
+                    viewStartupItem(prevTabs[i]);
+                    timer.addEvent("startup items: previous tab opened: " + i + " " + prevTabs[i].toString());
+                }
             }
         }       
+        timer.addEvent("startup items: all previous tabs loaded");
     }
+    protected void viewStartupItem(SyndieURI uri) { _browser.view(uri); }
     // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
     private int viewStartupItems(TreeItem item) {
         if (true) return 0; // dont use these, use the "last viewed" tabs

@@ -190,6 +190,9 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (_searchDetail != null)
             _searchDetailPopup.setVisible(false);
     }
+    protected void viewStartupItem(final SyndieURI uri) { 
+        _browserInstance.runAfterStartup(new Runnable() { public void run() { _browser.view(uri); } });
+    }
     
     private void createSearchDetailPopup() {
         _searchDetailPopup = new Shell(_searchAdvanced.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);

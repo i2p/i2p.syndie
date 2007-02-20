@@ -43,7 +43,7 @@ public final class LoginPrompt {
                     Shell s = _shell;
                     if ( (s != null) && (!s.isDisposed()) )
                         s.dispose();
-                    _browser.startup();
+                    _browser.startup(null);
                 }
             });
         }
