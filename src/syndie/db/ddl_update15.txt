@@ -1,0 +1,9 @@
+-- update the database from schema version 15
+-- this version 16 adds in some indexes for threading
+--
+
+UPDATE appVersion SET versionNum = 16, visibleVersion = 'Threading indexes';
+
+CREATE INDEX mhParent ON messageHierarchy(referencedMessageId, referencedChannelHash);
+CREATE INDEX msgScope ON channelMessage(scopeChannelId);
+

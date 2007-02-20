@@ -60,9 +60,9 @@ public class Timer {
             for (int i = 0; i < _nextEventIndex; i++)
                 log(i);
         }
-        _events = null;
-        _times = null;
-        _nextEventIndex = -1;
+        //_events = null;
+        //_times = null;
+        //_nextEventIndex = -1;
     }
    
     private void log(int event) {

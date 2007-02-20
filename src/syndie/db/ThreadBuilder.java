@@ -62,9 +62,9 @@ public class ThreadBuilder {
             if (c.msg == null) {
                 c.msg = new Message();
                 c.msg.id = tmi;
-                timer.addEvent("building ancestor");
+                //timer.addEvent("building ancestor");
                 int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, tmi, tmiToAncestors);
-                timer.addEvent("ancestor built");
+                //timer.addEvent("ancestor built");
                 c.msg.references = (List)tmiToAncestors.get(tmi);
                 if (DEBUG) _ui.debugMessage("ancestors for " + tmi + ": " + c.msg.references);
             }
