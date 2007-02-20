@@ -50,6 +50,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 
@@ -72,8 +73,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private List _nymRefs;
     
-    public BrowserTree(Browser browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        super(browser, parent, lsnr, accept, false, false);
+    public BrowserTree(Browser browser, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
+        super(browser, parent, lsnr, accept, false, false, timer);
         _browserInstance = browser;
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
@@ -90,9 +91,9 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         return _bookmarkEditor;
     }
     
-    protected void initComponents(boolean register, boolean multi) {
+    protected void initComponents(boolean register, boolean multi, Timer timer) {
         _startInit = System.currentTimeMillis();
-        super.initComponents(false, true);
+        super.initComponents(false, true, timer);
         _superInit = System.currentTimeMillis();
         
         _searchAdvanced = new Button((Composite)getControl(), SWT.PUSH);
@@ -104,7 +105,9 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         
         //createSearchDetailPopup();
         
+        timer.addEvent("browsertree init: search");
         initDnD();
+        timer.addEvent("browsertree init: dnd");
         
         getTree().addMouseTrackListener(new MouseTrackListener() {
             public void mouseEnter(MouseEvent mouseEvent) {}
@@ -159,6 +162,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         
         getBrowser().getTranslationRegistry().register(this);
         getBrowser().getThemeRegistry().register(this);
+        timer.addEvent("browsertree init: register");
     }
     
     // we don't override dispose here, since its never called - the browsertree is never destroyed

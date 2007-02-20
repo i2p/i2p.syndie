@@ -108,6 +108,7 @@ class AttachmentPreview implements Translatable, Themeable {
     }
     
     public void showURI(SyndieURI uri) {
+        if (_data != null) return;
         long scope = _client.getChannelId(uri.getScope());
         long msgId = _client.getMessageId(scope, uri.getMessageId().longValue());
         int internalAttachmentNum = uri.getAttachment().intValue()-1;

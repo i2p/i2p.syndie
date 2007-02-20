@@ -1472,6 +1472,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
     
+    List getMessages() { return _threadReferenceNodes; }
     void setMessages(List allNodes) { 
         // this method is overridden in WatchedMessageTree to rewrite allNodes, injecting parents.
         // on page traversals, we don't call this again though, but instead call w/ recalcTags param,

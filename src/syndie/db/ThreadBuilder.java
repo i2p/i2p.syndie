@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import net.i2p.data.Hash;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 
 /**
  * direct implementation of the jwz threading algorithm without any filtering
@@ -31,12 +32,19 @@ public class ThreadBuilder {
         _idTable = new HashMap();
     }
     
-    public List buildThread(Set threadMsgIds) {
+    public List buildThread(Set threadMsgIds) { 
+        Timer timer = new Timer("build thread", _ui);
+        List rv = buildThread(threadMsgIds, timer);
+        timer.complete();
+        return rv;
+    }
+    public List buildThread(Set threadMsgIds, Timer timer) {
         Map tmiToAncestors = new HashMap();
         Set newMsgIds = new HashSet();
         
         // find all children of the messages, in case they weren't included in the threadMsgIds
-        ThreadAccumulatorJWZ.buildChildren(_client, _ui, newMsgIds, threadMsgIds);
+        ThreadAccumulatorJWZ.buildChildren(_client, _ui, newMsgIds, threadMsgIds, timer);
+        timer.addEvent("children built");
         if (newMsgIds.size() > 0) {
             if (DEBUG) _ui.debugMessage("children exposed under existing messages: " + newMsgIds);
             threadMsgIds.addAll(newMsgIds);
@@ -54,7 +62,9 @@ public class ThreadBuilder {
             if (c.msg == null) {
                 c.msg = new Message();
                 c.msg.id = tmi;
+                timer.addEvent("building ancestor");
                 int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, tmi, tmiToAncestors);
+                timer.addEvent("ancestor built");
                 c.msg.references = (List)tmiToAncestors.get(tmi);
                 if (DEBUG) _ui.debugMessage("ancestors for " + tmi + ": " + c.msg.references);
             }
@@ -83,7 +93,9 @@ public class ThreadBuilder {
                         refContainer.msg = new Message();
                         refContainer.msg.id = ref;
                         
+                        timer.addEvent("building expanded ancestor");
                         int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, ref, tmiToAncestors);
+                        timer.addEvent("expanded ancestor built");
                         refContainer.msg.references = (List)tmiToAncestors.get(ref);
                         if (DEBUG) _ui.debugMessage("ancestors for " + ref + ": " + refContainer.msg.references);
                         
@@ -121,6 +133,7 @@ public class ThreadBuilder {
             }
         }
         
+        timer.addEvent("all ancestors built");
         List roots = new ArrayList();
         // step 2: find the root set
         for (Iterator iter = _idTable.entrySet().iterator(); iter.hasNext(); ) {
@@ -130,6 +143,7 @@ public class ThreadBuilder {
             if (c.parent == null)
                 roots.add(c);
         }
+        timer.addEvent("roots found");
         dumpTable();
         // step 3: eh. pretty useless, but doesn't hurt to do this early
         _idTable.clear();
@@ -139,6 +153,7 @@ public class ThreadBuilder {
         // skip step 5, because syndie uses real references, not "Re: " stuff
         // step 6: persist the tree to our own structure
         List rv = containerToRefNode(roots);
+        timer.addEvent("refnodes built");
         // skip step 7, because we sort elsewhere
         return rv;
     }
@@ -266,12 +281,19 @@ public class ThreadBuilder {
 
     /** build the thread that contains the given message */
     public ThreadReferenceNode buildThread(ThreadMsgId id) {
+        Timer timer = new Timer("build thread " + id.msgId, _ui);
+        ThreadReferenceNode rv = buildThread(id, timer);
+        timer.complete();
+        return rv;
+    }
+    public ThreadReferenceNode buildThread(ThreadMsgId id, Timer timer) {
         Set msgIds = new HashSet();
         msgIds.add(id);
         // we can't just feed this to buildThread(msgIds), because that assumes
         // the leaves are all included
         Map ancestors = new HashMap();
         ThreadAccumulatorJWZ.buildAncestors(_client, _ui, id, ancestors);
+        timer.addEvent("ancestors built");
         for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             msgIds.add(entry.getKey());
@@ -279,7 +301,9 @@ public class ThreadBuilder {
             msgIds.addAll(parents);
         }
         addChildren(msgIds);
-        List threads = buildThread(msgIds);
+        timer.addEvent("children added");
+        List threads = buildThread(msgIds, timer);
+        timer.addEvent("thread built");
         if (threads.size() > 0)
             return (ThreadReferenceNode)threads.get(0);
         else

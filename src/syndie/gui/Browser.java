@@ -251,7 +251,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         timer.addEvent("sash construction");
-        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
+        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener(), timer);
         timer.addEvent("browser tree construction");
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE | SWT.BORDER);
@@ -453,7 +453,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 _shell.forceActive();
                 _shell.forceFocus();
             }
-            timer.addEvent("doStartup complete");
+            timer.addEvent("doStartup shell displayed");
             while (_runAfterStartup.size() > 0) {
                 ((Runnable)_runAfterStartup.remove(0)).run();
                 timer.addEvent("doStartup: run deferred");

@@ -1,10 +1,19 @@
 package syndie.db;
 
-import java.util.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -714,7 +723,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     /**
      * find all of the children of the selected msgId, adding it to newMsgIds if its new
      */
-    public static void buildChildren(DBClient client, UI ui, Set newMsgIds, Set existingMsgIds) {
+    public static void buildChildren(DBClient client, UI ui, Set newMsgIds, Set existingMsgIds, Timer timer) {
         if (existingMsgIds.size() <= 0) return;
         
         PreparedStatement stmt = null;
@@ -746,14 +755,17 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         
         String query = buf.toString();
         //ui.debugMessage("Children query: " + query);
+        timer.addEvent("buildChildren query created");
         
         int queryRuns = 0;
         long queryTime = 0;
         int queryMatches = 0;
         try {
             stmt = client.con().prepareStatement(query);
+            timer.addEvent("buildChildren query prepared");
             long before = System.currentTimeMillis();
             rs = stmt.executeQuery();
+            timer.addEvent("buildChildren query executed");
             while (rs.next()) {
                 byte chanHash[] = rs.getBytes(1);
                 long messageId = rs.getLong(2);
@@ -790,6 +802,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 long after = System.currentTimeMillis();
                 queryTime += (after-before);
             }
+            timer.addEvent("buildChildren query fetched");
             rs.close();
             rs = null;
             stmt.close();

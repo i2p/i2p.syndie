@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.Hash;
+import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -99,9 +100,15 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     private boolean _showSearchList;
     
     public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        this(control, parent, lsnr, accept, false, true);
+        this(control, parent, lsnr, accept, false, true, null);
     }
     public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList) {
+        this(control, parent, lsnr, accept, chooseAllStartupItems, showSearchList, null);
+    }    
+    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
+        this(control, parent, lsnr, accept, false, true, timer);
+    }
+    public ReferenceChooserTree(BrowserControl control, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList, Timer timer) {
         _ui = control.getUI();
         _client = control.getClient();
         _browser = control;
@@ -116,7 +123,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         _manageChannels = new HashMap();
         _searchResults = new ArrayList();
         _showSearchList = showSearchList;
-        initComponents(true, false);
+        initComponents(true, false, timer);
     }
 
     DBClient getClient() { return _client; }
@@ -336,7 +343,9 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         _tree.setRedraw(true);
     }
     
-    protected void initComponents(boolean register, boolean multipleSelections) {
+    protected void initComponents(boolean register, boolean multipleSelections) { initComponents(register, multipleSelections, null); }
+    protected void initComponents(boolean register, boolean multipleSelections, Timer timer) {
+        if (timer != null) timer.addEvent("refChooserTree init");
         long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
@@ -422,11 +431,17 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         configTreeListeners(_tree);
         long t3 = System.currentTimeMillis();
         
+        if (timer != null) timer.addEvent("refChooserTree init: gui built");
         //_browser.getUI().debugMessage("init refChooserTree", new Exception("source"));
         rebuildBookmarks();
+        if (timer != null) timer.addEvent("refChooserTree init: bookmarks rebuilt");
         long t4 = System.currentTimeMillis();
+        SimpleTimer.getInstance().addEvent(new SimpleTimer.TimedEvent() {
+            public void timeReached() {/*
+        })
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
+                                        */
                 refetchNymChannels();
                 Display.getDefault().asyncExec(new Runnable() {
                    public void run() {
@@ -437,7 +452,8 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                    } 
                 });
             }
-        });
+        }, 500);
+        if (timer != null) timer.addEvent("refChooserTree init: after enqueue");
         long t8 = System.currentTimeMillis();
         
         _chooseAllStartupItems = false;
@@ -445,9 +461,11 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
             _browser.getTranslationRegistry().register(this);
             _browser.getThemeRegistry().register(this);
         }
+        if (timer != null) timer.addEvent("refChooserTree init: after register");
         
         _browser.getClient().addWatchEventListener(this);
         long t9 = System.currentTimeMillis();
+        if (timer != null) timer.addEvent("refChooserTree init: complete");
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
     
