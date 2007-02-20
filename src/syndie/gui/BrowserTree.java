@@ -582,6 +582,32 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             return null;
     }
     
+    public void saveBookmarks() {
+        ReferenceNode.walk(_nymRefs, new Renumberer());
+        _browser.getClient().setNymReferences(_nymRefs);
+    }
+    
+    /**
+     * Update the groupId and ordering in the reference nodes based on their position from
+     * a depth first traversal
+     */
+    private class Renumberer implements ReferenceNode.Visitor {
+        private int _groupId;
+        public Renumberer() { _groupId = 0; }
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            NymReferenceNode n = (NymReferenceNode)node;
+            n.setGroupId(_groupId);
+            _groupId++;
+            NymReferenceNode parent = (NymReferenceNode)n.getParent();
+            if (parent != null)
+                parent.addChild(n); // handles the sibling order
+            else
+                n.setSiblingOrder(siblingOrder);
+            _browser.getUI().debugMessage("renumbering bookmarks: " + n.getGroupId() + " under " + n.getParentGroupId() + " order " + n.getSiblingOrder() + ": " + n.getName());
+        }
+        
+    }
+    
     private static final String T_WATCH_VIEW = "syndie.gui.browsertree.watch.view";
     private static final String T_WATCH_HIGHLIGHT = "syndie.gui.browsertree.watch.highlight";
     private static final String T_WATCH_IMPBOOKMARKS = "syndie.gui.browsertree.watch.impbookmarks";
@@ -692,6 +718,31 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (_browserInstance != null)
             _browserInstance.bookmarksUpdated(nymRefs);
         _nymRefs = nymRefs;
+    }
+
+    public void bookmark(NymReferenceNode node) {
+        //_client.addNymReference(_client.getLoggedInNymId(), node);
+        if (node == null) return;
+        NymReferenceNode parent = null;
+        if (node.getParentGroupId() != -1) {
+            for (int i = 0; i < _nymRefs.size(); i++) {
+                NymReferenceNode cur = (NymReferenceNode)_nymRefs.get(i);
+                parent = (NymReferenceNode)cur.getByUniqueId(node.getParentGroupId());
+                if (parent != null)
+                    break;
+            }
+        }
+        if (parent != null) {
+            parent.addChild(node);
+        } else {
+            int order = node.getSiblingOrder();
+            if ( (order < 0) || (order >= _nymRefs.size()) ) {
+                _nymRefs.add(node);
+            } else {
+                _nymRefs.add(order, node);
+            }
+        }
+        saveBookmarks();
     }
     
     private static final String T_BOOKMARK_VIEW = "syndie.gui.browsertree.bookmark.view";
@@ -884,13 +935,30 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 boolean isBookmark = (root == getBookmarkRoot());
                 
                 long parentGroupId = -1;
+                int siblingOrder = 0;
+                
                 if (isBookmark) {
                     NymReferenceNode cur = getBookmark(item);
                     if (cur != null) {
-                        if (cur.getURI() == null)
+                        if (cur.getURI() == null) {
                             parentGroupId = cur.getGroupId();
-                        else
+                            siblingOrder = 0;
+                        } else {
                             parentGroupId = cur.getParentGroupId();
+                            TreeItem parent = item.getParentItem();
+                            if (parent != null) {
+                                TreeItem siblings[] = parent.getItems();
+                                for (int i = 0; i < siblings.length; i++) {
+                                    if (item == siblings[i]) {
+                                        if (before)
+                                            siblingOrder = i;
+                                        else
+                                            siblingOrder = i+1;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -898,13 +966,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                     evt.detail = DND.DROP_NONE;
                     return;
                 } else {
+                    _browser.getUI().debugMessage("dropping bookmark under " + parentGroupId + " order " + siblingOrder + " (before? " + before + " target: " + item + ")");
                     BookmarkDnD bookmark = new BookmarkDnD();
                     bookmark.fromString(evt.data.toString());
                     if (bookmark.uri != null) { // parsed fine
                         if (isWatch) {
                             watch(bookmark.uri, item);
                         } else if (isBookmark) {
-                            _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false), true);
+                            _browser.bookmark(new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, siblingOrder, false, false, false), true);
                         }
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
@@ -913,7 +982,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                             if (isWatch)
                                 watch(uri, item);
                             else if (isBookmark)
-                                _browser.bookmark(uri, parentGroupId);
+                                _browserInstance.bookmark(uri, parentGroupId, siblingOrder);
                         } catch (URISyntaxException use) {
                             _browser.getUI().debugMessage("invalid uri: " + str, use);
                             byte val[] = Base64.decode(str);
@@ -922,7 +991,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                                 if (isWatch)
                                     watch(uri, item);
                                 else if (isBookmark)
-                                    _browser.bookmark(uri, parentGroupId);
+                                    _browserInstance.bookmark(uri, parentGroupId, siblingOrder);
                             }
                         }
                     }

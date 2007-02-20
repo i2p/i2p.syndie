@@ -3544,22 +3544,27 @@ public class DBClient {
     
     private static final String SQL_ADD_NYM_REFERENCE = "INSERT INTO resourceGroup (groupId, parentGroupId, siblingOrder, name, description, uriId, nymId) VALUES (?, ?, ?, ?, ?, ?, ?)";
     /** add a new reference recursively, then updating the groupId, uriId, and siblingOrder fields in newValue */
-    public void addNymReference(long nymId, NymReferenceNode newValue) {
+    public void addNymReference(long nymId, NymReferenceNode newValue) { addNymReference(nymId, newValue, true); }
+    public void addNymReference(long nymId, NymReferenceNode newValue, boolean recurse) {
         ensureLoggedIn();
         if (newValue == null) return;
         if (!isNewNymReference(nymId, newValue)) return;
         addNymReferenceDetail(nymId, newValue);
-        for (int i = 0; i < newValue.getChildCount(); i++) {
-            NymReferenceNode child = (NymReferenceNode)newValue.getChild(i);
-            child.setParentGroupId(newValue.getGroupId());
-            child.setSiblingOrder(i);
-            addNymReference(nymId, child);
+        if (recurse) {
+            for (int i = 0; i < newValue.getChildCount(); i++) {
+                NymReferenceNode child = (NymReferenceNode)newValue.getChild(i);
+                child.setParentGroupId(newValue.getGroupId());
+                child.setSiblingOrder(i);
+                addNymReference(nymId, child);
+            }
         }
     }
     private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
         createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
-        long groupId = nextId("resourceGroupIdSequence");
+        long groupId = newValue.getGroupId();
+        if (groupId < 0)
+            groupId = nextId("resourceGroupIdSequence");
         int siblingOrder = newValue.getSiblingOrder();
         long uriId = -1;
         if (newValue.getURI() != null)
@@ -3697,6 +3702,22 @@ public class DBClient {
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_DELETE_NYM_REFS = "DELETE FROM resourceGroup WHERE nymId = ?";
+    public void setNymReferences(List nymRefNodes) { setNymReferences(_nymId, nymRefNodes); }
+    public void setNymReferences(long nymId, List nymRefNodes) {
+        ensureLoggedIn();
+        try { exec(SQL_DELETE_NYM_REFS, nymId); } catch (SQLException se) { log(se); }
+        if (nymRefNodes != null)
+            ReferenceNode.walk(nymRefNodes, new PersistNymRefs());
+    }
+    
+    private class PersistNymRefs implements ReferenceNode.Visitor {
+        public PersistNymRefs() {}
+        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+            addNymReference(_nymId, (NymReferenceNode)node, false);
         }
     }
     

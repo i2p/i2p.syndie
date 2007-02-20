@@ -1614,18 +1614,23 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public void bookmark(SyndieURI uri) {
         String name = "bookmark name";
         String desc = "";
-        bookmark(uri, name, desc, -1, true);
+        bookmark(uri, name, desc, -1, true, 0);
     }
     
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */
     public void bookmark(SyndieURI uri, long parentGroupId) {
         String name = "bookmark name";
         String desc = "";
-        bookmark(uri, name, desc, parentGroupId, false);
+        bookmark(uri, name, desc, parentGroupId, false, 0);
     }
-    private void bookmark(SyndieURI uri, String name, String desc, long parentGroupId, boolean pickParent) {
-        debugMessage("bookmarking "+uri);
-        int siblingOrder = -1;
+    /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+    public void bookmark(SyndieURI uri, long parentGroupId, int siblingOrder) {
+        String name = "bookmark name";
+        String desc = "";
+        bookmark(uri, name, desc, parentGroupId, false, siblingOrder);
+    }
+    private void bookmark(SyndieURI uri, String name, String desc, long parentGroupId, boolean pickParent, int siblingOrder) {
+        debugMessage("bookmarking "+uri + " parent=" + parentGroupId + " siblingOrder=" + siblingOrder);
         boolean loadOnStart = false;
         
         if (desc.length() <= 0) {
@@ -1685,15 +1690,18 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         BookmarkEditorPopup editor = getBookmarkEditor();
         editor.setBookmark(node);
         editor.pickParent(pickParent);
+        editor.pickOrder(false);
         editor.open();
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
     public void bookmark(NymReferenceNode node, boolean doneBookmarking) {
-        _client.addNymReference(_client.getLoggedInNymId(), node);
-        if (doneBookmarking) {
-            _bookmarks.refreshBookmarks();
-            debugMessage("bookmarks refreshed");
-        }
+        debugMessage("bookmarking node: parent=" + node.getParentGroupId() + " siblingOrder=" + node.getSiblingOrder());
+        _bookmarks.bookmark(node);
+        //_client.addNymReference(_client.getLoggedInNymId(), node);
+        //if (doneBookmarking) {
+        //    _bookmarks.refreshBookmarks();
+        //    debugMessage("bookmarks refreshed");
+        //}
     }
     public void deleteBookmark(long bookmarkGroupId) {
         _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
@@ -1707,6 +1715,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _bookmarks.refreshBookmarks();
     }
     public void updateBookmark(NymReferenceNode bookmark) {
+        debugMessage("updating bookmark: parent=" + bookmark.getParentGroupId() + " siblingOrder=" + bookmark.getSiblingOrder());
         _client.updateNymReference(_client.getLoggedInNymId(), bookmark);
         _bookmarks.refreshBookmarks();
     }
@@ -2352,7 +2361,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 BrowserTab tab = (BrowserTab)_openTabs.get(uri);
                 if (tab.getTabItem() == item) {
                     SyndieURI curURI = tab.getURI(); // may have changed since insert
-                    bookmark(curURI, tab.getName(), tab.getDescription(), -1, true);
+                    bookmark(curURI, tab.getName(), tab.getDescription(), -1, true, 0);
                     return;
                 }
             }

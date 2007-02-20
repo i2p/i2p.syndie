@@ -276,7 +276,10 @@ class BookmarkEditor implements Translatable {
         } else{
             parentGroupId = -1;
         }
-        order = _siblingOrder.getSelectionIndex();
+        if (_pickOrder)
+            order = _siblingOrder.getSelectionIndex();
+        else
+            order = _node.getSiblingOrder();
         
         _browser.getUI().debugMessage("uri: " + uri + " uriId: " + uriId + " groupId: " + groupId + " order: " + order);
         

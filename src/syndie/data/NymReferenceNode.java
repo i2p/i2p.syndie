@@ -65,6 +65,33 @@ public class NymReferenceNode extends ReferenceNode {
         }
     }
     
+    public void addChild(ReferenceNode ref) {
+        if (_children.contains(ref))
+            _children.remove(ref); // readd in a new position
+        
+        ref._parent = this;
+        if (ref instanceof NymReferenceNode) {
+            NymReferenceNode r = (NymReferenceNode)ref;
+            r.setParentGroupId(_groupId);
+            int order = r.getSiblingOrder();
+            if (order < 0) {
+                order = _children.size();
+                r.setSiblingOrder(order);
+                _children.add(r);
+            } else if (order > _children.size()) {
+                order = _children.size();
+                r.setSiblingOrder(order);
+                _children.add(r);
+            } else {
+                _children.add(order, r);
+            }
+            r._treeIndex = _treeIndex + "." + order;
+        } else {
+            _children.add(ref);
+            ref._treeIndex = _treeIndex + "." + _children.size();
+        }
+    }
+    
     public static NymReferenceNode deepCopyNym(NymReferenceNode node) {
         NymReferenceNode copy = new NymReferenceNode(node.getName(), node.getURI(), node.getDescription(), 
                 node.getURIId(), node.getGroupId(), node.getParentGroupId(), node.getSiblingOrder(),
