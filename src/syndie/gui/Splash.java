@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.io.IOException;
 import java.io.InputStream;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -21,7 +22,7 @@ public class Splash {
     public static void show(Display display) {
         if (DISABLED) return;
         _shell = new Shell(display, SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-        _img = /*ImageUtil.*/createImageFromResource("splash.png");
+        _img = getImage();
         _shell.setLayout(new FillLayout());
         Label l = new Label(_shell,  SWT.NO_BACKGROUND);
         l.setImage(_img);
@@ -49,6 +50,26 @@ public class Splash {
             // query shell to see what its coordinates will be (and hence
             // determine what monitor its on) since its not yet open)
             return monitors[0].getBounds();
+        }
+    }
+    
+    private static Image getImage() { 
+        int splashCount = getSplashCount();
+        // many clocks have only 10ms granularity
+        long which = (System.currentTimeMillis()/10) % splashCount;
+        return createImageFromResource("splash" + which + ".png");
+    }
+    
+    private static int getSplashCount() {
+        int splashes = 0;
+        while (true) {
+            InputStream in = Splash.class.getResourceAsStream("splash" + splashes + ".png");
+            if (in != null) {
+                splashes++;
+                try { in.close(); } catch (IOException ioe) {}
+            } else {
+                return splashes;
+            }
         }
     }
     

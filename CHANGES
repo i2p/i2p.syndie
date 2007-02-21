@@ -1,5 +1,23 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-02-21  1.004a released
+    - heavily reworked HTTP syndication to improve reliability and performance,
+      and to deal with hung connections better
+    - Darn's improvements for pulling from Freenet archives more efficiently
+    - rework pushing to Freenet archives to improve performance and to enable
+      creating new ones
+    - substantial performance improvements (optimize the thread queries and
+      defer heavy operations where possible)
+    - more graceful importing of transient identity keys used for accessing
+      private forums
+    - manage a forum's advertised references, bans, and archives more clearly
+    - some HTML parsing/rendering fixes
+    - more of jadeSerpent's logos and splashes
+    - enable drag and drop bookmark management for the user, individual forums,
+      and references added to messages
+    - bundle the trac export code (though it isn't used in Syndie itself)
+    - lots of small bugfixes and tweaks
+
 * 2007-02-02  1.003a released
     - enable more advanced authentication and authorization policies in the
       forum management GUI, controlling both who should have certain
