@@ -410,9 +410,10 @@ public class EepGet {
         public void resetTimeout() { _lastActivity = System.currentTimeMillis(); }
         public void cancelTimeout() { _cancelled = true; }
         public void timeReached() {
+            long idle = System.currentTimeMillis()-_lastActivity;
             if (_cancelled) return;
             
-            if (_lastActivity + _timeout < System.currentTimeMillis()) {
+            if (idle >= _timeout) {
                 _aborted = true;
                 if (_proxyIn != null)
                     try { _proxyIn.close(); } catch (IOException ioe) {}
@@ -480,6 +481,7 @@ public class EepGet {
             _log.debug("Headers read completely, reading " + _bytesRemaining);
         
         DisconnectIfIdle idle = new DisconnectIfIdle(_fetchHeaderTimeout);
+        SimpleTimer.getInstance().addEvent(idle, 10*1000);
         
         boolean strictSize = (_bytesRemaining >= 0);
             

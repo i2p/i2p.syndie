@@ -520,12 +520,12 @@ public class SyncOutboundPusher {
         } catch (DataFormatException dfe) {
             SimpleTimer.getInstance().removeEvent(timeout);
             error = "Internal error: " + dfe.getMessage();
-            _manager.getUI().errorMessage("Error posting", dfe);
+            _manager.getUI().debugMessage("Error posting", dfe);
             _manager.getUI().commandComplete(-1, null);
         } catch (IOException ioe) {
             SimpleTimer.getInstance().removeEvent(timeout);
             error = ioe.getMessage();
-            _manager.getUI().errorMessage("Error posting", ioe);
+            _manager.getUI().debugMessage("Error posting", ioe);
             _manager.getUI().commandComplete(-1, null);
         }
         return error;
