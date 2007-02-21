@@ -19,7 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 package com.swabunga.spell.engine;
 
-import java.security.AccessControlException;
+// jr: removed for jvm flexibility/compatability
+//import java.security.AccessControlException;
 
 
 /**
@@ -120,7 +121,8 @@ public abstract class Configuration {
   		String config = System.getProperty("jazzy.config"); // added by bd
   		if (config != null && config.length() > 0)
   			return getConfiguration(config);
-  	} catch (AccessControlException e) {
+  	//} catch (AccessControlException e) {
+  	} catch (Exception e) {
   		e.printStackTrace();
   	} 
     return getConfiguration(null);
