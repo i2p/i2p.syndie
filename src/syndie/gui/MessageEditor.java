@@ -107,9 +107,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private Button _postpone;
     private Button _cancel;
     
-    private CTabItem _refTab;
-    private Composite _refTabRoot;
-    private ManageReferenceChooser _refs;
+    private CTabItem _refEditorTab;
+    private Composite _refEditorTabRoot;
+    private MessageReferencesEditor _refEditor;
     private CTabItem _threadTab;
     private Composite _threadTabRoot;
     private MessageTree _threadTree;
@@ -198,10 +198,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     // state info
     private List _pageEditors;
     private List _pageTypes;
-    /** list of ReferenceNode roots */
-    private List _referenceNodes;
-    /** SyndieURI that generate the reference to the ReferenceNode added into referenceNodes */
-    private Map _referenceNodeSource;
     
     private List _attachmentConfig;
     private List _attachmentData;
@@ -256,8 +252,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _attachmentConfig = new ArrayList();
         _attachmentData = new ArrayList();
         _attachmentSummary = new ArrayList();
-        _referenceNodes = new ArrayList();
-        _referenceNodeSource = new HashMap();
         _parents = new ArrayList();
         _signAsHashes = new ArrayList();
         _modifiedSinceOpen = false;
@@ -485,7 +479,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             String src = _tag.getText().trim();
             return Constants.split(" \t\r\n", src, false);
         }
-        public List getReferenceNodes() { return _referenceNodes; }
+        public List getReferenceNodes() { return _refEditor.getReferenceNodes(); }
         public int getParentCount() { return _parents.size(); }
         public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
         public String getExpiration() { return null; }
@@ -597,7 +591,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         }
         zos.closeEntry();
         
-        List nodes = _refs.getReferenceNodes();
+        List nodes = _refEditor.getReferenceNodes();
+        //List nodes = _refs.getReferenceNodes();
         if ( (nodes != null) && (nodes.size() > 0) ) {
             zos.putNextEntry(new ZipEntry(SER_ENTRY_REFS));
             String str = ReferenceNode.walk(nodes);
@@ -665,7 +660,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             if (name.equals(SER_ENTRY_CONFIG)) {
                 deserializeConfig(readCfg(read(zin)));
             } else if (name.equals(SER_ENTRY_REFS)) {
-                _referenceNodes = ReferenceNode.buildTree(zin);
+                _refEditor.setReferenceNodes(ReferenceNode.buildTree(zin));
             } else if (name.startsWith(SER_ENTRY_PAGE_CFG_PREFIX)) {
                 pageCfgs.put(name, read(zin));
             } else if (name.startsWith(SER_ENTRY_PAGE_PREFIX)) {
@@ -740,7 +735,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
          */
         
         rebuildAttachmentSummaries();
-        rebuildRefs();
         if (_pageEditors.size() > 0)
             viewPage(0);
         updateAuthor();
@@ -1385,7 +1379,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
      * go through the toolbar to adjust the available options for the current page
      */
     private void updateToolbar() {
-        rebuildRefs();
         int page = getCurrentPage();
         int pages = _pageEditors.size();
         int attachments = _attachmentData.size();
@@ -1564,8 +1557,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (refs != null) {
             // refs may include private read/post/manage/reply keys for various forums
             List refNodes = ReferenceNode.buildTree(new ByteArrayInputStream(DataHelper.getUTF8(refs)));
-            _referenceNodes.addAll(refNodes);
-            //rebuildRefs(); // called in updateToolbar below
+            _refEditor.setReferenceNodes(refNodes);
         }
         
         updateAuthor();
@@ -1599,12 +1591,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _pageTabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP | SWT.BORDER);
         _pageTabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        _refTab = new CTabItem(_pageTabs, SWT.NONE);
-        _refTabRoot = new Composite(_pageTabs, SWT.NONE);
-        _refTabRoot.setLayout(new FillLayout());
-        _refTab.setControl(_refTabRoot);
-        _refs = new ManageReferenceChooser(_refTabRoot, _browser, true);
-
+        _refEditorTab = new CTabItem(_pageTabs, SWT.NONE);
+        _refEditorTabRoot = new Composite(_pageTabs, SWT.NONE);
+        _refEditorTabRoot.setLayout(new FillLayout());
+        _refEditorTab.setControl(_refEditorTabRoot);
+        _refEditor = new MessageReferencesEditor(_refEditorTabRoot, _browser);
+        
         _threadTab = new CTabItem(_pageTabs, SWT.NONE);
         _threadTabRoot = new Composite(_pageTabs, SWT.NONE);
         _threadTabRoot.setLayout(new FillLayout());
@@ -2886,7 +2878,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _authorLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
         _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
         
-        _refTab.setText(_browser.getTranslationRegistry().getText(T_REFTAB, "References"));
+        _refEditorTab.setText(_browser.getTranslationRegistry().getText(T_REFTAB, "References"));
         _threadTab.setText(_browser.getTranslationRegistry().getText(T_THREADTAB, "Thread"));
     }
 
@@ -3117,8 +3109,6 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private static final String T_PAGE_VIEW = "syndie.gui.messageeditor.pageview";
     private static final String T_PAGE_DELETE = "syndie.gui.messageeditor.pagedelete";
     
-    private void rebuildRefs() { _refs.setReferences(_referenceNodes); }
-
     public void insertAtCaret(String html) {
         PageEditor editor = getPageEditor();
         if (editor != null)
