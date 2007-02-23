@@ -97,6 +97,33 @@ public class WatchedMessageTree extends MessageTree {
             super.markUnreadChild(item);
     }
     
+    protected long markAllRead(TreeItem item) {
+        if (item.getParentItem() == null) {
+            ReferenceNode node = (ReferenceNode)_itemToNode.get(item);
+            if ( (node != null) && (node.getURI() != null) ) {
+                Hash scope = node.getURI().getScope();
+                if (scope != null) {
+                    long target = _browser.getClient().getChannelId(scope);
+                    _browser.getClient().markChannelRead(target);
+                    return target;
+                }
+            }
+            return -1;
+        } else {
+            return super.markAllRead(item);
+        }
+    }
+    
+    protected int getMessageSelectedCount() {
+        TreeItem sel[] = _tree.getSelection();
+        int rv = 0;
+        for (int i = 0; i < sel.length; i++) {
+            if (sel[i].getParentItem() != null)
+                rv++;
+        }
+        return rv;
+    }
+    
     protected TreeItem getThreadRoot(TreeItem item) {
         TreeItem root = item;
         while ( (root.getParentItem() != null) && (root.getParentItem().getParentItem() != null) )

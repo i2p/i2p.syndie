@@ -86,7 +86,7 @@ public class MessageTree implements Translatable, Themeable {
     private Spinner _navPageSize;
     private Button _navNext;
     private Button _navEnd;
-    private Tree _tree;
+    protected Tree _tree;
     protected TreeColumn _colSubject;
     private TreeColumn _colAuthor;
     private TreeColumn _colChannel;
@@ -146,7 +146,7 @@ public class MessageTree implements Translatable, Themeable {
     /** ordered list of ReferenceNode instances describing the tree */
     private List _threadReferenceNodes;
     /** TreeItem to ReferenceNode */
-    private Map _itemToNode;
+    protected Map _itemToNode;
     
     /** orered list of ReferenceNodes matching the filter - aka all pages of the tree */
     private List _fullNodes;
@@ -1046,18 +1046,21 @@ public class MessageTree implements Translatable, Themeable {
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent menuEvent) {
                 boolean enable = _tree.getSelectionCount() > 0;
-                _bookmarkAuthor.setEnabled(enable);
+                boolean enableMsg = enable && (getMessageSelectedCount() > 0);
+                _bookmarkAuthor.setEnabled(enableMsg);
                 _bookmarkForum.setEnabled(enable);
-                _expandThread.setEnabled(enable);
-                _collapseThread.setEnabled(enable);
-                _markAllRead.setEnabled(enable);
-                _markRead.setEnabled(enable);
-                _markThreadRead.setEnabled(enable);
-                _markUnread.setEnabled(enable);
-                _view.setEnabled(enable);
-                _reply.setEnabled(enable);
-                _viewAuthor.setEnabled(enable);
-                _viewAuthorMeta.setEnabled(enable);
+                
+                _expandThread.setEnabled(enableMsg);
+                _collapseThread.setEnabled(enableMsg);
+                _markAllRead.setEnabled(enableMsg);
+                _markRead.setEnabled(enableMsg);
+                _markThreadRead.setEnabled(enableMsg);
+                _markUnread.setEnabled(enableMsg);
+                _view.setEnabled(enableMsg);
+                _reply.setEnabled(enableMsg);
+                _viewAuthor.setEnabled(enableMsg);
+                _viewAuthorMeta.setEnabled(enableMsg);
+                
                 _viewForum.setEnabled(enable);
                 _viewForumMeta.setEnabled(enable);
             }
@@ -1166,6 +1169,8 @@ public class MessageTree implements Translatable, Themeable {
         
         initDnD();
     }
+    
+    protected int getMessageSelectedCount() { return _tree.getSelectionCount(); }
     
     private void initDnD() {
         Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
@@ -1935,12 +1940,9 @@ public class MessageTree implements Translatable, Themeable {
         if ( (selected != null) && (selected.length > 0) ) {
             HashSet channelIds = new HashSet();
             for (int i = 0; i < selected.length; i++) {
-                Long msgId = (Long)_itemToMsgId.get(selected[i]);
-                if (msgId != null) {
-                    long target = _client.getMessageTarget(msgId.longValue());
-                    channelIds.add(new Long(target));
-                    _browser.getClient().markChannelRead(target);
-                }
+                long channelId = markAllRead(selected[i]);
+                if (channelId >= 0)
+                    channelIds.add(new Long(channelId));
             }
             if (channelIds.size() > 0)
                 _browser.readStatusUpdated();
@@ -1971,6 +1973,16 @@ public class MessageTree implements Translatable, Themeable {
                 item.setFont(_browser.getThemeRegistry().getTheme().MSG_OLD_FONT);
             }
              */
+        }
+    }
+    protected long markAllRead(TreeItem item) {
+        Long msgId = (Long)_itemToMsgId.get(item);
+        if (msgId != null) {
+            long target = _client.getMessageTarget(msgId.longValue());
+            _browser.getClient().markChannelRead(target);
+            return target;
+        } else {
+            return -1;
         }
     }
 
