@@ -66,6 +66,7 @@ public class Export {
         _attachmentDir = new File(attachmentDir);
         if (!_attachmentDir.exists()) _attachmentDir.mkdirs();
         _ui = new TextUI(args, new TextEngine.ScriptListener() {
+            public void alreadyRunning() {}
             public void scriptComplete(String script) {
                 if ("login".equals(script)) {
                     new Thread(new Runnable() { public void run() { export(dbFile); } }, "Exporter").start();
