@@ -81,6 +81,7 @@ public class TextEngine {
     
     public interface ScriptListener {
         public void scriptComplete(String script);
+        public void alreadyRunning();
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -329,6 +330,10 @@ public class TextEngine {
                 _ui.debugMessage("Unable to log in", se);
                 _ui.errorMessage("Unable to log in, as there is already another");
                 _ui.errorMessage("syndie instance accessing that database.");
+                for (int i = 0; i < _scriptListeners.size(); i++) {
+                    ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                    lsnr.alreadyRunning();
+                }
             } else {
                 _ui.errorMessage("Error trying to login", se);
             }

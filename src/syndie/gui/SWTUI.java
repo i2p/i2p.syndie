@@ -4,8 +4,17 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import net.i2p.I2PAppContext;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.DeviceData;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.TextEngine;
@@ -89,26 +98,63 @@ public class SWTUI {
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
         boolean ok = lsnr.waitFor("login", 30*1000);
-        if (!ok) {
-            browser.errorMessage("Timed out trying to start syndie up.  Please review the logs");
-            System.exit(0);
-            return;
-        }
-        timer.addEvent("login complete");
-        if (engine.newNymCreated()) {
-            WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
-                public void complete() {
-                    browser.startup(timer);
+        if (lsnr.getAlreadyRunning()) {
+            // show a special warning/error screen
+            final Shell s = new Shell(d, SWT.DIALOG_TRIM);
+            s.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_TITLE, "Already running"));
+            s.setLayout(new GridLayout(1, true));
+            Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
+            l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            l.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
+            Button b = new Button(s, SWT.PUSH);
+            b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            b.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_EXIT, "Exit"));
+            b.addSelectionListener(new FireSelectionListener() { 
+                public void fire() {
+                    s.dispose();
+                    System.exit(-1);
                 }
             });
-            screen.open();
+            s.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent shellEvent) {
+                    s.dispose();
+                    System.exit(-1);
+                }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            Splash.dispose();
+            s.pack();
+            Rectangle sSize = s.getBounds();
+            Rectangle screenSize = Splash.getScreenSize(s);
+            int x = screenSize.width/2-sSize.width/2;
+            int y = screenSize.height/2-sSize.height/2;
+            s.setBounds(x, y, sSize.width, sSize.height);
+            s.open();
         } else {
-            browser.debugMessage("db login complete, starting browser...");
-            browser.startup(timer);
-            browser.debugMessage("browser started");
+            if (!ok) {
+                browser.errorMessage("Timed out trying to start syndie up.  Please review the logs");
+                System.exit(0);
+                return;
+            }
+            timer.addEvent("login complete");
+            if (engine.newNymCreated()) {
+                WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
+                    public void complete() {
+                        browser.startup(timer);
+                    }
+                });
+                screen.open();
+            } else {
+                browser.debugMessage("db login complete, starting browser...");
+                browser.startup(timer);
+                browser.debugMessage("browser started");
+            }
+            timer.addEvent("swtUI startup complete");
+            timer.complete();
         }
-        timer.addEvent("swtUI startup complete");
-        timer.complete();
         
         while (!d.isDisposed()) {
             try { 
@@ -119,16 +165,30 @@ public class SWTUI {
         }
     }
     
+    private static final String T_ALREADY_RUNNING_TITLE = "syndie.gui.swtui.alreadyrunning.title";
+    private static final String T_ALREADY_RUNNING_EXIT = "syndie.gui.swtui.alreadyrunning.exit";
+    private static final String T_ALREADY_RUNNING = "syndie.gui.swtui.alreadyrunning";
+    
     private static class StartupListener implements TextEngine.ScriptListener {
         private Set _complete;
+        private boolean _alreadyRunning;
         
-        public StartupListener() { _complete = new HashSet(); }
+        public StartupListener() { 
+            _complete = new HashSet(); 
+            _alreadyRunning = false;
+        }
         public void scriptComplete(String script) {
             synchronized (_complete) { _complete.add(script); _complete.notifyAll(); }
         }
+        public void alreadyRunning() { 
+            _alreadyRunning = true; 
+            synchronized (_complete) { _complete.notifyAll(); } 
+        }
+        public boolean getAlreadyRunning() { return _alreadyRunning; }
         public boolean waitFor(String scriptName, long maxPeriod) {
             long endAt = System.currentTimeMillis() + maxPeriod;
             for (;;) {
+                if (_alreadyRunning) return false;
                 long remaining = endAt - System.currentTimeMillis();
                 if (remaining <= 0) return false;
                 try {
