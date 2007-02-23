@@ -1,5 +1,9 @@
 package syndie.gui;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +28,8 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
@@ -33,6 +39,7 @@ import org.eclipse.swt.graphics.GlyphMetrics;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.*;
 import syndie.Constants;
 import syndie.data.HTMLStateBuilder;
@@ -41,6 +48,8 @@ import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.NullUI;
+import syndie.db.UI;
 
 /**
  * Creates a new StyledText component for rendering pages.  Supports plain
@@ -142,6 +151,8 @@ public class PageRenderer implements Themeable {
     
     private long _lastMouseMove;
     
+    private Caret _defaultCaret;
+    
     public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
     public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
         _parent = parent;
@@ -150,6 +161,13 @@ public class PageRenderer implements Themeable {
             _text = new CustomStyledText(browser.getUI(), parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         else
             _text = new CustomStyledText(browser.getUI(), parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+        // by defining a caret, the styledtext will skip the potentially insanely expensive 
+        // caret location positioning code (spending 12 minutes in org.eclipse.swt.internal.gtk.OS.gdk_pango_layout_get_clip_region)
+        // this is the case on SWT3.3M4/M5, but if it ever is no longer the case,
+        // this can be removed.
+        _defaultCaret = new Caret(_text, SWT.NONE);
+        _text.setCaret(_defaultCaret);
+        //_defaultCaret.setVisible(false);
         _fonts = null;
         _colors = null;
         _imageTags = new ArrayList();
@@ -574,6 +592,7 @@ public class PageRenderer implements Themeable {
         _browser.getUI().debugMessage("before syncExec to write on the styledText");
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
+                long start = System.currentTimeMillis();
                 _fonts = fonts;
                 _colors = colors;
                 _imageIndexes = imageIndexes;
@@ -586,16 +605,18 @@ public class PageRenderer implements Themeable {
                 
                 _text.setRedraw(false);
                 _text.setEnabled(true);
+                long before = System.currentTimeMillis();
                 _text.setText(text);
-                _browser.getUI().debugMessage("syncExec to write on the styledText: text written: list indexes: " + _liIndexes);
+                long after = System.currentTimeMillis();
+                _browser.getUI().debugMessage("syncExec to write on the styledText: text written in " + (after-before) + ": list indexes: " + _liIndexes);
                 StyleRange ranges[] = sbuilder.getStyleRanges();
                 long beforeSet = System.currentTimeMillis();
                 _text.setStyleRanges(ranges);
                 long afterSet = System.currentTimeMillis();
                 _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set w/ " + ranges.length + " in " + (afterSet-beforeSet));
-                long before = System.currentTimeMillis();
+                before = System.currentTimeMillis();
                 setLineProperties(builder, sbuilder);
-                long after = System.currentTimeMillis();
+                after = System.currentTimeMillis();
                 _browser.getUI().debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
 
                 _bgImage = sbuilder.getBackgroundImage();
@@ -618,7 +639,8 @@ public class PageRenderer implements Themeable {
                 _text.setVisible(true);
                 _text.setRedraw(true);
                 _text.setCursor(null);
-                _browser.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured");
+                long end = System.currentTimeMillis();
+                _browser.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured in " + (end-start));
             }
         });
     }
@@ -875,6 +897,7 @@ public class PageRenderer implements Themeable {
         disposeFonts();
         disposeColors();
         disposeImages();
+        _defaultCaret.dispose();
         _browser.getThemeRegistry().unregister(this);
     }
     
@@ -1901,5 +1924,68 @@ public class PageRenderer implements Themeable {
         rerender();
         long after = System.currentTimeMillis();
         _browser.getUI().debugMessage("applyTheme to pageRenderer: render took " + (after-before));
+    }
+    
+    public static void main(String args[]) {
+        String content = "<html><b>hi</b><br />foo</html>";
+        /*
+        try {
+            FileInputStream fis = new FileInputStream("/tmp/syndie-log-1.txt");
+            StringBuffer buf = new StringBuffer();
+            String line = null;
+            BufferedReader in = new BufferedReader(new InputStreamReader(fis));
+            while ( (line = in.readLine()) != null)
+                buf.append(line).append("\n");
+            fis.close();
+            content = buf.toString();
+        } catch (IOException ioe) {}
+         */
+        
+        UI ui = new NullUI() { 
+            public void debugMessage(String msg) { debugMessage(msg, null); }
+            public void debugMessage(String msg, Exception e) { 
+                System.out.println(msg); 
+                if (e != null)
+                    e.printStackTrace();
+            } 
+        };
+        Display d = Display.getDefault();
+        final Shell shell = new Shell(d, SWT.SHELL_TRIM);
+        shell.setLayout(new FillLayout());
+        DummyBrowserControl control = new DummyBrowserControl(null, ui);
+        PageRenderer renderer = new PageRenderer(shell, control);
+        ArrayList pages = new ArrayList();
+        ArrayList attachments = new ArrayList();
+        ArrayList attachmentOrder = new ArrayList();
+        pages.add(content);
+
+        MessageInfo msgInfo = new MessageInfo();
+        msgInfo.setURI(PageRendererTab.DUMMY_URI);
+        msgInfo.setTargetChannel(PageRendererTab.DUMMY_URI.getScope());
+        msgInfo.setTargetChannelId(Long.MAX_VALUE);
+        msgInfo.setScopeChannelId(Long.MAX_VALUE);
+        msgInfo.setAuthorChannelId(Long.MAX_VALUE);
+        msgInfo.setInternalId(Long.MAX_VALUE);
+        msgInfo.setMessageId(PageRendererTab.DUMMY_URI.getMessageId().longValue());
+        msgInfo.setPageCount(1);
+        
+        renderer.renderPage(new PageRendererSourceMem(control, null, msgInfo, pages, attachments, attachmentOrder), PageRendererTab.DUMMY_URI);
+        shell.setMaximized(true);
+        shell.open();
+        shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent shellEvent) { shell.dispose(); }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+
+        while (!shell.isDisposed()) {
+            try { 
+                if (!d.readAndDispatch()) d.sleep(); 
+            } catch (RuntimeException e) {
+                ui.debugMessage("Internal error", e);
+            }
+        }
     }
 }

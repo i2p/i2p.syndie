@@ -390,7 +390,7 @@ public class MessageGen extends CommandImpl {
             String dataFile = args.getOptValue("page" + page);
             String cfgFile = args.getOptValue("page" + page + "-config");
             if (dataFile != null) {
-                byte data[] = read(ui, dataFile, 256*1024);
+                byte data[] = read(ui, dataFile, 4*1024*1024); // align the max page size with the max post size (though still pretty absurd... 4MB of HTML?)
                 if (data == null)
                     throw new IOException("Data for page " + page + " not found in " + dataFile);
                 

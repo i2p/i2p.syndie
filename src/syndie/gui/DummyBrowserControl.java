@@ -16,10 +16,12 @@ import syndie.db.UI;
 public class DummyBrowserControl implements BrowserControl {
     private DBClient _client;
     private UI _ui;
+    private ThemeRegistry _themeRegistry;
     
     public DummyBrowserControl(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
+        _themeRegistry = new ThemeRegistry(null);
     }
 
     public UI getUI() { return _ui; }
@@ -67,7 +69,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createBugReportURI() { return null; }
 
     public SyndieURI createSQLURI() { return null; }
-    public ThemeRegistry getThemeRegistry() { return null; } 
+    public ThemeRegistry getThemeRegistry() { return _themeRegistry; } 
 
     public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
     public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {}

@@ -24,7 +24,7 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
         super(browser, uri);
     }
     
-    private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
+    static final SyndieURI DUMMY_URI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
     private void show(String htmlText, String title, String desc) {
         _name = title;
         _desc = desc;
@@ -35,16 +35,16 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
         List attachmentOrder = new ArrayList();
 
         MessageInfo msgInfo = new MessageInfo();
-        msgInfo.setURI(_dummyURI);
-        msgInfo.setTargetChannel(_dummyURI.getScope());
+        msgInfo.setURI(DUMMY_URI);
+        msgInfo.setTargetChannel(DUMMY_URI.getScope());
         msgInfo.setTargetChannelId(Long.MAX_VALUE);
         msgInfo.setScopeChannelId(Long.MAX_VALUE);
         msgInfo.setAuthorChannelId(Long.MAX_VALUE);
         msgInfo.setInternalId(Long.MAX_VALUE);
-        msgInfo.setMessageId(_dummyURI.getMessageId().longValue());
+        msgInfo.setMessageId(DUMMY_URI.getMessageId().longValue());
         msgInfo.setPageCount(1);
         
-        _renderer.renderPage(new PageRendererSourceMem(getBrowser(), null, msgInfo, pages, attachments, attachmentOrder), _dummyURI);
+        _renderer.renderPage(new PageRendererSourceMem(getBrowser(), null, msgInfo, pages, attachments, attachmentOrder), DUMMY_URI);
     }
     
     protected void initComponents() {
