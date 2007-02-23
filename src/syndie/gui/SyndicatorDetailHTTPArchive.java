@@ -112,6 +112,11 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         _name = new Text(row, SWT.SINGLE | SWT.BORDER);
         _name.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _name.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                _save.setEnabled(_name.getText().trim().length() > 0);
+            }
+        });
         
         _locationLabel = new Label(row, SWT.NONE);
         _locationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -281,6 +286,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         
         _save = new Button(actions, SWT.PUSH);
+        _save.setEnabled(false);
         _cancel = new Button(actions, SWT.PUSH);
         
         configActions();
@@ -296,33 +302,36 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                save(false);
-                _archive.setNextSyncTime(-1);
-                _archive.setNextSyncOneOff(false);
-                _archive.store(true);
-                _listener.scheduleUpdated();
+                if (save(false)) {
+                    _archive.setNextSyncTime(-1);
+                    _archive.setNextSyncOneOff(false);
+                    _archive.store(true);
+                    _listener.scheduleUpdated();
+                }
             }
         });
         _nextSyncNow.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                save(false);
-                _archive.setNextSyncTime(System.currentTimeMillis());
-                _archive.setNextSyncOneOff(false);
-                _archive.store(true);
-                _listener.scheduleUpdated();
+                if (save(false)) {
+                    _archive.setNextSyncTime(System.currentTimeMillis());
+                    _archive.setNextSyncOneOff(false);
+                    _archive.store(true);
+                    _listener.scheduleUpdated();
+                }
             }
         });
         _nextSyncOneOff.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                save(false);
-                _archive.setNextSyncTime(System.currentTimeMillis());
-                _archive.setNextSyncOneOff(true);
-                _archive.store(true);
-                _listener.scheduleUpdated();
+                if (save(false)) {
+                    _archive.setNextSyncTime(System.currentTimeMillis());
+                    _archive.setNextSyncOneOff(true);
+                    _archive.store(true);
+                    _listener.scheduleUpdated();
+                }
             }
         });
         
@@ -331,8 +340,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             public void widgetSelected(SelectionEvent selectionEvent) { loadData(); _listener.cancelled(); }
         });
         _save.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); _listener.cancelled(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { save(); _listener.cancelled(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { if (save()) _listener.cancelled(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { if (save()) _listener.cancelled(); }
         });
     }
     
@@ -430,9 +439,9 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         Button save = new Button(row, SWT.PUSH);
         save.setText(_browser.getTranslationRegistry().getText(T_FREENET_SAVE, "Save"));
         save.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { save(); }
-            private void save() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveFreenet(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { saveFreenet(); }
+            private void saveFreenet() {
                 if (writeOnly.getSelection() && (privKey.getText().trim().length() > 0))
                     _archive.setPostKey(privKey.getText().trim());
                 else
@@ -539,9 +548,11 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         return "USK@" + key + "/archive/0/";
     }
     
-    private void save() { save(true); }
-    private void save(boolean store) {
-        _archive.setName(_name.getText());
+    private boolean save() { return save(true); }
+    private boolean save(boolean store) {
+        String name = _name.getText();
+        if (name.trim().length() <= 0) return false;
+        _archive.setName(name);
         String host = _proxyHost.getText().trim();
         int port = -1;
         if (host.length() > 0) {
@@ -567,6 +578,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         if (store)
             _archive.store(true);
+        return true;
     }
     
     private SharedArchiveEngine.PullStrategy createPullStrategy() {
@@ -722,6 +734,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             _nextSync.setText(_browser.getTranslationRegistry().getText(T_NEVER, "Never"));
         }
     
+        if (_name.getText().trim().length() > 0)
+            _save.setEnabled(true);
         _nextSyncDelay.setEnabled(false);
         _failures.setText(_archive.getConsecutiveFailures() + "");
         _backOffOnFailures.setEnabled(false);
