@@ -1,10 +1,14 @@
 package syndie.gui;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -73,6 +77,11 @@ public class PassphrasePrompt implements Translatable, Themeable {
         _passphrase.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (!_creatingNewPassphrase)
             _passphrase.setEchoChar('*');
+        _passphrase.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) complete(true);
+            }
+        });
         _passphrasePromptLabel = new Label(_shell, SWT.NONE);
         _passphrasePromptLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _passphrasePrompt = new Text(_shell, SWT.SINGLE | SWT.BORDER);
