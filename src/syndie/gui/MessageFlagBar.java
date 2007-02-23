@@ -127,7 +127,7 @@ public class MessageFlagBar implements Translatable {
             List bannedChannels = _browser.getClient().getBannedChannels();
             boolean banned = bannedChannels.contains(author) || bannedChannels.contains(forum);
 
-            boolean bookmarked = _browser.isBookmarked(SyndieURI.createScope(forum));
+            boolean bookmarked = _browser.isBookmarked(SyndieURI.createScope(author != null ? author : forum));
             boolean scheduledForExpire = _msg.getExpiration() > 0;
 
             List refs = _msg.getReferences();
