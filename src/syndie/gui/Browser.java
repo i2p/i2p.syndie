@@ -118,6 +118,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private CTabFolder _tabs;
     private Menu _tabMenu;
     private MenuItem _copyTabLocation;
+    private MenuItem _closeAllTabs;
+    private MenuItem _closeOtherTabs;
     private MenuItem _bookmarkTab;
     private MenuItem _fileMenuRoot;
     private MenuItem _fileMenuOpen;
@@ -125,9 +127,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
-    private MenuItem _bookmarkMenuRoot;
-    private Menu _bookmarkMenu;
-    private MenuItem _bookmarkMenuShow;
+    private MenuItem _viewMenuRoot;
+    private Menu _viewMenu;
+    private MenuItem _viewMenuShow;
     private MenuItem _forumMenuRoot;
     private MenuItem _forumMenuSearch;
     private MenuItem _forumMenuBookmarked;
@@ -276,6 +278,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 tab.tabShown();
             }
         });
+        
+        _closeAllTabs = new MenuItem(_tabMenu, SWT.PUSH);
+        _closeAllTabs.addSelectionListener(new FireSelectionListener() {
+            public void fire() { closeAllTabs(); }
+        });
+        _closeOtherTabs = new MenuItem(_tabMenu, SWT.PUSH);
+        _closeOtherTabs.addSelectionListener(new FireSelectionListener() {
+            public void fire() { closeOtherTabs(); }
+        });
+        
+        new MenuItem(_tabMenu, SWT.SEPARATOR);
         
         _copyTabLocation = new MenuItem(_tabMenu, SWT.PUSH);
         _copyTabLocation.addSelectionListener(new SelectionListener() {
@@ -536,22 +549,79 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         timer.addEvent("file menu constructed");
         
-        _bookmarkMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
-        _bookmarkMenu = new Menu(_bookmarkMenuRoot);
-        _bookmarkMenuRoot.setMenu(_bookmarkMenu);
-        _bookmarkMenuShow = new MenuItem(_bookmarkMenu, SWT.CHECK);
-        _bookmarkMenuShow.setSelection(false);
-        _bookmarkMenuShow.addSelectionListener(new SelectionListener() {
+        _viewMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
+        _viewMenu = new Menu(_viewMenuRoot);
+        _viewMenuRoot.setMenu(_viewMenu);
+        _viewMenuShow = new MenuItem(_viewMenu, SWT.CHECK);
+        _viewMenuShow.setSelection(false);
+        _viewMenuShow.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
+                _sash.setMaximizedControl(_viewMenuShow.getSelection() ? null : _tabs);
             }
             public void widgetSelected(SelectionEvent selectionEvent) {
-                _sash.setMaximizedControl(_bookmarkMenuShow.getSelection() ? null : _tabs);
+                _sash.setMaximizedControl(_viewMenuShow.getSelection() ? null : _tabs);
             }
         });
-        _bookmarkMenuShow.setAccelerator(SWT.MOD2 + SWT.ESC); // shift-escape to toggle bookmarks
+        _viewMenuShow.setAccelerator(SWT.MOD2 + SWT.ESC); // shift-escape to toggle bookmarks
         
         timer.addEvent("bookmark menu constructed");
+        
+        
+        _languageMenuRoot = new MenuItem(_viewMenu, SWT.CASCADE);
+        _languageMenu = new Menu(_languageMenuRoot);
+        _languageMenuRoot.setMenu(_languageMenu);
+        _languageMenuEdit = new MenuItem(_languageMenu, SWT.PUSH);
+        _languageMenuEdit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
+        });
+        _languageMenuEdit.setEnabled(false);
+        _languageMenuRefresh = new MenuItem(_languageMenu, SWT.PUSH);
+        _languageMenuRefresh.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { populateTranslations(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { populateTranslations(); }
+        });
+        
+        // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() { populateTranslations(); }
+                });
+            }
+        });
+        //populateTranslations();
+        
+        timer.addEvent("language menu constructed");
+        
+        _styleMenuRoot = new MenuItem(_viewMenu, SWT.CASCADE);
+        _styleMenu = new Menu(_styleMenuRoot);
+        _styleMenuRoot.setMenu(_styleMenu);
+        _styleMenuIncreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuIncreaseFont.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { increaseFont(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { increaseFont(); }
+        });
+        _styleMenuIncreaseFont.setAccelerator(SWT.MOD1 + '='); // '=' is an unshifted +
+        _styleMenuDecreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuDecreaseFont.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { decreaseFont(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { decreaseFont(); }
+        });
+        _styleMenuDecreaseFont.setAccelerator(SWT.MOD1 + '-');
+        _styleMenuReset = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuReset.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { resetStyle(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { resetStyle(); }
+        });
+        _styleMenuEdit = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuEdit.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { }
+            public void widgetSelected(SelectionEvent selectionEvent) { }
+        });
+        _styleMenuEdit.setEnabled(false);
+        
+        timer.addEvent("style menu constructed");
         
         _forumMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu forumMenu = new Menu(_forumMenuRoot);
@@ -671,62 +741,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
 
         timer.addEvent("syndicate menu constructed");
                 
-        _languageMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
-        _languageMenu = new Menu(_languageMenuRoot);
-        _languageMenuRoot.setMenu(_languageMenu);
-        _languageMenuEdit = new MenuItem(_languageMenu, SWT.PUSH);
-        _languageMenuEdit.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
-        });
-        _languageMenuEdit.setEnabled(false);
-        _languageMenuRefresh = new MenuItem(_languageMenu, SWT.PUSH);
-        _languageMenuRefresh.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { populateTranslations(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { populateTranslations(); }
-        });
-        
-        // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
-        JobRunner.instance().enqueue(new Runnable() {
-            public void run() {
-                Display.getDefault().asyncExec(new Runnable() {
-                    public void run() { populateTranslations(); }
-                });
-            }
-        });
-        //populateTranslations();
-        
-        timer.addEvent("language menu constructed");
-        
-        _styleMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
-        _styleMenu = new Menu(_styleMenuRoot);
-        _styleMenuRoot.setMenu(_styleMenu);
-        _styleMenuIncreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleMenuIncreaseFont.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { increaseFont(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { increaseFont(); }
-        });
-        _styleMenuIncreaseFont.setAccelerator(SWT.MOD1 + '='); // '=' is an unshifted +
-        _styleMenuDecreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleMenuDecreaseFont.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { decreaseFont(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { decreaseFont(); }
-        });
-        _styleMenuDecreaseFont.setAccelerator(SWT.MOD1 + '-');
-        _styleMenuReset = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleMenuReset.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { resetStyle(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { resetStyle(); }
-        });
-        _styleMenuEdit = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleMenuEdit.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { }
-            public void widgetSelected(SelectionEvent selectionEvent) { }
-        });
-        _styleMenuEdit.setEnabled(false);
-        
-        timer.addEvent("style menu constructed");
-        
         _advancedMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu advancedMenu = new Menu(_advancedMenuRoot);
         _advancedMenuRoot.setMenu(advancedMenu);
@@ -2221,7 +2235,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
     private void searchForums() {
-        final ReferenceChooserPopup popup = new ReferenceChooserPopup(_shell, this, T_SEARCH_FORUM_TITLE, "Forum search");
+        final ReferenceChooserPopup popup = new ReferenceChooserPopup(_shell, this, T_SEARCH_FORUM_TITLE, "Find forums");
         popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) { view(uri); }
             public void referenceChoiceAborted() { popup.dispose(); }
@@ -2422,6 +2436,31 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             }
         }
     }
+    private void closeAllTabs() {
+        for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
+            SyndieURI uri = (SyndieURI)iter.next();
+            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            if (tab.allowClose()) {
+                iter.remove();
+                _openTabURIs.remove(tab.getTabItem());
+                tab.dispose();
+            }
+        }
+    }
+    private void closeOtherTabs() {
+        CTabItem item = _tabs.getSelection();
+        for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
+            SyndieURI uri = (SyndieURI)iter.next();
+            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            if (item != tab.getTabItem()) {
+                if (tab.allowClose()) {
+                    iter.remove();
+                    _openTabURIs.remove(tab.getTabItem());
+                    tab.dispose();
+                }
+            }
+        }
+    }
     
     public void messageImported() { _statusBar.refreshDisplay(); }
     public void metaImported() { _statusBar.refreshDisplay(); }
@@ -2437,16 +2476,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     void bookmarksUpdated(List nymRefs) {
         _bookmarkCache = nymRefs;
-        MenuItem items[] = _bookmarkMenu.getItems();
+        MenuItem items[] = _viewMenu.getItems();
         for (int i = 0; i < items.length; i++)
-            if (items[i] != _bookmarkMenuShow)
+            if ( (items[i] != _viewMenuShow) && (items[i] != _styleMenuRoot) && (items[i] != _languageMenuRoot) )
                 items[i].dispose();
         
-        new MenuItem(_bookmarkMenu, SWT.SEPARATOR);
+        new MenuItem(_viewMenu, SWT.SEPARATOR);
         
         for (int i = 0; i < nymRefs.size(); i++) {
             final NymReferenceNode ref = (NymReferenceNode)nymRefs.get(i);
-            bookmarksUpdated(ref, _bookmarkMenu);
+            bookmarksUpdated(ref, _viewMenu);
         }
         _statusBar.refreshDisplay();
     }
@@ -2678,6 +2717,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private static final String T_SHELL_TITLE = "syndie.gui.browser.title";
+    private static final String T_CLOSE_ALL = "syndie.gui.browser.tabmenu.closeall";
+    private static final String T_CLOSE_OTHER = "syndie.gui.browser.tabmenu.closeother";
     private static final String T_COPY_TAB_LOC = "syndie.gui.browser.tabmenu.copylocation";
     private static final String T_BOOKMARK_TAB = "syndie.gui.browser.tabmenu.bookmark";
     private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
@@ -2690,8 +2731,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_RESTORE_SECRETS = "syndie.gui.browser.filemenu.restoresecrets";
     private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
     private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
-    private static final String T_BOOKMARK_MENU_TITLE = "syndie.gui.browser.bookmarkmenu";
-    private static final String T_BOOKMARK_MENU_SHOW = "syndie.gui.browser.bookmarkmenu.show";
+    private static final String T_VIEW_MENU_TITLE = "syndie.gui.browser.viewmenu";
+    private static final String T_VIEW_MENU_SHOW = "syndie.gui.browser.viewmenu.show";
     private static final String T_FORUM_MENU_TITLE = "syndie.gui.browser.forummenu.title";
     private static final String T_FORUM_MENU_SEARCH = "syndie.gui.browser.forummenu.search";
     private static final String T_FORUM_MENU_BOOKMARKED = "syndie.gui.browser.forummenu.bookmarked";
@@ -2753,6 +2794,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(T_SHELL_TITLE, "Syndie"));
+        _closeAllTabs.setText(registry.getText(T_CLOSE_ALL, "close all tabs"));
+        _closeOtherTabs.setText(registry.getText(T_CLOSE_OTHER, "close other tabs"));
         _copyTabLocation.setText(registry.getText(T_COPY_TAB_LOC, "copy tab location"));
         _bookmarkTab.setText(registry.getText(T_BOOKMARK_TAB, "bookmark tab"));
         
@@ -2763,11 +2806,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
 
-        _bookmarkMenuRoot.setText(registry.getText(T_BOOKMARK_MENU_TITLE, "&Bookmarks"));
-        _bookmarkMenuShow.setText(registry.getText(T_BOOKMARK_MENU_SHOW, "&Manage"));
+        _viewMenuRoot.setText(registry.getText(T_VIEW_MENU_TITLE, "&View"));
+        _viewMenuShow.setText(registry.getText(T_VIEW_MENU_SHOW, "Show &bookmarks"));
         
         _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
-        _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Search"));
+        _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Find forums"));
         _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &bookmarked"));
         _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
         _forumMenuBrowseForums.setText(registry.getText(T_FORUM_MENU_BROWSEFORUMS, "Read &all by forum"));
@@ -2793,7 +2836,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
         _languageMenuRefresh.setText(registry.getText(T_LANGUAGE_MENU_REFRESH, "&Refresh translations"));
 
-        _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "S&tyle"));
+        _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "&Style"));
         _styleMenuIncreaseFont.setText(registry.getText(T_STYLE_MENU_INCREASE, "&Increase font"));
         _styleMenuDecreaseFont.setText(registry.getText(T_STYLE_MENU_DECREASE, "&Decrease font"));
         _styleMenuReset.setText(registry.getText(T_STYLE_MENU_RESET, "&Reset style"));

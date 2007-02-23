@@ -372,6 +372,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 if (item != null)
                     fire(item);
             }
+            public void deleteHit() { deleteSelected(); }
             private void fire(TreeItem item) {
                 if (_acceptanceListener == null)
                     return;
@@ -468,6 +469,8 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         if (timer != null) timer.addEvent("refChooserTree init: complete");
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
+    
+    protected void deleteSelected() { }
     
     private void searchSelected(boolean accept) {
         int idx = _searchList.getSelectionIndex();

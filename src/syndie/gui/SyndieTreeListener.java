@@ -37,6 +37,8 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     /** when traversing by the keyboard, position us horizontally at the beginning of the row */
     public boolean keyToFirstColumn() { return true; }
     public void selectionUpdated() {}
+    /** the delete key was hit */
+    public void deleteHit() {}
     
     // remaining are the implementations of the listeners
     
@@ -95,6 +97,8 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
                 expanded();
             else
                 collapsed();
+        } else if (evt.keyCode == SWT.DEL) {
+            deleteHit();
         }
         if (keyToFirstColumn())
             scrollHorizontalBeginning();

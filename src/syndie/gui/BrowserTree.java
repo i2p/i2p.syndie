@@ -568,10 +568,13 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_CONFIRM_DELETE_MESSAGE, "Are you sure you want to delete this bookmark?"));
             box.setText(getBrowser().getTranslationRegistry().getText(T_CONFIRM_DELETE_TITLE, "Confirm"));
             int rc = box.open();
-            if (rc == SWT.YES)
+            if (rc == SWT.YES) {
                 getBrowser().deleteBookmark(node.getGroupId());
+            }
         }
     }
+
+    protected void deleteSelected() { deleteBookmark(getSelectedItem()); }
     
     private Hash getPostScope(TreeItem item) {
         ChannelInfo chan = getPostChannel(item);

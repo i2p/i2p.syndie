@@ -36,7 +36,7 @@ public class TranslationRegistry {
     public TranslationRegistry(BrowserControl browser) {
         _browser = browser;
         _translatable = Collections.synchronizedSet(new HashSet());
-        _lang = "default";
+        _lang = "English";
         _text = new Properties();
         _images = new HashMap();
         _baseText = new Properties();
@@ -83,7 +83,7 @@ public class TranslationRegistry {
             return; // noop
         }
         
-        if ("default".equals(newLang)) {
+        if ("English".equals(newLang)) {
             switchTranslation(newLang, new Properties(), new HashMap());
         } else {
             Properties txt = (Properties)_fileTranslations.get(newLang);
@@ -210,7 +210,7 @@ public class TranslationRegistry {
         refreshFileTranslations();
 
         ArrayList rv = new ArrayList();
-        rv.add("default");
+        rv.add("English");
         TreeSet ordered = new TreeSet();
         ordered.addAll(_embeddedTranslations.keySet());
         ordered.addAll(_fileTranslations.keySet());
