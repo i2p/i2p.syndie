@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
@@ -13,10 +15,12 @@ import syndie.data.SyndieURI;
 
 class SyncInboundFetcher {
     private SyncManager _manager;
+    private DataImporter _importer;
     private static Map _runnerToArchive = new HashMap();
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
+        _importer = new DataImporter();
     }
     
     public void start() {
@@ -70,10 +74,11 @@ class SyncInboundFetcher {
                 _runnerToArchive.remove(runner);
                 if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
                     if (archive.getIndexFetchComplete()) {
+                        _manager.getUI().debugMessage("inbund fetch wanted for " + archive);
                         // there's stuff to be done
                         if (_runnerToArchive.containsValue(archive)) {
                             // but someone else is doing it
-                            //_manager.getUI().debugMessage("inbound fetch wanted for " + archive + " but its already in progress");
+                            _manager.getUI().debugMessage("inbound fetch wanted for " + archive + " but its already in progress");
                             continue;
                         } else {
                             _runnerToArchive.put(runner, archive);
@@ -179,11 +184,10 @@ class SyncInboundFetcher {
     }
     
     private void fetchHTTP(SyncArchive archive) {
+        List pendingMeta = new ArrayList();
+        List pendingMsg = new ArrayList();
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
-            while (!_manager.isOnline())
-                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
-        
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it
@@ -195,43 +199,135 @@ class SyncInboundFetcher {
                 action.importSuccessful();
                 continue;
             }
-        
-            String url = archive.getURL();
-            if (url.indexOf("://") == -1)
-                url = "http://" + url;
 
-            int q = url.indexOf('?');
-            String query = "";
-            if (q != -1) {
-                query = url.substring(q);
-                url = url.substring(0, q);
-            }
-            int dir = url.lastIndexOf('/');
-            if (dir <= "http://".length())
-                url = url + '/';
-            else
-                url = url.substring(0, dir) + '/';
-
-            url = url + uri.getScope().toBase64() + '/';
             if (uri.getMessageId() != null)
-                url = url + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
+                pendingMsg.add(action);
             else
-                url = url + "meta" + Constants.FILENAME_SUFFIX;
+                pendingMeta.add(action);
+        }
         
-            url = url + query;
-            
-            if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
-                _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
-            else
-                _manager.getUI().statusMessage("Fetching [" + url + "]");
-            try {
-                File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
-                EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
-                GetListener lsnr = new GetListener(action, dataFile);
-                get.addStatusListener(lsnr);
-                get.fetch(60*1000);
-            } catch (IOException ioe) {
-                action.fetchFailed("Internal error writing temp file", ioe);
+        if ( (pendingMeta.size() == 0) &&  (pendingMsg.size() == 0) ) {
+            _manager.getUI().debugMessage("nothing to fetch...");
+            return;
+        }
+        
+        String archiveURL = archive.getURL();
+        if (archiveURL.indexOf("://") == -1)
+            archiveURL = "http://" + archiveURL;
+
+        int q = archiveURL.indexOf('?');
+        String query = "";
+        if (q != -1) {
+            query = archiveURL.substring(q);
+            archiveURL = archiveURL.substring(0, q);
+        }
+        int dir = archiveURL.lastIndexOf('/');
+        if (dir <= "http://".length())
+            archiveURL = archiveURL + '/';
+        else
+            archiveURL = archiveURL.substring(0, dir) + '/';
+
+        // successful fetches are enqueued in the importer thread so we can import serially without
+        // blocking the fetches
+        Thread t = new Thread(_importer, "Data importer");
+        t.start();
+        
+        // fetch all of the meta before any of the messages, as we need the meta for the channels
+        // we are importing the messages with (to verify signatures).  within these fetches there
+        // are 5 concurrent fetches running through the individual files to fetch
+        fetchHTTPMeta(archive, pendingMeta, archiveURL, query);
+        _manager.getUI().debugMessage("meta fetches run, waiting for the queue to finish");
+        _importer.finishQueue();
+        _manager.getUI().debugMessage("meta fetches imported, fetching msgs");
+        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query);
+        _manager.getUI().debugMessage("msg fetches run, waiting for the queue to finish");
+        _importer.finishQueue();
+        _manager.getUI().debugMessage("msgs imported, complete");
+        _importer.complete();
+    }
+    
+    private static final int CONCURRENT_FETCHES = 5;
+    
+    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query) {
+        List fetchers = new ArrayList(CONCURRENT_FETCHES);
+        for (int i = 0; i < CONCURRENT_FETCHES; i++) {
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query), "MetaFetcher " + i);
+            t.start();
+            fetchers.add(t);
+        }
+        while (fetchers.size() > 0) {
+            Thread t = (Thread)fetchers.remove(0);
+            try { t.join(); } catch (InterruptedException ie) {}
+        }
+    }
+    
+    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query) {
+        List fetchers = new ArrayList(CONCURRENT_FETCHES);
+        for (int i = 0; i < CONCURRENT_FETCHES; i++) {
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query), "MsgFetcher " + i);
+            t.start();
+            fetchers.add(t);
+        }
+        while (fetchers.size() > 0) {
+            Thread t = (Thread)fetchers.remove(0);
+            try { t.join(); } catch (InterruptedException ie) {}
+        }
+    }
+    
+    private class Fetch implements Runnable {
+        private SyncArchive _archive;
+        private List _actions;
+        private String _archiveURL;
+        private String _query;
+        
+        public Fetch(SyncArchive archive, List actions, String archiveURL, String query) {
+            _archive = archive;
+            _actions = actions;
+            _archiveURL = archiveURL;
+            _query = query;
+        }
+        public void run() {
+            while (true) {
+                while (!_manager.isOnline())
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+                
+                SyncArchive.IncomingAction action = null;
+                synchronized (_actions) {
+                    if (_actions.size() <= 0) return;
+                    action = (SyncArchive.IncomingAction)_actions.remove(0);
+                }
+                
+                if (action.getCompletionTime() > 0) continue; // already complete
+                if (action.isPaused()) continue; // dont wanna do it
+
+                SyndieURI uri = action.getURI();
+
+                if (isLocal(uri)) { // fetched concurrently from another archive
+                    action.importSuccessful();
+                    continue;
+                }
+
+                String url = _archiveURL;
+                url = url + uri.getScope().toBase64() + '/';
+                if (uri.getMessageId() == null)
+                    url = url + "meta" + Constants.FILENAME_SUFFIX;
+                else
+                    url = url + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
+                url = url + _query;
+
+                if ( (_archive.getHTTPProxyHost() != null) && (_archive.getHTTPProxyHost().length() > 0) )
+                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Fetching [" + url + "] proxy " + _archive.getHTTPProxyHost() + ":" + _archive.getHTTPProxyPort());
+                else
+                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
+                try {
+                    File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
+                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
+                    GetListener lsnr = new GetListener(action, dataFile);
+                    get.addStatusListener(lsnr);
+                    get.fetch(30*1000);
+                } catch (IOException ioe) {
+                    action.fetchFailed("Internal error writing temp file", ioe);
+                }
             }
         }
     }
@@ -256,7 +352,10 @@ class SyncInboundFetcher {
 
         public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {
             _manager.getUI().debugMessage("Fetch data complete [" + url + "] after " + bytesTransferred);
-            importData(_incomingAction, _dataFile, true);
+            if (_importer != null)
+                _importer.enqueueData(_incomingAction, _dataFile, true);
+            else // only the http fetch uses the multithreaded importer (files are sequential, and freenet fetches are slow enough)
+                importData(_incomingAction, _dataFile, true);
         }
         
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
@@ -270,7 +369,73 @@ class SyncInboundFetcher {
         public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
         public void headerReceived(String url, int currentAttempt, String key, String val) {}
         public void attempting(String url) {
-            _manager.getUI().debugMessage("Fetch data attempting [" + url + "]...");
+            //_manager.getUI().debugMessage("Fetch data attempting [" + url + "]...");
+        }
+    }
+    
+    private class DataImporter implements Runnable {
+        private List _actions;
+        private List _files;
+        private List _toDelete;
+        private boolean _complete;
+        
+        public DataImporter() { 
+            _actions = new ArrayList();
+            _files = new ArrayList();
+            _toDelete = new ArrayList();
+            _complete = false;
+        }
+        
+        public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
+            _manager.getUI().statusMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
+            synchronized (DataImporter.this) {
+                _actions.add(action);
+                _files.add(datafile);
+                _toDelete.add(delete ? Boolean.TRUE : Boolean.FALSE);
+                DataImporter.this.notifyAll();
+            }
+        }
+        
+        public void complete() {
+            synchronized (DataImporter.this) {
+                _complete = true;
+                DataImporter.this.notifyAll();
+            }
+        }
+        
+        public void finishQueue() { 
+            while (true) {
+                try {
+                    synchronized (DataImporter.this) {
+                        if (_actions.size() == 0)
+                            return;
+                        else
+                            DataImporter.this.wait(1000);
+                    }
+                } catch (InterruptedException ie) {}
+            }
+        }
+        
+        public void run() {
+            while (!_complete) {
+                SyncArchive.IncomingAction action = null;
+                File datafile = null;
+                boolean delete = false;
+                synchronized (DataImporter.this) {
+                    if (_actions.size() <= 0)
+                        try { DataImporter.this.wait(); } catch (InterruptedException ie) {}
+                    if (_actions.size() > 0) {
+                        action = (SyncArchive.IncomingAction)_actions.remove(0);
+                        datafile = (File)_files.remove(0);
+                        delete = ((Boolean)_toDelete.remove(0)).booleanValue();
+                    }
+                }
+                
+                if (action != null) {
+                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
+                    importData(action, datafile, delete);
+                }
+            }
         }
     }
     

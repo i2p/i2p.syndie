@@ -121,10 +121,7 @@ public class SyncArchive {
         
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
-            for (int j = 0; j < _incomingActions.size(); j++) {
-                IncomingAction action = (IncomingAction)_incomingActions.get(j);
-                lsnr.incomingUpdated(action);
-            }
+            lsnr.incomingUpdated(_incomingActions);
             for (int j = 0; j < _outgoingActions.size(); j++) {
                 OutgoingAction action = (OutgoingAction)_outgoingActions.get(j);
                 lsnr.outgoingUpdated(action);
@@ -142,27 +139,31 @@ public class SyncArchive {
         }
         
         ui.debugMessage("index fetch complete, notify " + _listeners);
-        fireUpdated();
+        fireUpdated(false);
     }
     
-    void fireUpdated() {
+    void fireUpdated() { fireUpdated(true); }
+    void fireUpdated(boolean notifyActions) {
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
             lsnr.archiveUpdated(this);
         }
-        for (int i = 0; i < _incomingActions.size(); i++) {
-            IncomingAction action = (IncomingAction)_incomingActions.get(i);
-            notifyUpdate(action);
-        }
-        for (int i = 0; i < _outgoingActions.size(); i++) {
-            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
-            notifyUpdate(action);
+        if (notifyActions) {
+            for (int i = 0; i < _incomingActions.size(); i++) {
+                IncomingAction action = (IncomingAction)_incomingActions.get(i);
+                notifyUpdate(action);
+            }
+            for (int i = 0; i < _outgoingActions.size(); i++) {
+                OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+                notifyUpdate(action);
+            }
         }
         _manager.wakeUpEngine();
     }
     
     public interface SyncArchiveListener {
         public void incomingUpdated(IncomingAction action);
+        public void incomingUpdated(List actions);
         public void outgoingUpdated(OutgoingAction action);
         public void archiveUpdated(SyncArchive archive);
     }
@@ -691,7 +692,12 @@ public class SyncArchive {
     }
     public boolean getIndexFetchComplete() { return _indexFetchComplete; }
     
-    public String getLastIndexFetchErrorMsg() { return _indexFetchErrorMsg; }
+    public String getLastIndexFetchErrorMsg() { 
+        String rv = _indexFetchErrorMsg;
+        if (_indexFetchError != null)
+            rv = rv + " - " + _indexFetchError.getMessage();
+        return rv;
+    }
     public void setLastIndexFetchErrorMsg(String msg) { _indexFetchErrorMsg = msg; }
     public Exception getLastIndexFetchError() { return _indexFetchError; }
     public void setLastIndexFetchError(Exception e) { _indexFetchError = e; }

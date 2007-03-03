@@ -3,6 +3,7 @@ package syndie.gui;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
@@ -746,6 +747,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
 
     // callbacks from the archive engine, may occur on arbitrary threads
     public void incomingUpdated(SyncArchive.IncomingAction action) {}
+    public void incomingUpdated(List actions) {}
     public void outgoingUpdated(SyncArchive.OutgoingAction action) {}
     public void archiveUpdated(SyncArchive archive) { 
         Display.getDefault().asyncExec(new Runnable() { 

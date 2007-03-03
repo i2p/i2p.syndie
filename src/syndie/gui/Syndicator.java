@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -746,9 +747,12 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_CORRUPT, "Message is corrupt"));
             } else if (action.getFetchErrorMsg() != null) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                String msg = action.getFetchErrorMsg();
+                if (action.getFetchError() != null)
+                    msg = msg + " - " + action.getFetchError().getMessage();
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_FAILED, "Fetch failed: ") + action.getFetchErrorMsg());
+                actionItem.setText(3, _browser.getTranslationRegistry().getText(T_FETCH_FAILED, "Fetch failed: ") + msg);
             } else if (action.isExecuting()) {
                 actionItem.setText(1, _browser.getTranslationRegistry().getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
@@ -976,6 +980,17 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
         if (_disposed) return;
         _browser.getUI().debugMessage("incoming action updated: " + action);
         Display.getDefault().syncExec(new Runnable() { public void run() { loadDataFetch(action); } });
+    }
+
+    public void incomingUpdated(final List actions) {
+        if (_disposed) return;
+        _browser.getUI().debugMessage("incoming actions updated: " + actions.size());
+        Display.getDefault().syncExec(new Runnable() { 
+            public void run() {
+                for (int i = 0; i < actions.size(); i++)
+                    loadDataFetch((SyncArchive.IncomingAction)actions.get(i));
+            }
+        });
     }
 
     public void outgoingUpdated(final SyncArchive.OutgoingAction action) {

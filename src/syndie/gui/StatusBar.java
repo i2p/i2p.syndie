@@ -238,6 +238,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 //if (action.isComplete() || (action.getPBEPrompt() != null))
                 //    refreshDisplay(false); // new import may require updating the counts
             }
+            public void incomingUpdated(List actions) {}
             public void outgoingUpdated(SyncArchive.OutgoingAction action) {}
             public void archiveUpdated(SyncArchive archive) {
                 refreshDisplay(true); // only update the next sync time
