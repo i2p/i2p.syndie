@@ -757,4 +757,295 @@ Alternately, to build a syndie-${syndie.version}.dmg, run the following on OSX:
 <!--      <ant target="java-package" /> -->
       <ant target="pkgosx" />
     </target>
+    
+    <!-- following are newstyle packaging targets, not yet used for deployment -->
+    <target name="-pkg">
+        <loadproperties srcfile="VERSION" />
+        <property name="pkgdir" value="/tmp/pkg" />
+        <antcall target="-binwin32" />
+        <antcall target="-binlinux32jar" />
+        <antcall target="-binlinux32tar" />
+        <antcall target="-binosxtar" />
+        <antcall target="jar" />
+        <copy file="lib/syndie.jar" tofile="${pkgdir}/syndie-${syndie.version}.bin.jar" />
+        
+    </target>
+    
+    <target name="-binwin32">
+        <antcall target="-binpackage">
+            <param name="swt.jar" value="${swt.win32}" />
+            <param name="dictfile" value="${words}" />
+            <param name="syndie.exe" value="true" /> <!-- build a syndie.exe? -->
+            <param name="tobindir" value="" /> <!-- extra file to copy to the bin dir -->
+            <param name="installer" value="true" /> <!-- build an izpack install? -->
+            <param name="installer.exe" value="true" /> <!-- build an install.exe? -->
+            <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.win32.exe" />
+        </antcall>
+    </target>
+    <target name="-binlinux32jar">
+        <loadproperties srcfile="VERSION" />
+        <antcall target="-binpackage">
+            <param name="swt.jar" value="${swt.linux32}" />
+            <!-- <param name="dictfile" value="words.txt" /> -->
+            <param name="syndie.exe" value="true" /> <!-- build a syndie.exe? -->
+            <param name="tobindir" value="" /> <!-- extra file to copy to the bin dir -->
+            <param name="installer" value="true" /> <!-- build an izpack install? -->
+            <param name="installer.exe" value="" /> <!-- build an install.exe? -->
+            <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.linux32.jar" />
+        </antcall>
+    </target>
+    <target name="-binlinux32tar">
+        <loadproperties srcfile="VERSION" />
+        <antcall target="-binpackage">
+            <param name="swt.jar" value="${swt.linux32}" />
+            <!-- <param name="dictfile" value="words.txt" /> -->
+            <param name="syndie.exe" value="true" /> <!-- build a syndie.exe? -->
+            <param name="tobindir" value="" /> <!-- extra file to copy to the bin dir -->
+            <param name="installer" value="" /> <!-- build an izpack install? -->
+            <param name="installer.exe" value="" /> <!-- build an install.exe? -->
+            <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.linux32.tar.bz2" />
+        </antcall>
+    </target>
+    <target name="-binosxtar">
+        <loadproperties srcfile="VERSION" />
+        <antcall target="-binpackage">
+            <param name="swt.jar" value="${swt.osx}" />
+            <!-- <param name="dictfile" value="words.txt" /> -->
+            <param name="syndie.exe" value="" /> <!-- build a syndie.exe? -->
+            <param name="tobindir" value="" /> <!-- extra file to copy to the bin dir -->
+            <param name="installer" value="" /> <!-- build an izpack install? -->
+            <param name="installer.exe" value="" /> <!-- build an install.exe? -->
+            <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.osx.tar.bz2" />
+        </antcall>
+    </target>
+    
+    <!--
+        Parameters: 
+            swt.jar         file to save as lib/swt.jar
+            dictfile        file to save as lib/words.txt (or blank for no file)
+            syndie.exe      if true, build a bin/syndie.exe launcher
+            tobindir        if specified, file to add to the bin/ directory
+            installer       if true, build an installer out of the package, otherwise create a tar.bz2
+            installer.exe   if true, build a .exe out of the installer
+            outfile         file to save the resulting package as
+     -->
+    <target name="-binpackage" description="build up a binary package" depends="jar">
+        <loadproperties srcfile="VERSION" />
+        <!--
+            create the generic binary tree
+        -->
+        <!-- <antcall target="jar" /> -->
+        <delete dir="binpackage/" />
+        <mkdir dir="binpackage" />
+        <mkdir dir="binpackage/syndie-${syndie.version}" />
+        <mkdir dir="binpackage/syndie-${syndie.version}/bin" />
+        <mkdir dir="binpackage/syndie-${syndie.version}/doc" />
+        <mkdir dir="binpackage/syndie-${syndie.version}/doc/web" />
+        <mkdir dir="binpackage/syndie-${syndie.version}/lib" />
+        <copy todir="binpackage/syndie-${syndie.version}/doc/">
+               <fileset dir="." includes="CHANGES, CREDITS, INSTALL, LICENSE, README, TODO" />
+        </copy>
+        <copy todir="binpackage/syndie-${syndie.version}/doc/" file="mtn-committers" />
+        <copy todir="binpackage/syndie-${syndie.version}/" file="resources/welcome.txt" />
+        <copy todir="binpackage/syndie-${syndie.version}/doc/" file="doc/syndie.1" />
+        <copy todir="binpackage/syndie-${syndie.version}/doc/web/">
+               <fileset dir="doc/web/" includes="*" />
+        </copy>
+        <copy todir="binpackage/syndie-${syndie.version}/bin/">
+               <fileset dir="bin/" includes="*" />
+        </copy>
+        <copy todir="binpackage/syndie-${syndie.version}/lib/">
+               <fileset dir="lib/" includes="*" />
+        </copy>
+        
+        <!-- 
+            now for the build-specific attributes 
+        -->
+
+        <copy todir="binpackage/syndie-${syndie.version}/lib/" file="${swt.jar}" />
+        
+        <!-- dictfile may not exist -->
+        <condition property="noDictFile"><not><length string="${dictfile}" length="0" /></not></condition>
+        <antcall target="-bincopydict" />
+        
+        <!-- 
+            now build the syndie.exe
+        -->
+        <condition property="noSyndieExe"><length string="${syndie.exe}" length="0" /></condition>
+        <antcall target="-binSyndie.exe" />
+        
+        <condition property="noBinfileKnown"><length string="${tobindir}" length="0" /></condition>
+        <antcall target="-binfile" />
+        
+        <condition property="noInstaller"><length string="${installer}" length="0" /></condition>
+        <antcall target="-binInstaller" />
+        
+        <condition property="noInstallerExe"><length string="${installer.exe}" length="0" /></condition>
+        <antcall target="-binInstaller.exe" />
+        
+        <condition property="noBz2"><length string="${installer}" when="greater" length="0" /></condition>
+        <antcall target="-binBz2" />
+        
+        <!-- 
+            built, so now copy the resulting file to the requested location
+        -->
+        <copy file="binpackage/syndie-${syndie.version}.tar.bz2" tofile="${outfile}" failonerror="false" />
+        <copy file="binpackage/syndie-${syndie.version}.jar" tofile="${outfile}" failonerror="false" />
+        <copy file="binpackage/syndie-${syndie.version}.jar.exe" tofile="${outfile}" failonerror="false" />
+        
+        <delete dir="binpackage/" />
+    </target>
+    
+    <!-- copy the selected dictionary file -->
+    <target name="-bincopydict" unless="noDictFile">
+        <unzip src="${dictfile}" dest="binpackage/syndie-${syndie.version}/lib/" />
+    </target>
+    
+    <!-- copy the selected script to the packaged bin dir -->
+    <target name="-binfile" unless="noBinfileKnown">
+        <copy todir="binpackage/syndie-${syndie.version}/bin" file="${tobindir}" />
+    </target>
+    
+    <!-- create binpackage/syndie-${syndie.version}/bin/syndie.exe -->
+    <target name="-binSyndie.exe" unless="noSyndieExe">
+        <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
+        <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
+                 classname="net.sf.launch4j.ant.Launch4jTask" />
+        
+        <jar jarfile="syndie-${syndie.version}.jar">
+          <manifest>
+            <attribute name="Main-Class" value="syndie.gui.SWTUI" />
+            <!-- relative to the exe/jar file -->
+            <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar ../lib/swt.jar" />
+          </manifest>
+        </jar>
+
+        <echo file="launchsyndie.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>0</headerType>
+ <jar>syndie-${syndie.version}.jar</jar>
+ <outfile>binpackage/syndie-${syndie.version}/bin/syndie.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>..</chdir>
+ <icon>doc/web/favicon.ico</icon>
+ <jre>
+  <minVersion>1.4.0</minVersion>
+ </jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} graphical interface</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchsyndie.xml" />
+        <delete file="launchsyndie.xml" />
+        <delete file="syndie-${syndie.version}.jar" />
+    </target>
+    
+    <!-- create binpackage/syndie-${syndie.version}.jar containing the installer-->
+    <target name="-binInstaller" unless="noInstaller">
+        <fail unless="izpackdir">Specify the location of the IzPack installation directory with -Dizpackdir=/some/path where it contains lib/compiler.jar</fail>
+        <taskdef name="izpack" classpath="${izpackdir}/lib/standalone-compiler.jar"
+                 classname="com.izforge.izpack.ant.IzPackTask" />
+
+        <izpack output="binpackage/syndie-${syndie.version}.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpackdir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <appname>Syndie</appname>
+        <appversion>@{syndie.version}</appversion>
+        <appsubpath>syndie-@{syndie.version}</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="syndie-inst@i2p.net"/>
+        </authors>
+        <url>http://syndie.i2p.net</url>
+        <javaversion>1.4</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="700" height="500" resizable="yes" />
+    <locale>
+        <langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <resources>
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="binpackage/syndie-@{syndie.version}" includes="**/*" targetdir="$INSTALL_PATH"/>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn"></executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+    </target>
+
+    <!-- create binpackage/syndie-${syndie.version}.jar.exe containing the installer, deleting the .jar -->
+    <target name="-binInstaller.exe" unless="noInstallerExe">
+        <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
+        <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
+                 classname="net.sf.launch4j.ant.Launch4jTask" />
+
+        <delete file="launchinstall.xml" />
+        <echo file="launchinstall.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>0</headerType>
+ <jar>binpackage/syndie-${syndie.version}.jar</jar>
+ <outfile>binpackage/syndie-${syndie.version}.jar.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>.</chdir>
+ <icon>doc/web/favicon.ico</icon>
+ <jre><minVersion>1.4.0</minVersion></jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} installer</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-${syndie.version}.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchinstall.xml" />
+        <delete file="launchinstall.xml" />
+        <delete file="binpackage/syndie-${syndie.version}.jar" />        
+    </target>
+    
+    <!-- create binpackage/syndie-${syndie.version}.tar.bz2 containing the runnable binaries, but no installer -->
+    <target name="-binBz2" unless="noBz2">
+        <tar compression="bzip2" destfile="binpackage/syndie-${syndie.version}.tar.bz2">
+            <tarfileset dir="binpackage/" includes="syndie-${syndie.version}/**" />
+        </tar>
+        <delete file="binpackage/syndie-${syndie.version}.jar" />
+        <delete file="binpackage/syndie-${syndie.version}.jar.exe" />
+    </target>
 </project>
