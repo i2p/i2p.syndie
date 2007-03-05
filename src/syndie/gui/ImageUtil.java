@@ -37,10 +37,11 @@ public class ImageUtil {
         //public void debugMessage(String msg) { System.out.println(msg); }
     }, false, -1);
     
-    public static void dispose(Image img) {
+    public static boolean dispose(Image img) {
         if ( (img == null) || (img.isDisposed()) || (_indisposableImages.contains(img)) )
-            return;
+            return false;
         img.dispose();
+        return true;
     }
     
     public static final Image ICON_ERROR = Display.getDefault().getSystemImage(SWT.ICON_ERROR);
@@ -211,6 +212,7 @@ public class ImageUtil {
         _indisposableImages.add(ICON_TAB_HIGHLIGHTS);
         _indisposableImages.add(ICON_TAB_MSG);
         _indisposableImages.add(ICON_TAB_ARCHIVE);
+        _indisposableImages.add(ICON_TAB_BROWSE);
         
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PUBLIC);
         _indisposableImages.add(ICON_EDITOR_PRIVACY_PBE);

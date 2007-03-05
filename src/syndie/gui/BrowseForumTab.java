@@ -34,7 +34,8 @@ public class BrowseForumTab extends BrowserTab {
                 if (chan != null) {
                     _name = chan.getName();
                     _description = chan.getDescription();
-                    _icon = createAvatar(chan);
+                    //_icon = createAvatar(chan);
+                    _icon = ImageUtil.ICON_TAB_BROWSE;
                 }
             }
             if (_name == null) {

@@ -172,8 +172,10 @@ abstract class BrowserTab implements Themeable {
         } else {
             _item.setImage(null);
         }
-        if (old != null)
-            ImageUtil.dispose(old);
+        if ( (old != null) && (old != icon) ) {
+            boolean disposed = ImageUtil.dispose(old);
+            _browser.getUI().debugMessage("disposing old tab " + getClass().getName() + " image: " + disposed);
+        }
         _item.setText((null != getName() ? getName() : ""));
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
         debug("reconfiguring item: complete");
@@ -228,9 +230,9 @@ abstract class BrowserTab implements Themeable {
     protected void error(String msg) { _browser.getUI().errorMessage(msg); }
     protected void error(String msg, Exception e) { _browser.getUI().errorMessage(msg, e); }
     
-    protected Image createAvatar(ChannelInfo chan) {
-        return ImageUtil.resize(ImageUtil.ICON_QUESTION, ImageUtil.TAB_ICON_SIZE, ImageUtil.TAB_ICON_SIZE, false);
-    }
+    //protected Image createAvatar(ChannelInfo chan) {
+    //    return ImageUtil.resize(ImageUtil.ICON_QUESTION, ImageUtil.TAB_ICON_SIZE, ImageUtil.TAB_ICON_SIZE, false);
+    //}
     
     public void applyTheme(Theme theme) { 
         //_item.setFont(theme.TAB_FONT); 
