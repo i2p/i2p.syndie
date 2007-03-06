@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import net.i2p.data.Hash;
@@ -950,39 +951,66 @@ public class PageEditor {
                 String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
                 if ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType))
                     html = true;
-                quote(page, html);
+                long authorId = _browser.getClient().getMessageAuthor(msgId);
+                Hash authorHash = _browser.getClient().getChannelHash(authorId);
+                String authorName = _browser.getClient().getChannelName(authorId);
+                quote(page, html, parent, authorHash, authorName);
             }
         }
     }
-    void quote(String content, boolean contentIsHTML) {
+    void quote(String content, boolean contentIsHTML, SyndieURI source, Hash authorHash, String authorName) {
         boolean quoteAsHTML = _isPreviewable;
-        insert(getQuotable(content, contentIsHTML, quoteAsHTML), true);
+        insert(getQuotable(content, contentIsHTML, quoteAsHTML, source, authorHash, authorName), true);
     }
-    private String getQuotable(String src, boolean srcIsHTML, boolean quoteAsHTML) {
+    private String getQuotable(String src, boolean srcIsHTML, boolean quoteAsHTML, SyndieURI source, Hash authorHash, String authorName) {
         if (src == null) return "";
+        boolean autoBR = true;
         String plainQuote = src;
         if (srcIsHTML) {
             HTMLStateBuilder sb = new HTMLStateBuilder(src);
             sb.buildState();
-            plainQuote = HTMLStateBuilder.stripPlaceholders(sb.getAsText());
+            plainQuote = getSourceToQuote(sb, quoteAsHTML);
+            autoBR = false;
+        } else if (quoteAsHTML) {
+            autoBR = false;
+            plainQuote = getSourceToQuoteFromText(src);
         }
         StringReader in = new StringReader(plainQuote);
         StringBuffer buf = new StringBuffer(plainQuote.length() + 64);
+        String quoteAuthor = "";
+        if (authorName != null)
+            quoteAuthor = authorName;
+        if (authorHash != null) {
+            if (authorName != null)
+                quoteAuthor = quoteAuthor + " ";
+            quoteAuthor = quoteAuthor + "(" + authorHash.toBase64().substring(0,6) + ")";
+        }
+        if (quoteAsHTML)
+            buf.append("<a href=\"").append(source.toString()).append("\"><b>").append(quoteAuthor).append("</b></a>:\n");
+        else
+            buf.append(quoteAuthor).append(":\n");
         if (quoteAsHTML)
             buf.append("<quote>");
         
         try {
             BufferedReader br = new BufferedReader(in);
+            int lines = 0;
             String line = null;
             while ( (line = br.readLine()) != null) {
                 if (quoteAsHTML) {
+                    if (lines > 0) {
+		        if (autoBR) buf.append("<br />");
+                        buf.append("\n");
+                    }
                     if (line.trim().length() > 0)
-                        buf.append(line.trim()).append("<br />\n");
+                        buf.append(line.trim());
                 } else {
                     buf.append("> ").append(line.trim()).append("\n");
+                    //buf.append(line.trim()).append("\n");
                 }
+                lines++;
             }
-            buf.append("\n");
+            if (!quoteAsHTML) buf.append("\n");
         } catch (IOException ioe) {
             // wtf?
         }
@@ -991,5 +1019,75 @@ public class PageEditor {
             buf.append("</quote>");
         
         return buf.toString();
+    }
+    
+    private String getSourceToQuote(HTMLStateBuilder sb, boolean quoteAsHTML) {
+        List tags = sb.getTags();
+        String txt = sb.getAsText();
+        txt = HTMLStateBuilder.stripPlaceholders(txt);
+        String formatted = injectTags(txt, tags, quoteAsHTML);
+        return formatted;
+    }
+    private String injectTags(String asText, List tags, boolean quoteAsHTML) {
+        StringBuffer buf = new StringBuffer();
+        char str[] = asText.toCharArray();
+        int textIndent = 0;
+        //if (!quoteAsHTML) buf.append("> ");
+        for (int i = 0; i < str.length; i++) {
+            boolean quoteFound = false;
+            for (int j = 0; j < tags.size(); j++) {
+                HTMLTag tag = (HTMLTag)tags.get(j);
+                if (tag.startIndex == i) {
+                    if (quoteAsHTML) {
+                        injectTagStart(buf, tag, tag.endIndex == i);
+                    } else if (tag.name.equals("quote")) {
+                        quoteFound = true;
+                        textIndent++;
+                    }
+                } else if (tag.endIndex == i) {
+                    if (quoteAsHTML) {
+                        buf.append("</").append(tag.name).append(">");
+                    } else if (tag.name.equals("quote")) {
+                        textIndent--;
+                    }
+                }
+            }
+            if (!quoteAsHTML && quoteFound) {
+                // inject the indentation at the site of the <quote> tag before the
+                // actual quoted data
+                for (int j = 0; j < textIndent; j++)
+                    buf.append("> ");
+            }
+            buf.append(str[i]);
+            if (!quoteAsHTML && (str[i] == '\n') ) {
+                // inject all appropriate indentation after each newline
+                for (int j = 0; j < textIndent; j++)
+                    buf.append("> ");
+            }
+        }
+        String rv = buf.toString();
+        return rv;
+    }
+    private void injectTagStart(StringBuffer buf, HTMLTag tag, boolean closedTag) {
+        if (tag.name.equals("img")) return;
+
+        buf.append("<").append(tag.name);
+        if ( (tag.attributes != null) && (tag.attributes.size() > 0) ) {
+            buf.append(" ");
+            for (Iterator iter = tag.attributes.keySet().iterator(); iter.hasNext(); ) {
+                String attr = (String)iter.next();
+                String val = tag.attributes.getProperty(attr);
+                buf.append(attr).append("=\"").append(val).append("\" ");
+            }
+        }
+        if (closedTag)
+            buf.append(" /");
+        buf.append(">");
+    }
+    private String getSourceToQuoteFromText(String src) {
+        src = Constants.replace(src, "&", "&amp;");
+        src = Constants.replace(src, ">", "&gt;");
+        src = Constants.replace(src, "<", "&lt;");
+        return "<pre>" + src + "</pre>";
     }
 }
