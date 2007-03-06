@@ -86,7 +86,8 @@ public class ImageUtil {
     public static final Image ICON_MSG_FLAG_AUTHENTICATED = createImageFromResource("iconMsgFlagAuthenticated.png");
     public static final Image ICON_MSG_FLAG_AUTHORIZED = createImageFromResource("iconMsgFlagAuthorized.png");
     public static final Image ICON_MSG_FLAG_BANNED = createImageFromResource("iconMsgFlagBanned.png");
-    public static final Image ICON_MSG_FLAG_BOOKMARKED = createImageFromResource("iconMsgFlagBookmarked.png");
+    public static final Image ICON_MSG_FLAG_BOOKMARKED_AUTHOR = createImageFromResource("iconMsgFlagBookmarked.png", false); // use two different images, so we can
+    public static final Image ICON_MSG_FLAG_BOOKMARKED_FORUM = createImageFromResource("iconMsgFlagBookmarked.png", false); // differentiate them in the message flag bar
     public static final Image ICON_MSG_FLAG_SCHEDULEDFOREXPIRE = createImageFromResource("iconMsgFlagScheduledForExpire.png");
     public static final Image ICON_MSG_FLAG_HASKEYS = createImageFromResource("iconMsgFlagHasKeys.png");
     public static final Image ICON_MSG_FLAG_HASARCHIVES = createImageFromResource("iconMsgFlagHasArchives.png");
@@ -182,7 +183,8 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSG_FLAG_AUTHENTICATED);
         _indisposableImages.add(ICON_MSG_FLAG_AUTHORIZED);
         _indisposableImages.add(ICON_MSG_FLAG_BANNED);
-        _indisposableImages.add(ICON_MSG_FLAG_BOOKMARKED);
+        _indisposableImages.add(ICON_MSG_FLAG_BOOKMARKED_AUTHOR);
+        _indisposableImages.add(ICON_MSG_FLAG_BOOKMARKED_FORUM);
         _indisposableImages.add(ICON_MSG_FLAG_SCHEDULEDFOREXPIRE);
         _indisposableImages.add(ICON_MSG_FLAG_HASKEYS);
         _indisposableImages.add(ICON_MSG_FLAG_HASARCHIVES);
@@ -270,11 +272,12 @@ public class ImageUtil {
         return img;
     }
     
-    public static Image createImageFromResource(String resource) {
+    public static Image createImageFromResource(String resource) { return createImageFromResource(resource, true); }
+    public static Image createImageFromResource(String resource, boolean cache) {
         if (false) return Display.getDefault().getSystemImage(SWT.ICON_WARNING);
         synchronized (_loadedResources) {
             Image img = (Image)_loadedResources.get(resource);
-            if (img != null)
+            if (cache && (img != null))
                 return img;
             _timer.addEvent("before getResource("+resource+")");
             InputStream in = ImageUtil.class.getResourceAsStream(resource);

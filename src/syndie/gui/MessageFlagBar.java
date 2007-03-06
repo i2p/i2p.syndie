@@ -127,7 +127,8 @@ public class MessageFlagBar implements Translatable {
             List bannedChannels = _browser.getClient().getBannedChannels();
             boolean banned = bannedChannels.contains(author) || bannedChannels.contains(forum);
 
-            boolean bookmarked = _browser.isBookmarked(SyndieURI.createScope(author != null ? author : forum));
+            boolean authorBookmarked = author != null ? _browser.isBookmarked(SyndieURI.createScope(author)) : false;
+            boolean forumBookmarked = forum != null ? _browser.isBookmarked(SyndieURI.createScope(forum)) : false;
             boolean scheduledForExpire = _msg.getExpiration() > 0;
 
             List refs = _msg.getReferences();
@@ -160,7 +161,8 @@ public class MessageFlagBar implements Translatable {
             if (authenticated) _images.add(ImageUtil.ICON_MSG_FLAG_AUTHENTICATED);
             if (authorized) _images.add(ImageUtil.ICON_MSG_FLAG_AUTHORIZED);
             if (banned) _images.add(ImageUtil.ICON_MSG_FLAG_BANNED);
-            if (bookmarked) _images.add(ImageUtil.ICON_MSG_FLAG_BOOKMARKED);
+            if (authorBookmarked) _images.add(ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR);
+            if (forumBookmarked) _images.add(ImageUtil.ICON_MSG_FLAG_BOOKMARKED_FORUM);
             if (scheduledForExpire) _images.add(ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE);
             if (hasKeys) _images.add(ImageUtil.ICON_MSG_FLAG_HASKEYS);
             if (hasArchives) _images.add(ImageUtil.ICON_MSG_FLAG_HASARCHIVES);
@@ -237,7 +239,8 @@ public class MessageFlagBar implements Translatable {
     private static final String T_AUTHENTICATED = "syndie.gui.messageflagbar.authenticated";
     private static final String T_AUTHORIZED = "syndie.gui.messageflagbar.authorized";
     private static final String T_BANNED = "syndie.gui.messageflagbar.banned";
-    private static final String T_BOOKMARKED = "syndie.gui.messageflagbar.bookmarked";
+    private static final String T_BOOKMARKED_FORUM = "syndie.gui.messageflagbar.bookmarked.forum";
+    private static final String T_BOOKMARKED_AUTHOR = "syndie.gui.messageflagbar.bookmarked.author";
     private static final String T_SCHEDULED = "syndie.gui.messageflagbar.scheduled";
     private static final String T_HASKEYS = "syndie.gui.messageflagbar.haskeys";
     private static final String T_HASARCHIVES = "syndie.gui.messageflagbar.hasarchives";
@@ -271,8 +274,10 @@ public class MessageFlagBar implements Translatable {
                     l.setToolTipText(registry.getText(T_AUTHORIZED, "Author is allowed to post in the forum"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BANNED)
                     l.setToolTipText(registry.getText(T_BANNED, "Post is banned"));
-                else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED)
-                    l.setToolTipText(registry.getText(T_BOOKMARKED, "Author is bookmarked"));
+                else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR)
+                    l.setToolTipText(registry.getText(T_BOOKMARKED_AUTHOR, "Author is bookmarked"));
+                else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_FORUM)
+                    l.setToolTipText(registry.getText(T_BOOKMARKED_FORUM, "Forum is bookmarked"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE)
                     l.setToolTipText(registry.getText(T_SCHEDULED, "Message is scheduled to expire"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASKEYS)

@@ -335,7 +335,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
             
             TreeItem item = new TreeItem(_watchedRoot, SWT.NONE);
             item.setText(name);
-            item.setImage(ImageUtil.ICON_MSG_FLAG_BOOKMARKED);
+            item.setImage(ImageUtil.ICON_MSG_FLAG_BOOKMARKED_FORUM);
             _watchedItemToWatchedChannel.put(item, chan);
         }
         if (wasExpanded && watched.size() > 0)

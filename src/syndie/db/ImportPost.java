@@ -35,6 +35,7 @@ public class ImportPost {
     private boolean _privateMessage;
     private boolean _authenticated;
     private boolean _authorized;
+    private boolean _pseudoauthorized;
     private String _bodyPassphrase;
     private boolean _forceReimport;
     private boolean _alreadyImported;
@@ -273,6 +274,7 @@ public class ImportPost {
         // check authentication/authorization
         _authenticated = false;
         _authorized = false;
+        _pseudoauthorized = false;
         
         // posts do not need to include an identity in their headers (though if they are
         // neither identified nor authenticated, they'll be dropped)
@@ -344,10 +346,11 @@ public class ImportPost {
         
         // includes managers, posters, and the owner
         List signingPubKeys = null;
-        if (targetHash != null)
+        if (targetHash != null) {
             signingPubKeys = _client.getAuthorizedPosters(targetHash);
-        else
+        } else {
             signingPubKeys = _client.getAuthorizedPosters(_channel);
+        }
         if (signingPubKeys == null) {
             _ui.errorMessage("Internal error getting authorized posters for the channel");
             _ui.commandComplete(-1, null);
@@ -356,16 +359,38 @@ public class ImportPost {
         
         Signature authorizationSig = _enc.getAuthorizationSig();
         Hash authorizationHash = _enc.getAuthorizationHash();
+        _ui.debugMessage("attempting to authorize the post against " + signingPubKeys.size());
         for (int i = 0; i < signingPubKeys.size(); i++) {
             SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
             boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
             if (ok) {
                 _authorized = true;
                 break;
+            } else {
+                _ui.debugMessage("not authorized for key " + i);
             }
         }
         
-        if (_authenticated || _authorized) {
+        if (!_authorized && !_authenticated && !targetHash.equals(_channel) && (_enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT) != null) && (_body instanceof UnreadableEnclosureBody)) {
+            // the post may be a PBE replying to a post in another channel (which could be authorized once
+            // the PBE info is decrypted), so for now, lets try to import it as an unreadable post in the 
+            // source channel
+            signingPubKeys = _client.getAuthorizedPosters(_channel);
+            _ui.debugMessage("attempting pseudoauthorization authorize the unreadable PBE'd post against " + signingPubKeys.size());
+            for (int i = 0; i < signingPubKeys.size(); i++) {
+                SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
+                boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
+                if (ok) {
+                    _pseudoauthorized = true;
+                    _ui.debugMessage("pseudoauthorized unreadable PBE'd post");
+                    break;
+                } else {
+                    _ui.debugMessage("not authorized for key " + i);
+                }
+            }
+        }
+        
+        if (_authenticated || _authorized || _pseudoauthorized) {
             boolean ok = importMessage();
             if (ok) {
                 if (_body instanceof UnreadableEnclosureBody)
@@ -385,7 +410,7 @@ public class ImportPost {
     
     private boolean importMessage() {
         _ui.debugMessage("Message is" + (_authenticated ? " authenticated" : " not authenticated") +
-                          (_authorized ? " authorized" : " not authorized") + ": " + _body);
+                          (_authorized ? " authorized" : _pseudoauthorized ? " pseudoauthorized" : " not authorized") + ": " + _body);
         long msgId = _client.nextId("msgIdSequence");
         if (msgId < 0) {
             _ui.errorMessage("Internal error with the database (GCJ/HSQLDB problem with sequences?)");
