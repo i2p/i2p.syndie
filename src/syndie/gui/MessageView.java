@@ -589,7 +589,8 @@ public class MessageView implements Translatable, Themeable {
 
         _threadTree.setMessages(msgs);
         //timer.addEvent("initBody thread tree messages set");
-        _threadTree.select(_uri);             
+        _threadTree.expandAll();
+        _threadTree.select(_uri);
         
         configGoTo(msgs, id, threadSize);
     }

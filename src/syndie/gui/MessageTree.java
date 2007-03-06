@@ -1523,6 +1523,19 @@ public class MessageTree implements Translatable, Themeable {
         _tree.setRedraw(true);
     }
     
+    public void expandAll() {
+        TreeItem items[] = _tree.getItems();
+        for (int i = 0; i < items.length; i++)
+            expandAll(items[i]);
+    }
+    private void expandAll(TreeItem item) {
+        if (item.getItemCount() <= 0) return;
+        item.setExpanded(true);
+        TreeItem items[] = item.getItems();
+        for (int i = 0; i < items.length; i++)
+            expandAll(items[i]);
+    }
+    
     /** build up the thread in a nonvirtual tree */
     private long add(ReferenceNode node, TreeItem parent) {
         _browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
@@ -1642,7 +1655,12 @@ public class MessageTree implements Translatable, Themeable {
                 item.setGrayed(false);
                 long importDate = _client.getMessageImportDate(msgId);
                 long postDate = uri.getMessageId().longValue();
-                if ( (_appliedFilter == null) || (_appliedFilter.getString("agelocal") != null) ) {
+                if (_appliedFilter == null) {
+                    if (MessageTree.shouldUseImportDate(_browser))
+                        date = Constants.getDate(importDate);
+                    else
+                        date = Constants.getDate(postDate);
+                } else if (_appliedFilter.getString("agelocal") != null) {
                     date = Constants.getDate(importDate);
                     //_browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
                 } else {
