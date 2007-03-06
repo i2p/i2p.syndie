@@ -1927,7 +1927,8 @@ public class PageRenderer implements Themeable {
     }
     
     public static void main(String args[]) {
-        String content = "<html><b>hi</b><br />foo</html>";
+        //String content = "<html><b>hi</b><br />foo</html>";
+        String content = "normal<quote>first level<quote>second level<quote>third level</quote>second level</quote>first level</quote>normal";
         /*
         try {
             FileInputStream fis = new FileInputStream("/tmp/syndie-log-1.txt");

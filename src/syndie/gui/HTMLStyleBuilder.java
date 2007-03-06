@@ -195,7 +195,8 @@ class HTMLStyleBuilder {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
             // find all breakpoints that this tag applies to
             for (int j = 0; j < bpIndexes.length; j++) {
-                if (tag.startIndex > bpIndexes[j]) break; // bpIndexes is ordered
+                //if (tag.startIndex < bpIndexes[j]) break; // bpIndexes is ordered
+                if (tag.endIndex < bpIndexes[j]) break; // bpIndexes is ordered
                 if ( (tag.startIndex <= bpIndexes[j]) && (tag.endIndex >= bpIndexes[j]) ) {
                     if (!bpTags[j].contains(tag))
                         bpTags[j].add(tag);
