@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.TreeSet;
@@ -12,6 +13,8 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -204,6 +207,16 @@ public class MessagePreview implements Themeable, Translatable {
         _headerReply.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false));
         
         _headerReplyMenu = new Menu(_headerReply);
+        _headerReplyMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) {
+                // if the user isn't authorized to post a reply to the forum, don't offer to let them
+                if (allowedToReply(_client, _msgId))
+                    _headerReplyForumPublic.setEnabled(true);
+                else
+                    _headerReplyForumPublic.setEnabled(false);
+            }
+        });
         _headerReply.setMenu(_headerReplyMenu);
         _headerReply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _headerReplyMenu.setVisible(true); }
@@ -289,6 +302,27 @@ public class MessagePreview implements Themeable, Translatable {
     private void replyPublicForum() {
         if (_target != null)
             _browser.view(_browser.createPostURI(_target, _uri, false));
+    }
+    
+    static boolean allowedToReply(DBClient client, long msgId) {
+        long forumId = client.getMessageTarget(msgId);
+        if (forumId < 0) return false;
+        if (client.getChannelAllowPublicReplies(forumId))
+            return true;
+        // ok, lets check to see if the currently user has a nym who is allowed to reply
+        ChannelInfo channel = client.getChannel(forumId);
+        List signAsKeys = client.getSignKeys(client.getChannelHash(forumId));
+        for (int i = 0; i < signAsKeys.size(); i++) {
+            SigningPrivateKey key = (SigningPrivateKey)signAsKeys.get(i);
+            Hash pub = key.toPublic().calculateHash();
+            if (channel.getChannelHash().equals(pub))
+                return true;
+            else if (channel.getAuthorizedManagerHashes().contains(pub))
+                return true;
+            else if (channel.getAuthorizedPosterHashes().contains(pub))
+                return true;
+        }
+        return false;
     }
     
     private static final String T_VIEW = "syndie.gui.messagepreview.view";

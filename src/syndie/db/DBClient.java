@@ -872,6 +872,7 @@ public class DBClient {
      * list of SigningPrivateKey instances that the nym specified can use to
      * try and authenticate/authorize posts to the given identHash channel
      */
+    public List getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _pass); }
     public List getSignKeys(Hash identHash, long nymId, String nymPassphrase) {
         ensureLoggedIn();
         if (identHash == null) throw new IllegalArgumentException("you need an identHash (or you should use getNymKeys())");

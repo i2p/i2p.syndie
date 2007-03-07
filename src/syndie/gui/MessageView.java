@@ -23,6 +23,8 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -818,6 +820,17 @@ public class MessageView implements Translatable, Themeable {
         });
                 
         _forumMenu = new Menu(_headerForumAction);
+        _forumMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) {
+                // if the user isn't authorized to post a reply to the forum, don't offer to let them
+                if (MessagePreview.allowedToReply(_client, _msgId))
+                    _forumMenuReplyPublic.setEnabled(true);
+                else
+                    _forumMenuReplyPublic.setEnabled(false);
+            }
+        });
+
         _headerForumAction.setMenu(_forumMenu);
         
         _forumMenuViewMsgs = new MenuItem(_forumMenu, SWT.PUSH);
@@ -872,6 +885,17 @@ public class MessageView implements Translatable, Themeable {
         _headerReply = new Button(buttons, SWT.PUSH);
         
         _headerReplyMenu = new Menu(_headerReply);
+        _headerReplyMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) {
+                // if the user isn't authorized to post a reply to the forum, don't offer to let them
+                if (MessagePreview.allowedToReply(_client, _msgId))
+                    _headerReplyForumPublic.setEnabled(true);
+                else
+                    _headerReplyForumPublic.setEnabled(false);
+            }
+        });
+
         _headerReply.setMenu(_headerReplyMenu);
         _headerReply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) { fire(); }

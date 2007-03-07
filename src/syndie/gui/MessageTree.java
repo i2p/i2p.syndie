@@ -1057,12 +1057,22 @@ public class MessageTree implements Translatable, Themeable {
                 _markThreadRead.setEnabled(enableMsg);
                 _markUnread.setEnabled(enableMsg);
                 _view.setEnabled(enableMsg);
-                _reply.setEnabled(enableMsg);
                 _viewAuthor.setEnabled(enableMsg);
                 _viewAuthorMeta.setEnabled(enableMsg);
                 
                 _viewForum.setEnabled(enable);
                 _viewForumMeta.setEnabled(enable);
+                if (enableMsg) {
+                    SyndieURI uri = getSelected();
+                    if (uri != null) {
+                        long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                        _reply.setEnabled(MessagePreview.allowedToReply(_client, msgId));
+                    } else {
+                        _reply.setEnabled(false);
+                    }
+                } else {
+                    _reply.setEnabled(false);
+                }
             }
         });
         

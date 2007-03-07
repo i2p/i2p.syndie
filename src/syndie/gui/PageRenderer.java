@@ -22,6 +22,8 @@ import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
@@ -1338,6 +1340,17 @@ public class PageRenderer implements Themeable {
     private void buildBodyMenu() {
         _bodyMenu = new Menu(_text);
         _bodyMenu.setEnabled(true);
+        _bodyMenu.addMenuListener(new MenuListener() {
+            public void menuHidden(MenuEvent menuEvent) {}
+            public void menuShown(MenuEvent menuEvent) {
+                // if the user isn't authorized to post a reply to the forum, don't offer to let them
+                long msgId = _msg != null ? _msg.getInternalId() : -1;
+                if (MessagePreview.allowedToReply(_browser.getClient(), msgId))
+                    _bodyReplyToForum.setEnabled(true);
+                else
+                    _bodyReplyToForum.setEnabled(false);
+            }
+        });
 
         _bodyViewForum = new MenuItem(_bodyMenu, SWT.PUSH);
         _bodyViewForum.setText("View forum");
