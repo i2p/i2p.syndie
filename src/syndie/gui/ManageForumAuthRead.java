@@ -32,6 +32,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     private Composite _root;
     
     private Button _choiceAnyone;
+    private Button _choiceAnyoneRetroactive;
     private Button _choiceAllowed;
     private Button _choiceAllowedRotate;
     private Button _choiceNew;
@@ -77,7 +78,10 @@ class ManageForumAuthRead implements Themeable, Translatable {
         _root.setLayout(new GridLayout(4, false));
         
         _choiceAnyone = new Button(_root, SWT.RADIO | SWT.WRAP);
-        _choiceAnyone.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        _choiceAnyone.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
+        
+        _choiceAnyoneRetroactive = new Button(_root, SWT.CHECK);
+        _choiceAnyoneRetroactive.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _choiceAllowed = new Button(_root, SWT.RADIO | SWT.WRAP);
         _choiceAllowed.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
@@ -194,6 +198,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     }
     
     public boolean getEncryptMetadata() { return !_choiceAnyone.getSelection(); }
+    public boolean getReadKeyPublicRetroactive() { return _choiceAnyone.getSelection() && _choiceAnyoneRetroactive.getSelection(); }
     public boolean getNewKey() { return _choiceNew.getSelection(); }
     public ArrayList getSendExplicit() { return _sendSelectedForums; }
     public boolean getPostPBE() { return _sendPBE.getSelection(); }
@@ -211,6 +216,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     
     private void pickChoiceAnyone() {
         _choiceAnyone.setSelection(true);
+        _choiceAnyoneRetroactive.setEnabled(true);
         _choiceAllowed.setSelection(false);
         _choiceNew.setSelection(false);
         _choiceAllowedRotate.setEnabled(false);
@@ -227,6 +233,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     private void pickChoiceAllowed() {
         _choiceAllowed.setSelection(true);
         _choiceAnyone.setSelection(false);
+        _choiceAnyoneRetroactive.setEnabled(false);
         _choiceNew.setSelection(false);
         _choiceAllowedRotate.setEnabled(true);
         _sendSelected.setEnabled(true);
@@ -297,6 +304,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     public void applyTheme(Theme theme) {
         _shell.setFont(theme.SHELL_FONT);
         _choiceAnyone.setFont(theme.DEFAULT_FONT);
+        _choiceAnyoneRetroactive.setFont(theme.DEFAULT_FONT);
         _choiceAllowed.setFont(theme.DEFAULT_FONT);
         _choiceAllowedRotate.setFont(theme.DEFAULT_FONT);
         _choiceNew.setFont(theme.DEFAULT_FONT);
@@ -316,6 +324,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
     private static final String T_SHELL = "syndie.gui.viewforumauthread.shell";
     
     private static final String T_CHOICE_ANYONE = "syndie.gui.viewforumauthread.choice.anyone";
+    private static final String T_CHOICE_ANYONE_RETROACTIVE = "syndie.gui.viewforumauthread.choice.anyoneretroactive";
     private static final String T_CHOICE_ALLOWED = "syndie.gui.viewforumauthread.choice.allowed";
     private static final String T_CHOICE_ALLOWED_ROTATE = "syndie.gui.viewforumauthread.choice.allowed.rotate";
     private static final String T_CHOICE_NEW = "syndie.gui.viewforumauthread.choice.new";
@@ -332,6 +341,7 @@ class ManageForumAuthRead implements Themeable, Translatable {
         _shell.setText(registry.getText(T_SHELL, "Who can read posts?"));
         
         _choiceAnyone.setText(registry.getText(T_CHOICE_ANYONE, "Anyone can read posts"));
+        _choiceAnyoneRetroactive.setText(registry.getText(T_CHOICE_ANYONE_RETROACTIVE, "Apply retroactively"));
         _choiceAllowed.setText(registry.getText(T_CHOICE_ALLOWED, "Those already allowed to read posts"));
         _choiceAllowedRotate.setText(registry.getText(T_CHOICE_ALLOWED_ROTATE, "Rotate the keys used"));
         _choiceNew.setText(registry.getText(T_CHOICE_NEW, "Anyone who has a newly created key"));

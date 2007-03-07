@@ -513,7 +513,14 @@ class ManageForum implements Translatable, Themeable {
             public String getPassphrase() { return _passphrase; }
             public String getPassphrasePrompt() { return _prompt; }
             /** return the read keys we explicitly want to deliver in the metadata, or null/empty if we don't care */
-            public List getCurrentReadKeys() { return null; }
+            public List getCurrentReadKeys() { 
+                if ( (_manageForumAuthRead != null) && (_manageForumAuthRead.getReadKeyPublicRetroactive()) ) {
+                    // all session keys we know for reading posts in the forum, whether they were private or public
+                    return _browser.getClient().getReadKeys(_browser.getClient().getChannelHash(_scopeId), false);
+                } else {
+                    return null;
+                }
+            }
         });
         exec.execute();
         String errs = exec.getErrors();

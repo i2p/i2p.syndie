@@ -635,6 +635,7 @@ public class DBClient {
     }
     public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
         List rv = new ArrayList(1);
+        if (identHash == null) return null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
