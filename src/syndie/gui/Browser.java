@@ -3,6 +3,7 @@ package syndie.gui;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -66,6 +67,7 @@ import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
@@ -125,6 +127,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private MenuItem _fileMenuOpen;
     private MenuItem _fileMenuMinimize;
     private MenuItem _fileMenuImport;
+    private MenuItem _fileMenuImportBulk;
     private MenuItem _fileMenuExport;
     private MenuItem _fileMenuExit;
     private MenuItem _viewMenuRoot;
@@ -184,6 +187,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private ToolTip _systrayTip;
     
     private FileDialog _importFileDialog;
+    private DirectoryDialog _importDirDialog;
     
     private StatusBar _statusBar;
     private BookmarkEditorPopup _bookmarkEditor;
@@ -534,6 +538,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuImport.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { importMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { importMessage(); }
+        });
+        _fileMenuImportBulk = new MenuItem(fileMenu, SWT.PUSH);
+        _fileMenuImportBulk.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { importBulkMessage(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { importBulkMessage(); }
         });
         _fileMenuExport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuExport.addSelectionListener(new SelectionListener() {
@@ -2111,9 +2120,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             JobRunner.instance().enqueue(new Runnable() {
                 public void run() {
                     int imported = 0;
-                    final int total = names.length;
+                    List files = getFiles(names, path);
+                    final int total = files.size();
                     for (int i = 0; i < total; i++) {
-                        boolean ok = importFile(path, names[i]);
+                        boolean ok = importFile((File)files.get(i));
                         if (ok)
                             imported++;
                     }
@@ -2130,18 +2140,69 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             });
         }
     }
+    private static final String T_IMPORT_BULK_SYNDIE_TITLE = "syndie.gui.browser.importbulksyndietitle";
+    /** recursive import directories */
+    private void importBulkMessage() {
+        if (_importDirDialog == null)
+            _importDirDialog = new DirectoryDialog(_shell, SWT.NONE);
+        // retranslate each time
+        _importDirDialog.setText(_translation.getText(T_IMPORT_BULK_SYNDIE_TITLE, "Import directories recursively"));
+        final String dir = _importDirDialog.open();
+        if (dir != null) {
+            JobRunner.instance().enqueue(new Runnable() {
+                public void run() {
+                    int imported = 0;
+                    List files = new ArrayList();
+                    getFiles(new File(dir), files);
+                    final int total = files.size();
+                    for (int i = 0; i < total; i++) {
+                        boolean ok = importFile((File)files.get(i));
+                        if (ok)
+                            imported++;
+                    }
+                    final int successful = imported;
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+                            box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
+                            box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
+                            box.open();
+                        }
+                    });
+                }
+            });
+        }
+    }
+    private List getFiles(String names[], String path) {
+        List rv = new ArrayList();
+        for (int i = 0; i < names.length; i++) {
+            File f = new File(path, names[i]);
+            getFiles(f, rv);
+        }
+        return rv;
+    }
+    private void getFiles(File f, List rv) {
+        if (f.exists()) {
+            if (f.isFile() && f.getName().endsWith(Constants.FILENAME_SUFFIX)) {
+                rv.add(f);
+            } else if (f.isDirectory() && (!f.getName().equals(".") && !f.getName().equals(".."))) {
+                File files[] = f.listFiles();
+                for (int i = 0; i < files.length; i++)
+                    getFiles(files[i], rv);
+            }
+        }
+    }
     
     /** run outside the swt thread */
-    private boolean importFile(String path, String filename) {
+    private boolean importFile(File f) {
         Importer imp = new Importer(_client, null);
-        File f = new File(path, filename);
         if (f.exists()) {
             try {
                 boolean rv = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false, null, null);
                 messageImported();
                 return rv;
             } catch (IOException ioe) {
-                errorMessage("error importing " + path + "/" + filename, ioe);
+                errorMessage("error importing " + f.getPath(), ioe);
                 return false;
             }
         } else {
@@ -2726,6 +2787,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
     private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
     private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
+    private static final String T_FILE_MENU_IMPORT_BULK = "syndie.gui.browser.filemenu.importbulk";
     private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
     private static final String T_FILE_MENU_BACKUP_SECRETS = "syndie.gui.browser.filemenu.backupsecrets";
     private static final String T_FILE_MENU_RESTORE_SECRETS = "syndie.gui.browser.filemenu.restoresecrets";
@@ -2803,6 +2865,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
         _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
         _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
+        _fileMenuImportBulk.setText(registry.getText(T_FILE_MENU_IMPORT_BULK, "Import &bulk"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
 
