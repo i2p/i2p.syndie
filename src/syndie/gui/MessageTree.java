@@ -1052,7 +1052,7 @@ public class MessageTree implements Translatable, Themeable {
                 
                 _expandThread.setEnabled(enableMsg);
                 _collapseThread.setEnabled(enableMsg);
-                _markAllRead.setEnabled(enableMsg);
+                _markAllRead.setEnabled(enable);
                 _markRead.setEnabled(enableMsg);
                 _markThreadRead.setEnabled(enableMsg);
                 _markUnread.setEnabled(enableMsg);
