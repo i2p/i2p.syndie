@@ -746,6 +746,16 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (parent != null) {
             parent.addChild(node);
         } else {
+            // remove dups
+            for (int i = 0; i < _nymRefs.size(); i++) {
+                ReferenceNode child = (ReferenceNode)_nymRefs.get(i);
+                if ( (node.getURI() != null) && (node.getURI().equals(child.getURI())) ) {
+                    // its a link to the same URL in the same category
+                    _nymRefs.remove(i);
+                    i--;
+                }
+            }
+            
             int order = node.getSiblingOrder();
             if ( (order < 0) || (order >= _nymRefs.size()) ) {
                 _nymRefs.add(node);

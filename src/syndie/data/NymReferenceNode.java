@@ -66,8 +66,28 @@ public class NymReferenceNode extends ReferenceNode {
     }
     
     public void addChild(ReferenceNode ref) {
-        if (_children.contains(ref))
-            _children.remove(ref); // readd in a new position
+        // remove it and readd it in the new position
+        for (int i = 0; i < _children.size(); i++) {
+            ReferenceNode child = (ReferenceNode)_children.get(i);
+            if ( (child.getURI() != null) && (child.getURI().equals(ref.getURI())) ) {
+                // its a link to the same URL in the same category
+                _children.remove(i);
+                i--;
+            } else if ( (ref.getURI() == null) && (child.getURI() == null) && (ref.getName() != null) && (child.getName() != null) && (ref.getName().equals(child.getName())) ) {
+                // its a folder with the same name
+                return;
+                /*
+                if (ref._children != null)
+                    ref._children.addAll(child._children);
+                else
+                    ref._children = child._children;
+                _children.remove(i);
+                i--;
+                 */
+            }
+        }
+        //if (_children.contains(ref))
+        //    _children.remove(ref); // readd in a new position
         
         ref._parent = this;
         if (ref instanceof NymReferenceNode) {
