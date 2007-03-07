@@ -2121,6 +2121,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                 public void run() {
                     int imported = 0;
                     List files = getFiles(names, path);
+                    sortFiles(files);
+                    _statusBar.setEnableRefresh(false);
                     final int total = files.size();
                     for (int i = 0; i < total; i++) {
                         boolean ok = importFile((File)files.get(i));
@@ -2134,6 +2136,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                             box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
                             box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
                             box.open();
+                            _statusBar.setEnableRefresh(true);
                         }
                     });
                 }
@@ -2154,6 +2157,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     int imported = 0;
                     List files = new ArrayList();
                     getFiles(new File(dir), files);
+                    sortFiles(files);
+                    _statusBar.setEnableRefresh(false);
                     final int total = files.size();
                     for (int i = 0; i < total; i++) {
                         boolean ok = importFile((File)files.get(i));
@@ -2167,6 +2172,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                             box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
                             box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
                             box.open();
+                            _statusBar.setEnableRefresh(true);
                         }
                     });
                 }
@@ -2191,6 +2197,20 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     getFiles(files[i], rv);
             }
         }
+    }
+    private void sortFiles(List orig) {
+        List meta = new ArrayList();
+        List post = new ArrayList();
+        for (int i = 0; i < orig.size(); i++) {
+            File f = (File)orig.get(i);
+            if (f.getName().startsWith("meta"))
+                meta.add(f);
+            else
+                post.add(f);
+        }
+        orig.clear();
+        orig.addAll(meta);
+        orig.addAll(post);
     }
     
     /** run outside the swt thread */

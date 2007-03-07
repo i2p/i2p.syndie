@@ -65,10 +65,14 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private Button _postpone;
     private Menu _postponeMenu;
     private Label _version;
+    private boolean _enableRefresh;
+    private boolean _syncNow;
     
     public StatusBar(Browser browser, Composite parent, Timer timer) {
         _browser = browser;
         _parent = parent;
+        _enableRefresh = true;
+        _syncNow = false;
         initComponents(timer);
     }
     
@@ -258,13 +262,19 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     public void refreshDisplay(final boolean onlineStateOnly) {
         _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(onlineStateOnly); } });
     }
+    public void setEnableRefresh(boolean enable) {
+        _enableRefresh = enable;
+        if (enable) refreshDisplay();
+    }
     private void doRefreshDisplay() { doRefreshDisplay(false); }
     private void doRefreshDisplay(boolean onlineStateOnly) {
         SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
         displayOnlineState(mgr.isOnline());
         
         if (onlineStateOnly) return;
-        
+        if (_syncNow) return; // don't update the status details during a refresh
+       
+        if (!_enableRefresh) return;
         int newForums = refreshNewForums();
         calcUnread();
         int pbe = refreshPBE();
@@ -707,10 +717,13 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     public void setNextSync(long when, boolean online) {
         if (!online) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_OFFLINE, "Deferred..."));
+            _syncNow = false;
         } else if (when <= 0) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NONE, "None scheduled"));
+            _syncNow = false;
         } else if (when-System.currentTimeMillis() <= 0) {
             _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NOW, "Now"));
+            _syncNow = true;
         } else {
             long delay = when-System.currentTimeMillis();
             if (delay < 60*1000)
@@ -722,6 +735,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             else
                 _nextSyncDate.setText(delay/(24*60*60*1000) + "d");
             //_nextSyncDate.setText(DataHelper.formatDuration()); // 3h, 39m, 2d, etc
+            _syncNow = false;
         }
         _root.layout(true);
     }

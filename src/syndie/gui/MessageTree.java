@@ -1473,6 +1473,7 @@ public class MessageTree implements Translatable, Themeable {
         
         _top.layout(true, true);
         _browser.getUI().debugMessage("currentPage[" + _currentPage + "/" + pages + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
+        if (start > end) start = end;
         return referenceNodes.subList(start, end);
     }
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";

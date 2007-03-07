@@ -1480,7 +1480,8 @@ public class DBClient {
             if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
                 continue;
             ChannelInfo info = getChannel(chanId.longValue());
-            if ( (name != null) && (!info.getName().toLowerCase().startsWith(name.toLowerCase())) )
+            if (info == null) continue;
+            if ( (name != null) && (info.getName() != null) && (!info.getName().toLowerCase().startsWith(name.toLowerCase())) )
                 continue;
             Set pub = info.getPublicTags();
             Set priv= info.getPrivateTags();
