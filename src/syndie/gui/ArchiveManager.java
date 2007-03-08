@@ -215,7 +215,7 @@ public class ArchiveManager implements Translatable, Themeable {
     private static final String T_ADVERTISED_POPUP_DESC = "syndie.gui.archivemanager.adpopup.desc";
     private static final String T_ADVERTISED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
     private void manageAdvertised() {
-        final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
         s.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP, "Advertised archives"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
@@ -249,7 +249,9 @@ public class ArchiveManager implements Translatable, Themeable {
         archives.setFont(theme.TABLE_FONT);
         ok.setFont(theme.BUTTON_FONT);
         
-        s.setSize(s.computeSize(400, 200));
+        //s.pack();
+        //s.setSize(s.computeSize(400, SWT.DEFAULT));
+        s.layout(true, true);
         s.open();
     }
     
@@ -270,7 +272,7 @@ public class ArchiveManager implements Translatable, Themeable {
     private static final String T_BANNED_POPUP_DESC = "syndie.gui.archivemanager.bannedpopup.desc";
     private static final String T_BANNED_POPUP_OK = "syndie.gui.archivemanager.bannedpopup.ok";
     private void manageBanned() {
-        final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
         s.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP, "Banned"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
