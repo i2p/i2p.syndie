@@ -858,7 +858,7 @@ public class Syndicator implements Translatable, Themeable, SyncManager.SyncList
     }
     
     private void resizeCols(TreeItem item) {
-        setMinWidth(_colName, item.getText(0), 0, 200);
+        setMinWidth(_colName, item.getText(0), 0, 300);
         setMinWidth(_colTime, item.getText(1), 0, 150);
         setMinWidth(_colStatus, item.getText(2), 0, 50);
         setMinWidth(_colSummary, item.getText(3), 0, 100);

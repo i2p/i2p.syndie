@@ -129,7 +129,10 @@ public class SyncManager {
             Map.Entry entry = (Map.Entry)iter.next();
             String name = (String)entry.getKey();
             String url = (String)entry.getValue();
+            String pullPolicy = (String)Constants.DEFAULT_ARCHIVE_PULLPOLICY.get(name);
+            String pushPolicy = (String)Constants.DEFAULT_ARCHIVE_PUSHPOLICY.get(name);
             String proxyInfo = (String)Constants.DEFAULT_ARCHIVE_PROXIES.get(name);
+            String syncByDefault = (String)Constants.DEFAULT_ARCHIVE_SYNCBYDEFAULT.get(name);
             String proxyHost = null;
             int proxyPort = -1;
             if (proxyInfo != null) {
@@ -150,6 +153,12 @@ public class SyncManager {
             archive.setHTTPProxyHost(proxyHost);
             archive.setHTTPProxyPort(proxyPort);
             //_archives.add(archive);
+            if (pullPolicy != null)
+                archive.setPullStrategy(new SharedArchiveEngine.PullStrategy(pullPolicy));
+            if (pushPolicy != null)
+                archive.setPushStrategy(new SharedArchiveEngine.PushStrategy(pushPolicy));
+            if (syncByDefault != null)
+                archive.setNextSyncTime(Boolean.valueOf(syncByDefault).booleanValue() ? System.currentTimeMillis() : -1);
             archive.store();
             //for (int j = 0; j < _listeners.size(); j++)
             //    ((SyncListener)_listeners.get(j)).archiveLoaded(archive);

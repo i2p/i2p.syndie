@@ -12,14 +12,24 @@ public class Constants {
     public static final Map DEFAULT_ARCHIVES = new TreeMap();
     /** name (String) to proxy (String of host:port) for the proxies associated with the DEFAULT_ARCHIVES */
     public static final Map DEFAULT_ARCHIVE_PROXIES = new TreeMap();
+    /** when installing the default archives, use the given value as the pull policy */
+    public static final Map DEFAULT_ARCHIVE_PULLPOLICY = new HashMap();
+    /** when installing the default archives, use the given value as the push policy */
+    public static final Map DEFAULT_ARCHIVE_PUSHPOLICY = new HashMap();
+    /** when installing the default archives, if the associated value is true, schedule a sync by default */
+    public static final Map DEFAULT_ARCHIVE_SYNCBYDEFAULT = new HashMap();
     static { 
-        DEFAULT_ARCHIVES.put("Standard archive (direct)", "http://syndie.i2p.net:8080/"); 
+        DEFAULT_ARCHIVES.put("Standard archive (direct)", "http://syndie.i2p.net:8080/");
+        DEFAULT_ARCHIVES.put("Standard archive (direct) - pull only", "http://syndie.i2p.net:8080/");
         DEFAULT_ARCHIVES.put("Standard archive (over I2P)", "http://archive.syndie.i2p/?i2paddresshelper=iXX0DadZTJQpPr1to0OmQ4xokHgx1HYd5ec7~zIjQ80W~p4kRCYJmEzibH2Kn59Gi04SAXeA2O9i3bNqfGCQjsbz7UcjPGrW6-UrckXVXW67Moxp7QWY6i-aKuVYM3bqYxUL2mWvcDzJ8D0ecMpvasxhxwXpdFn2J6CGboMxeGV8R3hwwlNYbYoKgHr74qEJaIZpm1FrRWvNHV5cMv363iWnPy72XspQefk79-VOjPsxfummosU7gqlxl5teyiGKNzMs3G6iJyfVHO8IlKtdn~P~ET9p7zWlTPgV8NTyCVB-Wn5S3JMkMGOFZR7wSlxSwGFpTFQKc7mxVTtLZ5nWcV2OhvOIxRZ31RvGJZyVs562RC5aMfyqcM5IHQiZVlmkhzJKIy9VDw8tKayQtRM-xeN5k6Qr7iMmYIRORwuAODkYApoMD9a0eJ6ZYOSgBMOCSvYcwfT8axRY~GabiHm0QC82mo-nDgrUypGKtOPMI9MIqMTsb8Yl-UGWn6twBAIzAAAA");
         DEFAULT_ARCHIVES.put("Standard archive (over Tor)", "http://syndie.i2p.net:8080/");
         DEFAULT_ARCHIVES.put("synar.i2p", "http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHfLgQbFOtO-KWt~14IQr36jtXaUKThYU8eISCfnRQ0295GGUGeer1zUldON9Kcvf0I31so70397sGHJHG7TPGlV-mCKdht7TZBW6qK037omn4QBa8wuiA80fDtcpAdG3xKAnhEBO3fH2UEH-4ZFXSP7dRVW5c88zdTq93TMRqgNanC8cWzgoPDaE1lzIydbseeP9449RCDj9XUr16PiBQtuveUJvsZhdajzYrjgRsBPQXBa9k4hvFeVB8VRLnfPaHugd~6ct6iMdxOybJMaBF6NH~NVOwUaOn8uDKgQOzsWaqwUWahizKlmZbC0NtimQdAIa4~pgdq4S8Wz5YWTB3lceUlF-ZAo-F5QSbw4Pjg8iJ0rvapxuGec9i2cwW~qwOjKwbv1z4kZ0niKvUNH9T4WoRUDO2ttu5d4CAAAA");
         DEFAULT_ARCHIVE_PROXIES.put("Standard archive (over I2P)", "localhost:4444");
         DEFAULT_ARCHIVE_PROXIES.put("Standard archive (over Tor)", "localhost:8118");
         DEFAULT_ARCHIVE_PROXIES.put("synar.i2p", "localhost:4444");
+        DEFAULT_ARCHIVE_PULLPOLICY.put("Standard archive (direct) - pull only", "RecentMessagesOnly IncludePBE IncludePrivate AllChannels DiscoverArchives");
+        DEFAULT_ARCHIVE_PUSHPOLICY.put("Standard archive (direct) - pull only", "SendNothing");
+        DEFAULT_ARCHIVE_SYNCBYDEFAULT.put("Standard archive (direct) - pull only", "true");
     }
     
     /** header line in the enclosure before the body specifying the body size */

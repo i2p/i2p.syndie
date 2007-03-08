@@ -33,6 +33,7 @@ public class SharedArchiveEngine {
             includeDupForPIR = false;
             pullNothing = false;
             discoverArchives = true;
+            newAgeDays = -1;
         }
         public PullStrategy(String serialized) {
             this();
@@ -60,6 +61,15 @@ public class SharedArchiveEngine {
                         if (end > 0) {
                             try {
                                 maxKBTotal = Integer.parseInt(serialized.substring(maxTotIdx + "MaxTotal".length(), end));
+                            } catch (NumberFormatException nfe) {}
+                        }
+                    }
+                    int newAgeDaysIdx = serialized.indexOf("NewAgeDays");
+                    if (newAgeDaysIdx >= 0) {
+                        int end = serialized.indexOf(' ', newAgeDaysIdx);
+                        if (end > 0) {
+                            try {
+                                newAgeDays = Integer.parseInt(serialized.substring(newAgeDaysIdx + "NewAgeDays".length(), end));
                             } catch (NumberFormatException nfe) {}
                         }
                     }
@@ -113,6 +123,14 @@ public class SharedArchiveEngine {
          */
         public boolean discoverArchives;
         
+        /**
+         * when pulling "new" messages, we can either go by what the archive advertises as new
+         * or we can expand back the "new" period further (without falling back on !recentMessagesOnly).
+         * this specifies the number of days back we want to treat as "new", but if it is less than 1,
+         * use the archive's advertised "new" flag
+         */
+        public int newAgeDays;
+        
         public String toString() {
             StringBuffer buf = new StringBuffer();
             if (includeDupForPIR) {
@@ -137,6 +155,8 @@ public class SharedArchiveEngine {
                     buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
                 if (maxKBTotal >= 0)
                     buf.append("MaxTotal").append(maxKBTotal).append(" ");
+                if (newAgeDays > 0)
+                    buf.append("NewAgeDays").append(newAgeDays).append(" ");
             }
             if (discoverArchives)
                 buf.append("DiscoverArchives ");
@@ -291,9 +311,13 @@ public class SharedArchiveEngine {
                     continue;
                 if (messages[i].isPrivate() && !strategy.includePrivateMessages)
                     continue;
-                if (!messages[i].isNew() && strategy.includeRecentMessagesOnly) {
-                    //ui.debugMessage("message is old and we only want recent messages: " + messages[i]);
-                    continue;
+
+                if (strategy.includeRecentMessagesOnly) {
+                    // if the server hasn't marked it as 'new' and the author gave it a date earlier 
+                    // than what we want, skip
+                    if (!messages[i].isNew() && 
+                        (messages[i].getMessageId() < System.currentTimeMillis()-strategy.newAgeDays*24*60*60*1000L))
+                        continue;
                 }
                 
                 // already known

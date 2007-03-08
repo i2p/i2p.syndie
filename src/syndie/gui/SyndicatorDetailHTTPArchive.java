@@ -61,6 +61,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private Combo _pullPolicy;
     private Label _pullMaxSizeLabel;
     private Combo _pullMaxSize;
+    private Label _pullNewAgeLabel;
+    private Combo _pullNewAge;
     private Button _pullPrivate;
     private Button _pullPrivateLocalOnly;
     private Button _pullPBE;
@@ -240,6 +242,21 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         _pullMaxSize = new Combo(row, SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
         _pullMaxSize.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        // pull new age row
+        
+        // stub for the first column
+        new Composite(_root, SWT.NONE).setLayoutData(new GridData(1, 1));
+        
+        Composite newAge = new Composite(_root, SWT.NONE);
+        newAge.setLayout(new GridLayout(2, false));
+        newAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        _pullNewAgeLabel = new Label(newAge, SWT.NONE);
+        _pullNewAgeLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        
+        _pullNewAge = new Combo(newAge, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+        _pullNewAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         // pull private row
         
@@ -589,6 +606,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         pullStrategy.includePBEMessages = _pullPBE.getSelection();
         pullStrategy.includePrivateMessages = _pullPrivate.getSelection();
         pullStrategy.maxKBPerMessage = SIZES[_pullMaxSize.getSelectionIndex()];
+        pullStrategy.newAgeDays = NEWAGEDAYS[_pullNewAge.getSelectionIndex()];
         
         switch (_pullPolicy.getSelectionIndex()) {
             case PULL_POLICY_ALL_DELTA: 
@@ -719,6 +737,17 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _pullPrivateLocalOnly.setEnabled(false);
         _pullPBE.setSelection(pull.includePBEMessages);
         
+        if (pull.newAgeDays <= 0)
+            _pullNewAge.select(0);
+        else if (pull.newAgeDays <= 7)
+            _pullNewAge.select(1);
+        else if (pull.newAgeDays <= 14)
+            _pullNewAge.select(2);
+        else if (pull.newAgeDays <= 32)
+            _pullNewAge.select(3);
+        else
+            _pullNewAge.select(4);
+        
         long last = _archive.getLastSyncTime();
         if (last > 0)
             _lastSync.setText(Constants.getDateTime(last));
@@ -789,6 +818,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _failuresLabel.setFont(theme.DEFAULT_FONT);
         _failures.setFont(theme.DEFAULT_FONT);
         _backOffOnFailures.setFont(theme.DEFAULT_FONT);
+        _pullNewAge.setFont(theme.DEFAULT_FONT);
+        _pullNewAgeLabel.setFont(theme.DEFAULT_FONT);
     
         _locationAdvanced.setFont(theme.BUTTON_FONT);
         _nextSyncNow.setFont(theme.BUTTON_FONT);
@@ -834,6 +865,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private static final String T_SYNC_DELAY_SUFFIX = "syndie.gui.syndicatordetailhttparchive.syncdelaysuffix";
     private static final String T_SAVE = "syndie.gui.syndicatordetailhttparchive.save";
     private static final String T_CANCEL = "syndie.gui.syndicatordetailhttparchive.cancel";
+    private static final String T_PULLNEWAGE = "syndie.gui.syndicatordetailhttparchive.pullnewage";
     
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
@@ -862,6 +894,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _save.setText(registry.getText(T_SAVE, "Save"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
 
+        _pullNewAgeLabel.setText(registry.getText(T_PULLNEWAGE, "Age to treat as 'recent'"));
+        
         translateCombos(registry);
     }
     
@@ -883,6 +917,14 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
     private static final int SYNC_DELAY_DEFAULT_INDEX = 0;
+    
+    private static final String T_NEWAGE_DEFAULT = "syndie.gui.syndicatordetailhttparchive.newage.default";
+    private static final String T_NEWAGE_1W = "syndie.gui.syndicatordetailhttparchive.newage.1w";
+    private static final String T_NEWAGE_2W = "syndie.gui.syndicatordetailhttparchive.newage.2w";
+    private static final String T_NEWAGE_1M = "syndie.gui.syndicatordetailhttparchive.newage.1m";
+    private static final String T_NEWAGE_6M = "syndie.gui.syndicatordetailhttparchive.newage.6m";
+    private static final int NEWAGE_DEFAULT_INDEX = 0;
+    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 14, 31, 183 };
     
     private void translateCombos(TranslationRegistry registry) {
         int cnt = _pushPolicy.getItemCount();
@@ -907,7 +949,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _pullPolicy.add(registry.getText(T_PULLPOLICY_ALLDELTA, "All messages we don't have"));
         _pullPolicy.add(registry.getText(T_PULLPOLICY_RECENTKNOWN, "Recent messages in forums we know"));
         _pullPolicy.add(registry.getText(T_PULLPOLICY_ALLKNOWN, "All messages in forums we know"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_PIR, "Everything the archive considers 'new' (PIR)"));
+        _pullPolicy.add(registry.getText(T_PULLPOLICY_PIR, "Everything the archive considers recent (PIR)"));
         _pullPolicy.add(registry.getText(T_PULLPOLICY_NOTHING, "Nothing"));
         _pullPolicy.select(sel);
         
@@ -917,6 +959,16 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         for (int i = 0; i < SIZES.length; i++)
             _pullMaxSize.add(SIZES[i] + registry.getText(T_SIZE_SUFFIX, " KBytes"));
         _pullMaxSize.select(sel);
+
+        cnt = _pullNewAge.getItemCount();
+        sel = (cnt > 0 ? _pullNewAge.getSelectionIndex() : NEWAGE_DEFAULT_INDEX);
+        _pullNewAge.removeAll();
+        _pullNewAge.add(registry.getText(T_NEWAGE_DEFAULT, "Whatever the archive advertises as new (default)"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_1W, "1 week"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_2W, "2 weeks"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_1M, "1 month"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_6M, "6 months"));
+        _pullNewAge.select(sel);
         
         cnt = _nextSyncDelay.getItemCount();
         sel = (cnt > 0 ? _nextSyncDelay.getSelectionIndex() : SYNC_DELAY_DEFAULT_INDEX);
