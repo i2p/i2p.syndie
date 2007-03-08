@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
@@ -25,6 +26,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -37,6 +39,7 @@ import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
@@ -71,6 +74,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private Label _metaIconArchives;
     private Label _metaIconReferences;
     private Label _metaIconAdmins;
+    private Combo _metaRefCombo;
     private MessageTree _tree;
     private MessageTree.MessageTreeListener _listener;
     private MessagePreview _preview;
@@ -325,7 +329,23 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                 if (evt.detail == SWT.TRAVERSE_RETURN) viewAdmins();
             }
         });
-        
+
+        _metaRefCombo = new Combo(_meta, SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+        _metaRefCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 9, 1));
+        ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
+        _metaRefCombo.setVisible(false);
+        _metaRefCombo.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                int idx = _metaRefCombo.getSelectionIndex();
+                if ( (idx >= 0) && (idx < _refs.size()) ) {
+                    SyndieURI uri = (SyndieURI)_refs.get(idx);
+                    _browser.view(uri);
+                }
+            }
+        });
+        //_metaRefCombo.add("Refs go here...");
+        //_metaRefCombo.add("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+
         _browser.getUI().debugMessage("browseForum.initialize: creating tree");
         if (_byForum)
             _tree = new WatchedMessageTree(_browser, _top, this, true);
@@ -474,6 +494,15 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             ((GridData)_metaIconReferences.getLayoutData()).exclude = !inclRefs;
             ((GridData)_metaIconAdmins.getLayoutData()).exclude = !admins;
         
+            if (inclRefs) {
+                addRefs(refs);
+                _metaRefCombo.setVisible(true);
+                ((GridData)_metaRefCombo.getLayoutData()).exclude = false;
+            } else {
+                _metaRefCombo.setVisible(false);
+                ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
+            }
+            
             _top.layout(true, true);
         } else {
             GridData gd = (GridData)_meta.getLayoutData();
@@ -493,6 +522,9 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             ((GridData)_metaIconReferences.getLayoutData()).exclude = true;
             ((GridData)_metaIconAdmins.getLayoutData()).exclude = true;
             
+            _metaRefCombo.setVisible(false);
+            ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
+            
             _browser.getUI().debugMessage("no avatar found for no channel: " + uri);
             gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = true;
@@ -506,6 +538,36 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _sash.layout(true, true);
     }
 
+    private List _refs;
+    private void addRefs(List refRoots) {
+        _refs = new ArrayList();
+        _metaRefCombo.removeAll();
+        ReferenceNode.walk(refRoots, new ReferenceNode.Visitor() {
+            public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                SyndieURI uri = node.getURI();
+                if (uri == null) return;
+                String name = node.getName();
+                String desc = node.getDescription();
+                String val = null;
+                if ( (name != null) && (desc != null) )
+                    val = name + ": " + desc;
+                else if (name != null)
+                    val = name;
+                else if (desc != null)
+                    val = desc;
+                else
+                    val = "";
+                if (uri.getURL() != null)
+                    val = val + " - " + uri.getURL();
+                else
+                    val = val + " - " + uri.toString();
+                
+                _metaRefCombo.add(val);
+                _refs.add(uri);
+            }
+        });
+    }
+    
     private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";
     
     public void setFilter(SyndieURI filter) { 
@@ -653,6 +715,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         
         _metaIconManageable.setFont(theme.BUTTON_FONT);
         _metaIconPostable.setFont(theme.BUTTON_FONT);
+        _metaRefCombo.setFont(theme.DEFAULT_FONT);
         
         _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
         //_root.layout(true, true);
