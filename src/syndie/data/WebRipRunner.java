@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -182,6 +183,11 @@ public class WebRipRunner implements EepGet.StatusListener {
         setState(STATE_STARTED_FETCH_HTML);
         if (get(_htmlFile, _location)) {
             setState(STATE_FETCH_HTML_COMPLETE);
+            File encoded = reencodeHTML(_htmlFile, _sourceHTMLEncoding, _ui);
+            if (encoded != _htmlFile) {
+                _htmlFile.delete();
+                _htmlFile = encoded;
+            }
             _totalSize = (int)_htmlFile.length();
             String html = parse(_htmlFile);
             setState(STATE_STARTED_FETCH_ATTACHMENTS);
@@ -508,10 +514,71 @@ public class WebRipRunner implements EepGet.StatusListener {
     public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {}
     public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {}
     public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt) {}
-    public void headerReceived(String url, int currentAttempt, String key, String val) {}
+    public void headerReceived(String url, int currentAttempt, String key, String val) {
+        // not everything out there is UTF-8, ya know... track what they say they are so that we can
+        // reencode it into UTF-8 after fetch.
+        //
+        // a more aggressive system would try to parse the HTML for things like
+        // <meta http-equiv="Content-Type" content="text/html; charset=foo" />
+        // but... well...
+        if ("Content-Encoding".equalsIgnoreCase(key)) {
+            _sourceHTMLEncoding = val.trim();
+        } else if ("charset".equalsIgnoreCase(key)) {
+            _sourceHTMLEncoding = val.trim();
+        } else if ("Content-type".equalsIgnoreCase(key) && (val.indexOf("charset=") > 0)) {
+            int start = val.indexOf("charset=") + "charset=".length();
+            if (start >= val.length()) return;
+            String charset = val.substring(start).trim();
+            if (charset.length() > 0)
+                _sourceHTMLEncoding = charset;
+        }
+    }
     public void attempting(String url) {}
+
+    private String _sourceHTMLEncoding;
+    private static final Set NO_REENCODE_ENCODINGS = new HashSet();
+    static {
+        // these are subsets of UTF-8, so we can just call them "UTF-8" and be done with it
+        NO_REENCODE_ENCODINGS.add("utf-8");
+        NO_REENCODE_ENCODINGS.add("utf8");
+        NO_REENCODE_ENCODINGS.add("ascii");
+        NO_REENCODE_ENCODINGS.add("us-ascii");
+        // latin-1 is a strict subset, right...?
+        // eh, better safe than sorry
+        //NO_REENCODE_ENCODINGS.add("iso-8859-1");
+        //NO_REENCODE_ENCODINGS.add("iso-latin-1"); // == 8859-1
+    }
+    private static File reencodeHTML(File src, String sourceEncoding, UI ui) {
+        if ( (sourceEncoding == null) || (NO_REENCODE_ENCODINGS.contains(Constants.lowercase(sourceEncoding))) )
+            return src;
+        try {
+            File out = File.createTempFile("webripReencde", ".html", src.getParentFile());
+            FileOutputStream fos = new FileOutputStream(out);
+            OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+            
+            FileInputStream fis = new FileInputStream(src);
+            InputStreamReader reader = new InputStreamReader(fis, sourceEncoding);
+            
+            char buf[] = new char[4096];
+            int read = -1;
+            while ( (read = reader.read(buf)) != -1)
+                writer.write(buf, 0, read);
+            writer.close();
+            reader.close();
+            return out;
+        } catch (IOException ioe) {
+            ui.errorMessage("Error reencoding the HTML from [" + sourceEncoding + "] to UTF-8", ioe);
+            return src;
+        }
+    }
     
     public static void main(String args[]) {
+        /*
+        File f = reencodeHTML(new File("/tmp/index.html.ja"), "ISO-2022-JP", new NullUI() {
+            public void errorMessage(String msg, Exception e) { System.err.println(msg); if (e != null) e.printStackTrace(); }
+        });
+        System.out.println("reencoded into " + f.getAbsolutePath());
+        */
         WebRipRunner runner = new WebRipRunner(new NullUI(), "file:///tmp/webrip/src/index.html", null, -1, new File("/tmp/webrip/tmp"));
         runner.configure(true, true, 16, 64, true, 0);
         runner.blockingRip();
