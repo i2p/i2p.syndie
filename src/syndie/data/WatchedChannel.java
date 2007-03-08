@@ -28,9 +28,9 @@ public class WatchedChannel {
     public boolean getImportKeys() { return _importKeys; }
     /** if true, import any bookmarks they offer to us */
     public boolean getImportBookmarks() { return _importBookmarks; }
-    /** if true, import and honor any bans they advertize */
+    /** if true, import and honor any bans they advertise */
     public boolean getImportBans() { return _importBans; }
-    /** if true, import any archives they advertize, but do not automatically sync with them */
+    /** if true, import any archives they advertise, but do not automatically sync with them */
     public boolean getImportArchives() { return _importArchives; }
 
     /** channel being watched */
@@ -44,8 +44,8 @@ public class WatchedChannel {
     public void setImportKeys(boolean imp) { _importKeys = imp; }
     /** if true, import any bookmarks they offer to us */
     public void setImportBookmarks(boolean imp) { _importBookmarks = imp; }
-    /** if true, import and honor any bans they advertize */
+    /** if true, import and honor any bans they advertise */
     public void setImportBans(boolean imp) { _importBans = imp; }
-    /** if true, import any archives they advertize, but do not automatically sync with them */
+    /** if true, import any archives they advertise, but do not automatically sync with them */
     public void setImportArchives(boolean imp) { _importArchives = imp; }
 }

@@ -90,13 +90,13 @@ public class SharedArchiveEngine {
          */
         public boolean includePBEMessages;
         /**
-         * should we only fetch messages the archive advertizes as 'recent', even if they
+         * should we only fetch messages the archive advertises as 'recent', even if they
          * have messages we would otherwise want but are flagged as 'old'?
          */
         public boolean includeRecentMessagesOnly;
         /**
          * if true, we want to use trivial single-database private information retrieval:
-         * get everything the archive advertizes as "new", and their dependencies, even if
+         * get everything the archive advertises as "new", and their dependencies, even if
          * we already have some of them.  This way the archive can't tell what we have or
          * what we want (and hence will have a much harder time profiling the user).  If
          * this flag is set, all of the other flags in the strategy are ignored.

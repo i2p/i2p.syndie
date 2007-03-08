@@ -481,7 +481,7 @@ public class ManageForumArchives implements Themeable, Translatable {
     private static final String T_TITLE = "syndie.gui.manageforumarchives.title";
 
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Archives advertized"));
+        _shell.setText(registry.getText(T_TITLE, "Archives advertised"));
         
         _colName.setText(registry.getText(T_COLNAME, "Name"));
         _colType.setText(registry.getText(T_COLTYPE, "Type"));

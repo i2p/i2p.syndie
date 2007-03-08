@@ -26,7 +26,7 @@ public class SharedArchiveBuilder {
     private DBClient _client;
     private UI _ui;
     private int _shareDelayHours;
-    /** if a message was created locally, don't advertize it as being here for at least this long */
+    /** if a message was created locally, don't advertise it as being here for at least this long */
     private int _hideLocalHours;
     private boolean _shareBanned;
     private boolean _shareReceivedOnly;
@@ -37,7 +37,7 @@ public class SharedArchiveBuilder {
         _ui = ui;
         _about = about;
         
-        setHideLocalHours(1); // don't advertize things we created locally until at least an hour has passed
+        setHideLocalHours(1); // don't advertise things we created locally until at least an hour has passed
         setShareBanned(true); // just because we have banned something doesn't mean other people need to know that
         setShareDelayHours(_about.getPublishRebuildFrequencyHours());
         setShareReceivedOnly(false);

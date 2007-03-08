@@ -41,9 +41,9 @@ public class ArchiveManager implements Translatable, Themeable {
     private Label _maxForumAgeLabel;
     private Combo _maxForumAgeCombo;
     
-    private Label _advertizedLabel;
-    private Label _advertized;
-    private Button _advertizedManage;
+    private Label _advertisedLabel;
+    private Label _advertised;
+    private Button _advertisedManage;
     
     private Label _deniableLabel;
     private Label _deniable;
@@ -95,15 +95,15 @@ public class ArchiveManager implements Translatable, Themeable {
         manageable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         manageable.setLayout(new GridLayout(3, false));
         
-        _advertizedLabel = new Label(manageable, SWT.NONE);
-        _advertizedLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _advertized = new Label(manageable, SWT.NONE);
-        _advertized.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        _advertizedManage = new Button(manageable, SWT.PUSH);
-        _advertizedManage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _advertizedManage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { manageAdvertized(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { manageAdvertized(); }
+        _advertisedLabel = new Label(manageable, SWT.NONE);
+        _advertisedLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _advertised = new Label(manageable, SWT.NONE);
+        _advertised.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _advertisedManage = new Button(manageable, SWT.PUSH);
+        _advertisedManage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _advertisedManage.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { manageAdvertised(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { manageAdvertised(); }
         });
         
         _deniableLabel = new Label(manageable, SWT.NONE);
@@ -169,9 +169,9 @@ public class ArchiveManager implements Translatable, Themeable {
         SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_browser.getClient(), mgr.getDefaultPullStrategy());
         SyndieURI uris[] = cfg.getAlternateArchives();
         if (uris != null)
-            _advertized.setText(uris.length+"");
+            _advertised.setText(uris.length+"");
         else
-            _advertized.setText(0+"");
+            _advertised.setText(0+"");
         
         _uris.clear();
         if (uris != null)
@@ -211,16 +211,16 @@ public class ArchiveManager implements Translatable, Themeable {
         _browser.getThemeRegistry().unregister(this);
     }
 
-    private static final String T_ADVERTIZED_POPUP = "syndie.gui.archivemanager.adpopup.title";
-    private static final String T_ADVERTIZED_POPUP_DESC = "syndie.gui.archivemanager.adpopup.desc";
-    private static final String T_ADVERTIZED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
-    private void manageAdvertized() {
+    private static final String T_ADVERTISED_POPUP = "syndie.gui.archivemanager.adpopup.title";
+    private static final String T_ADVERTISED_POPUP_DESC = "syndie.gui.archivemanager.adpopup.desc";
+    private static final String T_ADVERTISED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
+    private void manageAdvertised() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        s.setText(_browser.getTranslationRegistry().getText(T_ADVERTIZED_POPUP, "Advertized archives"));
+        s.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP, "Advertised archives"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         desc.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
-        desc.setText(_browser.getTranslationRegistry().getText(T_ADVERTIZED_POPUP_DESC, "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
+        desc.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP_DESC, "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
         final Table archives = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
@@ -237,7 +237,7 @@ public class ArchiveManager implements Translatable, Themeable {
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_browser.getTranslationRegistry().getText(T_ADVERTIZED_POPUP_OK, "OK"));
+        ok.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP_OK, "OK"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
@@ -263,7 +263,7 @@ public class ArchiveManager implements Translatable, Themeable {
                     _uris.add(uri);
             }
         }
-        _advertized.setText(_uris.size() + "");
+        _advertised.setText(_uris.size() + "");
     }
 
     private static final String T_BANNED_POPUP = "syndie.gui.archivemanager.bannedpopup.title";
@@ -335,9 +335,9 @@ public class ArchiveManager implements Translatable, Themeable {
         _maxForumAgeLabel.setFont(theme.DEFAULT_FONT);
         _maxForumAgeCombo.setFont(theme.DEFAULT_FONT);
 
-        _advertizedLabel.setFont(theme.DEFAULT_FONT);
-        _advertized.setFont(theme.DEFAULT_FONT);
-        _advertizedManage.setFont(theme.BUTTON_FONT);
+        _advertisedLabel.setFont(theme.DEFAULT_FONT);
+        _advertised.setFont(theme.DEFAULT_FONT);
+        _advertisedManage.setFont(theme.BUTTON_FONT);
 
         _deniableLabel.setFont(theme.DEFAULT_FONT);
         _deniable.setFont(theme.DEFAULT_FONT);
@@ -356,8 +356,8 @@ public class ArchiveManager implements Translatable, Themeable {
     private static final String T_MAXMSGAGE = "syndie.gui.archivemanager.maxmsgage";
     private static final String T_MAXFORUMSIZE = "syndie.gui.archivemanager.maxforumsize";
     private static final String T_MAXFORUMAGE = "syndie.gui.archivemanager.maxforumage";
-    private static final String T_ADVERTIZED = "syndie.gui.archivemanager.advertized";
-    private static final String T_ADVERTIZEDMANAGE = "syndie.gui.archivemanager.advertizedmanage";
+    private static final String T_ADVERTISED = "syndie.gui.archivemanager.advertised";
+    private static final String T_ADVERTISEDMANAGE = "syndie.gui.archivemanager.advertisedmanage";
     private static final String T_DENIABLE = "syndie.gui.archivemanager.deniable";
     private static final String T_DENIABLEMANAGE = "syndie.gui.archivemanager.deniablemanage";
     private static final String T_BANNED = "syndie.gui.archivemanager.banned";
@@ -371,8 +371,8 @@ public class ArchiveManager implements Translatable, Themeable {
         _maxForumSizeLabel.setText(registry.getText(T_MAXFORUMSIZE, "Max forum size:"));
         _maxForumAgeLabel.setText(registry.getText(T_MAXFORUMAGE, "Max forum age:"));
     
-        _advertizedLabel.setText(registry.getText(T_ADVERTIZED, "Advertized archives:"));
-        _advertizedManage.setText(registry.getText(T_ADVERTIZEDMANAGE, "Manage..."));
+        _advertisedLabel.setText(registry.getText(T_ADVERTISED, "Advertised archives:"));
+        _advertisedManage.setText(registry.getText(T_ADVERTISEDMANAGE, "Manage..."));
         
         _deniableLabel.setText(registry.getText(T_DENIABLE, "Deniable forums:"));
         _deniableManage.setText(registry.getText(T_DENIABLEMANAGE, "Manage..."));
