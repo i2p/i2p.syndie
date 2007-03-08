@@ -856,9 +856,9 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         for (int i = 0; i < _searchResults.size(); i++) {
             ReferenceNode node = (ReferenceNode)_searchResults.get(i);
             String str = null;
-            if (node.getName() != null)
+            if ( (node.getName() != null) && (node.getName().trim().length() > 0) )
                 str = node.getName();
-            else if (node.getDescription() != null)
+            else if ( (node.getDescription() != null) && (node.getDescription().trim().length() > 0) )
                 str = node.getDescription();
             else if (node.getURI().getScope() != null)
                 str = node.getURI().getScope().toBase64().substring(0,6);
