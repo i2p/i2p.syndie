@@ -53,6 +53,7 @@ public class PageEditor {
     private Composite _root;
     private SashForm _sash;
     private StyledText _text;
+    private TextChangeManager _textManager;
     private MaxEditor _maxEditor;
     private PageRenderer _preview;
     private MaxPreview _maxPreview;
@@ -333,6 +334,8 @@ public class PageEditor {
                 }
             }
         });
+        
+        _textManager = new TextChangeManager(_text, _browser.getUI());
     }
     
     /** helper to shove text in, adjusting the caret to the first character after the new text */
@@ -718,6 +721,7 @@ public class PageEditor {
     private static final String T_MAXEDITOR_UNMAX = "syndie.gui.pageeditor.maxeditor.unmax";
     private static final String T_MAXEDITOR_PREVIEW = "syndie.gui.pageeditor.maxeditor.preview";
     private StyledText _maxText;
+    private TextChangeManager _maxTextManager;
     private class MaxEditor {
         private Shell _shell;
         
@@ -791,6 +795,7 @@ public class PageEditor {
                 public void shellIconified(ShellEvent shellEvent) {}
             });
             
+            _maxTextManager = new TextChangeManager(_maxText, _browser.getUI());
             
             _shell.open();
             _maxText.forceFocus();
