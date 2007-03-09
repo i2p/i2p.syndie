@@ -1597,6 +1597,7 @@ public class MessageTree implements Translatable, Themeable {
 
         long dbStart = System.currentTimeMillis();
 
+        long msgId = -1;
         if (uri != null) {
             long chanId = _client.getChannelId(uri.getScope());
             String scopeName = _client.getChannelName(chanId);
@@ -1609,7 +1610,7 @@ public class MessageTree implements Translatable, Themeable {
             long messageId = -1;
             if (uri.getMessageId() != null)
                 messageId = uri.getMessageId().longValue();
-            long msgId = _client.getMessageId(chanId, messageId);
+            msgId = _client.getMessageId(chanId, messageId);
             
             //_browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
             
@@ -1708,6 +1709,8 @@ public class MessageTree implements Translatable, Themeable {
         Font f = null;
         if ( (status == DBClient.MSG_STATUS_READ) || (uri == null) ) {
             f = _browser.getThemeRegistry().getTheme().MSG_OLD_FONT;
+        } else if (msgId < 0) {
+            f = _browser.getThemeRegistry().getTheme().MSG_UNKNOWN_FONT;
         } else {
             _itemsNewUnread.add(item);
             f = _browser.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT;

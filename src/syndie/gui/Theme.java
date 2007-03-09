@@ -27,6 +27,7 @@ public class Theme {
         LINK_FONT = adjustHeight("initlink", SYSFONT, -4, Boolean.TRUE, null);
         LOG_FONT = adjustHeight("initlog", SYSFONT, -4, null, null, "Courier");
         MSG_OLD_FONT = adjustHeight("initmsgold", SYSFONT, -4, null, null); // same as msg_new_read
+        MSG_UNKNOWN_FONT = adjustHeight("initmsgunknown", SYSFONT, -4, null, Boolean.TRUE, "Courier");
         MSG_NEW_READ_FONT = adjustHeight("initmsgnewread", SYSFONT, -4, null, null);
         MSG_UNREAD_CHILD_FONT = adjustHeight("initmsgunreadchild", SYSFONT, -4, null, Boolean.TRUE);
         MSG_NEW_UNREAD_FONT = adjustHeight("initmsgnewunread", SYSFONT, -4, Boolean.TRUE, null);
@@ -56,6 +57,8 @@ public class Theme {
     public Font LOG_FONT;
     /** messages in a message tree that were marked read in bulk */
     public Font MSG_OLD_FONT;
+    /** messages in a message tree that arent known locally */
+    public Font MSG_UNKNOWN_FONT;
     /** messages in a message tree that were read after the last mark read in bulk */
     public Font MSG_NEW_READ_FONT;
     /** messages in a message tree that have not yet been read */
@@ -89,6 +92,7 @@ public class Theme {
         dispose(LINK_FONT);
         dispose(LOG_FONT);
         dispose(MSG_OLD_FONT);
+        dispose(MSG_UNKNOWN_FONT);
         dispose(MSG_NEW_READ_FONT);
         dispose(MSG_UNREAD_CHILD_FONT);
         dispose(MSG_NEW_UNREAD_FONT);
@@ -161,6 +165,7 @@ public class Theme {
         LINK_FONT = increaseFont("link", LINK_FONT);
         DEFAULT_FONT = increaseFont("default", DEFAULT_FONT);
         MSG_OLD_FONT = increaseFont("msgold", MSG_OLD_FONT);
+        MSG_UNKNOWN_FONT = increaseFont("msgunknown", MSG_UNKNOWN_FONT);
         MSG_NEW_READ_FONT = increaseFont("msgnewread", MSG_NEW_READ_FONT);
         MSG_UNREAD_CHILD_FONT = increaseFont("msgunreadchild", MSG_UNREAD_CHILD_FONT);
         MSG_NEW_UNREAD_FONT = increaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
@@ -180,6 +185,7 @@ public class Theme {
         LINK_FONT = decreaseFont("link", LINK_FONT);
         DEFAULT_FONT = decreaseFont("default", DEFAULT_FONT);
         MSG_OLD_FONT = decreaseFont("msgold", MSG_OLD_FONT);
+        MSG_UNKNOWN_FONT = decreaseFont("msgunknown", MSG_UNKNOWN_FONT);
         MSG_NEW_READ_FONT = decreaseFont("msgnewread", MSG_NEW_READ_FONT);
         MSG_UNREAD_CHILD_FONT = decreaseFont("msgunreadchild", MSG_UNREAD_CHILD_FONT);
         MSG_NEW_UNREAD_FONT = decreaseFont("msgnewunread", MSG_NEW_UNREAD_FONT);
@@ -202,6 +208,7 @@ public class Theme {
         store(props, LOG_FONT, face, size, "theme.logfont");
         store(props, LINK_FONT, face, size, "theme.linkfont");
         store(props, MSG_OLD_FONT, face, size, "theme.msgoldfont");
+        store(props, MSG_UNKNOWN_FONT, face, size, "theme.msgunknownfont");
         store(props, MSG_NEW_READ_FONT, face, size, "theme.msgnewreadfont");
         store(props, MSG_UNREAD_CHILD_FONT, face, size, "theme.msgunreadchildfont");
         store(props, MSG_NEW_UNREAD_FONT, face, size, "theme.msgnewunreadfont");
@@ -239,6 +246,7 @@ public class Theme {
         LOG_FONT = load(props, LOG_FONT, "theme.logfont");
         LINK_FONT = load(props, LINK_FONT, "theme.linkfont");
         MSG_OLD_FONT = load(props, MSG_OLD_FONT, "theme.msgoldfont");
+        MSG_UNKNOWN_FONT = load(props, MSG_UNKNOWN_FONT, "theme.msgunknownfont");
         MSG_NEW_READ_FONT = load(props, MSG_NEW_READ_FONT, "theme.msgnewreadfont");
         MSG_UNREAD_CHILD_FONT = load(props, MSG_UNREAD_CHILD_FONT, "theme.msgunreadchildfont");
         MSG_NEW_UNREAD_FONT = load(props, MSG_NEW_UNREAD_FONT, "theme.msgnewunreadfont");
