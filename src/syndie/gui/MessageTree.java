@@ -1681,7 +1681,7 @@ public class MessageTree implements Translatable, Themeable {
                 status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
-                subj = "";
+                subj = _browser.getTranslationRegistry().getText(T_SUBJECT_NOT_KNOWN_LOCALLY, "Message is not known locally");
                 if (scopeName != null)
                     auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 else
@@ -1731,6 +1731,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";
+    private static final String T_SUBJECT_NOT_KNOWN_LOCALLY = "syndie.gui.messagetree.subjectnotknownlocally";
     
     protected void setMinWidth(TreeColumn col, String txt, int extra, int min) {
         int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
