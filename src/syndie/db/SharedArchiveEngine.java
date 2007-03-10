@@ -175,6 +175,7 @@ public class SharedArchiveEngine {
             sendHashcashForAll = false;
             sendLocalNewOnly = false;
             sendNothing = false;
+            sendMaxAge = 7;
         }
         public PushStrategy(String serialized) {
             this();
@@ -199,6 +200,15 @@ public class SharedArchiveEngine {
                     if (end > 0) {
                         try {
                             maxKBTotal = Integer.parseInt(serialized.substring(maxTotIdx + "MaxTotal".length(), end));
+                        } catch (NumberFormatException nfe) {}
+                    }
+                }
+                int maxAgeIdx = serialized.indexOf("MaxAge");
+                if (maxAgeIdx >= 0) {
+                    int end = serialized.indexOf(' ', maxAgeIdx);
+                    if (end > 0) {
+                        try {
+                            sendMaxAge = Integer.parseInt(serialized.substring(maxAgeIdx + "MaxAge".length(), end));
                         } catch (NumberFormatException nfe) {}
                     }
                 }
@@ -230,6 +240,8 @@ public class SharedArchiveEngine {
         public boolean sendLocalNewOnly;
         /** noop strategy - dont send anything */
         public boolean sendNothing;
+        /** max age in days of things to send - less than 1 means infinite */
+        public int sendMaxAge;
         
         public String toString() {
             StringBuffer buf = new StringBuffer();
@@ -246,13 +258,15 @@ public class SharedArchiveEngine {
                         buf.append("MaxPerMsg").append(maxKBPerMessage).append(" ");
                 if (maxKBTotal >= 0)
                     buf.append("MaxTotal").append(maxKBTotal).append(" ");
+                if (sendMaxAge >= 0)
+                    buf.append("MaxAge").append(sendMaxAge).append(" ");
             }
             return buf.toString();
         }
         public String serialize() { return toString(); }
     }
     
-    private static final long PERIOD_TOO_OLD = 7*24*60*60*1000;
+    //private static final long PERIOD_TOO_OLD = 7*24*60*60*1000;
     
     /** 
      * pick out what elements of the shared archive we want, according to the given
@@ -491,9 +505,11 @@ public class SharedArchiveEngine {
                     }
                 }
                 
-                if (importDate + PERIOD_TOO_OLD < System.currentTimeMillis()) {
-                    ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
-                    continue;
+                if (strategy.sendMaxAge > 0) {
+                    if (importDate + 7*24*60*60*1000L*strategy.sendMaxAge < System.currentTimeMillis()) {
+                        ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
+                        continue;
+                    }
                 }
 
                 if ( (strategy.maxKBTotal > 0) && (lenKB + totalKB > strategy.maxKBTotal)) {

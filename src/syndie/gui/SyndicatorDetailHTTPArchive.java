@@ -63,6 +63,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private Combo _pullMaxSize;
     private Label _pullNewAgeLabel;
     private Combo _pullNewAge;
+    private Label _pushAgeLabel;
+    private Combo _pushAge;
     private Button _pullPrivate;
     private Button _pullPrivateLocalOnly;
     private Button _pullPBE;
@@ -257,6 +259,21 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         _pullNewAge = new Combo(newAge, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
         _pullNewAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        // push age row
+        
+        // stub for the first column
+        new Composite(_root, SWT.NONE).setLayoutData(new GridData(1, 1));
+        
+        Composite pushAge = new Composite(_root, SWT.NONE);
+        pushAge.setLayout(new GridLayout(2, false));
+        pushAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        _pushAgeLabel = new Label(pushAge, SWT.NONE);
+        _pushAgeLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        
+        _pushAge = new Combo(pushAge, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+        _pushAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         // pull private row
         
@@ -653,6 +670,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         SharedArchiveEngine.PushStrategy pushStrategy = new SharedArchiveEngine.PushStrategy();
         
         pushStrategy.maxKBPerMessage = SIZES[_pushMaxSize.getSelectionIndex()];
+        pushStrategy.sendMaxAge = SENDAGEDAYS[_pushAge.getSelectionIndex()];
         
         switch (_pushPolicy.getSelectionIndex()) {
             case PUSH_POLICY_ALL_DELTA: 
@@ -748,6 +766,21 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         else
             _pullNewAge.select(4);
         
+        if (push.sendMaxAge <= 0)
+            _pushAge.select(6);
+        else if (push.sendMaxAge <= 7)
+            _pushAge.select(0);
+        else if (push.sendMaxAge <= 14)
+            _pushAge.select(1);
+        else if (push.sendMaxAge <= 31)
+            _pushAge.select(2);
+        else if (push.sendMaxAge <= 64)
+            _pushAge.select(3);
+        else if (push.sendMaxAge <= 186)
+            _pushAge.select(4);
+        else // 1y
+            _pushAge.select(5);
+        
         long last = _archive.getLastSyncTime();
         if (last > 0)
             _lastSync.setText(Constants.getDateTime(last));
@@ -820,6 +853,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _backOffOnFailures.setFont(theme.DEFAULT_FONT);
         _pullNewAge.setFont(theme.DEFAULT_FONT);
         _pullNewAgeLabel.setFont(theme.DEFAULT_FONT);
+        _pushAge.setFont(theme.DEFAULT_FONT);
+        _pushAgeLabel.setFont(theme.DEFAULT_FONT);
     
         _locationAdvanced.setFont(theme.BUTTON_FONT);
         _nextSyncNow.setFont(theme.BUTTON_FONT);
@@ -866,6 +901,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private static final String T_SAVE = "syndie.gui.syndicatordetailhttparchive.save";
     private static final String T_CANCEL = "syndie.gui.syndicatordetailhttparchive.cancel";
     private static final String T_PULLNEWAGE = "syndie.gui.syndicatordetailhttparchive.pullnewage";
+    private static final String T_PUSHAGE = "syndie.gui.syndicatordetailhttparchive.pushage";
     
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
@@ -895,6 +931,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
 
         _pullNewAgeLabel.setText(registry.getText(T_PULLNEWAGE, "Age to treat as 'recent'"));
+        _pushAgeLabel.setText(registry.getText(T_PUSHAGE, "Oldest message to send"));
         
         translateCombos(registry);
     }
@@ -926,6 +963,16 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private static final int NEWAGE_DEFAULT_INDEX = 0;
     private static final int[] NEWAGEDAYS = new int[] { -1, 7, 14, 31, 183 };
     
+    private static final String T_SENDAGE_1W = "syndie.gui.syndicatordetailhttparchive.sendage.1w";
+    private static final String T_SENDAGE_2W = "syndie.gui.syndicatordetailhttparchive.sendage.2w";
+    private static final String T_SENDAGE_1M = "syndie.gui.syndicatordetailhttparchive.sendage.1m";
+    private static final String T_SENDAGE_2M = "syndie.gui.syndicatordetailhttparchive.sendage.2m";
+    private static final String T_SENDAGE_6M = "syndie.gui.syndicatordetailhttparchive.sendage.6m";
+    private static final String T_SENDAGE_1Y = "syndie.gui.syndicatordetailhttparchive.sendage.1y";
+    private static final String T_SENDAGE_INF = "syndie.gui.syndicatordetailhttparchive.sendage.inf";
+    private static final int SENDAGE_DEFAULT_INDEX = 0;
+    private static final int[] SENDAGEDAYS = new int[] { 7, 31, 62, 183, 365, -1 };
+        
     private void translateCombos(TranslationRegistry registry) {
         int cnt = _pushPolicy.getItemCount();
         int sel = (cnt > 0 ? _pushPolicy.getSelectionIndex() : PUSH_POLICY_DEFAULT);
@@ -965,10 +1012,21 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         _pullNewAge.removeAll();
         _pullNewAge.add(registry.getText(T_NEWAGE_DEFAULT, "Whatever the archive advertises as new (default)"));
         _pullNewAge.add(registry.getText(T_NEWAGE_1W, "1 week"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_2W, "2 weeks"));
         _pullNewAge.add(registry.getText(T_NEWAGE_1M, "1 month"));
         _pullNewAge.add(registry.getText(T_NEWAGE_6M, "6 months"));
         _pullNewAge.select(sel);
+
+        cnt = _pushAge.getItemCount();
+        sel = (cnt > 0 ? _pushAge.getSelectionIndex() : SENDAGE_DEFAULT_INDEX);
+        _pushAge.removeAll();
+        _pushAge.add(registry.getText(T_SENDAGE_1W, "1 week"));
+        _pushAge.add(registry.getText(T_SENDAGE_2W, "2 weeks"));
+        _pushAge.add(registry.getText(T_SENDAGE_1M, "1 month"));
+        _pushAge.add(registry.getText(T_SENDAGE_2M, "2 months"));
+        _pushAge.add(registry.getText(T_SENDAGE_6M, "6 months"));
+        _pushAge.add(registry.getText(T_SENDAGE_1Y, "1 year"));
+        _pushAge.add(registry.getText(T_SENDAGE_INF, "Unlimited (only use if your clock is off)"));
+        _pushAge.select(sel);
         
         cnt = _nextSyncDelay.getItemCount();
         sel = (cnt > 0 ? _nextSyncDelay.getSelectionIndex() : SYNC_DELAY_DEFAULT_INDEX);
