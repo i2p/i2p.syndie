@@ -389,14 +389,17 @@ class SyncInboundFetcher {
         public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
             _manager.getUI().statusMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
             synchronized (DataImporter.this) {
-                _actions.add(action);
-                _files.add(datafile);
-                _toDelete.add(delete ? Boolean.TRUE : Boolean.FALSE);
+                if (!_actions.contains(action)) {
+                    _actions.add(action);
+                    _files.add(datafile);
+                    _toDelete.add(delete ? Boolean.TRUE : Boolean.FALSE);
+                }
                 DataImporter.this.notifyAll();
             }
         }
         
         public void complete() {
+            _manager.getUI().statusMessage(Thread.currentThread().getName() + ": No more imports");
             synchronized (DataImporter.this) {
                 _complete = true;
                 DataImporter.this.notifyAll();
@@ -405,14 +408,17 @@ class SyncInboundFetcher {
         
         public void finishQueue() { 
             while (true) {
+                int remaining = 0;
                 try {
                     synchronized (DataImporter.this) {
-                        if (_actions.size() == 0)
+                        remaining = _actions.size();
+                        if (remaining <= 0)
                             return;
                         else
                             DataImporter.this.wait(1000);
                     }
                 } catch (InterruptedException ie) {}
+                _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Waiting for the pending " + remaining + " import action queue to clear...");
             }
         }
         
@@ -463,6 +469,11 @@ class SyncInboundFetcher {
             }
         } catch (IOException ioe) {
             action.importFailed("Error reading", ioe);
+        } catch (Exception e) {
+            action.importFailed("Internal error importing", e);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            action.importFailed("Internal error importing: " + t.getMessage(), null);
         } finally {
             if (delete)
                 datafile.delete();
