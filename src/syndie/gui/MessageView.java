@@ -650,14 +650,16 @@ public class MessageView implements Translatable, Themeable {
                 _maxView.dispose();
                 _maxView = null;
             } else {
-                int page = 0;
+                int tab = 0;
+                int tabs = 0;
                 if (_tabFolder != null) {
-                    page = _tabFolder.getSelectionIndex();
+                    tab = _tabFolder.getSelectionIndex();
+                    tabs = _tabs.length;
                 }
-
-                // page may be beyond the last page
-                if (_browser.getClient().getMessagePageConfig(_msgId, page) != null) {
-                    SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), page);
+                int pages = (_body == null ? 1 : _body.length);
+                int attachments = (_attachmentPreviews == null ? 0 : _attachmentPreviews.length);
+                if (tab < pages) {
+                    SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), tab+1);
                     _maxView = new MaxView(_browser, _root.getShell(), uri, new MaxView.MaxListener() {
                         public void unmax(MaxView view) {
                             synchronized (MessageView.this) {
@@ -666,7 +668,9 @@ public class MessageView implements Translatable, Themeable {
                             view.dispose();
                         }
                     });
-                } else {
+                } else if (tab >= tabs - attachments) {
+                    int attachStart = tabs - attachments;
+                    _attachmentPreviews[tab-attachStart].maximize();
                     //_browser.getUI().debugMessage("no pages?");
                 }
             }

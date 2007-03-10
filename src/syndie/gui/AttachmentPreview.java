@@ -11,6 +11,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -18,6 +19,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
@@ -106,6 +108,63 @@ class AttachmentPreview implements Translatable, Themeable {
         _dialog = new FileDialog(_root.getShell(), SWT.SAVE);
         _browser.getTranslationRegistry().register(this);
         _browser.getThemeRegistry().register(this);
+    }
+    
+    private static final String T_MAXVIEW_UNMAX = "syndie.gui.attachmentpreview.unmax";
+    private Shell _maxShell;
+    private ImageCanvas _maxImage;
+    
+    public void maximize() {
+        if ( (_preview == null) || (_preview.getImage() == null) ) return;
+        if (_maxShell != null) {
+            unmax();
+            return;
+        }
+        
+        _maxShell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+        _maxShell.setLayout(new GridLayout(1, true));
+        Button unmax = new Button(_maxShell, SWT.PUSH);
+        unmax.setText(_browser.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+        unmax.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
+        unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+
+        _maxImage = new ImageCanvas(_maxShell, true);
+        _maxImage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 1));
+        _maxImage.setImage(_preview.getImage());
+
+        Monitor mon[] = _root.getDisplay().getMonitors();
+        Rectangle rect = null;
+        if ( (mon != null) && (mon.length > 1) )
+            rect = mon[0].getClientArea();
+        else
+            rect = _parent.getDisplay().getClientArea();
+        _maxShell.setSize(rect.width, rect.height);
+        _maxShell.setMaximized(true);
+
+        _maxShell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) {
+                evt.doit = false;
+                unmax();
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+
+        unmax.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { unmax(); }
+            private void fire() { unmax(); }
+        });
+
+        _maxShell.open();
+    }
+    private void unmax() {
+        if ( (_maxShell != null) && (!_maxShell.isDisposed()) )
+            _maxShell.dispose();
+        _maxShell = null;
+        _maxImage = null; // leave the image disposal to the _preview
     }
     
     public void showURI(SyndieURI uri) {
@@ -210,6 +269,8 @@ class AttachmentPreview implements Translatable, Themeable {
     public void dispose() { 
         _browser.getTranslationRegistry().unregister(this); 
         _browser.getThemeRegistry().unregister(this);
+        unmax();
+        _preview.disposeImage();
     }
     
     private static final String T_SAVE_OK_TITLE = "syndie.gui.attachmentpreviewpopup.save.ok.title";
