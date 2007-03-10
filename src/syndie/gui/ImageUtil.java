@@ -2,6 +2,9 @@ package syndie.gui;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,6 +35,7 @@ public class ImageUtil {
     private static final Set _indisposableImages = Collections.synchronizedSet(new HashSet());
     /** resource name to Image */
     private static final Map _loadedResources = new HashMap();
+    private static File _tmpDir;
     
     private static final Timer _timer = new Timer("image util init", new NullUI() {
         //public void debugMessage(String msg) { System.out.println(msg); }
@@ -142,8 +146,9 @@ public class ImageUtil {
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
-    public static void init() {
+    public static void init(File tmpDir) {
         _timer.addEvent("init begin");
+        _tmpDir = tmpDir;
         synchronized (ImageUtil.class) {
             if (_initialized) return;
             _initialized = true;
@@ -249,10 +254,40 @@ public class ImageUtil {
         return scaled;
     }
     
-    public static Image createImage(byte data[]) {
+    public static Image createImage(byte data[]) { return createImage(data, _tmpDir); }
+    public static Image createMemoryImage(byte data[]) {
         if (data == null) return null;
         try {
             return new Image(Display.getDefault(), new ByteArrayInputStream(data));
+        } catch (IllegalArgumentException iae) {
+            return null;
+        } catch (SWTException se) {
+            return null;
+        }
+    }
+    
+    /**
+     * swt is optimized for loading images from disk, so lets exploit that by
+     * writing to disk, loading it from there, and then deleting the temp file.
+     * this falls back on loading in-memory if it can't write to the disk
+     */
+    public static Image createImage(byte data[], File tmpDir) {
+        if (data == null) return null;
+        try {
+            File tmp = null;
+            try {
+                tmp = File.createTempFile("img", ".png", tmpDir);
+                FileOutputStream fos = new FileOutputStream(tmp);
+                fos.write(data);
+                fos.close();
+            } catch (IOException ioe) { 
+                tmp.delete();
+                return createMemoryImage(data);
+            }
+            
+            Image img = new Image(Display.getDefault(), tmp.getAbsolutePath()); //new ByteArrayInputStream(data));
+            tmp.delete();
+            return img;
         } catch (IllegalArgumentException iae) {
             return null;
         } catch (SWTException se) {

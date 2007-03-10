@@ -89,6 +89,13 @@ public class PageEditor {
         preview();
     }
     
+    public long getUndoBufferSize() {
+        long rv = 0;
+        if (_maxTextManager != null) rv += _maxTextManager.getBufferSize();
+        if (_textManager != null) rv += _textManager.getBufferSize();
+        return rv;
+    }
+    
     public void dispose() {
         if (_preview != null)
             _preview.dispose();

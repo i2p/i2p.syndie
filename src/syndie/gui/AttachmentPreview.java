@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 import syndie.db.DBClient;
 
 /**
@@ -109,11 +110,15 @@ class AttachmentPreview implements Translatable, Themeable {
     
     public void showURI(SyndieURI uri) {
         if (_data != null) return;
+        Timer timer = new Timer("show attachment", _browser.getUI());
         long scope = _client.getChannelId(uri.getScope());
         long msgId = _client.getMessageId(scope, uri.getMessageId().longValue());
+        timer.addEvent("msgId fetch");
         int internalAttachmentNum = uri.getAttachment().intValue()-1;
         Properties cfg = _client.getMessageAttachmentConfig(msgId, internalAttachmentNum);
+        timer.addEvent("cfg fetched");
         int bytes = _client.getMessageAttachmentSize(msgId, internalAttachmentNum);
+        timer.addEvent("size fetched");
         
         if (cfg.containsKey(Constants.MSG_ATTACH_NAME))
             _name.setText(cfg.getProperty(Constants.MSG_ATTACH_NAME));
@@ -131,23 +136,30 @@ class AttachmentPreview implements Translatable, Themeable {
         
         _size.setText((bytes+1023)/1024 + " KB");
         
+        timer.addEvent("options displayed");
         _data = _client.getMessageAttachmentData(msgId, internalAttachmentNum);
-        showPreviewIfPossible(type, _data);
+        timer.addEvent("data fetched");
+        showPreviewIfPossible(type, _data, timer);
+        timer.addEvent("data displayed");
         
         _saveAs.setText(_name.getText());
+        timer.complete();
         
         //_shell.pack();
         //_shell.open();
     }
     
-    private void showPreviewIfPossible(String contentType, byte data[]) {
+    private void showPreviewIfPossible(String contentType, byte data[], Timer timer) {
         Image old = _preview.getImage();
         ImageUtil.dispose(old);
+        timer.addEvent("old disposed");
         boolean show = false;
         if (contentType.startsWith("image/") && (data != null)) {
-            Image img = ImageUtil.createImage(data);
+            Image img = ImageUtil.createImage(data, _browser.getClient().getTempDir());
+            timer.addEvent("new image created");
             if (img != null) {
                 _preview.setImage(img);
+                timer.addEvent("new image set on preview");
                 show = true;
             } else {
                 show = false;
@@ -155,6 +167,7 @@ class AttachmentPreview implements Translatable, Themeable {
         }
         if (show) {
             _preview.setVisible(true);
+            timer.addEvent("new image preview shown");
             _browser.getUI().debugMessage("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
             //gd.exclude = false;
         } else {

@@ -211,20 +211,24 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     /** called by the log thread */
     private void append(final List records) {
         if (records.size() <= 0) return;
-        while (records.size() > 0) {
-            Record r = (Record)records.remove(0);
-            if (r.msg != null) {
-                _outBuf.append(ts(r.when) + ":");
-                _outBuf.append(" " + r.msg + "\n");
+        try {
+            while (records.size() > 0) {
+                Record r = (Record)records.remove(0);
+                if (r.msg != null) {
+                    _outBuf.append(ts(r.when) + ":");
+                    _outBuf.append(" " + r.msg + "\n");
+                }
+                if (r.e != null) {
+                    StringWriter out = new StringWriter();
+                    r.e.printStackTrace(new PrintWriter(out));
+                    _outBuf.append(ts(r.when));
+                    _outBuf.append("\n" + out.getBuffer().toString() + "\n");
+                }
             }
-            if (r.e != null) {
-                StringWriter out = new StringWriter();
-                r.e.printStackTrace(new PrintWriter(out));
-                _outBuf.append(ts(r.when));
-                _outBuf.append("\n" + out.getBuffer().toString() + "\n");
-            }
+            redrawOut();
+        } catch (OutOfMemoryError oom) {
+            System.err.println("OOM appending to the log tab");
         }
-        redrawOut();
     }
     private void redrawOut() {
         // add some newlines so when we scroll, we go to the beginning of a line

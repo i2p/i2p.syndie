@@ -187,17 +187,39 @@ public class MessageView implements Translatable, Themeable {
         //showPage();
         //_footerPage.select(_page-1);
     }
+    public void viewAttachment(int attachment) {
+        if (attachment <= 0) return; // 1-indexed
+        
+        if (_tabFolder != null) {
+            int attachments = getMessage().getAttachmentCount();
+            int tabs = _tabs.length;
+            // attachment tabs are at the end
+            int tab = tabs - attachments + attachment - 1;
+            if ( (tab >= 0) && (tab < tabs) ) {
+                final SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), attachment);
+                _attachmentPreviews[attachment-1].showURI(uri);
+                _tabFolder.setSelection(_tabs[tab]);
+            }
+        }
+    }
     
     public boolean isKnownLocally() { return _author != null; }
 
+    private MessageInfo _msg;
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )
             return null;
         long chanId = _client.getChannelId(_uri.getScope());
-        MessageInfo msg = _client.getMessage(chanId, _uri.getMessageId());
-        if (msg != null)
-            _msgId = msg.getInternalId();
-        return msg;
+        long msgId = _client.getMessageId(chanId, _uri.getMessageId().longValue());
+        if (msgId == _msgId) {
+            return _msg;
+        } else {
+            MessageInfo msg = _client.getMessage(chanId, _uri.getMessageId());
+            if (msg != null)
+                _msgId = msg.getInternalId();
+            _msg = msg;
+            return msg;
+        }
     }
     
     private void showPage(Timer timer) {
@@ -410,6 +432,7 @@ public class MessageView implements Translatable, Themeable {
         public int getCount() { return _count; }
     }
     
+    private static final boolean DEFERRED_ATTACHMENT_PREVIEW = false;
     private void initBody(final MessageInfo msg, Timer timer) {
         if (msg == null) return;
         timer.addEvent("initBody");
@@ -547,13 +570,17 @@ public class MessageView implements Translatable, Themeable {
             
                 final int toff = off;
                 final int preview = i;
-                _tabFolder.addSelectionListener(new FireSelectionListener() {
-                    public void fire() {
-                        if (_tabFolder.getSelection() == _tabs[toff]) {
-                            _attachmentPreviews[preview].showURI(uri);
+                if (DEFERRED_ATTACHMENT_PREVIEW) {
+                    _tabFolder.addSelectionListener(new FireSelectionListener() {
+                        public void fire() {
+                            if (_tabFolder.getSelection() == _tabs[toff]) {
+                                _attachmentPreviews[preview].showURI(uri);
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+                    _attachmentPreviews[preview].showURI(uri);
+                }
             }
         }
         //configGoTo(msgs, id, threadSize);

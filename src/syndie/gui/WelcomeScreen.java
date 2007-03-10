@@ -61,7 +61,7 @@ public class WelcomeScreen implements Themeable, Translatable {
         _browser = browser;
         _lsnr = lsnr;
         _avatarImages = new ArrayList();
-        ImageUtil.init();
+        ImageUtil.init(browser.getClient().getTempDir());
         initComponents();
     }
     

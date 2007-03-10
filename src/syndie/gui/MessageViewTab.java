@@ -71,6 +71,8 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     public void show(SyndieURI uri) {
         if (uri.getPage() != null)
             _view.viewPage(uri.getPage().intValue());
+        else if (uri.getAttachment() != null)
+            _view.viewAttachment(uri.getAttachment().intValue());
     }
     
     public void toggleMaxView() { _view.toggleMaxView(); }

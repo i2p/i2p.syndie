@@ -311,6 +311,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     /** save the state of the message so if there is a crash / exit / etc, it is resumeable */
     private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
+    private static final String SQL_POSTPONE_CLEANUP = "DELETE FROm nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion < ?";
     void saveState() {
         if (!_modifiedSinceSave || !_enableSave) return;
         long stateId = _postponeId;
@@ -332,6 +333,16 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             stmt.setLong(2, stateId);
             stmt.setInt(3, version);
             stmt.setString(4, state);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+
+            
+            // if that didn't fail, delete all of the older versions
+            stmt = con.prepareStatement(SQL_POSTPONE_CLEANUP);
+            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(2, stateId);
+            stmt.setInt(3, version);
             stmt.executeUpdate();
             stmt.close();
             stmt = null;
@@ -521,20 +532,34 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
      * and there is no substantial padding on the body (only up to the next 16 byte boundary)
      */
     public String serializeStateToB64(long postponementId) {
-        byte data[] = null;
         try {
-            data = serializeState();
-        } catch (IOException ioe) {
-            // this is writing to memory...
-            _browser.getUI().errorMessage("Internal error serializing message state", ioe);
+            byte data[] = null;
+            try {
+                data = serializeState();
+            } catch (IOException ioe) {
+                // this is writing to memory...
+                _browser.getUI().errorMessage("Internal error serializing message state", ioe);
+                return null;
+            }
+            byte salt[] = new byte[16];
+            byte encr[] = _browser.getClient().pbeEncrypt(data, salt);
+            String rv = Base64.encode(salt) + Base64.encode(encr);
+            _postponeId = postponementId;
+            _postponeVersion++;
+            _browser.getUI().debugMessage("serialized state to " + encr.length + " bytes (" + rv.length() + " base64 encoded...)");
+            return rv;
+        } catch (OutOfMemoryError oom) {
+            _browser.getUI().errorMessage("Ran out of memory serializing the state.  page buffers: " + countPageUndoBuffers() + " bytes");
             return null;
         }
-        byte salt[] = new byte[16];
-        byte encr[] = _browser.getClient().pbeEncrypt(data, salt);
-        String rv = Base64.encode(salt) + Base64.encode(encr);
-        _postponeId = postponementId;
-        _postponeVersion++;
-        _browser.getUI().debugMessage("serialized state to " + encr.length + " bytes (" + rv.length() + " base64 encoded...)");
+    }
+    
+    private long countPageUndoBuffers() {
+        long rv = 0;
+        for (int i = 0; i < _pageEditors.size(); i++) {
+            PageEditor ed = (PageEditor)_pageEditors.get(i);
+            rv += ed.getUndoBufferSize();
+        }
         return rv;
     }
     

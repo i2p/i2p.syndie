@@ -91,9 +91,19 @@ public class TextChangeManager {
         });
     }
     
+    public long getBufferSize() {
+        long rv = 0;
+        for (int i = 0; i < _undoable.size(); i++)
+            rv += ((Memento)_undoable.get(i)).size();
+        for (int i = 0; i < _redoable.size(); i++)
+            rv += ((Memento)_redoable.get(i)).size();
+        return rv;
+    }
+    
     public interface Memento {
         public void redo();
         public void undo();
+        public long size();
     }
     
     private void redo() {
@@ -144,6 +154,7 @@ public class TextChangeManager {
             _text.setCaretOffset(_afterCaret);
             _text.setTopPixel(_afterScroll);
         }
+        public long size() { return _before.length() + _after.length(); }
     }
     
     public static void main(String args[]) {

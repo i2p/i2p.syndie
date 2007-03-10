@@ -47,6 +47,8 @@ public final class PageRendererThread implements Runnable {
                     //System.out.println("async render time: " + renderTime);
                 } catch (Exception e) {
                     e.printStackTrace();
+                } catch (OutOfMemoryError oom) {
+                    oom.printStackTrace();
                 }
             }
             cur = null;

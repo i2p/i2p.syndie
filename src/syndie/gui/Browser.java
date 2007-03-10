@@ -231,7 +231,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         timer.addEvent("begin initComponents");
         ColorUtil.init();
         timer.addEvent("color init");
-        ImageUtil.init();
+        ImageUtil.init(_client.getTempDir());
         timer.addEvent("image init");
         SpellUtil.init();
         timer.addEvent("spell init");
