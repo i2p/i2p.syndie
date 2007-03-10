@@ -2631,6 +2631,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private static final Exception NO_CAUSE = new Exception();
     private static final List NO_LOCATIONS = new ArrayList(0);
+    
+    private static final Integer TYPE_ORDER_ERROR = new Integer(0);
+    private static final Integer TYPE_ORDER_STATUS = new Integer(1);
+    private static final Integer TYPE_ORDER_DEBUG = new Integer(2);
+    private static final Integer TYPE_ORDER_COMMAND_COMPLETE = new Integer(3);
+
     private class UIListenerPusher implements Runnable {
         private List _errMsgs;
         private List _errCauses;
@@ -2667,29 +2673,24 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                         if (_typeOrder.size() <= 0) {
                             UIListenerPusher.this.wait();
                         } else {
-                            int type = ((Integer)_typeOrder.remove(0)).intValue();
-                            switch (type) {
-                                case 0: // errors
-                                    errMsg = (String)_errMsgs.remove(0);
-                                    errCause = (Exception)_errCauses.remove(0);
-                                    if (errCause == NO_CAUSE)
-                                        errCause = null;
-                                    break;
-                                case 1: // status msgs
-                                    statusMsg = (String)_statusMsgs.remove(0);
-                                    break;
-                                case 2: // debug
-                                    debugMsg = (String)_debugMsgs.remove(0);
-                                    debugCause = (Exception)_debugCauses.remove(0);
-                                    if (debugCause == NO_CAUSE)
-                                        debugCause = null;
-                                    break;
-                                case 3: // complete
-                                    completeStatus = (Integer)_completeStatus.remove(0);
-                                    completeLocation = (List)_completeLocations.remove(0);
-                                    if (completeLocation == NO_LOCATIONS)
-                                        completeLocation = null;
-                                    break;
+                            Object type = _typeOrder.remove(0);
+                            if (type == TYPE_ORDER_ERROR) {
+                                errMsg = (String)_errMsgs.remove(0);
+                                errCause = (Exception)_errCauses.remove(0);
+                                if (errCause == NO_CAUSE)
+                                    errCause = null;
+                            } else if (type == TYPE_ORDER_STATUS) {
+                                statusMsg = (String)_statusMsgs.remove(0);
+                            } else if (type == TYPE_ORDER_DEBUG) {
+                                debugMsg = (String)_debugMsgs.remove(0);
+                                debugCause = (Exception)_debugCauses.remove(0);
+                                if (debugCause == NO_CAUSE)
+                                    debugCause = null;
+                            } else if (type == TYPE_ORDER_COMMAND_COMPLETE) {
+                                completeStatus = (Integer)_completeStatus.remove(0);
+                                completeLocation = (List)_completeLocations.remove(0);
+                                if (completeLocation == NO_LOCATIONS)
+                                    completeLocation = null;
                             }
                         }
                     }
@@ -2712,7 +2713,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         void errorMessage(String msg, Exception cause) {
             synchronized (UIListenerPusher.this) {
-                _typeOrder.add(new Integer(0));
+                _typeOrder.add(TYPE_ORDER_ERROR);
                 _errMsgs.add(msg);
                 if (cause == null)
                     _errCauses.add(NO_CAUSE);
@@ -2723,14 +2724,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         void statusMessage(String msg) {
             synchronized (UIListenerPusher.this) {
-                _typeOrder.add(new Integer(1));
+                _typeOrder.add(TYPE_ORDER_STATUS);
                 _statusMsgs.add(msg);
                 UIListenerPusher.this.notifyAll();
             }
         }
         void debugMessage(String msg, Exception cause) {
             synchronized (UIListenerPusher.this) {
-                _typeOrder.add(new Integer(2));
+                _typeOrder.add(TYPE_ORDER_DEBUG);
                 _debugMsgs.add(msg);
                 if (cause == null)
                     _debugCauses.add(NO_CAUSE);
@@ -2741,7 +2742,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         }
         void commandComplete(int status, List location) {
             synchronized (UIListenerPusher.this) {
-                _typeOrder.add(new Integer(3));
+                _typeOrder.add(TYPE_ORDER_COMMAND_COMPLETE);
                 _completeStatus.add(new Integer(status));
                 if (location == null)
                     _completeLocations.add(NO_LOCATIONS);

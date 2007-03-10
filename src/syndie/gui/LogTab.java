@@ -215,14 +215,12 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
             while (records.size() > 0) {
                 Record r = (Record)records.remove(0);
                 if (r.msg != null) {
-                    _outBuf.append(ts(r.when) + ":");
-                    _outBuf.append(" " + r.msg + "\n");
+                    _outBuf.insert(0, ts(r.when) + ": " + r.msg + "\n");
                 }
                 if (r.e != null) {
                     StringWriter out = new StringWriter();
                     r.e.printStackTrace(new PrintWriter(out));
-                    _outBuf.append(ts(r.when));
-                    _outBuf.append("\n" + out.getBuffer().toString() + "\n");
+                    _outBuf.insert(0, ts(r.when) + "\n" + out.getBuffer().toString() + "\n");
                 }
             }
             redrawOut();
@@ -231,29 +229,16 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         }
     }
     private void redrawOut() {
-        // add some newlines so when we scroll, we go to the beginning of a line
-        _outBuf.append("\n");
-
         int chars = _outBuf.length();
         if (chars > MAX_CHARS)
-            _outBuf.delete(0,chars-MAX_CHARS);
+            _outBuf.delete(MAX_CHARS, chars);
 
         final String str = _outBuf.toString();
         final int strlen = str.length();
-        _outBuf.setLength(strlen-1);
         Display.getDefault().asyncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
-                //_out.setRedraw(false);
                 _out.setText(str);
-                // scroll to the end
-                if (strlen > 1) {
-                    _out.setSelection(strlen-2, strlen-1);
-                    _out.showSelection();
-                    _out.clearSelection();
-                }
-                
-                //_out.setRedraw(true);
             }
         });
     }
