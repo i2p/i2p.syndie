@@ -3493,6 +3493,17 @@ class MessageEditorSpell implements Themeable, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { cancelSpell(); }
         });
         
+        _spellShell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) {
+                evt.doit = false;
+                cancelSpell();
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        
         _editor.getBrowser().getTranslationRegistry().register(this);
         _editor.getBrowser().getThemeRegistry().register(this);
     }
