@@ -260,6 +260,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
 
     public void refreshDisplay() { refreshDisplay(false); }
     public void refreshDisplay(final boolean onlineStateOnly) {
+        if (!_enableRefresh) return;
         _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(onlineStateOnly); } });
     }
     public void setEnableRefresh(boolean enable) {

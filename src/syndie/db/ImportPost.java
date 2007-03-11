@@ -84,6 +84,14 @@ public class ImportPost {
             return false;
         }
         
+        long msgId = _client.getMessageId(_uri.getScope(), _uri.getMessageId());
+        if (msgId >= 0) {
+            if (_client.getMessageDecrypted(msgId)) {
+                _ui.debugMessage("post is already decrypted fully, no need to import it again");
+                return true; // already decrypted
+            }
+        }
+        
         // first we check to ban posts by ANY author in a banned channel
         if (_client.getBannedChannels().contains(_channel)) {
             _ui.errorMessage("Not importing banned post in " + _channel.toBase64() + ": " + _uri);

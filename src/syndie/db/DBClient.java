@@ -4274,6 +4274,33 @@ public class DBClient {
         return rv;
     }
     
+    private static final String SQL_GET_MESSAGE_DECRYPTED = "SELECT true FROM channelMessage WHERE msgId = ? AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL";
+    public boolean getMessageDecrypted(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_DECRYPTED);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                boolean rv = rs.getBoolean(1);
+                if (rs.wasNull())
+                    rv = false;
+                return rv;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error determining if the message was decrypted", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }        
+    }
+    
     private static final String SQL_GET_MESSAGE_TARGET = "SELECT targetChannelId FROM channelMessage WHERE msgId = ?";
     public long getMessageTarget(long msgId) {
         PreparedStatement stmt = null;

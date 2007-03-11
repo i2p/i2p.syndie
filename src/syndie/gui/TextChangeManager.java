@@ -35,7 +35,7 @@ public class TextChangeManager {
     private int _beforeTextPosition;
     private int _beforeTextScrollPixel;
     
-    private static final int MAX_UNDOABLE = 20;
+    private static final int MAX_UNDOABLE = 200;
     
     public TextChangeManager(StyledText text, UI ui) {
         _ui = ui;

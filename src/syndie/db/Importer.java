@@ -213,12 +213,28 @@ public class Importer extends CommandImpl {
     
     protected boolean importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
         // first check that the metadata is signed by an authorized key
-        if (verifyMeta(ui, enc)) {
+        if (alreadyKnownMeta(ui, enc)) {
+            _wasAlreadyImported = true;
+            return true;
+        } else if (verifyMeta(ui, enc)) {
             return ImportMeta.process(_client, ui, enc, nymId, _passphrase, bodyPassphrase);
         } else {
             ui.errorMessage("meta does not verify");
             return false;
         }
+    }
+    private boolean alreadyKnownMeta(UI ui, Enclosure enc) {
+        SigningPublicKey pubKey = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
+        Long edition = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
+        if ( (pubKey != null) && (edition != null) ) {
+            long known = _client.getKnownEdition(pubKey.calculateHash());
+            // we could check for == here and let old meta to proceed with importing (in case they
+            // included keys/headers/etc that were subsequently removed), but the importmeta would
+            // drop off the import process prior to that, since this is an old edition.
+            if (known >= edition.longValue()) 
+                return true;
+        }
+        return false;
     }
     /**
      * The metadata message is ok if it is either signed by the channel's
