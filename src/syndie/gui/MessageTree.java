@@ -35,6 +35,8 @@ import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontMetrics;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -163,6 +165,9 @@ public class MessageTree implements Translatable, Themeable {
     
     private boolean _filterable;
     
+    /** cached avg char width for the text in the tree */
+    private int _avgCharWidth;
+    
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
     public MessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
         this(browser, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
@@ -188,6 +193,7 @@ public class MessageTree implements Translatable, Themeable {
         _bars = new ArrayList();
         _filterable = true;
         _currentPage = 0;
+        _avgCharWidth = -1;
         initComponents();
     }
     
@@ -661,9 +667,9 @@ public class MessageTree implements Translatable, Themeable {
             TreeSet tags = new TreeSet(_msgTree.getTags());
             _filterTag.add(_ctl.getTranslationRegistry().getText(T_TAG_ALL, "Any tags"));
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
-                if (tag.trim().length() > 0)
-                    _filterTag.add(tag.trim());
+                String tag = ((String)iter.next()).trim();
+                if (tag.length() > 0)
+                    _filterTag.add(tag);
             }
             if (selected >= 0) {
                 _filterTag.select(selected);
@@ -1526,8 +1532,10 @@ public class MessageTree implements Translatable, Themeable {
         long afterGetTags = System.currentTimeMillis();
         _browser.getUI().debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
         
-        for (int i = 0; i < _bars.size(); i++)
-            ((FilterBar)_bars.get(i)).populateTagCombo();
+        if (recalcTags) {
+            for (int i = 0; i < _bars.size(); i++)
+                ((FilterBar)_bars.get(i)).populateTagCombo();
+        }
         
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
@@ -1549,7 +1557,7 @@ public class MessageTree implements Translatable, Themeable {
     
     /** build up the thread in a nonvirtual tree */
     private long add(ReferenceNode node, TreeItem parent) {
-        _browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
+        //_browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
         long dbTime = 0;
         TreeItem item = null;
         if (parent == null)
@@ -1737,7 +1745,7 @@ public class MessageTree implements Translatable, Themeable {
     private static final String T_SUBJECT_NOT_KNOWN_LOCALLY = "syndie.gui.messagetree.subjectnotknownlocally";
     
     protected void setMinWidth(TreeColumn col, String txt, int extra, int min) {
-        int width = ImageUtil.getWidth(txt, _tree) + _tree.getGridLineWidth()*2 + extra;
+        int width = getWidth(txt) + _tree.getGridLineWidth()*2 + extra;
         if (width < min)
             width = min;
         if (width > 400)
@@ -1745,6 +1753,16 @@ public class MessageTree implements Translatable, Themeable {
         int existing = col.getWidth();
         if (width > existing)
             col.setWidth(width);
+    }
+    
+    protected int getWidth(String text) {
+        if (_avgCharWidth <= 0) {
+            GC gc = new GC(_tree);
+            FontMetrics fm = gc.getFontMetrics();
+            _avgCharWidth = fm.getAverageCharWidth();
+            gc.dispose();
+        }
+        return _avgCharWidth * (text == null ? 1 : text.length());
     }
     
     private void fireSelected(boolean toView, boolean nodelay) {
@@ -2102,6 +2120,8 @@ public class MessageTree implements Translatable, Themeable {
         _navPageSize.setFont(theme.DEFAULT_FONT);
         _navNext.setFont(theme.BUTTON_FONT);
         _navEnd.setFont(theme.BUTTON_FONT);
+        
+        _avgCharWidth = -1;
         
         synchronized (this) {
             _tree.setFont(theme.TREE_FONT);

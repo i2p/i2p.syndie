@@ -3304,8 +3304,13 @@ public class DBClient {
         return urisToDelete;
     }
 
+    private Properties _nymPrefsCached;
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
-    public Properties getNymPrefs() { return getNymPrefs(_nymId); }
+    public Properties getNymPrefs() { 
+        if (_nymPrefsCached == null) 
+            _nymPrefsCached = getNymPrefs(_nymId);
+        return _nymPrefsCached;
+    }
     public Properties getNymPrefs(long nymId) {
         ensureLoggedIn();
         Properties rv = new Properties();
@@ -3331,7 +3336,10 @@ public class DBClient {
     }
     private static final String SQL_SET_NYMPREFS = "INSERT INTO nymPref (nymId, prefName, prefValue) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_NYMPREFS = "DELETE FROM nymPref WHERE nymId = ?";
-    public void setNymPrefs(Properties prefs) { setNymPrefs(_nymId, prefs); }
+    public void setNymPrefs(Properties prefs) { 
+        _nymPrefsCached = (Properties)prefs.clone();
+        setNymPrefs(_nymId, prefs);
+    }
     public void setNymPrefs(long nymId, Properties prefs) {
         ensureLoggedIn();
         PreparedStatement stmt = null;

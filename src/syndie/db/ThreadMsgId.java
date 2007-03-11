@@ -18,9 +18,12 @@ public final class ThreadMsgId {
     }
     public int hashCode() { return messageId >= 0 ? (int)messageId : (int)msgId; }
     public boolean equals(Object obj) throws ClassCastException {
+        if (obj == this) return true;
         ThreadMsgId tmi = (ThreadMsgId)obj;
-        return ( ( (tmi.msgId == msgId) && (tmi.msgId >= 0) ) || 
-                 ( (tmi.messageId == messageId) && (tmi.scope != null) && (tmi.scope.equals(scope))));
+        if ( (tmi.msgId >= 0) && (msgId >= 0) )
+            return tmi.msgId == msgId;
+        else
+            return (tmi.messageId == messageId) && (tmi.scope != null) && (tmi.scope.equals(scope));
     }
     public String toString() {
         return msgId + "/" + (scope != null ? scope.toBase64().substring(0,6) + ":" + messageId : "");
