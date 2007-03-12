@@ -206,10 +206,14 @@ public class SyncManager {
         }
         for (int i = 0; i < names.size(); i++) {
             String name = (String)names.get(i);
-            SyncArchive archive = new SyncArchive(this, _client, name);
-            _archives.add(archive);
-            for (int j = 0; j < _listeners.size(); j++)
-                ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
+            try {
+                SyncArchive archive = new SyncArchive(this, _client, name);
+                _archives.add(archive);
+                for (int j = 0; j < _listeners.size(); j++)
+                    ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
+            } catch (IllegalStateException ise) {
+                _ui.errorMessage("Internal error loading the archive [" + name + "]", ise);
+            }
         }
         for (int i = 0; i < _listeners.size(); i++)
             ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);

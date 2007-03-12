@@ -450,12 +450,14 @@ public class SyncArchive {
                 String pushPolicy = rs.getString(16);
                 
                 // now store 'em
-                SyndieURI uri = _client.getURI(uriId);
-                if (uri != null) {
-                    if (uri.isArchive())
-                        _archiveURL = uri.getURL();
-                    else if (uri.isURL())
-                        _archiveURL = uri.getURL();
+                if (uriId >= 0) {
+                    SyndieURI uri = _client.getURI(uriId);
+                    if (uri != null) {
+                        if (uri.isArchive())
+                            _archiveURL = uri.getURL();
+                        else if (uri.isURL())
+                            _archiveURL = uri.getURL();
+                    }
                 }
                 if (_archiveURL == null)
                     _archiveURL = "";
@@ -502,6 +504,9 @@ public class SyncArchive {
             }
         } catch (SQLException se) {
             _client.logError("Error getting the nym archive details", se);
+        } catch (RuntimeException re) {
+            _client.logError("Internal error getting the nym archive details", re);
+            throw new IllegalStateException("Internal error getting the archive details for " + _name + ": " + re.getMessage());
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}

@@ -56,7 +56,11 @@ public class SyndieURIDAO {
                 }
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            _log.error("error fetching the uri [" + uriId + "]", se);
+            return null;
+        } catch (RuntimeException re) {
+            _log.error("internal error fetching the uri [" + uriId + "]", re);
+            return null;
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
