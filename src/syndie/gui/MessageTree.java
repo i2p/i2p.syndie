@@ -71,6 +71,7 @@ import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.ThreadAccumulator;
 import syndie.db.ThreadAccumulatorJWZ;
+import syndie.db.ThreadReferenceNode;
 
 /**
  * 
@@ -1421,7 +1422,7 @@ public class MessageTree implements Translatable, Themeable {
     /**
      * actually generate the sorted list of matches
      *
-     * @return list of ReferenceNode for the root of each thread, or if it isn't
+     * @return list of ThreadReferenceNode for the root of each thread, or if it isn't
      *         threaded, simply one per message
      */
     private List calculateNodes(SyndieURI uri) {
@@ -1519,7 +1520,7 @@ public class MessageTree implements Translatable, Themeable {
         // done on-demand via the virtual tree
         
         for (int i = 0; i < referenceNodes.size(); i++) {
-            ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
+            ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             totalDBTime += add(node, null);
         }
         
@@ -1556,7 +1557,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     /** build up the thread in a nonvirtual tree */
-    private long add(ReferenceNode node, TreeItem parent) {
+    private long add(ThreadReferenceNode node, TreeItem parent) {
         //_browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
         long dbTime = 0;
         TreeItem item = null;
@@ -1576,25 +1577,27 @@ public class MessageTree implements Translatable, Themeable {
         }
         
         for (int i = 0; i < node.getChildCount(); i++)
-            dbTime += add(node.getChild(i), item);
+            dbTime += add((ThreadReferenceNode)node.getChild(i), item);
         return dbTime;
     }
     
     private Set getTags(List nodes) {
         IDGatherer idGatherer = new IDGatherer();
         ReferenceNode.walk(nodes, idGatherer);
-        return _client.getMessageTags(idGatherer.getIds(), true, true);
+        return idGatherer.getTags();
     }
     private static class IDGatherer implements ReferenceNode.Visitor {
-        private Set _ids;
-        public IDGatherer() { _ids = new HashSet(); }
-        public Set getIds() { return _ids; }
+        private Set _tags;
+        public IDGatherer() { _tags = new HashSet(); }
+        public Set getTags() { return _tags; }
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
-            _ids.add(new Long(node.getUniqueId()));
+            Set tags = ((ThreadReferenceNode)node).getTags();
+            if (tags != null)
+                _tags.addAll(tags);
         }
     }
     
-    protected long renderNode(ReferenceNode node, TreeItem item) {
+    protected long renderNode(ThreadReferenceNode node, TreeItem item) {
         SyndieURI uri = node.getURI();
         String subj = "";
         String auth = "";
@@ -1607,8 +1610,10 @@ public class MessageTree implements Translatable, Themeable {
 
         long msgId = -1;
         if (uri != null) {
-            long chanId = _client.getChannelId(uri.getScope());
-            String scopeName = _client.getChannelName(chanId);
+            long chanId = node.getScopeId();
+            String scopeName = node.getScopeName();
+            ////long chanId = _client.getChannelId(uri.getScope());
+            ////String scopeName = _client.getChannelName(chanId);
             //ChannelInfo scopeInfo = _client.getChannel(chanId);
             //MessageInfo msg = _client.getMessage(chanId, uri.getMessageId());
 
@@ -1616,19 +1621,20 @@ public class MessageTree implements Translatable, Themeable {
             // ThreadReferenceNode instances, which contain subject, msgId, target, etc.
 
             long messageId = -1;
-            if (uri.getMessageId() != null)
-                messageId = uri.getMessageId().longValue();
-            msgId = _client.getMessageId(chanId, messageId);
+            //if (uri.getMessageId() != null)
+            //    messageId = uri.getMessageId().longValue();
+            messageId = node.getMsgId().messageId;
+            msgId = node.getMsgId().msgId; // _client.getMessageId(chanId, messageId);
             
             //_browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
             
             if (msgId >= 0) {
                 _itemToMsgId.put(item, new Long(msgId));
-                subj = _client.getMessageSubject(msgId);
-                long authorId = _client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
+                subj = node.getSubject(); //_client.getMessageSubject(msgId);
+                long authorId = node.getAuthorId(); //_client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
                 if (authorId != chanId) {
-                    String authorName = _client.getChannelName(authorId);
-                    Hash authorHash = _client.getChannelHash(authorId);
+                    String authorName = node.getAuthorName(); // _client.getChannelName(authorId);
+                    Hash authorHash = node.getAuthorHash(); //_client.getChannelHash(authorId);
                     //ChannelInfo authInfo = _client.getChannel(authorId);
                     if (authorName != null) {
                         auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
@@ -1641,12 +1647,12 @@ public class MessageTree implements Translatable, Themeable {
                     auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 }
                 //ChannelInfo chanInfo = scopeInfo;
-                long targetChanId = _client.getMessageTarget(msgId);
+                long targetChanId = node.getTargetId(); // _client.getMessageTarget(msgId);
                 if (targetChanId != chanId) {
                     //System.out.println("target chan != scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + " vs " + scopeInfo.getChannelHash().toBase64() + "/" + scopeInfo.getChannelId());
                     //System.out.println("msg: " + uri.toString());
-                    String targetName = _client.getChannelName(targetChanId);
-                    Hash targetHash = _client.getChannelHash(targetChanId);
+                    String targetName = node.getTargetName(); //_client.getChannelName(targetChanId);
+                    Hash targetHash = node.getTargetHash(); //_client.getChannelHash(targetChanId);
                     //chanInfo = _client.getChannel(msg.getTargetChannelId());
                     chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
                     //if (chanInfo == null) {
@@ -1663,18 +1669,20 @@ public class MessageTree implements Translatable, Themeable {
                 if (auth.length() <= 0) {
                      auth = chan;
                 }
-                Set msgTags = _client.getMessageTags(msgId, true, true);
+                Set msgTags = node.getTags(); //_client.getMessageTags(msgId, true, true);
                 StringBuffer buf = new StringBuffer();
-                for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
-                    String tag = (String)iter.next();
-                    tag = tag.trim();
-                    buf.append(tag).append(" ");
-                    //_tags.add(tag);
+                if (msgTags != null) {
+                    for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
+                        String tag = (String)iter.next();
+                        tag = tag.trim();
+                        buf.append(tag).append(" ");
+                        //_tags.add(tag);
+                    }
                 }
                 tags = buf.toString().trim();
                 item.setGrayed(false);
-                long importDate = _client.getMessageImportDate(msgId);
-                long postDate = uri.getMessageId().longValue();
+                long importDate = node.getImportDate(); //_client.getMessageImportDate(msgId);
+                long postDate = messageId; //uri.getMessageId().longValue();
                 if (_appliedFilter == null) {
                     if (MessageTree.shouldUseImportDate(_browser))
                         date = Constants.getDate(importDate);
@@ -1687,7 +1695,7 @@ public class MessageTree implements Translatable, Themeable {
                     date = Constants.getDate(postDate);
                     //_browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
                 }
-                status = _client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
+                status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
                 subj = _browser.getTranslationRegistry().getText(T_SUBJECT_NOT_KNOWN_LOCALLY, "Message is not known locally");
@@ -1704,8 +1712,9 @@ public class MessageTree implements Translatable, Themeable {
             }
         }
 
-        if ( (subj == null) || (subj.trim().length() <= 0) )
-            subj = MessageView.calculateSubject(_browser, uri);
+        if ( (subj == null) || (subj.trim().length() <= 0) ) {
+            subj = calculateSubject(node, uri);
+        }
         
         long dbEnd = System.currentTimeMillis();
 
@@ -1739,6 +1748,18 @@ public class MessageTree implements Translatable, Themeable {
         if (!_showChannel) _colChannel.setWidth(1);
         //_browser.getUI().debugMessage("message status: " + status);
         return dbEnd-dbStart;
+    }
+    
+    private String calculateSubject(ThreadReferenceNode node, SyndieURI uri) {
+        ThreadReferenceNode cur = node;
+        while (cur != null) {
+            String subj = cur.getSubject();
+            if ( (subj != null) && (subj.length() > 0) )
+                return subj;
+            else
+                cur = (ThreadReferenceNode)cur.getParent();
+        }
+        return MessageView.calculateSubject(_browser, node.getUniqueId(), node.getScopeHash(), new Long(node.getMsgId().messageId), false);
     }
     
     private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";

@@ -3,6 +3,7 @@ package syndie.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -187,18 +188,84 @@ public class ThreadBuilder {
         return rv;
     }
     
+    private static final String SQL_POPULATE_NODE = "SELECT " +
+            "msg.authorChannelId, authorchan.name, authorchan.channelHash, " +
+            "msg.scopeChannelId, scopechan.name, scopechan.channelHash, " +
+            "msg.targetChannelId, targetchan.name, targetchan.channelHash, " +
+            "msg.subject, msg.importDate " +
+            "FROM channelMessage msg " +
+            "JOIN channel AS authorchan ON authorchan.channelId = msg.authorChannelId " +
+            "JOIN channel AS scopechan ON scopechan.channelId = msg.scopeChannelId " +
+            "JOIN channel AS targetchan ON targetchan.channelId = msg.targetChannelId " +
+            "WHERE msg.msgId = ?";
+    
     static void populateNode(DBClient client, ThreadReferenceNode node, ThreadMsgId tmi) {
         node.setURI(SyndieURI.createMessage(tmi.scope, tmi.messageId));
         if ( (tmi.msgId >= 0) && (!tmi.unreadable) ) {
             node.setIsDummy(false);
+            
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = client.con().prepareStatement(SQL_POPULATE_NODE);
+                stmt.setLong(1, tmi.msgId);
+                rs = stmt.executeQuery();
+                if (rs.next()) {
+                    // "authorChannelId, authorchan.name, authorchan.channelHash, " +
+                    // "scopeChannelId, scopechan.name, scopechan.channelHash, " +
+                    // "targetChannelId, targetchan.name, targetchan.channelHash, " +
+                    // "subject, msg.importDate "
+                    long authorId = rs.getLong(1);
+                    String authorName = rs.getString(2);
+                    byte authorHash[] = rs.getBytes(3);
+                    long scopeId = rs.getLong(4);
+                    String scopeName = rs.getString(5);
+                    byte scopeHash[] = rs.getBytes(6);
+                    long targetId = rs.getLong(7);
+                    String targetName = rs.getString(8);
+                    byte targetHash[] = rs.getBytes(9);
+                    String subject = rs.getString(10);
+                    Timestamp when = rs.getTimestamp(11);
+                    
+                    node.setAuthorId(authorId);
+                    node.setAuthorName(authorName);
+                    node.setAuthorHash(new Hash(authorHash));
+                    node.setScopeId(scopeId);
+                    node.setScopeName(scopeName);
+                    node.setScopeHash(new Hash(scopeHash));
+                    node.setTargetId(targetId);
+                    node.setTargetName(targetName);
+                    node.setTargetHash(new Hash(targetHash));
+                    if (when != null)
+                        node.setImportDate(when.getTime());
+                    
+                    node.setSubject(subject);
+                    
+                    node.setName(authorName);
+                }
+            } catch (SQLException se) {
+                client.logError("Internal error populating the node", se);
+                throw new RuntimeException("Internal error populating the node: " + se.getMessage());
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+            /*
             long authorId = client.getMessageAuthor(tmi.msgId);
             String subject = client.getMessageSubject(tmi.msgId);
             long target = client.getMessageTarget(tmi.msgId);
             String authorName = client.getChannelName(authorId);
+            int status = client.getMessageStatus(tmi.msgId);
+            long scopeId = client.getChannelId(tmi.scope);
+            node.setScopeId(scopeId);
             node.setAuthorId(authorId);
             node.setSubject(subject);
             node.setThreadTarget(target);
+            node.setMessageStatus(status);
+             */
 
+            node.setMessageStatus(client.getMessageStatus(tmi.msgId));
+            
             //List tags = new ArrayList(); node.getThreadTags(tags);
             //_ui.debugMessage("buildThread: msg: " + tmi + " authorId: " + authorId + " target: " + target + " authorName: " + authorName);// + " tags: " + tags);
 
@@ -208,7 +275,7 @@ public class ThreadBuilder {
             // * and the message subject in node.getDescription(), with the message URI in
             // * node.getURI().
             //
-            node.setName(authorName);
+            ////node.setName(authorName);
             node.setDescription(node.getThreadSubject());
         } else {
             //_ui.debugMessage("node is a dummy: " + tmi);

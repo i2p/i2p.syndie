@@ -55,8 +55,6 @@ public class SWTUI {
             d = new Display();
         }
         
-        Splash.show(d);
-        
         String root = TextEngine.getRootPath();
         if (args.length > 0)
             root = args[0];
@@ -66,11 +64,13 @@ public class SWTUI {
             System.err.println("Syndie data directory is not a directory: " + rootFile);
             System.exit(-1);
         }
+        
         // this way the logs won't go to ./logs/log-#.txt (i2p's default)
         // (this has to be set before the I2PAppContext instantiates the LogManager)
         System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");
         StartupListener lsnr = new StartupListener();
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
+        Splash.show(d, client.getTempDir());
         final Browser browser = new Browser(client);
         final Timer timer = new Timer("swtUI startup", browser.getUI());
         final TextEngine engine = new TextEngine(client, browser, lsnr);

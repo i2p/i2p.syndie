@@ -216,26 +216,15 @@ public class SyndieURI {
     public static SyndieURI createScope(Hash scope) { return createMessage(scope, -1, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId) { return createMessage(scope, msgId, -1); }
     public static SyndieURI createMessage(Hash scope, long msgId, int pageNum) {
-        StringBuffer buf = new StringBuffer();
-        buf.append("urn:syndie:channel:d");
-        if (scope != null) {
-            buf.append("7:channel");
-            String ch = scope.toBase64();
-            buf.append(ch.length()).append(':').append(ch);
-            if (msgId >= 0) {
-                buf.append("9:messageIdi").append(msgId).append("e");
-                if (pageNum >= 0)
-                    buf.append("4:pagei").append(pageNum).append("e");
-            }
-        }
-        buf.append('e');
-        try {
-            return new SyndieURI(buf.toString());
-        } catch (URISyntaxException use) {
-            System.err.println("attempted: " + buf.toString());
-            use.printStackTrace();
-            return null;
-        }
+        String type = "channel";
+        TreeMap attributes = new TreeMap();
+        if (scope != null)
+            attributes.put("channel", scope.toBase64());
+        if (msgId >= 0)
+            attributes.put("messageId", new Long(msgId));
+        if (pageNum >= 0)
+            attributes.put("page", new Long(pageNum));
+        return new SyndieURI(type, attributes);
     }
     public static SyndieURI createAttachment(Hash scope, long msgId, int attachmentNum) {
         StringBuffer buf = new StringBuffer();

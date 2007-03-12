@@ -385,29 +385,34 @@ public class MessageView implements Translatable, Themeable {
         return browser.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject");
     }
     static String calculateSubject(BrowserControl browser, SyndieURI uri) {
-        if (uri != null) {
-            long msgId = browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
-            if (msgId >= 0) {
-                String subject = browser.getClient().getMessageSubject(msgId);
-                if ( (subject != null) && (subject.trim().length() > 0) )
-                    return subject;
-                ThreadMsgId tmi = new ThreadMsgId(msgId);
-                tmi.scope = uri.getScope();
-                tmi.messageId = uri.getMessageId().longValue();
-                Map ancestors = new HashMap();
-                ThreadAccumulatorJWZ.buildAncestors(browser.getClient(), browser.getUI(), tmi, ancestors);
-                List ids = (List)ancestors.get(tmi);
-                if (ids != null) {
-                    for (int i = 0; i < ids.size(); i++) {
-                        ThreadMsgId id = (ThreadMsgId)ids.get(i);
-                        if (id.msgId >= 0) {
-                            subject = browser.getClient().getMessageSubject(id.msgId);
-                            if ( (subject != null) && (subject.trim().length() > 0) ) {
-                                if (Constants.lowercase(subject).startsWith("re:"))
-                                    return subject;
-                                else
-                                    return "re: " + subject.trim();
-                            }
+        long msgId = -1;
+        if (uri != null)
+            msgId = browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+        return calculateSubject(browser, msgId, uri.getScope(), uri.getMessageId(), true);
+    }
+    static String calculateSubject(BrowserControl browser, long msgId, Hash scope, Long messageId, boolean mayHaveSubject) {
+        if (msgId >= 0) {
+            String subject = null;
+            if (mayHaveSubject)
+                subject = browser.getClient().getMessageSubject(msgId);
+            if ( (subject != null) && (subject.trim().length() > 0) )
+                return subject;
+            ThreadMsgId tmi = new ThreadMsgId(msgId);
+            tmi.scope = scope;
+            tmi.messageId = (messageId != null ? messageId.longValue() : -1);
+            Map ancestors = new HashMap();
+            ThreadAccumulatorJWZ.buildAncestors(browser.getClient(), browser.getUI(), tmi, ancestors);
+            List ids = (List)ancestors.get(tmi);
+            if (ids != null) {
+                for (int i = 0; i < ids.size(); i++) {
+                    ThreadMsgId id = (ThreadMsgId)ids.get(i);
+                    if (id.msgId >= 0) {
+                        subject = browser.getClient().getMessageSubject(id.msgId);
+                        if ( (subject != null) && (subject.trim().length() > 0) ) {
+                            if (Constants.lowercase(subject).startsWith("re:"))
+                                return subject;
+                            else
+                                return "re: " + subject.trim();
                         }
                     }
                 }

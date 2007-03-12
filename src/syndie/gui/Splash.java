@@ -1,8 +1,11 @@
 package syndie.gui;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
@@ -19,10 +22,10 @@ public class Splash {
     private static Shell _shell;
     private static Image _img;
     private static final boolean DISABLED = false;
-    public static void show(Display display) {
+    public static void show(Display display, File tmpDir) {
         if (DISABLED) return;
         _shell = new Shell(display, SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-        _img = getImage();
+        _img = getImage(tmpDir);
         _shell.setLayout(new FillLayout());
         Label l = new Label(_shell,  SWT.NO_BACKGROUND);
         l.setImage(_img);
@@ -53,11 +56,11 @@ public class Splash {
         }
     }
     
-    private static Image getImage() { 
+    private static Image getImage(File tmpDir) { 
         int splashCount = getSplashCount();
         // many clocks have only 10ms granularity
         long which = (System.currentTimeMillis()/10) % splashCount;
-        return createImageFromResource("splash" + which + ".png");
+        return createImageFromResource("splash" + which + ".png", tmpDir);
     }
     
     private static int getSplashCount() {
@@ -74,17 +77,35 @@ public class Splash {
     }
     
     /** copied from ImageUtil to avoid invoking ImageUtil's statics */
-    private static Image createImageFromResource(String resource) {
-        InputStream in = ImageUtil.class.getResourceAsStream(resource);
+    private static Image createImageFromResource(String resource, File tmpDir) {
+        InputStream in = Splash.class.getResourceAsStream(resource);
         if (in != null) {
             try {
-                return new Image(Display.getDefault(), in);
+                File tmp = null;
+                try {
+                    tmp = File.createTempFile("img", ".png", tmpDir);
+                    FileOutputStream fos = new FileOutputStream(tmp);
+                    byte buf[] = new byte[4096];
+                    int read = -1;
+                    while ( (read = in.read(buf)) != -1)
+                        fos.write(buf, 0, read);
+                    fos.close();
+                } catch (IOException ioe) { 
+                    tmp.delete();
+                    in = Splash.class.getResourceAsStream(resource);
+                    return new Image(Display.getDefault(), in);
+                }
+
+                Image img = new Image(Display.getDefault(), tmp.getAbsolutePath()); //new ByteArrayInputStream(data));
+                tmp.delete();
+                return img;
             } catch (IllegalArgumentException iae) {
+                return null;
+            } catch (SWTException se) {
                 return null;
             }
         } else {
             return null;
         }
     }
-
 }

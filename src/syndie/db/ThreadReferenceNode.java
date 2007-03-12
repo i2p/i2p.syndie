@@ -3,16 +3,28 @@ package syndie.db;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.i2p.data.Hash;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
-class ThreadReferenceNode extends ReferenceNode {
+public class ThreadReferenceNode extends ReferenceNode {
+    private long _scopeId;
     private long _authorId;
     private String _subject;
     private long _targetChannelId;
     private boolean _dummy;
     private ThreadMsgId _msg;
     private long _importDate;
+    private Set _tags;
+    private int _messageStatus;
+    private String _authorName;
+    private Hash _authorHash;
+    private String _scopeName;
+    private Hash _scopeHash;
+    private long _targetId;
+    private String _targetName;
+    private Hash _targetHash;
+    
     public ThreadReferenceNode() { this(null); }
     public ThreadReferenceNode(ThreadMsgId id) {
         super(null, null, null, null);
@@ -22,15 +34,42 @@ class ThreadReferenceNode extends ReferenceNode {
         _targetChannelId = -1;
         _dummy = false;
         _importDate = -1;
+        _tags = null;
+        _messageStatus = -1;
+        _scopeId = -1;
     }
     public ThreadMsgId getMsgId() { return _msg; }
     public void setAuthorId(long authorId) { _authorId = authorId; }
     public void setSubject(String subject) { _subject = subject; }
     public String getSubject() { return _subject; }
+    public Set getTags() { return _tags; }
     public void setThreadTarget(long channelId) { _targetChannelId = channelId; }
     /** this node represents something we do not have locally, or is filtered */
     public boolean isDummy() { return _dummy || getUniqueId() < 0; }
     public void setIsDummy(boolean dummy) { _dummy = dummy; }
+    public int getMessageStatus() { return _messageStatus; }
+    public void setMessageStatus(int status) { _messageStatus = status; }
+    public long getImportDate() { return _importDate; }
+    public void setScopeId(long id) { _scopeId = id; }
+    public long getScopeId() { return _scopeId; }
+    
+    public void setAuthorName(String name) { _authorName = name; }
+    public void setAuthorHash(Hash scope) { _authorHash = scope; }
+    public void setScopeName(String name) { _scopeName = name; }
+    public void setScopeHash(Hash scope) { _scopeHash = scope; }
+    public void setTargetId(long id) { _targetChannelId = id; }
+    public void setTargetName(String name) { _targetName = name; }
+    public void setTargetHash(Hash scope) { _targetHash = scope; }
+    public void setImportDate(long when) { _importDate = when; }
+    
+    public String getAuthorName() { return _authorName; }
+    public Hash getAuthorHash() { return _authorHash; }
+    public String getScopeName() { return _scopeName; }
+    public Hash getScopeHash() { return _scopeHash; }
+    public long getTargetId() { return _targetChannelId; }
+    public String getTargetName() { return _targetName; }
+    public Hash getTargetHash() { return _targetHash; }
+    
     public long getThreadTarget() {
         if (_targetChannelId >= 0)
             return _targetChannelId;
@@ -41,16 +80,16 @@ class ThreadReferenceNode extends ReferenceNode {
         }
         return -1;
     }
-    public void getThreadTags(List rv, Map msgIdToTagSet) { 
+    void getThreadTags(List rv, Map msgIdToTagSet) { 
         if (_msg != null) {
-            Set tags = (Set)msgIdToTagSet.get(new Long(_msg.msgId));
-            if (tags != null)
-                rv.addAll(tags);
+            _tags = (Set)msgIdToTagSet.get(new Long(_msg.msgId));
+            if (_tags != null)
+                rv.addAll(_tags);
         }
         for (int i = 0; i < getChildCount(); i++)
             ((ThreadReferenceNode)getChild(i)).getThreadTags(rv, msgIdToTagSet);
     }
-    public long getLatestMessageId() {
+    long getLatestMessageId() {
         long latestMessageId = -1;
         SyndieURI uri = getURI();
         if ( !isDummy() && (uri != null) && (uri.getMessageId() != null) )
@@ -59,7 +98,7 @@ class ThreadReferenceNode extends ReferenceNode {
             latestMessageId = Math.max(latestMessageId, ((ThreadReferenceNode)getChild(i)).getLatestMessageId());
         return latestMessageId;
     }
-    public long getLatestImportDate(DBClient client) {
+    long getLatestImportDate(DBClient client) {
         long latest = _importDate;
         if (!isDummy() && (_msg != null) && (_msg.msgId >= 0) && (latest < 0))
             latest = _importDate = client.getMessageImportDate(_msg.msgId);
@@ -67,7 +106,7 @@ class ThreadReferenceNode extends ReferenceNode {
             latest = Math.max(latest, ((ThreadReferenceNode)getChild(i)).getLatestImportDate(client));
         return latest;
     }
-    public long getLatestAuthorId() { return getLatestAuthorId(getLatestMessageId()); }
+    long getLatestAuthorId() { return getLatestAuthorId(getLatestMessageId()); }
     private long getLatestAuthorId(long latestMessageId) {
         SyndieURI uri = getURI();
         if ( !isDummy() && (uri != null) && (uri.getMessageId() != null) )
@@ -80,7 +119,7 @@ class ThreadReferenceNode extends ReferenceNode {
         }
         return -1;
     }
-    public long getLatestPostDate() { return getLatestMessageId(); }
+    long getLatestPostDate() { return getLatestMessageId(); }
     /** count of actual messages, not including any dummy nodes */
     public int getMessageCount() {
         int rv = isDummy() ? 1 : 0;

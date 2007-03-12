@@ -318,15 +318,45 @@ public class ImageUtil {
             InputStream in = ImageUtil.class.getResourceAsStream(resource);
             _timer.addEvent("after getResource("+resource+")");
             if (in != null) {
-                try {
-                    img = new Image(Display.getDefault(), in);
-                    _timer.addEvent("after image instantiation ("+resource+")");
-                    _indisposableImages.add(img);
-                    _loadedResources.put(resource, img);
-                    return img;
-                } catch (IllegalArgumentException iae) {
-                    return null;
+                if (_tmpDir != null) {
+                    try {
+                        File tmp = null;
+                        try {
+                            tmp = File.createTempFile("img", ".png", _tmpDir);
+                            FileOutputStream fos = new FileOutputStream(tmp);
+                            byte buf[] = new byte[4096];
+                            int read = -1;
+                            while ( (read = in.read(buf)) != -1)
+                                fos.write(buf, 0, read);
+                            fos.close();
+
+                            img = new Image(Display.getDefault(), tmp.getAbsolutePath());
+                            tmp.delete();
+                        } catch (IOException ioe) { 
+                            tmp.delete();
+                            in = ImageUtil.class.getResourceAsStream(resource);
+                            img = new Image(Display.getDefault(), in);
+                        }
+
+                    } catch (IllegalArgumentException iae) {
+                        return null;
+                    } catch (SWTException se) {
+                        return null;
+                    }
+                } else { // no tmpDir yet
+                    try {
+                        img = new Image(Display.getDefault(), in);
+                    } catch (IllegalArgumentException iae) {
+                        return null;
+                    } catch (SWTException se) {
+                        return null;
+                    }                    
                 }
+                _timer.addEvent("after image instantiation ("+resource+")");
+                _indisposableImages.add(img);
+                _loadedResources.put(resource, img);
+                return img;
+
             } else {
                 return null;
             }

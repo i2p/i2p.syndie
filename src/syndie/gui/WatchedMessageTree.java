@@ -17,6 +17,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.ThreadAccumulator;
 import syndie.db.ThreadAccumulatorJWZ;
+import syndie.db.ThreadReferenceNode;
 
 /**
  * message tree that organizes threads first by forum, then by thread
@@ -35,9 +36,8 @@ public class WatchedMessageTree extends MessageTree {
     void setMessages(List referenceNodes) {
         Map forumToNodeList = new HashMap();
         Map forumNameToForum = new TreeMap();
-        Map forumToDesc = new HashMap();
         for (int i = 0; i < referenceNodes.size(); i++) {
-            ReferenceNode node = (ReferenceNode)referenceNodes.get(i);
+            ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             Hash forum = getForum(node);
             if (forum == null) continue; // all dummies?
             List nodes = (List)forumToNodeList.get(forum);
@@ -45,27 +45,30 @@ public class WatchedMessageTree extends MessageTree {
                 nodes = new ArrayList();
                 forumToNodeList.put(forum, nodes);
             }
-            String name = _browser.getClient().getChannelName(forum);
+            String name = getForumName(node);
             if ( (name == null) || (name.trim().length() <= 0) )
                 name = forum.toBase64().substring(0,6);
             else
                 name = name + " [" + forum.toBase64().substring(0,6) + "]";
             forumNameToForum.put(name, forum);
-            forumToDesc.put(forum, name);
             nodes.add(node);
         }
         List forumNodes = new ArrayList();
         // sorted by forum name
-        for (Iterator iter = forumNameToForum.values().iterator(); iter.hasNext(); ) {
-            Hash forum = (Hash)iter.next();
+        for (Iterator iter = forumNameToForum.keySet().iterator(); iter.hasNext(); ) {
+            String name = (String)iter.next();
+            Hash forum = (Hash)forumNameToForum.get(name);
             List nodes = (List)forumToNodeList.get(forum);
-            String name = _browser.getClient().getChannelName(forum);
-            String desc = (String)forumToDesc.get(forum);
+            //String name = _browser.getClient().getChannelName(forum);
             String type = nodes.size() + "";
             if (name == null)
                 name = "";
-            name = "(" + nodes.size() + ") " + name + " [" + forum.toBase64().substring(0,6) + "]";
-            ReferenceNode node = new ReferenceNode(name, SyndieURI.createScope(forum), "", "");
+            name = "(" + nodes.size() + ") " + name;// + " [" + forum.toBase64().substring(0,6) + "]";
+            //ReferenceNode node = new ReferenceNode(name, SyndieURI.createScope(forum), "", "");
+            ThreadReferenceNode node = new ThreadReferenceNode();
+            node.setName(name);
+            node.setURI(SyndieURI.createScope(forum));
+            node.setDescription("");
             for (int i = 0; i < nodes.size(); i++)
                 node.addChild((ReferenceNode)nodes.get(i));
             forumNodes.add(node);
@@ -73,21 +76,23 @@ public class WatchedMessageTree extends MessageTree {
         super.setMessages(forumNodes);
     }
     
-    private Hash getForum(ReferenceNode node) {
-        SyndieURI uri = node.getURI();
-        if (uri != null) {
-            long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
-            if (msgId >= 0) {
-                long scopeId = _browser.getClient().getMessageTarget(msgId);
-                Hash scope = _browser.getClient().getChannelHash(scopeId);
-                if (scope != null)
-                    return scope;
-            }
-        }
+    private Hash getForum(ThreadReferenceNode node) {
+        if (node.getTargetHash() != null)
+            return node.getTargetHash();
         for (int i = 0; i < node.getChildCount(); i++) {
-            Hash forum = getForum(node.getChild(i));
+            Hash forum = getForum((ThreadReferenceNode)node.getChild(i));
             if (forum != null)
                 return forum;
+        }
+        return null;
+    }
+    private String getForumName(ThreadReferenceNode node) {
+        if (node.getTargetName() != null)
+            return node.getTargetName();
+        for (int i = 0; i < node.getChildCount(); i++) {
+            String name = getForumName((ThreadReferenceNode)node.getChild(i));
+            if (name != null)
+                return name;
         }
         return null;
     }
@@ -131,14 +136,14 @@ public class WatchedMessageTree extends MessageTree {
         return root;
     }
     
-    protected long renderNode(ReferenceNode node, TreeItem item) {
+    protected long renderNode(ThreadReferenceNode node, TreeItem item) {
         if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) )
             return renderForumNode(node, item);
         else
             return super.renderNode(node, item);
     }
     
-    private long renderForumNode(ReferenceNode node, TreeItem item) {
+    private long renderForumNode(ThreadReferenceNode node, TreeItem item) {
         String title = node.getName();
         item.setText(0, title);
         setMinWidth(_colSubject, title, 0, 100);
@@ -147,9 +152,9 @@ public class WatchedMessageTree extends MessageTree {
        
     protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
         if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) ) {
-            Hash forum = getForum(node);
+            Hash forum = getForum((ThreadReferenceNode)node);
             if (forum == null) return null;
-            String name = _browser.getClient().getChannelName(forum);
+            String name = getForumName((ThreadReferenceNode)node); //_browser.getClient().getChannelName(forum);
             if (name == null) name = "";
             
             SyndieURI uri = SyndieURI.createScope(forum);
