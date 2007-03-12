@@ -81,6 +81,8 @@ public class Splash {
         InputStream in = Splash.class.getResourceAsStream(resource);
         if (in != null) {
             try {
+                if (!tmpDir.exists())
+                    tmpDir.mkdirs();
                 File tmp = null;
                 try {
                     tmp = File.createTempFile("img", ".png", tmpDir);
@@ -91,7 +93,9 @@ public class Splash {
                         fos.write(buf, 0, read);
                     fos.close();
                 } catch (IOException ioe) { 
-                    tmp.delete();
+                    System.err.println("Error buffering out to " + tmpDir.getAbsolutePath() + ": " + ioe.getMessage());
+                    if (tmp != null)
+                        tmp.delete();
                     in = Splash.class.getResourceAsStream(resource);
                     return new Image(Display.getDefault(), in);
                 }
