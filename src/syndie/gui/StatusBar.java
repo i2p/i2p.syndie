@@ -654,31 +654,33 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             items[i].dispose();
 
         int active = 0;
+        
         List channelIds = _browser.getClient().getNewChannelIds();
         for (int i = 0; i < channelIds.size(); i++) {
             Long channelId = (Long)channelIds.get(i);
-            ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
-            if (info == null) {
+            //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
+            Hash channelHash = _browser.getClient().getChannelHash(channelId.longValue());
+            if (channelHash == null) {
                 _browser.getUI().debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
                 continue;
             }
-            int msgs = _browser.getClient().countUnreadMessages(info.getChannelHash());
+            int msgs = _browser.getClient().countUnreadMessages(channelHash);
             if (msgs <= 0)
                 continue; // only list new forums with content
             active++;
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);
             
-            String name = info.getName();
+            String name = _browser.getClient().getChannelName(channelId.longValue()); //info.getName();
             if (name == null)
-                name = info.getChannelHash().toBase64().substring(0,6);
+                name = channelHash.toBase64().substring(0,6);
             else
-                name = name + " - " + info.getChannelHash().toBase64().substring(0,6);
+                name = name + " - " + channelHash.toBase64().substring(0,6);
             
             name = name + " (" + msgs + ")";
             item.setText(name);
             item.setImage(ImageUtil.ICON_MSG_TYPE_META);
-            final Hash scope = info.getChannelHash();
+            final Hash scope = channelHash;
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _browser.view(SyndieURI.createScope(scope));

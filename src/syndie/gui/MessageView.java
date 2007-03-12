@@ -13,7 +13,6 @@ import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
-import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
@@ -592,13 +591,13 @@ public class MessageView implements Translatable, Themeable {
         configGoTo(new ArrayList(), null, 1);
         timer.addEvent("initBody go to configured");
         //_root.layout(true, true);
-        SimpleTimer.getInstance().addEvent(new SimpleTimer.TimedEvent() {
-            public void timeReached() {
+        _root.getDisplay().timerExec(500, new Runnable() {
+            public void run() {
                 if (_root.isDisposed()) return;
                 if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) )
-                    Display.getDefault().asyncExec(new Runnable() { public void run() { loadThread(msg); } });
+                    loadThread(msg);
             }
-        }, 500);     
+        });
         timer.addEvent("initBody root laid out");
     }
     private static final String T_PAGE_PREFIX = "syndie.gui.messageview.pageprefix";

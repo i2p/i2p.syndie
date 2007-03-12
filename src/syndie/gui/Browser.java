@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.zip.ZipInputStream;
 import net.i2p.data.Hash;
-import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Listener;
@@ -689,12 +688,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuResumeRoot.setMenu(_postMenuResumeMenu);
     
         // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
-        JobRunner.instance().enqueue(new Runnable() {
-            public void run() {
-                Display.getDefault().asyncExec(new Runnable() {
-                    public void run() { populateResumeable(); }
-                });
-            }
+        Display.getDefault().timerExec(300, new Runnable() {
+            public void run() { populateResumeable(); }
         });
         timer.addEvent("post menu resumeable scheduled");
         
@@ -713,7 +708,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         timer.addEvent("post menu constructed");
         
         // queue it up to run sometime soon
-        SimpleTimer.getInstance().addEvent(new SimpleTimer.TimedEvent() { public void timeReached() { populatePostMenus(); } }, 1000);
+        _shell.getDisplay().timerExec(1000, new Runnable() {
+            public void run() {
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() { populatePostMenus(); }
+                });
+            }
+        });
         
         timer.addEvent("post menu population scheduled");
         

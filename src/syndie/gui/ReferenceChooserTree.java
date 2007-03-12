@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import net.i2p.data.Hash;
-import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -437,23 +436,23 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         rebuildBookmarks();
         if (timer != null) timer.addEvent("refChooserTree init: bookmarks rebuilt");
         long t4 = System.currentTimeMillis();
-        SimpleTimer.getInstance().addEvent(new SimpleTimer.TimedEvent() {
-            public void timeReached() {/*
-        })
-        JobRunner.instance().enqueue(new Runnable() {
+        _root.getDisplay().timerExec(500, new Runnable() {
             public void run() {
-                                        */
-                refetchNymChannels();
-                Display.getDefault().asyncExec(new Runnable() {
-                   public void run() {
-                       redrawPostable();
-                       redrawManageable();
-                       redrawSearchResults(false);
-                       rebuildWatched();
-                   } 
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() {
+                        refetchNymChannels();
+                        Display.getDefault().asyncExec(new Runnable() {
+                           public void run() {
+                               redrawPostable();
+                               redrawManageable();
+                               redrawSearchResults(false);
+                               rebuildWatched();
+                           } 
+                        });
+                    }
                 });
             }
-        }, 500);
+        });
         if (timer != null) timer.addEvent("refChooserTree init: after enqueue");
         long t8 = System.currentTimeMillis();
         
