@@ -15,12 +15,10 @@ import syndie.data.SyndieURI;
 
 class SyncInboundFetcher {
     private SyncManager _manager;
-    private DataImporter _importer;
     private static Map _runnerToArchive = new HashMap();
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
-        _importer = new DataImporter();
     }
     
     public void start() {
@@ -115,6 +113,9 @@ class SyncInboundFetcher {
     }
     
     private void fetchFreenet(SyncArchive archive) {
+        DataImporter importer = new DataImporter();
+        Thread t = new Thread(importer, "Data importer");
+        t.start();
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
             while (!_manager.isOnline())
@@ -141,7 +142,7 @@ class SyncInboundFetcher {
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, dataFile.getAbsolutePath(), url);
                     // the index fetch runs async, but these run synchronously, since we don't want to fire up e.g. 500 threads to pull
                     // new messages.  much to optimize on this front though
-                    GetListener lsnr = new GetListener(action, dataFile);
+                    GetListener lsnr = new GetListener(action, dataFile, importer);
                     get.addStatusListener(lsnr);
                     get.fetch(5*60*1000); // no retries, but let it sit for up to 5 minutes
                 } catch (IOException ioe) {
@@ -149,6 +150,8 @@ class SyncInboundFetcher {
                 }
             }
         }
+        importer.finishQueue();
+        importer.complete();
     }
     
     private void fetchFile(SyncArchive archive) {
@@ -229,29 +232,30 @@ class SyncInboundFetcher {
 
         // successful fetches are enqueued in the importer thread so we can import serially without
         // blocking the fetches
-        Thread t = new Thread(_importer, "Data importer");
+        DataImporter importer = new DataImporter();
+        Thread t = new Thread(importer, "Data importer");
         t.start();
         
         // fetch all of the meta before any of the messages, as we need the meta for the channels
         // we are importing the messages with (to verify signatures).  within these fetches there
         // are 5 concurrent fetches running through the individual files to fetch
-        fetchHTTPMeta(archive, pendingMeta, archiveURL, query);
+        fetchHTTPMeta(archive, pendingMeta, archiveURL, query, importer);
         _manager.getUI().debugMessage("meta fetches run, waiting for the queue to finish");
-        _importer.finishQueue();
+        importer.finishQueue();
         _manager.getUI().debugMessage("meta fetches imported, fetching msgs");
-        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query);
+        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query, importer);
         _manager.getUI().debugMessage("msg fetches run, waiting for the queue to finish");
-        _importer.finishQueue();
+        importer.finishQueue();
         _manager.getUI().debugMessage("msgs imported, complete");
-        _importer.complete();
+        importer.complete();
     }
     
     private static final int CONCURRENT_FETCHES = 5;
     
-    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query) {
+    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
         List fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query), "MetaFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer), "MetaFetcher " + i);
             t.start();
             fetchers.add(t);
         }
@@ -261,10 +265,10 @@ class SyncInboundFetcher {
         }
     }
     
-    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query) {
+    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
         List fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query), "MsgFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer), "MsgFetcher " + i);
             t.start();
             fetchers.add(t);
         }
@@ -279,12 +283,14 @@ class SyncInboundFetcher {
         private List _actions;
         private String _archiveURL;
         private String _query;
+        private DataImporter _importer;
         
-        public Fetch(SyncArchive archive, List actions, String archiveURL, String query) {
+        public Fetch(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
             _archive = archive;
             _actions = actions;
             _archiveURL = archiveURL;
             _query = query;
+            _importer = importer;
         }
         public void run() {
             while (true) {
@@ -322,7 +328,7 @@ class SyncInboundFetcher {
                 try {
                     File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
-                    GetListener lsnr = new GetListener(action, dataFile);
+                    GetListener lsnr = new GetListener(action, dataFile, _importer);
                     get.addStatusListener(lsnr);
                     get.fetch(30*1000);
                 } catch (IOException ioe) {
@@ -343,9 +349,11 @@ class SyncInboundFetcher {
     
     private class GetListener implements EepGet.StatusListener {
         private SyncArchive.IncomingAction _incomingAction;
+        private DataImporter _importer;
         private File _dataFile;
         private Exception _err;
-        public GetListener(SyncArchive.IncomingAction action, File dataFile) {
+        public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer) {
+            _importer = importer;
             _incomingAction = action;
             _dataFile = dataFile;
         }

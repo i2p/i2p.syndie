@@ -40,8 +40,8 @@ public class SWTUI {
      */
     private static final boolean ALLOW_SLOW_STARTUP = true;
     
-    public static void main(final String args[]) {
-        
+    public static void main(String args[]) {
+        args = new String[] { "/mnt/xp/cur-syndie/" };
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
@@ -52,6 +52,10 @@ public class SWTUI {
         }
         System.setProperty("jbigi.dontLog", "true");
         System.setProperty("jcpuid.dontLog", "true");
+        // we don't need I2P's 4MB of strong PRNG data.  4KB will do
+        System.setProperty("prng.bufsize", "1024");
+        System.setProperty("prng.buffers", "4");
+        
         long start = System.currentTimeMillis();
         boolean trackResources = trackResources(args);
    

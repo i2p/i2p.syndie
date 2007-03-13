@@ -8,10 +8,10 @@ import java.util.*;
  * has been eaten)
  */
 public class AsyncFortunaStandalone extends FortunaStandalone implements Runnable {
-    private static final int BUFFERS = 16;
-    private static final int BUFSIZE = 256*1024;
-    private final byte asyncBuffers[][] = new byte[BUFFERS][BUFSIZE];
-    private final int status[] = new int[BUFFERS];
+    private static int BUFFERS;// = 16;
+    private static int BUFSIZE;// = 256*1024;
+    private byte asyncBuffers[][];// = new byte[BUFFERS][BUFSIZE];
+    private int status[];// = new int[BUFFERS];
     private int nextBuf = 0;
 
     private static final int STATUS_NEED_FILL = 0;
@@ -19,8 +19,13 @@ public class AsyncFortunaStandalone extends FortunaStandalone implements Runnabl
     private static final int STATUS_FILLED = 2;
     private static final int STATUS_LIVE = 3;
     
-    public AsyncFortunaStandalone() {
+    public AsyncFortunaStandalone() { this(16, 256*1024); }
+    public AsyncFortunaStandalone(int buffers, int bufsize) {
         super();
+        BUFFERS = buffers;
+        BUFSIZE = bufsize;
+        asyncBuffers = new byte[BUFFERS][BUFSIZE];
+        status = new int[BUFFERS];
         for (int i = 0; i < BUFFERS; i++)
             status[i] = STATUS_NEED_FILL;
     }
