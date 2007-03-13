@@ -40,8 +40,7 @@ public class SWTUI {
      */
     private static final boolean ALLOW_SLOW_STARTUP = true;
     
-    public static void main(String args[]) {
-        args = new String[] { "/mnt/xp/cur-syndie/" };
+    public static void main(final String args[]) {
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
