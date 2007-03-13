@@ -144,7 +144,10 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            stmt = _con.prepareStatement("SHUTDOWN");
+            if (System.currentTimeMillis() % 100 > 90) // every 10 times defrag the db
+                stmt = _con.prepareStatement("SHUTDOWN COMPACT");
+            else
+                stmt = _con.prepareStatement("SHUTDOWN");
             stmt.execute();
             if (_log.shouldLog(Log.INFO))
                 _log.info("Database shutdown", new Exception("shutdown by"));

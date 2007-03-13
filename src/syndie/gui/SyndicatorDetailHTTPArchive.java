@@ -971,7 +971,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private static final String T_SENDAGE_1Y = "syndie.gui.syndicatordetailhttparchive.sendage.1y";
     private static final String T_SENDAGE_INF = "syndie.gui.syndicatordetailhttparchive.sendage.inf";
     private static final int SENDAGE_DEFAULT_INDEX = 0;
-    private static final int[] SENDAGEDAYS = new int[] { 7, 31, 62, 183, 365, -1 };
+    private static final int[] SENDAGEDAYS = new int[] { 7, 14, 31, 62, 183, 365, -1 };
         
     private void translateCombos(TranslationRegistry registry) {
         int cnt = _pushPolicy.getItemCount();
