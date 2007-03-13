@@ -82,6 +82,7 @@ public class TextEngine {
     public interface ScriptListener {
         public void scriptComplete(String script);
         public void alreadyRunning();
+        public void loginFailed(Exception cause);
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -336,6 +337,10 @@ public class TextEngine {
                 }
             } else {
                 _ui.errorMessage("Error trying to login", se);
+                for (int i = 0; i < _scriptListeners.size(); i++) {
+                    ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                    lsnr.loginFailed(se);
+                }
             }
         }
     }

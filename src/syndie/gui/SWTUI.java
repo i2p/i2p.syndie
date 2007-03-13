@@ -142,6 +142,41 @@ public class SWTUI {
             int y = screenSize.height/2-sSize.height/2;
             s.setBounds(x, y, sSize.width, sSize.height);
             s.open();
+        } else if (lsnr.getLoginFailedCause() != null) {
+            // show a special warning/error screen
+            final Shell s = new Shell(d, SWT.DIALOG_TRIM);
+            s.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_TITLE, "Internal error"));
+            s.setLayout(new GridLayout(1, true));
+            Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
+            l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            l.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED, "Syndie ran into an internal error trying to start up - please see the logs: ") + lsnr.getLoginFailedCause().getMessage());
+            Button b = new Button(s, SWT.PUSH);
+            b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            b.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_EXIT, "Exit"));
+            b.addSelectionListener(new FireSelectionListener() { 
+                public void fire() {
+                    s.dispose();
+                    System.exit(-1);
+                }
+            });
+            s.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent shellEvent) {
+                    s.dispose();
+                    System.exit(-1);
+                }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            Splash.dispose();
+            s.pack();
+            Rectangle sSize = s.getBounds();
+            Rectangle screenSize = Splash.getScreenSize(s);
+            int x = screenSize.width/2-sSize.width/2;
+            int y = screenSize.height/2-sSize.height/2;
+            s.setBounds(x, y, sSize.width, sSize.height);
+            s.open();
         } else {
             if (!ok) {
                 browser.errorMessage("Timed out trying to start syndie up.  Please review the logs");
@@ -177,10 +212,14 @@ public class SWTUI {
     private static final String T_ALREADY_RUNNING_TITLE = "syndie.gui.swtui.alreadyrunning.title";
     private static final String T_ALREADY_RUNNING_EXIT = "syndie.gui.swtui.alreadyrunning.exit";
     private static final String T_ALREADY_RUNNING = "syndie.gui.swtui.alreadyrunning";
+    private static final String T_LOGIN_FAILED_TITLE = "syndie.gui.swtui.loginfailed.title";
+    private static final String T_LOGIN_FAILED_EXIT = "syndie.gui.swtui.loginfailed.exit";
+    private static final String T_LOGIN_FAILED = "syndie.gui.swtui.loginfailed";
     
     private static class StartupListener implements TextEngine.ScriptListener {
         private Set _complete;
         private boolean _alreadyRunning;
+        private Exception _loginFailedCause;
         
         public StartupListener() { 
             _complete = new HashSet(); 
@@ -193,11 +232,17 @@ public class SWTUI {
             _alreadyRunning = true; 
             synchronized (_complete) { _complete.notifyAll(); } 
         }
+        public void loginFailed(Exception cause) {
+            _loginFailedCause = cause;
+            synchronized (_complete) { _complete.notifyAll(); }
+        }
         public boolean getAlreadyRunning() { return _alreadyRunning; }
+        public Exception getLoginFailedCause() { return _loginFailedCause; }
         public boolean waitFor(String scriptName, long maxPeriod) {
             long endAt = System.currentTimeMillis() + maxPeriod;
             for (;;) {
                 if (_alreadyRunning) return false;
+                if (_loginFailedCause != null) return false;
                 long remaining = -1;
                 if (maxPeriod > 0) {
                     remaining = endAt - System.currentTimeMillis();
