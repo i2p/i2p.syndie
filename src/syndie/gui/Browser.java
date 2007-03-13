@@ -1123,8 +1123,11 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             }
             
             ReferenceChooserTree.savePrevTabs(this, uris);
-            _client.close();
-            System.exit(0);
+            new Thread(new Runnable() {
+	      public void run() { _client.close(); System.exit(0); }
+	    }).start();
+            //_client.close();
+            //System.exit(0);
         }
     }
     
