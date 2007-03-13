@@ -32,7 +32,16 @@ public class SWTUI {
         return false;
     }
     
+    /**
+     * If true, remove the 30 second timeout when connecting to the database,
+     * as slow computers w/ lots in their redo logs could take that long.  The
+     * reason the timeout is here in the first place is to deal with those 
+     * running Syndie off pre-1.0 installs that didn't automatically log in
+     */
+    private static final boolean ALLOW_SLOW_STARTUP = true;
+    
     public static void main(final String args[]) {
+        
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
@@ -97,7 +106,7 @@ public class SWTUI {
         
         // to allow the startup scripts to run, which may include 'login',
         // so we dont have to show a login prompt.  perhaps toss up a splash screen
-        boolean ok = lsnr.waitFor("login", 30*1000);
+        boolean ok = lsnr.waitFor("login", ALLOW_SLOW_STARTUP ? -1 : 30*1000);
         if (lsnr.getAlreadyRunning()) {
             // show a special warning/error screen
             final Shell s = new Shell(d, SWT.DIALOG_TRIM);
@@ -189,14 +198,19 @@ public class SWTUI {
             long endAt = System.currentTimeMillis() + maxPeriod;
             for (;;) {
                 if (_alreadyRunning) return false;
-                long remaining = endAt - System.currentTimeMillis();
-                if (remaining <= 0) return false;
+                long remaining = -1;
+                if (maxPeriod > 0) {
+                    remaining = endAt - System.currentTimeMillis();
+                    if (remaining <= 0) return false;
+                }
                 try {
                     synchronized (_complete) {
                         if (_complete.contains(scriptName))
                             return true;
-                        else
+                        else if (maxPeriod > 0)
                             _complete.wait(remaining);
+                        else
+                            _complete.wait();
                     }
                 } catch (InterruptedException ie) {}
             }
