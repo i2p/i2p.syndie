@@ -12,29 +12,30 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
-class MaxView {
-    private DataControl _ctl;
+class MaxView extends BaseComponent {
     private Shell _parent;
     private Shell _shell;
     private PageRenderer _maxRenderer;
     private MaxListener _listener;
 
-    public MaxView(DataControl dataControl, Shell parent, SyndieURI pageURI, MaxListener lsnr) {
-        _ctl = dataControl;
+    public MaxView(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, SyndieURI pageURI, MaxListener lsnr) {
+        super(client, ui, themes, trans);
         _parent = parent;
         _shell = new Shell(_parent, SWT.NO_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new GridLayout(1, true));
         _listener = lsnr;
         Button unmax = new Button(_shell, SWT.PUSH);
-        unmax.setText(_ctl.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
-        unmax.setFont(_ctl.getThemeRegistry().getTheme().BUTTON_FONT);
+        unmax.setText(trans.getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+        unmax.setFont(themes.getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
         _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
         _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
 
-        _maxRenderer.renderPage(new PageRendererSource(_ctl), pageURI);
+        _maxRenderer.renderPage(new PageRendererSource(_client, _themeRegistry), pageURI);
 
         unmax.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }

@@ -40,7 +40,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Translatable {
+class LogTab extends BrowserTab implements UI, Themeable, Translatable {
     private Text _out;
     private StringBuffer _outBuf;
     private MenuItem _menuClear;
@@ -159,10 +159,11 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         
         updateFlags(super.getURI());
         
-        getBrowser().getThemeRegistry().register(this);
-        getBrowser().getTranslationRegistry().register(this);
+        _themeRegistry.register(this);
+        _translationRegistry.register(this);
         
-        getBrowser().addUIListener(this);
+        _ui.addUI(this);
+        //getBrowser().addUIListener(this);
     }
     
     public SyndieURI getURI() {
@@ -175,9 +176,9 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
     }
 
     protected void disposeDetails() { 
-        getBrowser().removeUIListener(this);
-        getBrowser().getThemeRegistry().unregister(this);
-        getBrowser().getTranslationRegistry().unregister(this);
+        _ui.removeUI(this);
+        _themeRegistry.unregister(this);
+        _translationRegistry.unregister(this);
         _closed = true; 
         synchronized (_pendingMessages) { 
             _pendingMessages.notifyAll();
@@ -290,4 +291,14 @@ class LogTab extends BrowserTab implements Browser.UIListener, Themeable, Transl
         
         reconfigItem();
     }
+
+    // unused UI methods
+    public Opts readCommand() { return null; }
+    public Opts readCommand(boolean displayPrompt) { return null; }
+    public boolean toggleDebug() { return false; }
+    public boolean togglePaginate() { return false; }
+    public void insertCommand(String commandline) {}
+    public String readStdIn() { return null; }
+    public void addUI(UI ui) {}
+    public void removeUI(UI ui) {}
 }

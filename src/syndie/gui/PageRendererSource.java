@@ -15,8 +15,6 @@ public class PageRendererSource {
     private DBClient _client;
     private ThemeRegistry _themes;
     private PageRendererSource() {}
-    public PageRendererSource(DataControl dataControl) { this(dataControl.getClient(), dataControl.getThemeRegistry()); }
-    /** two separate parameters to allow client to be null while browser has useful components (like theme/translation registries) */
     public PageRendererSource(DBClient client, ThemeRegistry themes) { 
         _client = client;
         _themes = themes;

@@ -62,16 +62,16 @@ import syndie.db.MessageThreadBuilder;
 import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
+import syndie.db.UI;
 
 /**
  *
  */
-public class MessageView implements Translatable, Themeable {
-    private DataControl _dataControl;
+public class MessageView extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private URIControl _uriControl;
     private BookmarkControl _bookmarkControl;
-    private DBClient _client;
+    private BanControl _banControl;
     private Composite _parent;
     private Composite _root;
     
@@ -133,13 +133,13 @@ public class MessageView implements Translatable, Themeable {
     private boolean _enabled;
     private long _msgId;
     
-    public MessageView(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, Composite parent, SyndieURI uri) {
+    public MessageView(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite parent, SyndieURI uri) {
+        super(client, ui, themes, trans);
         _enabled = false;
-        _dataControl = dataControl;
         _navControl = navControl;
         _uriControl = uriControl;
         _bookmarkControl = bookmarkControl;
-        _client = dataControl.getClient();
+        _banControl = ban;
         _parent = parent;
         _uri = uri;
         _msgId = -1;
@@ -148,7 +148,7 @@ public class MessageView implements Translatable, Themeable {
             _page = 1;
         else
             _page = page.intValue();
-        Timer timer = new Timer("view page " + Integer.toHexString(System.identityHashCode(this)), dataControl.getUI());
+        Timer timer = new Timer("view page " + Integer.toHexString(System.identityHashCode(this)), _ui);
         initComponents(timer);
         showPage(timer);
         timer.complete();
@@ -182,7 +182,7 @@ public class MessageView implements Translatable, Themeable {
     
     public String getTitle() { 
         String rv = _headerSubject.getText();
-        return _dataControl.getTranslationRegistry().getText(T_TITLE_PREFIX, "msg: ") + rv;
+        return _translationRegistry.getText(T_TITLE_PREFIX, "msg: ") + rv;
     }
     
     public void viewPage(int page) {
@@ -233,7 +233,7 @@ public class MessageView implements Translatable, Themeable {
         timer.addEvent("showing page");
         MessageInfo msg = getMessage();
         timer.addEvent("message loaded");
-        _dataControl.getUI().debugMessage("showPage: uri: " + _uri);
+        _ui.debugMessage("showPage: uri: " + _uri);
         _headerFlags.setMessage(msg);
         timer.addEvent("header flags set");
         if (msg == null) {
@@ -249,7 +249,7 @@ public class MessageView implements Translatable, Themeable {
         } else {
             if (msg.getPassphrasePrompt() != null) {
                 _root.setVisible(false);
-                PassphrasePrompt prompt = new PassphrasePrompt(_dataControl, _root.getShell(), false);
+                PassphrasePrompt prompt = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), false);
                 prompt.setPassphrasePrompt(msg.getPassphrasePrompt());
                 prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
                     public void promptComplete(String passphraseEntered, String promptEntered) {
@@ -260,11 +260,11 @@ public class MessageView implements Translatable, Themeable {
                 prompt.open();
             } else {
                 _root.setVisible(true);
-                if (MessageTree.shouldMarkReadOnView(_dataControl.getClient()))
-                    _dataControl.getClient().markMessageRead(msg.getInternalId());
+                if (MessageTree.shouldMarkReadOnView(_client))
+                    _client.markMessageRead(msg.getInternalId());
             }
             // perhaps we should check for the message avatar too...
-            byte authorAvatar[] = _dataControl.getClient().getChannelAvatar(msg.getAuthorChannelId());
+            byte authorAvatar[] = _client.getChannelAvatar(msg.getAuthorChannelId());
             timer.addEvent("avatar data read");
             if (authorAvatar != null) {
                 Image authorAvatarImg = ImageUtil.createImage(authorAvatar);
@@ -288,7 +288,7 @@ public class MessageView implements Translatable, Themeable {
             _headerSubject.setText(subject);
             timer.addEvent("subject set");
             
-            ChannelInfo authorChan = _dataControl.getClient().getChannel(msg.getAuthorChannelId());
+            ChannelInfo authorChan = _client.getChannel(msg.getAuthorChannelId());
             timer.addEvent("author determined");
             if (authorChan != null) {
                 String name = authorChan.getName();
@@ -297,11 +297,11 @@ public class MessageView implements Translatable, Themeable {
                 else
                     _headerAuthor.setText("(" + authorChan.getChannelHash().toBase64().substring(0,6) + ") " + name);
             } else {
-                _headerAuthor.setText(_dataControl.getTranslationRegistry().getText(T_NO_AUTHOR, "Unspecified"));
+                _headerAuthor.setText(_translationRegistry.getText(T_NO_AUTHOR, "Unspecified"));
             }
             timer.addEvent("author set");
             
-            ChannelInfo forumChan = _dataControl.getClient().getChannel(msg.getTargetChannelId());
+            ChannelInfo forumChan = _client.getChannel(msg.getTargetChannelId());
             timer.addEvent("forum determined");
             if (forumChan != null) {
                 String name = forumChan.getName();
@@ -310,7 +310,7 @@ public class MessageView implements Translatable, Themeable {
                 else
                     _headerForum.setText("(" + forumChan.getChannelHash().toBase64().substring(0,6) + ") " + name);
             } else {
-                _headerForum.setText(_dataControl.getTranslationRegistry().getText(T_NO_FORUM, "Unspecified"));
+                _headerForum.setText(_translationRegistry.getText(T_NO_FORUM, "Unspecified"));
             }
             timer.addEvent("forum set");
             
@@ -364,8 +364,8 @@ public class MessageView implements Translatable, Themeable {
         timer.addEvent("layout complete");
     }
     
-    private String calculateSubject(MessageInfo msg) { return calculateSubject(_dataControl, msg); }
-    public static String calculateSubject(DataControl dataControl, MessageInfo msg) {
+    private String calculateSubject(MessageInfo msg) { return calculateSubject(_client, _translationRegistry, msg); }
+    public static String calculateSubject(DBClient client, TranslationRegistry trans, MessageInfo msg) {
         if (msg != null) {
             String subject = msg.getSubject();
             if ( (subject != null) && (subject.trim().length() > 0) )
@@ -374,9 +374,9 @@ public class MessageView implements Translatable, Themeable {
             List ancestors = msg.getHierarchy();
             for (int i = 0; i < ancestors.size(); i++) {
                 SyndieURI uri = (SyndieURI)ancestors.get(i);
-                long msgId = dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                long msgId = client.getMessageId(uri.getScope(), uri.getMessageId());
                 if (msgId >= 0) {
-                    String ancestorSubject = dataControl.getClient().getMessageSubject(msgId);
+                    String ancestorSubject = client.getMessageSubject(msgId);
                     if ( (ancestorSubject != null) && (ancestorSubject.trim().length() > 0) ) {
                         if (Constants.lowercase(ancestorSubject).startsWith("re:"))
                             return ancestorSubject;
@@ -387,32 +387,32 @@ public class MessageView implements Translatable, Themeable {
             }
         }
         // no ancestors with a subject found
-        return dataControl.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject");
+        return trans.getText(T_NO_SUBJECT, "No subject");
     }
-    static String calculateSubject(DataControl dataControl, SyndieURI uri) {
+    static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, SyndieURI uri) {
         long msgId = -1;
         if (uri != null)
-            msgId = dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
-        return calculateSubject(dataControl, msgId, uri.getScope(), uri.getMessageId(), true);
+            msgId = client.getMessageId(uri.getScope(), uri.getMessageId());
+        return calculateSubject(client, ui, trans, msgId, uri.getScope(), uri.getMessageId(), true);
     }
-    static String calculateSubject(DataControl dataControl, long msgId, Hash scope, Long messageId, boolean mayHaveSubject) {
+    static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, long msgId, Hash scope, Long messageId, boolean mayHaveSubject) {
         if (msgId >= 0) {
             String subject = null;
             if (mayHaveSubject)
-                subject = dataControl.getClient().getMessageSubject(msgId);
+                subject = client.getMessageSubject(msgId);
             if ( (subject != null) && (subject.trim().length() > 0) )
                 return subject;
             ThreadMsgId tmi = new ThreadMsgId(msgId);
             tmi.scope = scope;
             tmi.messageId = (messageId != null ? messageId.longValue() : -1);
             Map ancestors = new HashMap();
-            ThreadAccumulatorJWZ.buildAncestors(dataControl.getClient(), dataControl.getUI(), tmi, ancestors);
+            ThreadAccumulatorJWZ.buildAncestors(client, ui, tmi, ancestors);
             List ids = (List)ancestors.get(tmi);
             if (ids != null) {
                 for (int i = 0; i < ids.size(); i++) {
                     ThreadMsgId id = (ThreadMsgId)ids.get(i);
                     if (id.msgId >= 0) {
-                        subject = dataControl.getClient().getMessageSubject(id.msgId);
+                        subject = client.getMessageSubject(id.msgId);
                         if ( (subject != null) && (subject.trim().length() > 0) ) {
                             if (Constants.lowercase(subject).startsWith("re:"))
                                 return subject;
@@ -424,7 +424,7 @@ public class MessageView implements Translatable, Themeable {
             }
         }
         // no ancestors with a subject found
-        return dataControl.getTranslationRegistry().getText(T_NO_SUBJECT, "No subject");
+        return trans.getText(T_NO_SUBJECT, "No subject");
     }
     private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
     
@@ -462,7 +462,7 @@ public class MessageView implements Translatable, Themeable {
             timer.addEvent("initBody 1-page renderer constructed");
             _body[0].setListener(new PageListener());
             SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
-            _body[0].renderPage(new PageRendererSource(_dataControl), uri);
+            _body[0].renderPage(new PageRendererSource(_client, _themeRegistry), uri);
             timer.addEvent("initBody 1-page renderer rendered");
             //_body[0].addKeyListener(new MaxViewListener(uri));
         } else {
@@ -470,25 +470,25 @@ public class MessageView implements Translatable, Themeable {
             if ( (refs != null) && (refs.size() > 0) ) tabs++;
             if (threadSize > 1) tabs++;
             
-            _dataControl.getUI().debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
+            _ui.debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
             
             _tabFolder = new CTabFolder(_bodyContainer, SWT.BORDER | SWT.MULTI);
             _tabs = new CTabItem[tabs];
             _tabRoots = new Composite[tabs];
             _body = new PageRenderer[pageCount];
-            _tabFolder.setFont(_dataControl.getThemeRegistry().getTheme().TAB_FONT);
+            _tabFolder.setFont(_themeRegistry.getTheme().TAB_FONT);
             PageListener lsnr = new PageListener();
             for (int i = 0; i < pageCount; i++) {
                 _tabs[i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[i].setControl(_tabRoots[i]);
-                _tabs[i].setText(_dataControl.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
                 _tabRoots[i].setLayout(new FillLayout());
                 _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
                 timer.addEvent("initBody n-page renderer constructed");
                 _body[i].setListener(lsnr);
                 SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
-                _body[i].renderPage(new PageRendererSource(_dataControl), uri);
+                _body[i].renderPage(new PageRendererSource(_client, _themeRegistry), uri);
                 timer.addEvent("initBody n-page renderer constructed");
                 //_body[i].addKeyListener(new MaxViewListener(uri));
             }
@@ -498,9 +498,9 @@ public class MessageView implements Translatable, Themeable {
                 _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off].setControl(_tabRoots[off]);
-                _tabs[off].setText(_dataControl.getTranslationRegistry().getText(T_TAB_THREAD, "Thread"));
+                _tabs[off].setText(_translationRegistry.getText(T_TAB_THREAD, "Thread"));
                 _tabRoots[off].setLayout(new FillLayout());
-                if (MessageTree.shouldShowPreview(_dataControl.getClient())) {
+                if (MessageTree.shouldShowPreview(_client)) {
                     // show a preview pane too
                     final SashForm sash = new SashForm(_tabRoots[off], SWT.VERTICAL);
                     _threadTree = ComponentBuilder.instance().createMessageTree(sash, new MessageTree.MessageTreeListener() {
@@ -538,13 +538,13 @@ public class MessageView implements Translatable, Themeable {
                 final int toff = off;
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
-                        _dataControl.getUI().debugMessage("tab folder selection fired");
+                        _ui.debugMessage("tab folder selection fired");
                         if (_tabFolder.getSelection() == _tabs[toff]) {
-                            _dataControl.getUI().debugMessage("tab folder: thread tab selected");
+                            _ui.debugMessage("tab folder: thread tab selected");
                             if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) ) {
                                 loadThread(msg);
                             } else {
-                                _dataControl.getUI().debugMessage("tab folder: thread tab already populated");
+                                _ui.debugMessage("tab folder: thread tab already populated");
                             }
                         }
                     }
@@ -557,7 +557,7 @@ public class MessageView implements Translatable, Themeable {
                 _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off].setControl(_tabRoots[off]);
-                _tabs[off].setText(_dataControl.getTranslationRegistry().getText(T_TAB_REFS, "References"));
+                _tabs[off].setText(_translationRegistry.getText(T_TAB_REFS, "References"));
                 _tabRoots[off].setLayout(new FillLayout());
                 _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
                 _refTree.setReferences(refs);
@@ -570,12 +570,12 @@ public class MessageView implements Translatable, Themeable {
                 _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off+i].setControl(_tabRoots[off+i]);
-                _tabs[off+i].setText(_dataControl.getTranslationRegistry().getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
+                _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
                 _tabRoots[off+i].setLayout(new FillLayout());
                 
                 final SyndieURI uri = SyndieURI.createAttachment(_uri.getScope(), _uri.getMessageId().longValue(), i+1);
                 timer.addEvent("initBody attachment preview tab created");
-                _attachmentPreviews[i] = new AttachmentPreview(_dataControl, _tabRoots[off+i]);
+                _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
                 timer.addEvent("initBody attachment preview instantiated");
             
                 final int toff = off;
@@ -612,8 +612,8 @@ public class MessageView implements Translatable, Themeable {
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
 
     private void loadThread(MessageInfo msg) {
-        _dataControl.getUI().debugMessage("tab folder: populate thread tab");
-        ThreadBuilder builder = new ThreadBuilder(_dataControl.getClient(), _dataControl.getUI());
+        _ui.debugMessage("tab folder: populate thread tab");
+        ThreadBuilder builder = new ThreadBuilder(_client, _ui);
         List msgs = new ArrayList(1);
         ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
         id.messageId = msg.getMessageId();
@@ -654,7 +654,7 @@ public class MessageView implements Translatable, Themeable {
         
     private MaxView _maxView;
     public void toggleMaxView() {
-        _dataControl.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _uri);
+        _ui.debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _uri);
         synchronized (this) {
             if (_maxView != null) {
                 _maxView.dispose();
@@ -670,7 +670,7 @@ public class MessageView implements Translatable, Themeable {
                 int attachments = (_attachmentPreviews == null ? 0 : _attachmentPreviews.length);
                 if (tab < pages) {
                     SyndieURI uri = SyndieURI.createMessage(_uri.getScope(), _uri.getMessageId().longValue(), tab+1);
-                    _maxView = new MaxView(_dataControl, _root.getShell(), uri, new MaxView.MaxListener() {
+                    _maxView = new MaxView(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), uri, new MaxView.MaxListener() {
                         public void unmax(MaxView view) {
                             synchronized (MessageView.this) {
                                 _maxView = null;
@@ -754,14 +754,14 @@ public class MessageView implements Translatable, Themeable {
     private void reimport(final String passphrase) {
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
-                final boolean ok = _dataControl.reimport(_uri, passphrase);
+                final boolean ok = _client.reimport(_uri, passphrase);
                 Display.getDefault().asyncExec(new Runnable() { 
                    public void run() {
                        MessageBox box = null;
                        if (!ok) {
                            box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-                           box.setText(_dataControl.getTranslationRegistry().getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
-                           box.setMessage(_dataControl.getTranslationRegistry().getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           box.setText(_translationRegistry.getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
+                           box.setMessage(_translationRegistry.getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
                            if (rc == SWT.YES) {
                                _navControl.unview(_uri);
@@ -978,8 +978,8 @@ public class MessageView implements Translatable, Themeable {
         
         _headerReplyMenu.setVisible(false);
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
         timer.addEvent("initialized");
     }
     
@@ -1097,7 +1097,7 @@ public class MessageView implements Translatable, Themeable {
     }
     private void banAuthor() {
         if (_author != null) {
-            if (_dataControl.ban(_author))
+            if (_banControl.ban(_author))
                 _navControl.unview(_uri);
         }
     }
@@ -1115,31 +1115,20 @@ public class MessageView implements Translatable, Themeable {
     }
     private void banForum() {
         if (_target != null) {
-            if (_dataControl.ban(_target)) {
+            if (_banControl.ban(_target)) {
                 _navControl.unview(_uri);
             }
         }
     }
     
     private class PageListener implements PageRenderer.PageActionListener {
-        public void viewScopeMessages(PageRenderer renderer, Hash scope) {
-            if (_dataControl != null)
-                _navControl.view(SyndieURI.createScope(scope));
-        }
-        public void viewScopeMetadata(PageRenderer renderer, Hash scope) {
-            if (_dataControl != null)
-                _navControl.view(_uriControl.createManageURI(scope));
-        }
-        public void view(PageRenderer renderer, SyndieURI uri) {
-            if (_dataControl != null)
-                _navControl.view(SyndieURI.resolveRelative(_uri, uri));
-        }
+        public void viewScopeMessages(PageRenderer renderer, Hash scope) { _navControl.view(SyndieURI.createScope(scope)); }
+        public void viewScopeMetadata(PageRenderer renderer, Hash scope) { _navControl.view(_uriControl.createManageURI(scope)); }
+        public void view(PageRenderer renderer, SyndieURI uri) { _navControl.view(SyndieURI.resolveRelative(_uri, uri)); }
         public void bookmark(PageRenderer renderer, SyndieURI uri) { _bookmarkControl.bookmark(uri); }
         public void banScope(PageRenderer renderer, Hash scope) {
-            if (_dataControl != null) {
-                if (_dataControl.ban(scope))
-                    _navControl.unview(_uri);
-            }
+            if (_banControl.ban(scope))
+                _navControl.unview(_uri);
         }
         public void viewImage(PageRenderer renderer, Image img) {}
         public void ignoreImageScope(PageRenderer renderer, Hash scope) {}
@@ -1150,14 +1139,8 @@ public class MessageView implements Translatable, Themeable {
         public void importArchiveKey(PageRenderer renderer, Hash referencedBy, SyndieURI archiveURI, SessionKey key) {}
         public void saveAllImages(PageRenderer renderer, Map images) {}
         public void saveImage(PageRenderer renderer, String suggestedName, Image img) {}
-        public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {
-            if (_dataControl != null)
-                _navControl.view(_uriControl.createPostURI(author, msg, true));
-        }
-        public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
-            if (_dataControl != null)
-                _navControl.view(_uriControl.createPostURI(forum, msg));
-        }
+        public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) { _navControl.view(_uriControl.createPostURI(author, msg, true)); }
+        public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) { _navControl.view(_uriControl.createPostURI(forum, msg)); }
         public void prevPage() {
             if (_tabFolder != null) {
                 int idx = _tabFolder.getSelectionIndex();
@@ -1194,7 +1177,7 @@ public class MessageView implements Translatable, Themeable {
         _headerTags.setFont(theme.DEFAULT_FONT);
 
         if (_tabFolder != null)
-            _tabFolder.setFont(_dataControl.getThemeRegistry().getTheme().TAB_FONT);
+            _tabFolder.setFont(theme.TAB_FONT);
     }
     
     private static final String T_REPLY = "syndie.gui.messageview.reply";

@@ -11,6 +11,10 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.custom.CTabFolder;
 
 /** enable browser components to tell the browser to do things */
-public interface BrowserControl extends NavigationControl, BookmarkControl, URIControl, DataControl, DataCallback, LocalMessageCallback {
+public interface BrowserControl extends NavigationControl, BookmarkControl, URIControl, BanControl, DataCallback, LocalMessageCallback {
     public CTabFolder getTabFolder();
+    public DBClient getClient();
+    public UI getUI();
+    public TranslationRegistry getTranslationRegistry();
+    public ThemeRegistry getThemeRegistry();
 }

@@ -26,16 +26,17 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
+import syndie.db.DBClient;
 import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.SyncOutboundPusher;
+import syndie.db.UI;
 
 /**
  *
  */
-class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable, SyncArchive.SyncArchiveListener {
-    private DataControl _dataControl;
+class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Translatable, Disposable, SyncArchive.SyncArchiveListener {
     private Composite _parent;
     private SyncArchive _archive;
     
@@ -84,8 +85,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private Button _cancel;
     private Syndicator.SyndicationDetailListener _listener;
     
-    public SyndicatorDetailHTTPArchive(DataControl dataControl, Composite parent, SyncArchive archive, Syndicator.SyndicationDetailListener lsnr) {
-        _dataControl = dataControl;
+    public SyndicatorDetailHTTPArchive(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, SyncArchive archive, Syndicator.SyndicationDetailListener lsnr) {
+        super(client, ui, themes, trans);
         _parent = parent;
         _archive = archive;
         _listener = lsnr;
@@ -96,8 +97,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     public Control getControl() { return _root; }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (!_root.isDisposed()) _root.dispose();
         _archive.removeListener(this);
     }
@@ -326,8 +327,8 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         
         configActions();
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
         
         loadData();
     }
@@ -382,7 +383,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     
     private void configFreenet() {
         final Shell dialog = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        dialog.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_TITLE, "Freenet configuration"));
+        dialog.setText(_translationRegistry.getText(T_FREENET_TITLE, "Freenet configuration"));
         dialog.setLayout(new GridLayout(1, true));
         
         Composite row = new Composite(dialog, SWT.NONE);
@@ -390,7 +391,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label pubLabel = new Label(row, SWT.NONE);
         pubLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        pubLabel.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_PUB, "Public key:"));
+        pubLabel.setText(_translationRegistry.getText(T_FREENET_PUB, "Public key:"));
         final Text pub = new Text(row, SWT.SINGLE | SWT.BORDER);
         pub.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         String loc = _location.getText().trim();
@@ -402,16 +403,16 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         final Button readOnly = new Button(row, SWT.RADIO);
-        readOnly.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_READONLY, "Read only"));
+        readOnly.setText(_translationRegistry.getText(T_FREENET_READONLY, "Read only"));
         final Button writeOnly = new Button(row, SWT.RADIO);
-        writeOnly.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_WRITEONLY, "Write only"));
+        writeOnly.setText(_translationRegistry.getText(T_FREENET_WRITEONLY, "Write only"));
         
         row = new Composite(dialog, SWT.NONE);
         row.setLayout(new GridLayout(4, false));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label fcpHostLabel = new Label(row, SWT.NONE);
         fcpHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpHostLabel.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_FCPHOST, "FCP host:"));
+        fcpHostLabel.setText(_translationRegistry.getText(T_FREENET_FCPHOST, "FCP host:"));
         final Text fcpHost = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if ( (_archive.getFCPHost() != null) && (_archive.getFCPHost().trim().length() > 0) )
@@ -420,7 +421,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             fcpHost.setText("127.0.0.1");
         Label fcpPortLabel = new Label(row, SWT.NONE);
         fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpPortLabel.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_FCPPORT, "port:"));
+        fcpPortLabel.setText(_translationRegistry.getText(T_FREENET_FCPPORT, "port:"));
         final Text fcpPort = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getFCPPort() > 0)
@@ -433,7 +434,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label privLabel = new Label(row, SWT.NONE);
         privLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        privLabel.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_PRIV, "Private key:"));
+        privLabel.setText(_translationRegistry.getText(T_FREENET_PRIV, "Private key:"));
         final Text privKey = new Text(row, SWT.SINGLE | SWT.BORDER);
         privKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getPostKey() != null)
@@ -442,7 +443,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             privKey.setText("");
         Button gen = new Button(row, SWT.PUSH);
         gen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        gen.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_NEWKEY, "Generate new"));
+        gen.setText(_translationRegistry.getText(T_FREENET_NEWKEY, "Generate new"));
         gen.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { gen(); }
             public void widgetSelected(SelectionEvent selectionEvent) { gen(); }
@@ -472,7 +473,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         row.setLayout(new FillLayout(SWT.HORIZONTAL));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Button save = new Button(row, SWT.PUSH);
-        save.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_SAVE, "Save"));
+        save.setText(_translationRegistry.getText(T_FREENET_SAVE, "Save"));
         save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveFreenet(); }
             public void widgetSelected(SelectionEvent selectionEvent) { saveFreenet(); }
@@ -489,7 +490,7 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             }
         });
         Button cancel = new Button(row, SWT.PUSH);
-        cancel.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_CANCEL, "Cancel"));
+        cancel.setText(_translationRegistry.getText(T_FREENET_CANCEL, "Cancel"));
         cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
@@ -528,11 +529,11 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             "GenerateSSK\r\n" +
             "Identifier=" + (msgId+1) + "\r\n" +
             "EndMessage\r\n"));
-            Map rv = SyncOutboundPusher.readResults(s.getInputStream(), _dataControl.getUI());
+            Map rv = SyncOutboundPusher.readResults(s.getInputStream(), _ui);
             if (rv == null) {
                 MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-                box.setMessage(_dataControl.getTranslationRegistry().getText(T_FREENET_ERROR, "Error communicating with the Freenet server"));
-                box.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_ERROR_TITLE, "Error"));
+                box.setMessage(_translationRegistry.getText(T_FREENET_ERROR, "Error communicating with the Freenet server"));
+                box.setText(_translationRegistry.getText(T_FREENET_ERROR_TITLE, "Error"));
                 box.open();
                 //_ui.commandComplete(-1, null);
             } else {
@@ -548,10 +549,10 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
             s.close();
         } catch (Exception e) {
             //_error = "Error generating a new Freenet keypair";
-            _dataControl.getUI().debugMessage("Error generating a new Freenet keypair", e);
+            _ui.debugMessage("Error generating a new Freenet keypair", e);
             MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_dataControl.getTranslationRegistry().getText(T_FREENET_ERROR, "Error communicating with the Freenet server") + ": " + e.getMessage());
-            box.setText(_dataControl.getTranslationRegistry().getText(T_FREENET_ERROR_TITLE, "Error"));
+            box.setMessage(_translationRegistry.getText(T_FREENET_ERROR, "Error communicating with the Freenet server") + ": " + e.getMessage());
+            box.setText(_translationRegistry.getText(T_FREENET_ERROR_TITLE, "Error"));
             box.open();
             //_ui.commandComplete(-1, null);
         }
@@ -694,14 +695,14 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
     private SharedArchiveEngine.PushStrategy getPushStrategy() {
         SharedArchiveEngine.PushStrategy rv = _archive.getPushStrategy();
         if (rv == null)
-            rv = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI()).getDefaultPushStrategy();
+            rv = SyncManager.getInstance(_client, _ui).getDefaultPushStrategy();
         return rv;
     }
     
     private SharedArchiveEngine.PullStrategy getPullStrategy() {
         SharedArchiveEngine.PullStrategy rv = _archive.getPullStrategy();
         if (rv == null)
-            rv = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI()).getDefaultPullStrategy();
+            rv = SyncManager.getInstance(_client, _ui).getDefaultPullStrategy();
         return rv;
     }
     
@@ -785,16 +786,16 @@ class SyndicatorDetailHTTPArchive implements Themeable, Translatable, Disposable
         if (last > 0)
             _lastSync.setText(Constants.getDateTime(last));
         else
-            _lastSync.setText(_dataControl.getTranslationRegistry().getText(T_NEVER, "Never"));
+            _lastSync.setText(_translationRegistry.getText(T_NEVER, "Never"));
         
         long nxt = _archive.getNextSyncTime();
         if (nxt > 0) {
             if (nxt <= System.currentTimeMillis())
-                _nextSync.setText(_dataControl.getTranslationRegistry().getText(T_ASAP, "ASAP"));
+                _nextSync.setText(_translationRegistry.getText(T_ASAP, "ASAP"));
             else
                 _nextSync.setText(Constants.getDateTime(nxt));
         } else {
-            _nextSync.setText(_dataControl.getTranslationRegistry().getText(T_NEVER, "Never"));
+            _nextSync.setText(_translationRegistry.getText(T_NEVER, "Never"));
         }
     
         if (_name.getText().trim().length() > 0)

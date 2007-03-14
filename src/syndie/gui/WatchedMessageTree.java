@@ -15,21 +15,23 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 import syndie.db.ThreadAccumulator;
 import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadReferenceNode;
+import syndie.db.UI;
 
 /**
  * message tree that organizes threads first by forum, then by thread
  */
 public class WatchedMessageTree extends MessageTree {
-    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
-    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
     }
-    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         // don't show the forum column, don't show the flags column, don't expand anything by default
-        super(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
+        super(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
     }
     
     /** given the list of thread roots, munge them into forums w/ threads underneath */
@@ -108,8 +110,8 @@ public class WatchedMessageTree extends MessageTree {
             if ( (node != null) && (node.getURI() != null) ) {
                 Hash scope = node.getURI().getScope();
                 if (scope != null) {
-                    long target = _dataControl.getClient().getChannelId(scope);
-                    _dataControl.getClient().markChannelRead(target);
+                    long target = _client.getChannelId(scope);
+                    _client.markChannelRead(target);
                     return target;
                 }
             }

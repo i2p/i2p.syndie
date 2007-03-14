@@ -205,7 +205,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public Browser(DBClient client) {
         _client = client;
-        initComponentBuilder();
         _openTabs = new HashMap();
         _openTabURIs = new HashMap();
         _uiListeners = new ArrayList();
@@ -213,12 +212,13 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _runAfterStartup = new ArrayList();
         _initialized = false;
         _uiListenerPusher = new UIListenerPusher();
+        _translation = new TranslationRegistry(this, client.getRootDir());
+        _themes = new ThemeRegistry(this);
+        _translation.loadTranslations();
+        initComponentBuilder();
         Thread t = new Thread(_uiListenerPusher, "UI msg pusher");
         t.setDaemon(true);
         t.start();
-        _translation = new TranslationRegistry(this);
-        _themes = new ThemeRegistry(this);
-        _translation.loadTranslations();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
@@ -229,10 +229,14 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         ComponentBuilder b = ComponentBuilder.instance();
         b.setBookmarkControl(this);
         b.setDataCallback(this);
-        b.setDataControl(this);
+        b.setBanControl(this);
         b.setLocalMessageCallback(this);
         b.setNavigationControl(this);
         b.setURIControl(this);
+        b.setDBClient(_client);
+        b.setUI(this);
+        b.setThemeRegistry(_themes);
+        b.setTranslationRegistry(_translation);
     }
 
     private void initComponents(Timer timer) {
@@ -1398,43 +1402,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     public void messagePostponed(long postponementId) { populateResumeable(); }
     public void messageCancelled() { populateResumeable(); }
     
-    
-    private static final Comparator INVERSE_COMPARATOR = new Comparator() {
-        public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }
-        public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
-    };
-
-    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";    
-    /**
-     * ordered map of postponeId (Long) to the most recent version (Integer),
-     * with the most recent messages first 
-     */
-    public TreeMap getResumeable() {
-        TreeMap postponeIdToVersion = new TreeMap(INVERSE_COMPARATOR);
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = _client.con().prepareStatement(SQL_LIST_RESUMEABLE);
-            stmt.setLong(1, _client.getLoggedInNymId());
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                long id = rs.getLong(1);
-                int ver = rs.getInt(2);
-                postponeIdToVersion.put(new Long(id), new Integer(ver));
-            }
-        } catch (SQLException se) {
-            errorMessage("Internal eror populating resumeable list", se);
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
-        return postponeIdToVersion;
-    }
-
     private void populateResumeable() {
         while (_postMenuResumeMenu.getItemCount() > 0)
             _postMenuResumeMenu.getItem(0).dispose();
-        TreeMap postponeIdToVersion = getResumeable();
+        TreeMap postponeIdToVersion = _client.getResumeable();
         
         if (postponeIdToVersion.size() == 0) {
             _postMenuResumeRoot.setEnabled(false);
@@ -1463,39 +1434,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public void resumePost(long postponeId, int postponeVersion) {
         view(createPostURI(postponeId, postponeVersion));
-    }
-    
-    public boolean reimport(SyndieURI uri, String passphrase) {
-        if ( (uri == null) || (uri.getScope() == null) ) return false;
-        File dir = new File(_client.getArchiveDir(), uri.getScope().toBase64());
-        File msgFile = null;
-        if (uri.getMessageId() != null)
-            msgFile = new File(dir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
-        else
-            msgFile = new File(dir, "meta" + Constants.FILENAME_SUFFIX);
-        Importer imp = new Importer(_client, passphrase);
-        FileInputStream fin = null;
-        try {
-            fin = new FileInputStream(msgFile);
-            boolean ok = imp.processMessage(getUI(), _client, fin, passphrase, true, null, null);
-            fin.close();
-            fin = null;
-            debugMessage("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
-            // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
-            // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
-            boolean rv = ok && !imp.wasMissingKey();
-            // the Importer should take care of reimporting messages with the new read keys
-            if (uri.getMessageId() == null)
-                metaImported();
-            else
-                messageImported();
-            return rv;
-        } catch (IOException ioe) {
-            errorMessage("Error reimporting " + uri, ioe);
-            return false;
-        } finally {
-            if (fin != null) try { fin.close(); } catch (IOException ioe) {}
-        }
     }
     
     public void showWaitCursor(boolean show) {
@@ -1648,7 +1586,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             bookmark.name = tab.getName();
             bookmark.desc = tab.getDescription();
             
-            NymReferenceNode parent = StatusBar.getParent(this, this, bookmark);
+            NymReferenceNode parent = StatusBar.getParent(this, _translation, this, bookmark);
             long parentGroupId = -1;
             if (parent != null)
                 parentGroupId = parent.getGroupId();
@@ -1806,8 +1744,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         box.open();
     }
 
-    public List getPrivateMsgIds(boolean alreadyRead) { return _client.getPrivateMsgIds(alreadyRead); }
-    
     private void postNew() { view(createPostURI(null, null)); }
     private void showTextUI() { view(createTextUIURI()); }
     private void showLogs() { view(createLogsURI()); }
@@ -1829,7 +1765,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private void postWebRip() {
-        WebRipPostPopup popup = new WebRipPostPopup(this, this, this, _shell);
+        WebRipPostPopup popup = new WebRipPostPopup(_client, this, _themes, _translation, this, this, _shell);
         popup.open();
     }
     
@@ -2219,7 +2155,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private void exportMessage() {
-        LinkBuilderPopup popup = new LinkBuilderPopup(this, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, this, _themes, _translation, _shell, new LinkBuilderPopup.LinkBuilderSource() {
             public void uriBuilt(SyndieURI uri, String text) {
                 exportMessage(uri);
             }
@@ -2294,7 +2230,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         if (file != null) {
             File f = new File(file);
             if (!f.exists()) return;
-            BackupSecrets.restore(this, _shell, f);
+            BackupSecrets.restore(_client, this, _themes, _translation, _shell, f);
         }
     }
     private static final String T_RESTORE_BACKUP = "syndie.gui.browser.restore.backup";
@@ -2684,16 +2620,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     }
                     if (errMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UIListener)_uiListeners.get(i)).errorMessage(errMsg, errCause);
+                            ((UI)_uiListeners.get(i)).errorMessage(errMsg, errCause);
                     } else if (statusMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UIListener)_uiListeners.get(i)).statusMessage(statusMsg);
+                            ((UI)_uiListeners.get(i)).statusMessage(statusMsg);
                     } else if (debugMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UIListener)_uiListeners.get(i)).debugMessage(debugMsg, debugCause);
+                            ((UI)_uiListeners.get(i)).debugMessage(debugMsg, debugCause);
                     } else if (completeStatus != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UIListener)_uiListeners.get(i)).commandComplete(completeStatus.intValue(), completeLocation);
+                            ((UI)_uiListeners.get(i)).commandComplete(completeStatus.intValue(), completeLocation);
                     }
                 } catch (InterruptedException ie) {}
             }
@@ -2774,17 +2710,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         return ImageUtil.resize(ImageUtil.ICON_SHELL, 16, 16, false);
     }
 
-    public void addUIListener(UIListener lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
-    public void removeUIListener(UIListener lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
-    
-    public interface UIListener {
-        public void errorMessage(String msg);
-        public void errorMessage(String msg, Exception cause);
-        public void statusMessage(String msg);
-        public void debugMessage(String msg);
-        public void debugMessage(String msg, Exception cause);
-        public void commandComplete(int status, List location);
-    }
+    public void addUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
+    public void removeUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
     
     private static final String T_SHELL_TITLE = "syndie.gui.browser.title";
     private static final String T_CLOSE_ALL = "syndie.gui.browser.tabmenu.closeall";

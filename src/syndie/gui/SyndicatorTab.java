@@ -10,7 +10,7 @@ public class SyndicatorTab extends BrowserTab {
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _syndicator = new Syndicator(getBrowser(), getBrowser(), getRoot());
+        _syndicator = new Syndicator(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getRoot());
     }
     
     public boolean canShow(SyndieURI uri) {

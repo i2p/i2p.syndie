@@ -13,16 +13,20 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 public class ReferenceChooserTreeDnDSource {
-    private DataControl _dataControl;
+    private DBClient _client;
+    private UI _ui;
     private ReferenceChooserTree _tree;
     private boolean _isDragging;
     private boolean _allowSelectTrees;
     
-    public ReferenceChooserTreeDnDSource(DataControl dataControl, ReferenceChooserTree tree) { this(dataControl, tree, false); }
-    public ReferenceChooserTreeDnDSource(DataControl dataControl, ReferenceChooserTree tree, boolean selTrees) {
-        _dataControl = dataControl;
+    public ReferenceChooserTreeDnDSource(DBClient client, UI ui, ReferenceChooserTree tree) { this(client, ui, tree, false); }
+    public ReferenceChooserTreeDnDSource(DBClient client, UI ui, ReferenceChooserTree tree, boolean selTrees) {
+        _client = client;
+        _ui = ui;
         _tree = tree;
         _isDragging = false;
         _allowSelectTrees = selTrees;
@@ -50,11 +54,11 @@ public class ReferenceChooserTreeDnDSource {
                     if (_allowSelectTrees) {
                         evt.data = new BookmarkDnD().toString();
                         evt.doit = true;
-                        _dataControl.getUI().debugMessage("dragSetData to a dummy bookmarkdnd");
+                        _ui.debugMessage("dragSetData to a dummy bookmarkdnd");
                         return;
                     }
                     evt.doit = false;
-                    _dataControl.getUI().debugMessage("dragSetData to null");
+                    _ui.debugMessage("dragSetData to null");
                     return;
                 }
 
@@ -95,10 +99,10 @@ public class ReferenceChooserTreeDnDSource {
                 if (src == null) {
                     WatchedChannel watched = _tree.getWatchedChannel(item);
                     if (watched != null) {
-                        Hash scope = _dataControl.getClient().getChannelHash(watched.getChannelId());
+                        Hash scope = _client.getChannelHash(watched.getChannelId());
                         src = new BookmarkDnD();
                         src.desc = "";
-                        String name = _dataControl.getClient().getChannelName(watched.getChannelId());
+                        String name = _client.getChannelName(watched.getChannelId());
                         if (name == null)
                             name = scope.toBase64();
                         src.name = name;
@@ -113,7 +117,7 @@ public class ReferenceChooserTreeDnDSource {
                          (item == _tree.getPostRoot()) ) {
                         evt.data = new BookmarkDnD().toString();
                         evt.doit = true;
-                        _dataControl.getUI().debugMessage("dragSetData to a rooted dummy bookmarkdnd");
+                        _ui.debugMessage("dragSetData to a rooted dummy bookmarkdnd");
                         return;
                     }
                 }

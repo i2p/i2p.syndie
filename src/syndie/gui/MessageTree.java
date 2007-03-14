@@ -72,17 +72,16 @@ import syndie.db.NullUI;
 import syndie.db.ThreadAccumulator;
 import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadReferenceNode;
+import syndie.db.UI;
 
 /**
  * 
  */
-public class MessageTree implements Translatable, Themeable {
-    protected DataControl _dataControl;
+public class MessageTree extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private URIControl _uriControl;
     private DataCallback _dataCallback;
     private BookmarkControl _bookmarkControl;
-    private DBClient _client;
     private Composite _parent;
     private Composite _root;
     private Composite _top;
@@ -173,17 +172,16 @@ public class MessageTree implements Translatable, Themeable {
     /** cached avg char width for the text in the tree */
     private int _avgCharWidth;
     
-    public MessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(dataControl, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
-    public MessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(dataControl, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
     }
-    public MessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
-        _dataControl = dataControl;
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
+        super(client, ui, themes, trans);
         _navControl = navControl;
         _uriControl = uriControl;
         _bookmarkControl = bookmarkControl;
         _dataCallback = callback;
-        _client = dataControl.getClient();
         _parent = parent;
         _listener = lsnr;
         _showAuthor = showAuthor;
@@ -266,7 +264,7 @@ public class MessageTree implements Translatable, Themeable {
     }
     
     public void createFilterBar(Composite row, PreviewControlListener lsnr) {
-        FilterBar bar = new FilterBar(_dataControl, _navControl, _uriControl, this, row, lsnr);
+        FilterBar bar = new FilterBar(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, this, row, lsnr);
         _bars.add(bar);
     }
 
@@ -325,8 +323,7 @@ public class MessageTree implements Translatable, Themeable {
         client.setNymPrefs(prefs);
     }
     
-    private static class FilterBar implements Translatable, Themeable {
-        private DataControl _ctl;
+    private static class FilterBar extends BaseComponent implements Translatable, Themeable {
         private NavigationControl _barNavControl;
         private URIControl _barURIControl;
         private Composite _filterRow;
@@ -359,8 +356,8 @@ public class MessageTree implements Translatable, Themeable {
         private Hash _forumScopeOther[];
         private PreviewControlListener _listener;
         
-        public FilterBar(DataControl dataControl, NavigationControl navControl, URIControl uriControl, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
-            _ctl = dataControl;
+        public FilterBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
+            super(client, ui, themes, trans);
             _barNavControl = navControl;
             _barURIControl = uriControl;
             _msgTree = msgTree;
@@ -463,10 +460,10 @@ public class MessageTree implements Translatable, Themeable {
             _advancedPrivacyPBE.setSelection(true);
             _advancedPrivacyPrivate.setSelection(true);
             _advancedThreadResults.setSelection(true);
-            _advancedPreview.setSelection(shouldShowPreview(_ctl.getClient()));
-            _advancedMarkReadOnView.setSelection(shouldMarkReadOnView(_ctl.getClient()));
-            _advancedMarkReadOnPreview.setSelection(shouldMarkReadOnPreview(_ctl.getClient()));
-            _advancedDateImport.setSelection(shouldUseImportDate(_ctl.getClient()));
+            _advancedPreview.setSelection(shouldShowPreview(_client));
+            _advancedMarkReadOnView.setSelection(shouldMarkReadOnView(_client));
+            _advancedMarkReadOnPreview.setSelection(shouldMarkReadOnPreview(_client));
+            _advancedDateImport.setSelection(shouldUseImportDate(_client));
             
             SelectionListener lsnr = new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { _msgTree.applyFilter(); }
@@ -486,7 +483,7 @@ public class MessageTree implements Translatable, Themeable {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
                 private void fire() {
-                    setShouldShowPreview(_ctl.getClient(), _advancedPreview.getSelection());
+                    setShouldShowPreview(_client, _advancedPreview.getSelection());
                     if (_listener != null)
                         _listener.togglePreview(_advancedPreview.getSelection());
                 }
@@ -495,24 +492,24 @@ public class MessageTree implements Translatable, Themeable {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
                 private void fire() {
-                    setShouldMarkReadOnView(_ctl.getClient(), _advancedMarkReadOnView.getSelection());
+                    setShouldMarkReadOnView(_client, _advancedMarkReadOnView.getSelection());
                 }
             });
             _advancedMarkReadOnPreview.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
                 private void fire() {
-                    setShouldMarkReadOnPreview(_ctl.getClient(), _advancedMarkReadOnPreview.getSelection());
+                    setShouldMarkReadOnPreview(_client, _advancedMarkReadOnPreview.getSelection());
                 }
             });
             
             _advancedDateImport.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    setShouldUseImportDate(_ctl.getClient(), _advancedDateImport.getSelection());
+                    setShouldUseImportDate(_client, _advancedDateImport.getSelection());
                     _msgTree.applyFilter();
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    setShouldUseImportDate(_ctl.getClient(), _advancedDateImport.getSelection());
+                    setShouldUseImportDate(_client, _advancedDateImport.getSelection());
                     _msgTree.applyFilter();
                 }
             });
@@ -543,18 +540,18 @@ public class MessageTree implements Translatable, Themeable {
                 public void widgetSelected(SelectionEvent selectionEvent) { pickForum(); }
             });
             
-            _ctl.getTranslationRegistry().register(this);
-            _ctl.getThemeRegistry().register(this);
+            _translationRegistry.register(this);
+            _themeRegistry.register(this);
         }
         
         public void dispose() {
-            _ctl.getTranslationRegistry().unregister(this);
-            _ctl.getThemeRegistry().unregister(this);
+            _translationRegistry.unregister(this);
+            _themeRegistry.unregister(this);
         }
         
         private void pickForum() {
             if (_forumChooser == null) {
-                _forumChooser = new ReferenceChooserPopup(_filterRow.getShell(), _ctl, _barNavControl, _barURIControl, new ReferenceChooserTree.AcceptanceListener () {
+                _forumChooser = new ReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _filterRow.getShell(), _barNavControl, _barURIControl, new ReferenceChooserTree.AcceptanceListener () {
                     public void referenceAccepted(SyndieURI uri) {
                         Hash scope = uri.getScope();
                         _forumScopeOther = new Hash[] { scope };
@@ -620,7 +617,7 @@ public class MessageTree implements Translatable, Themeable {
             else
                 _advancedScopeAll.setSelection(true);
             
-            _ctl.getUI().debugMessage("filterBar.setFilter(" + uri + ")");
+            _ui.debugMessage("filterBar.setFilter(" + uri + ")");
             _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
             _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
             _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
@@ -651,16 +648,16 @@ public class MessageTree implements Translatable, Themeable {
                 selected = _filterAge.getSelectionIndex();
             _filterAge.setRedraw(false);
             _filterAge.removeAll();
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_TODAY, "Today"));
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_YESTERDAY, "Since yesterday"));
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_THISWEEK, "This week"));
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_LASTWEEK, "Since last week"));
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_THISMONTH, "This month"));
-            _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_LASTMONTH, "Since last month"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_TODAY, "Today"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_YESTERDAY, "Since yesterday"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_THISWEEK, "This week"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_LASTWEEK, "Since last week"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_THISMONTH, "This month"));
+            _filterAge.add(_translationRegistry.getText(T_AGE_LASTMONTH, "Since last month"));
             if (_customDate > 0)
                 _filterAge.add(Constants.getDate(_customDate) + "...");
             else
-                _filterAge.add(_ctl.getTranslationRegistry().getText(T_AGE_CUSTOM, "Custom date..."));
+                _filterAge.add(_translationRegistry.getText(T_AGE_CUSTOM, "Custom date..."));
             _filterAge.select(selected);
             _filterAge.setRedraw(true);
         }
@@ -674,11 +671,11 @@ public class MessageTree implements Translatable, Themeable {
             //    selected = _filterTag.getSelectionIndex();
             if ( (_filterTag.getItemCount() > 0) && (txt.length() > 0) )
                 selected = _filterTag.indexOf(txt);
-            _ctl.getUI().debugMessage("populateTagCombo text=[" + txt + "] selected [" + selected + "]");
+            _ui.debugMessage("populateTagCombo text=[" + txt + "] selected [" + selected + "]");
             _filterTag.setRedraw(false);
             _filterTag.removeAll();
             TreeSet tags = new TreeSet(_msgTree.getTags());
-            _filterTag.add(_ctl.getTranslationRegistry().getText(T_TAG_ALL, "Any tags"));
+            _filterTag.add(_translationRegistry.getText(T_TAG_ALL, "Any tags"));
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 String tag = ((String)iter.next()).trim();
                 if (tag.length() > 0)
@@ -697,19 +694,19 @@ public class MessageTree implements Translatable, Themeable {
         private String buildFilter() {
             SyndieURI uri = null;
             String filter = _msgTree.getFilter();
-            _ctl.getUI().debugMessage("build filter, tree has [" + filter + "]");
+            _ui.debugMessage("build filter, tree has [" + filter + "]");
             try {
                 if ( (filter == null) || (filter.trim().length() <= 0) )
                     filter = SyndieURI.DEFAULT_SEARCH_URI.toString();
                 uri = new SyndieURI(filter);
             } catch (URISyntaxException use) {
-                _ctl.getUI().debugMessage("build filter, tree is invalid [" + filter + "]", use);
+                _ui.debugMessage("build filter, tree is invalid [" + filter + "]", use);
                 uri = SyndieURI.DEFAULT_SEARCH_URI;
             }
 
             Map attributes = uri.getAttributes();
             
-            _ctl.getUI().debugMessage("build filter w/ base attributes: " + attributes);
+            _ui.debugMessage("build filter w/ base attributes: " + attributes);
             
             int days = 1;
             switch (_filterAge.getSelectionIndex()) {
@@ -807,7 +804,7 @@ public class MessageTree implements Translatable, Themeable {
                 attributes.put("scope", new String[] { "all" });
             }
             
-            _ctl.getUI().debugMessage("buildFilter scope: " + attributes.get("scope") + " otherScope: " + _forumScopeOther);
+            _ui.debugMessage("buildFilter scope: " + attributes.get("scope") + " otherScope: " + _forumScopeOther);
             
             if (_advancedPrivacyPBE.getSelection())
                 attributes.put("pbe", Boolean.TRUE.toString());
@@ -839,7 +836,7 @@ public class MessageTree implements Translatable, Themeable {
                 attributes.put("threaded", Boolean.FALSE.toString());
             
             String rv = new SyndieURI(uri.getType(), attributes).toString();
-            _ctl.getUI().debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
+            _ui.debugMessage("building filter w/ new tag [" + tag + "] and age [" + days + "]: " + rv);
             return rv;
         }
         
@@ -1196,8 +1193,8 @@ public class MessageTree implements Translatable, Themeable {
         _tree.addKeyListener(lsnr);
         _tree.addMouseListener(lsnr);
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
         
         initDnD();
     }
@@ -1242,9 +1239,9 @@ public class MessageTree implements Translatable, Themeable {
         if (!_filterable) return;
         if (column == _currentSortColumn) {
             _currentSortDirection = (_currentSortDirection == SWT.UP ? SWT.DOWN : SWT.UP);
-            _dataControl.getUI().debugMessage("toggleSort direction on " + column.getText());
+            _ui.debugMessage("toggleSort direction on " + column.getText());
         } else {
-            _dataControl.getUI().debugMessage("toggleSort column on " + column.getText());
+            _ui.debugMessage("toggleSort column on " + column.getText());
             _currentSortColumn = column;
             _currentSortDirection = SWT.DOWN;
         }
@@ -1266,8 +1263,8 @@ public class MessageTree implements Translatable, Themeable {
     public void showTags(boolean show) { _showTags = show; }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         for (int i = 0; i < _bars.size(); i++)
             ((FilterBar)_bars.get(i)).dispose();
     }
@@ -1286,14 +1283,14 @@ public class MessageTree implements Translatable, Themeable {
             try {
                 uri = new SyndieURI(filter);
                 _filter = uri.toString();
-                _dataControl.getUI().debugMessage("Good filter set [" + filter + "]");
+                _ui.debugMessage("Good filter set [" + filter + "]");
             } catch (URISyntaxException use) {
-                _dataControl.getUI().debugMessage("Bad filter set [" + filter + "]", use);
+                _ui.debugMessage("Bad filter set [" + filter + "]", use);
                 uri = new SyndieURI("search", new HashMap());
                 _filter = "";
             }
         } else {
-            _dataControl.getUI().debugMessage("Blank filter set");
+            _ui.debugMessage("Blank filter set");
             _filter = "";
         }
     
@@ -1307,7 +1304,7 @@ public class MessageTree implements Translatable, Themeable {
         for (int i = 0; i < _bars.size() && filter == null; i++) {
             String newfilter = ((FilterBar)_bars.get(i)).buildFilter();
             if (filter != null)
-                _dataControl.getUI().debugMessage("overwriting filter [" + filter + "] with [" + newfilter + "]");
+                _ui.debugMessage("overwriting filter [" + filter + "] with [" + newfilter + "]");
             filter = newfilter;
         }
         applyFilter(filter);
@@ -1322,7 +1319,7 @@ public class MessageTree implements Translatable, Themeable {
             _filtering = true;
         }
         if (alreadyFiltering) {
-            _dataControl.getUI().debugMessage("filter already in progress, not applying...");
+            _ui.debugMessage("filter already in progress, not applying...");
             return;
         }
         final Shell s = showFilteringWidget();
@@ -1335,10 +1332,10 @@ public class MessageTree implements Translatable, Themeable {
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
                         try {
-                            _dataControl.getUI().debugMessage("begin async calculating nodes in the tree: " + uri.toString());
+                            _ui.debugMessage("begin async calculating nodes in the tree: " + uri.toString());
                             //try { Thread.sleep(200); } catch (InterruptedException ie) {}
                             applyFilter(txt, uri, calculateNodes(uri)); 
-                            _dataControl.getUI().debugMessage("end async calculating nodes in the tree");
+                            _ui.debugMessage("end async calculating nodes in the tree");
                         } finally {
                             synchronized (MessageTree.this) {
                                 _filtering = false;
@@ -1367,10 +1364,10 @@ public class MessageTree implements Translatable, Themeable {
         Composite c = new Composite(s, SWT.BORDER);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         Label label = new Label(c, SWT.NONE);
-        label.setText(_dataControl.getTranslationRegistry().getText(T_FILTERING_LABEL, "Message filtering in progress"));
+        label.setText(_translationRegistry.getText(T_FILTERING_LABEL, "Message filtering in progress"));
         final Label filler = new Label(c, SWT.NONE);
-        label.setFont(_dataControl.getThemeRegistry().getTheme().SHELL_FONT);
-        filler.setFont(_dataControl.getThemeRegistry().getTheme().SHELL_FONT);
+        label.setFont(_themeRegistry.getTheme().SHELL_FONT);
+        filler.setFont(_themeRegistry.getTheme().SHELL_FONT);
         filler.setText("\\");
         LivelinessIndicator liv = new LivelinessIndicator(filler);
         liv.run();
@@ -1379,7 +1376,7 @@ public class MessageTree implements Translatable, Themeable {
         Point src = _root.getShell().getSize();
         //if (src.x + src.y <= 0)
         //    src = _root.getParent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        _dataControl.getUI().debugMessage("show liveliness: sz=" + sz + " src=" + src);
+        _ui.debugMessage("show liveliness: sz=" + sz + " src=" + src);
         Rectangle rect = Display.getDefault().map(_root.getShell(), null, src.x/2-sz.x/2, src.y/2-sz.y/2, sz.x, sz.y);
         s.setBounds(rect);
         s.open();
@@ -1423,9 +1420,9 @@ public class MessageTree implements Translatable, Themeable {
                 }
                 if (!_showChannel) _colChannel.setWidth(1);
                 
-                _dataControl.getUI().debugMessage("nodes calculated, setting them");
+                _ui.debugMessage("nodes calculated, setting them");
                 setMessages(nodes);
-                _dataControl.getUI().debugMessage("nodes set w/ " + uri);
+                _ui.debugMessage("nodes set w/ " + uri);
                 _appliedFilter = uri;
                 _filter = uri.toString(); // normalize manually edited uris
                 if (_listener != null)
@@ -1441,9 +1438,8 @@ public class MessageTree implements Translatable, Themeable {
      *         threaded, simply one per message
      */
     private List calculateNodes(SyndieURI uri) {
-        //ThreadAccumulator acc = new ThreadAccumulator(_client, _browser.getUI());
-        ThreadAccumulator acc = new ThreadAccumulatorJWZ(_client, _dataControl.getUI());
-        _dataControl.getUI().debugMessage("setting the filter: " + uri.toString());
+        ThreadAccumulator acc = new ThreadAccumulatorJWZ(_client, _ui);
+        _ui.debugMessage("setting the filter: " + uri.toString());
         acc.setFilter(uri);
         int sort = ThreadAccumulator.SORT_DEFAULT;
         if (_currentSortColumn == _colSubject)
@@ -1455,7 +1451,7 @@ public class MessageTree implements Translatable, Themeable {
         else if (_currentSortColumn == _colAuthor)
             sort = ThreadAccumulator.SORT_AUTHOR;
         acc.setSort(sort, _currentSortDirection == SWT.UP);
-        _dataControl.getUI().debugMessage("gathering the threads");
+        _ui.debugMessage("gathering the threads");
         acc.gatherThreads();
         List threads = new ArrayList();
         for (int i = 0; i < acc.getThreadCount(); i++)
@@ -1468,7 +1464,7 @@ public class MessageTree implements Translatable, Themeable {
         _fullNodes = referenceNodes;
         if (sz <= 0) {
             StringBuffer buf = new StringBuffer();
-            buf.append(_dataControl.getTranslationRegistry().getText(T_NAV_PAGE_PREFIX, "Page: "));
+            buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
             buf.append(1);
             buf.append("/");
             buf.append(1);
@@ -1497,14 +1493,14 @@ public class MessageTree implements Translatable, Themeable {
         _navStart.setEnabled(!atBeginning);
         
         StringBuffer buf = new StringBuffer();
-        buf.append(_dataControl.getTranslationRegistry().getText(T_NAV_PAGE_PREFIX, "Page: "));
+        buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
         buf.append(_currentPage+1);
         buf.append("/");
         buf.append(pages);
         _navState.setText(buf.toString());
         
         _top.layout(true, true);
-        _dataControl.getUI().debugMessage("currentPage[" + _currentPage + "/" + pages + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
+        _ui.debugMessage("currentPage[" + _currentPage + "/" + pages + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
         if (start > end) start = end;
         return referenceNodes.subList(start, end);
     }
@@ -1540,13 +1536,13 @@ public class MessageTree implements Translatable, Themeable {
         }
         
         long after = System.currentTimeMillis();
-        _dataControl.getUI().debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
+        _ui.debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
         long beforeGetTags = System.currentTimeMillis();
         if (recalcTags)
             _tags.addAll(getTags(allNodes));
         long afterGetTags = System.currentTimeMillis();
-        _dataControl.getUI().debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
+        _ui.debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
         
         if (recalcTags) {
             for (int i = 0; i < _bars.size(); i++)
@@ -1699,7 +1695,7 @@ public class MessageTree implements Translatable, Themeable {
                 long importDate = node.getImportDate(); //_client.getMessageImportDate(msgId);
                 long postDate = messageId; //uri.getMessageId().longValue();
                 if (_appliedFilter == null) {
-                    if (MessageTree.shouldUseImportDate(_dataControl.getClient()))
+                    if (MessageTree.shouldUseImportDate(_client))
                         date = Constants.getDate(importDate);
                     else
                         date = Constants.getDate(postDate);
@@ -1713,7 +1709,7 @@ public class MessageTree implements Translatable, Themeable {
                 status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
-                subj = _dataControl.getTranslationRegistry().getText(T_SUBJECT_NOT_KNOWN_LOCALLY, "Message is not known locally");
+                subj = _translationRegistry.getText(T_SUBJECT_NOT_KNOWN_LOCALLY, "Message is not known locally");
                 if (scopeName != null)
                     auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 else
@@ -1740,12 +1736,12 @@ public class MessageTree implements Translatable, Themeable {
         item.setText(4, tags);
         Font f = null;
         if ( (status == DBClient.MSG_STATUS_READ) || (uri == null) ) {
-            f = _dataControl.getThemeRegistry().getTheme().MSG_OLD_FONT;
+            f = _themeRegistry.getTheme().MSG_OLD_FONT;
         } else if (msgId < 0) {
-            f = _dataControl.getThemeRegistry().getTheme().MSG_UNKNOWN_FONT;
+            f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {
             _itemsNewUnread.add(item);
-            f = _dataControl.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT;
+            f = _themeRegistry.getTheme().MSG_NEW_UNREAD_FONT;
         }
         
         synchronized (this) {
@@ -1774,7 +1770,7 @@ public class MessageTree implements Translatable, Themeable {
             else
                 cur = (ThreadReferenceNode)cur.getParent();
         }
-        return MessageView.calculateSubject(_dataControl, node.getUniqueId(), node.getScopeHash(), new Long(node.getMsgId().messageId), false);
+        return MessageView.calculateSubject(_client, _ui, _translationRegistry, node.getUniqueId(), node.getScopeHash(), new Long(node.getMsgId().messageId), false);
     }
     
     private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";
@@ -1826,9 +1822,9 @@ public class MessageTree implements Translatable, Themeable {
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) continue;
-                long msgId = _dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
-                long targetId = _dataControl.getClient().getMessageTarget(msgId);
-                Hash target = _dataControl.getClient().getChannelHash(targetId);
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                long targetId = _client.getMessageTarget(msgId);
+                Hash target = _client.getChannelHash(targetId);
                 _navControl.view(_uriControl.createPostURI(target, uri));
             }
         }
@@ -1966,9 +1962,9 @@ public class MessageTree implements Translatable, Themeable {
                 Long msgId = (Long)_itemToMsgId.get(selected[i]);
                 if (msgId != null) {
                     if (_itemsNewUnread.contains(selected[i])) {
-                        _dataControl.getUI().debugMessage("mark an unread message as read (" + msgId + ")");
-                        _dataControl.getClient().markMessageRead(msgId.longValue());
-                        selected[i].setFont(_dataControl.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+                        _ui.debugMessage("mark an unread message as read (" + msgId + ")");
+                        _client.markMessageRead(msgId.longValue());
+                        selected[i].setFont(_themeRegistry.getTheme().MSG_NEW_READ_FONT);
                         _itemsNewUnread.remove(selected[i]);
                     }
                 }
@@ -1982,9 +1978,9 @@ public class MessageTree implements Translatable, Themeable {
             for (int i = 0; i < selected.length; i++) {
                 Long msgId = (Long)_itemToMsgId.get(selected[i]);
                 if (msgId != null) {
-                    _dataControl.getUI().debugMessage("mark as unread (" + msgId + ")");
-                    _dataControl.getClient().markMessageUnread(msgId.longValue());
-                    selected[i].setFont(_dataControl.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+                    _ui.debugMessage("mark as unread (" + msgId + ")");
+                    _client.markMessageUnread(msgId.longValue());
+                    selected[i].setFont(_themeRegistry.getTheme().MSG_NEW_UNREAD_FONT);
                     _itemsNewUnread.add(selected[i]);
                 }
             }
@@ -2013,8 +2009,8 @@ public class MessageTree implements Translatable, Themeable {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
             if (_itemsNewUnread.contains(item)) {
-                _dataControl.getClient().markMessageRead(msgId.longValue());
-                item.setFont(_dataControl.getThemeRegistry().getTheme().MSG_NEW_READ_FONT);
+                _client.markMessageRead(msgId.longValue());
+                item.setFont(_themeRegistry.getTheme().MSG_NEW_READ_FONT);
                 _itemsNewUnread.remove(item);
             }
         }
@@ -2040,12 +2036,12 @@ public class MessageTree implements Translatable, Themeable {
                 SyndieURI uri = (SyndieURI)cur.getValue();
                 
                 if (uri != null) {
-                    long msgId = _dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                     if (msgId >= 0) {
-                        long target = _dataControl.getClient().getMessageTarget(msgId);
+                        long target = _client.getMessageTarget(msgId);
                         if (channelIds.contains(new Long(target))) {
                             _itemsNewUnread.remove(item);
-                            item.setFont(_dataControl.getThemeRegistry().getTheme().MSG_OLD_FONT);
+                            item.setFont(_themeRegistry.getTheme().MSG_OLD_FONT);
                         }
                     }
                 }
@@ -2066,7 +2062,7 @@ public class MessageTree implements Translatable, Themeable {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
             long target = _client.getMessageTarget(msgId.longValue());
-            _dataControl.getClient().markChannelRead(target);
+            _client.markChannelRead(target);
             return target;
         } else {
             return -1;
@@ -2169,9 +2165,9 @@ public class MessageTree implements Translatable, Themeable {
             for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
                 TreeItem item = (TreeItem)iter.next();
                 if (_itemsNewUnread.contains(item))
-                    item.setFont(_dataControl.getThemeRegistry().getTheme().MSG_NEW_UNREAD_FONT);
+                    item.setFont(theme.MSG_NEW_UNREAD_FONT);
                 else
-                    item.setFont(_dataControl.getThemeRegistry().getTheme().MSG_OLD_FONT);
+                    item.setFont(theme.MSG_OLD_FONT);
             }
             rethemeAncestorsOfUnread();
         }
@@ -2191,6 +2187,6 @@ public class MessageTree implements Translatable, Themeable {
         }
     }
     protected void markUnreadChild(TreeItem item) {
-        item.setFont(_dataControl.getThemeRegistry().getTheme().MSG_UNREAD_CHILD_FONT);
+        item.setFont(_themeRegistry.getTheme().MSG_UNREAD_CHILD_FONT);
     }
 }

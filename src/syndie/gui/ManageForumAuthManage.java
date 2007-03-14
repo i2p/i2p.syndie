@@ -20,12 +20,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-class ManageForumAuthManage implements Themeable, Translatable {
-    private DataControl _dataControl;
+class ManageForumAuthManage extends BaseComponent implements Themeable, Translatable {
     private ManageForum _manage;
     
     private Shell _shell;
@@ -53,8 +54,8 @@ class ManageForumAuthManage implements Themeable, Translatable {
     /** channels (Hash) to receive the new management key, ordered by the _sendNewList */
     private ArrayList _sendNewForums;
     
-    public ManageForumAuthManage(DataControl dataControl, ManageForum manage) {
-        _dataControl = dataControl;
+    public ManageForumAuthManage(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, ManageForum manage) {
+        super(client, ui, themes, trans);
         _manage = manage;
         _selectedForums = new ArrayList();
         _sendNewForums = new ArrayList();
@@ -162,8 +163,8 @@ class ManageForumAuthManage implements Themeable, Translatable {
         loadData();
         refreshEnabled();
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void loadData() {
@@ -173,7 +174,7 @@ class ManageForumAuthManage implements Themeable, Translatable {
             for (Iterator iter = info.getAuthorizedManagerHashes().iterator(); iter.hasNext(); ) {
                 Hash scope = (Hash)iter.next();
                 _selectedForums.add(scope);
-                String name = _dataControl.getClient().getChannelName(scope);
+                String name = _client.getChannelName(scope);
                 if (name != null)
                     _selectedList.add(name + " [" + scope.toBase64().substring(0,6) + "]");
                 else
@@ -193,8 +194,8 @@ class ManageForumAuthManage implements Themeable, Translatable {
     public String getSendPassphrasePrompt() { return getPostPBE() ? _sendNewPBEPrompt.getText().trim() : null; }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (!_shell.isDisposed())
             _shell.dispose();
         if (_chooser != null)
@@ -221,7 +222,7 @@ class ManageForumAuthManage implements Themeable, Translatable {
                 if ( (uri != null) && (uri.getScope() != null) ) {
                     if (!_selectedForums.contains(uri.getScope())) {
                         _selectedForums.add(uri.getScope());
-                        String name = _dataControl.getClient().getChannelName(uri.getScope());
+                        String name = _client.getChannelName(uri.getScope());
                         if (name != null)
                             _selectedList.add(name + " [" + uri.getScope().toBase64().substring(0,6) + "]");
                         else
@@ -249,7 +250,7 @@ class ManageForumAuthManage implements Themeable, Translatable {
                 if ( (uri != null) && (uri.getScope() != null) ) {
                     if (!_sendNewForums.contains(uri.getScope())) {
                         _sendNewForums.add(uri.getScope());
-                        String name = _dataControl.getClient().getChannelName(uri.getScope());
+                        String name = _client.getChannelName(uri.getScope());
                         if (name != null)
                             _sendNewList.add(name + " [" + uri.getScope().toBase64().substring(0,6) + "]");
                         else

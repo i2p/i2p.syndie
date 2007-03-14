@@ -17,7 +17,7 @@ public class ArchiveManagerTab extends BrowserTab {
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _manager = new ArchiveManager(getBrowser(), getRoot());
+        _manager = new ArchiveManager(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
     }
         
     public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }

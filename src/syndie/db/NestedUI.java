@@ -24,4 +24,7 @@ public class NestedUI implements UI {
     public boolean togglePaginate() { return _real.togglePaginate(); }
     public void insertCommand(String cmd) { _real.insertCommand(cmd); }
     public String readStdIn() { return _real.readStdIn(); }
+
+    public void addUI(UI ui) { _real.addUI(ui); }
+    public void removeUI(UI ui) { _real.removeUI(ui); }
 }

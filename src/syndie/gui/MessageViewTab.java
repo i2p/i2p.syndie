@@ -31,7 +31,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _view = new MessageView(getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
+        _view = new MessageView(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
         
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);

@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.data.ChannelInfo;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * rip a web page to create a brand new post
@@ -36,8 +37,8 @@ public class WebRipPostControl extends WebRipPageControl {
     private String _passphrase;
     private String _passphrasePrompt;
     
-    public WebRipPostControl(DataControl dataControl, Composite parent) {
-        super(dataControl, parent);
+    public WebRipPostControl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent) {
+        super(client, ui, themes, trans, parent);
     }
     
     /** anyone can read it */
@@ -131,7 +132,7 @@ public class WebRipPostControl extends WebRipPageControl {
         else
             _authorList = new ArrayList();
         
-        DBClient.ChannelCollector channels = _dataControl.getClient().getChannels(true, true, true, true);
+        DBClient.ChannelCollector channels = _client.getChannels(true, true, true, true);
         
         for (int i = 0; i < channels.getIdentityChannelCount(); i++) {
             ChannelInfo info = channels.getIdentityChannel(i);

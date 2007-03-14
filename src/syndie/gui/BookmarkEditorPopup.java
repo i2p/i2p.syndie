@@ -6,19 +6,20 @@ import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.NymReferenceNode;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Translatable, Themeable {
-    private DataControl _dataControl;
+class BookmarkEditorPopup extends BaseComponent implements BookmarkEditor.BookmarkEditorListener, Translatable, Themeable {
     private BookmarkControl _bookmarkControl;
     private Shell _parent;
     private Shell _shell;
     private BookmarkEditor _editor;
     
-    public BookmarkEditorPopup(DataControl dataControl, BookmarkControl bookmarkControl, Shell parent) {
-        _dataControl = dataControl;
+    public BookmarkEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, Shell parent) {
+        super(client, ui, themes, trans);
         _bookmarkControl = bookmarkControl;
         _parent = parent;
         initComponents();
@@ -27,7 +28,7 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
-        _editor = new BookmarkEditor(_dataControl, _shell, this);
+        _editor = new BookmarkEditor(_client, _ui, _themeRegistry, _translationRegistry, _shell, this);
         _shell.pack();
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
@@ -39,13 +40,13 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         _editor.dispose();
     }
     

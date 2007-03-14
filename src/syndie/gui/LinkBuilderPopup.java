@@ -39,13 +39,12 @@ import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.SyncManager;
+import syndie.db.UI;
 
 /**
  *
  */
-class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener {
-    private DataControl _dataControl;
-    private DBClient _client;
+class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener {
     private Shell _parentShell;
     private Shell _shell;
     private LinkBuilderSource _target;
@@ -139,9 +138,8 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     /** has limitOptions been called */
     private boolean _fieldsLimited;
     
-    public LinkBuilderPopup(DataControl dataControl, Shell parent, LinkBuilderSource src) {
-        _dataControl = dataControl;
-        _client = dataControl.getClient();
+    public LinkBuilderPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, LinkBuilderSource src) {
+        super(client, ui, themes, trans);
         _parentShell = parent;
         _target = src;
         _archives = new ArrayList();
@@ -470,22 +468,22 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
     public void dispose() {}
     
     private void setURI(SyndieURI uri, String linkText) {
-        _dataControl.getUI().debugMessage("setURI(" + uri + ", " + linkText + ")");
+        _ui.debugMessage("setURI(" + uri + ", " + linkText + ")");
         blankSettings();
         
         if (uri != null) {
             if (uri.isArchive()) {
-                _dataControl.getUI().debugMessage("uri is an archive: " + uri);
+                _ui.debugMessage("uri is an archive: " + uri);
                 _linkTypeArchive.setSelection(true);
                 _linkTypeArchiveCombo.setText(uri.toString());
             } else if (uri.isChannel()) {
-                _dataControl.getUI().debugMessage("uri is a channel: " + uri);
+                _ui.debugMessage("uri is a channel: " + uri);
                 displaySyndieURI(uri);
                 //_linkTypeSyndie.setSelection(true);
                 //_linkTypeSyndieText.setText(uri.toString());
             } else if (uri.isURL()) {
                 String url = uri.getURL();
-                _dataControl.getUI().debugMessage("uri is a url: " + url);
+                _ui.debugMessage("uri is a url: " + url);
                 if (url == null) {
                     _linkTypeWeb.setSelection(true);
                     _linkTypeWebText.setText("");
@@ -499,13 +497,13 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
                     }
                 }
             } else {
-                _dataControl.getUI().debugMessage("uri is something else: " + uri);
+                _ui.debugMessage("uri is something else: " + uri);
                 displaySyndieURI(uri);
                 //_linkTypeSyndie.setSelection(true);
                 //_linkTypeSyndieText.setText(uri.toString());
             }
         } else {
-            _dataControl.getUI().debugMessage("uri is null: " + uri);
+            _ui.debugMessage("uri is null: " + uri);
         }
         
         _text.setText(linkText);
@@ -913,7 +911,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         _linkTypeArchiveCombo.setText("");
         _linkTypeArchiveCombo.removeAll();
         _archives.clear();
-        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
+        SyncManager mgr = SyncManager.getInstance(_client, _ui);
         int archives = mgr.getArchiveCount();
         for (int i = 0; i < archives; i++) {
             SyndieURI uri = mgr.getArchive(i).getArchiveURI();
@@ -1038,7 +1036,7 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
             attributes.remove("page");
         
         SyndieURI rv = new SyndieURI(orig.getType(), attributes);
-        _dataControl.getUI().debugMessage("rewritten uri attributes: " + attributes);
+        _ui.debugMessage("rewritten uri attributes: " + attributes);
         return rv;
     }
 
@@ -1046,10 +1044,10 @@ class LinkBuilderPopup implements ReferenceChooserTree.AcceptanceListener, Messa
         displaySyndieURI(uri);
     }
     private void displaySyndieURI(SyndieURI uri) {
-        _dataControl.getUI().debugMessage("displaying syndieURI: " + uri);
+        _ui.debugMessage("displaying syndieURI: " + uri);
         _linkTypeSyndie.setSelection(true);
         uri = updateURIWithOptions(uri);
-        _dataControl.getUI().debugMessage("displaying syndieURI, updated uri is: " + uri);
+        _ui.debugMessage("displaying syndieURI, updated uri is: " + uri);
         _linkTypeSyndieText.setText(uri.toString());
         _forumId = _client.getChannelId(uri.getScope());
         _forum = null;

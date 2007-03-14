@@ -282,4 +282,7 @@ public class TextUI implements UI {
     public void run() {
         _engine.run();
     }
+
+    public void addUI(UI ui) {}
+    public void removeUI(UI ui) {}
 }

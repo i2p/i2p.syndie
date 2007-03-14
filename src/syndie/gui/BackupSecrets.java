@@ -44,15 +44,16 @@ import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
+import syndie.db.DBClient;
 import syndie.db.Importer;
 import syndie.db.KeyImport;
+import syndie.db.UI;
 
 /**
  *
  */
-public class BackupSecrets implements Themeable, Translatable {
+public class BackupSecrets extends BaseComponent implements Themeable, Translatable {
     private Composite _parent;
-    private DataControl _dataControl;
     private NavigationControl _navControl;
     private SyndieURI _uri;
     private Composite _root;
@@ -65,9 +66,9 @@ public class BackupSecrets implements Themeable, Translatable {
     private Button _ok;
     private Button _cancel;
     
-    public BackupSecrets(DataControl browser, NavigationControl navControl, Composite parent, SyndieURI uri) {
+    public BackupSecrets(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, Composite parent, SyndieURI uri) {
+        super(client, ui, themes, trans);
         _parent = parent;
-        _dataControl = browser;
         _navControl = navControl;
         _uri = uri;
         initComponents();
@@ -132,8 +133,8 @@ public class BackupSecrets implements Themeable, Translatable {
         
         populateFields();
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void backupSelection() {
@@ -141,8 +142,8 @@ public class BackupSecrets implements Themeable, Translatable {
         if (_passphraseRequired.getSelection()) {
             if (pass.length() <= 0) {
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setMessage(_dataControl.getTranslationRegistry().getText(T_PASS_REQUIRED_MSG, "A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
-                box.setText(_dataControl.getTranslationRegistry().getText(T_PASS_REQUIRED_TITLE, "Passphrase required"));
+                box.setMessage(_translationRegistry.getText(T_PASS_REQUIRED_MSG, "A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
+                box.setText(_translationRegistry.getText(T_PASS_REQUIRED_TITLE, "Passphrase required"));
                 box.open();
                 return;
             }
@@ -176,20 +177,20 @@ public class BackupSecrets implements Themeable, Translatable {
         if (nymKeys.size() > 0) {
             FileDialog dialog = new FileDialog(_root.getShell(), SWT.SAVE | SWT.SINGLE);
             dialog.setFileName("nymkeys.dat");
-            dialog.setText(_dataControl.getTranslationRegistry().getText(T_LOCATION, "File to write the backup to"));
+            dialog.setText(_translationRegistry.getText(T_LOCATION, "File to write the backup to"));
             String filename = dialog.open();
             if (filename != null) {
                 String err = backup(nymKeys, chanMeta, pass, filename);
                 if (err != null) {
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_dataControl.getTranslationRegistry().getText(T_ERROR_MSG, "There was an error backing up the keys: ") + err);
-                    box.setText(_dataControl.getTranslationRegistry().getText(T_ERROR_TITLE, "Error"));
+                    box.setMessage(_translationRegistry.getText(T_ERROR_MSG, "There was an error backing up the keys: ") + err);
+                    box.setText(_translationRegistry.getText(T_ERROR_TITLE, "Error"));
                     box.open();
                 } else {
                     _navControl.unview(_uri);
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_dataControl.getTranslationRegistry().getText(T_OK_MSG, "The keys were backed up to: ") + filename);
-                    box.setText(_dataControl.getTranslationRegistry().getText(T_OK_TITLE, "Backup successful"));
+                    box.setMessage(_translationRegistry.getText(T_OK_MSG, "The keys were backed up to: ") + filename);
+                    box.setText(_translationRegistry.getText(T_OK_TITLE, "Backup successful"));
                     box.open();
                 }
             }
@@ -226,7 +227,7 @@ public class BackupSecrets implements Themeable, Translatable {
             if (pass != null) {
                 byte data[] = ((ByteArrayOutputStream)out).toByteArray();
                 byte salt[] = new byte[16];
-                byte encrypted[] = _dataControl.getClient().pbeEncrypt(data, pass, salt);
+                byte encrypted[] = _client.pbeEncrypt(data, pass, salt);
                 FileOutputStream fos = new FileOutputStream(target);
                 fos.write(salt);
                 fos.write(encrypted);
@@ -249,7 +250,7 @@ public class BackupSecrets implements Themeable, Translatable {
         ZipOutputStream zos = new ZipOutputStream(out);
         for (int i = 0; i < chanHashes.size(); i++) {
             Hash chan = (Hash)chanHashes.get(i);
-            File src = new File(new File(_dataControl.getClient().getArchiveDir(), chan.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
+            File src = new File(new File(_client.getArchiveDir(), chan.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             if (!src.exists())
                 continue;
             ZipEntry entry = new ZipEntry("meta" + i + ".syndie");
@@ -282,7 +283,7 @@ public class BackupSecrets implements Themeable, Translatable {
     }
     
     private static final byte ZIP_HEADER[] = new byte[] { 'P', 'K', 0x03, 0x04 };
-    static void restore(final DataControl browser, final Shell parent, final File src) {
+    static void restore(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, final Shell parent, final File src) {
         final byte origData[] = new byte[(int)src.length()];
         FileInputStream fin = null;
         try {
@@ -291,36 +292,36 @@ public class BackupSecrets implements Themeable, Translatable {
             if (read != origData.length)
                 throw new EOFException();
         } catch (IOException ioe) {
-            browser.getUI().errorMessage("Error importing " + src.getPath(), ioe);
-            fail(browser, parent, ioe.getMessage());
+            ui.errorMessage("Error importing " + src.getPath(), ioe);
+            fail(client, ui, themes, trans, parent, ioe.getMessage());
         }
         if (origData.length <= ZIP_HEADER.length) {
             MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(browser.getTranslationRegistry().getText(T_READ_SHORT, "The secrets file was too short"));
-            box.setText(browser.getTranslationRegistry().getText(T_READ_SHORT_TITLE, "Error reading"));
+            box.setMessage(trans.getText(T_READ_SHORT, "The secrets file was too short"));
+            box.setText(trans.getText(T_READ_SHORT_TITLE, "Error reading"));
             box.open();
             return;
         }
         
-        restore(browser, parent, src, origData, origData);
+        restore(client, ui, themes, trans, parent, src, origData, origData);
     }
-    private static void restore(final DataControl dataControl, final Shell parent, final File str, final byte origData[], final byte decrypted[]) {
+    private static void restore(final DBClient client, final UI ui, final ThemeRegistry themes, final TranslationRegistry trans, final Shell parent, final File str, final byte origData[], final byte decrypted[]) {
         if (!DataHelper.eq(ZIP_HEADER, 0, decrypted, 0, ZIP_HEADER.length)) {
-            PassphrasePrompt prompt = new PassphrasePrompt(dataControl, parent, false);
+            PassphrasePrompt prompt = new PassphrasePrompt(client, ui, themes, trans, parent, false);
             prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
                 public void promptComplete(String passphraseEntered, String promptEntered) {
                     if (passphraseEntered.length() > 0) {
-                        byte decr[] = dataControl.getClient().pbeDecrypt(origData, 16, origData, 0, passphraseEntered, origData.length-16);
-                        restore(dataControl, parent, str, origData, decr);
+                        byte decr[] = client.pbeDecrypt(origData, 16, origData, 0, passphraseEntered, origData.length-16);
+                        restore(client, ui, themes, trans, parent, str, origData, decr);
                     } else {
-                        restore(dataControl, parent, str, origData, origData);
+                        restore(client, ui, themes, trans, parent, str, origData, origData);
                     }
                 }
                 public void promptAborted() {}
             });
             prompt.open();
         } else {
-            dataControl.getUI().debugMessage("decryption ok");
+            ui.debugMessage("decryption ok");
             // decryption ok
             ZipInputStream zin = null;    
             try {
@@ -333,15 +334,15 @@ public class BackupSecrets implements Themeable, Translatable {
                 while ( (entry = zin.getNextEntry()) != null) {
                     String name = entry.getName();
                     if (name.startsWith("nymkey")) {
-                        dataControl.getUI().debugMessage("importing key "+ name);
+                        ui.debugMessage("importing key "+ name);
                         KeyImport imp = new KeyImport();
-                        imp.importKey(dataControl.getUI(), dataControl.getClient(), zin, true, false);
+                        imp.importKey(ui, client, zin, true, false);
                         keysRead++;
                     } else if (name.startsWith("meta")) {
-                        dataControl.getUI().debugMessage("importing meta "+ name);
-                        Importer imp = new Importer(dataControl.getClient());
-                        boolean ok = imp.processMessage(dataControl.getUI(), zin, dataControl.getClient().getLoggedInNymId(), null, null, false, null, null);
-                        dataControl.getUI().debugMessage("import meta result: " + ok + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
+                        ui.debugMessage("importing meta "+ name);
+                        Importer imp = new Importer(client);
+                        boolean ok = imp.processMessage(ui, zin, client.getLoggedInNymId(), null, null, false, null, null);
+                        ui.debugMessage("import meta result: " + ok + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
                         if (ok && !imp.wasMissingKey() && !imp.wasPBE())
                             metaRead++;
                         else
@@ -352,11 +353,11 @@ public class BackupSecrets implements Themeable, Translatable {
                 zin = null;
                 
                 MessageBox box = new MessageBox(parent, SWT.ICON_INFORMATION | SWT.OK);
-                box.setMessage(dataControl.getTranslationRegistry().getText(T_RESTORED, "Restored keys/meta/corrupt meta: ") + keysRead + "/" + metaRead + "/" + failedMeta);
-                box.setText(dataControl.getTranslationRegistry().getText(T_RESTORED_TITLE, "Restored"));
+                box.setMessage(trans.getText(T_RESTORED, "Restored keys/meta/corrupt meta: ") + keysRead + "/" + metaRead + "/" + failedMeta);
+                box.setText(trans.getText(T_RESTORED_TITLE, "Restored"));
                 box.open();
             } catch (IOException ioe) {
-                fail(dataControl, parent, ioe.getMessage());
+                fail(client, ui, themes, trans, parent, ioe.getMessage());
                 return;
             } finally {
                 if (zin != null) try { zin.close(); } catch (IOException ioe) {}
@@ -368,10 +369,10 @@ public class BackupSecrets implements Themeable, Translatable {
     private static final String T_RESTORED = "syndie.gui.backupsecrets.restored";
     private static final String T_RESTORED_TITLE = "syndie.gui.backupsecrets.restored.title";
     
-    private static void fail(DataControl dataControl, Shell parent, String err) {
+    private static void fail(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, String err) {
         MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(dataControl.getTranslationRegistry().getText(T_READ_ERR, "The secrets file was corrupt: ") + err);
-        box.setText(dataControl.getTranslationRegistry().getText(T_READ_ERR_TITLE, "Error reading"));
+        box.setMessage(trans.getText(T_READ_ERR, "The secrets file was corrupt: ") + err);
+        box.setText(trans.getText(T_READ_ERR_TITLE, "Error reading"));
         box.open();
     }
     private static final String T_READ_ERR = "syndie.gui.backupsecrets.readerr";
@@ -383,7 +384,7 @@ public class BackupSecrets implements Themeable, Translatable {
         _passphraseRequired.setSelection(true);
         
         Map chanToKeys = new HashMap();
-        java.util.List keys = _dataControl.getClient().getNymKeys(null, null);
+        java.util.List keys = _client.getNymKeys(null, null);
         for (int i = 0; i < keys.size(); i++) {
             NymKey key = (NymKey)keys.get(i);
             Hash chan = key.getChannel();
@@ -394,7 +395,7 @@ public class BackupSecrets implements Themeable, Translatable {
             }
             chanKeys.add(key);
         }
-        java.util.List channelKeys = _dataControl.getClient().getPrivateChannelReadKeys();
+        java.util.List channelKeys = _client.getPrivateChannelReadKeys();
         for (int i = 0; i < channelKeys.size(); i++) {
             NymKey key = (NymKey)channelKeys.get(i);
             Hash chan = key.getChannel();
@@ -413,7 +414,7 @@ public class BackupSecrets implements Themeable, Translatable {
             Set chanKeys = new TreeSet(KEY_COMPARATOR);
             chanKeys.addAll((Set)entry.getValue());
             
-            String chanName = _dataControl.getClient().getChannelName(chan);
+            String chanName = _client.getChannelName(chan);
             if (chanName == null)
                 chanName = "";
             
@@ -427,18 +428,18 @@ public class BackupSecrets implements Themeable, Translatable {
                 item.setChecked(true);
                 String str = null;
                 if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()))
-                    str = _dataControl.getTranslationRegistry().getText(T_TYPE_MANAGE, "Forum management key");
+                    str = _translationRegistry.getText(T_TYPE_MANAGE, "Forum management key");
                 else if (Constants.KEY_FUNCTION_REPLY.equals(key.getFunction()))
-                    str = _dataControl.getTranslationRegistry().getText(T_TYPE_REPLY, "Forum reply key");
+                    str = _translationRegistry.getText(T_TYPE_REPLY, "Forum reply key");
                 else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction()))
-                    str = _dataControl.getTranslationRegistry().getText(T_TYPE_POST, "Forum post key");
+                    str = _translationRegistry.getText(T_TYPE_POST, "Forum post key");
                 else if (Constants.KEY_FUNCTION_READ.equals(key.getFunction()))
-                    str = _dataControl.getTranslationRegistry().getText(T_TYPE_READ, "Forum read key");
+                    str = _translationRegistry.getText(T_TYPE_READ, "Forum read key");
                 
                 if (key.getIsExpired())
-                    str = str + " [" + _dataControl.getTranslationRegistry().getText(T_KEY_EXPIRED, "expired") + "]";
+                    str = str + " [" + _translationRegistry.getText(T_KEY_EXPIRED, "expired") + "]";
                 
-                str = str + " (" + _dataControl.getClient().sha256(key.getData()).toBase64().substring(0,12) + ")";
+                str = str + " (" + _client.sha256(key.getData()).toBase64().substring(0,12) + ")";
                 item.setText(str);
                 
                 _itemToNymKey.put(item, key);
@@ -480,8 +481,8 @@ public class BackupSecrets implements Themeable, Translatable {
     };
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
     }
     
     public void applyTheme(Theme theme) {

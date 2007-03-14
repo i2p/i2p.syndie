@@ -42,9 +42,9 @@ import syndie.db.UI;
 /**
  *
  */
-public class BugReport implements Themeable, Translatable {
+public class BugReport extends BaseComponent implements Themeable, Translatable {
     private Composite _parent;
-    private DataControl _dataControl;
+    private BanControl _dataControl;
     private DataCallback _dataCallback;
     private NavigationControl _navControl;
     private ScrolledComposite _scroll;
@@ -97,8 +97,8 @@ public class BugReport implements Themeable, Translatable {
      */
     private static final String STANDARD_BUGREPORT_FORUM = "eu61~moznLTNsOizxDjAsJpxBIm1WC1s4b1hWDy8gYQ=";
     
-    public BugReport(DataControl dataControl, DataCallback callback, NavigationControl navControl, Composite parent, SyndieURI uri) {
-        _dataControl = dataControl;
+    public BugReport(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, Composite parent, SyndieURI uri) {
+        super(client, ui, themes, trans);
         _dataCallback = callback;
         _navControl = navControl;
         _parent = parent;
@@ -250,8 +250,8 @@ public class BugReport implements Themeable, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { targetSelected(); }
         });
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
         
         loadConfig();
         _root.layout(true, true);
@@ -259,18 +259,18 @@ public class BugReport implements Themeable, Translatable {
     }
     
     private void savePrefs(String os, String jvm, String swt) {
-        Properties prefs = _dataControl.getClient().getNymPrefs();
+        Properties prefs = _client.getNymPrefs();
         prefs.setProperty("bugreport.os", os);
         prefs.setProperty("bugreport.jvm", jvm);
         prefs.setProperty("bugreport.swt", swt);
-        _dataControl.getClient().setNymPrefs(prefs);
+        _client.setNymPrefs(prefs);
     }
     private void loadPrefs() {
         String defOS = System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch");
         String defJVM = System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version");
         String defSWT = SWT.getPlatform() + "-" + SWT.getVersion();
         
-        Properties prefs = _dataControl.getClient().getNymPrefs();
+        Properties prefs = _client.getNymPrefs();
         _os.setText(prefs.getProperty("bugreport.os", defOS));
         _jvm.setText(prefs.getProperty("bugreport.jvm", defJVM));
         _swt.setText(prefs.getProperty("bugreport.swt", defSWT));
@@ -285,8 +285,8 @@ public class BugReport implements Themeable, Translatable {
                 
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
             public DataCallback getDataCallback() { return _dataCallback; }
-            public DBClient getClient() { return _dataControl.getClient(); }
-            public UI getUI() { return _dataControl.getUI(); }
+            public DBClient getClient() { return _client; }
+            public UI getUI() { return _ui; }
             public Hash getAuthor() {
                 int idx = _signAs.getSelectionIndex();
                 if (idx >= _signAsChans.size()) {
@@ -352,7 +352,7 @@ public class BugReport implements Themeable, Translatable {
                     }
                     return buf;
                 } catch (IOException ioe) {
-                    _dataControl.getUI().errorMessage("Error reading attachment", ioe);
+                    _ui.errorMessage("Error reading attachment", ioe);
                     return null;
                 } finally {
                     if (fis != null) try { fis.close(); } catch (IOException ioe) {}
@@ -395,7 +395,7 @@ public class BugReport implements Themeable, Translatable {
             String err = creator.getErrors();
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setMessage(err);
-            box.setText(_dataControl.getTranslationRegistry().getText(T_POST_ERR, "Error posting report"));
+            box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
             box.open();
         }
     }
@@ -423,7 +423,7 @@ public class BugReport implements Themeable, Translatable {
     private void addAttachment() {
         if (_fileDialog == null) {
             _fileDialog = new FileDialog(_root.getShell(), SWT.OPEN | SWT.MULTI);
-            _fileDialog.setText(_dataControl.getTranslationRegistry().getText(T_FILE_TEXT, "File to attach"));
+            _fileDialog.setText(_translationRegistry.getText(T_FILE_TEXT, "File to attach"));
         }
         if (_fileDialog.open() == null) return;
         String selected[] = _fileDialog.getFileNames();
@@ -453,17 +453,17 @@ public class BugReport implements Themeable, Translatable {
     }
     
     private void loadConfig() {
-        BugConfig cfg = _dataControl.getClient().getBugConfig();
+        BugConfig cfg = _client.getBugConfig();
         rebuildComponentMenu(cfg);
         ReferenceNode def = cfg.getComponentDefault();
         if (def != null)
-            _component.setText(_dataControl.getTranslationRegistry().getText(def.getName(), def.getDescription()));
+            _component.setText(_translationRegistry.getText(def.getName(), def.getDescription()));
         
         _severity.setRedraw(false);
         for (int i = 0; i < cfg.getSeverityCount(); i++) {
             String id = cfg.getSeverityId(i);
             String name = cfg.getSeverityName(i);
-            _severity.add(_dataControl.getTranslationRegistry().getText(id, name));
+            _severity.add(_translationRegistry.getText(id, name));
             _severities.add(id);
         }
         if (cfg.getSeverityDefaultIndex() >= 0) {
@@ -476,7 +476,7 @@ public class BugReport implements Themeable, Translatable {
         for (int i = 0; i < cfg.getTypeCount(); i++) {
             String id = cfg.getTypeId(i);
             String name = cfg.getTypeName(i);
-            _type.add(_dataControl.getTranslationRegistry().getText(id, name));
+            _type.add(_translationRegistry.getText(id, name));
             _types.add(id);
         }
         if (cfg.getTypeDefaultIndex() >= 0) {
@@ -490,14 +490,14 @@ public class BugReport implements Themeable, Translatable {
         
         SyndieURI target = cfg.getTargetScope();
         if (target != null) {
-            long targetId = _dataControl.getClient().getChannelId(target.getScope());
+            long targetId = _client.getChannelId(target.getScope());
             if (targetId >= 0) {
-                String name = _dataControl.getClient().getChannelName(targetId);
+                String name = _client.getChannelName(targetId);
                 _target.add(target.getScope().toBase64().substring(0,6) + ": " + name);
             }
         }
         
-        DBClient.ChannelCollector chans = _dataControl.getClient().getChannels(true, true, true, true);
+        DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true);
         for (int i = 0; i < chans.getIdentityChannelCount(); i++) {
             ChannelInfo info = chans.getIdentityChannel(i);
             _targetChans.add(info.getChannelHash());
@@ -531,7 +531,7 @@ public class BugReport implements Themeable, Translatable {
             _target.select(0);
         targetSelected();
         
-        Properties prefs = _dataControl.getClient().getNymPrefs();
+        Properties prefs = _client.getNymPrefs();
         String val = prefs.getProperty("editor.defaultAuthor");
         if (val != null) {
             byte hash[] = Base64.decode(val);
@@ -563,10 +563,10 @@ public class BugReport implements Themeable, Translatable {
             item = new MenuItem(parent, SWT.CASCADE);
             Menu sub = new Menu(item);
             item.setMenu(sub);
-            item.setText(_dataControl.getTranslationRegistry().getText(node.getName(), node.getDescription()));
+            item.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
             
             MenuItem subcur = new MenuItem(sub, SWT.PUSH);
-            subcur.setText(_dataControl.getTranslationRegistry().getText(node.getName(), node.getDescription()));
+            subcur.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
             subcur.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { selectComponent(node); }
                 public void widgetSelected(SelectionEvent selectionEvent) { selectComponent(node); }
@@ -576,7 +576,7 @@ public class BugReport implements Themeable, Translatable {
                 addComponent(node.getChild(i), sub);
         } else {
             item = new MenuItem(parent, SWT.PUSH);
-            item.setText(_dataControl.getTranslationRegistry().getText(node.getName(), node.getDescription()));
+            item.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { selectComponent(node); }
                 public void widgetSelected(SelectionEvent selectionEvent) { selectComponent(node); }
@@ -585,13 +585,13 @@ public class BugReport implements Themeable, Translatable {
     }
     
     private void selectComponent(ReferenceNode node) {
-        _component.setText(_dataControl.getTranslationRegistry().getText(node.getName(), node.getDescription()));
+        _component.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
         _selectedComponentId = node.getName();
     }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
     }
     
     public void applyTheme(Theme theme) {
@@ -668,6 +668,6 @@ public class BugReport implements Themeable, Translatable {
             _signAs.add(registry.getText(T_SIGN_AS_ANON, "Anonymous"));
         }
         
-        rebuildComponentMenu(_dataControl.getClient().getBugConfig());
+        rebuildComponentMenu(_client.getBugConfig());
     }
 }

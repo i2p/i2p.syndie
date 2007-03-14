@@ -31,7 +31,7 @@ class StartupPanel extends DesktopPanel {
         initComponents();
         _display = parent.getDisplay();
         timer.addEvent("startup panel constructed");
-        ui.addUIListener(new NullUI() {
+        ui.addUI(new NullUI() {
             public void errorMessage(String msg) { errorMessage(msg, null); }
             public void debugMessage(String msg) { debugMessage(msg, null); }
             public void errorMessage(final String msg, final Exception cause) {

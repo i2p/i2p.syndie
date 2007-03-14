@@ -4485,6 +4485,70 @@ public class DBClient {
         return rv;
     }
 
+    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";    
+    /**
+     * ordered map of postponeId (Long) to the most recent version (Integer),
+     * with the most recent messages first 
+     */
+    public TreeMap getResumeable() {
+        TreeMap postponeIdToVersion = new TreeMap(INVERSE_COMPARATOR);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = con().prepareStatement(SQL_LIST_RESUMEABLE);
+            stmt.setLong(1, _nymId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                int ver = rs.getInt(2);
+                postponeIdToVersion.put(new Long(id), new Integer(ver));
+            }
+        } catch (SQLException se) {
+            _ui.errorMessage("Internal eror populating resumeable list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return postponeIdToVersion;
+    }
+    private static final Comparator INVERSE_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }
+        public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
+    };
+
+    public boolean reimport(SyndieURI uri, String passphrase) {
+        if ( (uri == null) || (uri.getScope() == null) ) return false;
+        File dir = new File(getArchiveDir(), uri.getScope().toBase64());
+        File msgFile = null;
+        if (uri.getMessageId() != null)
+            msgFile = new File(dir, uri.getMessageId().longValue() + Constants.FILENAME_SUFFIX);
+        else
+            msgFile = new File(dir, "meta" + Constants.FILENAME_SUFFIX);
+        Importer imp = new Importer(this, passphrase);
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream(msgFile);
+            boolean ok = imp.processMessage(_ui, this, fin, passphrase, true, null, null);
+            fin.close();
+            fin = null;
+            _ui.debugMessage("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
+            // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
+            // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
+            boolean rv = ok && !imp.wasMissingKey();
+            // the Importer should take care of reimporting messages with the new read keys
+            //if (uri.getMessageId() == null)
+            //    metaImported();
+            //else
+            //    messageImported();
+            return rv;
+        } catch (IOException ioe) {
+            _ui.errorMessage("Error reimporting " + uri, ioe);
+            return false;
+        } finally {
+            if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+        }
+    }
+    
     /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */
     public void runScript(UI ui, String scriptName) {
         File scriptDir = new File(_rootDir, "scripts");

@@ -23,12 +23,12 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * search control for a ReferenceChooserTree
  */
-public class ReferenceChooserSearch implements Translatable {
-    private DataControl _dataControl;
+public class ReferenceChooserSearch extends BaseComponent implements Translatable {
     private ReferenceChooserTree _chooser;
     private Composite _parent;
     private Group _root;
@@ -41,10 +41,10 @@ public class ReferenceChooserSearch implements Translatable {
     private Button _publicPost;
     private Button _search;
     
-    public ReferenceChooserSearch(Composite parent, ReferenceChooserTree chooser, DataControl dataControl) {
+    public ReferenceChooserSearch(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, ReferenceChooserTree chooser) {
+        super(client, ui, themes, trans);
         _parent = parent;
         _chooser = chooser;
-        _dataControl = dataControl;
         initComponents();
     }
     
@@ -108,11 +108,11 @@ public class ReferenceChooserSearch implements Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { search(); }
         });
         
-        _dataControl.getTranslationRegistry().register(this);
+        _translationRegistry.register(this);
     }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
+        _translationRegistry.unregister(this);
     }
     
     public void setName(String name) { _name.setText(name); }

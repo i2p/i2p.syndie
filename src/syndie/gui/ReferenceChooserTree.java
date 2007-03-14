@@ -59,11 +59,10 @@ import syndie.db.UI;
  *  - $forumName
  *   - $archive|$ban|$bookmark
  */
-public class ReferenceChooserTree implements Translatable, Themeable, DBClient.WatchEventListener {
-    protected DataControl _dataControl;
+public class ReferenceChooserTree extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
+    protected BanControl _dataControl;
     protected NavigationControl _navControl;
     protected URIControl _uriControl;
-    private DBClient _client;
     private Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */
     private ArrayList _nymRefs;
@@ -97,22 +96,19 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     private ChoiceListener _choiceListener;
     private AcceptanceListener _acceptanceListener;
     private boolean _chooseAllStartupItems;
-    private UI _ui;
     private boolean _showSearchList;
     
-    public ReferenceChooserTree(DataControl control, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
-        this(control, nav, uriControl, parent, lsnr, accept, false, true, null);
+    public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
+        this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, true, null);
     }
-    public ReferenceChooserTree(DataControl control, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList) {
-        this(control, nav, uriControl, parent, lsnr, accept, chooseAllStartupItems, showSearchList, null);
+    public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList) {
+        this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, chooseAllStartupItems, showSearchList, null);
     }    
-    public ReferenceChooserTree(DataControl control, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
-        this(control, nav, uriControl, parent, lsnr, accept, false, true, timer);
+    public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
+        this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, true, timer);
     }
-    public ReferenceChooserTree(DataControl control, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList, Timer timer) {
-        _ui = control.getUI();
-        _client = control.getClient();
-        _dataControl = control;
+    public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList, Timer timer) {
+        super(client, ui, themes, trans);
         _navControl = nav;
         _uriControl = uriControl;
         _parent = parent;
@@ -150,7 +146,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     protected ChoiceListener getChoiceListener() { return _choiceListener; }
     protected AcceptanceListener getAcceptanceListener() { return _acceptanceListener; }
     protected Tree getTree() { return _tree; }
-    protected DataControl getDataControl() { return _dataControl; }
+    protected BanControl getDataControl() { return _dataControl; }
     protected WatchedChannel getWatchedChannel(TreeItem item) {
         return (WatchedChannel)_watchedItemToWatchedChannel.get(item);
     }
@@ -186,7 +182,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
         }
         rebuildBookmarks();
-        _dataControl.getUI().debugMessage("refresh bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
+        _ui.debugMessage("refresh bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
         if (rootWasOpen) {
             _bookmarkRoot.setExpanded(true);
             ArrayList pending = new ArrayList();
@@ -218,9 +214,9 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     public boolean isBookmarked(SyndieURI uri) {
         if (uri == null) return false;
         Hash scope = uri.getScope();
-        long chanId = _dataControl.getClient().getChannelId(scope);
+        long chanId = _client.getChannelId(scope);
         if (chanId >= 0) {
-            ArrayList watched = new ArrayList(_dataControl.getClient().getWatchedChannels());
+            ArrayList watched = new ArrayList(_client.getWatchedChannels());
             for (int i = 0; i < watched.size(); i++) {
                 WatchedChannel chan = (WatchedChannel)watched.get(i);
                 if (chan.getChannelId() == chanId)
@@ -297,8 +293,8 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         boolean impBans = false;
         boolean impKeys = false;
         
-        long chanId = _dataControl.getClient().getChannelId(scope);
-        Collection chans = _dataControl.getClient().getWatchedChannels();
+        long chanId = _client.getChannelId(scope);
+        Collection chans = _client.getWatchedChannels();
         WatchedChannel chan = null;
         for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
             WatchedChannel cur = (WatchedChannel)iter.next();
@@ -318,7 +314,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
             // new, so use defaults from above
         }
         
-        _dataControl.getClient().watchChannel(scope, highlight, impArchives, impBookmarks, impBans, impKeys);
+        _client.watchChannel(scope, highlight, impArchives, impBookmarks, impBans, impKeys);
     }
     
     private void rebuildWatched() {
@@ -326,11 +322,11 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         boolean wasExpanded = _watchedRoot.getExpanded();
         _watchedItemToWatchedChannel.clear();
         _watchedRoot.removeAll();
-        ArrayList watched = new ArrayList(_dataControl.getClient().getWatchedChannels());
+        ArrayList watched = new ArrayList(_client.getWatchedChannels());
         for (int i = 0; i < watched.size(); i++) {
             WatchedChannel chan = (WatchedChannel)watched.get(i);
-            String name = _dataControl.getClient().getChannelName(chan.getChannelId());
-            Hash hash = _dataControl.getClient().getChannelHash(chan.getChannelId());
+            String name = _client.getChannelName(chan.getChannelId());
+            Hash hash = _client.getChannelHash(chan.getChannelId());
             if (hash == null) continue;
             
             if (name == null) name = "";
@@ -396,7 +392,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 }
                 WatchedChannel chan = (WatchedChannel)_watchedItemToWatchedChannel.get(item);
                 if (chan != null) {
-                    Hash scope = _dataControl.getClient().getChannelHash(chan.getChannelId());
+                    Hash scope = _client.getChannelHash(chan.getChannelId());
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(scope));
                 }
             }
@@ -462,12 +458,12 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         
         _chooseAllStartupItems = false;
         if (register) {
-            _dataControl.getTranslationRegistry().register(this);
-            _dataControl.getThemeRegistry().register(this);
+            _translationRegistry.register(this);
+            _themeRegistry.register(this);
         }
         if (timer != null) timer.addEvent("refChooserTree init: after register");
         
-        _dataControl.getClient().addWatchEventListener(this);
+        _client.addWatchEventListener(this);
         long t9 = System.currentTimeMillis();
         if (timer != null) timer.addEvent("refChooserTree init: complete");
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
@@ -486,9 +482,9 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     }
     
     public void dispose() {
-        _dataControl.getClient().removeWatchEventListener(this);
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _client.removeWatchEventListener(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
     }
     
     protected void configTreeListeners(final Tree tree) {
@@ -533,7 +529,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 if (_rebuilding) return;
                 _rebuilding = true;
             }
-            _dataControl.getUI().debugMessage("rebuilder started");
+            _ui.debugMessage("rebuilder started");
             final ArrayList refs = new ArrayList(_client.getNymReferences(_client.getLoggedInNymId()));
             final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {
@@ -580,8 +576,8 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         _root.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 MessageBox box = new MessageBox(_tree.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-                box.setMessage(_dataControl.getTranslationRegistry().getText(T_SCHEDULE_MESSAGE, "To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
-                box.setText(_dataControl.getTranslationRegistry().getText(T_SCHEDULE_TITLE, "Schedule syndication?"));
+                box.setMessage(_translationRegistry.getText(T_SCHEDULE_MESSAGE, "To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
+                box.setText(_translationRegistry.getText(T_SCHEDULE_TITLE, "Schedule syndication?"));
                 int rc = box.open();
                 if (rc == SWT.YES)
                     _navControl.view(_uriControl.createSyndicationConfigURI());
@@ -616,7 +612,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
     }
     
     private SyndieURI[] getPrevTabs() {
-        Properties props = _dataControl.getClient().getNymPrefs();
+        Properties props = _client.getNymPrefs();
         String numTabs = props.getProperty("browser.prevTabs");
         int num = -1;
         if (numTabs != null) {
@@ -662,7 +658,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
         SyndieURI prevTabs[] = getPrevTabs();
         timer.addEvent("startup items: previous tabs identified");
         if (prevTabs == null) {
-            _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
+            _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_client)));
         } else {
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {
@@ -795,7 +791,7 @@ public class ReferenceChooserTree implements Translatable, Themeable, DBClient.W
                 sel = found;
         }
         
-        _dataControl.getUI().debugMessage("redraw bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
+        _ui.debugMessage("redraw bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
         if (rootWasOpen) {
             _bookmarkRoot.setExpanded(true);
             ArrayList pending = new ArrayList();

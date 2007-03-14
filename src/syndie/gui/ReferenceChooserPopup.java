@@ -22,13 +22,10 @@ import syndie.db.UI;
 /**
  *
  */
-class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener, Translatable {
+class ReferenceChooserPopup extends BaseComponent implements ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener, Translatable {
     private Shell _parent;
-    private DataControl _dataControl;
     private NavigationControl _navControl;
     private URIControl _uriControl;
-    private UI _ui;
-    private DBClient _client;
     private Shell _shell;
     private ReferenceChooserTree.AcceptanceListener _lsnr;
     private ReferenceChooserTree _tree;
@@ -37,18 +34,16 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     private String _titleKey;
     private String _titleVal;
     
-    public ReferenceChooserPopup(Shell parent, DataControl dataControl, NavigationControl navControl, URIControl uriControl, String titleKey, String titleVal) { this(parent, dataControl, navControl, uriControl, null, titleKey, titleVal); }
-    public ReferenceChooserPopup(Shell parent, DataControl dataControl, NavigationControl navControl, URIControl uriControl) { this(parent, dataControl, navControl, uriControl, null); }
-    public ReferenceChooserPopup(Shell parent, DataControl dataControl, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr) {
-        this(parent, dataControl, navControl, uriControl, lsnr, T_TITLE, "Reference chooser");
+    public ReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, String titleKey, String titleVal) { this(client, ui, themes, trans, parent, navControl, uriControl, null, titleKey, titleVal); }
+    public ReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl) { this(client, ui, themes, trans, parent, navControl, uriControl, null); }
+    public ReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr) {
+        this(client, ui, themes, trans, parent, navControl, uriControl, lsnr, T_TITLE, "Reference chooser");
     }
-    public ReferenceChooserPopup(Shell parent, DataControl dataControl, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
+    public ReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
+        super(client, ui, themes, trans);
         _parent = parent;
-        _dataControl = dataControl;
         _navControl = navControl;
         _uriControl = uriControl;
-        _ui = dataControl.getUI();
-        _client = dataControl.getClient();
         _titleKey = titleKey;
         _titleVal = titleVal;
         _lsnr = lsnr;
@@ -61,7 +56,7 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
     public void hide() { _shell.setVisible(false); }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
+        _translationRegistry.unregister(this);
         _tree.dispose();
         _search.dispose();
         _info.dispose();
@@ -76,16 +71,16 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
         _shell.setLayout(new FillLayout());
         
         SashForm sash = new SashForm(_shell, SWT.HORIZONTAL);
-        _tree = new ReferenceChooserTree(_dataControl, _navControl, _uriControl, sash, this, this);
+        _tree = new ReferenceChooserTree(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, sash, this, this);
         
         Composite right = new Composite(sash, SWT.NONE);
         right.setLayout(new GridLayout(1, true));
-        _search = new ReferenceChooserSearch(right, _tree, _dataControl);
+        _search = new ReferenceChooserSearch(_client, _ui, _themeRegistry, _translationRegistry, right, _tree);
         GridData gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         gd.grabExcessVerticalSpace = false;
         _search.getControl().setLayoutData(gd);
-        _info = new ReferenceChooserInfo(right, _tree, this, _dataControl);
+        _info = new ReferenceChooserInfo(_client, _ui, _themeRegistry, _translationRegistry, right, _tree, this);
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
         gd.grabExcessVerticalSpace = true;
@@ -101,7 +96,7 @@ class ReferenceChooserPopup implements ReferenceChooserTree.ChoiceListener, Refe
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-        _dataControl.getTranslationRegistry().register(this);
+        _translationRegistry.register(this);
     }
 
     

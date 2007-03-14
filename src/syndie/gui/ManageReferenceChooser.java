@@ -39,12 +39,13 @@ import syndie.data.ArchiveInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-public class ManageReferenceChooser implements Translatable, Themeable {
-    private DataControl _dataControl;
+public class ManageReferenceChooser extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
     private Composite _parent;
@@ -71,8 +72,8 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     
     private boolean _editable;
     
-    public ManageReferenceChooser(Composite parent, DataControl dataControl, NavigationControl navControl, BookmarkControl bookmarkControl, boolean editable) {
-        _dataControl = dataControl;
+    public ManageReferenceChooser(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BookmarkControl bookmarkControl, boolean editable) {
+        super(client, ui, themes, trans);
         _navControl = navControl;
         _bookmarkControl = bookmarkControl;
         _parent = parent;
@@ -185,8 +186,8 @@ public class ManageReferenceChooser implements Translatable, Themeable {
         //lazy init
         //_editPopup = new EditPopup();
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private int getColumn(int x) {
@@ -217,21 +218,21 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     }
     
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (_editPopup != null)
             _editPopup.dispose();
     }
     private void add() {
         if (_editPopup == null)
-            _editPopup = new EditPopup();
+            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
         _editPopup.setParent(null);
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
     }
     private void addChild() {
         if (_editPopup == null)
-            _editPopup = new EditPopup();
+            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
         _editPopup.setParent(getSelectedNode());
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
@@ -240,7 +241,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
         ReferenceNode node = getSelectedNode();
         if (node != null) {
             if (_editPopup == null)
-                _editPopup = new EditPopup();
+                _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
             _editPopup.setCurrentNode(node);
             _editPopup.showPopup(node.getURI());
         }
@@ -275,7 +276,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
             if (!includedURIs.contains(node.getURI()))
                 includedURIs.add(node.getURI());
         }
-        add(ReferenceNode.deepCopy(_dataControl.getClient().getNymReferences(_dataControl.getClient().getLoggedInNymId())), false, includedURIs);
+        add(ReferenceNode.deepCopy(_client.getNymReferences(_client.getLoggedInNymId())), false, includedURIs);
         _tree.setRedraw(true);
     }
     private void importBookmarksToLocal(boolean all) {
@@ -497,7 +498,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     }
     
     public void setReferences(List refs) {
-        _dataControl.getUI().debugMessage("setting refs:\n" + refs);
+        _ui.debugMessage("setting refs:\n" + refs);
         _tree.setRedraw(false);
         _tree.removeAll();
         _refs.clear();
@@ -522,7 +523,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
             if (includedURIs != null)
                 includedURIs.add(node.getURI());
             
-            _dataControl.getUI().debugMessage("adding: " + node);
+            _ui.debugMessage("adding: " + node);
             if (parent != null)
                 item = new TreeItem(parent, SWT.NONE);
             else
@@ -570,7 +571,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
         int width = ImageUtil.getWidth(text, _tree) + _tree.getGridLineWidth()*2 + extraWidth;
         int existing = col.getWidth();
         if (width > existing) {
-            _dataControl.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
+            _ui.debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
             col.setWidth(width);
         } else {
             //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
@@ -583,7 +584,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
             child = new ReferenceNode(_refs.size() + "", uri, "", "");
         else
             child = parent.addChild(parent.getChildCount() + "", uri, "", "");
-        _dataControl.getUI().debugMessage("child added: " + child);
+        _ui.debugMessage("child added: " + child);
         TreeItem parentItem = null;
         if (parent != null) {
             for (Iterator iter = _itemToRefNode.keySet().iterator(); iter.hasNext(); ) {
@@ -636,7 +637,7 @@ public class ManageReferenceChooser implements Translatable, Themeable {
     private class EditPopup extends LinkBuilderPopup {
         private ReferenceNode _parentNode;
         private ReferenceNode _currentNode;
-        public EditPopup() { super(_dataControl, _parent.getShell(), null); }//_editor); }
+        public EditPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans) { super(client, ui, themes, trans, _parent.getShell(), null); }//_editor); }
         protected void uriBuilt(SyndieURI uri) {
             if (_currentNode == null) {
                 add(uri, _parentNode);

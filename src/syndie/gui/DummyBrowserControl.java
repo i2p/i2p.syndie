@@ -39,9 +39,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createLogsURI() { return null; }
     public SyndieURI createManageURI(Hash forum) { return null; }
     public CTabFolder getTabFolder() { return null; }
-    public void addUIListener(Browser.UIListener lsnr) {}
-    public void removeUIListener(Browser.UIListener lsnr) {}
-
+    
     public void bookmark(SyndieURI uri) {}
     public void bookmark(SyndieURI uri, long parentGroupId) {}
     public void deleteBookmark(long bookmarkGroupId) {}

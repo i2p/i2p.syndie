@@ -31,7 +31,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-class TextUITab extends BrowserTab implements Browser.UIListener {
+class TextUITab extends BrowserTab implements UI {
     private StyledText _out;
     private Text _in;
     private Button _exec;
@@ -97,11 +97,11 @@ class TextUITab extends BrowserTab implements Browser.UIListener {
         
         //getRoot().setTabList(new Control[] { _in, _exec, _out });
         
-        getBrowser().addUIListener(this);
+        _ui.addUI(this);
     }
 
     protected void disposeDetails() { 
-        getBrowser().removeUIListener(this); 
+        _ui.removeUI(this);
         _closed = true; 
         synchronized (_pendingMessages) { 
             _pendingMessages.notifyAll(); 
@@ -229,6 +229,16 @@ class TextUITab extends BrowserTab implements Browser.UIListener {
     public Image getIcon() { return ImageUtil.ICON_TAB_TEXTUI; }
     public String getName() { return "Text UI"; }
     public String getDescription() { return "Advanced text interface"; }
+
+    // unused UI methods
+    public Opts readCommand() { return null; }
+    public Opts readCommand(boolean displayPrompt) { return null; }
+    public boolean toggleDebug() { return false; }
+    public boolean togglePaginate() { return false; }
+    public void insertCommand(String commandline) {}
+    public String readStdIn() { return null; }
+    public void addUI(UI ui) {}
+    public void removeUI(UI ui) {}
     
     private static class Record {
         int type;

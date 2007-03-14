@@ -53,12 +53,13 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-class ManageForum implements Translatable, Themeable {
-    private DataControl _dataControl;
+class ManageForum extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private URIControl _uriControl;
     private DataCallback _dataCallback;
@@ -117,8 +118,8 @@ class ManageForum implements Translatable, Themeable {
     private String _passphrase;
     private String _prompt;
     
-    public ManageForum(DataControl dataControl, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri) {
-        _dataControl = dataControl;
+    public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri) {
+        super(client, ui, themes, trans);
         _navControl = navControl;
         _uriControl = uriControl;
         _dataCallback = callback;
@@ -137,11 +138,11 @@ class ManageForum implements Translatable, Themeable {
         if (scope == null)
             scope = uri.getHash("scope");
         if (scope != null) {
-            List keys = dataControl.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
+            List keys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
             _scope = scope;
-            _scopeId = dataControl.getClient().getChannelId(scope);
+            _scopeId = _client.getChannelId(scope);
         } else {
-            _dataControl.getUI().debugMessage("no scope!  creating a new one");
+            _ui.debugMessage("no scope!  creating a new one");
         }
         initComponents();
     }
@@ -151,8 +152,8 @@ class ManageForum implements Translatable, Themeable {
     }
     
     public void resized() {
-        _dataControl.getUI().debugMessage("resizing forum parent");
-        applyTheme(_dataControl.getThemeRegistry().getTheme()); 
+        _ui.debugMessage("resizing forum parent");
+        applyTheme(_themeRegistry.getTheme()); 
         _parent.layout(true, true);
     }
     
@@ -223,7 +224,7 @@ class ManageForum implements Translatable, Themeable {
         _archiveSelect = new Button(_archiveGroup, SWT.PUSH);
         _archiveRemoveAll = new Button(_archiveGroup, SWT.PUSH);
         _archiveSelect.addSelectionListener(new FireSelectionListener() {
-            public void fire() { new ManageForumArchives(_dataControl, ManageForum.this); }
+            public void fire() { new ManageForumArchives(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this); }
         });
         _archiveRemoveAll.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -238,7 +239,7 @@ class ManageForum implements Translatable, Themeable {
         
         _refSelect = new Button(_refGroup, SWT.PUSH);
         _refSelect.addSelectionListener(new FireSelectionListener() {
-            public void fire() { new ManageForumReferences(_dataControl, ManageForum.this); }
+            public void fire() { new ManageForumReferences(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this); }
         });
         _refRemoveAll = new Button(_refGroup, SWT.PUSH);
         _refRemoveAll.addSelectionListener(new FireSelectionListener() {
@@ -250,7 +251,7 @@ class ManageForum implements Translatable, Themeable {
         
         _banSelect = new Button(_banGroup, SWT.PUSH);
         _banSelect.addSelectionListener(new FireSelectionListener() {
-            public void fire() { new ManageForumBans(_dataControl, ManageForum.this); }
+            public void fire() { new ManageForumBans(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this); }
         });
         _banRemoveAll = new Button(_banGroup, SWT.PUSH);
         _banRemoveAll.addSelectionListener(new FireSelectionListener() {
@@ -271,7 +272,7 @@ class ManageForum implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() { 
                 if (_manageForumAuthRead == null)
-                    _manageForumAuthRead = new ManageForumAuthRead(_dataControl, ManageForum.this);
+                    _manageForumAuthRead = new ManageForumAuthRead(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this);
                 _manageForumAuthRead.show();
             }
         });
@@ -282,7 +283,7 @@ class ManageForum implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() { 
                 if (_manageForumAuthPost == null)
-                    _manageForumAuthPost = new ManageForumAuthPost(_dataControl, ManageForum.this);
+                    _manageForumAuthPost = new ManageForumAuthPost(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this);
                 _manageForumAuthPost.show();
             }
         });
@@ -293,7 +294,7 @@ class ManageForum implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() { 
                 if (_manageForumAuthManage == null)
-                    _manageForumAuthManage = new ManageForumAuthManage(_dataControl, ManageForum.this);
+                    _manageForumAuthManage = new ManageForumAuthManage(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this);
                 _manageForumAuthManage.show();
             }
         });
@@ -304,7 +305,7 @@ class ManageForum implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() { 
                 if (_manageForumAuthReply == null)
-                    _manageForumAuthReply = new ManageForumAuthReply(_dataControl, ManageForum.this);
+                    _manageForumAuthReply = new ManageForumAuthReply(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this);
                 _manageForumAuthReply.show();
             }
         });
@@ -327,14 +328,14 @@ class ManageForum implements Translatable, Themeable {
             public void widgetSelected(SelectionEvent selectionEvent) { loadData(); }
         });
         
-        ChannelInfo info = _dataControl.getClient().getChannel(_scopeId);
+        ChannelInfo info = _client.getChannel(_scopeId);
         loadData();
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
-    ChannelInfo getChannelInfo() { return _dataControl.getClient().getChannel(_scopeId); }
+    ChannelInfo getChannelInfo() { return _client.getChannel(_scopeId); }
     
     List getPublicArchiveURIs() { return new ArrayList(_pubArchiveURIs); }
     List getPrivateArchiveURIs() { return new ArrayList(_privArchiveURIs); }
@@ -354,8 +355,8 @@ class ManageForum implements Translatable, Themeable {
         ImageUtil.dispose(_avatarImgOrig);
         for (int i = 0; i < _avatarImgStandard.size(); i++)
             ImageUtil.dispose((Image)_avatarImgStandard.get(i));
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (_manageForumAuthRead != null) _manageForumAuthRead.dispose();
         if (_manageForumAuthPost != null) _manageForumAuthPost.dispose();
         if (_manageForumAuthManage != null) _manageForumAuthManage.dispose();
@@ -366,8 +367,8 @@ class ManageForum implements Translatable, Themeable {
     public boolean confirmClose() {
         if (!_modified) return true;
         MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText(_dataControl.getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
-        confirm.setMessage(_dataControl.getTranslationRegistry().getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
+        confirm.setText(_translationRegistry.getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
+        confirm.setMessage(_translationRegistry.getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             return true;
@@ -381,7 +382,7 @@ class ManageForum implements Translatable, Themeable {
     private static final String T_CONFIRM_CLOSE_MSG = "syndie.gui.manageforum.close.msg";
     
     private void promptForPBE() {
-        PassphrasePrompt prompt = new PassphrasePrompt(_dataControl, _root.getShell(), true);
+        PassphrasePrompt prompt = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), true);
         prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
             public void promptComplete(String passphraseEntered, String promptEntered) {
                 _passphrase = passphraseEntered;
@@ -393,7 +394,7 @@ class ManageForum implements Translatable, Themeable {
     }
     
     private void saveChanges() {
-        ManageForumExecutor exec = new ManageForumExecutor(_dataControl.getClient(), _dataControl.getUI(), new ManageForumExecutor.ManageForumState() {
+        ManageForumExecutor exec = new ManageForumExecutor(_client, _ui, new ManageForumExecutor.ManageForumState() {
             public boolean getCreateReadKey() {
                 if (_manageForumAuthRead != null) {
                     return _manageForumAuthRead.getNewKey() || (_scopeId < 0);
@@ -428,7 +429,7 @@ class ManageForum implements Translatable, Themeable {
             public String getDescription() { return _description.getText(); }
             public long getLastEdition() {
                 if (_scopeId >= 0) 
-                    return _dataControl.getClient().getChannelVersion(_scopeId);
+                    return _client.getChannelVersion(_scopeId);
                 else
                     return -1;
             }
@@ -489,7 +490,7 @@ class ManageForum implements Translatable, Themeable {
                 Set rv = new HashSet();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash scope = (Hash)scopes.get(i);
-                    SigningPublicKey key = _dataControl.getClient().getChannelIdentKey(scope);
+                    SigningPublicKey key = _client.getChannelIdentKey(scope);
                     if (key != null)
                         rv.add(key);
                 }
@@ -504,9 +505,9 @@ class ManageForum implements Translatable, Themeable {
                     SyndieURI uri = (SyndieURI)iter.next();
                     ArchiveInfo info = new ArchiveInfo(uri);
                     archives.add(info);
-                    _dataControl.getUI().debugMessage("getArchives: sz=" + archives.size() + " uri=" + uri);
+                    _ui.debugMessage("getArchives: sz=" + archives.size() + " uri=" + uri);
                 }
-                _dataControl.getUI().debugMessage("getArchives(" + uris + "): found " + archives.size() + " archives");
+                _ui.debugMessage("getArchives(" + uris + "): found " + archives.size() + " archives");
                 return archives;
             }
 
@@ -522,7 +523,7 @@ class ManageForum implements Translatable, Themeable {
             public List getCurrentReadKeys() { 
                 if ( (_manageForumAuthRead != null) && (_manageForumAuthRead.getReadKeyPublicRetroactive()) ) {
                     // all session keys we know for reading posts in the forum, whether they were private or public
-                    return _dataControl.getClient().getReadKeys(_dataControl.getClient().getChannelHash(_scopeId), false);
+                    return _client.getReadKeys(_client.getChannelHash(_scopeId), false);
                 } else {
                     return null;
                 }
@@ -532,8 +533,8 @@ class ManageForum implements Translatable, Themeable {
         String errs = exec.getErrors();
         if ( (errs != null) && (errs.trim().length() > 0) ) {
             MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_dataControl.getTranslationRegistry().getText(T_ERROR_TITLE, "Error"));
-            box.setMessage(_dataControl.getTranslationRegistry().getText(T_ERROR_MSG, "Internal error saving the forum:") + errs);
+            box.setText(_translationRegistry.getText(T_ERROR_TITLE, "Error"));
+            box.setMessage(_translationRegistry.getText(T_ERROR_MSG, "Internal error saving the forum:") + errs);
             box.open();
         } else {
             // ok, now create any of the posts we need to send keys to the right people, 
@@ -546,18 +547,18 @@ class ManageForum implements Translatable, Themeable {
             Hash manageIdentity = exec.getCreatedManageIdentity();
             File postFile = null;
             if (postIdentity != null)
-                postFile = new File(new File(_dataControl.getClient().getOutboundDir(), postIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
+                postFile = new File(new File(_client.getOutboundDir(), postIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             File manageFile = null;
             if (manageIdentity != null)
-                manageFile = new File(new File(_dataControl.getClient().getOutboundDir(), manageIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
+                manageFile = new File(new File(_client.getOutboundDir(), manageIdentity.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             
-            _dataControl.getUI().debugMessage("done updating, scope=" + scope + " readKey=" + readKey + " postIdent=" + postIdentity + " manageIdent=" + manageIdentity);
+            _ui.debugMessage("done updating, scope=" + scope + " readKey=" + readKey + " postIdent=" + postIdentity + " manageIdent=" + manageIdentity);
             
             if (_manageForumAuthRead != null) {
                 // open a new post to the appropriate locations containing the read key
                 if (readKey == null) {
                     // use the existing readkey to send
-                    List nks = _dataControl.getClient().getNymKeys(uri.getScope(), Constants.KEY_FUNCTION_READ);
+                    List nks = _client.getNymKeys(uri.getScope(), Constants.KEY_FUNCTION_READ);
                     for (int i = 0; i < nks.size(); i++) {
                         NymKey nk = (NymKey)nks.get(i);
                         if (!nk.getIsExpired()) {
@@ -567,10 +568,10 @@ class ManageForum implements Translatable, Themeable {
                     }
                     if (readKey == null) {
                         // could be attached to the channel and not the nym, so try it there too
-                        List rks = _dataControl.getClient().getReadKeys(uri.getScope(), true);
+                        List rks = _client.getReadKeys(uri.getScope(), true);
                         for (int i = 0; i < rks.size(); i++) {
                             SessionKey rk = (SessionKey)rks.get(i);
-                            if (!_dataControl.getClient().getChannelReadKeyIsPublic(uri.getScope(), rk)) {
+                            if (!_client.getChannelReadKeyIsPublic(uri.getScope(), rk)) {
                                 readKey = rk;
                                 break;
                             }
@@ -580,12 +581,12 @@ class ManageForum implements Translatable, Themeable {
                 List scopes = _manageForumAuthRead.getSendExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
-                    _dataControl.getUI().debugMessage("pop up a window to post the read key to " + to.toBase64());
+                    _ui.debugMessage("pop up a window to post the read key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), readKey), null));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_manageForumAuthRead.getPostPBE()) {
-                    _dataControl.getUI().debugMessage("pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthRead.getSendPassphrase() + "]");
+                    _ui.debugMessage("pop up a window to post to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthRead.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthRead.getSendPassphrase() + "]");
                     _navControl.view(_uriControl.createPostURI(uri.getScope(), null, _manageForumAuthRead.getSendPassphrase(), _manageForumAuthRead.getSendPassphrasePrompt(), createReferences(uri.getScope(), readKey), null));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
@@ -595,12 +596,12 @@ class ManageForum implements Translatable, Themeable {
                 List scopes = _manageForumAuthPost.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
-                    _dataControl.getUI().debugMessage("pop up a window to post the post identity key to " + to.toBase64());
+                    _ui.debugMessage("pop up a window to post the post identity key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST), new File[] { postFile }));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_manageForumAuthPost.getPostPBE()) {
-                    _dataControl.getUI().debugMessage("pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthPost.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthPost.getSendPassphrase() + "]");
+                    _ui.debugMessage("pop up a window to post the post identity keys to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthPost.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthPost.getSendPassphrase() + "]");
                     _navControl.view(_uriControl.createPostURI(uri.getScope(), null, _manageForumAuthPost.getSendPassphrase(), _manageForumAuthPost.getSendPassphrasePrompt(), createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST), new File[] { postFile }));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
@@ -610,12 +611,12 @@ class ManageForum implements Translatable, Themeable {
                 List scopes = _manageForumAuthManage.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
-                    _dataControl.getUI().debugMessage("pop up a window to post the manage identity key to " + to.toBase64());
+                    _ui.debugMessage("pop up a window to post the manage identity key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE), new File[] { manageFile }));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_manageForumAuthManage.getPostPBE()) {
-                    _dataControl.getUI().debugMessage("pop up a window to post the manage identity keys to " + _scope + " with pbe prompt [" + _manageForumAuthManage.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthManage.getSendPassphrase() + "]");
+                    _ui.debugMessage("pop up a window to post the manage identity keys to " + _scope + " with pbe prompt [" + _manageForumAuthManage.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthManage.getSendPassphrase() + "]");
                     _navControl.view(_uriControl.createPostURI(uri.getScope(), null, _manageForumAuthManage.getSendPassphrase(), _manageForumAuthManage.getSendPassphrasePrompt(), createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE), new File[] { manageFile }));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
@@ -625,12 +626,12 @@ class ManageForum implements Translatable, Themeable {
                 List scopes = _manageForumAuthReply.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash to = (Hash)scopes.get(i);
-                    _dataControl.getUI().debugMessage("pop up a window to post the reply key to " + to.toBase64());
+                    _ui.debugMessage("pop up a window to post the reply key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReplyReferences(uri.getScope()), null));
                     //_browser.createPostURI(to, null, true, readKey);
                 } 
                 if (_manageForumAuthReply.getPostPBE()) {
-                    _dataControl.getUI().debugMessage("pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthReply.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthReply.getSendPassphrase() + "]");
+                    _ui.debugMessage("pop up a window to post the reply key to " + _scope.toBase64() + " with pbe prompt [" + _manageForumAuthReply.getSendPassphrasePrompt() + "] for pass [" + _manageForumAuthReply.getSendPassphrase() + "]");
                     _navControl.view(_uriControl.createPostURI(uri.getScope(), null, _manageForumAuthReply.getSendPassphrase(), _manageForumAuthReply.getSendPassphrasePrompt(), createReplyReferences(uri.getScope()), null));
                     //_browser.createPostURI(_scope, null, false, readKey, _viewForumAuthRead.getSendPassphrase(), _viewForumAuthRead.getSendPassphrasePrompt());
                 }
@@ -660,7 +661,7 @@ class ManageForum implements Translatable, Themeable {
         //_browser.getUI().debugMessage("todo: create references for the " + keyFunction + " key in " + scope + ": " + postIdentity);
         SyndieURI uri = SyndieURI.createScope(scope);
         Map attributes = uri.getAttributes();
-        List nymKeys = _dataControl.getClient().getNymKeys(postIdentity, Constants.KEY_FUNCTION_MANAGE);
+        List nymKeys = _client.getNymKeys(postIdentity, Constants.KEY_FUNCTION_MANAGE);
         SigningPrivateKey privKey = null;
         for (int i = 0; i < nymKeys.size(); i++) {
             NymKey k = (NymKey)nymKeys.get(i);
@@ -683,7 +684,7 @@ class ManageForum implements Translatable, Themeable {
         //_browser.getUI().debugMessage("todo: create references for the reply key in " + scope);
         SyndieURI uri = SyndieURI.createScope(scope);
         Map attributes = uri.getAttributes();
-        List nymKeys = _dataControl.getClient().getNymKeys(scope, Constants.KEY_FUNCTION_REPLY);
+        List nymKeys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_REPLY);
         PrivateKey privKey = null;
         for (int i = 0; i < nymKeys.size(); i++) {
             NymKey k = (NymKey)nymKeys.get(i);
@@ -709,7 +710,7 @@ class ManageForum implements Translatable, Themeable {
     }
 
     private void loadOrigAvatar() {
-        byte avatar[] = _dataControl.getClient().getChannelAvatar(_scopeId);
+        byte avatar[] = _client.getChannelAvatar(_scopeId);
         if (avatar != null) {
             Image img = ImageUtil.createImage(avatar);
             if (img != null) {
@@ -781,9 +782,9 @@ class ManageForum implements Translatable, Themeable {
     }
     private void pickAvatar() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.SINGLE | SWT.OPEN);
-        dialog.setText(_dataControl.getTranslationRegistry().getText(T_AVATAR_OPEN_NAME, "Select a 48x48 pixel PNG image"));
+        dialog.setText(_translationRegistry.getText(T_AVATAR_OPEN_NAME, "Select a 48x48 pixel PNG image"));
         dialog.setFilterExtensions(new String[] { "*.png" });
-        dialog.setFilterNames(new String[] { _dataControl.getTranslationRegistry().getText(T_AVATAR_OPEN_TYPE, "PNG image") });
+        dialog.setFilterNames(new String[] { _translationRegistry.getText(T_AVATAR_OPEN_TYPE, "PNG image") });
         String filename = dialog.open();
         if (filename != null) {
             Image img = ImageUtil.createImageFromFile(filename);
@@ -815,7 +816,7 @@ class ManageForum implements Translatable, Themeable {
     private static final String T_AVATAR_OPEN_NAME = "syndie.gui.manageforum.avatar.name";
     private static final String T_AVATAR_OPEN_TYPE = "syndie.gui.manageforum.avatar.type";
     
-    private void loadData() { loadData(_dataControl.getClient().getChannel(_scopeId)); }
+    private void loadData() { loadData(_client.getChannel(_scopeId)); }
     private void loadData(ChannelInfo info) {
         if (info != null) {
             _description.setText(str(info.getDescription()));
@@ -878,7 +879,7 @@ class ManageForum implements Translatable, Themeable {
         List all = new ArrayList();
         all.addAll(_pubArchiveURIs);
         all.addAll(_privArchiveURIs);
-        _dataControl.getUI().debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
+        _ui.debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
         for (int i = 0; i < all.size(); i++) {
             final SyndieURI uri = (SyndieURI)all.get(i);
             if (uri == null) continue;
@@ -887,7 +888,7 @@ class ManageForum implements Translatable, Themeable {
             numSelected++;
         }
         
-        _archiveGroup.setText(_dataControl.getTranslationRegistry().getText(T_ARCHIVE_PREFIX, "Archives: ") + numSelected + " ");
+        _archiveGroup.setText(_translationRegistry.getText(T_ARCHIVE_PREFIX, "Archives: ") + numSelected + " ");
         _archiveRemoveAll.setEnabled(numSelected > 0);
         
         _archiveGroup.getParent().layout(new Control[] { _archiveGroup });
@@ -908,7 +909,7 @@ class ManageForum implements Translatable, Themeable {
         Counter counter = new Counter(false);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         numSelected = counter.getCount();
-        _refGroup.setText(_dataControl.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + numSelected + " ");
+        _refGroup.setText(_translationRegistry.getText(T_REF_PREFIX, "References: ") + numSelected + " ");
         _refRemoveAll.setEnabled(numSelected > 0);
         _refGroup.getParent().layout(new Control[] { _refGroup });
     }
@@ -925,7 +926,7 @@ class ManageForum implements Translatable, Themeable {
         ReferenceNode.walk(_referenceNodeRoots, trim);
         for (int i = 0; i < scopes.size(); i++)
             _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
-        _banGroup.setText(_dataControl.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + scopes.size() + " ");
+        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + scopes.size() + " ");
         _banRemoveAll.setEnabled(scopes.size() > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -983,7 +984,7 @@ class ManageForum implements Translatable, Themeable {
     private void removeRefs() {
         TrimRefs trim = new TrimRefs(false);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _refGroup.setText(_dataControl.getTranslationRegistry().getText(T_REF_PREFIX, "References: ") + 0 + " ");
+        _refGroup.setText(_translationRegistry.getText(T_REF_PREFIX, "References: ") + 0 + " ");
         _refRemoveAll.setEnabled(false);
         _refGroup.getParent().layout(new Control[] { _refGroup });
         modified();
@@ -992,7 +993,7 @@ class ManageForum implements Translatable, Themeable {
     private void removeBans() {
         TrimRefs trim = new TrimRefs(true);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _banGroup.setText(_dataControl.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + 0 + " ");
+        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + 0 + " ");
         _banRemoveAll.setEnabled(false);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1021,7 +1022,7 @@ class ManageForum implements Translatable, Themeable {
         Counter counter = new Counter(true);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         int numSelected = counter.getCount();
-        _banGroup.setText(_dataControl.getTranslationRegistry().getText(T_BAN_PREFIX, "Bans: ") + numSelected + " ");
+        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + numSelected + " ");
         _banRemoveAll.setEnabled(numSelected > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
     }
@@ -1128,6 +1129,6 @@ class ManageForum implements Translatable, Themeable {
         _banRemoveAll.setText(registry.getText(T_BAN_REMOVEALL, "Remove all"));
         _banSelect.setText(registry.getText(T_BAN_SELECT, "Select..."));
     
-        _avatarOther.setText(_dataControl.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
+        _avatarOther.setText(registry.getText(T_AVATAR_OTHER, "Other..."));
     }
 }

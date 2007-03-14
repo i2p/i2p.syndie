@@ -39,4 +39,9 @@ public interface UI {
      * This reads until a sinle line with just "." is put on it (SMTP-style).
      */
     public String readStdIn();
+    
+    /** propogate messages to the ui */
+    public void addUI(UI ui);
+    /** stop propogating messages to the UI */
+    public void removeUI(UI ui);
 }

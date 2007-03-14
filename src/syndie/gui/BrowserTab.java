@@ -21,11 +21,12 @@ import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-public abstract class BrowserTab implements Themeable {
+public abstract class BrowserTab extends BaseComponent implements Themeable {
     private BrowserControl _browser;
     private CTabItem _item;
     private SyndieURI _uri;
@@ -123,6 +124,7 @@ public abstract class BrowserTab implements Themeable {
     }
     
     protected BrowserTab(BrowserControl browser, SyndieURI uri) {
+        super(browser.getClient(), browser.getUI(), browser.getThemeRegistry(), browser.getTranslationRegistry());
         _browser = browser;
         debug("constructing base browser tab");
         _item = new CTabItem(browser.getTabFolder(), SWT.CLOSE | SWT.BORDER);
@@ -174,7 +176,7 @@ public abstract class BrowserTab implements Themeable {
         }
         if ( (old != null) && (old != icon) ) {
             boolean disposed = ImageUtil.dispose(old);
-            _browser.getUI().debugMessage("disposing old tab " + getClass().getName() + " image: " + disposed);
+            _ui.debugMessage("disposing old tab " + getClass().getName() + " image: " + disposed);
         }
         _item.setText((null != getName() ? getName() : ""));
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
@@ -182,7 +184,7 @@ public abstract class BrowserTab implements Themeable {
     }
     
     protected Composite getRoot() { return _root; }
-    protected DBClient getClient() { return _browser.getClient(); }
+    protected DBClient getClient() { return _client; }
     protected BrowserControl getBrowser() { return _browser; }
     /** ask the browser to close us (call this internally - do not use close()) */
     protected void closeTab() { _browser.unview(getURI()); }
@@ -201,7 +203,7 @@ public abstract class BrowserTab implements Themeable {
     public boolean close() { dispose(); return true; }
     /** unvetoable close */
     public void dispose() {
-        _browser.getThemeRegistry().unregister(this);
+        _themeRegistry.unregister(this);
         if (!_item.isDisposed())
             _item.dispose();
         ImageUtil.dispose(getIcon());
@@ -213,7 +215,7 @@ public abstract class BrowserTab implements Themeable {
         if (uri == null) return false;
         boolean eq = getURI().equals(uri);
         if (eq)
-            _browser.getUI().debugMessage("tab is equal to the uri: " + getClass().getName() + " uri=" + getURI() + " newURI=" + uri);
+            _ui.debugMessage("tab is equal to the uri: " + getClass().getName() + " uri=" + getURI() + " newURI=" + uri);
         return eq;
     }
     public void resized() {}
@@ -224,11 +226,11 @@ public abstract class BrowserTab implements Themeable {
     public void toggleMaxView() {}
     public void toggleMaxEditor() {}
     
-    protected void debug(String msg) { _browser.getUI().debugMessage(msg); }
-    protected void debug(String msg, Exception e) { _browser.getUI().debugMessage(msg, e); }
-    protected void status(String msg) { _browser.getUI().statusMessage(msg); }
-    protected void error(String msg) { _browser.getUI().errorMessage(msg); }
-    protected void error(String msg, Exception e) { _browser.getUI().errorMessage(msg, e); }
+    protected void debug(String msg) { _ui.debugMessage(msg); }
+    protected void debug(String msg, Exception e) { _ui.debugMessage(msg, e); }
+    protected void status(String msg) { _ui.statusMessage(msg); }
+    protected void error(String msg) { _ui.errorMessage(msg); }
+    protected void error(String msg, Exception e) { _ui.errorMessage(msg, e); }
     
     //protected Image createAvatar(ChannelInfo chan) {
     //    return ImageUtil.resize(ImageUtil.ICON_QUESTION, ImageUtil.TAB_ICON_SIZE, ImageUtil.TAB_ICON_SIZE, false);

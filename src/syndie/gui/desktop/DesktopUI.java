@@ -44,8 +44,8 @@ class DesktopUI implements Runnable, UI {
         t.start();
     }
 
-    public void addUIListener(UI lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
-    public void removeUIListener(UI lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
+    public void addUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
+    public void removeUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
 
     public void run() {
         while (true) {

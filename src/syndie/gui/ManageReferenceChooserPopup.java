@@ -15,12 +15,12 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-public class ManageReferenceChooserPopup implements Themeable, Translatable {
-    private DataControl _dataControl;
+public class ManageReferenceChooserPopup extends BaseComponent implements Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
     private ManageReferenceChooser _refs;
@@ -28,9 +28,9 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
     private boolean _editable;
     private List _closeListeners;
     
-    public ManageReferenceChooserPopup(DataControl dataControl, Shell parentShell) { this(dataControl, parentShell, false); }
-    public ManageReferenceChooserPopup(DataControl dataControl, Shell parentShell, boolean editable) {
-        _dataControl = dataControl;
+    public ManageReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parentShell) { this(client, ui, themes, trans, parentShell, false); }
+    public ManageReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parentShell, boolean editable) {
+        super(client, ui, themes, trans);
         _parentShell = parentShell;
         _editable = editable;
         _closeListeners = new ArrayList();
@@ -51,8 +51,8 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         }
     }
     public void dispose() {
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         _refs.dispose();
     }
     
@@ -92,8 +92,8 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         
         _shell.setSize(_shell.computeSize(400, 200));
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     public void applyTheme(Theme theme) {

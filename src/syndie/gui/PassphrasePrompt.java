@@ -15,12 +15,13 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-public class PassphrasePrompt implements Translatable, Themeable {
-    private DataControl _dataControl;
+public class PassphrasePrompt extends BaseComponent implements Translatable, Themeable {
     private Shell _parent;
     private Shell _shell;
     private boolean _creatingNewPassphrase;
@@ -33,8 +34,8 @@ public class PassphrasePrompt implements Translatable, Themeable {
     private Button _ok;
     private Button _cancel;
     
-    public PassphrasePrompt(DataControl dataControl, Shell parent, boolean creatingNewPassphrase) {
-        _dataControl = dataControl;
+    public PassphrasePrompt(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, boolean creatingNewPassphrase) {
+        super(client, ui, themes, trans);
         _parent = parent;
         _creatingNewPassphrase = creatingNewPassphrase;
         initComponents();
@@ -110,16 +111,16 @@ public class PassphrasePrompt implements Translatable, Themeable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void complete(boolean ok) {
         String pass = _passphrase.getText();
         String prompt = _passphrasePrompt.getText();
         _shell.dispose();
-        _dataControl.getTranslationRegistry().unregister(this);
-        _dataControl.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (_listener != null) {
             if (ok)
                 _listener.promptComplete(pass, prompt);

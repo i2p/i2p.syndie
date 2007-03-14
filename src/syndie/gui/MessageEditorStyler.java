@@ -23,8 +23,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
-class MessageEditorStyler implements Themeable, Translatable {
+class MessageEditorStyler extends BaseComponent implements Themeable, Translatable {
     private MessageEditor _editor;
     
     private Shell _txtShell;
@@ -47,7 +49,8 @@ class MessageEditorStyler implements Themeable, Translatable {
     private Group _grpText;
     private Group _grpAlign;
     
-    public MessageEditorStyler(MessageEditor editor) {
+    public MessageEditorStyler(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor) {
+        super(client, ui, themes, trans);
         _editor = editor;
         initComponents();
     }
@@ -57,8 +60,8 @@ class MessageEditorStyler implements Themeable, Translatable {
         _txtShell.open();
     }
     public void dispose() {
-        _editor.getDataControl().getThemeRegistry().unregister(this);
-        _editor.getDataControl().getTranslationRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if (!_txtShell.isDisposed())
             _txtShell.dispose();
         if ( (_sampleFont != null) && (!_sampleFont.isDisposed()) )
@@ -165,8 +168,8 @@ class MessageEditorStyler implements Themeable, Translatable {
         
         lsnr.redrawSample();
     
-        _editor.getDataControl().getTranslationRegistry().register(this);
-        _editor.getDataControl().getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void cancelStyle() {
@@ -220,7 +223,7 @@ class MessageEditorStyler implements Themeable, Translatable {
         }
         
         private Font getSampleFont(boolean bold, boolean italic, String style, String sz) {
-            int fontHeight = Theme.getSize(_editor.getDataControl().getThemeRegistry().getTheme().CONTENT_FONT);
+            int fontHeight = Theme.getSize(_themeRegistry.getTheme().CONTENT_FONT);
             try {
                 if (sz.startsWith("+"))
                     sz = sz.substring(1);
@@ -341,7 +344,7 @@ class MessageEditorStyler implements Themeable, Translatable {
         rv.setText(name);
         final Menu colorMenu = new Menu(rv);
         MenuItem none = new MenuItem(colorMenu, SWT.PUSH);
-        none.setText(_editor.getDataControl().getTranslationRegistry().getText(T_COLOR_DEFAULT, "default"));
+        none.setText(_translationRegistry.getText(T_COLOR_DEFAULT, "default"));
         if ( (defaultColor == null) || (!names.contains(defaultColor)) )
             none.setSelection(true);
         none.addSelectionListener(new ColorMenuItemListener(rv, null, onSelect));

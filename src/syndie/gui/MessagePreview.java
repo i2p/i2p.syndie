@@ -45,16 +45,15 @@ import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
-public class MessagePreview implements Themeable, Translatable {
-    private DataControl _dataControl;
+public class MessagePreview extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
     private URIControl _uriControl;
-    private DBClient _client;
     private Composite _parent;
     private Composite _root;
     
@@ -76,12 +75,11 @@ public class MessagePreview implements Themeable, Translatable {
     private Hash _author;
     private Hash _target;
     
-    public MessagePreview(DataControl dataControl, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent) {
-        _dataControl = dataControl;
+    public MessagePreview(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent) {
+        super(client, ui, themes, trans);
         _navControl = navControl;
         _bookmarkControl = bookmarkControl;
         _uriControl = uriControl;
-        _client = dataControl.getClient();
         _parent = parent;
         initComponents();
     }
@@ -107,7 +105,7 @@ public class MessagePreview implements Themeable, Translatable {
     
     private MaxView _maxView;
     public void toggleMaxView() {
-        _dataControl.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _msgURI);
+        _ui.debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _msgURI);
         synchronized (this) {
             if (_maxView != null) {
                 _maxView.dispose();
@@ -115,9 +113,9 @@ public class MessagePreview implements Themeable, Translatable {
             } else {
                 int page = 0;
                 // page may be beyond the last page
-                if (_dataControl.getClient().getMessagePageConfig(_msgId, page) != null) {
+                if (_client.getMessagePageConfig(_msgId, page) != null) {
                     SyndieURI uri = SyndieURI.createMessage(_msgURI.getScope(), _msgURI.getMessageId().longValue(), page);
-                    _maxView = new MaxView(_dataControl, _root.getShell(), uri, new MaxView.MaxListener() {
+                    _maxView = new MaxView(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), uri, new MaxView.MaxListener() {
                         public void unmax(MaxView view) {
                             synchronized (MessagePreview.this) {
                                 _maxView = null;
@@ -150,11 +148,11 @@ public class MessagePreview implements Themeable, Translatable {
             _msgURI = msg.getURI();
             updateMeta(msg);
             _target = msg.getTargetChannel();
-            _author = _dataControl.getClient().getChannelHash(msg.getAuthorChannelId());
-            _body.renderPage(new PageRendererSource(_dataControl), _uri);
+            _author = _client.getChannelHash(msg.getAuthorChannelId());
+            _body.renderPage(new PageRendererSource(_client, _themeRegistry), _uri);
             if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) ) {
-                if (MessageTree.shouldMarkReadOnPreview(_dataControl.getClient()))
-                    _dataControl.getClient().markMessageRead(msg.getInternalId());
+                if (MessageTree.shouldMarkReadOnPreview(_client))
+                    _client.markMessageRead(msg.getInternalId());
             }
         } else {
             _msgId = -1;
@@ -165,7 +163,7 @@ public class MessagePreview implements Themeable, Translatable {
         }
     }
     private void updateMeta(MessageInfo msg) {
-        String subj = MessageView.calculateSubject(_dataControl, msg);
+        String subj = MessageView.calculateSubject(_client, _translationRegistry, msg);
         _headerSubject.setText(subj);
         
         Set tags = new TreeSet(msg.getPublicTags());
@@ -240,7 +238,7 @@ public class MessagePreview implements Themeable, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
         });
         
-        _headerIcons = new MessageFlagBar(_dataControl, _bookmarkControl, _root, true);
+        _headerIcons = new MessageFlagBar(_client, _ui, _themeRegistry, _translationRegistry, _bookmarkControl, _root, true);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.heightHint = ICON_HEIGHT;
         _headerIcons.getControl().setLayoutData(gd);
@@ -271,8 +269,8 @@ public class MessagePreview implements Themeable, Translatable {
             public void prevPage() {}
         });
         
-        _dataControl.getTranslationRegistry().register(this);
-        _dataControl.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void replyPrivateAuthor() {

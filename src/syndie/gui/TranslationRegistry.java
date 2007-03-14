@@ -18,12 +18,14 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import org.eclipse.swt.graphics.Image;
+import syndie.db.UI;
 
 /**
  *
  */
 public class TranslationRegistry {
-    private DataControl _dataControl;
+    private UI _ui;
+    private File _rootDir;
     private Set _translatable;
     private String _lang;
     private Properties _text;
@@ -33,8 +35,9 @@ public class TranslationRegistry {
     private Map _embeddedTranslations;
     private Map _fileTranslations;
     
-    public TranslationRegistry(DataControl dataControl) {
-        _dataControl = dataControl;
+    public TranslationRegistry(UI ui, File rootDir) {
+        _ui = ui;
+        _rootDir = rootDir;
         _translatable = Collections.synchronizedSet(new HashSet());
         _lang = "English";
         _text = new Properties();
@@ -69,17 +72,17 @@ public class TranslationRegistry {
         _lang = newLang;
         _text = newText;
         _images = newImages;
-        _dataControl.getUI().debugMessage("switching translation to " + newLang);
+        _ui.debugMessage("switching translation to " + newLang);
         for (Iterator iter = _translatable.iterator(); iter.hasNext(); ) {
             Translatable cur = (Translatable)iter.next();
-            _dataControl.getUI().debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
+            _ui.debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
             cur.translate(this);
         }
     }
     
     public void switchTranslation(String newLang) {
         if ( (_lang != null) && (newLang.equals(_lang)) ) {
-            _dataControl.getUI().debugMessage("language already in use (" + newLang + ")");
+            _ui.debugMessage("language already in use (" + newLang + ")");
             return; // noop
         }
         
@@ -140,7 +143,7 @@ public class TranslationRegistry {
                     break;
                 }
             } catch (IOException ioe) {
-                _dataControl.getUI().errorMessage("problem getting the embedded translations", ioe);
+                _ui.errorMessage("problem getting the embedded translations", ioe);
             } finally {
                 if (reader != null) try { reader.close(); } catch (IOException ioe) {}
             }
@@ -151,7 +154,7 @@ public class TranslationRegistry {
     }
     private void refreshFileTranslations() {
         Map translations = new HashMap();
-        refreshFileTranslations(translations, _dataControl.getClient().getRootDir());
+        refreshFileTranslations(translations, _rootDir);
         _fileTranslations = translations;
     }
     private void refreshFileTranslations(Map translations, File dir) {
@@ -194,7 +197,7 @@ public class TranslationRegistry {
                             translations.put(lang, props);
                     }
                 } catch (IOException ioe) {
-                    _dataControl.getUI().errorMessage("problem getting the file translations", ioe);
+                    _ui.errorMessage("problem getting the file translations", ioe);
                 } finally {
                     if (reader != null) try { reader.close(); } catch (IOException ioe) {}
                 }

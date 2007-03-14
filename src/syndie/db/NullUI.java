@@ -18,4 +18,6 @@ public class NullUI implements UI {
     public boolean togglePaginate() { return false; }
     public void insertCommand(String commandline) {}
     public String readStdIn() { return null; }
+    public void addUI(UI ui) {}
+    public void removeUI(UI ui) {}
 }

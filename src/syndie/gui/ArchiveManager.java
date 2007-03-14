@@ -19,16 +19,17 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 import syndie.db.SharedArchive;
 import syndie.db.LocalArchiveManager;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
+import syndie.db.UI;
 
 /**
  *
  */
-public class ArchiveManager implements Translatable, Themeable {
-    private DataControl _browser;
+public class ArchiveManager extends BaseComponent implements Translatable, Themeable {
     private Composite _parent;
     private Composite _root;
     
@@ -59,8 +60,8 @@ public class ArchiveManager implements Translatable, Themeable {
     private List _uris;
     private List _bannedScopes;
     
-    public ArchiveManager(DataControl browser, Composite parent) {
-        _browser = browser;
+    public ArchiveManager(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent) {
+        super(client, ui, themes, trans);
         _parent = parent;
         _uris = new ArrayList();
         _bannedScopes = new ArrayList();
@@ -160,13 +161,13 @@ public class ArchiveManager implements Translatable, Themeable {
         
         loadConfig();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     private void loadConfig() {
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
-        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_browser.getClient(), mgr.getDefaultPullStrategy());
+        SyncManager mgr = SyncManager.getInstance(_client, _ui);
+        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_client, mgr.getDefaultPullStrategy());
         SyndieURI uris[] = cfg.getAlternateArchives();
         if (uris != null)
             _advertised.setText(uris.length+"");
@@ -178,7 +179,7 @@ public class ArchiveManager implements Translatable, Themeable {
             for (int i = 0; i < uris.length; i++)
                 _uris.add(uris[i]);
         //int size = cfg.maxMessageSize();
-        List chans = _browser.getClient().getBannedChannels();
+        List chans = _client.getBannedChannels();
         _bannedScopes.clear();
         _bannedScopes.addAll(chans);
         _banned.setText(chans.size()+"");
@@ -188,18 +189,18 @@ public class ArchiveManager implements Translatable, Themeable {
     }
     
     public void saveConfig() {
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
-        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_browser.getClient(), mgr.getDefaultPullStrategy());
+        SyncManager mgr = SyncManager.getInstance(_client, _ui);
+        SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_client, mgr.getDefaultPullStrategy());
         cfg.setAlternativeArchives((SyndieURI[])_uris.toArray(new SyndieURI[0]));
-        LocalArchiveManager.setLocalAbout(_browser.getClient(), _browser.getUI(), cfg);
+        LocalArchiveManager.setLocalAbout(_client, _ui, cfg);
         
-        List chans = _browser.getClient().getBannedChannels();
+        List chans = _client.getBannedChannels();
         List unbanned = new ArrayList();
         for (int i = 0; i < chans.size(); i++)
             if (!_bannedScopes.contains(chans.get(i)))
                 unbanned.add(chans.get(i));
         for (int i = 0; i < unbanned.size(); i++)
-            _browser.getClient().unban((Hash)unbanned.get(i));
+            _client.unban((Hash)unbanned.get(i));
         
         loadConfig();
     }
@@ -207,8 +208,8 @@ public class ArchiveManager implements Translatable, Themeable {
     private void populateCombos() {}
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
     }
 
     private static final String T_ADVERTISED_POPUP = "syndie.gui.archivemanager.adpopup.title";
@@ -216,15 +217,15 @@ public class ArchiveManager implements Translatable, Themeable {
     private static final String T_ADVERTISED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
     private void manageAdvertised() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP, "Advertised archives"));
+        s.setText(_translationRegistry.getText(T_ADVERTISED_POPUP, "Advertised archives"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         desc.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
-        desc.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP_DESC, "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
+        desc.setText(_translationRegistry.getText(T_ADVERTISED_POPUP_DESC, "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
         final Table archives = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_client, _ui);
         for (int i = 0; i < mgr.getArchiveCount(); i++) {
             SyncArchive archive = mgr.getArchive(i);
             String name = archive.getName();
@@ -237,13 +238,13 @@ public class ArchiveManager implements Translatable, Themeable {
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_browser.getTranslationRegistry().getText(T_ADVERTISED_POPUP_OK, "OK"));
+        ok.setText(_translationRegistry.getText(T_ADVERTISED_POPUP_OK, "OK"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
         });
 
-        Theme theme = _browser.getThemeRegistry().getTheme();
+        Theme theme = _themeRegistry.getTheme();
         s.setFont(theme.SHELL_FONT);
         desc.setFont(theme.DEFAULT_FONT);
         archives.setFont(theme.TABLE_FONT);
@@ -273,13 +274,13 @@ public class ArchiveManager implements Translatable, Themeable {
     private static final String T_BANNED_POPUP_OK = "syndie.gui.archivemanager.bannedpopup.ok";
     private void manageBanned() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP, "Banned"));
+        s.setText(_translationRegistry.getText(T_BANNED_POPUP, "Banned"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         GridData gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
         gd.widthHint = 400;
         desc.setLayoutData(gd);
-        desc.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP_DESC, "These authors and forums are completely ignored, with all of the associated messages refused"));
+        desc.setText(_translationRegistry.getText(T_BANNED_POPUP_DESC, "These authors and forums are completely ignored, with all of the associated messages refused"));
         final Table banned = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         gd = new GridData(GridData.FILL, GridData.FILL, true, true);
         gd.widthHint = 400;
@@ -288,7 +289,7 @@ public class ArchiveManager implements Translatable, Themeable {
         List scopes = _bannedScopes;
         for (int i = 0; i < scopes.size(); i++) {
             Hash scope = (Hash)scopes.get(i);
-            String name = _browser.getClient().getChannelName(scope);
+            String name = _client.getChannelName(scope);
             TableItem item = new TableItem(banned, SWT.NONE);
             if (name != null)
                 item.setText(scope.toBase64().substring(0,6) + " - " + name);
@@ -297,13 +298,13 @@ public class ArchiveManager implements Translatable, Themeable {
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_browser.getTranslationRegistry().getText(T_BANNED_POPUP_OK, "Unban checked"));
+        ok.setText(_translationRegistry.getText(T_BANNED_POPUP_OK, "Unban checked"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }
         });
 
-        Theme theme = _browser.getThemeRegistry().getTheme();
+        Theme theme = _themeRegistry.getTheme();
         s.setFont(theme.SHELL_FONT);
         desc.setFont(theme.DEFAULT_FONT);
         banned.setFont(theme.TABLE_FONT);
