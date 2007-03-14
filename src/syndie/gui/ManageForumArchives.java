@@ -35,7 +35,7 @@ import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 
 public class ManageForumArchives implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private ManageForum _manage;
     private Shell _shell;
     private Table _table;
@@ -60,8 +60,8 @@ public class ManageForumArchives implements Themeable, Translatable {
     
     private TableItem _curItem;
     
-    public ManageForumArchives(BrowserControl browser, ManageForum manage) {
-        _browser = browser;
+    public ManageForumArchives(DataControl dataControl, ManageForum manage) {
+        _dataControl = dataControl;
         _manage = manage;
         _itemToURI = new HashMap();
         _curItem = null;
@@ -159,8 +159,8 @@ public class ManageForumArchives implements Themeable, Translatable {
 
         _choiceHTTP.setSelection(true);
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
         loadData();
         
@@ -245,9 +245,9 @@ public class ManageForumArchives implements Themeable, Translatable {
         for (int i = 0; i < priv.size(); i++)
             privURLs.add(getURL((SyndieURI)priv.get(i)));
        
-        _browser.getUI().debugMessage("loadData: pub=" + pubURLs + " priv=" + privURLs);
+        _dataControl.getUI().debugMessage("loadData: pub=" + pubURLs + " priv=" + privURLs);
         
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
         int cnt = mgr.getArchiveCount();
         for (int i = 0; i < cnt; i++) {
             SyncArchive archive = mgr.getArchive(i);
@@ -265,7 +265,7 @@ public class ManageForumArchives implements Themeable, Translatable {
                 privURLs.remove(url); // remaining are handled below
             }
         
-            _browser.getUI().debugMessage("loadData: sel?" + selected + " pub?" + isPub + " url: " + url);
+            _dataControl.getUI().debugMessage("loadData: sel?" + selected + " pub?" + isPub + " url: " + url);
             
             TableItem item = addArchive(archive.getName(), url, isPub, selected);
             _itemToURI.put(item, archive.getArchiveURI());
@@ -391,7 +391,7 @@ public class ManageForumArchives implements Themeable, Translatable {
                     _itemToURI.put(item, uri);
                 }
             } catch (URISyntaxException use) {
-                _browser.getUI().errorMessage("Invalid URI: " + str, use);
+                _dataControl.getUI().errorMessage("Invalid URI: " + str, use);
             }
         } else if (_choiceFreenet.getSelection()) {
             String key = _freenetKey.getText().trim();
@@ -426,7 +426,7 @@ public class ManageForumArchives implements Themeable, Translatable {
                     pubURIs.add(uri);
                 else
                     privURIs.add(uri);
-                _browser.getUI().debugMessage("selected archive: " + getURL(uri) + " [" + uri + "]");
+                _dataControl.getUI().debugMessage("selected archive: " + getURL(uri) + " [" + uri + "]");
             }
         }
         
@@ -436,8 +436,8 @@ public class ManageForumArchives implements Themeable, Translatable {
     }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         
         if (!_shell.isDisposed()) _shell.dispose();
     }

@@ -43,9 +43,9 @@ public class ViewForumTab extends BrowserTab {
         }
         
         if (_editable)
-            _manage = new ManageForum(getBrowser(), getRoot(), uri);
+            _manage = new ManageForum(getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), uri);
         else
-            _view = new ViewForum(getBrowser(), getRoot(), getURI());
+            _view = new ViewForum(getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
         reconfigItem();
     }
     

@@ -20,7 +20,7 @@ import syndie.db.DBClient;
  *
  */
 public class ManageReferenceChooserPopup implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private Shell _parentShell;
     private Shell _shell;
     private ManageReferenceChooser _refs;
@@ -28,9 +28,9 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
     private boolean _editable;
     private List _closeListeners;
     
-    public ManageReferenceChooserPopup(BrowserControl browser, Shell parentShell) { this(browser, parentShell, false); }
-    public ManageReferenceChooserPopup(BrowserControl browser, Shell parentShell, boolean editable) {
-        _browser = browser;
+    public ManageReferenceChooserPopup(DataControl dataControl, Shell parentShell) { this(dataControl, parentShell, false); }
+    public ManageReferenceChooserPopup(DataControl dataControl, Shell parentShell, boolean editable) {
+        _dataControl = dataControl;
         _parentShell = parentShell;
         _editable = editable;
         _closeListeners = new ArrayList();
@@ -51,8 +51,8 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         }
     }
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _refs.dispose();
     }
     
@@ -62,7 +62,7 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
     private void initComponents() {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new GridLayout(1, true));
-        _refs = new ManageReferenceChooser(_shell, _browser, _editable);
+        _refs = ComponentBuilder.instance().createManageReferenceChooser(_shell, _editable);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
         //gd.widthHint = 600;
         //gd.heightHint = 300;
@@ -92,8 +92,8 @@ public class ManageReferenceChooserPopup implements Themeable, Translatable {
         
         _shell.setSize(_shell.computeSize(400, 200));
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     public void applyTheme(Theme theme) {

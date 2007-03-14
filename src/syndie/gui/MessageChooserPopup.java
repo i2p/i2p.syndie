@@ -12,14 +12,11 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.SyndieURI;
-import syndie.db.DBClient;
 
 /**
  *
  */
 public class MessageChooserPopup implements MessageTree.MessageTreeListener {
-    private BrowserControl _browser;
-    private DBClient _client;
     private Shell _parentShell;
     private Shell _shell;
     private MessageTree _tree;
@@ -28,9 +25,7 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     private Button _cancel;
     
     /** Creates a new instance of MessageChooserPopup */
-    public MessageChooserPopup(Shell parentShell, BrowserControl browser, MessageTree.MessageTreeListener lsnr) {
-        _browser = browser;
-        _client = browser.getClient();
+    public MessageChooserPopup(Shell parentShell, MessageTree.MessageTreeListener lsnr) {
         _parentShell = parentShell;
         _listener = lsnr;
         initComponents();
@@ -40,7 +35,7 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM);
         _shell.setText("Message chooser");
         _shell.setLayout(new GridLayout(2, true));
-        _tree = new MessageTree(_browser, _shell, this);
+        _tree = ComponentBuilder.instance().createMessageTree(_shell, this);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
         gd.widthHint = 300;
         gd.heightHint = 200;

@@ -24,7 +24,7 @@ public class BugReportTab extends BrowserTab implements Translatable, Themeable 
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _report = new BugReport(getBrowser(), getRoot(), getURI());
+        _report = new BugReport(getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
         
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);

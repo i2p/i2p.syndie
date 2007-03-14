@@ -37,7 +37,7 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _editor = new MessageEditor(getBrowser(), getRoot(), this);
+        _editor = new MessageEditor(getBrowser(), getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), this);
         
         SyndieURI uri = getURI();
         Long postponeId = uri.getLong("postponeid");

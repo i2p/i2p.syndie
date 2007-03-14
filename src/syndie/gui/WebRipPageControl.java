@@ -24,7 +24,7 @@ import syndie.data.WebRipRunner;
  * rip a web page to add as a new page to an existing post
  */
 public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.RipListener {
-    protected BrowserControl _browser;
+    protected DataControl _dataControl;
     private Composite _parent;
     private Composite _root;
     private Label _urlLabel;
@@ -53,8 +53,8 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
     private List _errorMessages;
     private RipControlListener _listener;
     
-    public WebRipPageControl(BrowserControl browser, Composite parent) {
-        _browser = browser;
+    public WebRipPageControl(DataControl dataControl, Composite parent) {
+        _dataControl = dataControl;
         _parent = parent;
         _existingAttachments = 0;
         _errorMessages = Collections.EMPTY_LIST;
@@ -147,8 +147,8 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
         });
         _proxyShell.pack();
         
-        String host = _browser.getClient().getDefaultHTTPProxyHost();
-        int port = _browser.getClient().getDefaultHTTPProxyPort();
+        String host = _dataControl.getClient().getDefaultHTTPProxyHost();
+        int port = _dataControl.getClient().getDefaultHTTPProxyPort();
         if ( (port > 0) && (host != null) && (host.length() > 0) ) {
             _proxyPort.setText(Integer.toString(port));
             _proxyHost.setText(host);
@@ -159,8 +159,8 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
             _proxyAsDefault.setSelection(false);
         }
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     public void cancel() {
@@ -175,8 +175,8 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
      * the files are deleted here
      */
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         if (!_proxyShell.isDisposed()) 
             _proxyShell.dispose();
         if (_ripRunner != null) {
@@ -205,24 +205,24 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
     private void configProxy() { _proxyShell.open(); }
     private void hideProxyConfig(boolean save) { 
         _proxyShell.setVisible(false);
-        _browser.getUI().debugMessage("hiding proxy config (" + save + "): saveAsDefault? " + _proxyAsDefault.getSelection());
+        _dataControl.getUI().debugMessage("hiding proxy config (" + save + "): saveAsDefault? " + _proxyAsDefault.getSelection());
         if (save && _proxyAsDefault.getSelection()) {
             String host = _proxyHost.getText().trim();
             String port = _proxyPort.getText().trim();
             try {
                 int portNum = Integer.parseInt(port);
                 if ( (host.length() > 0) && (portNum > 0) ) {
-                    _browser.getClient().setDefaultHTTPProxyHost(host);
-                    _browser.getClient().setDefaultHTTPProxyPort(portNum);
+                    _dataControl.getClient().setDefaultHTTPProxyHost(host);
+                    _dataControl.getClient().setDefaultHTTPProxyPort(portNum);
                 } else {
-                    _browser.getClient().setDefaultHTTPProxyHost(null);
-                    _browser.getClient().setDefaultHTTPProxyPort(-1);
+                    _dataControl.getClient().setDefaultHTTPProxyHost(null);
+                    _dataControl.getClient().setDefaultHTTPProxyPort(-1);
                 }
             } catch (NumberFormatException nfe) {
-                _browser.getClient().setDefaultHTTPProxyHost(null);
-                _browser.getClient().setDefaultHTTPProxyPort(-1);
+                _dataControl.getClient().setDefaultHTTPProxyHost(null);
+                _dataControl.getClient().setDefaultHTTPProxyPort(-1);
             }
-            _browser.getClient().saveProxyConfig();
+            _dataControl.getClient().saveProxyConfig();
         }
     }
     
@@ -240,19 +240,19 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
             return;
         }
         
-        _browser.getUI().debugMessage("ripping (existing attachments: " + _existingAttachments + ")");
+        _dataControl.getUI().debugMessage("ripping (existing attachments: " + _existingAttachments + ")");
         
         String proxy = _proxyHost.getText();
         int proxyPort = -1;
         try {
             proxyPort = Integer.parseInt(_proxyPort.getText());
         } catch (NumberFormatException nfe) {}
-        _ripRunner = new WebRipRunner(_browser.getUI(), _url.getText(), proxy, proxyPort, _browser.getClient().getTempDir());
+        _ripRunner = new WebRipRunner(_dataControl.getUI(), _url.getText(), proxy, proxyPort, _dataControl.getClient().getTempDir());
         _ripRunner.configure(_optionImages.getSelection(), _optionTorrents.getSelection(), getMaxAttachKB(), getMaxTotalKB(), _optionAllowFiles.getSelection(), _existingAttachments);
         _ripRunner.setListener(this);
         statusUpdated(T_STATUS_INIT, DEFAULT_STATUS_INIT, "", false, false);
         
-        _browser.getUI().debugMessage("nbrip start");
+        _dataControl.getUI().debugMessage("nbrip start");
         _ripRunner.nonblockingRip();
     }
 
@@ -274,7 +274,7 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
     
     public void statusUpdated(WebRipRunner runner) {
         if (_root.isDisposed()) return;
-        _browser.getUI().debugMessage("statusUpdated caled in the wrc");
+        _dataControl.getUI().debugMessage("statusUpdated caled in the wrc");
         int state = runner.getState();
         final String key;
         final String def;
@@ -335,7 +335,7 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
                 _errorMessages = runner.getErrorMessages();
                 for (int i = 0; i < _errorMessages.size(); i++) {
                     String msg = (String)_errorMessages.get(i);
-                    _browser.getUI().debugMessage(msg);
+                    _dataControl.getUI().debugMessage(msg);
                     buf.append(msg).append(" ");
                 }
                 detail = buf.toString().trim();
@@ -343,11 +343,11 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
                 success = false;
                 List exceptions = runner.getExceptions();
                 for (int i = 0; i < exceptions.size(); i++)
-                    _browser.getUI().errorMessage("error during rip", ((Exception)exceptions.get(i)));
+                    _dataControl.getUI().errorMessage("error during rip", ((Exception)exceptions.get(i)));
                 break;
         }
         
-        _browser.getUI().debugMessage("nbrip status updated: " + def + "/" + detail + "/" + terminal + "/"+ success);
+        _dataControl.getUI().debugMessage("nbrip status updated: " + def + "/" + detail + "/" + terminal + "/"+ success);
         
         _root.getDisplay().asyncExec(new Runnable() { public void run() { statusUpdated(key, def, detail, terminal, success); } });
     }
@@ -356,9 +356,9 @@ public class WebRipPageControl implements Translatable, Themeable, WebRipRunner.
     private void statusUpdated(String translationKey, String translationDefault, String detail, boolean terminal, boolean success) {
         if (_status.isDisposed()) return;
         if ( (detail != null) && (detail.length() > 0) )
-            _status.setText(_browser.getTranslationRegistry().getText(translationKey, translationDefault) + ": " + detail);
+            _status.setText(_dataControl.getTranslationRegistry().getText(translationKey, translationDefault) + ": " + detail);
         else
-            _status.setText(_browser.getTranslationRegistry().getText(translationKey, translationDefault));
+            _status.setText(_dataControl.getTranslationRegistry().getText(translationKey, translationDefault));
         
         if (terminal && (_listener != null))
             _listener.ripComplete(success, _ripRunner);

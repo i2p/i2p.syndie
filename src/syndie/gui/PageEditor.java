@@ -47,7 +47,7 @@ import syndie.db.CommandImpl;
  *
  */
 public class PageEditor {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private MessageEditor _editor;
     private CTabItem _item;
     private Composite _root;
@@ -65,8 +65,8 @@ public class PageEditor {
     private int _pageNum;
     
     /** Creates a new instance of PageEditorNew */
-    public PageEditor(BrowserControl browser, MessageEditor editor, boolean previewable, int pageNum) {
-        _browser = browser;
+    public PageEditor(DataControl dataControl, MessageEditor editor, boolean previewable, int pageNum) {
+        _dataControl = dataControl;
         _editor = editor;
         _isPreviewable = previewable;
         _pageNum = pageNum;
@@ -120,7 +120,7 @@ public class PageEditor {
         _text = new StyledText(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
         configText();
         
-        _preview = new PageRenderer(_sash, true, _browser);
+        _preview = ComponentBuilder.instance().createPageRenderer(_sash, true);
         _text.addControlListener(new ControlListener() {
             public void controlMoved(ControlEvent controlEvent) {}
             public void controlResized(ControlEvent evt) {
@@ -174,13 +174,13 @@ public class PageEditor {
             attachmentOrder.add(name);
             attachments.add(data);
         }
-        PageRendererSourceMem src = new PageRendererSourceMem(_browser, null, msgInfo, pageData, attachments, attachmentOrder);
+        PageRendererSourceMem src = new PageRendererSourceMem(_dataControl.getClient(), _dataControl.getThemeRegistry(), msgInfo, pageData, attachments, attachmentOrder);
         _preview.setRender(true);
         _sash.setMaximizedControl(null);
         long before = System.currentTimeMillis();
         _preview.renderPage(src, _dummyURI);
         long renderTime = System.currentTimeMillis()-before;
-        _browser.getUI().debugMessage("** render time: " + renderTime);
+        _dataControl.getUI().debugMessage("** render time: " + renderTime);
         _preview.setRender(false);
         _lastModified = -1;
         _lastResized = -1;
@@ -199,7 +199,7 @@ public class PageEditor {
                 else
                     idle = System.currentTimeMillis() - _lastResized;
                 if (idle > 1000) {
-                    _browser.getUI().debugMessage("idle for " + idle + "ms, previewing");
+                    _dataControl.getUI().debugMessage("idle for " + idle + "ms, previewing");
                     preview();
                 } else {
                     //System.out.println("idle for " + idle + "ms, NOT previewing");
@@ -342,7 +342,7 @@ public class PageEditor {
             }
         });
         
-        _textManager = new TextChangeManager(_text, _browser.getUI());
+        _textManager = new TextChangeManager(_text, _dataControl.getUI());
     }
     
     /** helper to shove text in, adjusting the caret to the first character after the new text */
@@ -461,7 +461,7 @@ public class PageEditor {
                 _findWrapped = true;
             }
         }
-        _browser.getUI().debugMessage("findNext @ " + nextStart + " (started @ " + caret + ")");
+        _dataControl.getUI().debugMessage("findNext @ " + nextStart + " (started @ " + caret + ")");
         if (nextStart != -1) {
             _text.setCaretOffset(nextStart);
             _text.setStyleRanges(null, null);
@@ -505,7 +505,7 @@ public class PageEditor {
         if (_spellWordStart + len >= _text.getCharCount())
             len = _text.getCharCount() - _spellWordStart;
         String oldFound = _text.getTextRange(_spellWordStart, len);
-        _browser.getUI().debugMessage("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
+        _dataControl.getUI().debugMessage("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
         _text.replaceTextRange(_spellWordStart, len, newText);
         _editor.modified();
         _spellWordIndex++;
@@ -699,7 +699,7 @@ public class PageEditor {
     }
 
     public void toggleMaxView() {
-        _browser.getUI().debugMessage("toggleMaxView of a page editor");
+        _dataControl.getUI().debugMessage("toggleMaxView of a page editor");
         if (_maxPreview != null) {
             _maxPreview.unmax();
             _maxPreview = null;
@@ -712,7 +712,7 @@ public class PageEditor {
         }
     }
     public void toggleMaxEditor() { 
-        _browser.getUI().debugMessage("toggleMaxEditor of a page editor");
+        _dataControl.getUI().debugMessage("toggleMaxEditor of a page editor");
         if (_maxEditor != null) {
             _maxEditor.unmax();
             _maxEditor = null;
@@ -736,10 +736,10 @@ public class PageEditor {
             _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             _shell.setLayout(new GridLayout(2, true));
             Button unmax = new Button(_shell, SWT.PUSH);
-            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXEDITOR_UNMAX, "Restore normal editor size"));
+            unmax.setText(_dataControl.getTranslationRegistry().getText(T_MAXEDITOR_UNMAX, "Restore normal editor size"));
             unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             Button preview = new Button(_shell, SWT.PUSH);
-            preview.setText(_browser.getTranslationRegistry().getText(T_MAXEDITOR_PREVIEW, "Show maximized preview"));
+            preview.setText(_dataControl.getTranslationRegistry().getText(T_MAXEDITOR_PREVIEW, "Show maximized preview"));
             preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxText = new StyledText(_shell, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
             _maxText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
@@ -802,7 +802,7 @@ public class PageEditor {
                 public void shellIconified(ShellEvent shellEvent) {}
             });
             
-            _maxTextManager = new TextChangeManager(_maxText, _browser.getUI());
+            _maxTextManager = new TextChangeManager(_maxText, _dataControl.getUI());
             
             _shell.open();
             _maxText.forceFocus();
@@ -843,13 +843,13 @@ public class PageEditor {
             _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             _shell.setLayout(new GridLayout(2, true));
             Button unmax = new Button(_shell, SWT.PUSH);
-            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXPREVIEW_UNMAX, "Restore normal preview size"));
+            unmax.setText(_dataControl.getTranslationRegistry().getText(T_MAXPREVIEW_UNMAX, "Restore normal preview size"));
             unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             Button edit = new Button(_shell, SWT.PUSH);
-            edit.setText(_browser.getTranslationRegistry().getText(T_MAXPREVIEW_EDITOR, "Show maximized editor"));
+            edit.setText(_dataControl.getTranslationRegistry().getText(T_MAXPREVIEW_EDITOR, "Show maximized editor"));
             edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             
-            _maxRenderer = new PageRenderer(_shell, true, _browser);
+            _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
             _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
             
             MessageInfo msgInfo = new MessageInfo();
@@ -872,7 +872,7 @@ public class PageEditor {
                 attachmentOrder.add(name);
                 attachments.add(data);
             }
-            PageRendererSourceMem src = new PageRendererSourceMem(_browser, null, msgInfo, pageData, attachments, attachmentOrder);
+            PageRendererSourceMem src = new PageRendererSourceMem(_dataControl.getClient(), _dataControl.getThemeRegistry(), msgInfo, pageData, attachments, attachmentOrder);
             _maxRenderer.renderPage(src, _dummyURI);
             
             unmax.addSelectionListener(new SelectionListener() {
@@ -951,21 +951,21 @@ public class PageEditor {
     }
     
     void quote(SyndieURI parent) {
-        long msgId = _browser.getClient().getMessageId(parent.getScope(), parent.getMessageId());
+        long msgId = _dataControl.getClient().getMessageId(parent.getScope(), parent.getMessageId());
         if (msgId >= 0) {
             int pageNum = 0;
-            String page = _browser.getClient().getMessagePageData(msgId, pageNum);
+            String page = _dataControl.getClient().getMessagePageData(msgId, pageNum);
             if (page != null) {
-                String cfg = _browser.getClient().getMessagePageConfig(msgId, pageNum);
+                String cfg = _dataControl.getClient().getMessagePageConfig(msgId, pageNum);
                 boolean html = false;
                 Properties props = new Properties();
                 CommandImpl.parseProps(cfg, props);
                 String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
                 if ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType))
                     html = true;
-                long authorId = _browser.getClient().getMessageAuthor(msgId);
-                Hash authorHash = _browser.getClient().getChannelHash(authorId);
-                String authorName = _browser.getClient().getChannelName(authorId);
+                long authorId = _dataControl.getClient().getMessageAuthor(msgId);
+                Hash authorHash = _dataControl.getClient().getChannelHash(authorId);
+                String authorName = _dataControl.getClient().getChannelName(authorId);
                 quote(page, html, parent, authorHash, authorName);
             }
         }

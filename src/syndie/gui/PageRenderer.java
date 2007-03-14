@@ -60,7 +60,8 @@ import syndie.db.UI;
  *
  */
 public class PageRenderer implements Themeable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private DataCallback _dataCallback;
     private Composite _parent;
     private StyledText _text;
     private PageRendererSource _source;
@@ -155,14 +156,15 @@ public class PageRenderer implements Themeable {
     
     private Caret _defaultCaret;
     
-    public PageRenderer(Composite parent, BrowserControl browser) { this(parent, false, browser); }
-    public PageRenderer(Composite parent, boolean scrollbars, BrowserControl browser) {
+    public PageRenderer(Composite parent, DataControl dataControl, DataCallback callback) { this(parent, false, dataControl, callback); }
+    public PageRenderer(Composite parent, boolean scrollbars, DataControl dataControl, DataCallback callback) {
         _parent = parent;
-        _browser = browser;
+        _dataControl = dataControl;
+        _dataCallback = callback;
         if (scrollbars)
-            _text = new CustomStyledText(browser.getUI(), parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+            _text = new CustomStyledText(dataControl.getUI(), parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         else
-            _text = new CustomStyledText(browser.getUI(), parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
+            _text = new CustomStyledText(dataControl.getUI(), parent, /*SWT.H_SCROLL | SWT.V_SCROLL |*/ SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
         // by defining a caret, the styledtext will skip the potentially insanely expensive 
         // caret location positioning code (spending 12 minutes in org.eclipse.swt.internal.gtk.OS.gdk_pango_layout_get_clip_region)
         // this is the case on SWT3.3M4/M5, but if it ever is no longer the case,
@@ -367,21 +369,21 @@ public class PageRenderer implements Themeable {
                     pageUp(false);
             }
         });
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     private void pageDown(boolean fake) {
         ScrollBar bar = _text.getVerticalBar();
         if (bar != null) {
             int incr = bar.getPageIncrement();
             if (bar.getSelection() + 1 + incr >= bar.getMaximum()) {
-                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
+                _dataControl.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
                 if (_listener != null)
                     _listener.nextPage();
             } else {
-                _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
+                _dataControl.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
-            _browser.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar);
+            _dataControl.getUI().debugMessage("pageDown(" + fake + "): bar=" + bar);
         }
         if (fake)
             _text.invokeAction(ST.PAGE_DOWN);
@@ -391,14 +393,14 @@ public class PageRenderer implements Themeable {
         if (bar != null) {
             int incr = bar.getPageIncrement();
             if (bar.getSelection() - 1 - incr <= bar.getMinimum()) {
-                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
+                _dataControl.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
                 if (_listener != null)
                     _listener.prevPage();
             } else {
-                _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
+                _dataControl.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
-            _browser.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar);
+            _dataControl.getUI().debugMessage("pageUp(" + fake + "): bar=" + bar);
         }
         if (fake)
             _text.invokeAction(ST.PAGE_UP);
@@ -457,7 +459,7 @@ public class PageRenderer implements Themeable {
         //System.out.println("rendering "+ msg + ": " + pageNum);
         _text.setCursor(_parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
         //_text.setRedraw(false);
-        _browser.getUI().debugMessage("Enqueue html render");
+        _dataControl.getUI().debugMessage("Enqueue html render");
         PageRendererThread.enqueue(this);
     }
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
@@ -483,11 +485,11 @@ public class PageRenderer implements Themeable {
             renderText(body);
         }
         long after = System.currentTimeMillis();
-        _browser.getUI().debugMessage("threaded page render took " + (after-before));
+        _dataControl.getUI().debugMessage("threaded page render took " + (after-before));
     }
     private void renderText(final String body) {
         if (_text.isDisposed()) {
-            _browser.getUI().errorMessage("render after dispose?", new Exception("source"));
+            _dataControl.getUI().errorMessage("render after dispose?", new Exception("source"));
             return;
         }
         _text.getDisplay().asyncExec(new Runnable() {
@@ -502,7 +504,7 @@ public class PageRenderer implements Themeable {
                 if (body != null) {
                     _text.setText(body);
                     StyleRange range = new StyleRange(0, body.length(), null, null);
-                    range.font = _browser.getThemeRegistry().getTheme().CONTENT_FONT;
+                    range.font = _dataControl.getThemeRegistry().getTheme().CONTENT_FONT;
                     _text.setStyleRange(range);
                 } else {
                     _text.setText("");
@@ -542,14 +544,14 @@ public class PageRenderer implements Themeable {
                     //if (paneWidth > 800) paneWidth = 800;
                     //else if (paneWidth < 100) paneWidth = 100;
                     _charsPerLine = paneWidth / (charWidth == 0 ? 12 : charWidth);
-                    _browser.getUI().debugMessage("max chars per line: " + _charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
+                    _dataControl.getUI().debugMessage("max chars per line: " + _charsPerLine + " pane width: " + paneWidth + "/" + ww + "/" + w + " charWidth: " + charWidth);
                 }
             });
         }
         return _charsPerLine;
     }
     private void renderHTML(String html) {
-        _browser.getUI().debugMessage("Beginning renderHTML");
+        _dataControl.getUI().debugMessage("Beginning renderHTML");
         if (_text.isDisposed()) return;
         _text.getDisplay().syncExec(new Runnable() {
             public void run() {
@@ -558,21 +560,21 @@ public class PageRenderer implements Themeable {
                 disposeImages();
             }
         });
-        _browser.getUI().debugMessage("renderHTML: old stuff disposed");
+        _dataControl.getUI().debugMessage("renderHTML: old stuff disposed");
 
         _charsPerLine = getCharsPerLine();
         
-        final HTMLStateBuilder builder = new HTMLStateBuilder(_browser.getUI(), html, _charsPerLine);
+        final HTMLStateBuilder builder = new HTMLStateBuilder(_dataControl.getUI(), html, _charsPerLine);
         builder.buildState();
-        _browser.getUI().debugMessage("renderHTML: state built");
+        _dataControl.getUI().debugMessage("renderHTML: state built");
         final String rawText = builder.getAsText();
-        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_browser.getUI(), _source, builder.getTags(), rawText, _msg, _enableImages, _styled);
+        final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_dataControl.getUI(), _source, builder.getTags(), rawText, _msg, _enableImages, _styled);
         final String text = builder.stripPlaceholders(rawText);
         
-        _browser.getUI().debugMessage("renderHTML: building styles");
+        _dataControl.getUI().debugMessage("renderHTML: building styles");
         //todo: do this in two parts, once in the current thread, another in the swt thread
         sbuilder.buildStyles(_viewSizeModifier);
-        _browser.getUI().debugMessage("renderHTML: styles built");
+        _dataControl.getUI().debugMessage("renderHTML: styles built");
         final ArrayList fonts = sbuilder.getFonts();
         final ArrayList colors = sbuilder.getCustomColors();
         // also need to get the ranges for images/internal page links/internal attachments/links/etc
@@ -591,7 +593,7 @@ public class PageRenderer implements Themeable {
         final ArrayList imageTags = sbuilder.getImageTags();
         
         if (_text.isDisposed()) return;
-        _browser.getUI().debugMessage("before syncExec to write on the styledText");
+        _dataControl.getUI().debugMessage("before syncExec to write on the styledText");
         Display.getDefault().syncExec(new Runnable() {
             public void run() {
                 long start = System.currentTimeMillis();
@@ -610,16 +612,16 @@ public class PageRenderer implements Themeable {
                 long before = System.currentTimeMillis();
                 _text.setText(text);
                 long after = System.currentTimeMillis();
-                _browser.getUI().debugMessage("syncExec to write on the styledText: text written in " + (after-before) + ": list indexes: " + _liIndexes);
+                _dataControl.getUI().debugMessage("syncExec to write on the styledText: text written in " + (after-before) + ": list indexes: " + _liIndexes);
                 StyleRange ranges[] = sbuilder.getStyleRanges();
                 long beforeSet = System.currentTimeMillis();
                 _text.setStyleRanges(ranges);
                 long afterSet = System.currentTimeMillis();
-                _browser.getUI().debugMessage("syncExec to write on the styledText: ranges set w/ " + ranges.length + " in " + (afterSet-beforeSet));
+                _dataControl.getUI().debugMessage("syncExec to write on the styledText: ranges set w/ " + ranges.length + " in " + (afterSet-beforeSet));
                 before = System.currentTimeMillis();
                 setLineProperties(builder, sbuilder);
                 after = System.currentTimeMillis();
-                _browser.getUI().debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
+                _dataControl.getUI().debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
 
                 _bgImage = sbuilder.getBackgroundImage();
                 if (_styled && _bgImage != null) {
@@ -642,7 +644,7 @@ public class PageRenderer implements Themeable {
                 _text.setRedraw(true);
                 _text.setCursor(null);
                 long end = System.currentTimeMillis();
-                _browser.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured in " + (end-start));
+                _dataControl.getUI().debugMessage("syncExec to write on the styledText: visible, redraw, cursor configured in " + (end-start));
             }
         });
     }
@@ -900,7 +902,7 @@ public class PageRenderer implements Themeable {
         disposeColors();
         disposeImages();
         _defaultCaret.dispose();
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
     }
     
     private void disposeFonts() {
@@ -995,7 +997,7 @@ public class PageRenderer implements Themeable {
     
     private void pickImageLinkMenu(HTMLTag linkTag, HTMLTag imgTag) {
         _text.setMenu(_imageLinkMenu);
-        _browser.getUI().debugMessage("pickImageLinkMenu: " + imgTag);
+        _dataControl.getUI().debugMessage("pickImageLinkMenu: " + imgTag);
         SyndieURI uri = null;
         if (linkTag != null)
             uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
@@ -1069,7 +1071,7 @@ public class PageRenderer implements Themeable {
     
     private void pickLinkMenu(HTMLTag linkTag) {
         _text.setMenu(_linkMenu);
-        _browser.getUI().debugMessage("pickLinkMenu: " + linkTag);
+        _dataControl.getUI().debugMessage("pickLinkMenu: " + linkTag);
         SyndieURI uri = null;
         if (linkTag != null)
             uri = HTMLStyleBuilder.getURI(linkTag.getAttribValue("href"), _msg);
@@ -1330,7 +1332,7 @@ public class PageRenderer implements Themeable {
     }
     private abstract class FireLinkEventListener extends FireEventListener {
         public void fireEvent() { 
-            _browser.getUI().debugMessage("fireLinkEvent for uri: " + _currentEventURI + " tag: " + _currentEventLinkTag);
+            _dataControl.getUI().debugMessage("fireLinkEvent for uri: " + _currentEventURI + " tag: " + _currentEventLinkTag);
             fireEvent(_currentEventLinkTag, _currentEventURI);
         }
         public abstract void fireEvent(HTMLTag tag, SyndieURI uri);
@@ -1345,7 +1347,7 @@ public class PageRenderer implements Themeable {
             public void menuShown(MenuEvent menuEvent) {
                 // if the user isn't authorized to post a reply to the forum, don't offer to let them
                 long msgId = _msg != null ? _msg.getInternalId() : -1;
-                if (MessagePreview.allowedToReply(_browser.getClient(), msgId))
+                if (MessagePreview.allowedToReply(_dataControl.getClient(), msgId))
                     _bodyReplyToForum.setEnabled(true);
                 else
                     _bodyReplyToForum.setEnabled(false);
@@ -1409,8 +1411,8 @@ public class PageRenderer implements Themeable {
         _bodyMarkAsRead.setText("Mark as read");
         _bodyMarkAsRead.addSelectionListener(new FireEventListener() { 
             public void fireEvent() { 
-                _browser.getClient().markMessageRead(_msg.getInternalId());
-                _browser.readStatusUpdated();
+                _dataControl.getClient().markMessageRead(_msg.getInternalId());
+                _dataCallback.readStatusUpdated();
             }
         });
         
@@ -1418,8 +1420,8 @@ public class PageRenderer implements Themeable {
         _bodyMarkAsUnread.setText("Mark as unread");
         _bodyMarkAsUnread.addSelectionListener(new FireEventListener() { 
             public void fireEvent() { 
-                _browser.getClient().markMessageUnread(_msg.getInternalId());
-                _browser.readStatusUpdated();
+                _dataControl.getClient().markMessageUnread(_msg.getInternalId());
+                _dataCallback.readStatusUpdated();
             }
         });
         
@@ -1936,7 +1938,7 @@ public class PageRenderer implements Themeable {
         long before = System.currentTimeMillis();
         rerender();
         long after = System.currentTimeMillis();
-        _browser.getUI().debugMessage("applyTheme to pageRenderer: render took " + (after-before));
+        _dataControl.getUI().debugMessage("applyTheme to pageRenderer: render took " + (after-before));
     }
     
     public static void main(String args[]) {
@@ -1967,7 +1969,7 @@ public class PageRenderer implements Themeable {
         final Shell shell = new Shell(d, SWT.SHELL_TRIM);
         shell.setLayout(new FillLayout());
         DummyBrowserControl control = new DummyBrowserControl(null, ui);
-        PageRenderer renderer = new PageRenderer(shell, control);
+        PageRenderer renderer = new PageRenderer(shell, control, control);
         ArrayList pages = new ArrayList();
         ArrayList attachments = new ArrayList();
         ArrayList attachmentOrder = new ArrayList();
@@ -1983,7 +1985,7 @@ public class PageRenderer implements Themeable {
         msgInfo.setMessageId(PageRendererTab.DUMMY_URI.getMessageId().longValue());
         msgInfo.setPageCount(1);
         
-        renderer.renderPage(new PageRendererSourceMem(control, null, msgInfo, pages, attachments, attachmentOrder), PageRendererTab.DUMMY_URI);
+        renderer.renderPage(new PageRendererSourceMem(control.getClient(), control.getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder), PageRendererTab.DUMMY_URI);
         shell.setMaximized(true);
         shell.open();
         shell.addShellListener(new ShellListener() {

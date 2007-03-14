@@ -51,7 +51,7 @@ import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
 
 class ManageForumReferences implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private ManageForum _manage;
     private Shell _shell;
     private SashForm _sash;
@@ -67,8 +67,8 @@ class ManageForumReferences implements Themeable, Translatable {
     private Button _ok;
     private Button _cancel;
     
-    public ManageForumReferences(BrowserControl browser, ManageForum manage) {
-        _browser = browser;
+    public ManageForumReferences(DataControl dataControl, ManageForum manage) {
+        _dataControl = dataControl;
         _manage = manage;
         initComponents();
     }
@@ -88,7 +88,7 @@ class ManageForumReferences implements Themeable, Translatable {
         });
         _sash = new SashForm(_shell, SWT.HORIZONTAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _refTree = new RefTree(_browser, _sash);
+        _refTree = ComponentBuilder.instance().createRefTree(_sash);
         _targetTree = new Tree(_sash, SWT.MULTI | SWT.BORDER);
         _colName = new TreeColumn(_targetTree, SWT.LEFT);
         _colDesc = new TreeColumn(_targetTree, SWT.LEFT);
@@ -140,8 +140,8 @@ class ManageForumReferences implements Themeable, Translatable {
         
         initDnDTarget();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
         _colName.pack();
         _colDesc.pack();
@@ -153,8 +153,8 @@ class ManageForumReferences implements Themeable, Translatable {
     }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _refTree.dispose();
         if (!_shell.isDisposed())
             _shell.dispose();
@@ -198,7 +198,7 @@ class ManageForumReferences implements Themeable, Translatable {
         if (node == null) return;
         
         final Text field = new Text(_targetTree, SWT.SINGLE);
-        field.setFont(_browser.getThemeRegistry().getTheme().DEFAULT_FONT);
+        field.setFont(_dataControl.getThemeRegistry().getTheme().DEFAULT_FONT);
         if (col == 0)
             field.setText((node.getName() != null ? node.getName() : ""));
         else if (col == 1)
@@ -295,7 +295,7 @@ class ManageForumReferences implements Themeable, Translatable {
         int width = ImageUtil.getWidth(text, _targetTree) + _targetTree.getGridLineWidth()*2 + 10;
         int existing = col.getWidth();
         if (width > existing) {
-            _browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
+            _dataControl.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
             col.setWidth(width);
         } else {
             //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
@@ -437,7 +437,7 @@ class ManageForumReferences implements Themeable, Translatable {
                     return;
                 }
                 
-                _browser.getUI().debugMessage("drop: " + evt);
+                _dataControl.getUI().debugMessage("drop: " + evt);
                 
                 Tree tree = _targetTree;
                 Point pt = tree.toControl(evt.x, evt.y);
@@ -475,7 +475,7 @@ class ManageForumReferences implements Themeable, Translatable {
             try {
                 uri = new SyndieURI(str);
             } catch (URISyntaxException use) {
-                _browser.getUI().debugMessage("invalid uri: " + str, use);
+                _dataControl.getUI().debugMessage("invalid uri: " + str, use);
                 byte val[] = Base64.decode(str);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
                     uri = SyndieURI.createScope(new Hash(val));

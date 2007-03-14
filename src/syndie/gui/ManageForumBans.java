@@ -53,7 +53,7 @@ import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
 
 class ManageForumBans implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private ManageForum _manage;
     private Shell _shell;
     private SashForm _sash;
@@ -66,8 +66,8 @@ class ManageForumBans implements Themeable, Translatable {
     private Button _ok;
     private Button _cancel;
     
-    public ManageForumBans(BrowserControl browser, ManageForum manage) {
-        _browser = browser;
+    public ManageForumBans(DataControl dataControl, ManageForum manage) {
+        _dataControl = dataControl;
         _manage = manage;
         _localBanHashes = new ArrayList();
         _targetBanHashes = new ArrayList();
@@ -94,7 +94,7 @@ class ManageForumBans implements Themeable, Translatable {
         _banGroup = new Group(lhs, SWT.SHADOW_ETCHED_IN);
         _banGroup.setLayout(new FillLayout());
         _localBans = new List(_banGroup, SWT.BORDER | SWT.MULTI);
-        _refTree = new RefTree(_browser, lhs);
+        _refTree = ComponentBuilder.instance().createRefTree(lhs);
         _targetBans = new List(_sash, SWT.BORDER | SWT.MULTI);
         
         Composite actions = new Composite(_shell, SWT.NONE);
@@ -112,8 +112,8 @@ class ManageForumBans implements Themeable, Translatable {
         initDnDBanListSrc();
         initDnDTarget();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
         loadData();
         
@@ -121,8 +121,8 @@ class ManageForumBans implements Themeable, Translatable {
     }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _refTree.dispose();
         if (!_shell.isDisposed())
             _shell.dispose();
@@ -137,7 +137,7 @@ class ManageForumBans implements Themeable, Translatable {
         
         _localBans.setRedraw(false);
         _localBanHashes.clear();
-        ArrayList banned = _browser.getClient().getBannedChannels();
+        ArrayList banned = _dataControl.getClient().getBannedChannels();
         for (int i = 0; i < banned.size(); i++) {
             _localBanHashes.add(banned.get(i));
             _localBans.add(((Hash)banned.get(i)).toBase64());
@@ -180,7 +180,7 @@ class ManageForumBans implements Themeable, Translatable {
                     return;
                 }
                 
-                _browser.getUI().debugMessage("drop: " + evt);
+                _dataControl.getUI().debugMessage("drop: " + evt);
                 
                 ArrayList scopes = getToAdd(evt.data.toString());
                 for (int i = 0; i < scopes.size(); i++) {
@@ -216,7 +216,7 @@ class ManageForumBans implements Themeable, Translatable {
                 try {
                     uri = new SyndieURI(str);
                 } catch (URISyntaxException use) {
-                    _browser.getUI().debugMessage("invalid uri: " + str, use);
+                    _dataControl.getUI().debugMessage("invalid uri: " + str, use);
                     byte val[] = Base64.decode(str);
                     if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
                         uri = SyndieURI.createScope(new Hash(val));

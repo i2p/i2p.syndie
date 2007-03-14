@@ -14,8 +14,8 @@ import syndie.data.WatchedChannel;
 
 class RefTree extends ReferenceChooserTree {
     private ReferenceChooserTreeDnDSource _dndSrc;
-    public RefTree(BrowserControl ctl, Composite parent) {
-        super(ctl, parent, new ReferenceChooserTree.ChoiceListener() {
+    public RefTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, Composite parent) {
+        super(dataControl, navControl, uriControl, parent, new ReferenceChooserTree.ChoiceListener() {
             public void watchedChannelSelected(TreeItem item, WatchedChannel channel) {}
             public void bookmarkSelected(TreeItem item, NymReferenceNode node) {}
             public void manageChannelSelected(TreeItem item, ChannelInfo channel) {}
@@ -30,11 +30,11 @@ class RefTree extends ReferenceChooserTree {
 
     protected void initComponents(boolean register, boolean multipleSelections) {
         super.initComponents(register, true);
-        _dndSrc = new ReferenceChooserTreeDnDSource(_browser, RefTree.this, true);
+        _dndSrc = new ReferenceChooserTreeDnDSource(_dataControl, RefTree.this, true);
     }
     public ReferenceNode getDragged() { 
         TreeItem[] item = super.getTree().getSelection();
-        _browser.getUI().debugMessage("getDragged(): " + (item != null ? item.length : 0) + " items");
+        _dataControl.getUI().debugMessage("getDragged(): " + (item != null ? item.length : 0) + " items");
         if ( (item == null) || (item.length == 0) ) return null;
         if (item.length == 1) {
             return getDragged(item[0]);
@@ -70,20 +70,20 @@ class RefTree extends ReferenceChooserTree {
         }
         WatchedChannel watched = getWatchedChannel(item);
         if (watched != null) {
-            Hash scope = _browser.getClient().getChannelHash(watched.getChannelId());
-            String name = _browser.getClient().getChannelName(watched.getChannelId());
+            Hash scope = _dataControl.getClient().getChannelHash(watched.getChannelId());
+            String name = _dataControl.getClient().getChannelName(watched.getChannelId());
             if (name == null)
                 name = scope.toBase64().substring(0,6);
             return new ReferenceNode(name, SyndieURI.createScope(scope), "", null);
         }
 
         if (item == getWatchedRoot()) {
-            ReferenceNode rv = new ReferenceNode(_browser.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
-            Collection chans = _browser.getClient().getWatchedChannels();
+            ReferenceNode rv = new ReferenceNode(_dataControl.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            Collection chans = _dataControl.getClient().getWatchedChannels();
             for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
                 WatchedChannel cur = (WatchedChannel)iter.next();
-                Hash scope = _browser.getClient().getChannelHash(cur.getChannelId());
-                String name = _browser.getClient().getChannelName(cur.getChannelId());
+                Hash scope = _dataControl.getClient().getChannelHash(cur.getChannelId());
+                String name = _dataControl.getClient().getChannelName(cur.getChannelId());
                 if (name == null)
                     name = scope.toBase64().substring(0,6);
                 rv.addChild(new ReferenceNode(name, SyndieURI.createScope(scope), "", null));
@@ -95,7 +95,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getBookmarkRoot()) {
-            ReferenceNode rv = new ReferenceNode(_browser.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_dataControl.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
             Collection chans = getBookmarks();
             for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
                 NymReferenceNode cur = (NymReferenceNode)iter.next();
@@ -109,7 +109,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getManageRoot()) {
-            ReferenceNode rv = new ReferenceNode(_browser.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_dataControl.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
             ArrayList chans = getManageableChannels();
             for (int i = 0; i < chans.size(); i++) {
                 chan = (ChannelInfo)chans.get(i);
@@ -126,7 +126,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getPostRoot()) {
-            ReferenceNode rv = new ReferenceNode(_browser.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_dataControl.getTranslationRegistry().getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
             ArrayList chans = getPostableChannels();
             for (int i = 0; i < chans.size(); i++) {
                 chan = (ChannelInfo)chans.get(i);

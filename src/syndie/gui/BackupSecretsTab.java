@@ -15,7 +15,7 @@ public class BackupSecretsTab extends BrowserTab {
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _backup = new BackupSecrets(getBrowser(), getRoot(), getURI());
+        _backup = new BackupSecrets(getBrowser(), getBrowser(), getRoot(), getURI());
     }
     
     public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }

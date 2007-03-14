@@ -205,6 +205,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public Browser(DBClient client) {
         _client = client;
+        initComponentBuilder();
         _openTabs = new HashMap();
         _openTabURIs = new HashMap();
         _uiListeners = new ArrayList();
@@ -222,6 +223,16 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(new Timer("logged in init", getUI(), true, -1)); } });
+    }
+    
+    private void initComponentBuilder() {
+        ComponentBuilder b = ComponentBuilder.instance();
+        b.setBookmarkControl(this);
+        b.setDataCallback(this);
+        b.setDataControl(this);
+        b.setLocalMessageCallback(this);
+        b.setNavigationControl(this);
+        b.setURIControl(this);
     }
 
     private void initComponents(Timer timer) {
@@ -254,7 +265,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         timer.addEvent("sash construction");
-        _bookmarks = new BrowserTree(this, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener(), timer);
+        _bookmarks = ComponentBuilder.instance().createBrowserTree(this, timer, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         timer.addEvent("browser tree construction");
         
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE | SWT.BORDER);
@@ -304,7 +315,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         timer.addEvent("folder construction");
         
-        _statusBar = new StatusBar(this, _shell, timer);
+        _statusBar = ComponentBuilder.instance().createStatusBar(this, _shell, timer);
         _statusBar.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         timer.addEvent("status bar construction");
@@ -1120,7 +1131,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
                     uris.add(curURI);
             }
             
-            ReferenceChooserTree.savePrevTabs(this, uris);
+            ReferenceChooserTree.savePrevTabs(_client, uris);
             new Thread(new Runnable() {
 	      public void run() { _client.close(); System.exit(0); }
 	    }).start();
@@ -1621,7 +1632,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     private BookmarkEditorPopup getBookmarkEditor() {
         if (_bookmarkEditor == null)
-            _bookmarkEditor = new BookmarkEditorPopup(this, _shell);
+            _bookmarkEditor = ComponentBuilder.instance().createBookmarkEditorPopup(_shell);
         return _bookmarkEditor;
     }
     
@@ -1637,7 +1648,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             bookmark.name = tab.getName();
             bookmark.desc = tab.getDescription();
             
-            NymReferenceNode parent = StatusBar.getParent(this, bookmark);
+            NymReferenceNode parent = StatusBar.getParent(this, this, bookmark);
             long parentGroupId = -1;
             if (parent != null)
                 parentGroupId = parent.getGroupId();
@@ -1818,7 +1829,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private void postWebRip() {
-        WebRipPostPopup popup = new WebRipPostPopup(this, _shell);
+        WebRipPostPopup popup = new WebRipPostPopup(this, this, this, _shell);
         popup.open();
     }
     
@@ -2293,7 +2304,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
     private void searchForums() {
-        final ReferenceChooserPopup popup = new ReferenceChooserPopup(_shell, this, T_SEARCH_FORUM_TITLE, "Find forums");
+        final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(_shell, T_SEARCH_FORUM_TITLE, "Find forums");
         popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) { view(uri); }
             public void referenceChoiceAborted() { popup.dispose(); }

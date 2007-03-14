@@ -31,7 +31,7 @@ import syndie.db.DBClient;
  *
  */
 public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private Composite _parent;
     private ReferenceChooserTree _chooser;
     private ReferenceChooserTree.AcceptanceListener _listener;
@@ -89,18 +89,18 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     private Button _uriCancel;
     
     /** Creates a new instance of ReferenceChooserInfo */
-    public ReferenceChooserInfo(Composite parent, ReferenceChooserTree chooser, ReferenceChooserTree.AcceptanceListener lsnr, BrowserControl browser) {
+    public ReferenceChooserInfo(Composite parent, ReferenceChooserTree chooser, ReferenceChooserTree.AcceptanceListener lsnr, DataControl dataControl) {
         _parent = parent;
         _chooser = chooser;
         _listener = lsnr;
-        _browser = browser;
+        _dataControl = dataControl;
         initComponents();
     }
     
     public Control getControl() { return _root; }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
     }
     
     private void initComponents() {
@@ -114,7 +114,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
         initURIComponents();
         
         updateChannel(null, null);
-        _browser.getTranslationRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
         _rootLayout.topControl = _rootChannel;
         _chooser.setListener(this);
     }
@@ -347,7 +347,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
     
     public void watchedChannelSelected(TreeItem item, WatchedChannel channel) {
-        Hash scope = _browser.getClient().getChannelHash(channel.getChannelId());
+        Hash scope = _dataControl.getClient().getChannelHash(channel.getChannelId());
         if (scope != null) {
             _curReference = SyndieURI.createScope(scope);
             refSelected();
@@ -487,7 +487,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
     
     public void manageChannelSelected(TreeItem item, ChannelInfo channel) {
-        _browser.getUI().debugMessage("manage channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
+        _dataControl.getUI().debugMessage("manage channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
         _curReference = SyndieURI.createScope(channel.getChannelHash());
         updateChannel(channel.getChannelHash(), channel);
         _rootChannel.layout(true, true);
@@ -496,7 +496,7 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
 
     public void postChannelSelected(TreeItem item, ChannelInfo channel) {
-        _browser.getUI().debugMessage("post channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
+        _dataControl.getUI().debugMessage("post channel selected [" + item.getText() + "]: " + channel.getChannelHash().toBase64());
         _curReference = SyndieURI.createScope(channel.getChannelHash());
         updateChannel(channel.getChannelHash(), channel);
         _rootLayout.topControl = _rootChannel;
@@ -504,14 +504,14 @@ public class ReferenceChooserInfo implements ReferenceChooserTree.ChoiceListener
     }
 
     public void searchResultSelected(String name, ReferenceNode node) {
-        _browser.getUI().debugMessage("search result selected [" + name + "]: " + node.getURI().toString());
+        _dataControl.getUI().debugMessage("search result selected [" + name + "]: " + node.getURI().toString());
         _curReference = node.getURI();
         refSelected();
         _root.layout();
     }
 
     public void otherSelected(TreeItem item) {
-        _browser.getUI().debugMessage("other item selected [" + item.getText() + "]");
+        _dataControl.getUI().debugMessage("other item selected [" + item.getText() + "]");
     }
     
     private static final String T_CHANNEL_ROOT = "syndie.gui.refchooserinfo.channel";

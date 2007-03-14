@@ -22,7 +22,7 @@ import syndie.data.SyndieURI;
  *
  */
 class BookmarkEditor implements Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private NymReferenceNode _node;
     private Composite _parent;
     private Composite _root;
@@ -50,8 +50,8 @@ class BookmarkEditor implements Translatable {
     private boolean _pickOrder;
     private boolean _pickTarget;
     
-    public BookmarkEditor(BrowserControl control, Composite parent, BookmarkEditorListener lsnr) {
-        _browser = control;
+    public BookmarkEditor(DataControl control, Composite parent, BookmarkEditorListener lsnr) {
+        _dataControl = control;
         _parent = parent;
         _lsnr = lsnr;
         _pickParent = true;
@@ -169,12 +169,12 @@ class BookmarkEditor implements Translatable {
             }
         });
         
-        _browser.getTranslationRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
     }
     
     private void browse() {
         if (_refPopup == null) {
-            _refPopup = new LinkBuilderPopup(_browser, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
+            _refPopup = new LinkBuilderPopup(_dataControl, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
                 public void uriBuilt(SyndieURI uri, String text) {
                     if (uri != null) {
                         if ( (text != null) && (text.trim().length() > 0) )
@@ -222,7 +222,7 @@ class BookmarkEditor implements Translatable {
         boolean ignored = false;
         boolean banned = false;
         
-        _browser.getUI().debugMessage("getState for node " + _node);
+        _dataControl.getUI().debugMessage("getState for node " + _node);
         
         name = _name.getText().trim();
         desc = _description.getText().trim();
@@ -236,7 +236,7 @@ class BookmarkEditor implements Translatable {
                     try {
                         newURI = new SyndieURI(uriStr);
                     } catch (URISyntaxException use) {
-                        _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
+                        _dataControl.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
                         newURI = null;
                     }
                 }
@@ -252,7 +252,7 @@ class BookmarkEditor implements Translatable {
                     try {
                         uri = new SyndieURI(uriStr);
                     } catch (URISyntaxException use) {
-                        _browser.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
+                        _dataControl.getUI().errorMessage("Invalid URI [" + _uri.getText() + "]", use);
                         uri = null;
                     }
                 }
@@ -281,7 +281,7 @@ class BookmarkEditor implements Translatable {
         else
             order = _node.getSiblingOrder();
         
-        _browser.getUI().debugMessage("uri: " + uri + " uriId: " + uriId + " groupId: " + groupId + " order: " + order);
+        _dataControl.getUI().debugMessage("uri: " + uri + " uriId: " + uriId + " groupId: " + groupId + " order: " + order);
         
         NymReferenceNode rv = _node;
         if (rv == null) {
@@ -340,7 +340,7 @@ class BookmarkEditor implements Translatable {
         if (_node != null)
             order = _node.getSiblingOrder();
         
-        _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_BEGINNING, "At the beginning"));
+        _siblingOrder.add(_dataControl.getTranslationRegistry().getText(T_SIBLINGORDER_BEGINNING, "At the beginning"));
         if (order == 0)
             _siblingOrder.select(0);
         
@@ -349,20 +349,20 @@ class BookmarkEditor implements Translatable {
             for (int i = 0; i < parent.getChildCount(); i++) {
                 NymReferenceNode child = (NymReferenceNode)parent.getChild(i);
                 if ( (_node != null) && (child.getGroupId() == _node.getGroupId()) ) {
-                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
+                    _siblingOrder.add(_dataControl.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
                     _siblingOrder.select(_siblingOrder.getItemCount()-1);
                 } else {
-                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
+                    _siblingOrder.add(_dataControl.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
                 }
             }
         } else {
             for (int i = 0; i < _roots.size(); i++) {
                 NymReferenceNode child = (NymReferenceNode)_roots.get(i);
                 if ( (_node != null) && (child.getGroupId() == _node.getGroupId()) ) {
-                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
+                    _siblingOrder.add(_dataControl.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "Same as before"));
                     _siblingOrder.select(_siblingOrder.getItemCount()-1);
                 } else {
-                    _siblingOrder.add(_browser.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
+                    _siblingOrder.add(_dataControl.getTranslationRegistry().getText(T_SIBLINGORDER_SAME, "After: ") + getElementName(child));
                 }
             }
         }
@@ -386,12 +386,12 @@ class BookmarkEditor implements Translatable {
         _parentGroup.setRedraw(false);
         _parentGroup.removeAll();
         _parentNodes.clear();
-        _parentGroup.add(_browser.getTranslationRegistry().getText(T_TOPLEVELBOOKMARK, "Top level bookmark"));
-        _browser.getUI().debugMessage("bookmarkEditor: populating parent(" + parentId + ")");
+        _parentGroup.add(_dataControl.getTranslationRegistry().getText(T_TOPLEVELBOOKMARK, "Top level bookmark"));
+        _dataControl.getUI().debugMessage("bookmarkEditor: populating parent(" + parentId + ")");
         if (parentId == -1)
             _parentGroup.select(0);
         
-        _roots = _browser.getClient().getNymReferences(_browser.getClient().getLoggedInNymId());
+        _roots = _dataControl.getClient().getNymReferences(_dataControl.getClient().getLoggedInNymId());
         for (int i = 0; i < _roots.size(); i++) {
             NymReferenceNode node = (NymReferenceNode)_roots.get(i);
             addParentElement(node, "", parentId);
@@ -407,7 +407,7 @@ class BookmarkEditor implements Translatable {
         _parentNodes.add(cur);
         if (cur.getGroupId() == targetParentId) {
             _parentGroup.select(_parentGroup.getItemCount()-1);
-            _browser.getUI().debugMessage("bookmarkEditor: found parent: " + cur.getName());
+            _dataControl.getUI().debugMessage("bookmarkEditor: found parent: " + cur.getName());
         }
         
         String childPrefix = name + " > ";
@@ -423,7 +423,7 @@ class BookmarkEditor implements Translatable {
         else if ( (cur.getURI() != null) && (cur.getURI().getScope() != null) )
             return cur.getURI().getScope().toBase64().substring(0,6);
         else
-            return _browser.getTranslationRegistry().getText(T_UNNAMED, "unnamed");
+            return _dataControl.getTranslationRegistry().getText(T_UNNAMED, "unnamed");
     }
     
     private static final String T_NAME = "syndie.gui.bookmarkeditor.name";

@@ -14,14 +14,14 @@ import org.eclipse.swt.widgets.Shell;
 import syndie.data.SyndieURI;
 
 class MaxView {
-    private BrowserControl _ctl;
+    private DataControl _ctl;
     private Shell _parent;
     private Shell _shell;
     private PageRenderer _maxRenderer;
     private MaxListener _listener;
 
-    public MaxView(BrowserControl browser, Shell parent, SyndieURI pageURI, MaxListener lsnr) {
-        _ctl = browser;
+    public MaxView(DataControl dataControl, Shell parent, SyndieURI pageURI, MaxListener lsnr) {
+        _ctl = dataControl;
         _parent = parent;
         _shell = new Shell(_parent, SWT.NO_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new GridLayout(1, true));
@@ -31,7 +31,7 @@ class MaxView {
         unmax.setFont(_ctl.getThemeRegistry().getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
-        _maxRenderer = new PageRenderer(_shell, true, _ctl);
+        _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
         _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
 
         _maxRenderer.renderPage(new PageRendererSource(_ctl), pageURI);

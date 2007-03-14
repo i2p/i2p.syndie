@@ -31,7 +31,7 @@ import syndie.db.DBClient;
  *
  */
 class AttachmentPreview implements Translatable, Themeable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
@@ -53,8 +53,8 @@ class AttachmentPreview implements Translatable, Themeable {
 
     private byte _data[];
 
-    public AttachmentPreview(BrowserControl browser, Composite parent) {
-        _browser = browser;
+    public AttachmentPreview(DataControl browser, Composite parent) {
+        _dataControl = browser;
         _client = browser.getClient();
         _parent = parent;
         initComponents();
@@ -106,8 +106,8 @@ class AttachmentPreview implements Translatable, Themeable {
         });
 
         _dialog = new FileDialog(_root.getShell(), SWT.SAVE);
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     private static final String T_MAXVIEW_UNMAX = "syndie.gui.attachmentpreview.unmax";
@@ -124,8 +124,8 @@ class AttachmentPreview implements Translatable, Themeable {
         _maxShell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
         _maxShell.setLayout(new GridLayout(1, true));
         Button unmax = new Button(_maxShell, SWT.PUSH);
-        unmax.setText(_browser.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
-        unmax.setFont(_browser.getThemeRegistry().getTheme().BUTTON_FONT);
+        unmax.setText(_dataControl.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+        unmax.setFont(_dataControl.getThemeRegistry().getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
         _maxImage = new ImageCanvas(_maxShell, true);
@@ -169,7 +169,7 @@ class AttachmentPreview implements Translatable, Themeable {
     
     public void showURI(SyndieURI uri) {
         if (_data != null) return;
-        Timer timer = new Timer("show attachment", _browser.getUI());
+        Timer timer = new Timer("show attachment", _dataControl.getUI());
         long scope = _client.getChannelId(uri.getScope());
         long msgId = _client.getMessageId(scope, uri.getMessageId().longValue());
         timer.addEvent("msgId fetch");
@@ -214,7 +214,7 @@ class AttachmentPreview implements Translatable, Themeable {
         timer.addEvent("old disposed");
         boolean show = false;
         if (contentType.startsWith("image/") && (data != null)) {
-            Image img = ImageUtil.createImage(data, _browser.getClient().getTempDir());
+            Image img = ImageUtil.createImage(data, _dataControl.getClient().getTempDir());
             timer.addEvent("new image created");
             if (img != null) {
                 _preview.setImage(img);
@@ -227,7 +227,7 @@ class AttachmentPreview implements Translatable, Themeable {
         if (show) {
             _preview.setVisible(true);
             timer.addEvent("new image preview shown");
-            _browser.getUI().debugMessage("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+            _dataControl.getUI().debugMessage("preview size: " + _preview.getSize() + " computed: " + _preview.computeSize(SWT.DEFAULT, SWT.DEFAULT));
             //gd.exclude = false;
         } else {
             _preview.setImage(null);
@@ -252,14 +252,14 @@ class AttachmentPreview implements Translatable, Themeable {
             fos.close();
             fos = null;
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_INFORMATION);
-            box.setText(_browser.getTranslationRegistry().getText(T_SAVE_OK_TITLE, "Attachment saved"));
-            box.setMessage(_browser.getTranslationRegistry().getText(T_SAVE_OK_MSG, "Attachment saved to:") + out.getAbsolutePath());
+            box.setText(_dataControl.getTranslationRegistry().getText(T_SAVE_OK_TITLE, "Attachment saved"));
+            box.setMessage(_dataControl.getTranslationRegistry().getText(T_SAVE_OK_MSG, "Attachment saved to:") + out.getAbsolutePath());
             box.open();
         } catch (IOException ioe) {
             // hrm
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_ERROR);
-            box.setText(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_TITLE, "Error saving attachment"));
-            box.setMessage(_browser.getTranslationRegistry().getText(T_SAVE_ERROR_MSG, "Attachment could not be saved: ") + ioe.getMessage());
+            box.setText(_dataControl.getTranslationRegistry().getText(T_SAVE_ERROR_TITLE, "Error saving attachment"));
+            box.setMessage(_dataControl.getTranslationRegistry().getText(T_SAVE_ERROR_MSG, "Attachment could not be saved: ") + ioe.getMessage());
             box.open();
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
@@ -267,8 +267,8 @@ class AttachmentPreview implements Translatable, Themeable {
     }
     
     public void dispose() { 
-        _browser.getTranslationRegistry().unregister(this); 
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this); 
+        _dataControl.getThemeRegistry().unregister(this);
         unmax();
         _preview.disposeImage();
     }
@@ -286,13 +286,13 @@ class AttachmentPreview implements Translatable, Themeable {
     private static final String T_SAVE = "syndie.gui.attachmentpreviewpopup.save";
     
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(_browser.getTranslationRegistry().getText(T_NAME, "Name:"));
-        _descLabel.setText(_browser.getTranslationRegistry().getText(T_DESC, "Description:"));
-        _sizeLabel.setText(_browser.getTranslationRegistry().getText(T_SIZE, "Size:"));
-        _typeLabel.setText(_browser.getTranslationRegistry().getText(T_TYPE, "Type:"));
-        _saveAsLabel.setText(_browser.getTranslationRegistry().getText(T_SAVEAS, "Save as:"));
-        _saveAsBrowse.setText(_browser.getTranslationRegistry().getText(T_SAVEAS_BROWSE, "Browse..."));
-        _saveAsOk.setText(_browser.getTranslationRegistry().getText(T_SAVE, "Save"));
+        _nameLabel.setText(_dataControl.getTranslationRegistry().getText(T_NAME, "Name:"));
+        _descLabel.setText(_dataControl.getTranslationRegistry().getText(T_DESC, "Description:"));
+        _sizeLabel.setText(_dataControl.getTranslationRegistry().getText(T_SIZE, "Size:"));
+        _typeLabel.setText(_dataControl.getTranslationRegistry().getText(T_TYPE, "Type:"));
+        _saveAsLabel.setText(_dataControl.getTranslationRegistry().getText(T_SAVEAS, "Save as:"));
+        _saveAsBrowse.setText(_dataControl.getTranslationRegistry().getText(T_SAVEAS_BROWSE, "Browse..."));
+        _saveAsOk.setText(_dataControl.getTranslationRegistry().getText(T_SAVE, "Save"));
     }
     
     public void applyTheme(Theme theme) {

@@ -20,7 +20,7 @@ import org.eclipse.swt.widgets.Text;
  *
  */
 public class PassphrasePrompt implements Translatable, Themeable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private Shell _parent;
     private Shell _shell;
     private boolean _creatingNewPassphrase;
@@ -33,8 +33,8 @@ public class PassphrasePrompt implements Translatable, Themeable {
     private Button _ok;
     private Button _cancel;
     
-    public PassphrasePrompt(BrowserControl browser, Shell parent, boolean creatingNewPassphrase) {
-        _browser = browser;
+    public PassphrasePrompt(DataControl dataControl, Shell parent, boolean creatingNewPassphrase) {
+        _dataControl = dataControl;
         _parent = parent;
         _creatingNewPassphrase = creatingNewPassphrase;
         initComponents();
@@ -110,16 +110,16 @@ public class PassphrasePrompt implements Translatable, Themeable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     private void complete(boolean ok) {
         String pass = _passphrase.getText();
         String prompt = _passphrasePrompt.getText();
         _shell.dispose();
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         if (_listener != null) {
             if (ok)
                 _listener.promptComplete(pass, prompt);

@@ -431,11 +431,11 @@ class MessageCreator {
                 ui.commandComplete(0, null);
                 cleanup(tempFiles, refFile);
                 
-                long msgId = _editor.getBrowser().getClient().getMessageId(scope, messageId);
+                long msgId = _editor.getClient().getMessageId(scope, messageId);
                 if (msgId >= 0)
-                    _editor.getBrowser().getClient().markMessageRead(msgId);
+                    _editor.getClient().markMessageRead(msgId);
                 
-                _editor.getBrowser().messageImported();
+                _editor.getDataCallback().messageImported();
                 return true;
             }
         } else {
@@ -453,7 +453,7 @@ class MessageCreator {
     }
     
     public interface MessageCreatorSource {
-        public BrowserControl getBrowser();
+        public DataCallback getDataCallback();
         public DBClient getClient();
         public UI getUI();
         public Hash getAuthor();

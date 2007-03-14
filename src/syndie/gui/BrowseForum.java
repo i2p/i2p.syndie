@@ -49,6 +49,12 @@ import syndie.db.UI;
  *
  */
 public class BrowseForum implements MessageTree.MessageTreeListener, Translatable, Themeable {
+    private DataControl _dataControl;
+    private NavigationControl _navControl;
+    private BookmarkControl _bookmarkControl;
+    private URIControl _uriControl;
+    private DataCallback _dataCallback;
+
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
@@ -81,24 +87,27 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     private Composite _filterRow;
     private Hash _scope;
     private UI _ui;
-    private BrowserControl _browser;
     private boolean _viewOnly;
     private boolean _shouldPreview;
     
     private boolean _byForum;
     
-    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr, boolean byForum) {
-        this(parent, browser, lsnr, false, byForum);
+    public BrowseForum(Composite parent, DataControl dataControl, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, MessageTree.MessageTreeListener lsnr, boolean byForum) {
+        this(parent, dataControl, navControl, bookmarkControl, uriControl, callback, lsnr, false, byForum);
     }
-    public BrowseForum(Composite parent, BrowserControl browser, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
-        _browser = browser;
-        _client = browser.getClient();
+    public BrowseForum(Composite parent, DataControl dataControl, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
+        _dataControl = dataControl;
+        _navControl = navControl;
+        _bookmarkControl = bookmarkControl;
+        _uriControl = uriControl;
+        _dataCallback = callback;
+        _client = dataControl.getClient();
         _parent = parent;
         _listener = lsnr;
         _viewOnly = viewOnly;
         _byForum = byForum;
-        _shouldPreview = MessageTree.shouldShowPreview(browser);
-        _ui = browser.getUI();
+        _shouldPreview = MessageTree.shouldShowPreview(dataControl.getClient());
+        _ui = dataControl.getUI();
         _ui.debugMessage("initializing browse");
         initComponents();
         _ui.debugMessage("browse initialized");
@@ -203,13 +212,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         });
         
         _metaNameMenuView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createMetaURI(_scope)); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(_browser.createMetaURI(_scope)); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(_uriControl.createMetaURI(_scope)); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(_uriControl.createMetaURI(_scope)); }
         });
         
         _metaNameMenuBookmark.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _browser.bookmark(SyndieURI.createScope(_scope)); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _bookmarkControl.bookmark(SyndieURI.createScope(_scope)); }
+            public void widgetSelected(SelectionEvent selectionEvent) { _bookmarkControl.bookmark(SyndieURI.createScope(_scope)); }
         });
         
         _metaNameMenuMarkRead.addSelectionListener(new SelectionListener() {
@@ -218,13 +227,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             private void markAllRead() {
                 Hash scope = _scope;
                 if (scope == null) return;
-                long scopeId = _browser.getClient().getChannelId(scope);
+                long scopeId = _dataControl.getClient().getChannelId(scope);
                 if (scopeId >= 0) {
-                    _browser.getClient().markChannelRead(scopeId);
+                    _dataControl.getClient().markChannelRead(scopeId);
                     // the filter may want to exclude 'read' messages (or it may just want
                     // to redraw them differently)
                     _tree.applyFilter();
-                    _browser.readStatusUpdated();
+                    _dataCallback.readStatusUpdated();
                 }
             }
         });
@@ -233,8 +242,8 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                if (_browser.ban(_scope))
-                    _browser.unview(getURI());
+                if (_dataControl.ban(_scope))
+                    _navControl.unview(getURI());
                     
             }
         });
@@ -260,7 +269,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             public void widgetSelected(SelectionEvent selectionEvent) { reply(); }
             private void reply() {
                 if (_scope != null)
-                    _browser.view(_browser.createPostURI(_scope, null, true));
+                    _navControl.view(_uriControl.createPostURI(_scope, null, true));
             }
         });
         
@@ -339,22 +348,22 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                 int idx = _metaRefCombo.getSelectionIndex();
                 if ( (idx >= 0) && (idx < _refs.size()) ) {
                     SyndieURI uri = (SyndieURI)_refs.get(idx);
-                    _browser.view(uri);
+                    _navControl.view(uri);
                 }
             }
         });
         //_metaRefCombo.add("Refs go here...");
         //_metaRefCombo.add("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 
-        _browser.getUI().debugMessage("browseForum.initialize: creating tree");
+        _dataControl.getUI().debugMessage("browseForum.initialize: creating tree");
         if (_byForum)
-            _tree = new WatchedMessageTree(_browser, _top, this, true);
+            _tree = ComponentBuilder.instance().createWatchedMessageTree(_top, this, true);
         else
-            _tree = new MessageTree(_browser, _top, this, true);
+            _tree = ComponentBuilder.instance().createMessageTree(_top, this, true);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _browser.getUI().debugMessage("browseForum.initialize: creating preview");
-        _preview = new MessagePreview(_browser, _sash);
-        _browser.getUI().debugMessage("browseForum.initialize: preview created");
+        _dataControl.getUI().debugMessage("browseForum.initialize: creating preview");
+        _preview = ComponentBuilder.instance().createMessagePreview(_sash);
+        _dataControl.getUI().debugMessage("browseForum.initialize: preview created");
         _sash.setWeights(new int[] { 50, 50 });
         
         if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
@@ -380,13 +389,13 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             }
         });
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
 
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _preview.dispose();
         _tree.dispose();
         ImageUtil.dispose(_metaAvatar.getImage());
@@ -405,7 +414,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                 scope = null;
         }
         
-        _browser.getUI().debugMessage("Update metadata for " + scope + " / " + uri);
+        _dataControl.getUI().debugMessage("Update metadata for " + scope + " / " + uri);
         
         if ( ( (scope == null) && (_scope == null) ) || ( (scope != null) && (scope.equals(_scope)) ) )
             return; // same as before
@@ -432,10 +441,10 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             if (name == null) name = scope.toBase64().substring(0,6);
             _metaName.setText(name);
             
-            byte avatar[] = _browser.getClient().getChannelAvatar(info.getChannelId());
+            byte avatar[] = _dataControl.getClient().getChannelAvatar(info.getChannelId());
             Image img = null;
             if (avatar != null) {
-                _browser.getUI().debugMessage("avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
+                _dataControl.getUI().debugMessage("avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
                 img = ImageUtil.createImage(avatar);
                 if (img != null) {
                     Rectangle bounds = img.getBounds();
@@ -445,7 +454,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
                         img = ImageUtil.resize(img, Math.min(width, Constants.MAX_AVATAR_WIDTH), Math.min(height, Constants.MAX_AVATAR_HEIGHT), true);
                 }
             } else {
-                _browser.getUI().debugMessage("no avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
+                _dataControl.getUI().debugMessage("no avatar found for channel " + info.getChannelHash().toBase64() + "/" + info.getChannelId());
             }
             _metaAvatar.setImage(img);
             gd = (GridData)_metaAvatar.getLayoutData();
@@ -509,7 +518,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             gd.exclude = false;
             _ui.debugMessage("update metadata: no forum");
             _metaName.setText("");
-            _metaDesc.setText(_browser.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
+            _metaDesc.setText(_dataControl.getTranslationRegistry().getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
             _metaIconManageable.setVisible(false);
             _metaIconPostable.setVisible(false);
             _metaIconArchives.setVisible(false);
@@ -525,7 +534,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
             _metaRefCombo.setVisible(false);
             ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
             
-            _browser.getUI().debugMessage("no avatar found for no channel: " + uri);
+            _dataControl.getUI().debugMessage("no avatar found for no channel: " + uri);
             gd = (GridData)_metaAvatar.getLayoutData();
             gd.exclude = true;
             _metaAvatar.setVisible(false);
@@ -585,7 +594,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         //    _shell.setVisible(false);
         //_ui.debugMessage("message selected: " + uri);
         if (toView)
-            _browser.view(uri);
+            _navControl.view(uri);
         else
             preview(uri, false, nodelay);
         if (_listener != null)
@@ -605,7 +614,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     void preview(final SyndieURI uri, final boolean fullscreen) { preview(uri, fullscreen, false); }
     void preview(final SyndieURI uri, final boolean fullscreen, boolean nodelay) {
         if ( (uri == null) || (uri.getMessageId() == null) ) return;
-        _browser.getUI().debugMessage("preview request for " + uri);
+        _dataControl.getUI().debugMessage("preview request for " + uri);
         _toPreview = uri;
         Runnable r = new Runnable() { 
             public void run() { 
@@ -623,7 +632,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     // actually preview
     void doPreview(SyndieURI uri, boolean fullscreen) {
         if (!_shouldPreview) return;
-        _browser.getUI().debugMessage("previewing " + uri);
+        _dataControl.getUI().debugMessage("previewing " + uri);
         if (fullscreen && uri.isChannel() && (uri.getScope() != null) && (uri.getMessageId() != null) )
             _sash.setMaximizedControl(_preview.getControl());
         else
@@ -641,33 +650,14 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
     }
     
     private void post() {
-        if (_browser != null) {
-            _browser.getUI().debugMessage("posting...");
-            _browser.view(_browser.createPostURI(_scope, null));
-        }
+        _dataControl.getUI().debugMessage("posting...");
+        _navControl.view(_uriControl.createPostURI(_scope, null));
     }
     
-    private void manage() {
-        if (_browser != null) {
-            _browser.view(_browser.createManageURI(_scope));
-        }
-    }
-    
-    private void viewRefs() {
-        if (_browser != null) {
-            _browser.view(_browser.createMetaRefsURI(_scope));
-        }
-    }
-    private void viewArchives() {
-        if (_browser != null) {
-            _browser.view(_browser.createMetaArchivesURI(_scope));
-        }
-    }
-    private void viewAdmins() {
-        if (_browser != null) {
-            _browser.view(_browser.createMetaManagersURI(_scope));
-        }
-    }
+    private void manage() { _navControl.view(_uriControl.createManageURI(_scope)); }
+    private void viewRefs() { _navControl.view(_uriControl.createMetaRefsURI(_scope)); }
+    private void viewArchives() { _navControl.view(_uriControl.createMetaArchivesURI(_scope)); }
+    private void viewAdmins() { _navControl.view(_uriControl.createMetaManagersURI(_scope)); }
 
     private static final String T_MANAGEABLE_TOOLTIP = "syndie.gui.browseforum.manageable";
     private static final String T_POSTABLE_TOOLTIP = "syndie.gui.browseforum.postable";
@@ -717,7 +707,7 @@ public class BrowseForum implements MessageTree.MessageTreeListener, Translatabl
         _metaIconPostable.setFont(theme.BUTTON_FONT);
         _metaRefCombo.setFont(theme.DEFAULT_FONT);
         
-        _browser.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
+        _dataControl.getUI().debugMessage("meta name size: " + _metaName.getFont().getFontData()[0].getHeight() + "/" + _metaName.getText());
         //_root.layout(true, true);
     }
 }

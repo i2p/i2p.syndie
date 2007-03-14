@@ -36,8 +36,8 @@ public class WebRipPostControl extends WebRipPageControl {
     private String _passphrase;
     private String _passphrasePrompt;
     
-    public WebRipPostControl(BrowserControl browser, Composite parent) {
-        super(browser, parent);
+    public WebRipPostControl(DataControl dataControl, Composite parent) {
+        super(dataControl, parent);
     }
     
     /** anyone can read it */
@@ -131,7 +131,7 @@ public class WebRipPostControl extends WebRipPageControl {
         else
             _authorList = new ArrayList();
         
-        DBClient.ChannelCollector channels = _browser.getClient().getChannels(true, true, true, true);
+        DBClient.ChannelCollector channels = _dataControl.getClient().getChannels(true, true, true, true);
         
         for (int i = 0; i < channels.getIdentityChannelCount(); i++) {
             ChannelInfo info = channels.getIdentityChannel(i);

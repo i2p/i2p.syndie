@@ -57,7 +57,8 @@ import syndie.data.WatchedChannel;
  * different issues
  */
 class MessageReferencesEditor implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private NavigationControl _navControl;
     private Composite _parent;
     private Tree _targetTree;
     private TreeColumn _colName;
@@ -72,9 +73,10 @@ class MessageReferencesEditor implements Themeable, Translatable {
     private Map _targetItemToNode;
     private LinkBuilderPopup _editPopup;
     
-    public MessageReferencesEditor(Composite parent, BrowserControl browser) {
+    public MessageReferencesEditor(Composite parent, DataControl dataControl, NavigationControl navControl) {
         _parent = parent;
-        _browser = browser;
+        _dataControl = dataControl;
+        _navControl = navControl;
         initComponents();
     }
     
@@ -128,7 +130,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
                     if (node != null) {
                         SyndieURI uri = node.getURI();
                         if (uri != null)
-                            _browser.view(uri);
+                            _navControl.view(uri);
                     }
                 }
             }
@@ -156,8 +158,8 @@ class MessageReferencesEditor implements Themeable, Translatable {
         
         initDnDTarget();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
         _colName.pack();
         _colDesc.pack();
@@ -168,8 +170,8 @@ class MessageReferencesEditor implements Themeable, Translatable {
     }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _editPopup.dispose();
     }
     
@@ -187,7 +189,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
     
     private void add() {
         if (_editPopup == null)
-            _editPopup = new LinkBuilderPopup(_browser, _parent.getShell(), new EditListener());
+            _editPopup = new LinkBuilderPopup(_dataControl, _parent.getShell(), new EditListener());
         _parentNode = null;
         _currentNode = null;
         _editPopup.showPopup();
@@ -219,7 +221,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
         if (node == null) return;
         
         final Text field = new Text(_targetTree, SWT.SINGLE);
-        field.setFont(_browser.getThemeRegistry().getTheme().DEFAULT_FONT);
+        field.setFont(_dataControl.getThemeRegistry().getTheme().DEFAULT_FONT);
         if (col == 0)
             field.setText((node.getName() != null ? node.getName() : ""));
         else if (col == 1)
@@ -318,7 +320,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
         int width = ImageUtil.getWidth(text, _targetTree) + _targetTree.getGridLineWidth()*2 + 10;
         int existing = col.getWidth();
         if (width > existing) {
-            _browser.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
+            _dataControl.getUI().debugMessage("Increasing the width on " + col.getText() + " from " + existing + " to " + width);
             col.setWidth(width);
         } else {
             //_browser.getUI().debugMessage("Keeping the width on " + col.getText() + " at " + existing + " (new width would be " + width + ")");
@@ -460,7 +462,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
                     return;
                 }
                 
-                _browser.getUI().debugMessage("drop: " + evt);
+                _dataControl.getUI().debugMessage("drop: " + evt);
                 
                 Tree tree = _targetTree;
                 Point pt = tree.toControl(evt.x, evt.y);
@@ -495,7 +497,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
             try {
                 uri = new SyndieURI(str);
             } catch (URISyntaxException use) {
-                _browser.getUI().debugMessage("invalid uri: " + str, use);
+                _dataControl.getUI().debugMessage("invalid uri: " + str, use);
                 byte val[] = Base64.decode(str);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
                     uri = SyndieURI.createScope(new Hash(val));
@@ -566,7 +568,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
             if (includedURIs != null)
                 includedURIs.add(node.getURI());
             
-            _browser.getUI().debugMessage("adding: " + node);
+            _dataControl.getUI().debugMessage("adding: " + node);
             if (parent != null)
                 item = new TreeItem(parent, SWT.NONE);
             else
@@ -599,7 +601,7 @@ class MessageReferencesEditor implements Themeable, Translatable {
             child = new ReferenceNode(name, uri, "", "");
         else
             child = parent.addChild(name, uri, "", "");
-        _browser.getUI().debugMessage("child added: " + child);
+        _dataControl.getUI().debugMessage("child added: " + child);
         TreeItem parentItem = null;
         if (parent != null) {
             for (Iterator iter = _targetItemToNode.keySet().iterator(); iter.hasNext(); ) {

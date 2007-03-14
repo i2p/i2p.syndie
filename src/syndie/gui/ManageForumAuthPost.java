@@ -25,7 +25,7 @@ import syndie.data.SyndieURI;
  *
  */
 class ManageForumAuthPost implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private ManageForum _manage;
     
     private Shell _shell;
@@ -58,8 +58,8 @@ class ManageForumAuthPost implements Themeable, Translatable {
     /** channels (Hash) to receive the new posting key, ordered by the _sendNewList */
     private ArrayList _sendNewForums;
     
-    public ManageForumAuthPost(BrowserControl browser, ManageForum manage) {
-        _browser = browser;
+    public ManageForumAuthPost(DataControl dataControl, ManageForum manage) {
+        _dataControl = dataControl;
         _manage = manage;
         _selectedForums = new ArrayList();
         _sendNewForums = new ArrayList();
@@ -194,8 +194,8 @@ class ManageForumAuthPost implements Themeable, Translatable {
         
         loadData();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     private void loadData() {
@@ -224,7 +224,7 @@ class ManageForumAuthPost implements Themeable, Translatable {
             for (Iterator iter = info.getAuthorizedPosterHashes().iterator(); iter.hasNext(); ) {
                 Hash scope = (Hash)iter.next();
                 _selectedForums.add(scope);
-                String name = _browser.getClient().getChannelName(scope);
+                String name = _dataControl.getClient().getChannelName(scope);
                 if (name != null)
                     _selectedList.add(name + " [" + scope.toBase64().substring(0,6) + "]");
                 else
@@ -249,8 +249,8 @@ class ManageForumAuthPost implements Themeable, Translatable {
     public String getSendPassphrasePrompt() { return getPostPBE() ? _sendNewPBEPrompt.getText().trim() : null; }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         if (!_shell.isDisposed())
             _shell.dispose();
         if (_chooser != null)
@@ -317,13 +317,13 @@ class ManageForumAuthPost implements Themeable, Translatable {
     
     private void addAuthorizedForum() {
         if (_chooser == null)
-            _chooser = new ReferenceChooserPopup(_shell, _browser);
+            _chooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell);
         _chooser.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) {
                 if ( (uri != null) && (uri.getScope() != null) ) {
                     if (!_selectedForums.contains(uri.getScope())) {
                         _selectedForums.add(uri.getScope());
-                        String name = _browser.getClient().getChannelName(uri.getScope());
+                        String name = _dataControl.getClient().getChannelName(uri.getScope());
                         if (name != null)
                             _selectedList.add(name + " [" + uri.getScope().toBase64().substring(0,6) + "]");
                         else
@@ -345,13 +345,13 @@ class ManageForumAuthPost implements Themeable, Translatable {
     
     private void addNewForum() {
         if (_chooser == null)
-            _chooser = new ReferenceChooserPopup(_shell, _browser);
+            _chooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell);
         _chooser.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) {
                 if ( (uri != null) && (uri.getScope() != null) ) {
                     if (!_sendNewForums.contains(uri.getScope())) {
                         _sendNewForums.add(uri.getScope());
-                        String name = _browser.getClient().getChannelName(uri.getScope());
+                        String name = _dataControl.getClient().getChannelName(uri.getScope());
                         if (name != null)
                             _sendNewList.add(name + " [" + uri.getScope().toBase64().substring(0,6) + "]");
                         else

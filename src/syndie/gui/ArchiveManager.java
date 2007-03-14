@@ -28,7 +28,7 @@ import syndie.db.SyncManager;
  *
  */
 public class ArchiveManager implements Translatable, Themeable {
-    private BrowserControl _browser;
+    private DataControl _browser;
     private Composite _parent;
     private Composite _root;
     
@@ -59,7 +59,7 @@ public class ArchiveManager implements Translatable, Themeable {
     private List _uris;
     private List _bannedScopes;
     
-    public ArchiveManager(BrowserControl browser, Composite parent) {
+    public ArchiveManager(DataControl browser, Composite parent) {
         _browser = browser;
         _parent = parent;
         _uris = new ArrayList();

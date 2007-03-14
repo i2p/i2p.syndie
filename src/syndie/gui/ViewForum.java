@@ -67,7 +67,9 @@ import syndie.data.SyndieURI;
  *
  */
 class ViewForum implements Translatable, Themeable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private NavigationControl _navControl;
+    private URIControl _uriControl;
     private Composite _parent;
     private SyndieURI _uri;
     private Hash _scope;
@@ -119,8 +121,10 @@ class ViewForum implements Translatable, Themeable {
     
     private int _auth = 1;
     
-    public ViewForum(BrowserControl browser, Composite parent, SyndieURI uri) {
-        _browser = browser;
+    public ViewForum(DataControl dataControl, NavigationControl navControl, URIControl uriControl, Composite parent, SyndieURI uri) {
+        _dataControl = dataControl;
+        _navControl = navControl;
+        _uriControl = uriControl;
         _parent = parent;
         _uri = uri;
         _scope = null;
@@ -141,9 +145,9 @@ class ViewForum implements Translatable, Themeable {
             scope = uri.getHash("scope");
         if (scope != null) {
             _scope = scope;
-            _scopeId = browser.getClient().getChannelId(scope);
+            _scopeId = _dataControl.getClient().getChannelId(scope);
         } else {
-            _browser.getUI().debugMessage("no scope!  creating a new one");
+            _dataControl.getUI().debugMessage("no scope!  creating a new one");
         }
         initComponents();
     }
@@ -153,8 +157,8 @@ class ViewForum implements Translatable, Themeable {
     }
     
     public void resized() {
-        _browser.getUI().debugMessage("resizing forum parent");
-        applyTheme(_browser.getThemeRegistry().getTheme()); 
+        _dataControl.getUI().debugMessage("resizing forum parent");
+        applyTheme(_dataControl.getThemeRegistry().getTheme()); 
         _parent.layout(true, true);
     }
     
@@ -240,7 +244,7 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < items.length; i++) {
                     ReferenceNode node = (ReferenceNode)_refItemToNode.get(items[i]);
                     if ( (node != null) && (node.getURI() != null) )
-                        _browser.view(node.getURI());
+                        _navControl.view(node.getURI());
                 }
             }
             /** the user hit return on the selected row */
@@ -249,7 +253,7 @@ class ViewForum implements Translatable, Themeable {
                 for (int i = 0; i < items.length; i++) {
                     ReferenceNode node = (ReferenceNode)_refItemToNode.get(items[i]);
                     if ( (node != null) && (node.getURI() != null) )
-                        _browser.view(node.getURI());
+                        _navControl.view(node.getURI());
                 }
             }
         };
@@ -270,8 +274,8 @@ class ViewForum implements Translatable, Themeable {
                 int indexes[] = _banList.getSelectionIndices();
                 for (int i = 0; i < indexes.length; i++) {
                     Hash scope = (Hash)_banScopes.get(indexes[i]);
-                    if (_browser.getClient().getChannelId(scope) >= 0)
-                        _browser.view(SyndieURI.createScope(scope));
+                    if (_dataControl.getClient().getChannelId(scope) >= 0)
+                        _navControl.view(SyndieURI.createScope(scope));
                 }
             }
         });
@@ -281,7 +285,7 @@ class ViewForum implements Translatable, Themeable {
                 int indexes[] = _banList.getSelectionIndices();
                 for (int i = 0; i < indexes.length; i++) {
                     Hash scope = (Hash)_banScopes.get(indexes[i]);
-                    _browser.ban(scope);
+                    _dataControl.ban(scope);
                 }
             }
         });
@@ -304,7 +308,7 @@ class ViewForum implements Translatable, Themeable {
         final Menu userMenu = new Menu(_users);
         _users.setMenu(userMenu);
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
-        viewForum.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
+        viewForum.setText(_dataControl.getTranslationRegistry().getText(T_USER_VIEWFORUM, "View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
@@ -312,12 +316,12 @@ class ViewForum implements Translatable, Themeable {
                 TableItem items[] = _users.getSelection();
                 for (int i = 0; i < items.length; i++) {
                     Hash scope = (Hash)_userItemToHash.get(items[i]);
-                    _browser.view(SyndieURI.createScope(scope));
+                    _navControl.view(SyndieURI.createScope(scope));
                 }
             }
         });
         MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
-        viewMeta.setText(_browser.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum profile"));
+        viewMeta.setText(_dataControl.getTranslationRegistry().getText(T_USER_VIEWFORUMMETA, "View forum profile"));
         viewMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
@@ -325,7 +329,7 @@ class ViewForum implements Translatable, Themeable {
                 TableItem items[] = _users.getSelection();
                 for (int i = 0; i < items.length; i++) {
                     Hash scope = (Hash)_userItemToHash.get(items[i]);
-                    _browser.view(_browser.createMetaURI(scope));
+                    _navControl.view(_uriControl.createMetaURI(scope));
                 }
             }
         });
@@ -347,7 +351,7 @@ class ViewForum implements Translatable, Themeable {
         _archives.setMenu(archiveMenu);
 
         MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
-        view.setText(_browser.getTranslationRegistry().getText(T_ARCHIVE_VIEW, "View"));
+        view.setText(_dataControl.getTranslationRegistry().getText(T_ARCHIVE_VIEW, "View"));
         view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewArchive(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewArchive(); }
@@ -357,15 +361,15 @@ class ViewForum implements Translatable, Themeable {
                     SyndieURI uri = (SyndieURI)_archiveItemToURI.get(items[i]);
                     if (uri != null) {
                         if (uri.isArchive())
-                            _browser.view(uri);
+                            _navControl.view(uri);
                         else
-                            _browser.view(SyndieURI.createArchive(uri.getURL(), null));
+                            _navControl.view(SyndieURI.createArchive(uri.getURL(), null));
                     }
                 }
             }
         });
         
-        ChannelInfo info = _browser.getClient().getChannel(_scopeId);
+        ChannelInfo info = _dataControl.getClient().getChannel(_scopeId);
         loadData();
         
         if (info != null) {
@@ -377,19 +381,19 @@ class ViewForum implements Translatable, Themeable {
                 _auth = 3;
         }
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
     }
     
-    ChannelInfo getChannelInfo() { return _browser.getClient().getChannel(_scopeId); }
+    ChannelInfo getChannelInfo() { return _dataControl.getClient().getChannel(_scopeId); }
     
     public void dispose() {
         ImageUtil.dispose(_avatarImgOrig);
         for (int i = 0; i < _avatarImgStandard.size(); i++)
             ImageUtil.dispose((Image)_avatarImgStandard.get(i));
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
     }
     
     /* called when the tab is closed */
@@ -417,7 +421,7 @@ class ViewForum implements Translatable, Themeable {
                 if (scope == null) {
                     // maybe we should find a way to transfer trees instead of just individual bookmarks?
                     evt.doit = false;
-                    _browser.getUI().debugMessage("dragSetData to null");
+                    _dataControl.getUI().debugMessage("dragSetData to null");
                     return;
                 }
 
@@ -451,7 +455,7 @@ class ViewForum implements Translatable, Themeable {
                 if (node == null) {
                     // maybe we should find a way to transfer trees instead of just individual bookmarks?
                     evt.doit = false;
-                    _browser.getUI().debugMessage("dragSetData to null");
+                    _dataControl.getUI().debugMessage("dragSetData to null");
                     return;
                 }
 
@@ -481,7 +485,7 @@ class ViewForum implements Translatable, Themeable {
     }
     
     private void loadOrigAvatar() {
-        byte avatar[] = _browser.getClient().getChannelAvatar(_scopeId);
+        byte avatar[] = _dataControl.getClient().getChannelAvatar(_scopeId);
         if (avatar != null) {
             Image img = ImageUtil.createImage(avatar);
             if (img != null) {
@@ -518,7 +522,7 @@ class ViewForum implements Translatable, Themeable {
         _avatar.getParent().layout(new Control[] { _avatar });
     }
     
-    private void loadData() { loadData(_browser.getClient().getChannel(_scopeId)); }
+    private void loadData() { loadData(_dataControl.getClient().getChannel(_scopeId)); }
     private void loadData(ChannelInfo info) {
         if (info != null) {
             _description.setText(str(info.getDescription()));
@@ -594,7 +598,7 @@ class ViewForum implements Translatable, Themeable {
         _banList.removeAll();
         for (int i = 0; i < _banScopes.size(); i++) {
             Hash scope = (Hash)_banScopes.get(i);
-            String name = _browser.getClient().getChannelName(scope);
+            String name = _dataControl.getClient().getChannelName(scope);
             if (name != null)
                 _banList.add(name + " [" + scope.toBase64() + "]");
             else
@@ -695,7 +699,7 @@ class ViewForum implements Translatable, Themeable {
         ArrayList all = new ArrayList();
         all.addAll(_pubArchiveURIs);
         all.addAll(_privArchiveURIs);
-        _browser.getUI().debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
+        _dataControl.getUI().debugMessage("redrawArchives: all=" + all.size() + " pub=" + _pubArchiveURIs.size() + " priv=" + _privArchiveURIs.size());
         for (int i = 0; i < all.size(); i++) {
             final SyndieURI uri = (SyndieURI)all.get(i);
             if (uri == null) continue;
@@ -704,9 +708,9 @@ class ViewForum implements Translatable, Themeable {
             TableItem item = new TableItem(_archives, SWT.NONE);
             item.setText(0, url.trim());
             if (_pubArchiveURIs.contains(uri))
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_PUBLIC, "Public"));
+                item.setText(1, _dataControl.getTranslationRegistry().getText(T_ARCHIVE_PUBLIC, "Public"));
             else
-                item.setText(1, _browser.getTranslationRegistry().getText(T_ARCHIVE_PRIVATE, "Authorized readers only"));
+                item.setText(1, _dataControl.getTranslationRegistry().getText(T_ARCHIVE_PRIVATE, "Authorized readers only"));
             
             _archiveItemToURI.put(item, uri);
         }
@@ -747,7 +751,7 @@ class ViewForum implements Translatable, Themeable {
         
         for (int i = 0; i < all.size(); i++) {
             final Hash scope = (Hash)all.get(i);
-            String name = _browser.getClient().getChannelName(scope);
+            String name = _dataControl.getClient().getChannelName(scope);
             
             TableItem item = new TableItem(_users, SWT.NONE);
             if (name != null)
@@ -756,9 +760,9 @@ class ViewForum implements Translatable, Themeable {
                 item.setText(0, scope.toBase64().substring(0,6));
             
             if (_managerHashes.contains(scope))
-                item.setText(1, _browser.getTranslationRegistry().getText(T_USER_PRIV_MANAGE, "Manager"));
+                item.setText(1, _dataControl.getTranslationRegistry().getText(T_USER_PRIV_MANAGE, "Manager"));
             else
-                item.setText(1, _browser.getTranslationRegistry().getText(T_USER_PRIV_POST, "Authorized poster"));
+                item.setText(1, _dataControl.getTranslationRegistry().getText(T_USER_PRIV_POST, "Authorized poster"));
             
             _userItemToHash.put(item, scope);
         }

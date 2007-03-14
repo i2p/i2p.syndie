@@ -20,7 +20,8 @@ import syndie.db.DBClient;
  * collection of icons relevent for a particular message
  */
 public class MessageFlagBar implements Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private BookmarkControl _bookmarkControl;
     private Composite _parent;
     private Composite _root;
     private MessageInfo _msg;
@@ -28,8 +29,9 @@ public class MessageFlagBar implements Translatable {
     private List _images;
     private boolean _realized;
     
-    public MessageFlagBar(BrowserControl browser, Composite parent, boolean includeTooltips) {
-        _browser = browser;
+    public MessageFlagBar(DataControl dataControl, BookmarkControl bookmarkControl, Composite parent, boolean includeTooltips) {
+        _dataControl = dataControl;
+        _bookmarkControl = bookmarkControl;
         _parent = parent;
         _includeTooltips = includeTooltips;
         _images = new ArrayList();
@@ -83,7 +85,7 @@ public class MessageFlagBar implements Translatable {
                 Label l = new Label(_root, SWT.NONE);
                 l.setImage((Image)_images.get(i));
             }
-            translate(_browser.getTranslationRegistry());
+            translate(_dataControl.getTranslationRegistry());
             _root.layout(true, true);
             _root.setRedraw(true);
         } else {
@@ -121,14 +123,14 @@ public class MessageFlagBar implements Translatable {
             } else if (_msg.getScopeChannelId() == _msg.getAuthorChannelId()) {
                 author = _msg.getScopeChannel();
             } else if (authenticated) {
-                author = _browser.getClient().getChannelHash(_msg.getAuthorChannelId());
+                author = _dataControl.getClient().getChannelHash(_msg.getAuthorChannelId());
             }
 
-            List bannedChannels = _browser.getClient().getBannedChannels();
+            List bannedChannels = _dataControl.getClient().getBannedChannels();
             boolean banned = bannedChannels.contains(author) || bannedChannels.contains(forum);
 
-            boolean authorBookmarked = author != null ? _browser.isBookmarked(SyndieURI.createScope(author)) : false;
-            boolean forumBookmarked = forum != null ? _browser.isBookmarked(SyndieURI.createScope(forum)) : false;
+            boolean authorBookmarked = author != null ? _bookmarkControl.isBookmarked(SyndieURI.createScope(author)) : false;
+            boolean forumBookmarked = forum != null ? _bookmarkControl.isBookmarked(SyndieURI.createScope(forum)) : false;
             boolean scheduledForExpire = _msg.getExpiration() > 0;
 
             List refs = _msg.getReferences();
@@ -139,7 +141,7 @@ public class MessageFlagBar implements Translatable {
             boolean hasArchives = false;
             boolean hasRefs = refs.size() > 0;
             boolean hasAttachments = _msg.getAttachmentCount() > 0;
-            boolean isNew = _browser.getClient().getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
+            boolean isNew = _dataControl.getClient().getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
             
             for (int i = 0; i < refs.size(); i++) {
                 if (hasArchives((ReferenceNode)refs.get(i))) {
@@ -172,14 +174,14 @@ public class MessageFlagBar implements Translatable {
         }
         
         // reapply translation to pull the per-image tooltips
-        translate(_browser.getTranslationRegistry());
+        translate(_dataControl.getTranslationRegistry());
     }
     
     private void realizeComponents() {
         if (_realized) return;
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _browser.getTranslationRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
         _realized = true;
     }
     
@@ -228,7 +230,7 @@ public class MessageFlagBar implements Translatable {
     public void dispose() {
         disposeImages();
         if (_realized)
-            _browser.getTranslationRegistry().unregister(this);
+            _dataControl.getTranslationRegistry().unregister(this);
     }
     
     private static final String T_PBE = "syndie.gui.messageflagbar.pbe";
@@ -256,7 +258,7 @@ public class MessageFlagBar implements Translatable {
         for (int i = 0; i < ctl.length; i++) {
             Label l = (Label)ctl[i];
             if (!l.isDisposed()) {
-                _browser.getUI().debugMessage("translating icon " + i);
+                _dataControl.getUI().debugMessage("translating icon " + i);
                 Image img = l.getImage();
                 if (img == ImageUtil.ICON_MSG_FLAG_PBE)
                     l.setToolTipText(registry.getText(T_PBE, "Post is passphrase protected"));
@@ -293,7 +295,7 @@ public class MessageFlagBar implements Translatable {
                 else if (img == ImageUtil.ICON_MSG_TYPE_PRIVATE)
                     l.setToolTipText(registry.getText(T_ISPRIVATE, "Message was privately encrypted"));
                 else {
-                    _browser.getUI().debugMessage("translating icon " + i + ": UNKNOWN icon");
+                    _dataControl.getUI().debugMessage("translating icon " + i + ": UNKNOWN icon");
                 }
             }
         }

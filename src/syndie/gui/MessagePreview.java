@@ -50,7 +50,10 @@ import syndie.db.DBClient;
  *
  */
 public class MessagePreview implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private NavigationControl _navControl;
+    private BookmarkControl _bookmarkControl;
+    private URIControl _uriControl;
     private DBClient _client;
     private Composite _parent;
     private Composite _root;
@@ -73,9 +76,12 @@ public class MessagePreview implements Themeable, Translatable {
     private Hash _author;
     private Hash _target;
     
-    public MessagePreview(BrowserControl browser, Composite parent) {
-        _browser = browser;
-        _client = browser.getClient();
+    public MessagePreview(DataControl dataControl, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent) {
+        _dataControl = dataControl;
+        _navControl = navControl;
+        _bookmarkControl = bookmarkControl;
+        _uriControl = uriControl;
+        _client = dataControl.getClient();
         _parent = parent;
         initComponents();
     }
@@ -101,7 +107,7 @@ public class MessagePreview implements Themeable, Translatable {
     
     private MaxView _maxView;
     public void toggleMaxView() {
-        _browser.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _msgURI);
+        _dataControl.getUI().debugMessage("toggleMaxView: msgId=" + _msgId + " msgURI=" + _msgURI);
         synchronized (this) {
             if (_maxView != null) {
                 _maxView.dispose();
@@ -109,9 +115,9 @@ public class MessagePreview implements Themeable, Translatable {
             } else {
                 int page = 0;
                 // page may be beyond the last page
-                if (_browser.getClient().getMessagePageConfig(_msgId, page) != null) {
+                if (_dataControl.getClient().getMessagePageConfig(_msgId, page) != null) {
                     SyndieURI uri = SyndieURI.createMessage(_msgURI.getScope(), _msgURI.getMessageId().longValue(), page);
-                    _maxView = new MaxView(_browser, _root.getShell(), uri, new MaxView.MaxListener() {
+                    _maxView = new MaxView(_dataControl, _root.getShell(), uri, new MaxView.MaxListener() {
                         public void unmax(MaxView view) {
                             synchronized (MessagePreview.this) {
                                 _maxView = null;
@@ -144,11 +150,11 @@ public class MessagePreview implements Themeable, Translatable {
             _msgURI = msg.getURI();
             updateMeta(msg);
             _target = msg.getTargetChannel();
-            _author = _browser.getClient().getChannelHash(msg.getAuthorChannelId());
-            _body.renderPage(new PageRendererSource(_browser), _uri);
+            _author = _dataControl.getClient().getChannelHash(msg.getAuthorChannelId());
+            _body.renderPage(new PageRendererSource(_dataControl), _uri);
             if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) ) {
-                if (MessageTree.shouldMarkReadOnPreview(_browser))
-                    _browser.getClient().markMessageRead(msg.getInternalId());
+                if (MessageTree.shouldMarkReadOnPreview(_dataControl.getClient()))
+                    _dataControl.getClient().markMessageRead(msg.getInternalId());
             }
         } else {
             _msgId = -1;
@@ -159,7 +165,7 @@ public class MessagePreview implements Themeable, Translatable {
         }
     }
     private void updateMeta(MessageInfo msg) {
-        String subj = MessageView.calculateSubject(_browser, msg);
+        String subj = MessageView.calculateSubject(_dataControl, msg);
         _headerSubject.setText(subj);
         
         Set tags = new TreeSet(msg.getPublicTags());
@@ -189,13 +195,8 @@ public class MessagePreview implements Themeable, Translatable {
         
         _headerView = new Button(_root, SWT.PUSH | SWT.FLAT);
         _headerView.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        _headerView.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { 
-                if (_browser != null) _browser.view(_uri);
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                if (_browser != null) _browser.view(_uri);
-            }
+        _headerView.addSelectionListener(new FireSelectionListener() {
+            public void fire() { _navControl.view(_uri); }
         });
         
         _headerSubject = new Label(_root, SWT.BORDER | SWT.SINGLE | SWT.WRAP);
@@ -239,7 +240,7 @@ public class MessagePreview implements Themeable, Translatable {
             public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
         });
         
-        _headerIcons = new MessageFlagBar(_browser, _root, true);
+        _headerIcons = new MessageFlagBar(_dataControl, _bookmarkControl, _root, true);
         gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         gd.heightHint = ICON_HEIGHT;
         _headerIcons.getControl().setLayoutData(gd);
@@ -247,24 +248,13 @@ public class MessagePreview implements Themeable, Translatable {
         _headerTags = new Label(_root, SWT.SINGLE | SWT.WRAP | SWT.READ_ONLY);
         _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false, 2, 1));
         
-        _body = new PageRenderer(_root, true, _browser);
+        _body = ComponentBuilder.instance().createPageRenderer(_root, true);
         _body.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1));
         _body.setListener(new PageRenderer.PageActionListener() {
-            public void viewScopeMessages(PageRenderer renderer, Hash scope) {
-                if (_browser != null)
-                    _browser.view(SyndieURI.createScope(scope));
-            }
-            public void viewScopeMetadata(PageRenderer renderer, Hash scope) {
-                if (_browser != null)
-                    _browser.view(_browser.createManageURI(scope));
-            }
-            public void view(PageRenderer renderer, SyndieURI uri) {
-                if (_browser != null)
-                    _browser.view(SyndieURI.resolveRelative(_uri, uri));
-            }
-            public void bookmark(PageRenderer renderer, SyndieURI uri) {
-                if (_browser != null) _browser.bookmark(uri);
-            }
+            public void viewScopeMessages(PageRenderer renderer, Hash scope) { _navControl.view(SyndieURI.createScope(scope)); }
+            public void viewScopeMetadata(PageRenderer renderer, Hash scope) { _navControl.view(_uriControl.createManageURI(scope)); }
+            public void view(PageRenderer renderer, SyndieURI uri) { _navControl.view(SyndieURI.resolveRelative(_uri, uri)); }
+            public void bookmark(PageRenderer renderer, SyndieURI uri) { _bookmarkControl.bookmark(uri); }
             public void banScope(PageRenderer renderer, Hash scope) {}
             public void viewImage(PageRenderer renderer, Image img) {}
             public void ignoreImageScope(PageRenderer renderer, Hash scope) {}
@@ -275,33 +265,27 @@ public class MessagePreview implements Themeable, Translatable {
             public void importArchiveKey(PageRenderer renderer, Hash referencedBy, SyndieURI archiveURI, SessionKey key) {}
             public void saveAllImages(PageRenderer renderer, Map images) {}
             public void saveImage(PageRenderer renderer, String suggestedName, Image img) {}
-            public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {
-                if (_browser != null)
-                    _browser.view(_browser.createPostURI(author, msg, true));
-            }
-            public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
-                if (_browser != null)
-                    _browser.view(_browser.createPostURI(forum, msg));
-            }
+            public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) { _navControl.view(_uriControl.createPostURI(author, msg, true)); }
+            public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) { _navControl.view(_uriControl.createPostURI(forum, msg)); }
             public void nextPage() {}
             public void prevPage() {}
         });
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     private void replyPrivateAuthor() {
         if (_author != null)
-            _browser.view(_browser.createPostURI(_author, _uri, true));
+            _navControl.view(_uriControl.createPostURI(_author, _uri, true));
     }
     private void replyPrivateForum() {
         if (_target != null)
-            _browser.view(_browser.createPostURI(_target, _uri, true));
+            _navControl.view(_uriControl.createPostURI(_target, _uri, true));
     }
     private void replyPublicForum() {
         if (_target != null)
-            _browser.view(_browser.createPostURI(_target, _uri, false));
+            _navControl.view(_uriControl.createPostURI(_target, _uri, false));
     }
     
     static boolean allowedToReply(DBClient client, long msgId) {

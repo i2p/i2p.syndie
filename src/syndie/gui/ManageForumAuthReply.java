@@ -22,7 +22,7 @@ import syndie.data.SyndieURI;
  *
  */
 class ManageForumAuthReply implements Themeable, Translatable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
     private ManageForum _manage;
     
     private Shell _shell;
@@ -45,8 +45,8 @@ class ManageForumAuthReply implements Themeable, Translatable {
     /** channels (Hash) allowed to manage, ordered by the _sendNewSelectedList */
     private ArrayList _sendNewSelectedForums;
     
-    public ManageForumAuthReply(BrowserControl browser, ManageForum manage) {
-        _browser = browser;
+    public ManageForumAuthReply(DataControl dataControl, ManageForum manage) {
+        _dataControl = dataControl;
         _manage = manage;
         _sendNewSelectedForums = new ArrayList();
         initComponents();
@@ -139,8 +139,8 @@ class ManageForumAuthReply implements Themeable, Translatable {
         
         refreshEnabled();
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     public void show() { _shell.pack(); _shell.open(); }
@@ -154,8 +154,8 @@ class ManageForumAuthReply implements Themeable, Translatable {
     public String getSendPassphrasePrompt() { return getPostPBE() ? _sendNewPBEPrompt.getText().trim() : null; }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         if (!_shell.isDisposed())
             _shell.dispose();
         if (_chooser != null)
@@ -176,13 +176,13 @@ class ManageForumAuthReply implements Themeable, Translatable {
     
     private void addAuthorizedForum() {
         if (_chooser == null)
-            _chooser = new ReferenceChooserPopup(_shell, _browser);
+            _chooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell);
         _chooser.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) {
                 if ( (uri != null) && (uri.getScope() != null) ) {
                     if (!_sendNewSelectedForums.contains(uri.getScope())) {
                         _sendNewSelectedForums.add(uri.getScope());
-                        String name = _browser.getClient().getChannelName(uri.getScope());
+                        String name = _dataControl.getClient().getChannelName(uri.getScope());
                         if (name != null)
                             _sendNewSelectedList.add(name + " [" + uri.getScope().toBase64().substring(0,6) + "]");
                         else

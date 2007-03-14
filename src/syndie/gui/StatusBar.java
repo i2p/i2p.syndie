@@ -47,6 +47,11 @@ import syndie.db.ThreadAccumulatorJWZ;
  *
  */
 public class StatusBar implements Translatable, Themeable, DBClient.WatchEventListener {
+    private DataControl _dataControl;
+    private BookmarkControl _bookmarkControl;
+    private NavigationControl _navControl;
+    private URIControl _uriControl;
+    private DataCallback _dataCallback;
     private Browser _browser;
     private Composite _parent;
     private Composite _root;
@@ -68,8 +73,13 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private boolean _enableRefresh;
     private boolean _syncNow;
     
-    public StatusBar(Browser browser, Composite parent, Timer timer) {
+    public StatusBar(DataControl dataControl, BookmarkControl bookmarkControl, NavigationControl navControl, URIControl uriControl, Browser browser, DataCallback callback, Composite parent, Timer timer) {
+        _dataControl = dataControl;
+        _bookmarkControl = bookmarkControl;
+        _navControl = navControl;
+        _uriControl = uriControl;
         _browser = browser;
+        _dataCallback = callback;
         _parent = parent;
         _enableRefresh = true;
         _syncNow = false;
@@ -87,10 +97,10 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         _bookmark.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _bookmark.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                _browser.bookmarkCurrentTab();
+                _bookmarkControl.bookmarkCurrentTab();
             }
             public void widgetSelected(SelectionEvent selectionEvent) {
-                _browser.bookmarkCurrentTab();
+                _bookmarkControl.bookmarkCurrentTab();
             }
         });
         
@@ -106,14 +116,14 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
             public void mouseDown(MouseEvent mouseEvent) {}
             public void mouseUp(MouseEvent mouseEvent) {
-                _browser.view(_browser.createSyndicationConfigURI());
+                _navControl.view(_uriControl.createSyndicationConfigURI());
             }
         });
         _nextSyncDate.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
             public void mouseDown(MouseEvent mouseEvent) {}
             public void mouseUp(MouseEvent mouseEvent) {
-                _browser.view(_browser.createSyndicationConfigURI());
+                _navControl.view(_uriControl.createSyndicationConfigURI());
             }
         });
         
@@ -179,7 +189,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         
         timer.addEvent("status bar: gui constructed");
         
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
         mgr.addListener(new SyncManager.SyncListener() {
             public void archiveAdded(SyncArchive archive) {
                 registerListen(archive);
@@ -210,9 +220,9 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         doRefreshDisplay(true); // only the online state (no queries)
         timer.addEvent("status bar: doRefreshDisplay");
         
-        _browser.getClient().addWatchEventListener(this);
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getClient().addWatchEventListener(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
         
         timer.addEvent("status bar: themed");
         initDnD();
@@ -251,7 +261,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     }
     
     private void toggleOnline() {
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
         mgr.setIsOnline(!mgr.isOnline());
     }
     
@@ -269,7 +279,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     }
     private void doRefreshDisplay() { doRefreshDisplay(false); }
     private void doRefreshDisplay(boolean onlineStateOnly) {
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
         displayOnlineState(mgr.isOnline());
         
         if (onlineStateOnly) return;
@@ -282,7 +292,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         String priv = refreshPrivateMessages();
         int postpone = refreshPostponed();
         
-        TranslationRegistry registry = _browser.getTranslationRegistry();
+        TranslationRegistry registry = _dataControl.getTranslationRegistry();
         
         if (newForums > 0) {
             _newForum.setText(registry.getText(T_NEWFORUM, "New forums: ") + newForums);
@@ -368,11 +378,11 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             }
             _unreadCalcInProgress = true;
         }
-        _browser.getUI().debugMessage("calcUnread begin");
-        final SyndieURI uri = _browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser));
+        _dataControl.getUI().debugMessage("calcUnread begin");
+        final SyndieURI uri = _uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_dataControl.getClient()));
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
-                ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_browser.getClient(), _browser.getUI());
+                ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_dataControl.getClient(), _dataControl.getUI());
                 acc.setFilter(uri);
                 acc.gatherThreads();
                 final Set forums = new HashSet();
@@ -384,7 +394,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 }
                 final int unreadThreads = threads;
                 final Map sortedForums = sortForums(forums);
-                _browser.getUI().debugMessage("calcUnread end: " + forums.size() + " / " + threads);
+                _dataControl.getUI().debugMessage("calcUnread end: " + forums.size() + " / " + threads);
                 
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {
@@ -408,24 +418,24 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         
         if (threads > 0) {
             MenuItem item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
+            item.setText(_dataControl.getTranslationRegistry().getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(_browser.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                 }
             });
             
             item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_browser.getTranslationRegistry().getText(T_UNREAD_ALL, "View unread in all forums"));
+            item.setText(_dataControl.getTranslationRegistry().getText(T_UNREAD_ALL, "View unread in all forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _navControl.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_browser)));
+                    _navControl.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                 }
             });
             
@@ -442,10 +452,10 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                        _browser.view(SyndieURI.createSearch(forum, true, true, MessageTree.shouldUseImportDate(_browser)));
+                        _navControl.view(SyndieURI.createSearch(forum, true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                     }
                     public void widgetSelected(SelectionEvent selectionEvent) {
-                        _browser.view(SyndieURI.createSearch(forum, true, true, MessageTree.shouldUseImportDate(_browser)));
+                        _navControl.view(SyndieURI.createSearch(forum, true, true, MessageTree.shouldUseImportDate(_dataControl.getClient())));
                     }
                 });
             }
@@ -454,7 +464,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         GridData gd = (GridData)_unread.getLayoutData();
         boolean wasExcluded = gd.exclude;
         if (threads > 0) {
-            _unread.setText(_browser.getTranslationRegistry().getText(T_UNREAD, "Unread: ") + sortedForums.size() + "/" + threads);
+            _unread.setText(_dataControl.getTranslationRegistry().getText(T_UNREAD, "Unread: ") + sortedForums.size() + "/" + threads);
             gd.exclude = false;
             _unread.setVisible(true);
             if (wasExcluded)
@@ -475,7 +485,7 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         Map rv = new TreeMap();
         for (Iterator iter = forums.iterator(); iter.hasNext(); ) {
             Hash forum = (Hash)iter.next();
-            String name = _browser.getClient().getChannelName(forum);
+            String name = _dataControl.getClient().getChannelName(forum);
             if (name == null) name = "";
             name = name + " [" + forum.toBase64().substring(0,6) + "]";
             rv.put(name, forum);
@@ -489,9 +499,9 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             if (nodeURI != null) {
                 if ( (node.getParent() == null) || (node.getParent().getURI() == null) )
                     unread = true;
-                long msgId = _browser.getClient().getMessageId(nodeURI.getScope(), nodeURI.getMessageId());
-                long scopeId = _browser.getClient().getMessageTarget(msgId);
-                Hash scope = _browser.getClient().getChannelHash(scopeId);
+                long msgId = _dataControl.getClient().getMessageId(nodeURI.getScope(), nodeURI.getMessageId());
+                long scopeId = _dataControl.getClient().getMessageTarget(msgId);
+                Hash scope = _dataControl.getClient().getChannelHash(scopeId);
                 if (scope != null)
                     forums.add(scope);
             }
@@ -505,39 +515,39 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         MenuItem items[] = _privMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
-        final List unreadMsgIds = _browser.getPrivateMsgIds(false);
+        final List unreadMsgIds = _dataControl.getPrivateMsgIds(false);
         for (int i = 0; i < unreadMsgIds.size(); i++) {
             long msgId = ((Long)unreadMsgIds.get(i)).longValue();
-            long authorId = _browser.getClient().getMessageAuthor(msgId);
-            String author = _browser.getClient().getChannelName(authorId);
+            long authorId = _dataControl.getClient().getMessageAuthor(msgId);
+            String author = _dataControl.getClient().getChannelName(authorId);
             if (author == null) author = "";
-            long when = _browser.getClient().getMessageImportDate(msgId);
-            String subject = _browser.getClient().getMessageSubject(msgId);
+            long when = _dataControl.getClient().getMessageImportDate(msgId);
+            String subject = _dataControl.getClient().getMessageSubject(msgId);
             if (subject == null) subject = "";
             String str = Constants.getDate(when) + ": " + author + " - " + subject;
             MenuItem item = new MenuItem(_privMenu, SWT.PUSH);
             item.setText(str);
             item.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
-            final SyndieURI uri = _browser.getClient().getMessageURI(msgId);
+            final SyndieURI uri = _dataControl.getClient().getMessageURI(msgId);
             item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
-                public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
             });
         }
         
         if (unreadMsgIds.size() > 0) {
             new MenuItem(_privMenu, SWT.SEPARATOR);
             MenuItem item = new MenuItem(_privMenu, SWT.PUSH);
-            item.setText(_browser.getTranslationRegistry().getText(T_PRIV_MARKALLREAD, "Mark all as read"));
+            item.setText(_dataControl.getTranslationRegistry().getText(T_PRIV_MARKALLREAD, "Mark all as read"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
                 private void markAllRead() {
                     for (int i = 0; i < unreadMsgIds.size(); i++) {
                         Long msgId = (Long)unreadMsgIds.get(i);
-                        _browser.getClient().markMessageRead(msgId.longValue());
+                        _dataControl.getClient().markMessageRead(msgId.longValue());
                     }
-                    _browser.readStatusUpdated();
+                    _dataCallback.readStatusUpdated();
                 }
             });
         }
@@ -584,13 +594,13 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
         
-        List uris = _browser.getClient().getPBERequired(true, true);
+        List uris = _dataControl.getClient().getPBERequired(true, true);
         for (int i = 0; i < uris.size(); i++) {
             final SyndieURI uri = (SyndieURI)uris.get(i);
             if (uri.getMessageId() == null) {
                 if (uri.getScope() == null)
                     continue;
-                String name = _browser.getClient().getChannelName(uri.getScope());
+                String name = _dataControl.getClient().getChannelName(uri.getScope());
                 if (name == null)
                     name = uri.getScope().toBase64();
                 else
@@ -599,11 +609,11 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 item.setText(name);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
                 item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
                 });
             } else {
-                String name = _browser.getClient().getChannelName(uri.getScope());
+                String name = _dataControl.getClient().getChannelName(uri.getScope());
                 if (name == null)
                     name = uri.getScope().toBase64();
                 else
@@ -613,8 +623,8 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                 item.setText(name);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
                 item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { _browser.view(uri); }
+                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
+                    public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
                 });
             }
         }
@@ -625,21 +635,21 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
 
-        Map msgs = _browser.getResumeable();
+        Map msgs = _dataControl.getResumeable();
         for (Iterator iter = msgs.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             final Long postponeId = (Long)entry.getKey();
             final Integer rev = (Integer)entry.getValue();
             
-            String str = _browser.getTranslationRegistry().getText(T_POSTPONE_PREFIX, "Postponed on: ") + Constants.getDateTime(postponeId.longValue());
+            String str = _dataControl.getTranslationRegistry().getText(T_POSTPONE_PREFIX, "Postponed on: ") + Constants.getDateTime(postponeId.longValue());
             MenuItem item = new MenuItem(_postponeMenu, SWT.PUSH);
             item.setText(str);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.resumePost(postponeId.longValue(), rev.intValue());
+                    _navControl.resumePost(postponeId.longValue(), rev.intValue());
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.resumePost(postponeId.longValue(), rev.intValue());
+                    _navControl.resumePost(postponeId.longValue(), rev.intValue());
                 }
             });
         }
@@ -655,23 +665,23 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
 
         int active = 0;
         
-        List channelIds = _browser.getClient().getNewChannelIds();
+        List channelIds = _dataControl.getClient().getNewChannelIds();
         for (int i = 0; i < channelIds.size(); i++) {
             Long channelId = (Long)channelIds.get(i);
             //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
-            Hash channelHash = _browser.getClient().getChannelHash(channelId.longValue());
+            Hash channelHash = _dataControl.getClient().getChannelHash(channelId.longValue());
             if (channelHash == null) {
-                _browser.getUI().debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
+                _dataControl.getUI().debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
                 continue;
             }
-            int msgs = _browser.getClient().countUnreadMessages(channelHash);
+            int msgs = _dataControl.getClient().countUnreadMessages(channelHash);
             if (msgs <= 0)
                 continue; // only list new forums with content
             active++;
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);
             
-            String name = _browser.getClient().getChannelName(channelId.longValue()); //info.getName();
+            String name = _dataControl.getClient().getChannelName(channelId.longValue()); //info.getName();
             if (name == null)
                 name = channelHash.toBase64().substring(0,6);
             else
@@ -683,10 +693,10 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
             final Hash scope = channelHash;
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createScope(scope));
+                    _navControl.view(SyndieURI.createScope(scope));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _browser.view(SyndieURI.createScope(scope));
+                    _navControl.view(SyndieURI.createScope(scope));
                 }
             });
         }
@@ -697,16 +707,16 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private void displayOnlineState(boolean online) {
         if (online) {
             _onlineState.setImage(ImageUtil.ICON_ONLINE);
-            _onlineState.setToolTipText(_browser.getTranslationRegistry().getText(T_ONLINE, "Online: syndication is enabled"));
+            _onlineState.setToolTipText(_dataControl.getTranslationRegistry().getText(T_ONLINE, "Online: syndication is enabled"));
         } else {
             _onlineState.setImage(ImageUtil.ICON_OFFLINE);
-            _onlineState.setToolTipText(_browser.getTranslationRegistry().getText(T_OFFLINE, "Offline: syndication is deferred"));
+            _onlineState.setToolTipText(_dataControl.getTranslationRegistry().getText(T_OFFLINE, "Offline: syndication is deferred"));
         }
         updateNextSync();
     }
     
     private void updateNextSync() {
-        SyncManager mgr = SyncManager.getInstance(_browser.getClient(), _browser.getUI());
+        SyncManager mgr = SyncManager.getInstance(_dataControl.getClient(), _dataControl.getUI());
         final boolean isOnline = mgr.isOnline();
         final long nextSync = mgr.getNextSyncDate();
         Display.getDefault().asyncExec(new Runnable() {
@@ -719,13 +729,13 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
     private static final String T_NEXT_SYNC_NONE = "syndie.gui.statusbar.nextsync.none";
     public void setNextSync(long when, boolean online) {
         if (!online) {
-            _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_OFFLINE, "Deferred..."));
+            _nextSyncDate.setText(_dataControl.getTranslationRegistry().getText(T_NEXT_SYNC_OFFLINE, "Deferred..."));
             _syncNow = false;
         } else if (when <= 0) {
-            _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NONE, "None scheduled"));
+            _nextSyncDate.setText(_dataControl.getTranslationRegistry().getText(T_NEXT_SYNC_NONE, "None scheduled"));
             _syncNow = false;
         } else if (when-System.currentTimeMillis() <= 0) {
-            _nextSyncDate.setText(_browser.getTranslationRegistry().getText(T_NEXT_SYNC_NOW, "Now"));
+            _nextSyncDate.setText(_dataControl.getTranslationRegistry().getText(T_NEXT_SYNC_NOW, "Now"));
             _syncNow = true;
         } else {
             long delay = when-System.currentTimeMillis();
@@ -764,20 +774,20 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
                     BookmarkDnD bookmark = new BookmarkDnD();
                     bookmark.fromString(evt.data.toString());
                     if (bookmark.uri != null) { // parsed fine
-                        NymReferenceNode parent = getParent(_browser, bookmark);
+                        NymReferenceNode parent = getParent(_dataControl, _bookmarkControl, bookmark);
                         long parentGroupId = -1;
                         if (parent != null)
                             parentGroupId = parent.getGroupId();
                         NymReferenceNode node = new NymReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, -1, -1, parentGroupId, 0, false, false, false);
-                        _browser.bookmark(node, true);
-                        _browser.getUI().debugMessage("bookmark the target w/ parentGroupId=" + parentGroupId + " resulting in " + node.getGroupId());
+                        _bookmarkControl.bookmark(node, true);
+                        _dataControl.getUI().debugMessage("bookmark the target w/ parentGroupId=" + parentGroupId + " resulting in " + node.getGroupId());
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
                         try {
                             SyndieURI uri = new SyndieURI(str);
-                            _browser.bookmark(uri);
+                            _bookmarkControl.bookmark(uri);
                         } catch (URISyntaxException use) {
-                            _browser.getUI().debugMessage("invalid uri: " + str, use);
+                            _dataControl.getUI().debugMessage("invalid uri: " + str, use);
                         }
                     }
                 }
@@ -790,12 +800,12 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
      * select the bookmark folder to stash the bookmark in, creating a new one if
      * necessary.  the folder is named "$date messages"
      */
-    static NymReferenceNode getParent(BrowserControl browser, BookmarkDnD bookmark) {
+    static NymReferenceNode getParent(DataControl dataControl, BookmarkControl bookmarkControl, BookmarkDnD bookmark) {
         if (bookmark.uri.getMessageId() == null) return null;
         
-        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + browser.getTranslationRegistry().getText(T_BOOKMARK_SUFFIX_MSGS, "messages");
+        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + dataControl.getTranslationRegistry().getText(T_BOOKMARK_SUFFIX_MSGS, "messages");
         
-        List bookmarks = browser.getBookmarks();
+        List bookmarks = bookmarkControl.getBookmarks();
         for (int i = 0; i < bookmarks.size(); i++) {
             NymReferenceNode node = (NymReferenceNode)bookmarks.get(i);
             if (wantedName.equals(node.getName()))
@@ -803,8 +813,8 @@ public class StatusBar implements Translatable, Themeable, DBClient.WatchEventLi
         }
         // does not exist.  create it
         NymReferenceNode node = new NymReferenceNode(wantedName, null, "", -1, -1, -1, 0, false, false, false);
-        browser.bookmark(node, false);
-        browser.getUI().debugMessage("created parent for the bookmark: " + wantedName + " as groupId=" + node.getGroupId());
+        bookmarkControl.bookmark(node, false);
+        dataControl.getUI().debugMessage("created parent for the bookmark: " + wantedName + " as groupId=" + node.getGroupId());
         return node;
     }
     

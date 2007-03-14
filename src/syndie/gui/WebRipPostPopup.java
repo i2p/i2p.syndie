@@ -20,13 +20,17 @@ import syndie.db.UI;
  *
  */
 public class WebRipPostPopup implements Themeable, Translatable, WebRipPageControl.RipControlListener {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private DataCallback _dataCallback;
+    private NavigationControl _navControl;
     private Shell _parent;
     private Shell _shell;
     private WebRipPostControl _rip;
     
-    public WebRipPostPopup(BrowserControl browser, Shell parent) {
-        _browser = browser;
+    public WebRipPostPopup(DataControl dataControl, DataCallback callback, NavigationControl navControl, Shell parent) {
+        _dataControl = dataControl;
+        _dataCallback = callback;
+        _navControl = navControl;
         _parent = parent;
         initComponents();
     }
@@ -39,7 +43,7 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     private void initComponents() {
         _shell = new Shell(_parent, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new FillLayout());
-        _rip = new WebRipPostControl(_browser, _shell);
+        _rip = new WebRipPostControl(_dataControl, _shell);
         _rip.setExistingAttachments(0);
         _rip.setListener(this);
         
@@ -50,8 +54,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     private void cancelRip() {
@@ -61,8 +65,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     public void dispose() {
         _rip.dispose();
         _shell.dispose();
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
     }
     
     public void applyTheme(Theme theme) {
@@ -87,8 +91,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
                 _shell.getDisplay().asyncExec(new Runnable() {
                     public void run() {
                         MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_browser.getTranslationRegistry().getText(T_ERROR_MSG, "Web rip could not be created: " + err.toString()));
-                        box.setText(_browser.getTranslationRegistry().getText(T_ERROR_TITLE, "Web rip failed"));
+                        box.setMessage(_dataControl.getTranslationRegistry().getText(T_ERROR_MSG, "Web rip could not be created: " + err.toString()));
+                        box.setText(_dataControl.getTranslationRegistry().getText(T_ERROR_TITLE, "Web rip failed"));
                         box.open();
                     }
                 });
@@ -108,7 +112,7 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
         final List attachmentTypes = runner.getAttachmentTypes();
         final List attachmentData = runner.getAttachmentData();
         if (attachmentData == null) {
-            _browser.getUI().errorMessage("Internal error reading web rip attachments");
+            _dataControl.getUI().errorMessage("Internal error reading web rip attachments");
             return;
         }
         final Hash author = _rip.getAuthor();
@@ -124,7 +128,7 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
             passphrase = null;
             passphrasePrompt = null;
         }
-        _browser.getUI().debugMessage("Post html from " + author + " to " + target + " (tags: " + tags + "), priv=" + privacy + " (pass: " + passphrase + "/" + passphrasePrompt + ")");
+        _dataControl.getUI().debugMessage("Post html from " + author + " to " + target + " (tags: " + tags + "), priv=" + privacy + " (pass: " + passphrase + "/" + passphrasePrompt + ")");
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 post(html, attachmentNames, attachmentTypes, attachmentData, author, target, tags, privacy, passphrase, passphrasePrompt);
@@ -142,9 +146,9 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
     
     private void post(final String html, final List attachmentNames, final List attachmentTypes, final List attachmentData, final Hash author, final Hash target, final String tags, final int privacy, final String passphrase, final String passphrasePrompt) {
         MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
-            public BrowserControl getBrowser() { return _browser; }
-            public DBClient getClient() { return _browser.getClient(); }
-            public UI getUI() { return _browser.getUI(); }
+            public DataCallback getDataCallback() { return _dataCallback; }
+            public DBClient getClient() { return _dataControl.getClient(); }
+            public UI getUI() { return _dataControl.getUI(); }
             public Hash getAuthor() { return author; }
             public Hash getTarget() { return target; }
             public Hash getSignAs() { return null; }
@@ -178,10 +182,10 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
             _parent.getDisplay().asyncExec(new Runnable() { 
                 public void run() {
                     MessageBox box = new MessageBox(_parent, SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_browser.getTranslationRegistry().getText(T_CREATE_MSG, "Web rip created - please syndicate it to others if you want to share"));
-                    box.setText(_browser.getTranslationRegistry().getText(T_CREATE_TITLE, "Web rip created"));
+                    box.setMessage(_dataControl.getTranslationRegistry().getText(T_CREATE_MSG, "Web rip created - please syndicate it to others if you want to share"));
+                    box.setText(_dataControl.getTranslationRegistry().getText(T_CREATE_TITLE, "Web rip created"));
                     box.open();
-                    _browser.view(uri);
+                    _navControl.view(uri);
                 }
             });
         } else {
@@ -189,8 +193,8 @@ public class WebRipPostPopup implements Themeable, Translatable, WebRipPageContr
             _parent.getDisplay().asyncExec(new Runnable() { 
                 public void run() {
                     MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_browser.getTranslationRegistry().getText(T_CREATE_MSG, "Web rip failed: ") + errors);
-                    box.setText(_browser.getTranslationRegistry().getText(T_CREATE_TITLE, "Web rip failed"));
+                    box.setMessage(_dataControl.getTranslationRegistry().getText(T_CREATE_MSG, "Web rip failed: ") + errors);
+                    box.setText(_dataControl.getTranslationRegistry().getText(T_CREATE_TITLE, "Web rip failed"));
                     box.open();
                 }
             });

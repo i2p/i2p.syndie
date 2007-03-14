@@ -83,7 +83,11 @@ import syndie.db.UI;
  *
  */
 public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup.ImageBuilderSource {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private DataCallback _dataCallback;
+    private NavigationControl _navControl;
+    private BookmarkControl _bookmarkControl;
+    private URIControl _uriControl;
     private Composite _parent;
     private Composite _root;
     private Composite _toolbar;
@@ -244,8 +248,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
-    public MessageEditor(BrowserControl browser, Composite parent, LocalMessageCallback lsnr) {
-        _browser = browser;
+    public MessageEditor(DataControl dataControl, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr) {
+        _dataControl = dataControl;
+        _dataCallback = callback;
+        _navControl = navControl;
+        _bookmarkControl = bookmarkControl;
+        _uriControl = uriControl;
         _parent = parent;
         _pageEditors = new ArrayList(1);
         _pageTypes = new ArrayList();
@@ -259,7 +267,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _enableSave = false;
         _postponeId = -1;
         _postponeVersion = -1;
-        Properties prefs = _browser.getClient().getNymPrefs();
+        Properties prefs = _dataControl.getClient().getNymPrefs();
         String val = prefs.getProperty("editor.defaultAuthor");
         if (val != null) {
             byte hash[] = Base64.decode(val);
@@ -290,8 +298,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         ImageUtil.dispose(_forumAvatar);
         ImageUtil.dispose(_authorAvatar);
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
     }
     
     // PageEditors ask for these:
@@ -311,19 +319,19 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         long stateId = _postponeId;
         if (stateId < 0)
             stateId = System.currentTimeMillis();
-        _browser.getUI().debugMessage("saving state for postponeId " + _postponeId + "/" + stateId);
+        _dataControl.getUI().debugMessage("saving state for postponeId " + _postponeId + "/" + stateId);
         String state = serializeStateToB64(stateId); // increments the version too
-        _browser.getUI().debugMessage("serialized state for postponeId " + stateId + " / " + _postponeVersion);
+        _dataControl.getUI().debugMessage("serialized state for postponeId " + stateId + " / " + _postponeVersion);
         if (state == null) {
-            _browser.getUI().errorMessage("Internal error serializing message state");
+            _dataControl.getUI().errorMessage("Internal error serializing message state");
             return;
         }
         int version = _postponeVersion;
-        Connection con = _browser.getClient().con();
+        Connection con = _dataControl.getClient().con();
         PreparedStatement stmt = null;
         try {
             stmt = con.prepareStatement(SQL_POSTPONE);
-            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(1, _dataControl.getClient().getLoggedInNymId());
             stmt.setLong(2, stateId);
             stmt.setInt(3, version);
             stmt.setString(4, state);
@@ -334,30 +342,30 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             
             // if that didn't fail, delete all of the older versions
             stmt = con.prepareStatement(SQL_POSTPONE_CLEANUP);
-            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(1, _dataControl.getClient().getLoggedInNymId());
             stmt.setLong(2, stateId);
             stmt.setInt(3, version);
             stmt.executeUpdate();
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
-            _browser.getUI().errorMessage("Internal error postponing", se);
+            _dataControl.getUI().errorMessage("Internal error postponing", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        _browser.getUI().debugMessage("done saving state.  " + _postponeId + "/" + _postponeVersion);
+        _dataControl.getUI().debugMessage("done saving state.  " + _postponeId + "/" + _postponeVersion);
         _modifiedSinceSave = false;
     }
     
     private static final String SQL_RESUME = "SELECT encryptedData FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion = ?";
     public boolean loadState(long postponeId, int version) {
-        Connection con = _browser.getClient().con();
+        Connection con = _dataControl.getClient().con();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         String state = null;
         try {
             stmt = con.prepareStatement(SQL_RESUME);
-            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(1, _dataControl.getClient().getLoggedInNymId());
             stmt.setLong(2, postponeId);
             stmt.setInt(3, version);
             rs = stmt.executeQuery();
@@ -369,7 +377,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
-            _browser.getUI().errorMessage("Internal error resuming", se);
+            _dataControl.getUI().errorMessage("Internal error resuming", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
@@ -386,18 +394,18 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     
     private static final String SQL_DROP = "DELETE FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ?";
     void dropSavedState() {
-        _browser.getUI().debugMessage("dropping saved state for postponeId " + _postponeId);
-        Connection con = _browser.getClient().con();
+        _dataControl.getUI().debugMessage("dropping saved state for postponeId " + _postponeId);
+        Connection con = _dataControl.getClient().con();
         PreparedStatement stmt = null;
         try {
             stmt = con.prepareStatement(SQL_DROP);
-            stmt.setLong(1, _browser.getClient().getLoggedInNymId());
+            stmt.setLong(1, _dataControl.getClient().getLoggedInNymId());
             stmt.setLong(2, _postponeId);
             stmt.executeUpdate();
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
-            _browser.getUI().errorMessage("Internal error dropping saved state", se);
+            _dataControl.getUI().errorMessage("Internal error dropping saved state", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
@@ -418,23 +426,23 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (ok) {
             dropSavedState();
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
-            box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
+            box.setMessage(getDataControl().getTranslationRegistry().getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+            box.setText(getDataControl().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
             box.open();
             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
                 ((LocalMessageCallback)iter.next()).messageCreated(creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
-            box.setText(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_TITLE, "Error creating the message"));
+            box.setMessage(getDataControl().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
+            box.setText(getDataControl().getTranslationRegistry().getText(T_POST_ERROR_TITLE, "Error creating the message"));
             box.open();
         }
     }
     
     private class CreatorSource implements MessageCreator.MessageCreatorSource {
-        public BrowserControl getBrowser() { return _browser; }
-        public DBClient getClient() { return _browser.getClient(); }
-        public UI getUI() { return _browser.getUI(); }
+        public DataCallback getDataCallback() { return _dataCallback; }
+        public DBClient getClient() { return _dataControl.getClient(); }
+        public UI getUI() { return _dataControl.getUI(); }
         public Hash getAuthor() { return _author; }
         public Hash getSignAs() {
             if (_signAsHashes.size() > 0) {
@@ -506,8 +514,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (requireConfirm) {
             // confirm
             MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            dialog.setMessage(getBrowser().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
-            dialog.setText(getBrowser().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
+            dialog.setMessage(getDataControl().getTranslationRegistry().getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
+            dialog.setText(getDataControl().getTranslationRegistry().getText(T_CANCEL_TITLE, "Confirm message cancellation"));
             int rv = dialog.open();
             if (rv == SWT.YES) {
                 cancelMessage(false);
@@ -532,18 +540,18 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 data = serializeState();
             } catch (IOException ioe) {
                 // this is writing to memory...
-                _browser.getUI().errorMessage("Internal error serializing message state", ioe);
+                _dataControl.getUI().errorMessage("Internal error serializing message state", ioe);
                 return null;
             }
             byte salt[] = new byte[16];
-            byte encr[] = _browser.getClient().pbeEncrypt(data, salt);
+            byte encr[] = _dataControl.getClient().pbeEncrypt(data, salt);
             String rv = Base64.encode(salt) + Base64.encode(encr);
             _postponeId = postponementId;
             _postponeVersion++;
-            _browser.getUI().debugMessage("serialized state to " + encr.length + " bytes (" + rv.length() + " base64 encoded...)");
+            _dataControl.getUI().debugMessage("serialized state to " + encr.length + " bytes (" + rv.length() + " base64 encoded...)");
             return rv;
         } catch (OutOfMemoryError oom) {
-            _browser.getUI().errorMessage("Ran out of memory serializing the state.  page buffers: " + countPageUndoBuffers() + " bytes");
+            _dataControl.getUI().errorMessage("Ran out of memory serializing the state.  page buffers: " + countPageUndoBuffers() + " bytes");
             return null;
         }
     }
@@ -563,15 +571,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     public void deserializeStateFromB64(String state, long postponeId, int version) {
         String salt = state.substring(0, 24);
         String body = state.substring(24);
-        byte decr[] = _browser.getClient().pbeDecrypt(Base64.decode(body), Base64.decode(salt));
+        byte decr[] = _dataControl.getClient().pbeDecrypt(Base64.decode(body), Base64.decode(salt));
         
         if (decr == null) {
-            _browser.getUI().errorMessage("Error pbe decrypting " + postponeId + "." + version + ": state: " + state);
+            _dataControl.getUI().errorMessage("Error pbe decrypting " + postponeId + "." + version + ": state: " + state);
             dispose();
             return;
         }
 
-        _browser.getUI().debugMessage("deserialized state to " + decr.length + " bytes (" + state.length() + " base64 encoded...)");
+        _dataControl.getUI().debugMessage("deserialized state to " + decr.length + " bytes (" + state.length() + " base64 encoded...)");
         state = null;
 
         ZipInputStream zin = null;
@@ -579,7 +587,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             zin = new ZipInputStream(new ByteArrayInputStream(decr));
             deserializeState(zin);
         } catch (IOException ioe) {
-            _browser.getUI().errorMessage("Internal error deserializing message state", ioe);
+            _dataControl.getUI().errorMessage("Internal error deserializing message state", ioe);
             return;
         } finally {
             if (zin != null) try { zin.close(); } catch (IOException ioe) {}
@@ -675,7 +683,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         byte avatar[] = null;
         while ( (entry = zin.getNextEntry()) != null) {
             String name = entry.getName();
-            _browser.getUI().debugMessage("Deserializing state: entry = " + name);
+            _dataControl.getUI().debugMessage("Deserializing state: entry = " + name);
             if (name.equals(SER_ENTRY_CONFIG)) {
                 deserializeConfig(readCfg(read(zin)));
             } else if (name.equals(SER_ENTRY_REFS)) {
@@ -708,13 +716,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             String body = (String)pages.get(SER_ENTRY_PAGE_PREFIX + i);
             String type = (String)pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
             
-            _browser.getUI().debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
+            _dataControl.getUI().debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
             boolean isHTML = TYPE_HTML.equals(type);
-            PageEditor editor = new PageEditor(_browser, this, isHTML, i);
+            PageEditor editor = new PageEditor(_dataControl, this, isHTML, i);
             _pageEditors.add(editor);
             _pageTypes.add(type);
             editor.setContent(body);
-            editor.getItem().setText(_browser.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
+            editor.getItem().setText(_dataControl.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
             if (isHTML)
                 _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
             else
@@ -729,7 +737,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             Properties cfg = (Properties)attachmentCfgs.get(SER_ENTRY_ATTACH_CFG_PREFIX + i);
             if ( (cfg == null) || (data == null) ) 
                 break;
-            _browser.getUI().debugMessage("Deserializing state: adding attachment: " + i);
+            _dataControl.getUI().debugMessage("Deserializing state: adding attachment: " + i);
             _attachmentData.add(data);
             _attachmentConfig.add(cfg);
         }
@@ -818,7 +826,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (t == null) return null;
         byte d[] = Base64.decode(t);
         if ( (d == null) || (d.length != Hash.HASH_LENGTH) ) {
-            _browser.getUI().debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
+            _dataControl.getUI().debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
             return null;
         } else {
             return new Hash(d);
@@ -826,7 +834,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private void deserializeConfig(Properties cfg) {
-        _browser.getUI().debugMessage("deserializing config: \n" + cfg.toString());
+        _dataControl.getUI().debugMessage("deserializing config: \n" + cfg.toString());
         _author = getHash(cfg, SER_AUTHOR);
         _forum = getHash(cfg, SER_TARGET);
         
@@ -848,12 +856,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             }
         }
         if (_parents.size() > 0) {
-            ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
+            ThreadBuilder builder = new ThreadBuilder(_dataControl.getClient(), _dataControl.getUI());
             HashSet msgIds = new HashSet();
             for (int i = 0; i < _parents.size(); i++) {
                 SyndieURI uri = (SyndieURI)_parents.get(i);
                 if ( (uri.getScope() != null) && (uri.getMessageId() != null) ) {
-                    long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                    long msgId = _dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
                     ThreadMsgId id = new ThreadMsgId(msgId); // may be -1
                     id.messageId = uri.getMessageId().longValue();
                     id.scope = uri.getScope();
@@ -861,7 +869,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 }
             }
             List roots = builder.buildThread(msgIds);
-            _browser.getUI().debugMessage("setting message ancestry tree to: \n" + roots);
+            _dataControl.getUI().debugMessage("setting message ancestry tree to: \n" + roots);
             _threadTree.setMessages(roots);
             _threadTree.select((SyndieURI)_parents.get(0));
         } else {
@@ -875,7 +883,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             _subject.setText(cfg.getProperty(SER_SUBJECT));
         } else if ( (_parents != null) && (_parents.size() > 0) ) {
             SyndieURI parent = (SyndieURI)_parents.get(0);
-            String parentSubject = MessageView.calculateSubject(_browser, parent).trim();
+            String parentSubject = MessageView.calculateSubject(_dataControl, parent).trim();
             if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
                 _subject.setText("re: " + parentSubject);
             } else {
@@ -943,7 +951,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         return cfg;
     }
     
-    BrowserControl getBrowser() { return _browser; }
+    DataControl getDataControl() { return _dataControl; }
     
     /** current search term used */
     String getSearchTerm() { return _finder.getSearchTerm(); }
@@ -1072,7 +1080,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (ed != null) {
             ed.toggleMaxEditor();
         } else {
-            _browser.getUI().debugMessage("messageEditor.toggleMaxEditor()");
+            _dataControl.getUI().debugMessage("messageEditor.toggleMaxEditor()");
         }
     }
     
@@ -1093,12 +1101,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _spellchecker = new MessageEditorSpell(this);
         //_styler = new MessageEditorStyler(this);
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
                 
         addPage();
         
-        _nymChannels = _browser.getClient().getChannels(true, true, true, true);
+        _nymChannels = _dataControl.getClient().getChannels(true, true, true, true);
         updateForum();
         updateAuthor();
 
@@ -1110,7 +1118,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 if ( (idx >= 0) && (idx < _pageEditors.size()) ) {
                     PageEditor ed = getPageEditor();
                     String type = getPageType(idx);
-                    _browser.getUI().debugMessage("switching to page " + idx + " [" + type + "]");
+                    _dataControl.getUI().debugMessage("switching to page " + idx + " [" + type + "]");
                     ed.setContentType(type);
                 }
                 updateToolbar(); 
@@ -1126,10 +1134,10 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         else
             idx = 1;
         _privacy.removeAll();
-        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PUBLIC, "Anyone can read the post"));
-        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_AUTHORIZED, "Authorized readers of the forum can read the post"));
-        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_PBE, "Passphrase required to read the post..."));
-        _privacy.add(_browser.getTranslationRegistry().getText(T_PRIV_REPLY, "Only forum administrators can read the post"));
+        _privacy.add(_dataControl.getTranslationRegistry().getText(T_PRIV_PUBLIC, "Anyone can read the post"));
+        _privacy.add(_dataControl.getTranslationRegistry().getText(T_PRIV_AUTHORIZED, "Authorized readers of the forum can read the post"));
+        _privacy.add(_dataControl.getTranslationRegistry().getText(T_PRIV_PBE, "Passphrase required to read the post..."));
+        _privacy.add(_dataControl.getTranslationRegistry().getText(T_PRIV_REPLY, "Only forum administrators can read the post"));
         _privacy.setRedraw(true);
     }
     
@@ -1157,12 +1165,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); 
                 _privPBE.setSelection(true);
                 if (promptForPassphrase) { // false when deserializing state
-                    final PassphrasePrompt dialog = new PassphrasePrompt(_browser, _root.getShell(), true);
+                    final PassphrasePrompt dialog = new PassphrasePrompt(_dataControl, _root.getShell(), true);
                     dialog.setPassphrase(_passphrase);
                     dialog.setPassphrasePrompt(_passphrasePrompt);
                     dialog.setPassphraseListener(new PassphrasePrompt.PassphraseListener() { 
                         public void promptComplete(String passphraseEntered, String promptEntered) {
-                            _browser.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
+                            _dataControl.getUI().debugMessage("passphrase set [" + passphraseEntered + "] / [" + promptEntered + "]");
                             _passphrase = passphraseEntered;
                             _passphrasePrompt = promptEntered;
                         }
@@ -1214,13 +1222,13 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     static final String TYPE_HTML = "text/html";
     static final String TYPE_TEXT = "text/plain";
     private void setDefaultPageType(String type) {
-        Properties prefs = _browser.getClient().getNymPrefs();
+        Properties prefs = _dataControl.getClient().getNymPrefs();
         prefs.setProperty("editor.defaultFormat", type);
-        _browser.getClient().setNymPrefs(prefs);
+        _dataControl.getClient().setNymPrefs(prefs);
     }
     
     private PageEditor addPage() {
-        Properties prefs = _browser.getClient().getNymPrefs();
+        Properties prefs = _dataControl.getClient().getNymPrefs();
         boolean html = true;
         String pref = prefs.getProperty("editor.defaultFormat", TYPE_TEXT);
         if (TYPE_HTML.equals(pref))
@@ -1235,11 +1243,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private PageEditor addPage(String type) {
         saveState();
         modified();
-        PageEditor ed = new PageEditor(_browser, this, TYPE_HTML.equals(type), _pageEditors.size());
+        PageEditor ed = new PageEditor(_dataControl, this, TYPE_HTML.equals(type), _pageEditors.size());
         _pageEditors.add(ed);
         _pageTypes.add(type);
         int pageNum = _pageEditors.size();
-        ed.getItem().setText(_browser.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + pageNum);
+        ed.getItem().setText(_dataControl.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + pageNum);
         
         viewPage(_pageEditors.size()-1);
         if (type.equals(TYPE_HTML))
@@ -1257,22 +1265,22 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     public void removePage(int pageNum) {
         if ( (pageNum >= 0) && (pageNum < _pageEditors.size()) ) {
-            _browser.getUI().debugMessage("saving stte, pages: " + _pageEditors.size());
+            _dataControl.getUI().debugMessage("saving stte, pages: " + _pageEditors.size());
             saveState();
             modified();
-            _browser.getUI().debugMessage("remove page " + pageNum + "/" + _pageEditors.size());
+            _dataControl.getUI().debugMessage("remove page " + pageNum + "/" + _pageEditors.size());
             PageEditor editor = (PageEditor)_pageEditors.remove(pageNum);
             _pageTypes.remove(pageNum);
             editor.dispose();
             
             for (int i = 0; i < _pageEditors.size(); i++) {
                 PageEditor cur = (PageEditor)_pageEditors.get(i);
-                cur.getItem().setText(_browser.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                cur.getItem().setText(_dataControl.getTranslationRegistry().getText(T_PAGE_PREFIX, "Page ") + (i+1));
             }
             viewPage(_pageEditors.size()-1);
             saveState();
         } else {
-            _browser.getUI().debugMessage("remove page " + pageNum + " is out of range");
+            _dataControl.getUI().debugMessage("remove page " + pageNum + " is out of range");
         }
     }
     private void togglePageType() {
@@ -1301,11 +1309,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private void addWebRip() {
         Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         shell.setLayout(new FillLayout());
-        final WebRipPageControl ctl = new WebRipPageControl(_browser, shell);
+        final WebRipPageControl ctl = new WebRipPageControl(_dataControl, shell);
         ctl.setListener(new WebRipListener(shell, ctl));
         ctl.setExistingAttachments(_attachmentData.size());
         shell.pack();
-        shell.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_TITLE, "Add web rip"));
+        shell.setText(getDataControl().getTranslationRegistry().getText(T_WEBRIP_TITLE, "Add web rip"));
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent evt) { ctl.dispose(); }
@@ -1324,7 +1332,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             _ctl = ctl;
         }
         public void ripComplete(boolean successful, WebRipRunner runner) {
-            _browser.getUI().debugMessage("rip complete: ok?" + successful);
+            _dataControl.getUI().debugMessage("rip complete: ok?" + successful);
             if (successful) {
                 disableAutoSave();
                 PageEditor editor = addPage("text/html");
@@ -1352,14 +1360,14 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         ctl.dispose();        
         if (msgs.size() > 0) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(getBrowser().getTranslationRegistry().getText(T_WEBRIP_FAIL, "Rip failed"));
+            box.setText(getDataControl().getTranslationRegistry().getText(T_WEBRIP_FAIL, "Rip failed"));
             StringBuffer err = new StringBuffer();
             for (int i = 0; i < msgs.size(); i++)
                 err.append((String)msgs.get(i)).append('\n');
             box.setMessage(err.toString());
             box.open();
         } else {
-            _browser.getUI().debugMessage("rip failed, but no messages, so it must have been cancelled");
+            _dataControl.getUI().debugMessage("rip failed, but no messages, so it must have been cancelled");
         }
     }
     
@@ -1405,7 +1413,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         boolean pageLoaded = (page >= 0) && (pages > 0);
         boolean isHTML = pageLoaded && TYPE_HTML.equals(type);
         
-        _browser.getUI().debugMessage("updateToolbar: pages=" + pages + " (" + page + "/" + (pages-1) + ") attachments=" + attachments + " isHTML? " + isHTML + "/" + type + " pageLoaded? " + pageLoaded + " types: " + _pageTypes);
+        _dataControl.getUI().debugMessage("updateToolbar: pages=" + pages + " (" + page + "/" + (pages-1) + ") attachments=" + attachments + " isHTML? " + isHTML + "/" + type + " pageLoaded? " + pageLoaded + " types: " + _pageTypes);
        
         _attachAddImage.setEnabled(isHTML);
         _linkMenu.setEnabled(isHTML);
@@ -1484,7 +1492,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     private void showLinkPopup(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
         if (_linkPopup == null)
-            _linkPopup = new LinkBuilderPopup(getBrowser(), _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
+            _linkPopup = new LinkBuilderPopup(getDataControl(), _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
                 public void uriBuilt(SyndieURI uri, String text) {
                     insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
                 }
@@ -1504,34 +1512,34 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) ) {
             _parents.add(uri);
             
-            long msgId = _browser.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+            long msgId = _dataControl.getClient().getMessageId(uri.getScope(), uri.getMessageId());
             if (msgId >= 0) {
                 ThreadMsgId tmi = new ThreadMsgId(msgId);
                 tmi.messageId = uri.getMessageId().longValue();
                 tmi.scope = uri.getScope();
                 Map tmiToList = new HashMap();
-                ThreadAccumulatorJWZ.buildAncestors(_browser.getClient(), _browser.getUI(), tmi, tmiToList);
+                ThreadAccumulatorJWZ.buildAncestors(_dataControl.getClient(), _dataControl.getUI(), tmi, tmiToList);
                 List ancestors = (List)tmiToList.get(tmi);
                 if ( (ancestors != null) && (ancestors.size() > 0) ) {
-                    _browser.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + ancestors);
+                    _dataControl.getUI().debugMessage("parentMessage is " + uri + ", but its ancestors are " + ancestors);
                     for (int i = 0; i < ancestors.size(); i++) {
                         ThreadMsgId ancestor = (ThreadMsgId)ancestors.get(i);
                         _parents.add(SyndieURI.createMessage(ancestor.scope, ancestor.messageId));
                     }
                 } else {
-                    _browser.getUI().debugMessage("parentMessage is " + uri + ", and it has no ancestors");
+                    _dataControl.getUI().debugMessage("parentMessage is " + uri + ", and it has no ancestors");
                 }
 
-                ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
+                ThreadBuilder builder = new ThreadBuilder(_dataControl.getClient(), _dataControl.getUI());
                 HashSet msgIds = new HashSet(1);
                 msgIds.add(tmi);
                 List roots = builder.buildThread(msgIds);
-                _browser.getUI().debugMessage("thread: " + roots);
+                _dataControl.getUI().debugMessage("thread: " + roots);
                 _threadTree.setMessages(roots);
                 _threadTree.select(uri);
                 
                 if (_subject.getText().trim().length() <= 0) {
-                    String parentSubject = MessageView.calculateSubject(_browser, uri).trim();
+                    String parentSubject = MessageView.calculateSubject(_dataControl, uri).trim();
                     if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
                         _subject.setText("re: " + parentSubject);
                     } else {
@@ -1539,9 +1547,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     }
                 }
             } else {
-                _browser.getUI().debugMessage("parentMessage is " + uri + ", but we don't know it, so don't know its ancestors");
+                _dataControl.getUI().debugMessage("parentMessage is " + uri + ", but we don't know it, so don't know its ancestors");
 
-                ThreadBuilder builder = new ThreadBuilder(_browser.getClient(), _browser.getUI());
+                ThreadBuilder builder = new ThreadBuilder(_dataControl.getClient(), _dataControl.getUI());
                 HashSet msgIds = new HashSet(1);
                 ThreadMsgId tmi = new ThreadMsgId(-1);
                 tmi.messageId = uri.getMessageId().longValue();
@@ -1587,7 +1595,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             viewPage(0);
         
         Long attach = uri.getLong("attachments");
-        _browser.getUI().debugMessage("configuration complete, with attachments: " + attach);
+        _dataControl.getUI().debugMessage("configuration complete, with attachments: " + attach);
         if (attach != null) {
             for (int i = 0; i < attach.intValue(); i++) {
                 String filename = uri.getString("attachment" + i);
@@ -1614,16 +1622,16 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _refEditorTabRoot = new Composite(_pageTabs, SWT.NONE);
         _refEditorTabRoot.setLayout(new FillLayout());
         _refEditorTab.setControl(_refEditorTabRoot);
-        _refEditor = new MessageReferencesEditor(_refEditorTabRoot, _browser);
+        _refEditor = ComponentBuilder.instance().createMessageReferencesEditor(_refEditorTabRoot);
         
         _threadTab = new CTabItem(_pageTabs, SWT.NONE);
         _threadTabRoot = new Composite(_pageTabs, SWT.NONE);
         _threadTabRoot.setLayout(new FillLayout());
         _threadTab.setControl(_threadTabRoot);
-        _threadTree = new MessageTree(_browser, _threadTabRoot, new MessageTree.MessageTreeListener() {
+        _threadTree = ComponentBuilder.instance().createMessageTree(_threadTabRoot, new MessageTree.MessageTreeListener() {
             public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                 if (toView)
-                    _browser.view(uri);
+                    _navControl.view(uri);
             }
             public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
         }, true);
@@ -1750,7 +1758,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         long forumId = -1;
         String forumSummary = "";
         boolean managed = false;
-        _browser.getUI().debugMessage("updateForum: " + _forum);
+        _dataControl.getUI().debugMessage("updateForum: " + _forum);
         
         boolean itemsSinceSep = false;
         
@@ -1770,7 +1778,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
             
             if (_forum == null) {
                 _forum = info.getChannelHash();
@@ -1817,7 +1825,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
 
             if (_forum == null) {
                 _forum = info.getChannelHash();
@@ -1864,7 +1872,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
             
             if (_forum == null) {
                 _forum = info.getChannelHash();
@@ -1911,7 +1919,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
             
             if (_forum == null) {
                 _forum = info.getChannelHash();
@@ -1941,11 +1949,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         if (!targetFound && (_forum != null)) {
             // other forum chosen
-            long id = _browser.getClient().getChannelId(_forum);
+            long id = _dataControl.getClient().getChannelId(_forum);
             if (id >= 0) {
                 if (itemsSinceSep)
                     new MenuItem(_forumMenu, SWT.SEPARATOR);
-                final ChannelInfo info = _browser.getClient().getChannel(id);
+                final ChannelInfo info = _dataControl.getClient().getChannel(id);
 
                 StringBuffer buf = new StringBuffer();
                 if ( (info.getName() != null) && (info.getName().length() > 0) )
@@ -1959,7 +1967,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 buf.append(info.getChannelHash().toBase64().substring(0,6));
 
                 final String summary = buf.toString();
-                _browser.getUI().debugMessage("summary: " + summary);
+                _dataControl.getUI().debugMessage("summary: " + summary);
 
                 forumId = info.getChannelId();
                 forumSummary = summary;
@@ -2010,7 +2018,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         if (_refChooser == null) {
             String transKey = T_PICK_FORUM_KEY;
             String transDefaultVal = "Forum chooser";
-            _refChooser = new ReferenceChooserPopup(_root.getShell(), _browser, new ReferenceChooserTree.AcceptanceListener() {
+            _refChooser = ComponentBuilder.instance().createReferenceChooserPopup(_root.getShell(), new ReferenceChooserTree.AcceptanceListener() {
                 public void referenceAccepted(SyndieURI uri) {
                     if (uri.isSearch()) {
                         Hash scopes[] = uri.getSearchScopes();
@@ -2019,7 +2027,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     } else if (uri.isChannel()) {
                         _forum = uri.getScope();
                     }
-                    _browser.getUI().debugMessage("other forum picked: " + uri);
+                    _dataControl.getUI().debugMessage("other forum picked: " + uri);
                     updateForum();
                     refreshAuthors();
                     if (!validateAuthorForum())
@@ -2027,11 +2035,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 }
 
                 public void referenceChoiceAborted() {
-                    _browser.getUI().debugMessage("other forum selection aborted");
+                    _dataControl.getUI().debugMessage("other forum selection aborted");
                 }
             }, transKey, transDefaultVal);
         }
-        _browser.getUI().debugMessage("picking other forum...");
+        _dataControl.getUI().debugMessage("picking other forum...");
         _refChooser.show();
     }
 
@@ -2045,7 +2053,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             if (managed == null) 
                 managed = Boolean.FALSE;
             if ( (cur != null) && (cur.equals(forum)) ) {
-                redrawForumAvatar(cur, _browser.getClient().getChannelId(cur), items[i].getText(), managed.booleanValue());
+                redrawForumAvatar(cur, _dataControl.getClient().getChannelId(cur), items[i].getText(), managed.booleanValue());
                 break;
             }
         }
@@ -2054,7 +2062,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             showUnauthorizedWarning();
     }
     private void pickForum(Hash forum, long channelId, String summary, boolean isManaged) {
-        _browser.getUI().debugMessage("pick forum " + forum + " / " + summary);
+        _dataControl.getUI().debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
         redrawForumAvatar(forum, channelId, summary, isManaged);
         refreshAuthors();
@@ -2076,8 +2084,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             // don't show the forum avatar unless the forum is bookmarked or we own the channel -
             // this should help fight phishing attacks (to prevent spoofing w/ same 
             // icon & link <a href=...>send me your password</a>)
-            if (isManaged || _browser.isBookmarked(SyndieURI.createScope(forum))) {
-                byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
+            if (isManaged || _bookmarkControl.isBookmarked(SyndieURI.createScope(forum))) {
+                byte avatar[] = _dataControl.getClient().getChannelAvatar(channelId);
                 if (avatar != null) {
                     _forumAvatar = ImageUtil.createImage(avatar);
                     _forumButton.setImage(_forumAvatar);
@@ -2118,15 +2126,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         List signAsKeys = null;
         boolean explicitKey = false;
         if (_forum != null) {
-            List nymKeys = _browser.getClient().getNymKeys(_forum, null);
+            List nymKeys = _dataControl.getClient().getNymKeys(_forum, null);
             for (int i = 0; i < nymKeys.size(); i++) {
                 NymKey key = (NymKey)nymKeys.get(i);
                 if (!key.getAuthenticated()) {
-                    _browser.getUI().debugMessage("key is not authenticated: " + key);
+                    _dataControl.getUI().debugMessage("key is not authenticated: " + key);
                     continue;
                 }
                 if (key.getIsExpired()) {
-                    _browser.getUI().debugMessage("key is expired: " + key);
+                    _dataControl.getUI().debugMessage("key is expired: " + key);
                     continue;
                 }
                 if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()) ||
@@ -2138,7 +2146,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 }
             }
         }
-        _browser.getUI().debugMessage("refreshing authors: forum=" + _forum + " signAs keys: " + signAsKeys);
+        _dataControl.getUI().debugMessage("refreshing authors: forum=" + _forum + " signAs keys: " + signAsKeys);
         
         GridData authorGD = (GridData)_authorCombo.getLayoutData();
         GridData signAsGD = (GridData)_signAs.getLayoutData();
@@ -2161,7 +2169,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 NymKey key = (NymKey)signAsKeys.get(i);
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
                 Hash pubHash = priv.toPublic().calculateHash();
-                String name = _browser.getClient().getChannelName(pubHash);
+                String name = _dataControl.getClient().getChannelName(pubHash);
                 if (name != null)
                     _signAs.add(name + " (" + pubHash.toBase64().substring(0,6) + ")");
                 else
@@ -2201,7 +2209,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         
         long authorId = -1;
         String authorSummary = "";
-        _browser.getUI().debugMessage("updateAuthor: " + _author);
+        _dataControl.getUI().debugMessage("updateAuthor: " + _author);
         
         boolean itemsSinceSep = false;
         
@@ -2221,7 +2229,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
             
             if (_author == null) {
                 _author = info.getChannelHash();
@@ -2265,7 +2273,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _browser.getUI().debugMessage("summary: " + summary);
+            _dataControl.getUI().debugMessage("summary: " + summary);
 
             if (_author == null) {
                 _author = info.getChannelHash();
@@ -2291,9 +2299,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         }
         
         if (_author != null) {
-            Properties prefs = _browser.getClient().getNymPrefs();
+            Properties prefs = _dataControl.getClient().getNymPrefs();
             prefs.setProperty("editor.defaultAuthor", _author.toBase64());
-            _browser.getClient().setNymPrefs(prefs);
+            _dataControl.getClient().setNymPrefs(prefs);
         }
         
         redrawAuthorAvatar(_author, authorId, authorSummary);
@@ -2303,15 +2311,15 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         modified();
         _author = author;
         if (_author != null) {
-            Properties prefs = _browser.getClient().getNymPrefs();
+            Properties prefs = _dataControl.getClient().getNymPrefs();
             prefs.setProperty("editor.defaultAuthor", _author.toBase64());
-            _browser.getClient().setNymPrefs(prefs);
+            _dataControl.getClient().setNymPrefs(prefs);
         }
         MenuItem items[] = _authorMenu.getItems();
         for (int i = 0; i < items.length; i++) {
             Hash cur = (Hash)items[i].getData("channel.hash");
             if ( (cur != null) && (cur.equals(author)) ) {
-                redrawAuthorAvatar(cur, _browser.getClient().getChannelId(cur), items[i].getText());
+                redrawAuthorAvatar(cur, _dataControl.getClient().getChannelId(cur), items[i].getText());
                 break;
             }
         }
@@ -2319,12 +2327,12 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             showUnauthorizedWarning();
     }
     private void pickAuthor(Hash author, long channelId, String summary) {
-        _browser.getUI().debugMessage("pick author " + author + " / " + summary);
+        _dataControl.getUI().debugMessage("pick author " + author + " / " + summary);
         _author = author;
         if (_author != null) {
-            Properties prefs = _browser.getClient().getNymPrefs();
+            Properties prefs = _dataControl.getClient().getNymPrefs();
             prefs.setProperty("editor.defaultAuthor", _author.toBase64());
-            _browser.getClient().setNymPrefs(prefs);
+            _dataControl.getClient().setNymPrefs(prefs);
         }
         redrawAuthorAvatar(author, channelId, summary);
         if (!validateAuthorForum())
@@ -2341,7 +2349,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         }
         ImageUtil.dispose(_authorAvatar);
         _authorButton.setImage(null);
-        byte avatar[] = _browser.getClient().getChannelAvatar(channelId);
+        byte avatar[] = _dataControl.getClient().getChannelAvatar(channelId);
         if (avatar != null) {
             _authorAvatar = ImageUtil.createImage(avatar);
             _authorButton.setImage(_authorAvatar);
@@ -2380,31 +2388,31 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         Hash author = _author;
         ChannelInfo forum = null;
         if (_forum != null)
-            forum = _browser.getClient().getChannel(_browser.getClient().getChannelId(_forum));
+            forum = _dataControl.getClient().getChannel(_dataControl.getClient().getChannelId(_forum));
         
         boolean ok = true;
         
-        _browser.getUI().debugMessage("validating author forum: author=" + _author + " forum=" + _forum);
+        _dataControl.getUI().debugMessage("validating author forum: author=" + _author + " forum=" + _forum);
         
         if ( (author != null) && (forum != null) ) {
             if (author.equals(forum.getChannelHash())) {
                 // ok
-                _browser.getUI().debugMessage("forum == author");
+                _dataControl.getUI().debugMessage("forum == author");
             } else if (forum.getAllowPublicPosts()) {
                 // ok too
-                _browser.getUI().debugMessage("forum allows public posts");
+                _dataControl.getUI().debugMessage("forum allows public posts");
             } else if (forum.getAuthorizedManagerHashes().contains(author)) {
                 // yep
-                _browser.getUI().debugMessage("forum explicitly allowes the author to manage the forum");
+                _dataControl.getUI().debugMessage("forum explicitly allowes the author to manage the forum");
             } else if (forum.getAuthorizedPosterHashes().contains(author)) {
                 // again
-                _browser.getUI().debugMessage("forum explicitly allows the author to post in the forum");
+                _dataControl.getUI().debugMessage("forum explicitly allows the author to post in the forum");
             } else if (_privacy.getSelectionIndex() == PRIVACY_REPLY) {
                 // sure... though it won't go in the forum's scope
-                _browser.getUI().debugMessage("post is a private reply");
+                _dataControl.getUI().debugMessage("post is a private reply");
             } else if (forum.getAllowPublicReplies() && (_parents.size() > 0) ) {
                 // maybe... check to make sure the parent is allowed
-                _browser.getUI().debugMessage("forum allows public replies, and our parents: " + _parents);
+                _dataControl.getUI().debugMessage("forum allows public replies, and our parents: " + _parents);
                 boolean allowed = false;
                 for (int i = _parents.size()-1; !allowed && i >= 0; i--) {
                     SyndieURI uri = (SyndieURI)_parents.get(i);
@@ -2414,27 +2422,27 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                         forum.getAuthorizedPosterHashes().contains(scope)) {
                         // the scope is authorized, but make sure the uri is actually pointing to
                         // a post in the targetted forum!
-                        long msgId = _browser.getClient().getMessageId(scope, uri.getMessageId());
+                        long msgId = _dataControl.getClient().getMessageId(scope, uri.getMessageId());
                         if (msgId >= 0) {
-                            long targetChanId = _browser.getClient().getMessageTarget(msgId);
+                            long targetChanId = _dataControl.getClient().getMessageTarget(msgId);
                             if (forum.getChannelId() == targetChanId) {
                                 allowed = true;
                             } else {
-                                _browser.getUI().debugMessage("ancestor would be authorized, but they are targetting a different forum: " + targetChanId + ": " + uri);
+                                _dataControl.getUI().debugMessage("ancestor would be authorized, but they are targetting a different forum: " + targetChanId + ": " + uri);
                             }
                         } else {
-                            _browser.getUI().debugMessage("ancestor would be authorized, but isn't known, so we don't know whether they're actually targetting the right forum: " + uri);
+                            _dataControl.getUI().debugMessage("ancestor would be authorized, but isn't known, so we don't know whether they're actually targetting the right forum: " + uri);
                         }
                     }
                 }
                 if (!allowed) {
                     // none of the ancestors were allowed, so reject
-                    _browser.getUI().debugMessage("forum allows public replies but the parents are not authorized");
+                    _dataControl.getUI().debugMessage("forum allows public replies but the parents are not authorized");
                     ok = false;
                 }
             } else {
                 // not allowed
-                _browser.getUI().debugMessage("forum not allowed");
+                _dataControl.getUI().debugMessage("forum not allowed");
                 ok = false;
             }
         }
@@ -2450,7 +2458,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 // as the author would link the channel that was authorized to receive the private key and the
                 // channel that posted with the key.  the safe way to behave would be to run different unlinkable
                 // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
-                List nymKeys = _browser.getClient().getNymKeys(forum.getChannelHash(), null);
+                List nymKeys = _dataControl.getClient().getNymKeys(forum.getChannelHash(), null);
                 for (int i = 0; i < nymKeys.size(); i++) {
                     NymKey key = (NymKey)nymKeys.get(i);
                     if (!key.getAuthenticated()) continue;
@@ -2458,7 +2466,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                     if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
                         SigningPrivateKey priv = new SigningPrivateKey(key.getData());
                         if (priv.toPublic().calculateHash().equals(signAs)) {
-                            _browser.getUI().debugMessage("Explicitly authorized 'sign as' key selected: " + signAs);
+                            _dataControl.getUI().debugMessage("Explicitly authorized 'sign as' key selected: " + signAs);
                             ok = true;
                             break;
                         }
@@ -2471,8 +2479,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     private void showUnauthorizedWarning() {
         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
-        box.setText(_browser.getTranslationRegistry().getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
+        box.setMessage(_dataControl.getTranslationRegistry().getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
+        box.setText(_dataControl.getTranslationRegistry().getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
         box.open();
     }
     
@@ -2711,7 +2719,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     }
     
     private void initStyleControl() {
-        _browser.getUI().debugMessage("init styleControl");
+        _dataControl.getUI().debugMessage("init styleControl");
         _styleGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
         _styleGroup.setLayout(new FillLayout());
         
@@ -2748,7 +2756,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         });
         ColorUtil.init();
         List names = ColorUtil.getSystemColorNames();
-        _browser.getUI().debugMessage("color names: " + names);
+        _dataControl.getUI().debugMessage("color names: " + names);
         for (int i = 0; i < names.size(); i++) {
             final String name = (String)names.get(i);
             Color color = ColorUtil.getColor(name);
@@ -2897,8 +2905,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _authorLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
         _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
         
-        _refEditorTab.setText(_browser.getTranslationRegistry().getText(T_REFTAB, "References"));
-        _threadTab.setText(_browser.getTranslationRegistry().getText(T_THREADTAB, "Thread"));
+        _refEditorTab.setText(_dataControl.getTranslationRegistry().getText(T_REFTAB, "References"));
+        _threadTab.setText(_dataControl.getTranslationRegistry().getText(T_THREADTAB, "Thread"));
     }
 
     // image popup stuff
@@ -2927,8 +2935,8 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private boolean isValidSize(long length) {
         if (length > Constants.MAX_ATTACHMENT_SIZE) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_browser.getTranslationRegistry().getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
-            box.setText(_browser.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
+            box.setMessage(_dataControl.getTranslationRegistry().getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
+            box.setText(_dataControl.getTranslationRegistry().getText(T_TOOLARGE_TITLE, "Too large"));
             box.open();
             return false;
         //} else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
@@ -2949,7 +2957,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         String name = Constants.stripFilename(fname, false);
         String type = WebRipRunner.guessContentType(fname);
 
-        _browser.getUI().debugMessage("add attachment(" + fname + ") sz= " + file.length());
+        _dataControl.getUI().debugMessage("add attachment(" + fname + ") sz= " + file.length());
         
         if (!isValidSize(file.length()))
             return;
@@ -2958,11 +2966,11 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         try {
             int read = DataHelper.read(new FileInputStream(file), data);
             if (read != data.length) {
-                _browser.getUI().debugMessage("attachment was the wrong size (" + read + "/" + data.length + ")");
+                _dataControl.getUI().debugMessage("attachment was the wrong size (" + read + "/" + data.length + ")");
                 return;
             }
         } catch (IOException ioe) {
-            _browser.getUI().debugMessage("Unable to read the attachment", ioe);
+            _dataControl.getUI().debugMessage("Unable to read the attachment", ioe);
             return;
         }
         Properties cfg = new Properties();
@@ -2972,7 +2980,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _attachmentData.add(data);
         rebuildAttachmentSummaries();
         updateToolbar();
-        _browser.getUI().debugMessage("Attachment read and added");
+        _dataControl.getUI().debugMessage("Attachment read and added");
     }
     public int addAttachment(String contentType, String name, byte[] data) {
         if (data == null) return -1;
@@ -3099,7 +3107,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
                 _attachmentSummary.add(buf.toString());
             }
         } else {
-            _attachmentSummary.add(_browser.getTranslationRegistry().getText(T_ATTACHMENTS_NONE, "none"));
+            _attachmentSummary.add(_dataControl.getTranslationRegistry().getText(T_ATTACHMENTS_NONE, "none"));
         }
         
         
@@ -3114,9 +3122,9 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             attachItem.setMenu(sub);
             MenuItem view = new MenuItem(sub, SWT.PUSH);
             view.setEnabled(false);
-            view.setText(_browser.getTranslationRegistry().getText(T_ATTACHMENT_VIEW, "View"));
+            view.setText(_dataControl.getTranslationRegistry().getText(T_ATTACHMENT_VIEW, "View"));
             MenuItem delete = new MenuItem(sub, SWT.PUSH);
-            delete.setText(_browser.getTranslationRegistry().getText(T_ATTACHMENT_DELETE, "Delete"));
+            delete.setText(_dataControl.getTranslationRegistry().getText(T_ATTACHMENT_DELETE, "Delete"));
             final int attachNum = i;
             delete.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeAttachment(attachNum); }
@@ -3140,7 +3148,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         saveState();
         SyndieURI rv = null;
         if (_postponeId >= 0) {
-            rv = _browser.createPostURI(_postponeId, _postponeVersion);
+            rv = _uriControl.createPostURI(_postponeId, _postponeVersion);
         } else {
             rv = null;
         }
@@ -3196,8 +3204,8 @@ class MessageEditorFind implements Translatable, Themeable {
         _findText.forceFocus();
     }
     public void dispose() {
-        _editor.getBrowser().getTranslationRegistry().unregister(this);
-        _editor.getBrowser().getThemeRegistry().unregister(this);
+        _editor.getDataControl().getTranslationRegistry().unregister(this);
+        _editor.getDataControl().getThemeRegistry().unregister(this);
         _findShell.dispose();
         
     }
@@ -3290,8 +3298,8 @@ class MessageEditorFind implements Translatable, Themeable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _editor.getBrowser().getTranslationRegistry().register(this);
-        _editor.getBrowser().getThemeRegistry().register(this);
+        _editor.getDataControl().getTranslationRegistry().register(this);
+        _editor.getDataControl().getThemeRegistry().register(this);
     }
  
     public void applyTheme(Theme theme) {
@@ -3367,8 +3375,8 @@ class MessageEditorSpell implements Themeable, Translatable {
     }
  
     public void dispose() {
-        _editor.getBrowser().getTranslationRegistry().unregister(this);
-        _editor.getBrowser().getThemeRegistry().unregister(this);
+        _editor.getDataControl().getTranslationRegistry().unregister(this);
+        _editor.getDataControl().getThemeRegistry().unregister(this);
         _spellShell.dispose();
     }
     
@@ -3398,13 +3406,13 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(true);
             _spellAdd.setEnabled(false); // todo: user-specific dictionary
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_editor.getBrowser().getTranslationRegistry().getText(T_SPELL_CANCEL, "cancel"));
+            _spellCancel.setText(_editor.getDataControl().getTranslationRegistry().getText(T_SPELL_CANCEL, "cancel"));
             _spellIgnore.setEnabled(true);
             _spellIgnoreAll.setEnabled(true);
             _spellReplace.setEnabled(true);
             _spellReplaceAll.setEnabled(true);
         } else {
-            _spellContext.setText(_editor.getBrowser().getTranslationRegistry().getText(T_SPELL_END, "End of content reached"));
+            _spellContext.setText(_editor.getDataControl().getTranslationRegistry().getText(T_SPELL_END, "End of content reached"));
             _spellContext.setLineBackground(0, 1, ColorUtil.getColor("red", null));
             _spellWord.setText("");
             _spellWord.setEnabled(false);
@@ -3412,7 +3420,7 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(false);
             _spellAdd.setEnabled(false);
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_editor.getBrowser().getTranslationRegistry().getText(T_SPELL_END_OK, "ok"));
+            _spellCancel.setText(_editor.getDataControl().getTranslationRegistry().getText(T_SPELL_END_OK, "ok"));
             _spellIgnore.setEnabled(false);
             _spellIgnoreAll.setEnabled(false);
             _spellReplace.setEnabled(false);
@@ -3498,8 +3506,8 @@ class MessageEditorSpell implements Themeable, Translatable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _editor.getBrowser().getTranslationRegistry().register(this);
-        _editor.getBrowser().getThemeRegistry().register(this);
+        _editor.getDataControl().getTranslationRegistry().register(this);
+        _editor.getDataControl().getThemeRegistry().register(this);
     }
     
     void resetSpellcheck() {

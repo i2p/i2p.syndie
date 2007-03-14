@@ -23,13 +23,13 @@ import syndie.db.ThreadReferenceNode;
  * message tree that organizes threads first by forum, then by thread
  */
 public class WatchedMessageTree extends MessageTree {
-    public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr) { this(browser, parent, lsnr, false); }
-    public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(browser, parent, lsnr, true, true, true, true, hideFilter);
+    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
+    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
     }
-    public WatchedMessageTree(BrowserControl browser, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
+    public WatchedMessageTree(DataControl dataControl, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         // don't show the forum column, don't show the flags column, don't expand anything by default
-        super(browser, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
+        super(dataControl, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
     }
     
     /** given the list of thread roots, munge them into forums w/ threads underneath */
@@ -108,8 +108,8 @@ public class WatchedMessageTree extends MessageTree {
             if ( (node != null) && (node.getURI() != null) ) {
                 Hash scope = node.getURI().getScope();
                 if (scope != null) {
-                    long target = _browser.getClient().getChannelId(scope);
-                    _browser.getClient().markChannelRead(target);
+                    long target = _dataControl.getClient().getChannelId(scope);
+                    _dataControl.getClient().markChannelRead(target);
                     return target;
                 }
             }

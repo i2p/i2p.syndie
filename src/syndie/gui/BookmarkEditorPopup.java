@@ -11,13 +11,15 @@ import syndie.data.NymReferenceNode;
  *
  */
 class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Translatable, Themeable {
-    private BrowserControl _browser;
+    private DataControl _dataControl;
+    private BookmarkControl _bookmarkControl;
     private Shell _parent;
     private Shell _shell;
     private BookmarkEditor _editor;
     
-    public BookmarkEditorPopup(BrowserControl control, Shell parent) {
-        _browser = control;
+    public BookmarkEditorPopup(DataControl dataControl, BookmarkControl bookmarkControl, Shell parent) {
+        _dataControl = dataControl;
+        _bookmarkControl = bookmarkControl;
         _parent = parent;
         initComponents();
     }
@@ -25,7 +27,7 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
-        _editor = new BookmarkEditor(_browser, _shell, this);
+        _editor = new BookmarkEditor(_dataControl, _shell, this);
         _shell.pack();
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
@@ -37,13 +39,13 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
-        _browser.getTranslationRegistry().register(this);
-        _browser.getThemeRegistry().register(this);
+        _dataControl.getTranslationRegistry().register(this);
+        _dataControl.getThemeRegistry().register(this);
     }
     
     public void dispose() {
-        _browser.getTranslationRegistry().unregister(this);
-        _browser.getThemeRegistry().unregister(this);
+        _dataControl.getTranslationRegistry().unregister(this);
+        _dataControl.getThemeRegistry().unregister(this);
         _editor.dispose();
     }
     
@@ -61,11 +63,11 @@ class BookmarkEditorPopup implements BookmarkEditor.BookmarkEditorListener, Tran
     public void updateBookmark(BookmarkEditor editor, NymReferenceNode bookmark, boolean delete) {
         _shell.setVisible(false);
         if (bookmark.getGroupId() < 0)
-            _browser.bookmark(bookmark, true);
+            _bookmarkControl.bookmark(bookmark, true);
         else if (delete)
-            _browser.deleteBookmark(bookmark.getGroupId());
+            _bookmarkControl.deleteBookmark(bookmark.getGroupId());
         else
-            _browser.updateBookmark(bookmark);
+            _bookmarkControl.updateBookmark(bookmark);
     }
 
     public void cancelEditor(BookmarkEditor editor) {
