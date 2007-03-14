@@ -48,100 +48,100 @@ public class ImageUtil {
         return true;
     }
     
-    public static final Image ICON_ERROR = Display.getDefault().getSystemImage(SWT.ICON_ERROR);
-    public static final Image ICON_INFORMATION = Display.getDefault().getSystemImage(SWT.ICON_INFORMATION);
-    public static final Image ICON_QUESTION = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
-    public static final Image ICON_WARNING = Display.getDefault().getSystemImage(SWT.ICON_WARNING);
-    public static final Image ICON_WORKING = Display.getDefault().getSystemImage(SWT.ICON_WORKING);
+    public static Image ICON_ERROR;
+    public static Image ICON_INFORMATION;
+    public static Image ICON_QUESTION;
+    public static Image ICON_WARNING;
+    public static Image ICON_WORKING;
     
-    public static final Image ICON_SHELL = createImageFromResource("iconShell.png");
+    public static Image ICON_SHELL;
     
     /** shown after a link when rendering */
-    public static final Image ICON_LINK_END = createImageFromResource("iconLink.png");
+    public static Image ICON_LINK_END;
     /** shown in place of a nonexistant image when rendering */
-    public static final Image ICON_IMAGE_UNKNOWN = createImageFromResource("iconUnknown.png");
+    public static Image ICON_IMAGE_UNKNOWN;
     
-    public static final Image ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
-    public static final Image ICON_SYNDICATE_TYPE_INDIRECT = createImageFromResource("iconIndirect.png");
-    public static final Image ICON_SYNDICATE_TYPE_FREENET = createImageFromResource("iconFreenet.png");
-    public static final Image ICON_SYNDICATE_STATUS_INPROGRESS = createImageFromResource("iconSynInProgress.png");
-    public static final Image ICON_SYNDICATE_STATUS_SCHEDULED = createImageFromResource("iconSynScheduled.png");
-    public static final Image ICON_SYNDICATE_STATUS_NOKEY = createImageFromResource("iconSynNoKey.png");
-    public static final Image ICON_SYNDICATE_STATUS_ERROR = createImageFromResource("iconSynError.png");
-    public static final Image ICON_SYNDICATE_STATUS_PBE = createImageFromResource("iconSynPBE.png");
-    public static final Image ICON_SYNDICATE_STATUS_OK = createImageFromResource("iconSynOk.png");
-    public static final Image ICON_SYNDICATE_PUSH = createImageFromResource("iconSynPush.png");
+    public static Image ICON_SYNDICATE_TYPE_DIRECT;
+    public static Image ICON_SYNDICATE_TYPE_INDIRECT;
+    public static Image ICON_SYNDICATE_TYPE_FREENET;
+    public static Image ICON_SYNDICATE_STATUS_INPROGRESS;
+    public static Image ICON_SYNDICATE_STATUS_SCHEDULED;
+    public static Image ICON_SYNDICATE_STATUS_NOKEY;
+    public static Image ICON_SYNDICATE_STATUS_ERROR;
+    public static Image ICON_SYNDICATE_STATUS_PBE;
+    public static Image ICON_SYNDICATE_STATUS_OK;
+    public static Image ICON_SYNDICATE_PUSH;
     
-    public static final Image ICON_ARCHIVE_TYPE_FILE = createImageFromResource("iconArchiveFile.png");
-    public static final Image ICON_ARCHIVE_TYPE_FREENET = createImageFromResource("iconArchiveFreenet.png");
-    public static final Image ICON_ARCHIVE_TYPE_URL = createImageFromResource("iconArchiveURL.png");
-    public static final Image ICON_ARCHIVE_TYPE_SYNDIE = createImageFromResource("iconArchiveSyndie.png");
+    public static Image ICON_ARCHIVE_TYPE_FILE;
+    public static Image ICON_ARCHIVE_TYPE_FREENET;
+    public static Image ICON_ARCHIVE_TYPE_URL;
+    public static Image ICON_ARCHIVE_TYPE_SYNDIE;
     
-    public static final Image ICON_MSG_TYPE_NORMAL = createImageFromResource("iconMsgNormal.png");
-    public static final Image ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
-    public static final Image ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
+    public static Image ICON_MSG_TYPE_NORMAL;
+    public static Image ICON_MSG_TYPE_META;
+    public static Image ICON_MSG_TYPE_PRIVATE;
 
     // used for the MessageFlagBar to describe a message
-    public static final Image ICON_MSG_FLAG_READKEYUNKNOWN = createImageFromResource("iconMsgFlagReadKeyUnknown.png");
-    public static final Image ICON_MSG_FLAG_REPLYKEYUNKNOWN = createImageFromResource("iconMsgFlagReplyKeyUnknown.png");
-    public static final Image ICON_MSG_FLAG_PBE = createImageFromResource("iconMsgFlagPBE.png");
-    public static final Image ICON_MSG_FLAG_UNREADABLE = createImageFromResource("iconMsgFlagUnreadable.png");
-    public static final Image ICON_MSG_FLAG_PUBLIC = createImageFromResource("iconMsgFlagPublic.png");
-    public static final Image ICON_MSG_FLAG_AUTHENTICATED = createImageFromResource("iconMsgFlagAuthenticated.png");
-    public static final Image ICON_MSG_FLAG_AUTHORIZED = createImageFromResource("iconMsgFlagAuthorized.png");
-    public static final Image ICON_MSG_FLAG_BANNED = createImageFromResource("iconMsgFlagBanned.png");
-    public static final Image ICON_MSG_FLAG_BOOKMARKED_AUTHOR = createImageFromResource("iconMsgFlagBookmarked.png", false); // use two different images, so we can
-    public static final Image ICON_MSG_FLAG_BOOKMARKED_FORUM = createImageFromResource("iconMsgFlagBookmarked.png", false); // differentiate them in the message flag bar
-    public static final Image ICON_MSG_FLAG_SCHEDULEDFOREXPIRE = createImageFromResource("iconMsgFlagScheduledForExpire.png");
-    public static final Image ICON_MSG_FLAG_HASKEYS = createImageFromResource("iconMsgFlagHasKeys.png");
-    public static final Image ICON_MSG_FLAG_HASARCHIVES = createImageFromResource("iconMsgFlagHasArchives.png");
-    public static final Image ICON_MSG_FLAG_HASREFS = createImageFromResource("iconMsgFlagHasRefs.png");
-    public static final Image ICON_MSG_FLAG_HASATTACHMENTS = createImageFromResource("iconMsgFlagHasAttachments.png");
-    public static final Image ICON_MSG_FLAG_ISNEW = createImageFromResource("iconMsgFlagIsNew.png");
+    public static Image ICON_MSG_FLAG_READKEYUNKNOWN;
+    public static Image ICON_MSG_FLAG_REPLYKEYUNKNOWN;
+    public static Image ICON_MSG_FLAG_PBE;
+    public static Image ICON_MSG_FLAG_UNREADABLE;
+    public static Image ICON_MSG_FLAG_PUBLIC;
+    public static Image ICON_MSG_FLAG_AUTHENTICATED;
+    public static Image ICON_MSG_FLAG_AUTHORIZED;
+    public static Image ICON_MSG_FLAG_BANNED;
+    public static Image ICON_MSG_FLAG_BOOKMARKED_AUTHOR;
+    public static Image ICON_MSG_FLAG_BOOKMARKED_FORUM;
+    public static Image ICON_MSG_FLAG_SCHEDULEDFOREXPIRE;
+    public static Image ICON_MSG_FLAG_HASKEYS;
+    public static Image ICON_MSG_FLAG_HASARCHIVES;
+    public static Image ICON_MSG_FLAG_HASREFS;
+    public static Image ICON_MSG_FLAG_HASATTACHMENTS;
+    public static Image ICON_MSG_FLAG_ISNEW;
     
-    public static final Image ICON_REF_MSG = createImageFromResource("iconRefMsg.png");
-    public static final Image ICON_REF_FORUM = createImageFromResource("iconRefForum.png");
-    public static final Image ICON_REF_ARCHIVE = createImageFromResource("iconRefArchive.png");
-    public static final Image ICON_REF_URL = createImageFromResource("iconRefURL.png");
-    public static final Image ICON_REF_SYNDIE = createImageFromResource("iconRefSyndie.png");
-    public static final Image ICON_REF_FREENET = createImageFromResource("iconRefFreenet.png");
+    public static Image ICON_REF_MSG;
+    public static Image ICON_REF_FORUM;
+    public static Image ICON_REF_ARCHIVE;
+    public static Image ICON_REF_URL;
+    public static Image ICON_REF_SYNDIE;
+    public static Image ICON_REF_FREENET;
     
-    public static final Image ICON_BROWSE_ADMINS = createImageFromResource("iconBrowseAdmins.png");
-    public static final Image ICON_BROWSE_MANAGEABLE = createImageFromResource("iconBrowseManage.png");
-    public static final Image ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
-    public static final Image ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
-    public static final Image ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
+    public static Image ICON_BROWSE_ADMINS;
+    public static Image ICON_BROWSE_MANAGEABLE;
+    public static Image ICON_BROWSE_POSTABLE;
+    public static Image ICON_BROWSE_ARCHIVES;
+    public static Image ICON_BROWSE_REFS;
     
     static final int TAB_ICON_SIZE = 24;
     
-    public static final Image ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-    public static final Image ICON_TAB_BROWSE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+    public static Image ICON_TAB_EDIT;
+    public static Image ICON_TAB_TEXTUI;
+    public static Image ICON_TAB_LOGS;
+    public static Image ICON_TAB_SYNDICATE;
+    public static Image ICON_TAB_SQL;
+    public static Image ICON_TAB_PAGE;
+    public static Image ICON_TAB_HIGHLIGHTS;
+    public static Image ICON_TAB_MSG;
+    public static Image ICON_TAB_ARCHIVE;
+    public static Image ICON_TAB_BROWSE;
 
-    public static final Image ICON_EDITOR_PRIVACY_PUBLIC = createImageFromResource("iconPrivPublic.png");
-    public static final Image ICON_EDITOR_PRIVACY_PBE = createImageFromResource("iconPrivPBE.png");
-    public static final Image ICON_EDITOR_PRIVACY_AUTHORIZED = createImageFromResource("iconPrivAuthorized.png");
-    public static final Image ICON_EDITOR_PRIVACY_REPLY = createImageFromResource("iconPrivReply.png");
-    public static final Image ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
-    public static final Image ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
-    public static final Image ICON_EDITOR_PAGEADD = createImageFromResource("iconEdPageAdd.png");
-    public static final Image ICON_EDITOR_PAGETYPE_TEXT = createImageFromResource("iconEdPageTypeText.png");
-    public static final Image ICON_EDITOR_PAGETYPE_HTML = createImageFromResource("iconEdPageTypeHTML.png");
-    public static final Image ICON_EDITOR_ATTACH = createImageFromResource("iconEdAttach.png");
-    public static final Image ICON_EDITOR_LINK = createImageFromResource("iconEdLink.png");
-    public static final Image ICON_EDITOR_STYLE = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
-    public static final Image ICON_EDITOR_SPELL = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
-    public static final Image ICON_EDITOR_SEARCH = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+    public static Image ICON_EDITOR_PRIVACY_PUBLIC;
+    public static Image ICON_EDITOR_PRIVACY_PBE;
+    public static Image ICON_EDITOR_PRIVACY_AUTHORIZED;
+    public static Image ICON_EDITOR_PRIVACY_REPLY;
+    public static Image ICON_EDITOR_BOOKMARKED_NOAVATAR;
+    public static Image ICON_EDITOR_NOT_BOOKMARKED;
+    public static Image ICON_EDITOR_PAGEADD;
+    public static Image ICON_EDITOR_PAGETYPE_TEXT;
+    public static Image ICON_EDITOR_PAGETYPE_HTML;
+    public static Image ICON_EDITOR_ATTACH;
+    public static Image ICON_EDITOR_LINK;
+    public static Image ICON_EDITOR_STYLE;
+    public static Image ICON_EDITOR_SPELL;
+    public static Image ICON_EDITOR_SEARCH;
     
-    public static final Image ICON_ONLINE = createImageFromResource("iconOnline.png");
-    public static final Image ICON_OFFLINE = createImageFromResource("iconOffline.png");
+    public static Image ICON_ONLINE;
+    public static Image ICON_OFFLINE;
     
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
@@ -151,6 +151,7 @@ public class ImageUtil {
         _tmpDir = tmpDir;
         synchronized (ImageUtil.class) {
             if (_initialized) return;
+            initImages();
             _initialized = true;
         }
         _indisposableImages.add(ICON_ERROR);
@@ -240,6 +241,98 @@ public class ImageUtil {
         _indisposableImages.add(ICON_OFFLINE);
         _timer.addEvent("init complete");
         _timer.complete();
+    }
+    
+    private static void initImages() {
+        ICON_ERROR = Display.getDefault().getSystemImage(SWT.ICON_ERROR);
+        ICON_INFORMATION = Display.getDefault().getSystemImage(SWT.ICON_INFORMATION);
+        ICON_QUESTION = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
+        ICON_WARNING = Display.getDefault().getSystemImage(SWT.ICON_WARNING);
+        ICON_WORKING = Display.getDefault().getSystemImage(SWT.ICON_WORKING);
+        
+        
+        ICON_SHELL = createImageFromResource("iconShell.png");
+        ICON_LINK_END = createImageFromResource("iconLink.png");
+        ICON_IMAGE_UNKNOWN = createImageFromResource("iconUnknown.png");
+    
+        ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
+        ICON_SYNDICATE_TYPE_INDIRECT = createImageFromResource("iconIndirect.png");
+        ICON_SYNDICATE_TYPE_FREENET = createImageFromResource("iconFreenet.png");
+        ICON_SYNDICATE_STATUS_INPROGRESS = createImageFromResource("iconSynInProgress.png");
+        ICON_SYNDICATE_STATUS_SCHEDULED = createImageFromResource("iconSynScheduled.png");
+        ICON_SYNDICATE_STATUS_NOKEY = createImageFromResource("iconSynNoKey.png");
+        ICON_SYNDICATE_STATUS_ERROR = createImageFromResource("iconSynError.png");
+        ICON_SYNDICATE_STATUS_PBE = createImageFromResource("iconSynPBE.png");
+        ICON_SYNDICATE_STATUS_OK = createImageFromResource("iconSynOk.png");
+        ICON_SYNDICATE_PUSH = createImageFromResource("iconSynPush.png");
+    
+        ICON_ARCHIVE_TYPE_FILE = createImageFromResource("iconArchiveFile.png");
+        ICON_ARCHIVE_TYPE_FREENET = createImageFromResource("iconArchiveFreenet.png");
+        ICON_ARCHIVE_TYPE_URL = createImageFromResource("iconArchiveURL.png");
+        ICON_ARCHIVE_TYPE_SYNDIE = createImageFromResource("iconArchiveSyndie.png");
+    
+        ICON_MSG_TYPE_NORMAL = createImageFromResource("iconMsgNormal.png");
+        ICON_MSG_TYPE_META = createImageFromResource("iconMsgMeta.png");
+        ICON_MSG_TYPE_PRIVATE = createImageFromResource("iconMsgPrivate.png");
+
+        ICON_MSG_FLAG_READKEYUNKNOWN = createImageFromResource("iconMsgFlagReadKeyUnknown.png");
+        ICON_MSG_FLAG_REPLYKEYUNKNOWN = createImageFromResource("iconMsgFlagReplyKeyUnknown.png");
+        ICON_MSG_FLAG_PBE = createImageFromResource("iconMsgFlagPBE.png");
+        ICON_MSG_FLAG_UNREADABLE = createImageFromResource("iconMsgFlagUnreadable.png");
+        ICON_MSG_FLAG_PUBLIC = createImageFromResource("iconMsgFlagPublic.png");
+        ICON_MSG_FLAG_AUTHENTICATED = createImageFromResource("iconMsgFlagAuthenticated.png");
+        ICON_MSG_FLAG_AUTHORIZED = createImageFromResource("iconMsgFlagAuthorized.png");
+        ICON_MSG_FLAG_BANNED = createImageFromResource("iconMsgFlagBanned.png");
+        ICON_MSG_FLAG_BOOKMARKED_AUTHOR = createImageFromResource("iconMsgFlagBookmarked.png", false); // use two different images, so we can
+        ICON_MSG_FLAG_BOOKMARKED_FORUM = createImageFromResource("iconMsgFlagBookmarked.png", false); // differentiate them in the message flag bar
+        ICON_MSG_FLAG_SCHEDULEDFOREXPIRE = createImageFromResource("iconMsgFlagScheduledForExpire.png");
+        ICON_MSG_FLAG_HASKEYS = createImageFromResource("iconMsgFlagHasKeys.png");
+        ICON_MSG_FLAG_HASARCHIVES = createImageFromResource("iconMsgFlagHasArchives.png");
+        ICON_MSG_FLAG_HASREFS = createImageFromResource("iconMsgFlagHasRefs.png");
+        ICON_MSG_FLAG_HASATTACHMENTS = createImageFromResource("iconMsgFlagHasAttachments.png");
+        ICON_MSG_FLAG_ISNEW = createImageFromResource("iconMsgFlagIsNew.png");
+    
+        ICON_REF_MSG = createImageFromResource("iconRefMsg.png");
+        ICON_REF_FORUM = createImageFromResource("iconRefForum.png");
+        ICON_REF_ARCHIVE = createImageFromResource("iconRefArchive.png");
+        ICON_REF_URL = createImageFromResource("iconRefURL.png");
+        ICON_REF_SYNDIE = createImageFromResource("iconRefSyndie.png");
+        ICON_REF_FREENET = createImageFromResource("iconRefFreenet.png");
+    
+        ICON_BROWSE_ADMINS = createImageFromResource("iconBrowseAdmins.png");
+        ICON_BROWSE_MANAGEABLE = createImageFromResource("iconBrowseManage.png");
+        ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
+        ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
+        ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
+    
+        ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_BROWSE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+
+        ICON_EDITOR_PRIVACY_PUBLIC = createImageFromResource("iconPrivPublic.png");
+        ICON_EDITOR_PRIVACY_PBE = createImageFromResource("iconPrivPBE.png");
+        ICON_EDITOR_PRIVACY_AUTHORIZED = createImageFromResource("iconPrivAuthorized.png");
+        ICON_EDITOR_PRIVACY_REPLY = createImageFromResource("iconPrivReply.png");
+        ICON_EDITOR_BOOKMARKED_NOAVATAR = createImageFromResource("iconEdBookmarkedNoAvatar.png");
+        ICON_EDITOR_NOT_BOOKMARKED = createImageFromResource("iconEdNotBookmarked.png");
+        ICON_EDITOR_PAGEADD = createImageFromResource("iconEdPageAdd.png");
+        ICON_EDITOR_PAGETYPE_TEXT = createImageFromResource("iconEdPageTypeText.png");
+        ICON_EDITOR_PAGETYPE_HTML = createImageFromResource("iconEdPageTypeHTML.png");
+        ICON_EDITOR_ATTACH = createImageFromResource("iconEdAttach.png");
+        ICON_EDITOR_LINK = createImageFromResource("iconEdLink.png");
+        ICON_EDITOR_STYLE = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+        ICON_EDITOR_SPELL = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+        ICON_EDITOR_SEARCH = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+    
+        ICON_ONLINE = createImageFromResource("iconOnline.png");
+        ICON_OFFLINE = createImageFromResource("iconOffline.png");
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {
