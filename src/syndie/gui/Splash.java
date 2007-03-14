@@ -39,6 +39,7 @@ public class Splash {
     }
     public static void dispose() {
         if (DISABLED) return;
+        if (_shell == null) return;
         if (!_shell.isDisposed())
             _shell.dispose();
         ImageUtil.dispose(_img);

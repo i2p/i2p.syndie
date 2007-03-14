@@ -61,7 +61,8 @@ public class DesktopMain {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
             } catch (RuntimeException e) {
-                ui.errorMessage("Internal error", e);
+                e.printStackTrace();
+                ui.errorMessage("Internal error: " + e.getMessage(), e);
             }
         }
     }

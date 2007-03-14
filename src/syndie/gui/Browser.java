@@ -112,6 +112,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TranslationRegistry _translation;
     private ThemeRegistry _themes;
     private Shell _shell;
+    private Composite _root;
     private Menu _mainMenu;
     private SashForm _sash;
     private BrowserTree _bookmarks;
@@ -203,8 +204,17 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private List _runAfterStartup;
     
-    public Browser(DBClient client) {
+    private boolean _externalShell;
+    
+    public Browser(DBClient client) { this(client, null, null); }
+    public Browser(DBClient client, Shell shell, Composite root) {
         _client = client;
+        _shell = shell;
+        _root = root;
+        if (shell != null)
+            _externalShell = true;
+        else
+            _externalShell = false;
         _openTabs = new HashMap();
         _openTabURIs = new HashMap();
         _uiListeners = new ArrayList();
@@ -254,9 +264,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             timer.addEvent("doStartup themes loaded");
         }
         _initialized = true;
-        _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
-        _shell.setLayout(new GridLayout(1, true));
-        _shell.setImage(ImageUtil.ICON_SHELL);
+        if (_shell == null) {
+            _shell = new Shell(Display.getDefault(), SWT.SHELL_TRIM);
+            _shell.setLayout(new GridLayout(1, true));
+            _shell.setImage(ImageUtil.ICON_SHELL);
+            _root = _shell;
+        }
         
         timer.addEvent("main shell construction");
         
@@ -265,7 +278,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         initSystray();
         timer.addEvent("systray construction");
         
-        _sash = new SashForm(_shell, SWT.HORIZONTAL);
+        _sash = new SashForm(_root, SWT.HORIZONTAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         timer.addEvent("sash construction");
@@ -319,7 +332,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         timer.addEvent("folder construction");
         
-        _statusBar = ComponentBuilder.instance().createStatusBar(this, _shell, timer);
+        _statusBar = ComponentBuilder.instance().createStatusBar(this, _root, timer);
         _statusBar.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         timer.addEvent("status bar construction");
@@ -361,7 +374,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         
         debugMessage("=tabs w items: " +_tabs.getClientArea() + "/" + _tabs.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         
-        _shell.setVisible(false);
+        if (!_externalShell)
+            _shell.setVisible(false);
         
         _themes.register(this);
     }
@@ -2862,7 +2876,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     public void applyTheme(Theme theme) {
-        if (_shell == null) return; // initComponents isn't complete yet
+        if (!_initialized || _shell == null) return; // initComponents isn't complete yet
         long t1 = System.currentTimeMillis();
         _shell.setFont(theme.SHELL_FONT);
         _tabs.setFont(theme.TAB_FONT);
