@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import syndie.db.DBClient;
 import syndie.db.NullUI;
 import syndie.db.TextEngine;
 import syndie.db.UI;
+import syndie.gui.*;
 
 class StartupPanel extends DesktopPanel {
     private Text _text;

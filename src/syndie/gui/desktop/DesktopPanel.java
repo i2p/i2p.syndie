@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -7,6 +7,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import syndie.db.UI;
+import syndie.gui.*;
 
 /**
  *

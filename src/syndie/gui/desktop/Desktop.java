@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import java.io.File;
 import org.eclipse.swt.SWT;
@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Shell;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
+import syndie.gui.*;
 
 /**
  *
@@ -99,7 +100,7 @@ class Desktop {
     }
     
     void showDesktopTabs() {
-        DesktopTabPanel panel = new DesktopTabPanel(_center, this);
+        TabPanel panel = new TabPanel(_center, this);
         show(panel);
     }
     

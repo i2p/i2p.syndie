@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import java.io.File;
 import org.eclipse.swt.graphics.DeviceData;
@@ -8,6 +8,7 @@ import syndie.data.Timer;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;
 import syndie.db.UI;
+import syndie.gui.*;
 
 /** swt's readAndDispatch needs to be in the main thread */
 public class DesktopMain {

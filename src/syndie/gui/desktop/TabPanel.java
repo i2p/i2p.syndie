@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +11,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import syndie.gui.*;
 
-class DesktopTabPanel extends DesktopPanel {
+class TabPanel extends DesktopPanel {
     private Desktop _desktop;
     private CTabFolder _tabs;
     private Menu _tabMenu;
@@ -26,7 +27,7 @@ class DesktopTabPanel extends DesktopPanel {
     /** CTabItem to uri */
     private Map _openTabURIs;
     
-    public DesktopTabPanel(Composite parent, Desktop desktop) {
+    public TabPanel(Composite parent, Desktop desktop) {
         super(parent, desktop.getUI());
         _desktop = desktop;
         _openTabs = new HashMap();

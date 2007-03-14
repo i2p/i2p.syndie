@@ -25,7 +25,7 @@ import syndie.db.DBClient;
 /**
  *
  */
-abstract class BrowserTab implements Themeable {
+public abstract class BrowserTab implements Themeable {
     private BrowserControl _browser;
     private CTabItem _item;
     private SyndieURI _uri;
@@ -141,7 +141,7 @@ abstract class BrowserTab implements Themeable {
     
     protected abstract void initComponents();
     protected boolean allowClose() { return true; }
-    protected void tabShown() { _root.layout(true); }
+    public void tabShown() { _root.layout(true); }
     protected void configItem() {
         reconfigItem();
         _item.addDisposeListener(new DisposeListener() {

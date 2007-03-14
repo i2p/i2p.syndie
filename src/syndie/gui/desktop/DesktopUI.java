@@ -1,9 +1,10 @@
-package syndie.gui;
+package syndie.gui.desktop;
 
 import java.util.ArrayList;
 import java.util.List;
 import syndie.db.Opts;
 import syndie.db.UI;
+import syndie.gui.*;
 
 class DesktopUI implements Runnable, UI {
     private List _uiListeners;

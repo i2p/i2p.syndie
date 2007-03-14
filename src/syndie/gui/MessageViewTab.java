@@ -37,7 +37,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
         getBrowser().getTranslationRegistry().register(this);
     }
     
-    protected void tabShown() {
+    public void tabShown() {
         if (!_view.isKnownLocally()) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setText(getBrowser().getTranslationRegistry().getText(T_NOMSG_TITLE, "Message unknown"));
