@@ -22,11 +22,6 @@ class DesktopPanel {
     protected DesktopEdge _edgeSouth;
     protected DesktopEdge _edgeWest;
    
-    protected DesktopCorner _cornerNW;
-    protected DesktopCorner _cornerNE;
-    protected DesktopCorner _cornerSE;
-    protected DesktopCorner _cornerSW;
-    
     public DesktopPanel(Composite parent, UI ui) {
         _parent = parent;
         _ui = ui;
@@ -41,33 +36,17 @@ class DesktopPanel {
     protected Composite getRoot() { return _root; }
     protected UI getUI() { return _ui; }
     
+    /** callback after the panel has been completely shown on the desktop */
     void shown(Desktop desktop) {}
     
-    void buildNorth(Composite edge) { 
-        if (edge != null) _edgeNorth = new DesktopEdgeDummy(SWT.COLOR_GREEN, edge, _ui);
-    }
-    void buildEast(Composite edge) { 
-        if (edge != null) _edgeEast = new DesktopEdgeDummy(SWT.COLOR_GREEN, edge, _ui);
-    }
-    void buildSouth(Composite edge) { 
-        if (edge != null) _edgeSouth = new DesktopEdgeDummy(SWT.COLOR_GREEN, edge, _ui);
-    }
-    void buildWest(Composite edge) { 
-        if (edge != null) _edgeWest = new DesktopEdgeDummy(SWT.COLOR_GREEN, edge, _ui);
-    }
-    
-    void buildNorthWest(Composite corner) { 
-        if (corner != null) _cornerNW = new DesktopCornerDummy(SWT.COLOR_GREEN, corner, _ui);
-    }
-    void buildNorthEast(Composite corner) { 
-        if (corner != null) _cornerNE = new DesktopCornerDummy(SWT.COLOR_GREEN, corner, _ui);
-    }
-    void buildSouthEast(Composite corner) { 
-        if (corner != null) _cornerSE = new DesktopCornerDummy(SWT.COLOR_GREEN, corner, _ui);
-    }
-    void buildSouthWest(Composite corner) { 
-        if (corner != null) _cornerSW = new DesktopCornerDummy(SWT.COLOR_GREEN, corner, _ui);
-    }
+    /** instruct the panel to build its northern edge (or it can do nothing if it doesn't have one) */
+    void buildNorth(Composite edge) {}
+    /** instruct the panel to build its eastern edge (or it can do nothing if it doesn't have one) */
+    void buildEast(Composite edge) {}
+    /** instruct the panel to build its southern edge (or it can do nothing if it doesn't have one) */
+    void buildSouth(Composite edge) {}
+    /** instruct the panel to build its western edge (or it can do nothing if it doesn't have one) */
+    void buildWest(Composite edge) {}
     
     void disposeEdges() {
         if (_edgeNorth != null)
@@ -79,40 +58,25 @@ class DesktopPanel {
         if (_edgeWest != null)
             _edgeWest.dispose();
     }
-    void disposeCorners() {
-        if (_cornerNW != null)
-            _cornerNW.dispose();
-        if (_cornerNE != null)
-            _cornerNE.dispose();
-        if (_cornerSE != null)
-            _cornerSE.dispose();
-        if (_cornerSW != null)
-            _cornerSW.dispose();
-    }
-    
+
+    /**
+     * fetch the built edge (or null if the panel doesn't have any panel-specific edge, in which 
+     * case the default edge will be used)
+     */
     DesktopEdge getEdgeNorth() { return _edgeNorth; }
+    /**
+     * fetch the built edge (or null if the panel doesn't have any panel-specific edge, in which 
+     * case the default edge will be used)
+     */
     DesktopEdge getEdgeEast() { return _edgeEast; }
+    /**
+     * fetch the built edge (or null if the panel doesn't have any panel-specific edge, in which 
+     * case the default edge will be used)
+     */
     DesktopEdge getEdgeSouth() { return _edgeSouth; }
+    /**
+     * fetch the built edge (or null if the panel doesn't have any panel-specific edge, in which 
+     * case the default edge will be used)
+     */
     DesktopEdge getEdgeWest() { return _edgeWest; }
-    
-    DesktopCorner getCornerNW() { return _cornerNW; }
-    DesktopCorner getCornerNE() { return _cornerNE; }
-    DesktopCorner getCornerSE() { return _cornerSE; }
-    DesktopCorner getCornerSW() { return _cornerSW; }
-}
-
-class DesktopEdgeDummy extends DesktopEdge {
-    public DesktopEdgeDummy(int sysColor, Composite parent, UI ui) {
-        super(parent, ui);
-        Canvas c = new Canvas(getRoot(), SWT.NONE);
-        c.setBackground(getRoot().getDisplay().getSystemColor(sysColor));
-    }
-}
-
-class DesktopCornerDummy extends DesktopCorner {
-    public DesktopCornerDummy(int sysColor, Composite parent, UI ui) {
-        super(parent, ui);
-        Canvas c = new Canvas(getRoot(), SWT.NONE);
-        c.setBackground(getRoot().getDisplay().getSystemColor(sysColor));
-    }
 }

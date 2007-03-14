@@ -62,7 +62,7 @@ class StartupPanel extends DesktopPanel {
             // already shown, meaning there's no more work to do
         }
     }
-    
+
     /**
      * run outside the SWT thread so that we can do heavyweight things without freezing the UI
      */

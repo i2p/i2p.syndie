@@ -244,7 +244,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
-    public MessageEditor(BrowserControl browser, Composite parent, MessageEditor.MessageEditorListener lsnr) {
+    public MessageEditor(BrowserControl browser, Composite parent, LocalMessageCallback lsnr) {
         _browser = browser;
         _parent = parent;
         _pageEditors = new ArrayList(1);
@@ -275,13 +275,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         _modifiedSinceSave = false;
     }
     
-    public void addListener(MessageEditor.MessageEditorListener lsnr) { _listeners.add(lsnr); }
-
-    public interface MessageEditorListener {
-        public void messageCreated(SyndieURI postedURI);
-        public void messagePostponed(long postponementId);
-        public void messageCancelled();
-    }
+    public void addListener(LocalMessageCallback lsnr) { _listeners.add(lsnr); }
     
     public void dispose() {
         if (_refAddPopup != null) _refAddPopup.dispose();
@@ -428,7 +422,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
             box.setText(getBrowser().getTranslationRegistry().getText(T_POSTED_TITLE, "Message created!"));
             box.open();
             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditor.MessageEditorListener)iter.next()).messageCreated(creator.getCreatedURI());
+                ((LocalMessageCallback)iter.next()).messageCreated(creator.getCreatedURI());
         } else {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
@@ -501,7 +495,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
     public void postponeMessage() {
         saveState();
         for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditor.MessageEditorListener)iter.next()).messagePostponed(_postponeId);
+                ((LocalMessageCallback)iter.next()).messagePostponed(_postponeId);
     }
     
     private static final String T_CANCEL_MESSAGE = "syndie.gui.messageeditor.cancel.message";
@@ -521,7 +515,7 @@ public class MessageEditor implements Themeable, Translatable, ImageBuilderPopup
         } else {
             dropSavedState();
             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((MessageEditor.MessageEditorListener)iter.next()).messageCancelled();
+                ((LocalMessageCallback)iter.next()).messageCancelled();
         }
     }
 

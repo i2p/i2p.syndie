@@ -27,15 +27,28 @@ class Desktop {
     private Display _display;
     private Shell _shell;
     private Composite _edgeNorthWest;
-    private Composite _edgeNorth;
     private Composite _edgeNorthEast;
-    private Composite _edgeEast;
     private Composite _edgeSouthEast;
-    private Composite _edgeSouth;
     private Composite _edgeSouthWest;
+
+    private Composite _edgeNorth;
+    private Composite _edgeEast;
+    private Composite _edgeSouth;
     private Composite _edgeWest;
     private Composite _center;
+
+    private DesktopEdge _edgeNorthDefault;
+    private DesktopEdge _edgeEastDefault;
+    private DesktopEdge _edgeSouthDefault;
+    private DesktopEdge _edgeWestDefault;
+    
+    private Composite _centerDefault;
+    
     private StackLayout _centerStack;
+    private StackLayout _edgeNorthStack;
+    private StackLayout _edgeEastStack;
+    private StackLayout _edgeSouthStack;
+    private StackLayout _edgeWestStack;
     
     private StartupPanel _startupPanel;
     
@@ -86,17 +99,24 @@ class Desktop {
     }
     
     void show(DesktopPanel panel) {
-        panel.buildNorthWest(_edgeNorthWest);
-        panel.buildNorthEast(_edgeNorthEast);
-        panel.buildSouthEast(_edgeSouthEast);
-        panel.buildSouthWest(_edgeSouthWest);
         panel.buildNorth(_edgeNorth);
         panel.buildEast(_edgeEast);
         panel.buildSouth(_edgeSouth);
         panel.buildWest(_edgeWest);
         _centerStack.topControl = panel.getRoot();
-        panel.shown(this);
         _center.layout();
+        setEdge(_edgeNorth, _edgeNorthStack, panel.getEdgeNorth(), _edgeNorthDefault);
+        setEdge(_edgeEast, _edgeEastStack, panel.getEdgeEast(), _edgeEastDefault);
+        setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
+        setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
+        panel.shown(this);
+    }
+    private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
+        if (specificEdge != null)
+            stack.topControl = specificEdge.getRoot();
+        else
+            stack.topControl = defEdge.getRoot();
+        edge.layout();
     }
     
     void showDesktopTabs() {
@@ -147,12 +167,8 @@ class Desktop {
         _edgeSouthEast.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _edgeNorthWest.setLayout(new FillLayout());
-        _edgeNorth.setLayout(new FillLayout());
         _edgeNorthEast.setLayout(new FillLayout());
-        _edgeWest.setLayout(new FillLayout());
-        _edgeEast.setLayout(new FillLayout());
         _edgeSouthWest.setLayout(new FillLayout());
-        _edgeSouth.setLayout(new FillLayout());
         _edgeSouthEast.setLayout(new FillLayout());
         
         setSize(_edgeNorthWest, BORDER_SIZE, BORDER_SIZE);
@@ -165,8 +181,27 @@ class Desktop {
         setSize(_edgeEast, BORDER_SIZE, -1);
         setSize(_edgeWest, BORDER_SIZE, -1);
         
+        new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
+        new DesktopCornerDummy(SWT.COLOR_BLUE, _edgeNorthEast, _ui);
+        new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
+        new DesktopCornerDummy(SWT.COLOR_RED, _edgeSouthWest, _ui);
+        
+        _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
+        _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
+        _edgeSouthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeSouth, _ui);
+        _edgeWestDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
+        
         _centerStack = new StackLayout();
         _center.setLayout(_centerStack);
+
+        _edgeNorthStack = new StackLayout();
+        _edgeNorth.setLayout(_edgeNorthStack);
+        _edgeEastStack = new StackLayout();
+        _edgeEast.setLayout(_edgeEastStack);
+        _edgeSouthStack = new StackLayout();
+        _edgeSouth.setLayout(_edgeSouthStack);
+        _edgeWestStack = new StackLayout();
+        _edgeWest.setLayout(_edgeWestStack);
     }
     
     private static final int BORDER_SIZE = 64;

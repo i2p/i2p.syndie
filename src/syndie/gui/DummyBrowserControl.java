@@ -71,10 +71,6 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createSQLURI() { return null; }
     public ThemeRegistry getThemeRegistry() { return _themeRegistry; } 
 
-    public MessageEditor.MessageEditorListener getMessageEditorListener() { return null; }
-    public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {}
-    public void removeMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {}
-
     public boolean isBookmarked(SyndieURI syndieURI) { return false; }
 
     public TreeMap getResumeable() { return null; }
@@ -89,4 +85,8 @@ public class DummyBrowserControl implements BrowserControl {
     public void metaImported() {}
     public void readStatusUpdated() {}
     public void forumCreated() {}
+
+    public void messageCreated(SyndieURI postedURI) {}
+    public void messagePostponed(long postponementId) {}
+    public void messageCancelled() {}
 }

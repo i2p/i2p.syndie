@@ -111,7 +111,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private TextEngine _engine;
     private TranslationRegistry _translation;
     private ThemeRegistry _themes;
-    private MsgEditorListener _editorListener;
     private Shell _shell;
     private Menu _mainMenu;
     private SashForm _sash;
@@ -219,7 +218,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _translation = new TranslationRegistry(this);
         _themes = new ThemeRegistry(this);
         _translation.loadTranslations();
-        _editorListener = new MsgEditorListener();
         JobRunner.instance().setUI(getUI());
         debugMessage("browser construction.  isLoggedIn? " + client.isLoggedIn());
         if (client.isLoggedIn())
@@ -1385,35 +1383,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _postMenuPublicRoot.setEnabled(_postMenuPublicMenu.getItemCount() > 0);
     }
     
-    public MessageEditor.MessageEditorListener getMessageEditorListener() { return _editorListener; }
-    public void addMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {
-        _editorListener.add(lsnr);
-    }
-    public void removeMessageEditorListener(MessageEditor.MessageEditorListener lsnr) {
-        _editorListener.remove(lsnr);
-    }
+    public void messageCreated(SyndieURI postedURI) { populateResumeable(); }
+    public void messagePostponed(long postponementId) { populateResumeable(); }
+    public void messageCancelled() { populateResumeable(); }
     
-    private class MsgEditorListener implements MessageEditor.MessageEditorListener {
-        private Set _listeners;
-        public MsgEditorListener() { _listeners = new HashSet(); }
-        public void messageCreated(SyndieURI postedURI) { 
-            Browser.this.populateResumeable();
-            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
-                ((MessageEditor.MessageEditorListener)iter.next()).messageCreated(postedURI);
-        }
-        public void messagePostponed(long postponementId) {
-            Browser.this.populateResumeable();
-            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
-                ((MessageEditor.MessageEditorListener)iter.next()).messagePostponed(postponementId);
-        }
-        public void messageCancelled() {
-            Browser.this.populateResumeable();
-            for (Iterator iter = _listeners.iterator(); iter.hasNext(); )
-                ((MessageEditor.MessageEditorListener)iter.next()).messageCancelled();
-        }
-        private void add(MessageEditor.MessageEditorListener lsnr) { _listeners.add(lsnr); }
-        private void remove(MessageEditor.MessageEditorListener lsnr) { _listeners.remove(lsnr); }
-    }
     
     private static final Comparator INVERSE_COMPARATOR = new Comparator() {
         public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }

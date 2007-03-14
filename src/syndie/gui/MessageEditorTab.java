@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class MessageEditorTab extends BrowserTab implements MessageEditor.MessageEditorListener, Translatable {
+public class MessageEditorTab extends BrowserTab implements LocalMessageCallback, Translatable {
     private MessageEditor _editor;
     private Hash _forum;
     private SyndieURI _parent;
@@ -43,7 +43,7 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
         Long postponeId = uri.getLong("postponeid");
         Long postponeVer = uri.getLong("postponever");
         if ( (postponeId != null) && (postponeVer != null) ) {
-            _editor.addListener(getBrowser().getMessageEditorListener());
+            _editor.addListener(getBrowser());
             _editor.loadState(postponeId.longValue(), postponeVer.intValue());
             _forum = _editor.getForum();
             if (_editor.getParentCount() > 0)
@@ -52,7 +52,7 @@ public class MessageEditorTab extends BrowserTab implements MessageEditor.Messag
                 _parent = null;
             _asReply = _editor.getPrivacyReply();
         } else {
-            _editor.addListener(getBrowser().getMessageEditorListener());
+            _editor.addListener(getBrowser());
             getBrowser().getUI().debugMessage("message editor initialized.  adding page");
             //_editor.addPage();
             //getBrowser().getUI().debugMessage("page added");
