@@ -3,6 +3,8 @@ package syndie.gui.desktop;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -14,6 +16,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import syndie.db.UI;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.ImageGrid;
 import syndie.gui.ImageUtil;
 
 /**
@@ -43,25 +46,36 @@ public class LinkEdge extends DesktopEdge {
         _panelButtons = new HashMap(8);
         _panelCounter = 0;
         initComponents();
-        parent.getDisplay().timerExec(5000, new Runnable() { public void run() { dummyPopulate(); } });
+    }
+    void startupComplete() {
+        ImageUtil.init(_desktop.getDBClient().getTempDir());
+        getRoot().getDisplay().asyncExec(new Runnable() { public void run() { dummyPopulate(); } });
     }
     
     private void dummyPopulate() {
         Image imgs[] = new Image[] {
-            ImageUtil.ICON_TAB_ARCHIVE, ImageUtil.ICON_TAB_SYNDICATE,
             ImageUtil.ICON_ARCHIVE_TYPE_SYNDIE, ImageUtil.ICON_ARCHIVE_TYPE_URL,
             ImageUtil.ICON_MSG_FLAG_PUBLIC, ImageUtil.ICON_MSG_FLAG_AUTHENTICATED,
             ImageUtil.ICON_MSG_FLAG_AUTHORIZED, ImageUtil.ICON_MSG_FLAG_BANNED,
-            ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR
+            ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR, ImageUtil.ICON_MSG_FLAG_HASARCHIVES,
+            ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS, ImageUtil.ICON_MSG_FLAG_HASKEYS,
+            ImageUtil.ICON_MSG_FLAG_HASREFS, ImageUtil.ICON_MSG_FLAG_ISNEW,
+            ImageUtil.ICON_MSG_FLAG_PBE, ImageUtil.ICON_MSG_FLAG_PUBLIC,
+            ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN, ImageUtil.ICON_MSG_FLAG_REPLYKEYUNKNOWN,
+            ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE, ImageUtil.ICON_MSG_FLAG_UNREADABLE,
+            ImageUtil.ICON_MSG_TYPE_META, ImageUtil.ICON_MSG_TYPE_NORMAL,
+            ImageUtil.ICON_MSG_TYPE_PRIVATE
         };
         for (int i = 0; i < imgs.length; i++) {
             final int imgNum = i;
             _watchedAvatarGrid.add(i+"", imgs[i], "image " + i, new Runnable() { public void run() { _desktop.getUI().debugMessage("watched selected: " + imgNum); } });
         }
-        for (int i = 0; i < imgs.length; i++) {
+        for (int i = 0; i < 9; i++) {
             final int imgNum = i;
             _bookmarkIconGrid.add(i+"", imgs[i], "image " + i, new Runnable() { public void run() { _desktop.getUI().debugMessage("bookmark selected: " + imgNum); } });
         }
+        _watchedAvatarGrid.layout(true);
+        _bookmarkIconGrid.layout(true);
     }
     
     private void initComponents() {
@@ -80,7 +94,14 @@ public class LinkEdge extends DesktopEdge {
         _watchedAvatars = new Composite(root, SWT.NONE);
         _watchedAvatars.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _watchedAvatars.setLayout(new FillLayout());
-        _watchedAvatarGrid = new ImageGrid(_watchedAvatars, SWT.NONE, 2, 32, false);
+        _watchedAvatarGrid = new ImageGrid(_watchedAvatars, 16, false);
+        _watchedAvatarGrid.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) {
+                _desktop.getUI().debugMessage("watched avatar grid selected");
+            }
+        });
         
         _panels = new Composite(root, SWT.NONE);
         _panels.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -94,7 +115,14 @@ public class LinkEdge extends DesktopEdge {
         _bookmarkIcons = new Composite(root, SWT.NONE);
         _bookmarkIcons.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _bookmarkIcons.setLayout(new FillLayout());
-        _bookmarkIconGrid = new ImageGrid(_bookmarkIcons, SWT.NONE, 2, 32, true);
+        _bookmarkIconGrid = new ImageGrid(_bookmarkIcons, 16, true);
+        _bookmarkIconGrid.addMouseListener(new MouseListener() {
+            public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            public void mouseDown(MouseEvent mouseEvent) {}
+            public void mouseUp(MouseEvent mouseEvent) {
+                _desktop.getUI().debugMessage("bookmark icon grid selected");
+            }
+        });
         
         _bookmarkButton = new Button(root, SWT.PUSH);
         _bookmarkButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));

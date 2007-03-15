@@ -20,7 +20,12 @@ class TabPanel extends DesktopPanel {
     private void initComponents() {
         Composite root = getRoot();
         _browserBase = new Composite(root, SWT.NONE);
-        _browserBase.setLayout(new GridLayout(1, true));
+        GridLayout gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        _browserBase.setLayout(gl);
         _browser = new Browser(_desktop.getDBClient(), root.getShell(), _browserBase);
         _browser.addUI(_desktop.getUI());
         Timer t = new Timer("tab panel startup", _desktop.getUI());
@@ -28,4 +33,7 @@ class TabPanel extends DesktopPanel {
         t.addEvent("done with the nested browser startup");
         t.complete();
     }
+    
+    public String getPanelName() { return "tabs"; }
+    public String getPanelDescription() { return "Old style tabbed interface"; }
 }

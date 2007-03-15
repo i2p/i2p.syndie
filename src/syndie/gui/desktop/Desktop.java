@@ -43,7 +43,7 @@ class Desktop {
     private DesktopEdge _edgeNorthDefault;
     private DesktopEdge _edgeEastDefault;
     private DesktopEdge _edgeSouthDefault;
-    private DesktopEdge _edgeWestDefault;
+    private LinkEdge _edgeWestDefault;
     
     private Composite _centerDefault;
     
@@ -74,7 +74,7 @@ class Desktop {
     public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     public void removeListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     
-    private boolean TRIM = false;
+    private boolean TRIM = true;
     
     private void initComponents(Timer timer) {
         if (TRIM)
@@ -133,6 +133,11 @@ class Desktop {
         else
             stack.topControl = defEdge.getRoot();
         edge.layout();
+    }
+    
+    void startupComplete() {
+        _edgeWestDefault.startupComplete();
+        //_display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
     
     void showDesktopTabs() {
