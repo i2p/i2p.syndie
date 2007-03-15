@@ -1,5 +1,31 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-03-15  1.005a released
+    - streamline the splash screen loading, status bar updating, and thread
+      rendering.  also includes some minor refactorings to improve GUI
+      responsiveness.  page rendering is also improved for large messages.
+    - improved image loading performance
+    - trim the PRNG buffer size from 4MB to 4KB, dramatically cutting startup
+      load
+    - add a 200 change undo/redo buffer into the page editor
+    - handle attachment-specific Syndie URIs
+    - parallelize the HTTP syndication where possible
+    - add a direct "pull only" archive to new users, and schedule it up to run
+      automatically (to ease the out of box experience)
+    - better subsequent syndication fetch handling
+    - handle web rips in character sets other than UTF-8 (translating them into
+      UTF-8 transparently as long as the server sends the encoding/charset type)
+    - when browsing a single forum, include the forum's advertised references up
+      top, giving the forum administrator a place to put any FAQs/etc
+    - support nested quotes
+    - run the shutdown/exit in another thread so the GUI disappears immediately,
+      even if the database takes a while to clean up
+    - approximately every 10 times we shut down, compact the database
+    - disable the 30 second startup timeout, as slow machines that have to do
+      some database recovery could exceed that period (and the timeout was only
+      there for helping pre-1.0 users migrate anyway)
+    - major internal refactoring to simplify integration with other GUI styles
+
 * 2007-02-21  1.004a released
     - heavily reworked HTTP syndication to improve reliability and performance,
       and to deal with hung connections better

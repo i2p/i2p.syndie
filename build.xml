@@ -741,13 +741,9 @@ exec java -XstartOnFirstThread \
 	     hdiutil create -srcfolder pkgosx/syndie-1.003a/Syndie.app Syndie.dmg
 	     hdiutil internet-enable -yes Syndie.dmg
 	  -->
-	<echo>syndie-${syndie.version}.bin.osx.tar.bz2 extracts to syndie-${syndie.version}/Syndie.app/
-Alternately, to build a syndie-${syndie.version}.dmg, run the following on OSX:
-	hdiutil create -srcfolder pkgosx/syndie-${syndie.version}/Syndie.app syndie-${syndie.version}.dmg
-	hdiutil internet-enable -yes syndie-${syndie.version}.dmg
-</echo>
+        <delete dir="pkgosx" />
     </target>
-    <target name="dist">
+    <target name="-dist">
       <ant target="distclean" />
       <ant target="source-package" />
       <ant target="source-nodeps-package" />
@@ -758,17 +754,25 @@ Alternately, to build a syndie-${syndie.version}.dmg, run the following on OSX:
       <ant target="pkgosx" />
     </target>
     
-    <!-- following are newstyle packaging targets, not yet used for deployment -->
-    <target name="-pkg">
+    <target name="pkg" depends="distclean" description="Package a release">
         <loadproperties srcfile="VERSION" />
-        <property name="pkgdir" value="/tmp/pkg" />
-        <antcall target="-binwin32" />
+        <property name="pkgdir" value="pkgrelease" />
+        <delete dir="${pkgdir}" />
+	<!-- source comes first -->
+	<antcall target="source-nodeps-package" />
+        <copy file="doc/web/dist/syndie-${syndie.version}.src.nodeps.tar.bz2" todir="${pkgdir}" />
+	<delete file="doc/web/dist/syndie-${syndie.version}.src.nodeps.tar.bz2" />
+	<!-- osx is packaged specially -->
+	<ant target="pkgosx" />
+        <copy file="doc/web/dist/syndie-${syndie.version}.bin.osx.tar.bz2" todir="${pkgdir}" />
+        <delete file="doc/web/dist/syndie-${syndie.version}.bin.osx.tar.bz2" />
+        <!-- now for the packaged installers -->
+	<antcall target="-binwin32" />
         <antcall target="-binlinux32jar" />
         <antcall target="-binlinux32tar" />
-        <antcall target="-binosxtar" />
         <antcall target="jar" />
         <copy file="lib/syndie.jar" tofile="${pkgdir}/syndie-${syndie.version}.bin.jar" />
-        
+        <echo>Packages ready in ${pkgdir}</echo>
     </target>
     
     <target name="-binwin32">
@@ -804,18 +808,6 @@ Alternately, to build a syndie-${syndie.version}.dmg, run the following on OSX:
             <param name="installer" value="" /> <!-- build an izpack install? -->
             <param name="installer.exe" value="" /> <!-- build an install.exe? -->
             <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.linux32.tar.bz2" />
-        </antcall>
-    </target>
-    <target name="-binosxtar">
-        <loadproperties srcfile="VERSION" />
-        <antcall target="-binpackage">
-            <param name="swt.jar" value="${swt.osx}" />
-            <!-- <param name="dictfile" value="words.txt" /> -->
-            <param name="syndie.exe" value="" /> <!-- build a syndie.exe? -->
-            <param name="tobindir" value="" /> <!-- extra file to copy to the bin dir -->
-            <param name="installer" value="" /> <!-- build an izpack install? -->
-            <param name="installer.exe" value="" /> <!-- build an install.exe? -->
-            <param name="outfile" value="${pkgdir}/syndie-${syndie.version}.bin.osx.tar.bz2" />
         </antcall>
     </target>
     
