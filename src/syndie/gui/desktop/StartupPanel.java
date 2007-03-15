@@ -45,6 +45,10 @@ class StartupPanel extends DesktopPanel {
             }
         });
     }
+    
+    public String getPanelName() { return "console"; }
+    public String getPanelDescription() { return "Serves as a window into Syndie's internals"; }
+    
     private void initComponents() {
         Composite root = getRoot();
         _text = new Text(root, SWT.BORDER | SWT.WRAP);

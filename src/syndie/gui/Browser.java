@@ -459,7 +459,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public void setEngine(TextEngine engine) { _engine = engine; }
     public void startup(final Timer timer) {
-        debugMessage("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
+        timer.addEvent("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
         long beforeInit = System.currentTimeMillis();
         if (_client.isLoggedIn() && !_initialized) {
             _initialized = true;
@@ -471,7 +471,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         long afterInit = System.currentTimeMillis();
         Display.getDefault().syncExec(new Runnable() { public void run() { doStartup(new Timer("alternate startup", getUI(), true, -1)); } });
         long afterStart = System.currentTimeMillis();
-        //System.out.println("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
+        timer.addEvent("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
     }
     private void doStartup(final Timer timer) {
         timer.addEvent("doStartup beginning");

@@ -1,6 +1,8 @@
 package syndie.gui.desktop;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ShellEvent;
@@ -26,6 +28,7 @@ class Desktop {
     private DesktopUI _ui;
     private Display _display;
     private Shell _shell;
+    private List _listeners;
     private Composite _edgeNorthWest;
     private Composite _edgeNorthEast;
     private Composite _edgeSouthEast;
@@ -60,10 +63,18 @@ class Desktop {
         _rootFile = rootFile;
         _ui = ui;
         _display = display;
+        _listeners = new ArrayList();
         initComponents(timer);
     }
     
-    private boolean TRIM = true;
+    public interface DesktopListener {
+        public void panelShown(DesktopPanel panel);
+        public void destroyed(DesktopPanel panel);
+    }
+    public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
+    public void removeListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
+    
+    private boolean TRIM = false;
     
     private void initComponents(Timer timer) {
         if (TRIM)
@@ -110,7 +121,12 @@ class Desktop {
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
         panel.shown(this);
+        synchronized (_listeners) {
+            for (int i = 0; i < _listeners.size(); i++)
+                ((DesktopListener)_listeners.get(i)).panelShown(panel);
+        }
     }
+    
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
         if (specificEdge != null)
             stack.topControl = specificEdge.getRoot();
@@ -189,7 +205,7 @@ class Desktop {
         _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
         _edgeSouthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeSouth, _ui);
-        _edgeWestDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
+        _edgeWestDefault = new LinkEdge(_edgeWest, _ui, this); //new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
         
         _centerStack = new StackLayout();
         _center.setLayout(_centerStack);

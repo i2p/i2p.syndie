@@ -36,6 +36,9 @@ class DesktopPanel {
     protected Composite getRoot() { return _root; }
     protected UI getUI() { return _ui; }
     
+    public String getPanelName() { return "desktop panel"; }
+    public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
+    
     /** callback after the panel has been completely shown on the desktop */
     void shown(Desktop desktop) {}
     
