@@ -158,8 +158,10 @@ class Desktop {
     
     private void prepareGrid() {
         GridLayout gl = new GridLayout(3, false);
+        gl.horizontalSpacing = 0;
         gl.marginWidth = 0;
         gl.marginHeight = 0;
+        gl.verticalSpacing = 0;
         _shell.setLayout(gl);
         
         _edgeNorthWest = new Composite(_shell, SWT.NONE);

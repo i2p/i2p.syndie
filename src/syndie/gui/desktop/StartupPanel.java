@@ -80,7 +80,7 @@ class StartupPanel extends DesktopPanel {
         }
         _startupTimer.addEvent("runAfterStartup events complete");
         _startupTimer.complete();
-        _display.asyncExec(new Runnable() { public void run() { _desktop.showDesktopTabs(); } });
+        //_display.asyncExec(new Runnable() { public void run() { _desktop.showDesktopTabs(); } });
         //try { Thread.sleep(120*1000); } catch (InterruptedException ie) {}
         //_display.asyncExec(new Runnable() { public void run() { _desktop.exit(); } });
     }

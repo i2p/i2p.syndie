@@ -3,14 +3,18 @@ package syndie.gui.desktop;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import syndie.db.UI;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.ImageUtil;
 
 /**
  * desktop edge containing the watched forums, bookmarked references, and the
@@ -24,6 +28,9 @@ public class LinkEdge extends DesktopEdge {
     private Composite _bookmarkIcons;
     private Button _bookmarkButton;
     
+    private ImageGrid _watchedAvatarGrid;
+    private ImageGrid _bookmarkIconGrid;
+    
     private Map _panelButtons;
 
     /** each new panel gets a different color, rotating through this list */
@@ -36,6 +43,25 @@ public class LinkEdge extends DesktopEdge {
         _panelButtons = new HashMap(8);
         _panelCounter = 0;
         initComponents();
+        parent.getDisplay().timerExec(5000, new Runnable() { public void run() { dummyPopulate(); } });
+    }
+    
+    private void dummyPopulate() {
+        Image imgs[] = new Image[] {
+            ImageUtil.ICON_TAB_ARCHIVE, ImageUtil.ICON_TAB_SYNDICATE,
+            ImageUtil.ICON_ARCHIVE_TYPE_SYNDIE, ImageUtil.ICON_ARCHIVE_TYPE_URL,
+            ImageUtil.ICON_MSG_FLAG_PUBLIC, ImageUtil.ICON_MSG_FLAG_AUTHENTICATED,
+            ImageUtil.ICON_MSG_FLAG_AUTHORIZED, ImageUtil.ICON_MSG_FLAG_BANNED,
+            ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR
+        };
+        for (int i = 0; i < imgs.length; i++) {
+            final int imgNum = i;
+            _watchedAvatarGrid.add(i+"", imgs[i], "image " + i, new Runnable() { public void run() { _desktop.getUI().debugMessage("watched selected: " + imgNum); } });
+        }
+        for (int i = 0; i < imgs.length; i++) {
+            final int imgNum = i;
+            _bookmarkIconGrid.add(i+"", imgs[i], "image " + i, new Runnable() { public void run() { _desktop.getUI().debugMessage("bookmark selected: " + imgNum); } });
+        }
     }
     
     private void initComponents() {
@@ -53,13 +79,22 @@ public class LinkEdge extends DesktopEdge {
         
         _watchedAvatars = new Composite(root, SWT.NONE);
         _watchedAvatars.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _watchedAvatars.setLayout(new FillLayout());
+        _watchedAvatarGrid = new ImageGrid(_watchedAvatars, SWT.NONE, 2, 32, false);
         
         _panels = new Composite(root, SWT.NONE);
         _panels.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _panels.setLayout(new GridLayout(1, true));
+        gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        _panels.setLayout(gl);
         
         _bookmarkIcons = new Composite(root, SWT.NONE);
         _bookmarkIcons.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _bookmarkIcons.setLayout(new FillLayout());
+        _bookmarkIconGrid = new ImageGrid(_bookmarkIcons, SWT.NONE, 2, 32, true);
         
         _bookmarkButton = new Button(root, SWT.PUSH);
         _bookmarkButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
