@@ -1,0 +1,337 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<title>Syndie - desktop design</title>
+<link rel="stylesheet" href="style.css" type="text/css" title="normal" media="screen" />
+</head>
+<body>
+<div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
+<div id="Header">
+ <a href="index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
+</div>
+<div id="Menu">
+	<a href="index.html" title="Home">Home</a><br />
+	<a href="download.html" title="Download Syndie">Download</a><br />
+	<a href="features.html" title="Syndie Features">Features</a><br />
+	<a href="usecases.html" title="Use cases">Use cases</a><br />
+	<a href="faq.html" title="Frequently Asked Questions">Faq</a><br />
+	<a href="roadmap.html" title="Roadmap">Roadmap</a><br />
+	<a href="dev.html" title="Developers">Developers</a><br />
+	<a href="manual.html" title="">Manual</a><br />
+	<a href="donate.html" title="Help Syndie">Donate</a><br />
+	<a href="related.html" title="Related projects">Related projects</a><br />
+	<a href="about.html" title="About Syndie">About</a><br />
+	<hr />
+	<a href="https://trac.i2p.net/">Bugtracker</a>
+	<a href="http://trac.i2p/">(via I2P)</a><br />
+	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a><br />
+	<hr />
+	<a href="dev.html" title="Code">Code</a><br />
+	<a href="spec.html" title="Specs">Specs</a><br />
+	<a href="archive.html" title="Archives">Archives</a><br />
+	<a href="db.html" title="Database">Database</a><br />
+</div>
+<div id="Content">
+<h1>Syndie Desktop design notes</h1>
+
+<p>This page is a work in progress describing the design of the Syndie Desktop GUI.  Any
+input is very much appreciated.</p>
+
+<p>As a whole, the Desktop GUI offers a small number of contexts for doing various
+tasks - there's a screen for reading, another for posting, another for selecting what
+to read, and another for selecting what forums/blogs to participate in.  The aim is to
+fill each screen with everything the user needs to perform a particular task, but keep
+out everything they don't need, thereby reducing the conceptual overhead of each task
+and providing optimized widgets.</p>
+
+<p>Following the lead of Fitts' law and OLPC's "Sugar" interface, the edges and corners
+of the screen have increased importance as compared to standard GUIs.  Ease of use is
+paramount, as is the ability for experts to quickly do what they want - as such, the
+GUI aims to be controllable entirely through the keyboard.  Of course, accessibility
+is also an important part of that - alternative input and output technologies should
+not be precluded (and should instead be supported as best possible), and the display
+rendering should be customizable according to the user's needs.</p>
+
+<p>GUI performance is also a key focus of the Desktop GUI, both on modern machines and
+on the sort of machines found in out of the way net cafes.</p>
+
+<ul>
+<li><a href="#template">Screen template</a><ul>
+ <li><a href="#edges">Edges</a></li>
+ <li><a href="#corners">Corners</a><ul>
+  <li><a href="#cornercontrol">Control menu</a></li>
+  <li><a href="#cornerstatus">Status menu</a></li>
+  <li><a href="#corneradvanced">Advanced menu</a></li>
+  <li><a href="#corneridentity">Identity menu</a></li>
+  </ul></li>
+ </ul></li>
+<li><a href="#screenstartup">Startup screen</a></li>
+<li><a href="#screenforumselection">Forum selection screen</a></li>
+<li><a href="#screenmessageselection">Message selection screen</a></li>
+<li><a href="#screenmessageview">Message view screen</a></li>
+<li><a href="#screeneditmessage">Edit message screen</a></li>
+</ul>
+
+<h3 id="template">Screen template</h3>
+
+<p>A a whole, the user's display is broken up into a 9 blocks - the large center panel, four edges, and four corners.  The center panel displays the current "screen", and the four edges may be overridden for that screen (if a screen is not overriding an edge, it uses the "default edge").  The four corners are always visible and always have the same meaning, regardless of what screen is being displayed.</p>
+
+<h3 id="edges">Edges</h3>
+
+<p>All four edges have a theme<ul>
+<li>the "north" edge should display information or metadata about the current screen</li>
+<li>the "east" edge should have navigation buttons or controls to go somewhere else</li>
+<li>the "south" edge should have action buttons for performing various tasks</li>
+<li>the "west" edge serves as a base for accessing the user's highlights</li>
+</ul></p>
+
+<h4 id="edgewest">The default west edge</h4>
+
+<p>The west edge has special functionality - displaying quick link icon to access the 
+user's watched forums and selected bookmarks, buttons to switch between the already
+loaded screens, and drag&amp;drop targets to watch or bookmark resources.  Few if any
+screens should override the default west edge.</p>
+
+<h3 id="corners">Corners</h3>
+
+<p>As mentioned, the four corners have pegged functionality:<ul>
+<li>the "northwest" corner opens the control overlay menu</li>
+<li>the "northeast" corner opens the status overlay menu</li>
+<li>the "southeast" corner opens the advanced overlay menu</li>
+<li>the "southwest" corner opens the identity overlay menu</li>
+</ul>
+
+<p>These "overlay menus" are modal dialogs that display on top of the current screen, though do not take up the entire space.  When dismissed (either with a control inside the menu or by hitting the controlling corner again), the current screen becomes the focus again.  The intention of these displays are to serve as topical menus for certain functionality.</p>
+
+<h4 id="cornercontrol">"control menu"</h4>
+
+<p>Launched by the northwest corner, the control menu has a variety of basic control functions:<ul>
+<li>open a specific screen directly (via Syndie URI)</li>
+<li>import/export <code>.syndie</code> files</li>
+<li>backup/restore private information</li>
+<li>configure user preferences</li>
+<li>minimize or exit the application</li></ul></p>
+
+<h4 id="cornerstatus">"status menu"</h4>
+
+<p>Launched by the northeast corner, the status menu monitors the Syndie's archive and syndication status:<ul>
+<li>toggle online/offline state</li>
+<li>manage archive syndication schedule</li>
+<li>summarize local archive content (basic stats)</li>
+</ul></p>
+
+<p>The corner responsible for the status menu should also adjust its display based on the status (online/offline, syndication progress, etc), when possible</p>
+
+<h4 id="corneradvanced">"advanced menu"</h4>
+
+<p>Launched by the southeast corner, the advanced menu exposes the functionality not visible elsewhere:<ul>
+<li>Text based interface</li>
+<li>SQL interface</li>
+<li>Logs</li>
+</ul></p>
+
+<h4 id="corneridentity">"identity menu"</h4>
+
+<p>Launched by the southwest corner, the identity menu exposes tools to manage the user's identities:<ul>
+<li>Create new identities and forums</li>
+<li>Update the privacy, security, and authentication policies of manageable forums</li>
+<li>Adjust the resources advertised by manageable forums and identities</li>
+</ul></p>
+
+<hr />
+
+<h2 id="screenstartup">Startup screen</h2>
+<h3>Description</h3>
+<p>The startup screen is shown immediately when the Syndie desktop launches, and includes progress information about the startup process.  In fact, while the startup screen is being displayed, it is launching and monitoring the various tasks to get the Syndie desktop into working order.</p>
+
+<h3>north edge</h3>
+<p>No custom north edge is provided</p>
+
+<h3>east edge</h3>
+<p>No custom east edge is provided</p>
+
+<h3>south edge</h3>
+<p>No custom south edge is provided</p>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+<h2 id="screenforumselection">Forum selection screen</h2>
+<h3>Description</h3>
+<p>The forum selection screen is triggered when the default west edge is chosen -
+it manages the watched forums and bookmarks.  One of the important functions is to
+assign icons to bookmarked folders/elements so they can show up on the default west
+edge as links (it uses the scaled down avatars of the watched forums for the same)</p>
+
+<h3>north edge</h3>
+<p>No custom north edge is provided</p>
+
+<h3>east edge</h3>
+<p>A big "view selected" button.</p>
+
+<h3>south edge</h3>
+<p>A series of controls for the watched list and bookmark tree:<ul>
+<li>Add forum to the watched list</li>
+<li>Remove selected forum from the watched list</li>
+<li>Add a folder or bookmark to the bookmark tree</li>
+<li>Remove a folder or bookmark from the bookmark tree</li>
+</ul>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+<h2 id="screenmessageselection">Message selection screen</h2>
+<h3>Description</h3>
+<p>The "message selection screen" is a fancy term for that hierarchical message view.  It can show messages in just one forum, organized as threads or flat.  It can show messages for multiple forums as well, either split up by forum or interspersed with each other.  The messages can be filtered to match only certain criteria.  If desired, the screen can show a small preview of individual messages (perhaps the first 30 words?) in a small tooltip-like display.</p>
+
+<h3>north edge</h3>
+<p>If only a single forum is being shown, the north edge contains information about that forum - its avatar, name, description, and any advertised references (FAQs/policies/etc).  If multiple forums are being shown, it tries to show as much information as it can, but under certain circumstances may merely render the general filtering criteria being used to select messages.</p>
+
+<h3>east edge</h3>
+<p>The east edge has a variety of controls:<ul>
+<li>Pagination controls (in situations where the number of matching messages exceeds a reasonable number, they are split up into pages)</li>
+<li>A control to view the currently selected message (switching to the message view screen)</li>
+<li>Controls to expand/collapse threads</li>
+</ul>
+</p>
+
+<h3>south edge</h3>
+<p>The south edge has a large number of controls, fitting into two categories - filtering controls, and action controls.  The edge has a means to switch between these two - either showing the action controls or the filtering controls.</p>
+
+<h4>filtering controls</h4>
+<ul>
+<li>Full text search (textbox)</li>
+<li>Message tag (drop down)</li>
+<li>Unread only (checkbox)</li>
+<li>Date (drop down)</li>
+<li>Scope - single forum, any watched forum, manageable forums, postable forums, specific forums, all forums (radio button)</li>
+<li>Additional advanced options</li>
+</ul>
+
+<h4>action controls</h4>
+<ul>
+<li>Watch the forum</li>
+<li>Bookmark the forum</li>
+<li>Bookmark the current screen (forum and filtering criteria)</li>
+<li>Watch the selected author</li>
+<li>Bookmark the selected author</li>
+<li>Ban the forum</li>
+<li>Ban the selected author</li>
+</ul>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+<h2 id="screenmessageview">Message view screen</h2>
+<h3>Description</h3>
+<p>The screen itself is responsible for rendering the message - its pages, attachments,
+references, and context within a thread.</p>
+
+<h3>north edge</h3>
+<p>The north edge provides metadata for the message, the author, and the forum:<ul>
+<li>The author's avatar and name, plus flags if the author is watched or banned</li>
+<li>The forum's avatar and name, plus flags if the forum is watched or banned</li>
+<li>The message's subject, post-on and import dates, and any tags</li>
+<li>The message's privacy, authentication, and authorization attributes</li>
+</ul></p>
+
+<h3>east edge</h3>
+<p>The east edge provides a plethora of controls:<ul>
+<li>Buttons to other messages:<ul>
+ <li>Next unread in forum</li>
+ <li>Next in thread</li>
+ <li>Previous in thread</li>
+ <li>Next in forum</li>
+ <li>Previous in forum</li>
+ </ul></li>
+<li>Buttons to the message selection screen:<ul>
+ <li>Current message selection screen</li>
+ <li>Next watched forum with unread messages</li>
+ <li>Previous watched forum with unread messages</li>
+ </ul></li>
+<li>Buttons to the author's and forum's profile screens</li>
+<li>(maybe?) combo for each link in the message</li>
+<li>(maybe?) combo for each references attached to the message</li>
+</ul></p>
+
+<h3>south edge</h3>
+<p>The south edge has a selection of controls:<ul>
+<li>Reply to the forum</li>
+<li>Private reply to the author</li>
+<li>Private reply to the forum administrators</li>
+<li>Watch the author or forum</li>
+<li>Bookmark the author or forum</li>
+<li>Bookmark the message</li>
+<li>Import attached references</li>
+</ul></p>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+<h2 id="screeneditmessage">Edit message screen</h2>
+<h3>Description</h3>
+<p>This screen serves as Syndie's integrated editor for posting messages.</p>
+
+<h3>north edge</h3>
+<p>The north edge both displays and controls important attributes of the message<ul>
+<li>The message's author (showing the avatar and a combo for the name)</li>
+<li>If necessary, the message's author (showing the avatar and a combo for the name)</li>
+<li>The message's target forum (showing the avatar and a combo for the name)</li>
+<li>The message's privacy setting (showing the graphic and a combo)</li>
+<li>The message's subject (text box)</li>
+<li>Tags (text box)</li>
+</ul></p>
+
+<h3>east edge</h3>
+<p>The east edge has four controls - save for later, preview, post, and cancel message.
+When the "preview" option is selected, the message editor body renders the page,
+the "post" option is enabled, and the "preview" option is replaced with "edit".
+Selecting "edit" reverses that process, and selecting "post" (when enabled) posts the
+message.</p>
+
+<h3>south edge</h3>
+<p>The south edge provides access to the various editor tasks:<ul>
+<li>Add/remove a page</li>
+<li>Toggle the current page type</li>
+<li>Add/remove an attachment</li>
+<li>Add a link</li>
+<li>Customize the style</li>
+<li>Spellcheck the current page</li>
+<li>Find/replace in the current page</li>
+<li>Quote the parent message</li>
+</ul></p>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+<h2 id="screeneditmessage">Edit message screen</h2>
+<h3>Description</h3>
+<p></p>
+
+<h3>north edge</h3>
+<p>No custom north edge is provided</p>
+
+<h3>east edge</h3>
+<p>No custom east edge is provided</p>
+
+<h3>south edge</h3>
+<p>No custom south edge is provided</p>
+
+<h3>west edge</h3>
+<p>No custom west edge is provided</p>
+
+<hr />
+
+</div>
+</body>
+</html>
