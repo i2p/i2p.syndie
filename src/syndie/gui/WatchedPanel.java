@@ -210,21 +210,22 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
                             if (unreadOnly)
                                 _navControl.view(unreadURI);
                             else
-                                _navControl.view(msgsURI); 
+                                _navControl.view(msgsURI);
+                            close();
                         }
                     });
                     Menu m = new Menu(b);
                     b.setMenu(m);
                     MenuItem viewUnread = new MenuItem(m, SWT.PUSH);
-                    viewUnread.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(unreadURI); } });
+                    viewUnread.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(unreadURI); close(); } });
                     viewUnread.setText(_translationRegistry.getText(T_BUTTON_VIEW_UNREAD, "View unread messages"));
                     
                     MenuItem viewAll = new MenuItem(m, SWT.PUSH);
-                    viewAll.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(msgsURI); } });
+                    viewAll.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(msgsURI); close(); } });
                     viewAll.setText(_translationRegistry.getText(T_BUTTON_VIEW_ALL, "View all messages"));
                     
                     MenuItem profile = new MenuItem(m, SWT.PUSH);
-                    profile.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(_uriControl.createMetaURI(uri.getScope())); } });
+                    profile.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(_uriControl.createMetaURI(uri.getScope())); close(); } });
                     profile.setText(_translationRegistry.getText(T_BUTTON_PROFILE, "View profile"));
                     
                     MenuItem pm = new MenuItem(m, SWT.PUSH);
