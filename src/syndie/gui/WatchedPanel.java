@@ -232,6 +232,16 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
                     pm.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(_uriControl.createPostURI(uri.getScope(), null, true)); } });
                     pm.setText(_translationRegistry.getText(T_BUTTON_PM, "Send a private message"));
                     
+                    new MenuItem(m, SWT.SEPARATOR);
+                    
+                    MenuItem unwatch = new MenuItem(m, SWT.PUSH);
+                    unwatch.addSelectionListener(new FireSelectionListener() { 
+                        public void fire() { 
+                            _client.unwatchChannel(uri.getScope());
+                        } 
+                    });
+                    unwatch.setText(_translationRegistry.getText(T_BUTTON_UNWATCH, "Stop watching the forum"));
+                    
                     BookmarkDnDHelper.initSource(b, uri, tooltip);
                 }
                 
@@ -259,6 +269,7 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
     private static final String T_BUTTON_VIEW_UNREAD = "syndie.gui.watchedpanel.buttonviewunread";
     private static final String T_BUTTON_PROFILE = "syndie.gui.watchedpanel.buttonprofile";
     private static final String T_BUTTON_PM = "syndie.gui.watchedpanel.buttonpm";
+    private static final String T_BUTTON_UNWATCH = "syndie.gui.watchedpanel.buttonunwatch";
     
     public void close() {
         if (_onClose != null) _onClose.run();
@@ -281,7 +292,7 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
     private static final String T_CLOSE = "syndie.gui.watchedpanel.close";
     
     public void translate(TranslationRegistry registry) {
-        _unreadOnly.setText(registry.getText(T_UNREADONLY, "watched forums w/ unread messages only"));
+        _unreadOnly.setText(registry.getText(T_UNREADONLY, "Only include watched forums with unread messages"));
         _close.setText(registry.getText(T_CLOSE, "Close"));
     }
     public void applyTheme(Theme theme) {

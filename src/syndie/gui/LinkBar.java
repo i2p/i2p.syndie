@@ -37,6 +37,9 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
     private Shell _watchedShell;
     private WatchedPanel _watchedPanel;
     
+    private Shell _referencesShell;
+    private ReferencesPanel _referencesPanel;
+    
     public LinkBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, BookmarkControl bookmark, URIControl uriControl, Composite parent) {
         super(client, ui, themes, trans);
         _nav = nav;
@@ -58,7 +61,7 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         _watchedButton = new Button(_root, SWT.PUSH);
         _watchedButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _watchedButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() { toggleFullShell(); }
+            public void fire() { toggleWatchedShell(); }
         });
         _watchedButton.setBackground(ColorUtil.getColor("green"));
         _watchedButton.setForeground(ColorUtil.getColor("green"));
@@ -70,7 +73,7 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         _referencesButton = new Button(_root, SWT.PUSH);
         _referencesButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _referencesButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() { toggleFullShell(); }
+            public void fire() { toggleReferencesShell(); }
         });
         _referencesButton.setBackground(ColorUtil.getColor("blue"));
         _referencesButton.setForeground(ColorUtil.getColor("blue"));
@@ -143,7 +146,7 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
                         public void run() { toggleWatchedShell(); }
                     },
                     new Runnable() {
-                        public void run() { recenter(s); }
+                        public void run() { recenter(s, true); }
                     }
             );
             s.addShellListener(new ShellListener() {
@@ -167,18 +170,61 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
             //s.pack();
             //s.setSize(64*5, 64*4);
             
-            recenter(s);
+            recenter(s, true);
             _watchedPanel = watched;
             _watchedShell = s;
             s.open();
         }
         _ui.debugMessage("toggle watched shell");
     }
-    private void toggleReferencesShell() { _ui.debugMessage("toggle references shell"); }
+    
+    private void toggleReferencesShell() { 
+        if (_referencesShell != null) {
+            _referencesShell.dispose();
+            _referencesPanel.dispose();
+            _referencesShell = null;
+            _referencesPanel = null;
+        } else {
+            final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+            s.setLayout(new FillLayout());
+            ReferencesPanel refs = new ReferencesPanel(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, s, 
+                    new Runnable() {
+                        public void run() { toggleReferencesShell(); }
+                    }
+            );
+            s.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent evt) {
+                    _referencesPanel.dispose();
+                    _referencesShell = null;
+                    _referencesPanel = null;
+                }
+                public void shellDeactivated(ShellEvent evt) {
+                    /*
+                    _referencesShell.dispose();
+                    _referencesPanel.dispose();
+                    _referencesShell = null;
+                    _referencesPanel = null;
+                     */
+                }
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            //s.pack();
+            s.setSize(600, 400);
+            
+            recenter(s, false);
+            _referencesPanel = refs;
+            _referencesShell = s;
+            s.open();
+        }
+        _ui.debugMessage("toggle references shell"); 
+    }
     private void toggleFullShell() { _ui.debugMessage("toggle full shell"); }
     
-    private void recenter(Shell s) {
-        s.pack(true);
+    private void recenter(Shell s, boolean pack) {
+        if (pack)
+            s.pack(true);
         Rectangle size = s.getBounds();
         Rectangle screenSize = Splash.getScreenSize(s);
         int x = screenSize.width/2-size.width/2;
