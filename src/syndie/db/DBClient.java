@@ -4426,8 +4426,9 @@ public class DBClient {
     
     private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
-    public int countUnreadMessages(long nymId, Hash scope) {
-        long chan = getChannelId(scope);
+    public int countUnreadMessages(long nymId, Hash scope) { return countUnreadMessages(nymId, getChannelId(scope)); }
+    public int countUnreadMessages(long channelId) { return countUnreadMessages(_nymId, channelId); }
+    public int countUnreadMessages(long nymId, long chan) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

@@ -42,7 +42,8 @@ public final class JobRunner {
                     }
                 } catch (InterruptedException ie) {}
                 if (cur != null) {
-                    try { cur.run(); } catch (Exception e) { _ui.errorMessage(null, e); }
+                    try { cur.run(); } catch (Exception e) { 
+                        _ui.errorMessage("internal error with the job: " + cur + ": " + e, e); }
                 }
                 cur = null;
             }

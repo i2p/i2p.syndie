@@ -72,7 +72,7 @@ class StartupPanel extends DesktopPanel {
      */
     private void blockingStartup() {
         _startupTimer.addEvent("blocking events started");
-        execStartupProcess();   
+        boolean ok = execStartupProcess();   
         _startupTimer.addEvent("blocking events complete");
         while (_runAfterStartup.size() > 0) {
             ((Runnable)_runAfterStartup.remove(0)).run();
@@ -80,13 +80,13 @@ class StartupPanel extends DesktopPanel {
         }
         _startupTimer.addEvent("runAfterStartup events complete");
         _startupTimer.complete();
-        _desktop.startupComplete();
+        _desktop.startupComplete(ok);
         //try { Thread.sleep(120*1000); } catch (InterruptedException ie) {}
         //_display.asyncExec(new Runnable() { public void run() { _desktop.exit(); } });
     }
     
-    private void execStartupProcess() {
-        if (!startClient()) return;
+    private boolean execStartupProcess() {
+        if (!startClient()) return false;
  
         UI ui = getUI();
         final DBClient client = _desktop.getDBClient();
@@ -111,8 +111,10 @@ class StartupPanel extends DesktopPanel {
             
             //enableKeyFilters();
             _startupTimer.addEvent("doStartup key filters loaded");
+            return true;
         } else {
             ui.errorMessage("Not logged in... do you have an old instance of Syndie (pre-1.0)?  If so, try doing a clean install after backing up your keys");
+            return false;
         }
     }
     

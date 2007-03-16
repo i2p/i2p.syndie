@@ -76,16 +76,19 @@ public class ImageGrid extends Composite {
         return (area.width)/ _imgPx;
     }
     
+    public int getImageSize() { return _imgPx; }
+    public List getIds() { return new ArrayList(_ids); }
+    
     /** 
      * @param id identifier for the indexed element (usable in select(id) and remove(id))
      * @param img image to render in the grid
      * @param tooltip text to use when hovering over the image
      * @param onFire task to run (in the SWT thread) when the item is selected
-     * @return true if the image was added, false if the grid was full
+     * @return the control displaying the image if it was added, null if the grid was full
      */
-    public boolean add(Object id, final Image img, String tooltip, final Runnable onFire) {
+    public Control add(Object id, final Image img, String tooltip, final Runnable onFire) {
         int max = (getParent().getClientArea().height / _imgPx) * cols();
-        if (_ids.size() >= max) return false;
+        if (_ids.size() >= max) return null;
         
         _ids.add(id);
         _images.add(img);
@@ -112,7 +115,7 @@ public class ImageGrid extends Composite {
         c.setToolTipText(tooltip);
         c.addSelectionListener(new FireSelectionListener() { public void fire() { onFire.run(); } });
         redraw();
-        return true;
+        return c;
     }
     
     /** highlight the indexed element */
@@ -161,7 +164,7 @@ public class ImageGrid extends Composite {
         final ImageGrid gridDown = new ImageGrid(s, internalSize, true);
         for (int i = 0; i < 15; i++) {
             final int imgNum = i;
-            if (!gridDown.add("" + i, imgs[i%imgs.length], "image " + i, new Runnable() { public void run() { System.out.println("image " + imgNum + " selected"); } }))
+            if (null == gridDown.add("" + i, imgs[i%imgs.length], "image " + i, new Runnable() { public void run() { System.out.println("image " + imgNum + " selected"); } }))
                 System.err.println("failed to add " + i);
         }
         new Button(s, SWT.PUSH); // just to test focus off the grid

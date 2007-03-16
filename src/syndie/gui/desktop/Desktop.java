@@ -135,9 +135,11 @@ class Desktop {
         edge.layout();
     }
     
-    void startupComplete() {
-        _edgeWestDefault.startupComplete();
-        //_display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
+    void startupComplete(boolean ok) {
+        if (ok) {
+            _edgeWestDefault.startupComplete();
+            _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
+        }
     }
     
     void showDesktopTabs() {

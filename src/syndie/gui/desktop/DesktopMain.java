@@ -5,6 +5,7 @@ import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.Timer;
+import syndie.db.JobRunner;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;
 import syndie.db.UI;
@@ -55,6 +56,7 @@ public class DesktopMain {
    
         DesktopUI ui = new DesktopUI();
         Timer timer = new Timer("startup", ui);
+        JobRunner.instance().setUI(ui);
         Desktop desktop = new Desktop(rootFile, ui, d, timer);
         
         while (!d.isDisposed()) {
