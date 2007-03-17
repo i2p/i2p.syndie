@@ -1463,8 +1463,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _pageTypeGroup.setEnabled(false);
         }
         
-        _spellButton.setEnabled(pageLoaded);
-        _spellGroup.setEnabled(pageLoaded);
+        _spellButton.setEnabled(pageLoaded && false); // disabled for the moment,
+        _spellGroup.setEnabled(pageLoaded && false); // pending revamp (line breaking, plurals, caps)
+        
         _searchButton.setEnabled(pageLoaded);
         _searchGroup.setEnabled(pageLoaded);
         _quoteButton.setEnabled(pageLoaded && _parents.size() > 0);

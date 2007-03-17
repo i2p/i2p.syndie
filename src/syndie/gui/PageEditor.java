@@ -46,7 +46,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class PageEditor extends BaseComponent {
+public class PageEditor extends BaseComponent implements Themeable {
     private MessageEditor _editor;
     private CTabItem _item;
     private Composite _root;
@@ -96,6 +96,7 @@ public class PageEditor extends BaseComponent {
     }
     
     public void dispose() {
+        _themeRegistry.unregister(this);
         if (_preview != null)
             _preview.dispose();
         if (!_root.isDisposed())
@@ -139,6 +140,8 @@ public class PageEditor extends BaseComponent {
         }
         
         _findHighlight = new Point(0, 0);
+        
+        _themeRegistry.register(this);
     }
     
     public void updated() { preview(); }
@@ -500,6 +503,7 @@ public class PageEditor extends BaseComponent {
     }
     void spellNext() { spellNext(null, null); }
     private void spellNext(String forceReplacement, String replaceFor) {
+        if (true) return;
         // iterate over the lines
         //  iterate over the words (ignoring html)
         //   if (!spelledCorrectly)
@@ -513,13 +517,12 @@ public class PageEditor extends BaseComponent {
         _spellWordEnd = -1;
         boolean inTag = false;
         while (_spellLine < _text.getLineCount()) {
-            /*
-            int lineStart = _text.getOffsetAtLine(_spellLine);
+            int lineStart = 0; //_text.getOffsetAtLine(_spellLine);
             int lineEnd = -1;
             if (_spellLine + 1 >= _text.getLineCount())
                 lineEnd = _text.getCharCount()-1;
             else
-                lineEnd = _text.getOffsetAtLine(_spellLine+1)-1;
+                lineEnd = 0; //_text.getOffsetAtLine(_spellLine+1)-1;
             
             String lineText = "";
             if (lineEnd > lineStart)
@@ -537,13 +540,10 @@ public class PageEditor extends BaseComponent {
                     off = endTag+1;
                 }
             }
-            */
             
             /** wordStart is part of the word */
             int wordStart = -1;
             /** wordEnd is part of the word */
-            
-            /*
             int wordEnd = -1;
             int curWord = 0;
             int cur = off;
@@ -586,9 +586,9 @@ public class PageEditor extends BaseComponent {
                                 int wordLen = _spellWordEnd-_spellWordStart+1;
                                 if (_spellWordStart + wordLen >= _text.getCharCount())
                                     wordLen = _text.getCharCount() - _spellWordStart;
-                                String oldFound = _text.getTextRange(_spellWordStart, wordLen);
+                                String oldFound = ""; //_text.getTextRange(_spellWordStart, wordLen);
                                 //System.out.println("force replacing [" + lower + "]/[" + oldFound + "] with [" + forceReplacement + "]");
-                                _text.replaceTextRange(_spellWordStart, wordLen, forceReplacement);
+                                ////_text.replaceTextRange(_spellWordStart, wordLen, forceReplacement);
                                 // does not break.. keeps on iterating through the whole doc
                             } else {
                                 // ok, this word may be misspelled, but we are doing a replaceAll
@@ -621,7 +621,6 @@ public class PageEditor extends BaseComponent {
                 inTag = true;
             _spellWordIndex = 0;
             _spellLine++;
-             */
         }
         
         // end reached.  show success (or bailout if we just want to nested replaceAll)
@@ -785,6 +784,7 @@ public class PageEditor extends BaseComponent {
             
             _maxTextManager = new TextChangeManager(_maxText, _ui);
             
+            _maxText.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
             _shell.open();
             _maxText.forceFocus();
         }
@@ -1060,5 +1060,9 @@ public class PageEditor extends BaseComponent {
         src = Constants.replace(src, ">", "&gt;");
         src = Constants.replace(src, "<", "&lt;");
         return "<pre>" + src + "</pre>";
+    }
+    
+    public void applyTheme(Theme theme) {
+        _text.setFont(theme.DEFAULT_FONT);
     }
 }
