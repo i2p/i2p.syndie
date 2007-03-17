@@ -37,6 +37,8 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -90,6 +92,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Composite _parent;
     private Composite _root;
     private Composite _toolbar;
+    private Composite _headers;
+    private Button _hideHeaderButton;
     private Label _authorLabel;
     private Combo _authorCombo;
     // sometimes _signAs is not _authorCombo
@@ -105,6 +109,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Text _tag;
     private Label _privacyLabel;
     private Combo _privacy;
+
+    private Composite _abbrHeaders;
+    private Button _showHeaderButton;
+    private Label _abbrSubjectLabel;
+    private Text _abbrSubject;
+    
     private CTabFolder _pageTabs;
     private Button _post;
     private Button _postpone;
@@ -880,6 +890,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _passphrasePrompt = cfg.getProperty(SER_PASSPROMPT);
         if (cfg.containsKey(SER_SUBJECT)) {
             _subject.setText(cfg.getProperty(SER_SUBJECT));
+            _abbrSubject.setText(_subject.getText());
         } else if ( (_parents != null) && (_parents.size() > 0) ) {
             SyndieURI parent = (SyndieURI)_parents.get(0);
             String parentSubject = MessageView.calculateSubject(_client, _ui, _translationRegistry, parent).trim();
@@ -888,8 +899,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             } else {
                 _subject.setText(parentSubject);
             }
+            _abbrSubject.setText(_subject.getText());
         } else {
             _subject.setText("");
+            _abbrSubject.setText(_subject.getText());
         }
         if (cfg.containsKey(SER_TAGS))
             _tag.setText(cfg.getProperty(SER_TAGS));
@@ -1087,6 +1100,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _root.setLayout(new GridLayout(1, true));
         
         initHeader();
+        initAbbrHeader();
+        hideHeaders(); // default to the abbreviated headers
         initToolbar();
         initPage();
         initFooter();
@@ -1540,8 +1555,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     String parentSubject = MessageView.calculateSubject(_client, _ui, _translationRegistry, uri).trim();
                     if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
                         _subject.setText("re: " + parentSubject);
+                        _abbrSubject.setText(_subject.getText());
                     } else {
                         _subject.setText(parentSubject);
+                        _abbrSubject.setText(_subject.getText());
                     }
                 }
             } else {
@@ -1641,8 +1658,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void initHeader() {
         Composite header = new Composite(_root, SWT.NONE);
-        header.setLayout(new GridLayout(5, false));
+        header.setLayout(new GridLayout(6, false));
         header.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _headers = header;
         
         _authorLabel = new Label(header, SWT.NONE);
         _authorLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -1672,6 +1690,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ((GridData)_signAs.getLayoutData()).exclude = true;
         _authorHidden.setVisible(false);
         ((GridData)_authorHidden.getLayoutData()).exclude = true;
+        
+        _hideHeaderButton = new Button(header, SWT.PUSH);
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, false, false, 1, 4);
+        _hideHeaderButton.setLayoutData(gd);
+        _hideHeaderButton.addSelectionListener(new FireSelectionListener() { public void fire() { hideHeaders(); } });
         
         _toLabel = new Label(header, SWT.NONE);
         _toLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -1712,6 +1735,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             public void widgetSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
         });
         
+        _hideHeaderButton.setText("Hide");
         _subjectLabel.setText("Subject:");
         _tagLabel.setText("Tags:");
         _authorLabel.setText("Author:");
@@ -1719,6 +1743,57 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorHidden.setText("Hidden?");
         _to.setText("Forum:");
         _privacyLabel.setText("Privacy:");
+    }
+    
+    private void initAbbrHeader() {
+        _abbrHeaders = new Composite(_root, SWT.NONE);
+        _abbrHeaders.setLayout(new GridLayout(3, false));
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.exclude = true;
+        _abbrHeaders.setLayoutData(gd);
+        
+        _abbrSubjectLabel = new Label(_abbrHeaders, SWT.NONE);
+        _abbrSubjectLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _abbrSubject = new Text(_abbrHeaders, SWT.BORDER | SWT.SINGLE);
+        _abbrSubject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        // keep the _subject as the authoritative subject source
+        _abbrSubject.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                if (_abbrHeaders.isVisible()) _subject.setText(_abbrSubject.getText()); 
+            }
+        });
+        
+        _showHeaderButton = new Button(_abbrHeaders, SWT.PUSH);
+        gd = new GridData(GridData.FILL, GridData.FILL, false, false);
+        _showHeaderButton.setLayoutData(gd);
+        _showHeaderButton.addSelectionListener(new FireSelectionListener() { public void fire() { showHeaders(); } });
+        
+        _showHeaderButton.setText("Headers");
+        _abbrSubjectLabel.setText("Subject:");
+        _abbrHeaders.setVisible(false);
+    }
+    
+    private void hideHeaders() {
+        _root.setRedraw(false);
+        _abbrSubject.setText(_subject.getText());
+        ((GridData)_headers.getLayoutData()).exclude = true;
+        _headers.setVisible(false);
+        ((GridData)_abbrHeaders.getLayoutData()).exclude = false;
+        _abbrHeaders.setVisible(true);
+        _root.setRedraw(true);
+        _root.layout(true);
+        _showHeaderButton.forceFocus();
+    }
+    private void showHeaders() {
+        _root.setRedraw(false);
+        ((GridData)_headers.getLayoutData()).exclude = false;
+        _headers.setVisible(true);
+        ((GridData)_abbrHeaders.getLayoutData()).exclude = true;
+        _abbrHeaders.setVisible(false);
+        _root.setRedraw(true);
+        _root.layout(true);
+        _hideHeaderButton.forceFocus();
     }
     
     private void initToolbar() {
@@ -2878,6 +2953,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _privacyLabel.setFont(theme.DEFAULT_FONT);
         _privacy.setFont(theme.DEFAULT_FONT);
         _pageTabs.setFont(theme.TAB_FONT);
+        _abbrSubjectLabel.setFont(theme.DEFAULT_FONT);
+        _abbrSubject.setFont(theme.DEFAULT_FONT);
+        _hideHeaderButton.setFont(theme.BUTTON_FONT);
+        _showHeaderButton.setFont(theme.BUTTON_FONT);
     
         _forumGroup.setFont(theme.DEFAULT_FONT);
         _authorGroup.setFont(theme.DEFAULT_FONT);
