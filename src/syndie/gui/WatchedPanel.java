@@ -108,12 +108,14 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
         Map chanIdToUnreadCount = new HashMap();
         for (int i = 0; i < chans.size(); i++) {
             WatchedChannel c = (WatchedChannel)chans.get(i);
-            int unread = _client.countUnreadMessages(c.getChannelId());
-            if ( (unreadOnly) && (unread == 0) )
-                continue;
             Long key = new Long(c.getChannelId());
+            if (unreadOnly) {
+                int unread = _client.countUnreadMessages(c.getChannelId());
+                if (unread == 0)
+                    continue;
+                chanIdToUnreadCount.put(key, new Integer(unread));
+            }
             chanIds.add(key);
-            chanIdToUnreadCount.put(key, new Integer(unread));
         }
         toUndrawIds.removeAll(chanIds);
         final List toAddIds = new ArrayList(chanIds);
@@ -134,7 +136,8 @@ public class WatchedPanel extends BaseComponent implements Themeable, Translatab
             tooltipBuf.append("(").append(chan.toBase64().substring(0,6)).append(")");
             String tooltipShort = tooltipBuf.toString();
             Integer numUnread = (Integer)chanIdToUnreadCount.get(id);
-            tooltipBuf.append(": ").append(numUnread);
+            if (numUnread != null)
+                tooltipBuf.append(": ").append(numUnread);
             
             final byte avatar[] = _client.getChannelAvatar(id.longValue());
             if (avatar != null)
