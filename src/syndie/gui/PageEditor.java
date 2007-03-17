@@ -10,8 +10,6 @@ import java.util.Properties;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.StyleRange;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.ControlEvent;
@@ -53,14 +51,14 @@ public class PageEditor extends BaseComponent {
     private CTabItem _item;
     private Composite _root;
     private SashForm _sash;
-    private StyledText _text;
+    private Text _text;
     private TextChangeManager _textManager;
     private MaxEditor _maxEditor;
     private PageRenderer _preview;
     private MaxPreview _maxPreview;
     private boolean _isPreviewable;
     /** current search match is highlighted */
-    private StyleRange _findHighlight;
+    ////private StyleRange _findHighlight;
     /** has the current search wrapped the end at least once yet? */
     private boolean _findWrapped;
     private int _pageNum;
@@ -118,7 +116,7 @@ public class PageEditor extends BaseComponent {
         _item.setControl(_root);
         
         _sash = new SashForm(_root, SWT.HORIZONTAL);
-        _text = new StyledText(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
+        _text = new Text(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
         configText();
         
         _preview = ComponentBuilder.instance().createPageRenderer(_sash, true);
@@ -140,9 +138,9 @@ public class PageEditor extends BaseComponent {
             _sash.setMaximizedControl(_text);
         }
         
-        _findHighlight = new StyleRange();
-        _findHighlight.background = ColorUtil.getColor("yellow", null);
-        _findHighlight.foreground = ColorUtil.getColor("black", null);
+        //_findHighlight = new StyleRange();
+        //_findHighlight.background = ColorUtil.getColor("yellow", null);
+        //_findHighlight.foreground = ColorUtil.getColor("black", null);
     }
     
     public void updated() { preview(); }
@@ -232,10 +230,8 @@ public class PageEditor extends BaseComponent {
                         break;
                     case 0x02: // ^B
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            insertAtCaret("<b></b>");
-                            int newOffset = _text.getCaretOffset();
-                            newOffset -= "</b>".length();
-                            _text.setCaretOffset(newOffset);
+                            wrapSelection("<b>", "</b>");
+                            _editor.modified();
                             evt.doit = false;
                         }
                         break;
@@ -255,6 +251,7 @@ public class PageEditor extends BaseComponent {
                         break;
                          */
                     case 0x06: // ^F
+                        /*
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             String term = _editor.getSearchTerm();
                             if ( (term != null) && (term.length() > 0) ) {
@@ -266,15 +263,11 @@ public class PageEditor extends BaseComponent {
                                 find();
                             }
                         }
+                         */
                         break;
                     case 0x09: // ^I
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            int off = _text.getCaretOffset();
-                            _text.replaceTextRange(off-1, 1, ""); // remove the (^I-inserted) tab
-                            insertAtCaret("<i></i>");
-                            int newOffset = _text.getCaretOffset();
-                            newOffset -= "</i>".length();
-                            _text.setCaretOffset(newOffset);
+                            wrapSelection("<i>", "</i>");
                             _editor.modified();
                             evt.doit = false;
                         }
@@ -294,10 +287,8 @@ public class PageEditor extends BaseComponent {
                         break;
                     case 0x15: // ^U
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            insertAtCaret("<u></u>");
-                            int newOffset = _text.getCaretOffset();
-                            newOffset -= "</u>".length();
-                            _text.setCaretOffset(newOffset);
+                            wrapSelection("<u>", "</u>");
+                            _editor.modified();
                             evt.doit = false;
                         }
                         break;
@@ -321,24 +312,6 @@ public class PageEditor extends BaseComponent {
                             evt.doit = false;
                         }
                         break;
-                        /*
-                    case 0x0B: // ^K
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            if (_maxEditor != null)
-                                _maxEditor.dispose();
-                            _maxEditor = new MaxEditor();
-                            evt.doit = false;
-                        }
-                        break;
-                    case 0x0C: // ^L
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            if (_maxPreview != null)
-                                _maxPreview.dispose();
-                            _maxPreview = new MaxPreview();
-                            evt.doit = false;
-                        }
-                        break;
-                        */
                 }
             }
         });
@@ -346,14 +319,31 @@ public class PageEditor extends BaseComponent {
         _textManager = new TextChangeManager(_text, _ui);
     }
     
+    private void wrapSelection(String before, String after) {
+        Point sel = _text.getSelection();
+        _text.setSelection(sel.x, sel.x);
+        _text.insert(before);
+        _text.setSelection(sel.y+before.length());
+        _text.insert(after);
+        _text.setSelection(sel.x+before.length(), sel.y+before.length());
+    }
+    
     /** helper to shove text in, adjusting the caret to the first character after the new text */
     void insertAtCaret(String text) {
         if (text != null) {
             _editor.modified();
             // rather than replacing everything selected, just insert at the caret
-            _text.replaceTextRange(_text.getCaretOffset(), 0, text);
+            Point sel = _text.getSelection();
+            _text.setSelection(sel.x); // 0-length selection
+            _text.insert(text);
+            _text.setSelection(sel.x + text.length(), sel.y + text.length());
+            //StringBuffer buf = new StringBuffer(_text.getText());
+            //buf.insert(off, text);
+            //_text.setText(buf.toString());
+            //_text.setSelection(off+text.length());
+            ////_text.replaceTextRange(_text.getCaretOffset(), 0, text);
             //_text.insert(buf.toString());
-            _text.setCaretOffset(_text.getCaretOffset()+text.length());
+            ////_text.setCaretOffset(_text.getCaretOffset()+text.length());
         }
         boolean focused = _text.forceFocus();
     }
@@ -384,7 +374,7 @@ public class PageEditor extends BaseComponent {
     }
     
     public void insert(String toInsert, boolean onNewline) {
-        if (onNewline && !isAtBeginningOfLine(_text.getCaretOffset()))
+        if (onNewline && !isAtBeginningOfLine(_text.getCaretPosition()))
             insertAtCaret('\n' + toInsert);
         else
             insertAtCaret(toInsert);
@@ -392,11 +382,14 @@ public class PageEditor extends BaseComponent {
     
     // find utils - called either from within the page editor or by the message editor's finder
     void find() {
+        /*
         _findWrapped = false;
         _findHighlight.length = 0;
         _editor.search();
+         */
     }
     void findReplace() {
+        /*
         if (_findHighlight.length <= 0)
             findNext();
         if (_findHighlight.length > 0) {
@@ -408,8 +401,10 @@ public class PageEditor extends BaseComponent {
             _editor.modified();
             findNext();
         }
+         */
     }
     void findReplaceAll() {
+        /*
         if (_findHighlight.length <= 0)
             findNext(false);
         while (_findHighlight.length > 0) {
@@ -421,9 +416,11 @@ public class PageEditor extends BaseComponent {
             findNext(false);
         }
         _editor.modified();
+         */
     }
     void findNext() { findNext(true); }
     private void findNext(boolean wrapForever) {
+        /*
         String searchFor = _editor.getSearchTerm();
         if ( (searchFor == null) || (searchFor.length() <= 0) ) return;
         String txt = _text.getText();
@@ -477,9 +474,12 @@ public class PageEditor extends BaseComponent {
             int line = _text.getLineAtOffset(caret);
             _text.setTopIndex(line);
         }
+         */
     }
     void cancelFind() {
+        /*
         _text.setStyleRanges(null, null);
+         */
     }
     
     /** line in the text buffer we are spellchecking */
@@ -505,9 +505,16 @@ public class PageEditor extends BaseComponent {
         int len = _spellWordEnd-_spellWordStart+1;
         if (_spellWordStart + len >= _text.getCharCount())
             len = _text.getCharCount() - _spellWordStart;
-        String oldFound = _text.getTextRange(_spellWordStart, len);
+        _text.setSelection(_spellWordStart, _spellWordStart+len+1);
+        _text.insert(newText);
+        /*
+        StringBuffer buf = new StringBuffer(_text.getText());
+        String oldFound = buf.substring(_spellWordStart, _spellWordStart+len);
+        //String oldFound = _text.getText(_spellWordStart, _spellWordStart+len); //_text.getTextRange(_spellWordStart, len);
         _ui.debugMessage("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
-        _text.replaceTextRange(_spellWordStart, len, newText);
+        //_text.replaceTextRange(_spellWordStart, len, newText);
+        buf.replace(_spellWordStart, _spellWordStart+len, newText);
+         */
         _editor.modified();
         _spellWordIndex++;
         if (replaceAll) {
@@ -533,6 +540,7 @@ public class PageEditor extends BaseComponent {
         _spellWordEnd = -1;
         boolean inTag = false;
         while (_spellLine < _text.getLineCount()) {
+            /*
             int lineStart = _text.getOffsetAtLine(_spellLine);
             int lineEnd = -1;
             if (_spellLine + 1 >= _text.getLineCount())
@@ -556,10 +564,13 @@ public class PageEditor extends BaseComponent {
                     off = endTag+1;
                 }
             }
+            */
             
             /** wordStart is part of the word */
             int wordStart = -1;
             /** wordEnd is part of the word */
+            
+            /*
             int wordEnd = -1;
             int curWord = 0;
             int cur = off;
@@ -637,6 +648,7 @@ public class PageEditor extends BaseComponent {
                 inTag = true;
             _spellWordIndex = 0;
             _spellLine++;
+             */
         }
         
         // end reached.  show success (or bailout if we just want to nested replaceAll)
@@ -644,6 +656,7 @@ public class PageEditor extends BaseComponent {
             return;
         _editor.showSpell(false);
         return;
+        
     }
     
     // callback from the styler
@@ -652,14 +665,15 @@ public class PageEditor extends BaseComponent {
     void insertStyle(String str, boolean insert, int begin, int end) {
         if (insert) {
             insertAtCaret(str);
-            _text.setCaretOffset(_text.getCaretOffset() - (str.length()-begin));
-            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+            //_text.setSelection(_text.getCaretOffset() - (str.length()-begin));
+            //_text.setSelectionRange(_text.getCaretOffset(), (end-begin));
         } else { // replace selection
             _editor.modified();
-            Point range = _text.getSelectionRange();
-            _text.replaceTextRange(range.x, range.y, str);
-            _text.setCaretOffset(range.x+begin);
-            _text.setSelectionRange(_text.getCaretOffset(), (end-begin));
+            _text.insert(str);
+            //Point range = _text.getSelectionRange();
+            //_text.replaceTextRange(range.x, range.y, str);
+            //_text.setCaretOffset(range.x+begin);
+            //_text.setSelectionRange(_text.getCaretOffset(), (end-begin));
         }
     }
     
@@ -679,9 +693,17 @@ public class PageEditor extends BaseComponent {
                 if (bgImageURL != null)
                     buf.append("bgimage=\"").append(bgImageURL).append("\" ");
                 buf.append(">\n");
+                
+                Point sel = _text.getSelection();
+                _text.setSelection(0);
+                _text.insert(buf.toString());
+                _text.append("\n</body>\n</html>\n");
+                _text.setSelection(sel.x+buf.length(), sel.y+buf.length());
+                /*
                 _text.replaceTextRange(0, 0, buf.toString());
                 int sz = _text.getCharCount();
-                _text.replaceTextRange(sz, 0, "\n</body>\n</html>\n");
+                 _text.replaceTextRange(sz, 0, "\n</body>\n</html>\n");
+                 */
             } else {
                 int bodyEnd = txt.indexOf('>', body);
                 String attributes = txt.substring(body+1, bodyEnd);
@@ -694,7 +716,15 @@ public class PageEditor extends BaseComponent {
                     bodyTag.setAttribValue("bgimage", bgImageURL);
                 else
                     bodyTag.removeAttribValue("bgimage");
+                
+                Point sel = _text.getSelection();
+                _text.setSelection(body, bodyEnd+1);
+                String newBody = bodyTag.toHTML();
+                _text.insert(bodyTag.toHTML());
+                _text.setSelection(sel.x + newBody.length()-bodyEnd, sel.y + newBody.length()-bodyEnd);
+                /*
                 _text.replaceTextRange(body, bodyEnd-body+1, bodyTag.toHTML());
+                 */
             }
         }
     }
@@ -728,7 +758,7 @@ public class PageEditor extends BaseComponent {
     
     private static final String T_MAXEDITOR_UNMAX = "syndie.gui.pageeditor.maxeditor.unmax";
     private static final String T_MAXEDITOR_PREVIEW = "syndie.gui.pageeditor.maxeditor.preview";
-    private StyledText _maxText;
+    private Text _maxText;
     private TextChangeManager _maxTextManager;
     private class MaxEditor {
         private Shell _shell;
@@ -742,36 +772,13 @@ public class PageEditor extends BaseComponent {
             Button preview = new Button(_shell, SWT.PUSH);
             preview.setText(_translationRegistry.getText(T_MAXEDITOR_PREVIEW, "Show maximized preview"));
             preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            _maxText = new StyledText(_shell, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
+            _maxText = new Text(_shell, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
             _maxText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
             
             _maxText.setText(_text.getText());
 
             _maxText.setDoubleClickEnabled(true);
             _maxText.setEditable(true);
-            
-            _maxText.addKeyListener(new KeyListener() {
-                public void keyPressed(KeyEvent evt) {
-                    /*
-                    switch (evt.character) {
-                        case 0x0B: // ^K 
-                            if ( (evt.stateMask & SWT.MOD1) != 0) {
-                                unmax();
-                                evt.doit = false;
-                            }
-                            break;
-                        case 0x0C: // ^L
-                            if ( (evt.stateMask & SWT.MOD1) != 0) {
-                                maxpreview();
-                                evt.doit = false;
-                            }
-                            break;
-                    }
-                     */
-                }
-                public void keyReleased(KeyEvent keyEvent) {
-                }
-            });
             
             unmax.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { unmax(); }
@@ -884,28 +891,6 @@ public class PageEditor extends BaseComponent {
             edit.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { maxedit(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { maxedit(); }
-            });
-            
-            _maxRenderer.addKeyListener(new KeyListener() {
-                public void keyPressed(KeyEvent evt) {
-                    /*
-                    switch (evt.character) {
-                        case 0x0B: // ^K 
-                            if ( (evt.stateMask & SWT.MOD1) != 0) {
-                                maxedit();
-                                evt.doit = false;
-                            }
-                            break;
-                        case 0x0C: // ^L
-                            if ( (evt.stateMask & SWT.MOD1) != 0) {
-                                unmax();
-                                evt.doit = false;
-                            }
-                            break;
-                    }
-                     */
-                }
-                public void keyReleased(KeyEvent keyEvent) {}
             });
             
             Monitor mon[] = _root.getDisplay().getMonitors();
