@@ -57,8 +57,8 @@ public class PageEditor extends BaseComponent {
     private PageRenderer _preview;
     private MaxPreview _maxPreview;
     private boolean _isPreviewable;
-    /** current search match is highlighted */
-    ////private StyleRange _findHighlight;
+    /** current search match (x=start, y=end) */
+    private Point _findHighlight;
     /** has the current search wrapped the end at least once yet? */
     private boolean _findWrapped;
     private int _pageNum;
@@ -138,9 +138,7 @@ public class PageEditor extends BaseComponent {
             _sash.setMaximizedControl(_text);
         }
         
-        //_findHighlight = new StyleRange();
-        //_findHighlight.background = ColorUtil.getColor("yellow", null);
-        //_findHighlight.foreground = ColorUtil.getColor("black", null);
+        _findHighlight = new Point(0, 0);
     }
     
     public void updated() { preview(); }
@@ -235,35 +233,19 @@ public class PageEditor extends BaseComponent {
                             evt.doit = false;
                         }
                         break;
-                        /*
-                    case 0x05: // ^E
-                        if ( (evt.stateMask & SWT.MOD1) != 0) {
-                            String term = _editor.getSearchTerm();
-                            if ( (term != null) && (term.length() > 0) ) {
-                                boolean wasHighlighted = _findHighlight.length > 0;
-                                findNext();
-                                if (!wasHighlighted && (_findHighlight.length <= 0))
-                                    find();
-                            } else {
-                                find();
-                            }
-                        }
-                        break;
-                         */
+                    // case 0x05: // ^E //? why was this the same as ^F?
                     case 0x06: // ^F
-                        /*
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
                             String term = _editor.getSearchTerm();
                             if ( (term != null) && (term.length() > 0) ) {
-                                boolean wasHighlighted = _findHighlight.length > 0;
-                                findNext();
-                                if (!wasHighlighted && (_findHighlight.length <= 0))
+                                boolean wasHighlighted = _findHighlight.x < _findHighlight.y;
+                                findNext(false);
+                                if (!wasHighlighted && (_findHighlight.x >= _findHighlight.y))
                                     find();
                             } else {
                                 find();
                             }
                         }
-                         */
                         break;
                     case 0x09: // ^I
                         if ( (evt.stateMask & SWT.MOD1) != 0) {
@@ -382,45 +364,42 @@ public class PageEditor extends BaseComponent {
     
     // find utils - called either from within the page editor or by the message editor's finder
     void find() {
-        /*
         _findWrapped = false;
-        _findHighlight.length = 0;
+        _findHighlight.x = 0;
+        _findHighlight.y = 0;
         _editor.search();
-         */
     }
     void findReplace() {
-        /*
-        if (_findHighlight.length <= 0)
+        if (_findHighlight.x >= _findHighlight.y)
             findNext();
-        if (_findHighlight.length > 0) {
+        if (_findHighlight.x < _findHighlight.y) {
             String replaceWith = _editor.getSearchReplacement();
-            _text.replaceTextRange(_findHighlight.start, _findHighlight.length, replaceWith);
-            _text.setCaretOffset(_findHighlight.start + replaceWith.length());
-            _findHighlight.length = 0;
-            _text.setStyleRanges(null, null);
+            _text.setSelection(_findHighlight);
+            _text.insert(replaceWith);
+            _text.setSelection(_findHighlight.x+replaceWith.length());
+            _findHighlight.x = 0;
+            _findHighlight.y = 0;
             _editor.modified();
             findNext();
         }
-         */
     }
     void findReplaceAll() {
-        /*
-        if (_findHighlight.length <= 0)
+        if (_findHighlight.x >= _findHighlight.y)
             findNext(false);
-        while (_findHighlight.length > 0) {
+        while (_findHighlight.x < _findHighlight.y) {
             String replaceWith = _editor.getSearchReplacement();
-            _text.replaceTextRange(_findHighlight.start, _findHighlight.length, replaceWith);
-            _text.setCaretOffset(_findHighlight.start + replaceWith.length());
-            _findHighlight.length = 0;
-            _text.setStyleRanges(null, null);
+            _text.setSelection(_findHighlight);
+            _text.insert(replaceWith);
+            _text.setSelection(_findHighlight.x+replaceWith.length());
+            _findHighlight.x = 0;
+            _findHighlight.y = 0;
             findNext(false);
         }
         _editor.modified();
-         */
     }
     void findNext() { findNext(true); }
     private void findNext(boolean wrapForever) {
-        /*
+        _ui.debugMessage("findNext called", new Exception("source"));
         String searchFor = _editor.getSearchTerm();
         if ( (searchFor == null) || (searchFor.length() <= 0) ) return;
         String txt = _text.getText();
@@ -430,13 +409,14 @@ public class PageEditor extends BaseComponent {
             searchFor = searchFor.toLowerCase();
             txt = txt.toLowerCase();
         }
-        int caret = _text.getCaretOffset();
+        int caret = _text.getCaretPosition();
         int nextStart = -1;
         if (backwards) {
             nextStart = txt.lastIndexOf(searchFor, caret);
         } else {
             nextStart = txt.indexOf(searchFor, caret);
         }
+        _ui.debugMessage("findNext " + (backwards ? "lastIndex=" : "nextindex=") + nextStart + " wrapped? " + _findWrapped + " wrapForever? " + wrapForever);
         if (nextStart == caret) {
             if (backwards) {
                 if (caret > 0)
@@ -461,25 +441,18 @@ public class PageEditor extends BaseComponent {
         }
         _ui.debugMessage("findNext @ " + nextStart + " (started @ " + caret + ")");
         if (nextStart != -1) {
-            _text.setCaretOffset(nextStart);
-            _text.setStyleRanges(null, null);
-            _findHighlight.start = nextStart;
-            _findHighlight.length = searchFor.length();
-            _text.setStyleRange(_findHighlight);
-            int line = _text.getLineAtOffset(nextStart);
-            _text.setTopIndex(line);
+            _findHighlight.x = nextStart;
+            _findHighlight.y = nextStart + searchFor.length();
+            _text.setSelection(_findHighlight);
+            _text.showSelection();
         } else {
-            _findHighlight.length = 0;
-            _text.setStyleRanges(null, null);
-            int line = _text.getLineAtOffset(caret);
-            _text.setTopIndex(line);
+            _findHighlight.x = 0;
+            _findHighlight.y = 0;
         }
-         */
     }
     void cancelFind() {
-        /*
-        _text.setStyleRanges(null, null);
-         */
+        _findHighlight.x = 0;
+        _findHighlight.y = 0;
     }
     
     /** line in the text buffer we are spellchecking */

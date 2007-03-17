@@ -3201,6 +3201,7 @@ class MessageEditorFind implements Translatable, Themeable {
         _findBackwards.setSelection(false);
         _findMatchCase.setSelection(false);
         _findWrapAround.setSelection(false);
+        _findShell.pack();
         _findShell.open();
         _findText.forceFocus();
     }
@@ -3257,8 +3258,8 @@ class MessageEditorFind implements Translatable, Themeable {
         
         _close = new Button(actionRow, SWT.PUSH);
         _close.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.cancelFind(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.cancelFind(); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelFind(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { cancelFind(); }
         });
         
         _replace = new Button(actionRow, SWT.PUSH);
@@ -3276,23 +3277,25 @@ class MessageEditorFind implements Translatable, Themeable {
         _findText.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN) {
-                    _findNext.forceFocus();
                     _editor.findNext();
+                    _findNext.forceFocus();
+                    evt.doit = false;
                 }
             }
         });
         _findReplace.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN) {
-                    _replace.forceFocus();
                     _editor.findReplace();
+                    _replace.forceFocus();
+                    evt.doit = false;
                 }
             }
         });
         
         _findShell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; _editor.cancelFind(); }
+            public void shellClosed(ShellEvent evt) { evt.doit = false; cancelFind(); }
             public void shellDeactivated(ShellEvent shellEvent) {}
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
@@ -3300,6 +3303,11 @@ class MessageEditorFind implements Translatable, Themeable {
         
         _translationRegistry.register(this);
         _translationRegistry.register(this);
+    }
+    
+    private void cancelFind() {
+        _findText.setText("");
+        _editor.cancelFind();
     }
  
     public void applyTheme(Theme theme) {
