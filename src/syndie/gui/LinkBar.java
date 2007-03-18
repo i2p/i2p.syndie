@@ -353,8 +353,6 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
                 } else if ( (evt.character == 'n') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+n
                     toggleMyNymsShell();
                     //new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_MYNYMS);
-                } else if ( (evt.character == 'z') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+z
-                    new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_REFERENCES);
                 }
             }
         });

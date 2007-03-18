@@ -10,7 +10,7 @@ import syndie.gui.*;
  *
  */
 class DesktopEdge {
-    private UI _ui;
+    protected UI _ui;
     private Composite _parent;
     private Composite _root;
     

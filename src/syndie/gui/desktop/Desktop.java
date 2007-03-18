@@ -13,6 +13,8 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.Timer;
@@ -54,16 +56,22 @@ class Desktop {
     private StackLayout _edgeWestStack;
     
     private StartupPanel _startupPanel;
+    private ForumSelectionPanel _forumSelectionPanel;
     
     private DBClient _client;
-    //private TranslationRegistry _translation;
-    //private ThemeRegistry _themes;
+    private TranslationRegistry _translationRegistry;
+    private ThemeRegistry _themeRegistry;
+    
+    private List _loadedPanels;
+    private int _curPanelIndex;
     
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
         _ui = ui;
         _display = display;
         _listeners = new ArrayList();
+        _loadedPanels = new ArrayList();
+        _curPanelIndex = -1;
         initComponents(timer);
     }
     
@@ -74,7 +82,7 @@ class Desktop {
     public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     public void removeListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     
-    private boolean TRIM = true;
+    private boolean TRIM = false;
     
     private void initComponents(Timer timer) {
         if (TRIM)
@@ -96,6 +104,8 @@ class Desktop {
         _startupPanel = new StartupPanel(_center, _ui, timer);
         show(_startupPanel);
         
+        initKeyFilters();
+        
         Monitor mon[] = _display.getMonitors();
         Rectangle rect = null;
         if ( (mon != null) && (mon.length > 1) )
@@ -107,6 +117,28 @@ class Desktop {
         _shell.open();
         _shell.forceActive();
         _shell.forceFocus();
+    }
+    
+    private void initKeyFilters() {
+        
+        _display.addFilter(SWT.KeyDown, new Listener() {
+            public void handleEvent(Event evt) {
+                if (evt.character == SWT.ESC) {
+                    DesktopPanel panel = getCurrentPanel();
+                    if (panel instanceof ForumSelectionPanel) {
+                        ((ForumSelectionPanel)panel).forumSelectorCancelled();
+                        evt.type = SWT.None;
+                    }
+                } else if ( (evt.character == 'l') && ((evt.stateMask & SWT.MOD3) == SWT.MOD3) ) { // ALT+L to show/hide forum selector
+                    DesktopPanel panel = getCurrentPanel();
+                    if (panel instanceof ForumSelectionPanel)
+                        ((ForumSelectionPanel)panel).forumSelectorCancelled();
+                    else
+                        showForumSelectionPanel();
+                    evt.type = SWT.None;
+                }
+            }
+        });
     }
     
     void show(DesktopPanel panel) {
@@ -121,10 +153,46 @@ class Desktop {
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
         panel.shown(this);
+        int idx = _loadedPanels.indexOf(panel);
+        if (idx >= 0) {
+            _curPanelIndex = idx;
+        } else {
+            _loadedPanels.add(panel);
+            _curPanelIndex = _loadedPanels.size()-1;
+        }
         synchronized (_listeners) {
             for (int i = 0; i < _listeners.size(); i++)
                 ((DesktopListener)_listeners.get(i)).panelShown(panel);
         }
+    }
+    
+    DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
+    
+    boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
+    
+    void showPreviousPanel() {
+        if (_loadedPanels.size() > 0) {
+            int idx = _curPanelIndex - 1;
+            if (idx < 0) idx = _loadedPanels.size()-1;
+            DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
+            show(panel);
+        }
+    }
+    void showNextPanel() {
+        if (_loadedPanels.size() > 0) {
+            int idx = _curPanelIndex + 1;
+            if (idx >= _loadedPanels.size()) idx = 0;
+            DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
+            show(panel);
+        }
+    }
+    void panelDisposed(DesktopPanel panel) {
+        int idx = _loadedPanels.indexOf(panel);
+        _loadedPanels.remove(idx);
+        if (_curPanelIndex == idx)
+            showPreviousPanel();
+        else if (_curPanelIndex > idx)
+            _curPanelIndex--;
     }
     
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
@@ -136,10 +204,8 @@ class Desktop {
     }
     
     void startupComplete(boolean ok) {
-        if (ok) {
-            _edgeWestDefault.startupComplete();
-            _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
-        }
+        //if (ok)
+        //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
     
     void showDesktopTabs() {
@@ -153,6 +219,9 @@ class Desktop {
     void setDBClient(DBClient client) { _client = client; }
     DBClient getDBClient() { return _client; }
     UI getUI() { return _ui; }
+    
+    void setTranslationRegistry(TranslationRegistry trans) { _translationRegistry = trans; }
+    void setThemeRegistry(ThemeRegistry themes) { _themeRegistry = themes; }
     
     StartupPanel getStartupPanel() { return _startupPanel; }
     //void setThemeRegistry(ThemeRegistry registry) { _themes = registry; }
@@ -235,5 +304,11 @@ class Desktop {
         GridData gd = (GridData)c.getLayoutData();
         gd.heightHint = height;
         gd.widthHint = width;
+    }
+
+    public void showForumSelectionPanel() { 
+        if (_forumSelectionPanel == null)
+            _forumSelectionPanel = new ForumSelectionPanel(_client, _themeRegistry, _translationRegistry, _center, _ui);
+        show(_forumSelectionPanel);
     }
 }

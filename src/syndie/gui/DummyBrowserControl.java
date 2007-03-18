@@ -21,7 +21,7 @@ public class DummyBrowserControl implements BrowserControl {
     public DummyBrowserControl(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
-        _themeRegistry = new ThemeRegistry(null);
+        _themeRegistry = new ThemeRegistry(client, ui, null);
     }
 
     public UI getUI() { return _ui; }

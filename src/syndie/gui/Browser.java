@@ -224,7 +224,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _initialized = false;
         _uiListenerPusher = new UIListenerPusher();
         _translation = new TranslationRegistry(this, client.getRootDir());
-        _themes = new ThemeRegistry(this);
+        _themes = new ThemeRegistry(client, this, this);
         _translation.loadTranslations();
         initComponentBuilder();
         Thread t = new Thread(_uiListenerPusher, "UI msg pusher");

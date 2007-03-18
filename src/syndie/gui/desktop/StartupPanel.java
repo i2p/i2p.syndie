@@ -34,15 +34,24 @@ class StartupPanel extends DesktopPanel {
         ui.addUI(new NullUI() {
             public void errorMessage(String msg) { errorMessage(msg, null); }
             public void debugMessage(String msg) { debugMessage(msg, null); }
-            public void errorMessage(final String msg, final Exception cause) {
-                _display.asyncExec(new Runnable() { public void run() { _text.append(msg + "\n"); } });
-            }
-            public void statusMessage(final String msg) {
-                _display.asyncExec(new Runnable() { public void run() { _text.append(msg + "\n"); } });
-            }
-            public void debugMessage(final String msg, final Exception cause) {
-                _display.asyncExec(new Runnable() { public void run() { _text.append(msg + "\n"); } });
-            }
+            public void errorMessage(String msg, Exception cause) { append(msg); }
+            public void statusMessage(String msg) { append(msg); }
+            public void debugMessage(String msg, Exception cause) { append(msg); }
+        });
+    }
+    
+    private static final int MAX_SIZE = 100*500;
+    private static final int TRIM_SIZE = 100*50;
+    private void append(final String msg) {
+        _display.asyncExec(new Runnable() { 
+            public void run() { 
+                int count = _text.getCharCount();
+                if (count > MAX_SIZE) {
+                    _text.setSelection(0, TRIM_SIZE);
+                    _text.insert("");
+                }
+                _text.append(msg + "\n"); 
+            } 
         });
     }
     
@@ -88,15 +97,12 @@ class StartupPanel extends DesktopPanel {
     private boolean execStartupProcess() {
         if (!startClient()) return false;
  
-        UI ui = getUI();
         final DBClient client = _desktop.getDBClient();
-        ui.debugMessage("startup: loggedIn? " + client.isLoggedIn());
+        _ui.debugMessage("startup: loggedIn? " + client.isLoggedIn());
         long beforeInit = System.currentTimeMillis();
         if (client.isLoggedIn()) {
             
             _startupTimer.addEvent("begin initComponents");
-            _display.syncExec(new Runnable() { public void run() { ColorUtil.init(); } });
-            _startupTimer.addEvent("color init");
             _display.syncExec(new Runnable() { public void run() { ImageUtil.init(client.getTempDir()); } });
             _startupTimer.addEvent("image init");
             SpellUtil.init();
@@ -104,7 +110,13 @@ class StartupPanel extends DesktopPanel {
             
             // doing this at the start (if we are logged in) means we don't need
             // to retheme the components later
-            //_themes.loadTheme();
+            _display.syncExec(new Runnable() { public void run() {
+                ThemeRegistry themes = new ThemeRegistry(client, _ui, null);
+                themes.loadTheme();
+                _desktop.setThemeRegistry(themes);
+            }});
+            TranslationRegistry trans = new TranslationRegistry(_ui, client.getRootDir());
+            _desktop.setTranslationRegistry(trans);
             //_startupTimer.addEvent("doStartup themes loaded");
 
             // doStartup stuff
@@ -113,7 +125,7 @@ class StartupPanel extends DesktopPanel {
             _startupTimer.addEvent("doStartup key filters loaded");
             return true;
         } else {
-            ui.errorMessage("Not logged in... do you have an old instance of Syndie (pre-1.0)?  If so, try doing a clean install after backing up your keys");
+            _ui.errorMessage("Not logged in... do you have an old instance of Syndie (pre-1.0)?  If so, try doing a clean install after backing up your keys");
             return false;
         }
     }
@@ -131,7 +143,7 @@ class StartupPanel extends DesktopPanel {
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), _desktop.getRootFile());
         //final Browser browser = new Browser(client);
         //final Timer timer = new Timer("swtUI startup", browser.getUI());
-        final UI ui = getUI();
+        final UI ui = _ui;
         final TextEngine engine = new TextEngine(client, ui, lsnr);
         _startupTimer.addEvent("text engine instantiated");
         client.setDefaultUI(ui);

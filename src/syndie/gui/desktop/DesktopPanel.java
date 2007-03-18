@@ -6,6 +6,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.*;
 
@@ -13,7 +14,10 @@ import syndie.gui.*;
  *
  */
 class DesktopPanel {
-    private UI _ui;
+    protected DBClient _client;
+    protected ThemeRegistry _themeRegistry;
+    protected TranslationRegistry _translationRegistry;
+    protected UI _ui;
     private Composite _parent;
     private Composite _root;
     
@@ -21,10 +25,16 @@ class DesktopPanel {
     protected DesktopEdge _edgeEast;
     protected DesktopEdge _edgeSouth;
     protected DesktopEdge _edgeWest;
-   
+    
     public DesktopPanel(Composite parent, UI ui) {
+        this(null, null, null, parent, ui);
+    }
+    public DesktopPanel(DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui) {
         _parent = parent;
         _ui = ui;
+        _client = client;
+        _themeRegistry = themes;
+        _translationRegistry = trans;
         initComponents();
     }
     
@@ -34,7 +44,6 @@ class DesktopPanel {
     }
     
     protected Composite getRoot() { return _root; }
-    protected UI getUI() { return _ui; }
     
     public String getPanelName() { return "desktop panel"; }
     public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }

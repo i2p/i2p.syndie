@@ -18,6 +18,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -56,15 +57,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private Composite _top;
     private Button _unreadOnly;
     private Text _search;
+    private Button _searchButton;
     private Composite _buttons;
-    private Button _cancel;
     
     private List _records;
     
     public interface ChannelSelectorListener {
         public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar);
         public void channelSelected(Hash scope);
-        public void channelSelectorCancelled();
     }
     private ChannelSelectorListener _lsnr;
     
@@ -83,6 +83,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
 
     public Control getRoot() { return _root; }
     protected Composite getTop() { return _top; }
+    
+    public int getRecordCount() { return _records.size(); }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -105,19 +107,22 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _buttons.setLayout(rl);
         _buttons.setBackground(ColorUtil.getColor("green"));
         
-        _cancel = new Button(_root, SWT.PUSH);
-        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _cancel.addSelectionListener(new FireSelectionListener() { public void fire() { cancel(); } });
-        
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
     
     protected void initTop() {
-        _top.setLayout(new FillLayout(SWT.HORIZONTAL));
+        GridLayout gl = new GridLayout(3, false);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        _top.setLayout(gl);
         _unreadOnly = new Button(_top, SWT.CHECK);
+        _unreadOnly.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _unreadOnly.addSelectionListener(new FireSelectionListener() { public void fire() { recalcChannels(); } });    
-        _search = new Text(_top, SWT.SINGLE | SWT.BORDER);
+        _search = new Text(_top, SWT.SINGLE);
+        _search.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
         _search.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN) search(_search.getText());
@@ -127,6 +132,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             public void focusGained(FocusEvent focusEvent) { _search.selectAll(); }
             public void focusLost(FocusEvent focusEvent) {}
         });
+        _searchButton = new Button(_top, SWT.PUSH);
+        _searchButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _searchButton.addSelectionListener(new FireSelectionListener() { public void fire() { search(_search.getText()); } });
     }
 
     protected void search(final String term) {
@@ -159,8 +167,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         List existingRecords = new ArrayList(_records);
         _records.clear();
         Map chanIdToOldRecord = new HashMap();
-        for (int i = 0; i < buttons.length; i++) {
+        for (int i = 0; i < buttons.length; i++)
             buttons[i].dispose();
+        for (int i = 0; i < existingRecords.size(); i++) {
             Record rec = (Record)existingRecords.get(i);
             chanIdToOldRecord.put(new Long(rec.channelId), rec);
         }
@@ -200,6 +209,13 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                     _lsnr.channelReviewed(r.scope, r.channelId, r.name, r.desc, r.avatar);
                 }
                 public void focusLost(FocusEvent focusEvent) {}
+            });
+            b.addMouseTrackListener(new MouseTrackListener() {
+                public void mouseEnter(MouseEvent mouseEvent) {}
+                public void mouseExit(MouseEvent mouseEvent) {}
+                public void mouseHover(MouseEvent mouseEvent) {
+                    _lsnr.channelReviewed(r.scope, r.channelId, r.name, r.desc, r.avatar);
+                }
             });
             
             // buttons don't traverse on arrow keys by default, but these should
@@ -311,11 +327,6 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         disposeExisting();
     }
     
-    private void cancel() {
-        _lsnr.channelSelectorCancelled();
-        dispose();
-    }
-    
     public void setChannelIdSource(ChannelIdSource source) { _idSource = source; }
     /** 
      * queue up the recalc task - call this from the SWT thread
@@ -346,6 +357,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         });
     }
     
+    public void showWatched(Runnable afterSet) { showWatched(_unreadOnly.getSelection(), afterSet); }
     public void showWatched(boolean unreadOnly, Runnable afterSet) {
         setChannelIdSource(new ChannelSelectorPanel.ChannelIdSource() {
             public List listChannelIds() {
@@ -392,19 +404,19 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
     
     
-    private static final String T_CANCEL = "syndie.gui.channelselectorpanel.cancel";
     private static final String T_UNREADONLY = "syndie.gui.channelselectorpanel.unreadonly";
     private static final String T_SEARCH = "syndie.gui.channelselectorpanel.search";
+    private static final String T_SEARCH_BUTTON = "syndie.gui.channelselectorpanel.search.button";
 
     public void translate(TranslationRegistry registry) {
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         _unreadOnly.setText(registry.getText(T_UNREADONLY, "Only include forums with unread messages"));
         _search.setText(registry.getText(T_SEARCH, "search term"));
+        _searchButton.setText(registry.getText(T_SEARCH_BUTTON, "search"));
     }
     
     public void applyTheme(Theme theme) {
-        _cancel.setFont(theme.BUTTON_FONT);
         _unreadOnly.setFont(theme.DEFAULT_FONT);
         _search.setFont(theme.DEFAULT_FONT);
+        _searchButton.setFont(theme.BUTTON_FONT);
     }
 }

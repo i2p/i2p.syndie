@@ -57,6 +57,8 @@ public class DesktopMain {
         DesktopUI ui = new DesktopUI();
         Timer timer = new Timer("startup", ui);
         JobRunner.instance().setUI(ui);
+        d.syncExec(new Runnable() { public void run() { ColorUtil.init(); } });
+        timer.addEvent("color init");
         Desktop desktop = new Desktop(rootFile, ui, d, timer);
         
         while (!d.isDisposed()) {
