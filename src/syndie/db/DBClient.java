@@ -144,7 +144,7 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (System.currentTimeMillis() % 100 > 90) // every 10 times defrag the db
+            if (System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             else
                 stmt = _con.prepareStatement("SHUTDOWN");
@@ -1240,12 +1240,20 @@ public class DBClient {
         List _postChannels;
         List _publicPostChannels;
         List _internalIds;
+        List _identityChannelIds;
+        List _managedChannelIds;
+        List _postChannelIds;
+        List _publicPostChannelIds;
         public ChannelCollector() {
             _identityChannels = new ArrayList();
             _managedChannels = new ArrayList();
             _postChannels = new ArrayList();
             _publicPostChannels = new ArrayList();
             _internalIds = new ArrayList();
+            _identityChannelIds = new ArrayList();
+            _managedChannelIds = new ArrayList();
+            _postChannelIds = new ArrayList();
+            _publicPostChannelIds = new ArrayList();
         }
         public int getIdentityChannelCount() { return _identityChannels.size(); }
         public ChannelInfo getIdentityChannel(int idx) { return (ChannelInfo)_identityChannels.get(idx); }
@@ -1255,6 +1263,14 @@ public class DBClient {
         public ChannelInfo getPostChannel(int idx) { return (ChannelInfo)_postChannels.get(idx); }
         public int getPublicPostChannelCount() { return _publicPostChannels.size(); }
         public ChannelInfo getPublicPostChannel(int idx) { return (ChannelInfo)_publicPostChannels.get(idx); }
+        
+        // only loaded if the above isn't loaded
+        public List getIdentityChannelIds() { return _identityChannelIds; }
+        public List getManagedChannelIds() { return _managedChannelIds; }
+        public List getPostChannelIds() { return _postChannelIds; }
+        public List getPublicPostChannelIds() { return _publicPostChannelIds; }
+        
+        public List getAllIds() { return _internalIds; }
     }
     
     
@@ -1262,6 +1278,9 @@ public class DBClient {
     private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
     /** channels */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
+        return getChannels(includeManage, includeIdent, includePost, includePublicPost, true);
+    }
+    public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost, boolean fetchInfo) {
         ChannelCollector rv = new ChannelCollector();
         
         List identIds = new ArrayList();
@@ -1370,41 +1389,63 @@ public class DBClient {
         }
         
         // ok, now sort the identIds/manageIds/postIds/pubPostIds by their names
-        sortChannels(identIds);
-        sortChannels(manageIds);
-        sortChannels(postIds);
-        sortChannels(pubPostIds);
+        if (fetchInfo) {
+            sortChannels(identIds);
+            sortChannels(manageIds);
+            sortChannels(postIds);
+            sortChannels(pubPostIds);
+        }
         
         for (int i = 0; i < identIds.size(); i++) {
             Long chanId = (Long)identIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._identityChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._identityChannels.add(info);
+                rv._identityChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < manageIds.size(); i++) {
             Long chanId = (Long)manageIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._managedChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._managedChannels.add(info);
+                rv._managedChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < postIds.size(); i++) {
             Long chanId = (Long)postIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._postChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._postChannels.add(info);
+                rv._postChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < pubPostIds.size(); i++) {
             Long chanId = (Long)pubPostIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._publicPostChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._publicPostChannels.add(info);
+                rv._publicPostChannelIds.add(chanId);
             }
         }
         
