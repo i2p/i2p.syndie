@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.List;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -8,6 +9,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Transform;
@@ -38,16 +40,16 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
     private Button _referencesButton;
 
     private Shell _watchedShell;
-    private WatchedPanel _watchedPanel;
+    private ChannelSelectorPanel _watchedPanel;
     
     private Shell _referencesShell;
     private ReferencesPanel _referencesPanel;
 
     private Shell _myForumsShell;
-    private ChannelTable _myForumsTable;
+    private ChannelSelectorPanel _myForumsPanel;
     
     private Shell _myNymsShell;
-    private ChannelTable _myNymsTable;
+    private ChannelSelectorPanel _myNymsPanel;
     
     public LinkBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, BookmarkControl bookmark, URIControl uriControl, Composite parent) {
         super(client, ui, themes, trans);
@@ -86,7 +88,6 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         });
         _referencesButton.setBackground(ColorUtil.getColor("blue"));
         _referencesButton.setForeground(ColorUtil.getColor("blue"));
-        
         
         /*
         final Transform ccw = new Transform(_root.getDisplay());
@@ -141,52 +142,6 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         });
     }
     
-    private void toggleWatchedShell() { 
-        if (_watchedShell != null) {
-            _watchedShell.dispose();
-            _watchedPanel.dispose();
-            _watchedShell = null;
-            _watchedPanel = null;
-        } else {
-            final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
-            s.setLayout(new FillLayout());
-            WatchedPanel watched = new WatchedPanel(_client, _ui, _themeRegistry, _translationRegistry, _nav, _uriControl, s, 
-                    new Runnable() {
-                        public void run() { toggleWatchedShell(); }
-                    },
-                    new Runnable() {
-                        public void run() { recenter(s, true); }
-                    }
-            );
-            s.addShellListener(new ShellListener() {
-                public void shellActivated(ShellEvent shellEvent) {}
-                public void shellClosed(ShellEvent evt) {
-                    _watchedPanel.dispose();
-                    _watchedShell = null;
-                    _watchedPanel = null;
-                }
-                public void shellDeactivated(ShellEvent evt) {
-                    /*
-                    _watchedShell.dispose();
-                    _watchedPanel.dispose();
-                    _watchedShell = null;
-                    _watchedPanel = null;
-                     */
-                }
-                public void shellDeiconified(ShellEvent shellEvent) {}
-                public void shellIconified(ShellEvent shellEvent) {}
-            });
-            //s.pack();
-            //s.setSize(64*5, 64*4);
-            
-            recenter(s, true);
-            _watchedPanel = watched;
-            _watchedShell = s;
-            s.open();
-        }
-        _ui.debugMessage("toggle watched shell");
-    }
-    
     private void toggleReferencesShell() { 
         if (_referencesShell != null) {
             _referencesShell.dispose();
@@ -229,60 +184,89 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         }
         _ui.debugMessage("toggle references shell"); 
     }
-    
-    private void toggleMyForumsShell() { 
-        if (_myForumsShell != null) {
-            _myForumsShell.dispose();
-            _myForumsTable.dispose();
-            _myForumsShell = null;
-            _myForumsTable = null;
+   
+    private void toggleWatchedShell() { 
+        if (_watchedShell != null) {
+            _watchedShell.dispose();
+            _watchedPanel.dispose();
+            _watchedShell = null;
+            _watchedPanel = null;
         } else {
             final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             s.setLayout(new FillLayout());
-            final ChannelTable table = new ChannelTable(_client, _ui, _themeRegistry, _translationRegistry, _nav, _uriControl, s, 
-                new Runnable() {
-                    public void run() { toggleMyForumsShell(); }
-                }
-            );
+            final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
+                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleWatchedShell(); }
+                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelectorCancelled() { toggleWatchedShell(); }
+            });
             
             s.addShellListener(new ShellListener() {
                 public void shellActivated(ShellEvent shellEvent) {}
                 public void shellClosed(ShellEvent evt) {
-                    _myForumsTable.dispose();
-                    _myForumsShell = null;
-                    _myForumsTable = null;
+                    _watchedPanel.dispose();
+                    _watchedShell = null;
+                    _watchedPanel = null;
                 }
-                public void shellDeactivated(ShellEvent evt) {
-                    /*
-                    _myForumsShell.dispose();
-                    _myForumsTable.dispose();
-                    _myForumsShell = null;
-                    _myForumsTable = null;
-                     */
-                }
+                public void shellDeactivated(ShellEvent evt) {}
                 public void shellDeiconified(ShellEvent shellEvent) {}
                 public void shellIconified(ShellEvent shellEvent) {}
             });
-            //s.pack();
-            s.setSize(700, 400);
             
-            recenter(s, false);
-            _myForumsTable = table;
-            _myForumsShell = s;
-            
-            JobRunner.instance().enqueue(new Runnable() {
+            _watchedPanel = panel;
+            _watchedShell = s;
+                
+            final Timer timer = new Timer("watched", _ui);
+            panel.showWatched(false, new Runnable() {
                 public void run() {
-                    final Timer timer = new Timer("my forums", _ui);
-                    List channelIds = _client.getChannels(true, true, true, false, false).getAllIds();
-                    timer.addEvent("channels found");
-                    table.setChannels(channelIds, new Runnable() {
-                        public void run() { 
-                            timer.addEvent("async before open");
-                            s.open(); 
-                            timer.addEvent("async after open");
-                            timer.complete();
-                        }
-                    });
+                    timer.addEvent("after set, before open");
+                    recenter(s, false);
+                    s.open(); 
+                    timer.addEvent("async after open");
+                    timer.complete();
+                }
+            });
+        }
+        _ui.debugMessage("toggle watched");
+    }
+    
+    private void toggleMyForumsShell() { 
+        if (_myForumsShell != null) {
+            _myForumsShell.dispose();
+            _myForumsPanel.dispose();
+            _myForumsShell = null;
+            _myForumsPanel = null;
+        } else {
+            final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
+            s.setLayout(new FillLayout());
+            final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
+                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleMyForumsShell(); }
+                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelectorCancelled() { toggleMyForumsShell(); }
+            });
+            
+            s.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent evt) {
+                    _myForumsPanel.dispose();
+                    _myForumsShell = null;
+                    _myForumsPanel = null;
+                }
+                public void shellDeactivated(ShellEvent evt) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            
+            _myForumsPanel = panel;
+            _myForumsShell = s;
+                
+            final Timer timer = new Timer("my forums", _ui);
+            panel.showPostable(new Runnable() {
+                public void run() {
+                    timer.addEvent("after set, before open");
+                     recenter(s, false);
+                    s.open(); 
+                    timer.addEvent("async after open");
+                    timer.complete();
                 }
             });
         }
@@ -292,56 +276,41 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
     private void toggleMyNymsShell() { 
         if (_myNymsShell != null) {
             _myNymsShell.dispose();
-            _myNymsTable.dispose();
+            _myNymsPanel.dispose();
             _myNymsShell = null;
-            _myNymsTable = null;
+            _myNymsPanel = null;
         } else {
             final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             s.setLayout(new FillLayout());
-            final ChannelTable table = new ChannelTable(_client, _ui, _themeRegistry, _translationRegistry, _nav, _uriControl, s, 
-                new Runnable() {
-                    public void run() { toggleMyNymsShell(); }
-                }
-            );
+            final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
+                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleMyNymsShell(); }
+                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelectorCancelled() { toggleMyNymsShell(); }
+            });
             
             s.addShellListener(new ShellListener() {
                 public void shellActivated(ShellEvent shellEvent) {}
                 public void shellClosed(ShellEvent evt) {
-                    _myNymsTable.dispose();
+                    _myNymsPanel.dispose();
                     _myNymsShell = null;
-                    _myNymsTable = null;
+                    _myNymsPanel = null;
                 }
-                public void shellDeactivated(ShellEvent evt) {
-                    /*
-                    _myNymsShell.dispose();
-                    _myNymsTable.dispose();
-                    _myNymsShell = null;
-                    _myNymsTable = null;
-                     */
-                }
+                public void shellDeactivated(ShellEvent evt) {}
                 public void shellDeiconified(ShellEvent shellEvent) {}
                 public void shellIconified(ShellEvent shellEvent) {}
             });
-            //s.pack();
-            s.setSize(700, 400);
             
-            recenter(s, false);
-            _myNymsTable = table;
+            _myNymsPanel = panel;
             _myNymsShell = s;
-            
-            JobRunner.instance().enqueue(new Runnable() {
+                
+            final Timer timer = new Timer("my nyms", _ui);
+            panel.showIdent(new Runnable() {
                 public void run() {
-                    final Timer timer = new Timer("my forums", _ui);
-                    List channelIds = _client.getChannels(false, true, false, false, false).getAllIds();
-                    timer.addEvent("channels found");
-                    table.setChannels(channelIds, new Runnable() {
-                        public void run() { 
-                            timer.addEvent("async before open");
-                            s.open(); 
-                            timer.addEvent("async after open");
-                            timer.complete();
-                        }
-                    });
+                    timer.addEvent("after set, before open");
+                    recenter(s, false);
+                    s.open(); 
+                    timer.addEvent("async after open");
+                    timer.complete();
                 }
             });
         }
@@ -351,11 +320,21 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
     private void recenter(Shell s, boolean pack) {
         if (pack)
             s.pack(true);
-        Rectangle size = s.getBounds();
-        Rectangle screenSize = Splash.getScreenSize(s);
-        int x = screenSize.width/2-size.width/2;
-        int y = screenSize.height/2-size.height/2;
-        s.setBounds(x, y, size.width, size.height);
+        //Rectangle size = s.getBounds();
+        Composite parent = s.getParent();
+        Rectangle size = null;
+        int edgeX = 0;
+        int edgeY = 0;
+        if (true || (parent == null)) {
+            size = Splash.getScreenSize(s);
+            edgeX = 0;//size.width/10;
+            edgeY = 0;//size.height/10;
+        } else {
+            size = parent.getClientArea();
+            edgeX = size.width/10;
+            edgeY = size.height/10;
+        }
+        s.setBounds(edgeX, edgeY, size.width-edgeX*2, size.height-edgeY*2);
     }
     
     private void initKeyControls() {
@@ -364,12 +343,18 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
             public void handleEvent(Event evt) {
                 if ( (evt.character == 'w') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+w
                     toggleWatchedShell();
+                    //new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_WATCHED);
                 } else if ( (evt.character == 'r') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+r
                     toggleReferencesShell();
+                    //new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_REFERENCES);
                 } else if ( (evt.character == 'm') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+m
                     toggleMyForumsShell();
+                    //new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_MYFORUMS);
                 } else if ( (evt.character == 'n') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+n
                     toggleMyNymsShell();
+                    //new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_MYNYMS);
+                } else if ( (evt.character == 'z') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+z
+                    new ForumSelector(_client, _ui, _themeRegistry, _translationRegistry, _nav, _bookmarkControl, _uriControl, _root.getShell(), ForumSelector.METHOD_REFERENCES);
                 }
             }
         });

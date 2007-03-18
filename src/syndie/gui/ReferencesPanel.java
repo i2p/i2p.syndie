@@ -18,6 +18,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
@@ -56,6 +57,8 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         _onClose = onClose;
         initComponents();
     }
+    
+    public Control getRoot() { return _root; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);

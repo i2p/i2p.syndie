@@ -1581,6 +1581,34 @@ public class DBClient {
         return rv;
     }
     
+    private static final String SQL_SEARCH_CHANNEL_IDS = "SELECT channelId FROM channel WHERE name LIKE ? OR description LIKE ? " +
+            "UNION " +
+            "SELECT channelId FROM channelTag WHERE tag LIKE ?";
+    public List getChannelIds(String term) {
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_SEARCH_CHANNEL_IDS);
+            stmt.setString(1, "%" + term + "%");
+            stmt.setString(2, "%" + term + "%");
+            stmt.setString(3, "%" + term + "%");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                rv.add(new Long(id));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the query matches", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        _ui.debugMessage("search for [" + term + "] found " + rv.size() + " matches: " + rv);
+        return rv;
+    }
+    
     private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt, importDate FROM channel WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
