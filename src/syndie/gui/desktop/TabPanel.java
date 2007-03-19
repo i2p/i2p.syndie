@@ -3,17 +3,16 @@ package syndie.gui.desktop;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.gui.*;
 
 class TabPanel extends DesktopPanel {
-    private Desktop _desktop;
     private Composite _browserBase;
     private Browser _browser;
     
     public TabPanel(Composite parent, Desktop desktop) {
-        super(parent, desktop.getUI());
-        _desktop = desktop;
+        super(desktop, parent, desktop.getUI(), null);
         initComponents();
     }
     
@@ -26,13 +25,23 @@ class TabPanel extends DesktopPanel {
         gl.marginWidth = 0;
         gl.verticalSpacing = 0;
         _browserBase.setLayout(gl);
-        _browser = new Browser(_desktop.getDBClient(), root.getShell(), _browserBase);
-        _browser.addUI(_desktop.getUI());
-        Timer t = new Timer("tab panel startup", _desktop.getUI());
-        _browser.startup(t);
-        t.addEvent("done with the nested browser startup");
-        t.complete();
     }
+    
+    public void shown(Desktop desktop, SyndieURI uri) {
+        super.shown(desktop, uri);
+        if (_browser == null) {
+            _browser = new Browser(_desktop.getDBClient(), getRoot().getShell(), _browserBase, _desktop.getNavControl());
+            _browser.addUI(_desktop.getUI());
+            Timer t = new Timer("tab panel startup", _desktop.getUI());
+            _browser.startup(t);
+            t.addEvent("done with the nested browser startup");
+            t.complete();
+        }
+        if (uri != null)
+            _browser.view(uri);
+    }
+    
+    public void unview(SyndieURI uri) { _browser.unview(uri); }
     
     public String getPanelName() { return "tabs"; }
     public String getPanelDescription() { return "Old style tabbed interface"; }

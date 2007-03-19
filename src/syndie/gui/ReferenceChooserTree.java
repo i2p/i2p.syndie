@@ -658,7 +658,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         SyndieURI prevTabs[] = getPrevTabs();
         timer.addEvent("startup items: previous tabs identified");
         if (prevTabs == null) {
-            _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_client)));
+            _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
         } else {
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {

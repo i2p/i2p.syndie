@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
+import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -57,6 +58,7 @@ class Desktop {
     
     private StartupPanel _startupPanel;
     private ForumSelectionPanel _forumSelectionPanel;
+    private TabPanel _tabs;
     
     private DBClient _client;
     private TranslationRegistry _translationRegistry;
@@ -65,6 +67,8 @@ class Desktop {
     private List _loadedPanels;
     private int _curPanelIndex;
     
+    private NavigationControl _navControl;
+    
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
         _ui = ui;
@@ -72,6 +76,7 @@ class Desktop {
         _listeners = new ArrayList();
         _loadedPanels = new ArrayList();
         _curPanelIndex = -1;
+        _navControl = new DesktopNavigationControl(this);
         initComponents(timer);
     }
     
@@ -101,8 +106,8 @@ class Desktop {
             public void shellIconified(ShellEvent shellEvent) {}
         });
 
-        _startupPanel = new StartupPanel(_center, _ui, timer);
-        show(_startupPanel);
+        _startupPanel = new StartupPanel(this, _center, _ui, timer);
+        show(_startupPanel, null);
         
         initKeyFilters();
         
@@ -146,7 +151,7 @@ class Desktop {
         });
     }
     
-    void show(DesktopPanel panel) {
+    void show(DesktopPanel panel, SyndieURI uri) {
         panel.buildNorth(_edgeNorth);
         panel.buildEast(_edgeEast);
         panel.buildSouth(_edgeSouth);
@@ -157,7 +162,7 @@ class Desktop {
         setEdge(_edgeEast, _edgeEastStack, panel.getEdgeEast(), _edgeEastDefault);
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
-        panel.shown(this);
+        panel.shown(this, uri);
         int idx = _loadedPanels.indexOf(panel);
         if (idx >= 0) {
             _curPanelIndex = idx;
@@ -172,6 +177,8 @@ class Desktop {
     }
     
     DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
+    List getPanels() { return new ArrayList(_loadedPanels); }
+    NavigationControl getNavControl() { return _navControl; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     
@@ -180,7 +187,7 @@ class Desktop {
             int idx = _curPanelIndex - 1;
             if (idx < 0) idx = _loadedPanels.size()-1;
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
-            show(panel);
+            show(panel, panel.getOriginalURI());
         }
     }
     void showNextPanel() {
@@ -188,16 +195,18 @@ class Desktop {
             int idx = _curPanelIndex + 1;
             if (idx >= _loadedPanels.size()) idx = 0;
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
-            show(panel);
+            show(panel, panel.getOriginalURI());
         }
     }
     void panelDisposed(DesktopPanel panel) {
         int idx = _loadedPanels.indexOf(panel);
-        _loadedPanels.remove(idx);
-        if (_curPanelIndex == idx)
-            showPreviousPanel();
-        else if (_curPanelIndex > idx)
-            _curPanelIndex--;
+        if (idx >= 0) {
+            _loadedPanels.remove(idx);
+            if (_curPanelIndex == idx)
+                showPreviousPanel();
+            else if (_curPanelIndex > idx)
+                _curPanelIndex--;
+        }
     }
     
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
@@ -211,14 +220,16 @@ class Desktop {
     void startupComplete(boolean ok) {
         if (ok)
             _display.asyncExec(new Runnable() { public void run() { showForumSelectionPanel(); } });
-        if (ok)
-            _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
+        //if (ok)
+        //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
-    
-    void showDesktopTabs() {
-        TabPanel panel = new TabPanel(_center, this);
-        show(panel);
+
+    TabPanel getTabPanel(boolean create) {
+        if ((_tabs == null) && create)
+            _tabs = new TabPanel(_center, this);
+        return _tabs;
     }
+    void showDesktopTabs() { show(getTabPanel(true), null); }
     
     void exit() { close(); }
     
@@ -315,7 +326,7 @@ class Desktop {
 
     public void showForumSelectionPanel() { 
         if (_forumSelectionPanel == null)
-            _forumSelectionPanel = new ForumSelectionPanel(_client, _themeRegistry, _translationRegistry, _center, _ui);
-        show(_forumSelectionPanel);
+            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
+        show(_forumSelectionPanel, null);
     }
 }

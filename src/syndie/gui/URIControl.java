@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import net.i2p.data.Hash;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 
 public interface URIControl {
     
@@ -33,5 +34,5 @@ public interface URIControl {
     public SyndieURI createSyndicationDiffURI();
     public SyndieURI createSyndicationStatusURI();
     public SyndieURI createBugReportURI();
-    public SyndieURI createHighlightWatchedURI(boolean threaded, boolean unreadOnly, boolean useImportDate);
+    public SyndieURI createHighlightWatchedURI(DBClient client, boolean threaded, boolean unreadOnly, boolean useImportDate);
 }

@@ -31,7 +31,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _view = new MessageView(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
+        _view = new MessageView(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser().getNavControl(), URIHelper.instance(), getBrowser(), getBrowser(), getRoot(), getURI());
         
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);
@@ -42,7 +42,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setText(getBrowser().getTranslationRegistry().getText(T_NOMSG_TITLE, "Message unknown"));
             box.setMessage(getBrowser().getTranslationRegistry().getText(T_NOMSG, "The selected message is not known locally"));
-            getBrowser().unview(getURI());
+            getBrowser().getNavControl().unview(getURI());
             box.open();
             return;
         }    

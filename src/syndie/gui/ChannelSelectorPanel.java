@@ -244,11 +244,11 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 public void focusLost(FocusEvent focusEvent) {}
             });
             b.addMouseTrackListener(new MouseTrackListener() {
-                public void mouseEnter(MouseEvent mouseEvent) {}
-                public void mouseExit(MouseEvent mouseEvent) {}
-                public void mouseHover(MouseEvent mouseEvent) {
+                public void mouseEnter(MouseEvent mouseEvent) {
                     _lsnr.channelReviewed(r.scope, r.channelId, r.name, r.desc, r.avatar);
                 }
+                public void mouseExit(MouseEvent mouseEvent) {}
+                public void mouseHover(MouseEvent mouseEvent) {}
             });
             
             // buttons don't traverse on arrow keys by default, but these should
@@ -283,7 +283,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         ((GridLayout)_buttons.getLayout()).numColumns = numCols;
         
         Point sz = _buttons.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        _ui.errorMessage("bounds for the scroll container: " + bounds.width + "x" + bounds.height + " : " + sz);
+        //_ui.errorMessage("bounds for the scroll container: " + bounds.width + "x" + bounds.height + " : " + sz);
         _buttons.setSize(sz);
         _root.layout(true, true);
         first.forceFocus();

@@ -11,11 +11,13 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.NavigationControl;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.Themeable;
@@ -27,10 +29,11 @@ import syndie.gui.TranslationRegistry;
  */
 public class ForumSelectionPanel extends DesktopPanel implements ChannelSelectorPanel.ChannelSelectorListener {
     private ChannelSelectorPanel _channels;
-    private Desktop _desktop;
+    private NavigationControl _navControl;
     
-    public ForumSelectionPanel(DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui) {
-        super(client, themes, trans, parent, ui);
+    public ForumSelectionPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
+        super(desktop, client, themes, trans, parent, ui, null);
+        _navControl = navControl;
         initComponents();
     }
     
@@ -42,7 +45,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this);
     }
     
-    public void shown(Desktop desktop) {
+    public void shown(Desktop desktop, SyndieURI uri) {
         _desktop = desktop;
         if (_channels.getRecordCount() == 0)
             _channels.showWatched(false, null);
@@ -57,6 +60,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     public void channelSelected(Hash scope) {
         _ui.debugMessage("channel selected: " + scope);
         _desktop.panelDisposed(this);
+        _navControl.view(SyndieURI.createScope(scope));
     }
 
     public void forumSelectorCancelled() {

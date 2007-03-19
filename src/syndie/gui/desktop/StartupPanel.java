@@ -10,6 +10,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.NullUI;
@@ -20,14 +21,15 @@ import syndie.gui.*;
 class StartupPanel extends DesktopPanel {
     private Text _text;
     private Display _display;
-    private Desktop _desktop;
     private Timer _startupTimer;
     private List _runAfterStartup;
+    private boolean _initialized;
     
-    public StartupPanel(Composite parent, DesktopUI ui, Timer timer) {
-        super(parent, ui);
+    public StartupPanel(Desktop desktop, Composite parent, DesktopUI ui, Timer timer) {
+        super(desktop, parent, ui, null);
         _startupTimer = timer;
         _runAfterStartup = new ArrayList();
+        _initialized = false;
         initComponents();
         _display = parent.getDisplay();
         timer.addEvent("startup panel constructed");
@@ -64,8 +66,9 @@ class StartupPanel extends DesktopPanel {
         _text.setText("Starting Syndie...\n");
     }
     
-    public void shown(Desktop desktop) {
-        if (_desktop == null) {
+    public void shown(Desktop desktop, SyndieURI uri) {
+        if (!_initialized) {
+            _initialized = true;
             _startupTimer.addEvent("startup panel shown");
             _desktop = desktop;
             Thread t = new Thread(new Runnable() { public void run() { blockingStartup(); } }, "Desktop startup");

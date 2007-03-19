@@ -79,23 +79,23 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
     }
 
     public void viewScopeMessages(PageRenderer renderer, Hash scope) {
-        getBrowser().view(SyndieURI.createScope(scope));
+        getBrowser().getNavControl().view(SyndieURI.createScope(scope));
     }
     public void viewScopeMetadata(PageRenderer renderer, Hash scope) {
-        getBrowser().view(getBrowser().createMetaURI(scope));
+        getBrowser().getNavControl().view(URIHelper.instance().createMetaURI(scope));
     }
     public void view(PageRenderer renderer, SyndieURI uri) {
-        getBrowser().view(uri);
+        getBrowser().getNavControl().view(uri);
     }
     public void bookmark(PageRenderer renderer, SyndieURI uri) {
         getBrowser().bookmark(uri);
     }
     public void privateReply(PageRenderer renderer, Hash author, SyndieURI msg) {
-        getBrowser().view(getBrowser().createPostURI(author, msg, true));
+        getBrowser().getNavControl().view(URIHelper.instance().createPostURI(author, msg, true));
     }
 
     public void replyToForum(PageRenderer renderer, Hash forum, SyndieURI msg) {
-        getBrowser().view(getBrowser().createPostURI(forum, msg));
+        getBrowser().getNavControl().view(URIHelper.instance().createPostURI(forum, msg));
     }
 
     public void banScope(PageRenderer renderer, Hash scope) {}
