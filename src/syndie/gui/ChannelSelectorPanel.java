@@ -266,7 +266,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             if (isFirst) first = b;
             _records.add(r);
             
-            timer.addEvent("record " + i + " rendered");
+            //timer.addEvent("record " + i + " rendered");
         }
         timer.addEvent("all records rendered");
     
@@ -350,8 +350,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             Record r = (Record)records.get(i);
             byte avatar[] = _client.getChannelAvatar(r.channelId);
             r.avatarData = avatar;
-            if (avatar == null)
-                _ui.debugMessage("no avatar for channelId " + r.channelId + " [" + r.name + "]");
+            //if (avatar == null)
+            //    _ui.debugMessage("no avatar for channelId " + r.channelId + " [" + r.name + "]");
         }
     }
     

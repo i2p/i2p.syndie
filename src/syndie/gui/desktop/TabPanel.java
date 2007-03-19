@@ -27,8 +27,7 @@ class TabPanel extends DesktopPanel {
         _browserBase.setLayout(gl);
     }
     
-    public void shown(Desktop desktop, SyndieURI uri) {
-        super.shown(desktop, uri);
+    public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         if (_browser == null) {
             _browser = new Browser(_desktop.getDBClient(), getRoot().getShell(), _browserBase, _desktop.getNavControl());
             _browser.addUI(_desktop.getUI());
@@ -38,7 +37,7 @@ class TabPanel extends DesktopPanel {
             t.complete();
         }
         if (uri != null)
-            _browser.view(uri);
+            _browser.view(uri, suggestedName, suggestedDescription);
     }
     
     public void unview(SyndieURI uri) { _browser.unview(uri); }

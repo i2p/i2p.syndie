@@ -50,7 +50,7 @@ public class LinkEdge extends DesktopEdge {
     }
     
     private void initComponents() {
-        _button = new Button(getRoot(), SWT.PUSH);
+        _button = new Button(getEdgeRoot(), SWT.PUSH);
         _button.setText(" ");
         _button.setBackground(ColorUtil.getColor("blue"));
         _button.setForeground(ColorUtil.getColor("blue"));

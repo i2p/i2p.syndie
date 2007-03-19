@@ -868,6 +868,30 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_DESCRIPTION = "SELECT description FROM channel WHERE channelId = ?";
+    public String getChannelDescription(long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_DESCRIPTION);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String desc = rs.getString(1);
+                return desc;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel description", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND "+
@@ -1863,8 +1887,20 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
-        stmt = null;
-        rs = null;
+        List roots = getChannelReferences(channelId);
+        if (roots == null)
+            return null;
+        info.setReferences(roots);
+        
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getChanTime += (end-start);
+        return info;
+    }
+    
+    public List getChannelReferences(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_REFERENCES);
             stmt.setLong(1, channelId);
@@ -1926,8 +1962,7 @@ public class DBClient {
             roots.clear();
             for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
                 roots.add(iter.next());
-
-            info.setReferences(roots);
+            return roots;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
@@ -1936,11 +1971,6 @@ public class DBClient {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
-        long end = System.currentTimeMillis();
-        if (_trace)
-            _getChanTime += (end-start);
-        return info;
     }
     
     private static class DBReferenceNode extends ReferenceNode {

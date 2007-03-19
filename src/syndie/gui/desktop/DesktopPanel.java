@@ -62,7 +62,7 @@ class DesktopPanel {
     public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
     
     /** callback after the panel has been completely shown on the desktop */
-    void shown(Desktop desktop, SyndieURI uri) {}
+    void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {}
     
     /** instruct the panel to build its northern edge (or it can do nothing if it doesn't have one) */
     void buildNorth(Composite edge) {}

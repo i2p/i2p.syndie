@@ -82,6 +82,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private int _sortField;
     private boolean _sortOrderAscending;
         
+    private static final boolean VERBOSE_DEBUG = false;
+    
     public ThreadAccumulatorJWZ(DBClient client, UI ui) {
         super(client, ui);
         _client = client;
@@ -97,7 +99,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     public void setFilter(SyndieURI criteria) {
-        _ui.debugMessage("accumulator filter: " + criteria);
+        if (VERBOSE_DEBUG) _ui.debugMessage("accumulator filter: " + criteria);
         // split up the individual attributes. see doc/web/spec.html#uri_search
         String scope[] = criteria.getStringArray("scope");
         if ( (scope == null) || (scope.length == 0) || ( (scope.length == 1) && ("all".equals(scope[0]))) ) {
@@ -290,7 +292,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
      */
     public void gatherThreads() {
         init();
-        _ui.debugMessage("beginning gather threads w/ state: \n" + toString());
+        if (VERBOSE_DEBUG) _ui.debugMessage("beginning gather threads w/ state: \n" + toString());
         
         _client.beginTrace();
     
@@ -319,17 +321,18 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 if (!unread.contains(new Long(tmi.msgId))) {
-                    _ui.debugMessage("reject " + tmi + " because it was already read");
+                    if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because it was already read");
                     iter.remove();
                     removed++;
                 }
             }
             long afterStrip = System.currentTimeMillis();
-            _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
-                             " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip) + " removed: " + removed);
+            if (VERBOSE_DEBUG)
+                _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
+                                 " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip) + " removed: " + removed);
         }
         long afterFilterStatus = System.currentTimeMillis();
-        _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
+        if (VERBOSE_DEBUG) _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
 
         boolean tagFilter = true;
         if ( ( (_rejectedTags == null) || (_rejectedTags.size() <= 0) ) &&
@@ -346,7 +349,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 Set tags = _client.getMessageTags(tmi.msgId, true, true);
                 if (_applyTagFilterToMessages) {
                     if (!tagFilterPassed(tags)) {
-                        _ui.debugMessage("reject " + tmi + " because msg tag filters failed: " + tags);
+                        if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because msg tag filters failed: " + tags);
                         iter.remove();
                     } else {
                         _msgTags.put(new Long(tmi.msgId), tags);
@@ -359,10 +362,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
         long beforeGather = System.currentTimeMillis();
-        _ui.debugMessage("filter individual messages by thread took " + (beforeGather-afterFilterStatus));
+        if (VERBOSE_DEBUG) _ui.debugMessage("filter individual messages by thread took " + (beforeGather-afterFilterStatus));
         ThreadReferenceNode threads[] = buildThreads(matchingThreadMsgIds);
         long afterGather = System.currentTimeMillis();
-        _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
+        if (VERBOSE_DEBUG) _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
         
         // then drop the threads who do not match the tags (if !_applyTagFilterToMessages)
         if (tagFilter) {
@@ -371,7 +374,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].getThreadTags(tagBuf, _msgTags);
                     if (!tagFilterPassed(tagBuf)) {
-                        _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
+                        if (VERBOSE_DEBUG) _ui.debugMessage("reject thread because tag filters failed: " + tagBuf + ":" + threads[i]);
                         threads[i] = null;
                     }
                     tagBuf.clear();
@@ -385,7 +388,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (threads[i] != null) {
                 boolean empty = filterAuthorizationStatus(threads[i]);
                 if (empty) {
-                    _ui.debugMessage("reject because authorization status failed: " + threads[i]);
+                    if (VERBOSE_DEBUG) _ui.debugMessage("reject because authorization status failed: " + threads[i]);
                     threads[i] = null;
                 }
             }
@@ -398,7 +401,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (threads[i] != null) {
                     boolean empty = filterPrivacy(threads[i]);
                     if (empty) {
-                        _ui.debugMessage("reject because privacy failed: " + threads[i]);
+                        if (VERBOSE_DEBUG) _ui.debugMessage("reject because privacy failed: " + threads[i]);
                         threads[i] = null;
                     }
                 }
@@ -413,7 +416,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (threads[i] != null) {
                     boolean empty = filterKeyword(threads[i]);
                     if (empty) {
-                        _ui.debugMessage("reject because keyword search failed: " + threads[i]);
+                        if (VERBOSE_DEBUG) _ui.debugMessage("reject because keyword search failed: " + threads[i]);
                         threads[i] = null;
                     }
                 }
@@ -432,15 +435,15 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         storePruned(sorted);
         long afterStore = System.currentTimeMillis();
            
-        _ui.debugMessage("gather threads trace: " + _client.completeTrace());
-        _ui.debugMessage("gather: " + (afterGather-beforeGather));
-        _ui.debugMessage("threadTagFilter: " + (afterThreadTagFilter-afterGather));
-        _ui.debugMessage("authorizationFilter: " + (afterAuthorizationFilter-afterThreadTagFilter));
-        _ui.debugMessage("privacyFilter: " + (afterThreadPrivacyFilter-afterAuthorizationFilter));
-        _ui.debugMessage("keywordFilter: " + (afterThreadKeywordFilter-afterThreadPrivacyFilter));
-        _ui.debugMessage("prune: " + (afterPrune-afterThreadKeywordFilter));
-        _ui.debugMessage("sort: " + (afterSort-afterPrune));
-        _ui.debugMessage("store: " + (afterStore-afterSort));
+        if (VERBOSE_DEBUG) _ui.debugMessage("gather threads trace: " + _client.completeTrace());
+        if (VERBOSE_DEBUG) _ui.debugMessage("gather: " + (afterGather-beforeGather));
+        if (VERBOSE_DEBUG) _ui.debugMessage("threadTagFilter: " + (afterThreadTagFilter-afterGather));
+        if (VERBOSE_DEBUG) _ui.debugMessage("authorizationFilter: " + (afterAuthorizationFilter-afterThreadTagFilter));
+        if (VERBOSE_DEBUG) _ui.debugMessage("privacyFilter: " + (afterThreadPrivacyFilter-afterAuthorizationFilter));
+        if (VERBOSE_DEBUG) _ui.debugMessage("keywordFilter: " + (afterThreadKeywordFilter-afterThreadPrivacyFilter));
+        if (VERBOSE_DEBUG) _ui.debugMessage("prune: " + (afterPrune-afterThreadKeywordFilter));
+        if (VERBOSE_DEBUG) _ui.debugMessage("sort: " + (afterSort-afterPrune));
+        if (VERBOSE_DEBUG) _ui.debugMessage("store: " + (afterStore-afterSort));
         //_ui.debugMessage("threads: " + _roots);
     }
     
@@ -482,7 +485,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (pbePending)
                     query = SQL_GET_BASE_MSGS_BY_TARGET_PBE;
                 stmt = _client.con().prepareStatement(query);
-                _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
+                if (VERBOSE_DEBUG) _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
                 
                 for (Iterator iter = _channelHashes.iterator(); iter.hasNext(); ) {
                     Hash chan = (Hash)iter.next();
@@ -522,7 +525,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if (pbePending)
                     query = SQL_GET_BASE_MSGS_ALLCHANS_PBE;
                 stmt = _client.con().prepareStatement(query);
-                _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
+                if (VERBOSE_DEBUG) _ui.debugMessage("threading query: [minImport=" + minImportDate + " minMsgId=" + _earliestPostDate + "]: " + query);
                 stmt.setDate(1, new java.sql.Date(minImportDate));
                 stmt.setLong(2, minMsgId);
 
@@ -572,7 +575,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private void gatherPBEPendingDecryption() {
         Set matchingThreadMsgIds = getMatchingThreadMsgIds(true);
-        _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds);
+        if (VERBOSE_DEBUG) _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds);
         
         // the messages are still encrypted, so we dont know too much.  fake
         // what we do know though
@@ -600,13 +603,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
         List rv = null;
-        _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
+        if (VERBOSE_DEBUG) _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
         if (_showThreaded) {
             ThreadBuilder b = new ThreadBuilder(_client, _ui);
             long before = System.currentTimeMillis();
             rv = b.buildThread(matchingThreadMsgIds);
             long after = System.currentTimeMillis();
-            _ui.debugMessage("build threads took " + (after-before) + " to build: " + rv.size());
+            if (VERBOSE_DEBUG) _ui.debugMessage("build threads took " + (after-before) + " to build: " + rv.size());
         } else {
             long before = System.currentTimeMillis();
             rv = new ArrayList(matchingThreadMsgIds.size());
@@ -617,7 +620,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 rv.add(node);
             }
             long after = System.currentTimeMillis();
-            _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
+            if (VERBOSE_DEBUG) _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
         }
         return (ThreadReferenceNode[])rv.toArray(new ThreadReferenceNode[0]);
     }
@@ -839,7 +842,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
         boolean rv = filterAuthorizationStatus(root, allowedAuthorIds, _includeAuthorizedReplies && allowPublicReplies, allowAnyone, false);
-        if (rv)
+        if (VERBOSE_DEBUG && rv)
             _ui.debugMessage("filter auth status rejects w/ target=" + targetChannelId + ", allowedAuthorIds=" + allowedAuthorIds + ", allowAnyone=" + allowAnyone + ", allowPubReply=" + allowPublicReplies + ": " + root);
         return rv;
     }
@@ -861,7 +864,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
             
             if (!nodeIsAuthorized) {
-                _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI() + " parentAuth?" + parentIsAuthorized);
+                if (VERBOSE_DEBUG) _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI() + " parentAuth?" + parentIsAuthorized);
                 ReferenceNode root = node;
                 List parentURIs = new ArrayList();
                 while (root.getParent() != null) {
@@ -869,8 +872,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (root.getURI() != null)
                         parentURIs.add(root.getURI());
                 }
-                _ui.debugMessage("thread: " + root);
-                _ui.debugMessage("ancestor URIs: " + parentURIs);
+                if (VERBOSE_DEBUG) _ui.debugMessage("thread: " + root);
+                if (VERBOSE_DEBUG) _ui.debugMessage("ancestor URIs: " + parentURIs);
                 node.setIsDummy(true);
             }
         } else {
@@ -913,7 +916,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                             node.setIsDummy(true);
                         break;
                 }
-                if (node.isDummy())
+                if (node.isDummy() && VERBOSE_DEBUG)
                     _ui.debugMessage("rejecting a node because of the privacy needs: " + privacy + ": " + id.msgId);
             }
         } else {
@@ -940,7 +943,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (id != null) {
                 boolean match = _client.messageKeywordMatch(id.msgId, _keyword);
                 if (!match) {
-                    _ui.debugMessage("reject " + id + " because it didn't match the keyword");
+                    if (VERBOSE_DEBUG) _ui.debugMessage("reject " + id + " because it didn't match the keyword");
                     node.setIsDummy(true);
                 }
             }
@@ -953,7 +956,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             boolean childIsEmpty = filterKeyword((ThreadReferenceNode)node.getChild(i));
             rv = rv && childIsEmpty;
         }
-        _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
+        if (VERBOSE_DEBUG) _ui.debugMessage("filter keyword rv for " + node.getAuthorId() + ": " + rv + " - " + node.getURI());
         return rv;
     }
     
@@ -1207,7 +1210,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
                 String tag = (String)iter.next();
                 if (tags.contains(tag)) {
-                    _ui.debugMessage("Rejecting thread tagged with " + tag);
+                    if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread tagged with " + tag);
                     return false;
                 } else {
                     if (tag.endsWith("*") && (tag.length() > 0)) {
@@ -1217,7 +1220,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
                             String cur = (String)msgTagIter.next();
                             if (cur.startsWith(prefix)) {
-                                _ui.debugMessage("Rejecting thread prefix tagged with " + tag);
+                                if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread prefix tagged with " + tag);
                                 return false;
                             }
                         }
@@ -1243,11 +1246,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         if (substringMatch) {
                             //_ui.debugMessage("Substring tagged with " + tag);
                         } else {
-                            _ui.debugMessage("Rejecting thread not substring tagged with " + tag);
+                            if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread not substring tagged with " + tag);
                             return false;
                         }
                     } else {
-                        _ui.debugMessage("Rejecting thread not tagged with " + tag);
+                        if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread not tagged with " + tag);
                         return false;
                     }
                 }
@@ -1277,7 +1280,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
             if (!found) {
-                _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + _wantedTags + ")");
+                if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread not tagged with any of the wanted tags (" + _wantedTags + ")");
                 return false;
             }
         }

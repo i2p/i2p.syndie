@@ -25,7 +25,7 @@ class DesktopEdge {
         _root.setLayout(new FillLayout());
     }
     
-    protected Composite getRoot() { return _root; }
+    protected Composite getEdgeRoot() { return _root; }
     
-    public void dispose() { getRoot().dispose(); }
+    public void dispose() { getEdgeRoot().dispose(); }
 }

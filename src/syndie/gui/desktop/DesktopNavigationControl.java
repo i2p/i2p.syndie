@@ -16,16 +16,18 @@ public class DesktopNavigationControl implements NavigationControl {
         _desktop.getUI().debugMessage("view: " + uri);
         DesktopPanel panel = getPanel(uri);
         if (panel != null) {
-            _desktop.show(panel, uri);
+            _desktop.show(panel, uri, suggestedName, suggestedDescription);
         } else {
             panel = createPanel(uri, suggestedName, suggestedDescription);
             if (panel != null)
-                _desktop.show(panel, uri);
+                _desktop.show(panel, uri, suggestedName, suggestedDescription);
         }
     }
     
     private DesktopPanel createPanel(SyndieURI uri, String name, String desc) {
         if (uri == null) return null;
+        if ( (uri.isChannel() && uri.getMessageId() == null) || (uri.isSearch()) )
+            return new MessageTreePanel(_desktop, uri);
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);
     }

@@ -107,7 +107,7 @@ class Desktop {
         });
 
         _startupPanel = new StartupPanel(this, _center, _ui, timer);
-        show(_startupPanel, null);
+        show(_startupPanel, null, null, null);
         
         initKeyFilters();
         
@@ -151,7 +151,7 @@ class Desktop {
         });
     }
     
-    void show(DesktopPanel panel, SyndieURI uri) {
+    void show(DesktopPanel panel, SyndieURI uri, String name, String desc) {
         panel.buildNorth(_edgeNorth);
         panel.buildEast(_edgeEast);
         panel.buildSouth(_edgeSouth);
@@ -162,7 +162,7 @@ class Desktop {
         setEdge(_edgeEast, _edgeEastStack, panel.getEdgeEast(), _edgeEastDefault);
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
-        panel.shown(this, uri);
+        panel.shown(this, uri, name, desc);
         int idx = _loadedPanels.indexOf(panel);
         if (idx >= 0) {
             _curPanelIndex = idx;
@@ -179,6 +179,7 @@ class Desktop {
     DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
     List getPanels() { return new ArrayList(_loadedPanels); }
     NavigationControl getNavControl() { return _navControl; }
+    Composite getCenter() { return _center; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     
@@ -187,7 +188,7 @@ class Desktop {
             int idx = _curPanelIndex - 1;
             if (idx < 0) idx = _loadedPanels.size()-1;
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
-            show(panel, panel.getOriginalURI());
+            show(panel, null, null, null);
         }
     }
     void showNextPanel() {
@@ -195,7 +196,7 @@ class Desktop {
             int idx = _curPanelIndex + 1;
             if (idx >= _loadedPanels.size()) idx = 0;
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
-            show(panel, panel.getOriginalURI());
+            show(panel, null, null, null);
         }
     }
     void panelDisposed(DesktopPanel panel) {
@@ -211,9 +212,9 @@ class Desktop {
     
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
         if (specificEdge != null)
-            stack.topControl = specificEdge.getRoot();
+            stack.topControl = specificEdge.getEdgeRoot();
         else
-            stack.topControl = defEdge.getRoot();
+            stack.topControl = defEdge.getEdgeRoot();
         edge.layout();
     }
     
@@ -229,7 +230,7 @@ class Desktop {
             _tabs = new TabPanel(_center, this);
         return _tabs;
     }
-    void showDesktopTabs() { show(getTabPanel(true), null); }
+    void showDesktopTabs() { show(getTabPanel(true), null, null, null); }
     
     void exit() { close(); }
     
@@ -237,6 +238,8 @@ class Desktop {
     void setDBClient(DBClient client) { _client = client; }
     DBClient getDBClient() { return _client; }
     UI getUI() { return _ui; }
+    ThemeRegistry getThemeRegistry() { return _themeRegistry; }
+    TranslationRegistry getTranslationRegistry() { return _translationRegistry; }
     
     void setTranslationRegistry(TranslationRegistry trans) { _translationRegistry = trans; }
     void setThemeRegistry(ThemeRegistry themes) { _themeRegistry = themes; }
@@ -327,6 +330,6 @@ class Desktop {
     public void showForumSelectionPanel() { 
         if (_forumSelectionPanel == null)
             _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
-        show(_forumSelectionPanel, null);
+        show(_forumSelectionPanel, null, null, null);
     }
 }

@@ -45,7 +45,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this);
     }
     
-    public void shown(Desktop desktop, SyndieURI uri) {
+    public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
         if (_channels.getRecordCount() == 0)
             _channels.showWatched(false, null);
@@ -53,7 +53,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     public void hidden(Desktop desktop) {}
 
     public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {
-        _ui.debugMessage("channel reviewed: " + scope + ": " + name);
+        //_ui.debugMessage("channel reviewed: " + scope + ": " + name);
         ((NorthEdge)_edgeNorth).updateInfo(scope, channelId, name, description, avatar);
     }
 
@@ -88,7 +88,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             initComponents();
         }
         private void initComponents() {
-            _cancel = new Button(getRoot(), SWT.PUSH);
+            _cancel = new Button(getEdgeRoot(), SWT.PUSH);
             _cancel.addSelectionListener(new FireSelectionListener() {
                 public void fire() { forumSelectorCancelled(); }
             });
@@ -111,7 +111,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             initComponents();
         }
         private void initComponents() {
-            Composite root = NorthEdge.this.getRoot();
+            Composite root = NorthEdge.this.getEdgeRoot();
             GridLayout gl = new GridLayout(2, false);
             //gl.horizontalSpacing = 0;
             gl.verticalSpacing = 0;
@@ -143,7 +143,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             if (description != null)
                 buf.append(description);
             _info.setText(buf.toString());
-            NorthEdge.this.getRoot().layout(true, true);
+            NorthEdge.this.getEdgeRoot().layout(true, true);
         }
         public void applyTheme(Theme theme) {
             _info.setFont(theme.SHELL_FONT);
@@ -165,7 +165,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             initComponents();
         }
         private void initComponents() {
-            Composite root = getRoot();
+            Composite root = getEdgeRoot();
             root.setLayout(new FillLayout(SWT.VERTICAL));
             
             _watched = new Button(root, SWT.PUSH);

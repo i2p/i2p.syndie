@@ -66,7 +66,7 @@ class StartupPanel extends DesktopPanel {
         _text.setText("Starting Syndie...\n");
     }
     
-    public void shown(Desktop desktop, SyndieURI uri) {
+    public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         if (!_initialized) {
             _initialized = true;
             _startupTimer.addEvent("startup panel shown");
