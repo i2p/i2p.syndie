@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyEvent;
@@ -24,6 +25,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -58,6 +60,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private Button _unreadOnly;
     private Text _search;
     private Button _searchButton;
+    private Composite _scrollContainer;
+    private ScrolledComposite _scroll;
     private Composite _buttons;
     
     private List _records;
@@ -99,13 +103,27 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _top.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         initTop();
         
-        _buttons = new Composite(_root, SWT.NONE);
-        _buttons.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        // scrolledContainer is an extra container to tell us how much room we have to 
+        // jam the scrolled area into without having to compare against _root and _top's size
+        _scrollContainer = new Composite(_root, SWT.NONE);
+        _scrollContainer.setLayout(new FillLayout());
+        _scrollContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _scroll = new ScrolledComposite(_scrollContainer, SWT.V_SCROLL);
+        //_scroll.setExpandHorizontal(true);
+        //_scroll.setExpandVertical(true);
+        //_scroll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _buttons = new Composite(_scroll, SWT.NONE);
+        _scroll.setContent(_buttons);
+        //_buttons.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        /*
         RowLayout rl = new RowLayout(SWT.HORIZONTAL);
         rl.fill = true;
         rl.pack = false;
         _buttons.setLayout(rl);
+         */
+        _buttons.setLayout(new GridLayout(1, true));
         _buttons.setBackground(ColorUtil.getColor("green"));
+        _scroll.setBackground(ColorUtil.getColor("green"));
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -128,10 +146,12 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 if (evt.detail == SWT.TRAVERSE_RETURN) search(_search.getText());
             }
         });
+        /*
         _search.addFocusListener(new FocusListener() {
             public void focusGained(FocusEvent focusEvent) { _search.selectAll(); }
             public void focusLost(FocusEvent focusEvent) {}
         });
+         */
         _searchButton = new Button(_top, SWT.PUSH);
         _searchButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _searchButton.addSelectionListener(new FireSelectionListener() { public void fire() { search(_search.getText()); } });
@@ -174,6 +194,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             chanIdToOldRecord.put(new Long(rec.channelId), rec);
         }
         
+        Button first = null;
+        Button last = null;
         for (int i = 0; i < records.size(); i++) {
             final Record r = (Record)records.get(i); // no need to sort - getRecordsBasic did for us
             if (r.avatarData != null) {
@@ -183,6 +205,11 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                     oldRecord.avatar = null; // so we don't dispose it
                 } else {
                    r.avatar = ImageUtil.createImage(r.avatarData);
+                   if (r.avatar != null) {
+                       Rectangle rect = r.avatar.getBounds();
+                       if ( (rect.height > Constants.MAX_AVATAR_HEIGHT) || (rect.width > Constants.MAX_AVATAR_WIDTH) )
+                           r.avatar = ImageUtil.resize(r.avatar, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
+                   }
                 }
                 r.avatarData = null;
             }
@@ -230,6 +257,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 }
             });
             
+            if (isFirst) first = b;
             _records.add(r);
             
             timer.addEvent("record " + i + " rendered");
@@ -242,7 +270,16 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 ImageUtil.dispose(r.avatar);
         }
         timer.addEvent("columns packed");
+        Rectangle bounds = _scrollContainer.getBounds();
+    
+        int numCols = bounds.width / (Constants.MAX_AVATAR_WIDTH+2);
+        ((GridLayout)_buttons.getLayout()).numColumns = numCols;
+        
+        Point sz = _buttons.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        _ui.errorMessage("bounds for the scroll container: " + bounds.width + "x" + bounds.height + " : " + sz);
+        _buttons.setSize(sz);
         _root.layout(true, true);
+        first.forceFocus();
         _buttons.setRedraw(true);
         timer.addEvent("redraw reenabled");
         timer.complete();

@@ -204,6 +204,8 @@ class Desktop {
     }
     
     void startupComplete(boolean ok) {
+        if (ok)
+            _display.asyncExec(new Runnable() { public void run() { showForumSelectionPanel(); } });
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }

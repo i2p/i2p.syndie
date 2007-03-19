@@ -60,7 +60,7 @@ class StartupPanel extends DesktopPanel {
     
     private void initComponents() {
         Composite root = getRoot();
-        _text = new Text(root, SWT.BORDER | SWT.WRAP);
+        _text = new Text(root, SWT.BORDER | SWT.WRAP | SWT.READ_ONLY);
         _text.setText("Starting Syndie...\n");
     }
     
