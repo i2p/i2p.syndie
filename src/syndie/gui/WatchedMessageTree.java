@@ -122,13 +122,13 @@ public class WatchedMessageTree extends MessageTree {
     
     protected void markUnreadChild(TreeItem item) {
         if (!_multiforum) { super.markUnreadChild(item); return; }
-        if (item.getParentItem() != null) // don't mark the forum nodes
+        if (getParentItem(item) != null) // don't mark the forum nodes
             super.markUnreadChild(item);
     }
     
     protected long markAllRead(TreeItem item) {
         if (!_multiforum) { return super.markAllRead(item); }
-        if (item.getParentItem() == null) {
+        if (getParentItem(item) == null) {
             ReferenceNode node = (ReferenceNode)_itemToNode.get(item);
             if ( (node != null) && (node.getURI() != null) ) {
                 Hash scope = node.getURI().getScope();
@@ -149,7 +149,7 @@ public class WatchedMessageTree extends MessageTree {
         TreeItem sel[] = _tree.getSelection();
         int rv = 0;
         for (int i = 0; i < sel.length; i++) {
-            if (sel[i].getParentItem() != null)
+            if (getParentItem(sel[i]) != null)
                 rv++;
         }
         return rv;
@@ -158,8 +158,8 @@ public class WatchedMessageTree extends MessageTree {
     protected TreeItem getThreadRoot(TreeItem item) {
         if (!_multiforum) { return super.getThreadRoot(item); }
         TreeItem root = item;
-        while ( (root.getParentItem() != null) && (root.getParentItem().getParentItem() != null) )
-            root = root.getParentItem();
+        while ( (getParentItem(root) != null) && (getParentItem(getParentItem(root)) != null) )
+            root = getParentItem(root);
         return root;
     }
     

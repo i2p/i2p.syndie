@@ -46,6 +46,10 @@ public class SpellUtil {
         }
     }
     private static Reader getDictionaryReader() {
+        if (true) {
+            System.err.println("Spellchecker disabled");
+            return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
+        }
         // read from the db/etc
         String dictLocation = System.getProperty("syndie.dict", "/usr/share/dict/words");
         try {

@@ -1576,11 +1576,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private long add(ThreadReferenceNode node, TreeItem parent) {
         //_browser.getUI().debugMessage("Add: " + node.getURI() + " [" + System.identityHashCode(node) + "]");
         long dbTime = 0;
-        TreeItem item = null;
-        if (parent == null)
-            item = new TreeItem(_tree, SWT.NONE);
-        else
-            item = new TreeItem(parent, SWT.NONE);
+        TreeItem item = createItem(parent, _tree);
         dbTime = renderNode(node, item);
         
         _itemToNode.put(item, node);
@@ -1740,11 +1736,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         item.setText(3, date);
         item.setText(4, tags);
         Font f = null;
+        boolean isNew = false;
         if ( (status == DBClient.MSG_STATUS_READ) || (uri == null) ) {
             f = _themeRegistry.getTheme().MSG_OLD_FONT;
         } else if (msgId < 0) {
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {
+            isNew = true;
             _itemsNewUnread.add(item);
             f = _themeRegistry.getTheme().MSG_NEW_UNREAD_FONT;
         }
@@ -1753,8 +1751,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             item.setFont(f);
         }
         
-        // note: this will only retheme the ancestors of unread messages /that have been rendered/
-        rethemeAncestorsOfUnread();
+        if (isNew) {
+            // note: this will only retheme the ancestors of unread messages /that have been rendered/
+            rethemeAncestorsOfUnread(item);
+        }
         
         setMinWidth(_colSubject, subj, 0, 100);
         setMinWidth(_colAuthor, auth, 0, 50);
@@ -2006,8 +2006,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     protected TreeItem getThreadRoot(TreeItem item) {
         TreeItem root = item;
-        while (root.getParentItem() != null)
-            root = root.getParentItem();
+        while (getParentItem(root) != null)
+            root = getParentItem(root);
         return root;
     }
     private void markThreadRead(TreeItem item) {
@@ -2178,20 +2178,50 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
     }
     private void rethemeAncestorsOfUnread() {
+        //if (true) return;
         // now readjust the font of read/old message ancestors of unread messages
         synchronized (this) {
             for (Iterator iter = _itemsNewUnread.iterator(); iter.hasNext(); ) {
                 TreeItem item = (TreeItem)iter.next();
-                TreeItem parent = item.getParentItem();
+                TreeItem parent = getParentItem(item);
                 while (parent != null) {
                     if (!_itemsNewUnread.contains(parent))
                         markUnreadChild(parent);
-                    parent = parent.getParentItem();
+                    parent = getParentItem(parent);
                 }
             }
         }
     }
+    private void rethemeAncestorsOfUnread(TreeItem item) {
+        //if (true) return;
+        // now readjust the font of read/old message ancestors of unread messages
+        TreeItem parent = getParentItem(item);
+        while (parent != null) {
+            if (!_itemsNewUnread.contains(parent))
+                markUnreadChild(parent);
+            parent = getParentItem(parent);
+        }
+    }
     protected void markUnreadChild(TreeItem item) {
         item.setFont(_themeRegistry.getTheme().MSG_UNREAD_CHILD_FONT);
+    }
+    
+    /**
+     * gtk and perhaps other platforms have to do some muckiness to get the parent,
+     * probably due to the virtual trees.  however, since we dont use virtual trees
+     * in this class, lets just keep a pointer to the parent item in the item itself
+     */
+    protected TreeItem getParentItem(TreeItem item) {
+        if (item == null) return null;
+        return (TreeItem)item.getData("parent");
+    }
+    protected TreeItem createItem(TreeItem parent, Tree tree) {
+        TreeItem item = null;
+        if (parent == null)
+            item = new TreeItem(tree, SWT.NONE);
+        else
+            item = new TreeItem(parent, SWT.NONE);
+        item.setData("parent", parent); // see getParentItem(item)
+        return item;
     }
 }

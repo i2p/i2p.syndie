@@ -14,6 +14,7 @@ import syndie.gui.*;
 /** swt's readAndDispatch needs to be in the main thread */
 public class DesktopMain {
     public static void main(final String args[]) {
+        long start = System.currentTimeMillis();
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
@@ -28,7 +29,6 @@ public class DesktopMain {
         System.setProperty("prng.bufsize", "1024");
         System.setProperty("prng.buffers", "4");
         
-        long start = System.currentTimeMillis();
         boolean trackResources = trackResources(args);
    
         Display d = null;
@@ -56,11 +56,15 @@ public class DesktopMain {
    
         DesktopUI ui = new DesktopUI();
         Timer timer = new Timer("startup", ui);
+        timer.addEvent("main to timer startup: " + (System.currentTimeMillis()-start));
         JobRunner.instance().setUI(ui);
         d.syncExec(new Runnable() { public void run() { ColorUtil.init(); } });
         timer.addEvent("color init");
         Desktop desktop = new Desktop(rootFile, ui, d, timer);
         
+        loop(d, ui);
+    }
+    private static void loop(Display d, UI ui) {
         while (!d.isDisposed()) {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
