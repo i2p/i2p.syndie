@@ -49,6 +49,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _desktop = desktop;
         if (_channels.getRecordCount() == 0)
             _channels.showWatched(false, null);
+        super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
     public void hidden(Desktop desktop) {}
 
@@ -59,15 +60,15 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
 
     public void channelSelected(Hash scope) {
         _ui.debugMessage("channel selected: " + scope);
-        _desktop.panelDisposed(this);
         _navControl.view(SyndieURI.createScope(scope));
+        _desktop.panelDisposed(this, false);
     }
 
     public void forumSelectorCancelled() {
         _ui.debugMessage("channel selector cancelled");
         // don't actually dispose the panel, because the desktop keeps one of these around, but
         // tell the desktop to remove it from the active list
-        _desktop.panelDisposed(this);
+        _desktop.panelDisposed(this, true);
     }
 
     protected void buildSouth(Composite edge) { 
@@ -147,6 +148,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         }
         public void applyTheme(Theme theme) {
             _info.setFont(theme.SHELL_FONT);
+            getEdgeRoot().layout(true, true);
         }
     }
     

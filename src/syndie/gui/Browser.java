@@ -209,8 +209,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private boolean _externalShell;
     
-    public Browser(DBClient client) { this(client, null, null, null); }
-    public Browser(DBClient client, Shell shell, Composite root, NavigationControl navControl) {
+    public Browser(DBClient client) { this(client, null, null, null, null, null); }
+    public Browser(DBClient client, Shell shell, Composite root, NavigationControl navControl, ThemeRegistry themes, TranslationRegistry trans) {
         _client = client;
         _shell = shell;
         _root = root;
@@ -229,9 +229,19 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _runAfterStartup = new ArrayList();
         _initialized = false;
         _uiListenerPusher = new UIListenerPusher();
-        _translation = new TranslationRegistry(this, client.getRootDir());
-        _themes = new ThemeRegistry(client, this, this);
-        _translation.loadTranslations();
+        if (trans != null) {
+            _translation = trans;
+        } else {
+            _translation = new TranslationRegistry(this, client.getRootDir());
+            _translation.loadTranslations();
+        }
+        
+        if (themes != null) {
+            _themes = themes;
+            _themes.setToThemeLast(this);
+        } else {
+            _themes = new ThemeRegistry(client, this, this);
+        }
         initComponentBuilder();
         Thread t = new Thread(_uiListenerPusher, "UI msg pusher");
         t.setDaemon(true);

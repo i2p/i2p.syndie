@@ -77,6 +77,7 @@ class StartupPanel extends DesktopPanel {
         } else {
             // already shown, meaning there's no more work to do
         }
+        super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
 
     /**

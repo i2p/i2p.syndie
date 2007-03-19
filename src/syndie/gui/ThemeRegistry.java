@@ -40,6 +40,8 @@ public class ThemeRegistry {
         });
     }
     
+    public void setToThemeLast(Themeable themeable) { _toThemeLast = themeable; }
+    
     public void register(Themeable lsnr) { 
         if (_ui != null)
             _ui.debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));

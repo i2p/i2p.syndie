@@ -82,6 +82,7 @@ class Desktop {
     
     public interface DesktopListener {
         public void panelShown(DesktopPanel panel);
+        public void panelHidden(DesktopPanel panel);
         public void destroyed(DesktopPanel panel);
     }
     public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
@@ -146,12 +147,19 @@ class Desktop {
                 } else if ( (evt.keyCode == SWT.ARROW_UP) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-up
                     evt.type = SWT.NONE;
                     showPreviousPanel();
+                } else if ( (evt.character == '=') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^= (aka ^+)
+                    evt.type = SWT.NONE;
+                    _themeRegistry.increaseFont();
+                } else if ( (evt.character == '-') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^-
+                    evt.type = SWT.NONE;
+                    _themeRegistry.decreaseFont();
                 }
             }
         });
     }
     
-    void show(DesktopPanel panel, SyndieURI uri, String name, String desc) {
+    void show(DesktopPanel panel, SyndieURI uri, String name, String desc) { show(panel, uri, name, desc, true); }
+    void show(DesktopPanel panel, SyndieURI uri, String name, String desc, boolean notifyPrev) {
         panel.buildNorth(_edgeNorth);
         panel.buildEast(_edgeEast);
         panel.buildSouth(_edgeSouth);
@@ -163,6 +171,18 @@ class Desktop {
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
         panel.shown(this, uri, name, desc);
+        if (notifyPrev) {
+            if (_curPanelIndex >= 0) {
+                DesktopPanel prev = (DesktopPanel)_loadedPanels.get(_curPanelIndex);
+                if (prev != panel) {
+                    prev.hidden();
+                    synchronized (_listeners) {
+                        for (int i = 0; i < _listeners.size(); i++)
+                            ((DesktopListener)_listeners.get(i)).panelHidden(prev);
+                    }
+                }
+            }
+        }
         int idx = _loadedPanels.indexOf(panel);
         if (idx >= 0) {
             _curPanelIndex = idx;
@@ -183,12 +203,13 @@ class Desktop {
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     
-    void showPreviousPanel() {
+    void showPreviousPanel() { showPreviousPanel(true); }
+    void showPreviousPanel(boolean notifyPrev) {
         if (_loadedPanels.size() > 0) {
             int idx = _curPanelIndex - 1;
             if (idx < 0) idx = _loadedPanels.size()-1;
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
-            show(panel, null, null, null);
+            show(panel, null, null, null, notifyPrev);
         }
     }
     void showNextPanel() {
@@ -199,13 +220,18 @@ class Desktop {
             show(panel, null, null, null);
         }
     }
-    void panelDisposed(DesktopPanel panel) {
+    void panelDisposed(DesktopPanel panel, boolean showAnother) {
         int idx = _loadedPanels.indexOf(panel);
         if (idx >= 0) {
             _loadedPanels.remove(idx);
-            if (_curPanelIndex == idx)
-                showPreviousPanel();
-            else if (_curPanelIndex > idx)
+            synchronized (_listeners) {
+                for (int i = 0; i < _listeners.size(); i++)
+                    ((DesktopListener)_listeners.get(i)).destroyed(panel);
+            }
+            if (_curPanelIndex == idx) {
+                if (showAnother)
+                    showPreviousPanel(false);
+            } else if (_curPanelIndex > idx)
                 _curPanelIndex--;
         }
     }

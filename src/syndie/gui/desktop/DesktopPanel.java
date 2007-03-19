@@ -52,7 +52,7 @@ class DesktopPanel {
     public boolean canShow(SyndieURI uri) { return _origURI != null && _origURI.equals(uri); }
     public void close() { 
         dispose();
-        _desktop.panelDisposed(this); 
+        _desktop.panelDisposed(this, true); 
     }
     protected void dispose() { _root.dispose(); }
     
@@ -62,7 +62,14 @@ class DesktopPanel {
     public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
     
     /** callback after the panel has been completely shown on the desktop */
-    void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {}
+    void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
+        getRoot().setVisible(true);
+        getRoot().setEnabled(true);
+    }
+    void hidden() {
+        getRoot().setVisible(false);
+        getRoot().setEnabled(false);
+    }
     
     /** instruct the panel to build its northern edge (or it can do nothing if it doesn't have one) */
     void buildNorth(Composite edge) {}

@@ -286,11 +286,11 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         public void togglePreview(boolean shouldShow);
     }
     
-    static boolean shouldShowPreview(DBClient client) {
+    public static boolean shouldShowPreview(DBClient client) {
         Properties prefs = client.getNymPrefs();
         return ( (prefs == null) || (!prefs.containsKey("showPreview")) || (Boolean.valueOf(prefs.getProperty("showPreview")).booleanValue()));
     }
-    static void setShouldShowPreview(DBClient client, boolean shouldShow) {
+    public static void setShouldShowPreview(DBClient client, boolean shouldShow) {
         Properties prefs = client.getNymPrefs();
         prefs.setProperty("showPreview", shouldShow ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         client.setNymPrefs(prefs);
@@ -1336,7 +1336,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             s.dispose();
             _tree.setEnabled(true);
         }
-        _filter = filter;
+        //_filter = filter;
+        setFilter(filter);
         if (uri != null) {
             final SyndieURI filteredURI = uri;
             JobRunner.instance().enqueue(new Runnable() {
