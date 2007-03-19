@@ -66,9 +66,15 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _desktop.panelDisposed(this);
     }
 
-    protected void buildSouth(Composite edge) { _edgeSouth = new SouthEdge(edge, _ui); }
-    protected void buildNorth(Composite edge) { _edgeNorth = new NorthEdge(edge, _ui); }
-    protected void buildEast(Composite edge) { _edgeEast = new EastEdge(edge, _ui); }
+    protected void buildSouth(Composite edge) { 
+        if (_edgeSouth == null) _edgeSouth = new SouthEdge(edge, _ui); 
+    }
+    protected void buildNorth(Composite edge) { 
+        if (_edgeNorth == null) _edgeNorth = new NorthEdge(edge, _ui); 
+    }
+    protected void buildEast(Composite edge) { 
+        if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
+    }
 
     private static final String T_CANCEL = "syndie.gui.desktop.forumselectionpanel.cancel";
     class SouthEdge extends DesktopEdge implements Themeable, Translatable {

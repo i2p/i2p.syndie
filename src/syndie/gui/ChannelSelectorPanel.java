@@ -194,6 +194,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             chanIdToOldRecord.put(new Long(rec.channelId), rec);
         }
         
+        int maxWidth = 48;
+        
         Button first = null;
         Button last = null;
         for (int i = 0; i < records.size(); i++) {
@@ -215,6 +217,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             }
             if (r.avatar == null)
                 r.avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
+            
+            int width = r.avatar.getBounds().width;
+            if (width > maxWidth)
+                maxWidth = width;
             
             String tooltip = null;
             if (r.name != null)
@@ -271,8 +277,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         }
         timer.addEvent("columns packed");
         Rectangle bounds = _scrollContainer.getBounds();
+        bounds = _scrollContainer.getClientArea();
     
-        int numCols = bounds.width / (Constants.MAX_AVATAR_WIDTH+2);
+        int numCols = bounds.width / (maxWidth + 18); // 18?  trial and error.
         ((GridLayout)_buttons.getLayout()).numColumns = numCols;
         
         Point sz = _buttons.computeSize(SWT.DEFAULT, SWT.DEFAULT);

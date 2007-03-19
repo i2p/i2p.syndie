@@ -120,7 +120,6 @@ class Desktop {
     }
     
     private void initKeyFilters() {
-        
         _display.addFilter(SWT.KeyDown, new Listener() {
             public void handleEvent(Event evt) {
                 if (evt.character == SWT.ESC) {
@@ -136,6 +135,12 @@ class Desktop {
                     else
                         showForumSelectionPanel();
                     evt.type = SWT.None;
+                } else if ( (evt.keyCode == SWT.ARROW_DOWN) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-down
+                    evt.type = SWT.NONE;
+                    showNextPanel();
+                } else if ( (evt.keyCode == SWT.ARROW_UP) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-up
+                    evt.type = SWT.NONE;
+                    showPreviousPanel();
                 }
             }
         });
@@ -206,8 +211,8 @@ class Desktop {
     void startupComplete(boolean ok) {
         if (ok)
             _display.asyncExec(new Runnable() { public void run() { showForumSelectionPanel(); } });
-        //if (ok)
-        //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
+        if (ok)
+            _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
     
     void showDesktopTabs() {
