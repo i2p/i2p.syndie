@@ -97,7 +97,9 @@ class Desktop {
             _shell = new Shell(_display, SWT.NO_TRIM);
         prepareGrid();
         _shell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellActivated(ShellEvent shellEvent) {
+                _center.forceFocus(); // when the key filters are triggered, swt seems to lose track of the focus
+            }
             public void shellClosed(ShellEvent evt) {
                 evt.doit = false;
                 close();

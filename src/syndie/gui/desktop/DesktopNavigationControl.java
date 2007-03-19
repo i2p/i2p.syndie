@@ -26,8 +26,12 @@ public class DesktopNavigationControl implements NavigationControl {
     
     private DesktopPanel createPanel(SyndieURI uri, String name, String desc) {
         if (uri == null) return null;
-        if ( (uri.isChannel() && uri.getMessageId() == null) || (uri.isSearch()) )
+        // we have already checked and none of the existing message tree panels can show
+        // this uri
+        if ( (uri.isChannel() && uri.getMessageId() == null) || (uri.isSearch()) ) {
+            //System.out.println("creating a new message tree panel for " + uri);
             return new MessageTreePanel(_desktop, uri);
+        }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);
     }

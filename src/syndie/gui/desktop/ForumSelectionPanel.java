@@ -1,5 +1,6 @@
 package syndie.gui.desktop;
 
+import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -17,6 +18,7 @@ import syndie.db.UI;
 import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.MessageTree;
 import syndie.gui.NavigationControl;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
@@ -63,6 +65,16 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _navControl.view(SyndieURI.createScope(scope));
         _desktop.panelDisposed(this, false);
     }
+    
+    public void viewMatches() {
+        List scopes = _channels.getMatches();
+        boolean unread = _channels.isUnreadOnly();
+        boolean threaded = true;
+        boolean useImportDate = MessageTree.shouldUseImportDate(_client);
+        _ui.debugMessage("all matching channels selected: " + scopes);
+        _navControl.view(SyndieURI.createSearch(scopes, unread, threaded, useImportDate));
+        _desktop.panelDisposed(this, false);
+    }
 
     public void forumSelectorCancelled() {
         _ui.debugMessage("channel selector cancelled");
@@ -82,14 +94,22 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     }
 
     private static final String T_CANCEL = "syndie.gui.desktop.forumselectionpanel.cancel";
+    private static final String T_VIEWMATCHES = "syndie.gui.desktop.forumselectionpanel.viewmatches";
     class SouthEdge extends DesktopEdge implements Themeable, Translatable {
+        private Button _viewMatches;
         private Button _cancel;
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
         }
         private void initComponents() {
-            _cancel = new Button(getEdgeRoot(), SWT.PUSH);
+            Composite root = getEdgeRoot();
+            root.setLayout(new FillLayout(SWT.HORIZONTAL));
+            _viewMatches = new Button(root, SWT.PUSH);
+            _viewMatches.addSelectionListener(new FireSelectionListener() {
+                public void fire() { viewMatches(); }
+            });
+            _cancel = new Button(root, SWT.PUSH);
             _cancel.addSelectionListener(new FireSelectionListener() {
                 public void fire() { forumSelectorCancelled(); }
             });
@@ -97,9 +117,11 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _themeRegistry.register(SouthEdge.this);
         }
         public void translate(TranslationRegistry trans) {
+            _viewMatches.setText(trans.getText(T_VIEWMATCHES, "View all matches"));
             _cancel.setText(trans.getText(T_CANCEL, "Cancel"));
         }
         public void applyTheme(Theme theme) { 
+            _viewMatches.setFont(theme.BUTTON_FONT);
             _cancel.setFont(theme.BUTTON_FONT);
         }
     }

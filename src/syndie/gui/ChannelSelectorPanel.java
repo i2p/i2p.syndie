@@ -65,6 +65,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private Composite _buttons;
     
     private List _records;
+    private boolean _isUnreadOnly; // whether _records contains unread only
     
     public interface ChannelSelectorListener {
         public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar);
@@ -82,6 +83,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _parent = parent;
         _lsnr = lsnr;
         _records = new ArrayList();
+        _isUnreadOnly = false;
         initComponents();
     }
 
@@ -89,6 +91,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     protected Composite getTop() { return _top; }
     
     public int getRecordCount() { return _records.size(); }
+    public List getMatches() {
+        List rv = new ArrayList();
+        for (int i = 0; i < _records.size(); i++) {
+            Record r = (Record)_records.get(i);
+            rv.add(r.scope);
+        }
+        return rv;
+    }
+    public boolean isUnreadOnly() { return _isUnreadOnly; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -166,8 +177,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
      * tell the table to render the given channelIds.  this should NOT be run from the 
      * swt thread 
      */
-    public void setChannels(List channelIds, final Runnable afterSet) {
+    public void setChannels(List channelIds, final Runnable afterSet) { setChannels(false, channelIds, afterSet); }
+    private void setChannels(boolean unreadOnly, List channelIds, final Runnable afterSet) {
         if ( (channelIds == null) || (channelIds.size() == 0) ) return;
+        _isUnreadOnly = unreadOnly;
         
         final Timer timer = new Timer("set channels", _ui);
         Display d = _root.getDisplay();
@@ -396,7 +409,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                         }
                     }
                 }
-                setChannels(chanIds, afterSet);
+                setChannels(unreadOnly, chanIds, afterSet);
             }
         });
     }

@@ -81,9 +81,19 @@ public class SyndieURI {
                             null, null, null, null, null, null, null, null, false, true, false, true, false);
     }
     public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded, boolean useImportDate) {
-        String scopes[] = null;
+        List channels = new ArrayList();
         if (channel != null)
-            scopes = new String[] { channel.toBase64() };
+            channels.add(channel);
+        return createSearch(channels, unreadOnly, threaded, useImportDate);
+    }
+    public static SyndieURI createSearch(List channels, boolean unreadOnly, boolean threaded, boolean useImportDate) {
+        String scopes[] = null;
+        if (channels != null) {
+            scopes = new String[channels.size()];
+            for (int i = 0; i < scopes.length; i++) {
+                scopes[i] = ((Hash)channels.get(i)).toBase64();
+            }
+        }
         Long postDays = null;
         Long importDays = null;
         if (useImportDate)
