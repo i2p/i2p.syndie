@@ -20,7 +20,7 @@ class DesktopCorner {
         initComponents();
     }
     
-    protected void initComponents() {
+    private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new FillLayout());
     }

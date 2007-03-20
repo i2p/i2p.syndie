@@ -3895,6 +3895,34 @@ public class DBClient {
         return rv;
     }
     
+    private static final String SQL_IS_WATCHED = "SELECT COUNT(*) FROM nymWatchedChannel WHERE nymId = ? AND channelId = ?";
+    public boolean isWatched(Hash scope) { return isWatched(getChannelId(scope)); }
+    public boolean isWatched(long channelId) { return isWatched(_nymId, channelId); }
+    public boolean isWatched(long nymId, long channelId) { 
+        ensureLoggedIn();
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_IS_WATCHED);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long count = rs.getLong(1);
+                if (count > 0)
+                    return true;
+            }
+            return false;
+        } catch (SQLException se) {
+            log(se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return false;
+    }
+    
     
     /*
      * CREATE TABLE nymWatchedChannel (

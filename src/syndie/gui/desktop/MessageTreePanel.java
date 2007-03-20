@@ -15,6 +15,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -70,7 +71,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 _ui.debugMessage("message tree panel: filter applied: " + searchURI);
                 ((NorthEdge)_edgeNorth).update(searchURI);
             }
-        }, true);
+        }, false);
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -124,6 +125,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
              ( (description != null) && (description.length() > 0) ) ) {
             ((NorthEdge)_edgeNorth).updateMulti(name, description);
         }
+        ((SouthEdge)_edgeSouth).updateActions(uri);
+        ((EastEdge)_edgeEast).updateNav(uri);
         getRoot().getDisplay().addFilter(SWT.KeyDown, _keyListener);
         super.shown(desktop, uri, name, description);
     }
@@ -150,6 +153,13 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _edgeNorth = new NorthEdge(edge, _ui);
             ((NorthEdge)_edgeNorth).translate(_translationRegistry);
             ((NorthEdge)_edgeNorth).applyTheme(_themeRegistry.getTheme());
+        }
+    }
+    public void buildEast(Composite edge) { 
+        if (_edgeEast == null) {
+            _edgeEast = new EastEdge(edge, _ui); 
+            ((EastEdge)_edgeEast).translate(_translationRegistry);
+            ((EastEdge)_edgeEast).applyTheme(_themeRegistry.getTheme());
         }
     }
     public void buildSouth(Composite edge) { 
@@ -328,42 +338,162 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         public void translate(TranslationRegistry registry) {}
     }
     
+    private static final String T_POST = "syndie.gui.messagetreepanel.post";
+    private static final String T_PRIVMSG = "syndie.gui.messagetreepanel.privmsg";
+    private static final String T_WATCH = "syndie.gui.messagetreepanel.watch";
+    private static final String T_BAN = "syndie.gui.messagetreepanel.ban";
+    
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
-        private Composite _filterBar;
-        private Composite _actionBar;
+        private Button _post;
+        private Button _privmsg;
+        private Button _watch;
+        private Button _ban;
+        private Hash _actionScope;
+        
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
+            _actionScope = null;
             initComponents();
+        }
+        public void updateActions(final SyndieURI uri) {
+            if (uri == null) return; // no change, panel was just reshown
+            Hash scope = null;
+            if (uri.isChannel()) {
+                scope = uri.getScope();
+            } else if (uri.isSearch()) {
+                Hash scopes[] = uri.getSearchScopes();
+                if ( (scopes != null) && (scopes.length == 1) )
+                    scope = scopes[0];
+            }
+            if ( ( (scope == null) && (_actionScope == null) ) ||
+                 ( (scope != null) && (scope.equals(_actionScope)) ) ) {
+                return; // no change
+            } else if (scope != null) {
+                // single scope.. crunch to figure out what we're allowed to do, then
+                // come back and reenable the allowed buttons
+                _post.setEnabled(false);
+                _privmsg.setEnabled(false);
+                _watch.setEnabled(false);
+                _ban.setEnabled(false);
+                final Hash actionScope = scope;
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() {
+                        long channelId = _client.getChannelId(actionScope);
+                        DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true, false);
+                        final boolean postable = chans.getAllIds().contains(new Long(channelId));
+                        final boolean privmsg = true; // true for all channels
+                        final boolean watched = _client.isWatched(channelId);
+                        final boolean banned = _client.getBannedChannels().contains(actionScope);
+                        Display.getDefault().asyncExec(new Runnable() {
+                            public void run() {
+                                _actionScope = actionScope;
+                                _post.setEnabled(postable);
+                                _privmsg.setEnabled(privmsg);
+                                _watch.setEnabled(!watched);
+                                _ban.setEnabled(!banned);
+                            }
+                        });
+                    }
+                });
+            } else {
+                // multiple scopes
+                _post.setEnabled(false);
+                _privmsg.setEnabled(false);
+                _watch.setEnabled(false);
+                _ban.setEnabled(false);
+            }
         }
         private void initComponents() {
             Composite root = getEdgeRoot();
-            GridLayout gl = new GridLayout(1, true);
-            gl.horizontalSpacing = 0;
-            gl.verticalSpacing = 0;
-            gl.marginHeight = 0;
-            gl.marginWidth = 0;
-            root.setLayout(gl);
+            root.setLayout(new FillLayout(SWT.HORIZONTAL));
             
-            _filterBar = new Composite(root, SWT.NONE);
-            _filterBar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-            _filterBar.setLayout(new GridLayout(8, false));
-            _tree.createFilterBar(_filterBar, new MessageTree.PreviewControlListener() {
-                public void togglePreview(boolean shouldShow) { MessageTree.setShouldShowPreview(_client, shouldShow); }
-            });
+            _post = new Button(root, SWT.PUSH);
+            _post.addSelectionListener(new FireSelectionListener() { public void fire() { post(); } });
+            _privmsg = new Button(root, SWT.PUSH);
+            _privmsg.addSelectionListener(new FireSelectionListener() { public void fire() { sendPM(); } });
+            _watch = new Button(root, SWT.PUSH);
+            _watch.addSelectionListener(new FireSelectionListener() { public void fire() { watch(); } });
+            _ban = new Button(root, SWT.PUSH);
+            _ban.addSelectionListener(new FireSelectionListener() { public void fire() { ban(); } });
             
-            _actionBar = new Composite(root, SWT.NONE);
-            _actionBar.setLayout(new FillLayout(SWT.HORIZONTAL));
-            _actionBar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-            
-            new Button(_actionBar, SWT.PUSH);
-            new Button(_actionBar, SWT.PUSH);
-            new Button(_actionBar, SWT.PUSH);
-            new Button(_actionBar, SWT.PUSH);
+            _post.setEnabled(false);
+            _privmsg.setEnabled(false);
+            _watch.setEnabled(false);
+            _ban.setEnabled(false);
         }
         public void applyTheme(Theme theme) {
             getEdgeRoot().layout(true, true);
         }
-        public void translate(TranslationRegistry registry) {}
+        public void translate(TranslationRegistry registry) {
+            _post.setText(registry.getText(T_POST, "Post a new message"));
+            _privmsg.setText(registry.getText(T_PRIVMSG, "Send a private message"));
+            _watch.setText(registry.getText(T_WATCH, "Watch the forum"));
+            _ban.setText(registry.getText(T_BAN, "Ban the forum"));
+        }
+        
+        private void post() {
+            _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, false));
+        }
+        private void sendPM() {
+            _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, true));
+        }
+        private void watch() {
+            _client.watchChannel(_actionScope, true, false, false, false, false);
+        }
+        private void ban() {
+            _desktop.getBanControl().ban(_actionScope);
+        }
+    }
+
+    public String getT_MULTI() {
+        return T_MULTI;
+    }
+
+    public String getT_BAN() {
+        return T_BAN;
+    }
+    
+    private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";
+    
+    private class EastEdge extends DesktopEdge implements Themeable, Translatable {
+        private Button _profile;
+        private Hash _actionScope;
+        
+        public EastEdge(Composite edge, UI ui) {
+            super(edge, ui);
+            _actionScope = null;
+            initComponents();
+        }
+        private void initComponents() {
+            Composite root = getEdgeRoot();
+            root.setLayout(new FillLayout());
+            _profile = new Button(root, SWT.PUSH);
+            _profile.addSelectionListener(new FireSelectionListener() { public void fire() { viewProfile(); } });
+            _profile.setEnabled(false);
+        }
+        public void applyTheme(Theme theme) {
+            getEdgeRoot().layout(true, true);
+        }
+        public void translate(TranslationRegistry registry) {
+            _profile.setToolTipText(registry.getText(T_PROFILE_TT, "View the forum's profile"));
+        }
+        public void updateNav(SyndieURI uri) {
+            if (uri == null) return; // no change, reshown
+            Hash scope = null;
+            if (uri.isChannel()) {
+                scope = uri.getScope();
+            } else if (uri.isSearch()) {
+                Hash scopes[] = uri.getSearchScopes();
+                if ( (scopes != null) && (scopes.length == 1) )
+                    scope = scopes[0];
+            }
+            _actionScope = scope;
+            _profile.setEnabled(scope != null);
+        }
+        private void viewProfile() {
+            if (_actionScope != null)
+                _desktop.getNavControl().view(URIHelper.instance().createMetaURI(_actionScope));
+        }
     }
 }
 

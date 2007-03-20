@@ -3,6 +3,7 @@ package syndie.gui.desktop;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ShellEvent;
@@ -11,12 +12,15 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
+import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
@@ -68,6 +72,8 @@ class Desktop {
     private int _curPanelIndex;
     
     private NavigationControl _navControl;
+    private BanControl _banControl;
+    private BookmarkControl _bookmarkControl;
     
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
@@ -77,6 +83,8 @@ class Desktop {
         _loadedPanels = new ArrayList();
         _curPanelIndex = -1;
         _navControl = new DesktopNavigationControl(this);
+        _banControl = new DesktopBan();
+        _bookmarkControl = new DesktopBookmark();
         initComponents(timer);
     }
     
@@ -164,10 +172,16 @@ class Desktop {
                     showPreviousPanel();
                 } else if ( (evt.character == '=') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^= (aka ^+)
                     evt.type = SWT.NONE;
+                    _shell.setRedraw(false);
                     _themeRegistry.increaseFont();
+                    _center.layout(true, true);
+                    _shell.setRedraw(true);
                 } else if ( (evt.character == '-') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^-
                     evt.type = SWT.NONE;
+                    _shell.setRedraw(false);
                     _themeRegistry.decreaseFont();
+                    _center.layout(true, true);
+                    _shell.setRedraw(true);
                 }
             }
         });
@@ -214,6 +228,8 @@ class Desktop {
     DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
     List getPanels() { return new ArrayList(_loadedPanels); }
     NavigationControl getNavControl() { return _navControl; }
+    BanControl getBanControl() { return _banControl; }
+    BookmarkControl getBookmarkControl() { return _bookmarkControl; }
     Composite getCenter() { return _center; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
@@ -338,7 +354,7 @@ class Desktop {
         setSize(_edgeWest, BORDER_SIZE, -1);
         
         new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
-        new DesktopCornerDummy(SWT.COLOR_BLUE, _edgeNorthEast, _ui);
+        new ExitDesktopCorner(SWT.COLOR_BLUE, _edgeNorthEast, _ui);
         new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         new DesktopCornerDummy(SWT.COLOR_RED, _edgeSouthWest, _ui);
         
@@ -368,9 +384,74 @@ class Desktop {
         gd.widthHint = width;
     }
 
-    public void showForumSelectionPanel() { 
+    public void showForumSelectionPanel() { showForumSelectionPanel(false); }
+    public void showForumSelectionPanel(boolean startWithRefs) { 
         if (_forumSelectionPanel == null)
             _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
+        _forumSelectionPanel.preferRefs(startWithRefs);
         show(_forumSelectionPanel, null, null, null);
+    }
+    
+    private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";
+    private static final String T_CONFIRMBAN_NAME = "syndie.gui.desktop.desktop.confirmbanname";
+    
+    private class DesktopBan implements BanControl {
+        public boolean ban(Hash scope) { 
+            String scopeName = _client.getChannelName(scope);
+            if (scopeName == null)
+                scopeName = "";
+            scopeName = scopeName + " [" + scope.toBase64().substring(0,6) + "]";
+
+            MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(_translationRegistry.getText(T_CONFIRMBAN, 
+                    "All of the messages in it will be removed and you will never receive " +
+                    "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
+                    + scopeName);
+            box.setText(_translationRegistry.getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+            int rc = box.open();
+            if (rc == SWT.YES) {
+                _client.ban(scope, _ui, true, true);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    
+    private class DesktopBookmark implements BookmarkControl {
+        /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+        public void bookmark(SyndieURI uri) {}
+        /** show a popup to bookmark the given uri in the user's set of bookmarked references */
+        public void bookmark(SyndieURI uri, long parentGroupId) {}
+        /** just add the given bookmark.  the node's groupId, siblingOrder, and uriId will be populated */
+        public void bookmark(NymReferenceNode node, boolean doneBookmarking) {}
+        public void deleteBookmark(long bookmarkGroupId) {}
+        public void deleteBookmarks(List bookmarkGroupIds) {}
+        public void updateBookmark(NymReferenceNode bookmark) {}
+        public void bookmarkCurrentTab() {}
+        /** get the bookmarks (NymReferenceNode) currently loaded */
+        public List getBookmarks() { return null; }
+        public boolean isBookmarked(SyndieURI syndieURI) { return false; }
+    }
+}
+
+class ExitDesktopCorner extends DesktopCorner {
+    public ExitDesktopCorner(int color, Composite parent, UI ui) {
+        super(parent, ui);
+        initComponents(color);
+    }
+    private void initComponents(int color) {
+        Button b = new Button(getRoot(), SWT.PUSH);
+        b.setBackground(b.getDisplay().getSystemColor(color));
+        b.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+                box.setMessage("exit?");
+                int rc = box.open();
+                if (rc == SWT.YES)
+                    System.exit(0);
+            }
+        });
+        getRoot().layout(true, true);
     }
 }

@@ -40,7 +40,8 @@ import syndie.gui.BookmarkDnDHelper;
  */
 public class LinkEdge extends DesktopEdge {
     private Desktop _desktop;
-    private Button _button;
+    private Button _watches;
+    private Button _refs;
     
     public LinkEdge(Composite parent, UI ui, Desktop desktop) {
         super(parent, ui);
@@ -49,11 +50,22 @@ public class LinkEdge extends DesktopEdge {
     }
     
     private void initComponents() {
-        _button = new Button(getEdgeRoot(), SWT.PUSH);
-        _button.setText(" ");
-        _button.setBackground(ColorUtil.getColor("blue"));
-        _button.setForeground(ColorUtil.getColor("blue"));
-        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
-        BookmarkDnDHelper.initWatchTarget(_desktop.getDBClient(), _ui, _button);
+        Composite root = getEdgeRoot();
+        root.setLayout(new FillLayout(SWT.VERTICAL));
+        _watches = new Button(root, SWT.PUSH);
+        _watches.setText(" ");
+        _watches.setBackground(ColorUtil.getColor("blue"));
+        _watches.setForeground(ColorUtil.getColor("blue"));
+        _watches.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
+        BookmarkDnDHelper.initWatchTarget(_desktop.getDBClient(), _ui, _watches);
+        
+        _refs = new Button(root, SWT.PUSH);
+        _refs.setText(" ");
+        _refs.setBackground(ColorUtil.getColor("yellow"));
+        _refs.setForeground(ColorUtil.getColor("yellow"));
+        _refs.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(true); } }); 
+        BookmarkDnDHelper.initBookmarkDnDTarget(_desktop.getDBClient(), _ui, _refs, new BookmarkDnDHelper.BookmarkDnDTarget() {
+            public void dropped(SyndieURI uri) { _desktop.getBookmarkControl().bookmark(uri); }
+        });
     }
 }

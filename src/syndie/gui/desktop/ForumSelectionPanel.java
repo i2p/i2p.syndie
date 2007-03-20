@@ -34,10 +34,12 @@ import syndie.gui.TranslationRegistry;
 public class ForumSelectionPanel extends DesktopPanel implements ChannelSelectorPanel.ChannelSelectorListener {
     private ChannelSelectorPanel _channels;
     private NavigationControl _navControl;
+    private boolean _preferRefs;
     
     public ForumSelectionPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
         super(desktop, client, themes, trans, parent, ui, null);
         _navControl = navControl;
+        _preferRefs = false;
         initComponents();
     }
     
@@ -48,11 +50,16 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         Composite root = getRoot();
         _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this);
     }
+    public void preferRefs(boolean preferRefs) { _preferRefs = preferRefs; }
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
-        if (_channels.getRecordCount() == 0)
-            _channels.showWatched(false, null);
+        if (_channels.getRecordCount() == 0) {
+            if (_preferRefs)
+                _channels.showReferences(null);
+            else
+                _channels.showWatched(false, null);
+        }
         super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
     public void hidden(Desktop desktop) {}
