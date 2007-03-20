@@ -220,9 +220,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             buttons[i].dispose();
         for (int i = 0; i < existingRecords.size(); i++) {
             Record rec = (Record)existingRecords.get(i);
-            if (rec.channelId > 0)
+            if (rec.channelId >= 0)
                 chanIdToOldRecord.put(new Long(rec.channelId), rec);
-            else
+            else if (rec.node != null)
                 chanIdToOldRecord.put(new Long(rec.node.getUniqueId()), rec);
         }
         
@@ -251,7 +251,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             }
             if (r.avatar == null) {
                 if ( (r.node == null) || (r.node.getChildCount() == 0) ) {
-                    r.avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
+                    r.avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR; // message or other ref type
                 } else {
                     r.avatar = ImageUtil.ICON_EDITOR_LINK; // folder
                 }
@@ -475,8 +475,13 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private void getAvatarData(List records) {
         for (int i = 0; i < records.size(); i++) {
             Record r = (Record)records.get(i);
-            byte avatar[] = (r.channelId >= 0 ? _client.getChannelAvatar(r.channelId) : null);
-            r.avatarData = avatar;
+            if ( (r.node != null) && (r.node.getURI() != null) && (r.node.getURI().getMessageId() != null) ) {
+                // dont use the avatar for messages
+                r.avatarData = null;
+            } else {
+                byte avatar[] = (r.channelId >= 0 ? _client.getChannelAvatar(r.channelId) : null);
+                r.avatarData = avatar;
+            }
             //if (avatar == null)
             //    _ui.debugMessage("no avatar for channelId " + r.channelId + " [" + r.name + "]");
         }
@@ -603,5 +608,6 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _unreadOnly.setFont(theme.DEFAULT_FONT);
         _search.setFont(theme.DEFAULT_FONT);
         _searchButton.setFont(theme.BUTTON_FONT);
+        _root.layout(true, true);
     }
 }
