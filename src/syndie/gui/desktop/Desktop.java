@@ -91,11 +91,27 @@ class Desktop {
     private boolean TRIM = false;
     
     private void initComponents(Timer timer) {
+        timer.addEvent("init desktop components begin");
+        prepareShell(timer);
+        timer.addEvent("init desktop components: shell prepared");
+        _startupPanel = new StartupPanel(this, _center, _ui, timer);
+        show(_startupPanel, null, null, null);
+        timer.addEvent("init desktop components: startup panel shown");
+        
+        initKeyFilters();
+        timer.addEvent("init desktop components: key filters installed");
+        
+        show();
+        timer.addEvent("init desktop components: desktop shown");
+    }
+    private void prepareShell(Timer timer) {
         if (TRIM)
             _shell = new Shell(_display, SWT.SHELL_TRIM);
         else
             _shell = new Shell(_display, SWT.NO_TRIM);
+        timer.addEvent("shell created");
         prepareGrid();
+        timer.addEvent("grid prepared");
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {
                 _center.forceFocus(); // when the key filters are triggered, swt seems to lose track of the focus
@@ -108,12 +124,9 @@ class Desktop {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-
-        _startupPanel = new StartupPanel(this, _center, _ui, timer);
-        show(_startupPanel, null, null, null);
-        
-        initKeyFilters();
-        
+    }
+    
+    private void show() {
         Monitor mon[] = _display.getMonitors();
         Rectangle rect = null;
         if ( (mon != null) && (mon.length > 1) )

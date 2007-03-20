@@ -30,7 +30,10 @@ public class DesktopMain {
         System.setProperty("prng.buffers", "4");
         
         boolean trackResources = trackResources(args);
-   
+
+        long beforeDisplay = System.currentTimeMillis();
+        Class cls = Display.class;
+        long afterLoad = System.currentTimeMillis();
         Display d = null;
         if (trackResources) {
             DeviceData data = new DeviceData();
@@ -39,6 +42,8 @@ public class DesktopMain {
         } else {
             d = new Display();
         }
+
+        long afterDisplay = System.currentTimeMillis();
         
         String root = TextEngine.getRootPath();
         if (args.length > 0)
@@ -54,9 +59,11 @@ public class DesktopMain {
         // (this has to be set before the I2PAppContext instantiates the LogManager)
         System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");
    
+        long beforeUI = System.currentTimeMillis();
         DesktopUI ui = new DesktopUI();
         Timer timer = new Timer("startup", ui);
-        timer.addEvent("main to timer startup: " + (System.currentTimeMillis()-start));
+        long now = System.currentTimeMillis();
+        timer.addEvent("main to timer startup: " + (now-start) + " track time: " + (beforeDisplay-start) + " load time: " + (afterLoad-beforeDisplay) + " display time: " + (afterDisplay-afterLoad) + " dir time: " + (beforeUI - afterDisplay) + " ui time: " + (now-beforeUI));
         JobRunner.instance().setUI(ui);
         d.syncExec(new Runnable() { public void run() { ColorUtil.init(); } });
         timer.addEvent("color init");

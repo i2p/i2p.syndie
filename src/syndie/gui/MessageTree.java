@@ -1519,6 +1519,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         setMessages(allNodes, true); 
     }
     void setMessages(List allNodes, boolean recalcTags) {
+        if (allNodes == null) return;
         List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();

@@ -265,8 +265,15 @@ class StartupPanel extends DesktopPanel implements Themeable {
     private static final boolean ALLOW_SLOW_STARTUP = true;
     
     private boolean startClient() {
-        StartupListener lsnr = new StartupListener();
-        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), _desktop.getRootFile());
+        StartupListener lsnr = new StartupListener(_startupTimer);
+        I2PAppContext ctx = I2PAppContext.getGlobalContext();
+        _startupTimer.addEvent("i2pappcontext fetched");
+        Object o = ctx.logManager();
+        _startupTimer.addEvent("logManager warmed up");
+        o = ctx.keyGenerator();
+        _startupTimer.addEvent("keyGenerator warmed up");
+        DBClient client = new DBClient(ctx, _desktop.getRootFile());
+        _startupTimer.addEvent("db client instantiated");
         //final Browser browser = new Browser(client);
         //final Timer timer = new Timer("swtUI startup", browser.getUI());
         final UI ui = _ui;
@@ -435,12 +442,15 @@ class StartupListener implements TextEngine.ScriptListener {
     private Set _complete;
     private boolean _alreadyRunning;
     private Exception _loginFailedCause;
+    private Timer _timer;
 
-    public StartupListener() { 
+    public StartupListener(Timer timer) { 
         _complete = new HashSet(); 
         _alreadyRunning = false;
+        _timer = timer;
     }
     public void scriptComplete(String script) {
+        _timer.addEvent("script complete: " + script);
         synchronized (_complete) { _complete.add(script); _complete.notifyAll(); }
     }
     public void alreadyRunning() { 

@@ -70,9 +70,11 @@ public class DBClient {
     }
     
     public void connect(String url) throws SQLException { 
+        long start = System.currentTimeMillis();
         //System.out.println("Connecting to " + url);
         _url = url;
         _con = DriverManager.getConnection(url);
+        long connected = System.currentTimeMillis();
         if (_shutdownHook == null) {
             _shutdownHook = new Thread(new Runnable() {
                 public void run() {
@@ -86,10 +88,13 @@ public class DBClient {
         }
         
         initDB();
+        long init = System.currentTimeMillis();
         _uriDAO = new SyndieURIDAO(this);
         _login = null;
         _pass = null;
         _nymId = -1;
+        long now = System.currentTimeMillis();
+        _ui.debugMessage("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
     }
     public long connect(String url, String login, String passphrase) throws SQLException {
         connect(url);
