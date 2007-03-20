@@ -33,7 +33,6 @@ import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageGrid;
 import syndie.gui.ImageUtil;
 import syndie.gui.BookmarkDnDHelper;
-import syndie.gui.LinkBar;
 
 /**
  * desktop edge containing the watched forums, bookmarked references, and the

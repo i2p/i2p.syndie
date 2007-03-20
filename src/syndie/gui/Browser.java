@@ -115,7 +115,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private Composite _root;
     private Menu _mainMenu;
     private SashForm _sash;
-    private LinkBar _linkBar;
+    //private LinkBar _linkBar;
     private BrowserTree _bookmarks;
     private CTabFolder _tabs;
     private Menu _tabMenu;
@@ -299,7 +299,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         timer.addEvent("sash construction");
-        _linkBar = new LinkBar(_client, getUI(), getThemeRegistry(), getTranslationRegistry(), _navControl, this, URIHelper.instance(), _sash);
+        //_linkBar = new LinkBar(_client, getUI(), getThemeRegistry(), getTranslationRegistry(), _navControl, this, URIHelper.instance(), _sash);
         
         _bookmarks = ComponentBuilder.instance().createBrowserTree(this, timer, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         timer.addEvent("browser tree construction");
@@ -374,7 +374,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _themes.register(this);
         timer.addEvent("main browser theming");
         
-        _sash.setWeights(new int[] { 5, 15, 80 });
+        //_sash.setWeights(new int[] { 5, 15, 80 });
+        _sash.setWeights(new int[] { 20, 80 });
         _shell.setMinimumSize(_shell.computeSize(600, 300));
         // bah, default to hiding the bookmark tree
         _sash.setMaximizedControl(_tabs);

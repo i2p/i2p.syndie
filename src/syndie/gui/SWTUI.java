@@ -41,6 +41,7 @@ public class SWTUI {
     private static final boolean ALLOW_SLOW_STARTUP = true;
     
     public static void main(final String args[]) {
+        long start = System.currentTimeMillis();
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
@@ -55,7 +56,6 @@ public class SWTUI {
         System.setProperty("prng.bufsize", "1024");
         System.setProperty("prng.buffers", "4");
         
-        long start = System.currentTimeMillis();
         boolean trackResources = trackResources(args);
    
         Display d = null;
@@ -84,7 +84,9 @@ public class SWTUI {
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
         Splash.show(d, client.getTempDir());
         final Browser browser = new Browser(client);
+        long now = System.currentTimeMillis();
         final Timer timer = new Timer("swtUI startup", browser.getUI());
+        timer.addEvent("time between main(..) and timer: " + (now-start));
         final TextEngine engine = new TextEngine(client, browser, lsnr);
         timer.addEvent("text engine instantiated");
         browser.setEngine(engine);
