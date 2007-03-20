@@ -1,5 +1,6 @@
 package syndie.gui.desktop;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
@@ -12,6 +13,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -55,15 +57,47 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     }
     public void hidden(Desktop desktop) {}
 
-    public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {
+    public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {
         //_ui.debugMessage("channel reviewed: " + scope + ": " + name);
+        Hash scope = null;
+        if (uri != null) {
+            if (uri.isChannel()) {
+                scope = uri.getScope();
+            } else if (uri.isSearch()) {
+                Hash scopes[] = uri.getSearchScopes();
+                if ( (scopes != null) && (scopes.length == 1) )
+                    scope = scopes[0];
+            }
+        }
+                
         ((NorthEdge)_edgeNorth).updateInfo(scope, channelId, name, description, avatar);
     }
 
-    public void channelSelected(Hash scope) {
-        _ui.debugMessage("channel selected: " + scope);
-        _navControl.view(SyndieURI.createScope(scope));
-        _desktop.panelDisposed(this, false);
+    public void channelSelected(SyndieURI uri, int matchedIndex) {
+        _ui.debugMessage("channel selected: " + uri);
+        if (uri == null) {
+            List nodes = _channels.getMatchingNodes();
+            if ( (nodes != null) && (matchedIndex < nodes.size()) ) {
+                final ReferenceNode node = (ReferenceNode)nodes.get(matchedIndex);
+                if (node.getChildCount() > 0) {
+                    _channels.setChannelIdSource(new ChannelSelectorPanel.ChannelIdSource() {
+                        public List listChannelIds() { return null; }
+                        public List getReferenceNodes() {
+                            List rv = new ArrayList();
+                            for (int i = 0; i < node.getChildCount(); i++)
+                                rv.add(node.getChild(i));
+                            return rv;
+                        }
+                    });
+                    _channels.recalcChannels();
+                } else {
+                    // view an empty folder.  noop
+                }
+            }
+        } else {
+            _navControl.view(uri);
+            _desktop.panelDisposed(this, false);
+        }
     }
     
     public void viewMatches() {
@@ -175,12 +209,14 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     }
     
     private static final String T_WATCHED_TT = "syndie.gui.forumselectionpanel.watched.tt";
+    private static final String T_REFS_TT = "syndie.gui.forumselectionpanel.refs.tt";
     private static final String T_IDENT_TT = "syndie.gui.forumselectionpanel.ident.tt";
     private static final String T_MANAGEABLE_TT = "syndie.gui.forumselectionpanel.manageable.tt";
     private static final String T_POSTABLE_TT = "syndie.gui.forumselectionpanel.postable.tt";
     
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _watched;
+        private Button _refs;
         private Button _ident;
         private Button _manageable;
         private Button _postable;
@@ -196,6 +232,10 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _watched.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showWatched(null); } 
             });
+            _refs = new Button(root, SWT.PUSH);
+            _refs.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { _channels.showReferences(null); } 
+            });
             _ident = new Button(root, SWT.PUSH);
             _ident.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showIdent(null); } 
@@ -209,22 +249,26 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
                 public void fire() { _channels.showPostable(null); } 
             });
             
-            _watched.setBackground(ColorUtil.getColor("blue"));
-            _ident.setBackground(ColorUtil.getColor("blue"));
-            _manageable.setBackground(ColorUtil.getColor("blue"));
-            _postable.setBackground(ColorUtil.getColor("blue"));
+            Color color = ColorUtil.getColor("blue");
+            _watched.setBackground(color);
+            _refs.setBackground(color);
+            _ident.setBackground(color);
+            _manageable.setBackground(color);
+            _postable.setBackground(color);
             
             _translationRegistry.register(EastEdge.this);
             _themeRegistry.register(EastEdge.this);
         }
         public void translate(TranslationRegistry trans) {
             _watched.setToolTipText(trans.getText(T_WATCHED_TT, "Show watched forums"));
+            _refs.setToolTipText(trans.getText(T_REFS_TT, "Show references"));
             _ident.setToolTipText(trans.getText(T_IDENT_TT, "Show nyms"));
             _manageable.setToolTipText(trans.getText(T_MANAGEABLE_TT, "Show manageable forums"));
             _postable.setToolTipText(trans.getText(T_POSTABLE_TT, "Show postable forums"));
         }
         public void applyTheme(Theme theme) { 
             _watched.setFont(theme.BUTTON_FONT);
+            _refs.setFont(theme.BUTTON_FONT);
             _ident.setFont(theme.BUTTON_FONT);
             _manageable.setFont(theme.BUTTON_FONT);
             _postable.setFont(theme.BUTTON_FONT);

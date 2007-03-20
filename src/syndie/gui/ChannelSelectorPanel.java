@@ -36,9 +36,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.NymKey;
+import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.data.WatchedChannel;
@@ -68,14 +71,16 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private boolean _isUnreadOnly; // whether _records contains unread only
     
     public interface ChannelSelectorListener {
-        public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar);
-        public void channelSelected(Hash scope);
+        public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar);
+        public void channelSelected(SyndieURI uri, int matchedIndex);
     }
     private ChannelSelectorListener _lsnr;
     
     public interface ChannelIdSource {
         public List listChannelIds();
+        public List getReferenceNodes();
     }
+    abstract class BasicIdSource implements ChannelIdSource { public List getReferenceNodes() { return null; } }
     private ChannelIdSource _idSource;
     
     public ChannelSelectorPanel(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, ChannelSelectorPanel.ChannelSelectorListener lsnr) {
@@ -96,6 +101,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         for (int i = 0; i < _records.size(); i++) {
             Record r = (Record)_records.get(i);
             rv.add(r.scope);
+        }
+        return rv;
+    }
+    public List getMatchingNodes() {
+        List rv = new ArrayList();
+        for (int i = 0; i < _records.size(); i++) {
+            Record r = (Record)_records.get(i);
+            rv.add(r.node);
         }
         return rv;
     }
@@ -169,17 +182,18 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
 
     protected void search(final String term) {
-        setChannelIdSource(new ChannelIdSource() { public List listChannelIds() { return _client.getChannelIds(term); } });
+        setChannelIdSource(new BasicIdSource() { public List listChannelIds() { return _client.getChannelIds(term); } });
         recalcChannels();
     }
     
     /** 
      * tell the table to render the given channelIds.  this should NOT be run from the 
-     * swt thread 
+     * swt thread.
+     * @param src either a list of channel ids (Long) or bookmarks (ReferenceNode) to render
      */
-    public void setChannels(List channelIds, final Runnable afterSet) { setChannels(false, channelIds, afterSet); }
-    private void setChannels(boolean unreadOnly, List channelIds, final Runnable afterSet) {
-        if ( (channelIds == null) || (channelIds.size() == 0) ) return;
+    public void setChannels(List src, final Runnable afterSet) { setChannels(false, src, afterSet); }
+    private void setChannels(boolean unreadOnly, List src, final Runnable afterSet) {
+        if ( (src == null) || (src.size() == 0) ) return;
         _isUnreadOnly = unreadOnly;
         
         final Timer timer = new Timer("set channels", _ui);
@@ -187,12 +201,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         // step 1 gets the basic data per channel
         // step 2 grabs the avatar data
         // step 3 runs in the GUI thread, creating avatars and rows
-        final List records = getRecordsBasic(channelIds); // returns channels ordered by name
+        final List records = getRecordsBasic(src); // returns channels ordered by name
         timer.addEvent("record basics fetched");
         getAvatarData(records);
         timer.addEvent("avatar data fetched");
         d.asyncExec(new Runnable() { public void run() { setChannelData(records, afterSet, timer); } });
     }
+    
+    private static final String T_VIEWALL = "syndie.gui.channelselectorpanel.viewall";
     
     private void setChannelData(List records, Runnable afterSet, Timer timer) {
         _buttons.setRedraw(false);
@@ -204,7 +220,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             buttons[i].dispose();
         for (int i = 0; i < existingRecords.size(); i++) {
             Record rec = (Record)existingRecords.get(i);
-            chanIdToOldRecord.put(new Long(rec.channelId), rec);
+            if (rec.channelId > 0)
+                chanIdToOldRecord.put(new Long(rec.channelId), rec);
+            else
+                chanIdToOldRecord.put(new Long(rec.node.getUniqueId()), rec);
         }
         
         int maxWidth = 48;
@@ -213,8 +232,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         Button last = null;
         for (int i = 0; i < records.size(); i++) {
             final Record r = (Record)records.get(i); // no need to sort - getRecordsBasic did for us
+            long id = r.channelId;
+            if (id < 0) id = r.node.getUniqueId();
             if (r.avatarData != null) {
-                Record oldRecord = (Record)chanIdToOldRecord.get(new Long(r.channelId));
+                Record oldRecord = (Record)chanIdToOldRecord.get(new Long(id));
                 if (oldRecord != null) {
                     r.avatar = oldRecord.avatar;
                     oldRecord.avatar = null; // so we don't dispose it
@@ -228,20 +249,32 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 }
                 r.avatarData = null;
             }
-            if (r.avatar == null)
-                r.avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
+            if (r.avatar == null) {
+                if ( (r.node == null) || (r.node.getChildCount() == 0) ) {
+                    r.avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
+                } else {
+                    r.avatar = ImageUtil.ICON_EDITOR_LINK; // folder
+                }
+            }
             
             int width = r.avatar.getBounds().width;
             if (width > maxWidth)
                 maxWidth = width;
             
             String tooltip = null;
-            if (r.name != null)
-                tooltip = r.name + " [" + r.scope.toBase64().substring(0,6) + "]";
-            else
-                tooltip = "[" + r.scope.toBase64().substring(0,6) + "]";
-            if (r.desc != null)
-                tooltip = tooltip + " - " + r.desc;
+            if (r.node == null) {
+                if (r.name != null)
+                    tooltip = r.name + " [" + r.scope.toBase64().substring(0,6) + "]";
+                else
+                    tooltip = "[" + r.scope.toBase64().substring(0,6) + "]";
+                if (r.desc != null)
+                    tooltip = tooltip + " - " + r.desc;
+            } else {
+                if (r.node.getName() != null)
+                    tooltip = r.node.getName();
+                if (r.desc != null)
+                    tooltip = tooltip + " - " + r.node.getDescription();
+            }
 
             final String selectedText = tooltip;
             
@@ -249,20 +282,57 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             b.setImage(r.avatar);
             b.setToolTipText(tooltip);
             configButtonMenu(b, r.channelId, r.scope, r.name);
-            b.addSelectionListener(new FireSelectionListener() { public void fire() { _lsnr.channelSelected(r.scope); } });
+            final int matchedIndex = i;
+            b.addSelectionListener(new FireSelectionListener() { public void fire() { _lsnr.channelSelected(r.uri, matchedIndex); } });
             b.addFocusListener(new FocusListener() {
                 public void focusGained(FocusEvent focusEvent) { 
-                    _lsnr.channelReviewed(r.scope, r.channelId, r.name, r.desc, r.avatar);
+                    _lsnr.channelReviewed(r.uri, r.channelId, r.name, r.desc, r.avatar);
                 }
                 public void focusLost(FocusEvent focusEvent) {}
             });
             b.addMouseTrackListener(new MouseTrackListener() {
                 public void mouseEnter(MouseEvent mouseEvent) {
-                    _lsnr.channelReviewed(r.scope, r.channelId, r.name, r.desc, r.avatar);
+                    _lsnr.channelReviewed(r.uri, r.channelId, r.name, r.desc, r.avatar);
                 }
                 public void mouseExit(MouseEvent mouseEvent) {}
                 public void mouseHover(MouseEvent mouseEvent) {}
             });
+            if ( (r.node != null) && (r.node.getChildCount() > 0) ) {
+                Menu m = new Menu(b);
+                b.setMenu(m);
+                List roots = new ArrayList(1);
+                roots.add(r.node);
+                final List scopes = new ArrayList();
+                ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
+                    public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                        SyndieURI uri = node.getURI();
+                        if (uri == null) {
+                            // ignore
+                        } else if (uri.isChannel() && (uri.getMessageId() == null)) {
+                            Hash scope = uri.getScope();
+                            if (!scopes.contains(scope))
+                                scopes.add(scope);
+                        } else if (uri.isSearch()) {
+                            Hash search[] = uri.getSearchScopes();
+                            if (search != null) {
+                                for (int i = 0; i < search.length; i++) {
+                                    if (!scopes.contains(search[i]))
+                                        scopes.add(search[i]);
+                                }
+                            }
+                        }
+                    }
+                });
+                final boolean useImportDate = MessageTree.shouldUseImportDate(_client);
+                MenuItem viewAll = new MenuItem(m, SWT.PUSH);
+                viewAll.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { 
+                        SyndieURI mergedURI = SyndieURI.createSearch(scopes, _unreadOnly.getSelection(), true, useImportDate);
+                        _lsnr.channelSelected(mergedURI, -1); 
+                    }
+                });
+                viewAll.setText(_translationRegistry.getText(T_VIEWALL, "Combined view of this category's forums, recursively"));
+            }
             
             // buttons don't traverse on arrow keys by default, but these should
             final boolean isFirst = (i == 0);
@@ -316,7 +386,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
     
     private static final String SQL_GET_RECORD_BEGIN = "SELECT name, channelHash, description, channelId FROM channel WHERE channelId IN (";
-    private List getRecordsBasic(List channelIds) {
+    private List getRecordsBasic(List src) {
+        if ( (src == null) || (src.size() <= 0) ) return src;
+        Object first = src.get(0);
+        if (first instanceof Long)
+            return getRecordsFromIds(src);
+        else
+            return getRecordsFromNodes(src);
+    }
+    private List getRecordsFromIds(List channelIds) {
         StringBuffer query = new StringBuffer(SQL_GET_RECORD_BEGIN);
         int numIds = channelIds.size();
         for (int i = 0; i < numIds; i++) {
@@ -346,6 +424,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 r.name = name;
                 r.desc = desc;
                 r.scope = new Hash(hash);
+                r.uri = SyndieURI.createScope(r.scope);
                 rv.add(r);
             }
             return rv;
@@ -358,10 +437,45 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         }
     }
     
+    private List getRecordsFromNodes(List nodes) {
+        List rv = new ArrayList();
+        for (int i = 0; i < nodes.size(); i++) {
+            ReferenceNode node = (ReferenceNode)nodes.get(i);
+            String name = node.getName();
+            Hash scope = null;
+            String desc = node.getDescription();
+            long channelId = -1;
+            
+            SyndieURI uri = node.getURI();
+            if (uri != null) {
+                if (uri.isChannel()) {
+                    scope = uri.getScope();
+                    channelId = _client.getChannelId(scope);
+                } else if (uri.isSearch()) {
+                    Hash scopes[] = uri.getSearchScopes();
+                    if ( (scopes != null) && (scopes.length == 1) ) {
+                        scope = scopes[0];
+                        channelId = _client.getChannelId(scopes[0]);
+                    }
+                }
+            }
+            
+            Record r = new Record();
+            r.channelId = channelId;
+            r.name = name;
+            r.desc = desc;
+            r.scope = scope;
+            r.uri = uri;
+            r.node = node;
+            rv.add(r);
+        }
+        return rv;
+    }
+    
     private void getAvatarData(List records) {
         for (int i = 0; i < records.size(); i++) {
             Record r = (Record)records.get(i);
-            byte avatar[] = _client.getChannelAvatar(r.channelId);
+            byte avatar[] = (r.channelId >= 0 ? _client.getChannelAvatar(r.channelId) : null);
             r.avatarData = avatar;
             //if (avatar == null)
             //    _ui.debugMessage("no avatar for channelId " + r.channelId + " [" + r.name + "]");
@@ -376,6 +490,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         String desc;
         byte avatarData[];
         Image avatar;
+        // for bookmarks
+        SyndieURI uri;
+        ReferenceNode node;
     }
     
     public void dispose() {
@@ -398,16 +515,20 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             public void run() {
                 final Timer timer = new Timer("recalc channels, unread only? " + unreadOnly, _ui);
                 List chanIds = _idSource.listChannelIds();
-                for (int i = 0; i < chanIds.size(); i++) {
-                    Long id = (Long)chanIds.get(i);
-                    if (unreadOnly) {
-                        int unread = _client.countUnreadMessages(id.longValue());
-                        if (unread == 0) {
-                            chanIds.remove(i);
-                            i--;
-                            continue;
+                if (chanIds != null) {
+                    for (int i = 0; i < chanIds.size(); i++) {
+                        Long id = (Long)chanIds.get(i);
+                        if (unreadOnly) {
+                            int unread = _client.countUnreadMessages(id.longValue());
+                            if (unread == 0) {
+                                chanIds.remove(i);
+                                i--;
+                                continue;
+                            }
                         }
                     }
+                } else {
+                    chanIds = _idSource.getReferenceNodes();
                 }
                 setChannels(unreadOnly, chanIds, afterSet);
             }
@@ -416,7 +537,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     
     public void showWatched(Runnable afterSet) { showWatched(_unreadOnly.getSelection(), afterSet); }
     public void showWatched(boolean unreadOnly, Runnable afterSet) {
-        setChannelIdSource(new ChannelSelectorPanel.ChannelIdSource() {
+        setChannelIdSource(new BasicIdSource() {
             public List listChannelIds() {
                 List chans = _client.getWatchedChannels(); 
                 List chanIds = new ArrayList();
@@ -430,13 +551,13 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         recalcChannels(unreadOnly, afterSet);
     }
     public void showIdent(Runnable afterSet) {
-        setChannelIdSource(new ChannelIdSource() {
+        setChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(false, true, false, false, false).getAllIds(); }
         });
         recalcChannels(afterSet);
     }
     public void showManageable(Runnable afterSet) {
-        setChannelIdSource(new ChannelIdSource() {
+        setChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(true, true, false, false, false).getAllIds(); }
         });
         recalcChannels(afterSet);
@@ -454,8 +575,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
          */
     }
     public void showPostable(Runnable afterSet) {
-        setChannelIdSource(new ChannelIdSource() {
+        setChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(true, true, true, false, false).getAllIds(); }
+        });
+        recalcChannels(afterSet);
+    }
+    public void showReferences(Runnable afterSet) {
+        setChannelIdSource(new ChannelIdSource() {
+            public List listChannelIds() { return null; }
+            public List getReferenceNodes() { return _client.getNymReferences(_client.getLoggedInNymId()); }
         });
         recalcChannels(afterSet);
     }

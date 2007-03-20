@@ -195,8 +195,8 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
             final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             s.setLayout(new FillLayout());
             final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
-                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleWatchedShell(); }
-                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleWatchedShell(); }
+                public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleWatchedShell(); }
             });
             
@@ -239,8 +239,8 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
             final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             s.setLayout(new FillLayout());
             final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
-                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleMyForumsShell(); }
-                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleMyForumsShell(); }
+                public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleMyForumsShell(); }
             });
             
@@ -283,8 +283,8 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
             final Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             s.setLayout(new FillLayout());
             final ChannelSelectorPanel panel = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, s, new ChannelSelectorPanel.ChannelSelectorListener() {
-                public void channelSelected(Hash scope) { _nav.view(SyndieURI.createScope(scope)); toggleMyNymsShell(); }
-                public void channelReviewed(Hash scope, long channelId, String name, String description, Image avatar) {}
+                public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleMyNymsShell(); }
+                public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleMyNymsShell(); }
             });
             
