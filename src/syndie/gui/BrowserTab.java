@@ -147,7 +147,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     protected void configItem() {
         reconfigItem();
         _item.addDisposeListener(new DisposeListener() {
-            public void widgetDisposed(DisposeEvent evt) { _browser.unview(_uri); }
+            public void widgetDisposed(DisposeEvent evt) { _browser.getNavControl().unview(_uri); }
         });
         _item.getParent().addCTabFolder2Listener(new CTabFolder2Listener() {
             public void close(CTabFolderEvent evt) {
@@ -187,7 +187,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     protected DBClient getClient() { return _client; }
     protected BrowserControl getBrowser() { return _browser; }
     /** ask the browser to close us (call this internally - do not use close()) */
-    protected void closeTab() { _browser.unview(getURI()); }
+    protected void closeTab() { _browser.getNavControl().unview(getURI()); }
     
     public CTabItem getTabItem() { return _item; }
     public SyndieURI getURI() { return _uri; }

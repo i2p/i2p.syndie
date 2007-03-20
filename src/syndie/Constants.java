@@ -127,9 +127,9 @@ public class Constants {
     /** max size in bytes */
     public static final int MAX_AVATAR_SIZE = 16*1024;
     /** max width in pixels */
-    public static final int MAX_AVATAR_WIDTH = 48;
+    public static final int MAX_AVATAR_WIDTH = 64;
     /** max height in pixels */
-    public static final int MAX_AVATAR_HEIGHT = 48;
+    public static final int MAX_AVATAR_HEIGHT = 64;
 
     public static final String FILENAME_SUFFIX = ".syndie";
 

@@ -1,5 +1,6 @@
 package syndie.gui;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -25,6 +26,8 @@ import syndie.db.UI;
  * message tree that organizes threads first by forum, then by thread
  */
 public class WatchedMessageTree extends MessageTree {
+    private boolean _multiforum;
+    
     public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
     public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
         this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
@@ -32,10 +35,28 @@ public class WatchedMessageTree extends MessageTree {
     public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         // don't show the forum column, don't show the flags column, don't expand anything by default
         super(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
+        _multiforum = true;
+    }
+
+    public void applyFilter(String filter) {
+        try { 
+            SyndieURI uri = new SyndieURI(filter);
+            if (uri.isSearch()) {
+                Hash scopes[] = uri.getSearchScopes();
+                _multiforum = ( (scopes != null) && (scopes.length != 1) );
+            } else {
+                _multiforum = false;
+            }
+        } catch (URISyntaxException use) {
+            _multiforum = false;
+        }
+        //System.out.println("apply filter: " + _multiforum + ": " + filter);
+        super.applyFilter(filter);
     }
     
     /** given the list of thread roots, munge them into forums w/ threads underneath */
     void setMessages(List referenceNodes) {
+        if (!_multiforum) { super.setMessages(referenceNodes); return; }
         Map forumToNodeList = new HashMap();
         Map forumNameToForum = new TreeMap();
         for (int i = 0; i < referenceNodes.size(); i++) {
@@ -100,12 +121,14 @@ public class WatchedMessageTree extends MessageTree {
     }
     
     protected void markUnreadChild(TreeItem item) {
-        if (item.getParentItem() != null) // don't mark the forum nodes
+        if (!_multiforum) { super.markUnreadChild(item); return; }
+        if (getParentItem(item) != null) // don't mark the forum nodes
             super.markUnreadChild(item);
     }
     
     protected long markAllRead(TreeItem item) {
-        if (item.getParentItem() == null) {
+        if (!_multiforum) { return super.markAllRead(item); }
+        if (getParentItem(item) == null) {
             ReferenceNode node = (ReferenceNode)_itemToNode.get(item);
             if ( (node != null) && (node.getURI() != null) ) {
                 Hash scope = node.getURI().getScope();
@@ -122,23 +145,26 @@ public class WatchedMessageTree extends MessageTree {
     }
     
     protected int getMessageSelectedCount() {
+        if (!_multiforum) { return super.getMessageSelectedCount(); }
         TreeItem sel[] = _tree.getSelection();
         int rv = 0;
         for (int i = 0; i < sel.length; i++) {
-            if (sel[i].getParentItem() != null)
+            if (getParentItem(sel[i]) != null)
                 rv++;
         }
         return rv;
     }
     
     protected TreeItem getThreadRoot(TreeItem item) {
+        if (!_multiforum) { return super.getThreadRoot(item); }
         TreeItem root = item;
-        while ( (root.getParentItem() != null) && (root.getParentItem().getParentItem() != null) )
-            root = root.getParentItem();
+        while ( (getParentItem(root) != null) && (getParentItem(getParentItem(root)) != null) )
+            root = getParentItem(root);
         return root;
     }
     
     protected long renderNode(ThreadReferenceNode node, TreeItem item) {
+        if (!_multiforum) { return super.renderNode(node, item); }
         if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) )
             return renderForumNode(node, item);
         else
@@ -153,6 +179,7 @@ public class WatchedMessageTree extends MessageTree {
     }
        
     protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
+        if (!_multiforum) { return super.getBookmark(item, node); }
         if ( (node != null) && (node.getURI() != null) && (node.getURI().getMessageId() == null) ) {
             Hash forum = getForum((ThreadReferenceNode)node);
             if (forum == null) return null;

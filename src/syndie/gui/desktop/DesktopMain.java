@@ -5,6 +5,7 @@ import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.Timer;
+import syndie.db.JobRunner;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;
 import syndie.db.UI;
@@ -13,6 +14,7 @@ import syndie.gui.*;
 /** swt's readAndDispatch needs to be in the main thread */
 public class DesktopMain {
     public static void main(final String args[]) {
+        long start = System.currentTimeMillis();
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 if ("--cli".equals(args[i])) {
@@ -27,9 +29,11 @@ public class DesktopMain {
         System.setProperty("prng.bufsize", "1024");
         System.setProperty("prng.buffers", "4");
         
-        long start = System.currentTimeMillis();
         boolean trackResources = trackResources(args);
-   
+
+        long beforeDisplay = System.currentTimeMillis();
+        Class cls = Display.class;
+        long afterLoad = System.currentTimeMillis();
         Display d = null;
         if (trackResources) {
             DeviceData data = new DeviceData();
@@ -38,6 +42,8 @@ public class DesktopMain {
         } else {
             d = new Display();
         }
+
+        long afterDisplay = System.currentTimeMillis();
         
         String root = TextEngine.getRootPath();
         if (args.length > 0)
@@ -53,10 +59,19 @@ public class DesktopMain {
         // (this has to be set before the I2PAppContext instantiates the LogManager)
         System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");
    
+        long beforeUI = System.currentTimeMillis();
         DesktopUI ui = new DesktopUI();
         Timer timer = new Timer("startup", ui);
+        long now = System.currentTimeMillis();
+        timer.addEvent("main to timer startup: " + (now-start) + " track time: " + (beforeDisplay-start) + " load time: " + (afterLoad-beforeDisplay) + " display time: " + (afterDisplay-afterLoad) + " dir time: " + (beforeUI - afterDisplay) + " ui time: " + (now-beforeUI));
+        JobRunner.instance().setUI(ui);
+        d.syncExec(new Runnable() { public void run() { ColorUtil.init(); } });
+        timer.addEvent("color init");
         Desktop desktop = new Desktop(rootFile, ui, d, timer);
         
+        loop(d, ui);
+    }
+    private static void loop(Display d, UI ui) {
         while (!d.isDisposed()) {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 

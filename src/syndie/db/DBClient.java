@@ -70,9 +70,11 @@ public class DBClient {
     }
     
     public void connect(String url) throws SQLException { 
+        long start = System.currentTimeMillis();
         //System.out.println("Connecting to " + url);
         _url = url;
         _con = DriverManager.getConnection(url);
+        long connected = System.currentTimeMillis();
         if (_shutdownHook == null) {
             _shutdownHook = new Thread(new Runnable() {
                 public void run() {
@@ -86,10 +88,13 @@ public class DBClient {
         }
         
         initDB();
+        long init = System.currentTimeMillis();
         _uriDAO = new SyndieURIDAO(this);
         _login = null;
         _pass = null;
         _nymId = -1;
+        long now = System.currentTimeMillis();
+        _ui.debugMessage("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
     }
     public long connect(String url, String login, String passphrase) throws SQLException {
         connect(url);
@@ -144,7 +149,7 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (System.currentTimeMillis() % 100 > 90) // every 10 times defrag the db
+            if (System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             else
                 stmt = _con.prepareStatement("SHUTDOWN");
@@ -868,6 +873,30 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_CHANNEL_DESCRIPTION = "SELECT description FROM channel WHERE channelId = ?";
+    public String getChannelDescription(long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_DESCRIPTION);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                String desc = rs.getString(1);
+                return desc;
+            } else {
+                return null;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel description", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
                                                    "keyChannel = ? AND nymId = ? AND "+
@@ -1240,12 +1269,20 @@ public class DBClient {
         List _postChannels;
         List _publicPostChannels;
         List _internalIds;
+        List _identityChannelIds;
+        List _managedChannelIds;
+        List _postChannelIds;
+        List _publicPostChannelIds;
         public ChannelCollector() {
             _identityChannels = new ArrayList();
             _managedChannels = new ArrayList();
             _postChannels = new ArrayList();
             _publicPostChannels = new ArrayList();
             _internalIds = new ArrayList();
+            _identityChannelIds = new ArrayList();
+            _managedChannelIds = new ArrayList();
+            _postChannelIds = new ArrayList();
+            _publicPostChannelIds = new ArrayList();
         }
         public int getIdentityChannelCount() { return _identityChannels.size(); }
         public ChannelInfo getIdentityChannel(int idx) { return (ChannelInfo)_identityChannels.get(idx); }
@@ -1255,6 +1292,14 @@ public class DBClient {
         public ChannelInfo getPostChannel(int idx) { return (ChannelInfo)_postChannels.get(idx); }
         public int getPublicPostChannelCount() { return _publicPostChannels.size(); }
         public ChannelInfo getPublicPostChannel(int idx) { return (ChannelInfo)_publicPostChannels.get(idx); }
+        
+        // only loaded if the above isn't loaded
+        public List getIdentityChannelIds() { return _identityChannelIds; }
+        public List getManagedChannelIds() { return _managedChannelIds; }
+        public List getPostChannelIds() { return _postChannelIds; }
+        public List getPublicPostChannelIds() { return _publicPostChannelIds; }
+        
+        public List getAllIds() { return _internalIds; }
     }
     
     
@@ -1262,6 +1307,9 @@ public class DBClient {
     private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
     /** channels */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
+        return getChannels(includeManage, includeIdent, includePost, includePublicPost, true);
+    }
+    public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost, boolean fetchInfo) {
         ChannelCollector rv = new ChannelCollector();
         
         List identIds = new ArrayList();
@@ -1370,41 +1418,63 @@ public class DBClient {
         }
         
         // ok, now sort the identIds/manageIds/postIds/pubPostIds by their names
-        sortChannels(identIds);
-        sortChannels(manageIds);
-        sortChannels(postIds);
-        sortChannels(pubPostIds);
+        if (fetchInfo) {
+            sortChannels(identIds);
+            sortChannels(manageIds);
+            sortChannels(postIds);
+            sortChannels(pubPostIds);
+        }
         
         for (int i = 0; i < identIds.size(); i++) {
             Long chanId = (Long)identIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._identityChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._identityChannels.add(info);
+                rv._identityChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < manageIds.size(); i++) {
             Long chanId = (Long)manageIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._managedChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._managedChannels.add(info);
+                rv._managedChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < postIds.size(); i++) {
             Long chanId = (Long)postIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._postChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._postChannels.add(info);
+                rv._postChannelIds.add(chanId);
             }
         }
         for (int i = 0; i < pubPostIds.size(); i++) {
             Long chanId = (Long)pubPostIds.get(i);
-            ChannelInfo info = getChannel(chanId.longValue());
-            if (info != null) {
+            if (fetchInfo) {
+                ChannelInfo info = getChannel(chanId.longValue());
+                if (info != null) {
+                    rv._internalIds.add(chanId);
+                    rv._publicPostChannels.add(info);
+                }
+            } else {
                 rv._internalIds.add(chanId);
-                rv._publicPostChannels.add(info);
+                rv._publicPostChannelIds.add(chanId);
             }
         }
         
@@ -1537,6 +1607,34 @@ public class DBClient {
             
             rv.add(info);
         }
+        return rv;
+    }
+    
+    private static final String SQL_SEARCH_CHANNEL_IDS = "SELECT channelId FROM channel WHERE name LIKE ? OR description LIKE ? " +
+            "UNION " +
+            "SELECT channelId FROM channelTag WHERE tag LIKE ?";
+    public List getChannelIds(String term) {
+        List rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_SEARCH_CHANNEL_IDS);
+            stmt.setString(1, "%" + term + "%");
+            stmt.setString(2, "%" + term + "%");
+            stmt.setString(3, "%" + term + "%");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                rv.add(new Long(id));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the query matches", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        _ui.debugMessage("search for [" + term + "] found " + rv.size() + " matches: " + rv);
         return rv;
     }
     
@@ -1794,8 +1892,20 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
 
-        stmt = null;
-        rs = null;
+        List roots = getChannelReferences(channelId);
+        if (roots == null)
+            return null;
+        info.setReferences(roots);
+        
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getChanTime += (end-start);
+        return info;
+    }
+    
+    public List getChannelReferences(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_REFERENCES);
             stmt.setLong(1, channelId);
@@ -1857,8 +1967,7 @@ public class DBClient {
             roots.clear();
             for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
                 roots.add(iter.next());
-
-            info.setReferences(roots);
+            return roots;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
@@ -1867,11 +1976,6 @@ public class DBClient {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
-        long end = System.currentTimeMillis();
-        if (_trace)
-            _getChanTime += (end-start);
-        return info;
     }
     
     private static class DBReferenceNode extends ReferenceNode {
@@ -4426,8 +4530,9 @@ public class DBClient {
     
     private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
-    public int countUnreadMessages(long nymId, Hash scope) {
-        long chan = getChannelId(scope);
+    public int countUnreadMessages(long nymId, Hash scope) { return countUnreadMessages(nymId, getChannelId(scope)); }
+    public int countUnreadMessages(long channelId) { return countUnreadMessages(_nymId, channelId); }
+    public int countUnreadMessages(long nymId, long chan) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

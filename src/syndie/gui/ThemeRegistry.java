@@ -8,18 +8,24 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  *
  */
 public class ThemeRegistry {
-    private Browser _browser;
     private ArrayList _listeners;
     private Theme _cur;
     private boolean _themeLoaded;
+    private DBClient _client;
+    private UI _ui;
+    private Themeable _toThemeLast;
     
-    public ThemeRegistry(Browser browser) {
-        _browser = browser;
+    public ThemeRegistry(DBClient client, UI ui, Themeable toThemeLast) {
+        _client = client;
+        _ui = ui;
+        _toThemeLast = toThemeLast;
         _listeners = new ArrayList();
         _cur = Theme.getDefault();
         _themeLoaded = false;
@@ -34,10 +40,12 @@ public class ThemeRegistry {
         });
     }
     
+    public void setToThemeLast(Themeable themeable) { _toThemeLast = themeable; }
+    
     public void register(Themeable lsnr) { 
-        if (_browser != null)
-            _browser.getUI().debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
-        if (lsnr != _browser) {
+        if (_ui != null)
+            _ui.debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        if (lsnr != _toThemeLast) {
             synchronized (_listeners) {
                 _listeners.add(lsnr);
             }
@@ -45,8 +53,8 @@ public class ThemeRegistry {
         lsnr.applyTheme(_cur); 
     }
     public void unregister(Themeable lsnr) { 
-        if (_browser != null)
-            _browser.getUI().debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        if (_ui != null)
+            _ui.debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
         synchronized (_listeners) {
             _listeners.remove(lsnr);
         }
@@ -63,35 +71,35 @@ public class ThemeRegistry {
         }
         for (int i = 0; i < lsnrs.length; i++) {
             Themeable cur = (Themeable)lsnrs[i];
-            if (cur == _browser) continue;
+            if (cur == _toThemeLast) continue;
             String err = null; //theme.validate();
             if (err == null) {
                 long before = System.currentTimeMillis();
                 cur.applyTheme(theme);
                 long after = System.currentTimeMillis();
-                if (_browser != null)
-                    _browser.getUI().debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur) + " took " + (after-before));
+                if (_ui != null)
+                    _ui.debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur) + " took " + (after-before));
             } else {
-                if (_browser != null)
-                    _browser.getUI().errorMessage("cannot apply theme: " + err);
+                if (_ui != null)
+                    _ui.errorMessage("cannot apply theme: " + err);
             }
         }
         
         long before = System.currentTimeMillis();
-        if (_browser != null)
-            _browser.getUI().debugMessage("beginning applyTheme to the browser");
+        if (_ui != null)
+            _ui.debugMessage("beginning applyTheme to the browser");
         CustomStyledText.IGNORE_FORCE = true;
-        if (_browser != null)
-            _browser.applyTheme(theme);
+        if (_toThemeLast != null)
+            _toThemeLast.applyTheme(theme);
         CustomStyledText.IGNORE_FORCE = false;
         long after = System.currentTimeMillis();
-        if (_browser != null)
-            _browser.getUI().debugMessage("finally, apply theme to the browser: " + (after-before));
+        if (_ui != null)
+            _ui.debugMessage("finally, apply theme to the browser: " + (after-before));
     }
 
     public void increaseFont() {
-        if (_browser != null)
-            _browser.getUI().debugMessage("increasing font size");
+        if (_ui != null)
+            _ui.debugMessage("increasing font size");
         long before = System.currentTimeMillis();
         _cur.increaseFont();
         long t1 = System.currentTimeMillis();
@@ -99,12 +107,12 @@ public class ThemeRegistry {
         long t2 = System.currentTimeMillis();
         saveTheme();
         long t3 = System.currentTimeMillis();
-        if (_browser != null)
-            _browser.getUI().debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
+        if (_ui != null)
+            _ui.debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
     }
     public void decreaseFont() {
-        if (_browser != null)
-            _browser.getUI().debugMessage("decreasing font size");
+        if (_ui != null)
+            _ui.debugMessage("decreasing font size");
         long before = System.currentTimeMillis();
         _cur.decreaseFont();
         long t1 = System.currentTimeMillis();
@@ -112,26 +120,26 @@ public class ThemeRegistry {
         long t2 = System.currentTimeMillis();
         saveTheme();
         long t3 = System.currentTimeMillis();
-        if (_browser != null)
-            _browser.getUI().debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
+        if (_ui != null)
+            _ui.debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
     }
     
     private void saveTheme() {
-        if (_browser == null) return;
-        Properties prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+        if (_client == null) return;
+        Properties prefs = _client.getNymPrefs(_client.getLoggedInNymId());
         _cur.store(prefs);
-        _browser.getClient().setNymPrefs(_browser.getClient().getLoggedInNymId(), prefs);
+        _client.setNymPrefs(_client.getLoggedInNymId(), prefs);
     }
     public void loadTheme() {
         Properties prefs = null;
-        if (_browser == null) {
+        if (_client == null) {
             prefs = new Properties();
         } else {
-            prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+            prefs = _client.getNymPrefs(_client.getLoggedInNymId());
         }
         if (_cur != null) {
-            if (_browser != null)
-                _browser.getUI().debugMessage("disposing old theme");
+            if (_ui != null)
+                _ui.debugMessage("disposing old theme");
             _cur.dispose();
         }
         _cur = Theme.getTheme(prefs);
@@ -141,21 +149,21 @@ public class ThemeRegistry {
     public boolean themeLoaded() { return _themeLoaded; }
     public void resetTheme() {
         Properties prefs = null;
-        if (_browser == null) {
+        if (_client == null) {
             prefs = new Properties();
         } else {
-            prefs = _browser.getClient().getNymPrefs(_browser.getClient().getLoggedInNymId());
+            prefs = _client.getNymPrefs(_client.getLoggedInNymId());
         }
         for (Iterator iter = prefs.keySet().iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();
             if (key.startsWith("theme."))
                 iter.remove();
         }
-        if (_browser != null)
-            _browser.getClient().setNymPrefs(_browser.getClient().getLoggedInNymId(), prefs);
+        if (_client != null)
+            _client.setNymPrefs(_client.getLoggedInNymId(), prefs);
         if (_cur != null) {
-            if (_browser != null)
-                _browser.getUI().debugMessage("disposing old theme");
+            if (_ui != null)
+                _ui.debugMessage("disposing old theme");
             _cur.dispose();
         }
         _cur = Theme.getTheme(prefs);

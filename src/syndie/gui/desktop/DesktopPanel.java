@@ -6,6 +6,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.*;
 
@@ -13,18 +15,31 @@ import syndie.gui.*;
  *
  */
 class DesktopPanel {
-    private UI _ui;
+    protected DBClient _client;
+    protected ThemeRegistry _themeRegistry;
+    protected TranslationRegistry _translationRegistry;
+    protected UI _ui;
     private Composite _parent;
     private Composite _root;
+    private SyndieURI _origURI;
+    protected Desktop _desktop;
     
     protected DesktopEdge _edgeNorth;
     protected DesktopEdge _edgeEast;
     protected DesktopEdge _edgeSouth;
     protected DesktopEdge _edgeWest;
-   
-    public DesktopPanel(Composite parent, UI ui) {
+    
+    public DesktopPanel(Desktop desktop, Composite parent, UI ui, SyndieURI origURI) {
+        this(desktop, null, null, null, parent, ui, origURI);
+    }
+    public DesktopPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI) {
+        _desktop = desktop;
         _parent = parent;
         _ui = ui;
+        _client = client;
+        _themeRegistry = themes;
+        _translationRegistry = trans;
+        _origURI = origURI;
         initComponents();
     }
     
@@ -33,11 +48,28 @@ class DesktopPanel {
         _root.setLayout(new FillLayout());
     }
     
+    public SyndieURI getOriginalURI() { return _origURI; }
+    public boolean canShow(SyndieURI uri) { return _origURI != null && _origURI.equals(uri); }
+    public void close() { 
+        dispose();
+        _desktop.panelDisposed(this, true); 
+    }
+    protected void dispose() { _root.dispose(); }
+    
     protected Composite getRoot() { return _root; }
-    protected UI getUI() { return _ui; }
+    
+    public String getPanelName() { return "desktop panel"; }
+    public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
     
     /** callback after the panel has been completely shown on the desktop */
-    void shown(Desktop desktop) {}
+    void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
+        getRoot().setVisible(true);
+        getRoot().setEnabled(true);
+    }
+    void hidden() {
+        getRoot().setVisible(false);
+        getRoot().setEnabled(false);
+    }
     
     /** instruct the panel to build its northern edge (or it can do nothing if it doesn't have one) */
     void buildNorth(Composite edge) {}

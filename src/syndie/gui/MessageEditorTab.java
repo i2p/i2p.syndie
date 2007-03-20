@@ -37,7 +37,7 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _editor = new MessageEditor(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getBrowser(), getBrowser(), getBrowser(), getRoot(), this);
+        _editor = new MessageEditor(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getBrowser().getNavControl(), getBrowser(), URIHelper.instance(), getRoot(), this);
         
         SyndieURI uri = getURI();
         Long postponeId = uri.getLong("postponeid");
@@ -98,14 +98,14 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     
     public void messageCreated(SyndieURI postedURI) {
         closeTab();
-        getBrowser().view(postedURI);
+        getBrowser().getNavControl().view(postedURI);
     }
     public void messagePostponed(long postponementId) { closeTab(); }
     public void messageCancelled() { closeTab(); }
 
     public void closeTab() {
         SyndieURI uri = super.getURI();
-        getBrowser().unview(uri);
+        getBrowser().getNavControl().unview(uri);
     }
     
     private static final String T_TITLE = "syndie.gui.messageeditortab.title";

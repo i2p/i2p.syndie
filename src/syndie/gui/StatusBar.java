@@ -377,7 +377,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             _unreadCalcInProgress = true;
         }
         _ui.debugMessage("calcUnread begin");
-        final SyndieURI uri = _uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_client));
+        final SyndieURI uri = _uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client));
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_client, _ui);
@@ -419,10 +419,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             item.setText(_translationRegistry.getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_client)));
+                    _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    _navControl.view(_uriControl.createHighlightWatchedURI(true, true, MessageTree.shouldUseImportDate(_client)));
+                    _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
                 }
             });
             

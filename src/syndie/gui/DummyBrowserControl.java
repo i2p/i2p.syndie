@@ -13,7 +13,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class DummyBrowserControl implements BrowserControl {
+public class DummyBrowserControl implements BrowserControl, NavigationControl {
     private DBClient _client;
     private UI _ui;
     private ThemeRegistry _themeRegistry;
@@ -21,7 +21,7 @@ public class DummyBrowserControl implements BrowserControl {
     public DummyBrowserControl(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
-        _themeRegistry = new ThemeRegistry(null);
+        _themeRegistry = new ThemeRegistry(client, ui, null);
     }
 
     public UI getUI() { return _ui; }
@@ -39,6 +39,7 @@ public class DummyBrowserControl implements BrowserControl {
     public SyndieURI createLogsURI() { return null; }
     public SyndieURI createManageURI(Hash forum) { return null; }
     public CTabFolder getTabFolder() { return null; }
+    public NavigationControl getNavControl() { return this; }
     
     public void bookmark(SyndieURI uri) {}
     public void bookmark(SyndieURI uri, long parentGroupId) {}

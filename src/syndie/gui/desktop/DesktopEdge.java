@@ -10,7 +10,7 @@ import syndie.gui.*;
  *
  */
 class DesktopEdge {
-    private UI _ui;
+    protected UI _ui;
     private Composite _parent;
     private Composite _root;
     
@@ -25,7 +25,7 @@ class DesktopEdge {
         _root.setLayout(new FillLayout());
     }
     
-    protected Composite getRoot() { return _root; }
+    protected Composite getEdgeRoot() { return _root; }
     
-    public void dispose() { getRoot().dispose(); }
+    public void dispose() { getEdgeRoot().dispose(); }
 }

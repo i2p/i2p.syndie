@@ -106,7 +106,7 @@ import syndie.db.UI;
 /**
  * main gui wrapper
  */
-public class Browser implements UI, BrowserControl, Translatable, Themeable {
+public class Browser implements UI, BrowserControl, NavigationControl, Translatable, Themeable {
     private DBClient _client;
     private TextEngine _engine;
     private TranslationRegistry _translation;
@@ -115,6 +115,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     private Composite _root;
     private Menu _mainMenu;
     private SashForm _sash;
+    //private LinkBar _linkBar;
     private BrowserTree _bookmarks;
     private CTabFolder _tabs;
     private Menu _tabMenu;
@@ -204,10 +205,12 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     private List _runAfterStartup;
     
+    private NavigationControl _navControl;
+    
     private boolean _externalShell;
     
-    public Browser(DBClient client) { this(client, null, null); }
-    public Browser(DBClient client, Shell shell, Composite root) {
+    public Browser(DBClient client) { this(client, null, null, null, null, null); }
+    public Browser(DBClient client, Shell shell, Composite root, NavigationControl navControl, ThemeRegistry themes, TranslationRegistry trans) {
         _client = client;
         _shell = shell;
         _root = root;
@@ -215,6 +218,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _externalShell = true;
         else
             _externalShell = false;
+        if (navControl != null)
+            _navControl = navControl;
+        else
+            _navControl = this;
         _openTabs = new HashMap();
         _openTabURIs = new HashMap();
         _uiListeners = new ArrayList();
@@ -222,9 +229,19 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _runAfterStartup = new ArrayList();
         _initialized = false;
         _uiListenerPusher = new UIListenerPusher();
-        _translation = new TranslationRegistry(this, client.getRootDir());
-        _themes = new ThemeRegistry(this);
-        _translation.loadTranslations();
+        if (trans != null) {
+            _translation = trans;
+        } else {
+            _translation = new TranslationRegistry(this, client.getRootDir());
+            _translation.loadTranslations();
+        }
+        
+        if (themes != null) {
+            _themes = themes;
+            _themes.setToThemeLast(this);
+        } else {
+            _themes = new ThemeRegistry(client, this, this);
+        }
         initComponentBuilder();
         Thread t = new Thread(_uiListenerPusher, "UI msg pusher");
         t.setDaemon(true);
@@ -241,8 +258,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         b.setDataCallback(this);
         b.setBanControl(this);
         b.setLocalMessageCallback(this);
-        b.setNavigationControl(this);
-        b.setURIControl(this);
+        b.setNavigationControl(_navControl);
+        b.setURIControl(URIHelper.instance());
         b.setDBClient(_client);
         b.setUI(this);
         b.setThemeRegistry(_themes);
@@ -282,6 +299,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         timer.addEvent("sash construction");
+        //_linkBar = new LinkBar(_client, getUI(), getThemeRegistry(), getTranslationRegistry(), _navControl, this, URIHelper.instance(), _sash);
+        
         _bookmarks = ComponentBuilder.instance().createBrowserTree(this, timer, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
         timer.addEvent("browser tree construction");
         
@@ -355,6 +374,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _themes.register(this);
         timer.addEvent("main browser theming");
         
+        //_sash.setWeights(new int[] { 5, 15, 80 });
         _sash.setWeights(new int[] { 20, 80 });
         _shell.setMinimumSize(_shell.computeSize(600, 300));
         // bah, default to hiding the bookmark tree
@@ -459,7 +479,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     
     public void setEngine(TextEngine engine) { _engine = engine; }
     public void startup(final Timer timer) {
-        debugMessage("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
+        timer.addEvent("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
         long beforeInit = System.currentTimeMillis();
         if (_client.isLoggedIn() && !_initialized) {
             _initialized = true;
@@ -471,7 +491,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         long afterInit = System.currentTimeMillis();
         Display.getDefault().syncExec(new Runnable() { public void run() { doStartup(new Timer("alternate startup", getUI(), true, -1)); } });
         long afterStart = System.currentTimeMillis();
-        //System.out.println("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
+        timer.addEvent("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
     }
     private void doStartup(final Timer timer) {
         timer.addEvent("doStartup beginning");
@@ -607,8 +627,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _languageMenuRoot.setMenu(_languageMenu);
         _languageMenuEdit = new MenuItem(_languageMenu, SWT.PUSH);
         _languageMenuEdit.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createTranslateURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createTranslateURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createTranslateURI()); }
         });
         _languageMenuEdit.setEnabled(false);
         _languageMenuRefresh = new MenuItem(_languageMenu, SWT.PUSH);
@@ -688,8 +708,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         });
         _forumMenuCreate = new MenuItem(forumMenu, SWT.PUSH);
         _forumMenuCreate.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createManageURI(null)); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createManageURI(null)); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createManageURI(null)); }
         });
         _forumMenuManageRoot = new MenuItem(forumMenu, SWT.CASCADE);
         _forumMenuManageMenu = new Menu(_forumMenuManageRoot);
@@ -750,8 +770,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         _syndicateMenuRoot.setMenu(_syndicateMenu);
         _syndicateMenuConfig = new MenuItem(_syndicateMenu, SWT.PUSH);
         _syndicateMenuConfig.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createSyndicationConfigURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createSyndicationConfigURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createSyndicationConfigURI()); }
         });
         _syndicateMenuOnline = new MenuItem(_syndicateMenu, SWT.PUSH);
         _syndicateMenuOnline.addSelectionListener(new SelectionListener() {
@@ -805,8 +825,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         new MenuItem(advancedMenu, SWT.SEPARATOR);
         _advancedMenuSQL = new MenuItem(advancedMenu, SWT.PUSH);
         _advancedMenuSQL.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createSQLURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createSQLURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createSQLURI()); }
         });
         _advancedMenuDumpResources = new MenuItem(advancedMenu, SWT.PUSH);
         _advancedMenuDumpResources.addSelectionListener(new SelectionListener() {
@@ -833,8 +853,8 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         });
         _helpMenuBugReport = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuBugReport.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(createBugReportURI()); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(createBugReportURI()); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createBugReportURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createBugReportURI()); }
         });
         _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuFAQ.setEnabled(false);
@@ -1290,10 +1310,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
             });
             
@@ -1307,10 +1327,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createManageURI(info.getChannelHash()));
+                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createManageURI(info.getChannelHash()));
+                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
                 }
             });
         }
@@ -1327,10 +1347,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
             });
             
@@ -1344,10 +1364,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createManageURI(info.getChannelHash()));
+                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createManageURI(info.getChannelHash()));
+                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
                 }
             });
         }
@@ -1373,10 +1393,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
             });
         }
@@ -1401,10 +1421,10 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
                 public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(createPostURI(info.getChannelHash(), null));
+                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
                 }
             });
         }
@@ -1447,7 +1467,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     public void resumePost(long postponeId, int postponeVersion) {
-        view(createPostURI(postponeId, postponeVersion));
+        view(URIHelper.instance().createPostURI(postponeId, postponeVersion));
     }
     
     public void showWaitCursor(boolean show) {
@@ -1457,6 +1477,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
             _shell.setCursor(null);
     }
     
+    public NavigationControl getNavControl() { return _navControl; }
     public void view(SyndieURI uri) { view(uri, null, null); }
     public void view(SyndieURI uri, String suggestedName, String suggestedDescription) {
         showWaitCursor(true);
@@ -1758,9 +1779,9 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         box.open();
     }
 
-    private void postNew() { view(createPostURI(null, null)); }
-    private void showTextUI() { view(createTextUIURI()); }
-    private void showLogs() { view(createLogsURI()); }
+    private void postNew() { view(URIHelper.instance().createPostURI(null, null)); }
+    private void showTextUI() { view(URIHelper.instance().createTextUIURI()); }
+    private void showLogs() { view(URIHelper.instance().createLogsURI()); }
     
     private void increaseFont() {
         _shell.setRedraw(false);
@@ -1779,7 +1800,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     
     private void postWebRip() {
-        WebRipPostPopup popup = new WebRipPostPopup(_client, this, _themes, _translation, this, this, _shell);
+        WebRipPostPopup popup = new WebRipPostPopup(_client, this, _themes, _translation, this, _navControl, _shell);
         popup.open();
     }
     
@@ -2230,7 +2251,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
     }
     private static final String T_EXPORT_SAVE_DIALOG = "syndie.gui.browser.export.save.dialog";
     
-    private void backupSecrets() { view(createBackupSecretsURI()); }
+    private void backupSecrets() { view(URIHelper.instance().createBackupSecretsURI()); }
     private void restoreSecrets() {
         FileDialog dialog = new FileDialog(_shell, SWT.OPEN | SWT.SINGLE);
         dialog.setFileName("nymkeys.dat");
@@ -2262,18 +2283,7 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         popup.show();
     }
     
-    private void viewBookmarked() { view(createHighlightWatchedURI(true, false, true)); }
-    public SyndieURI createHighlightWatchedURI(boolean threaded, boolean unreadOnly, boolean useImportDate) {
-        List scopes = new ArrayList();
-        List watched = _client.getWatchedChannels();
-        for (int i = 0; i < watched.size(); i++) {
-            WatchedChannel chan = (WatchedChannel)watched.get(i);
-            if (chan.getHighlight())
-                scopes.add(_client.getChannelHash(chan.getChannelId()));
-        }
-        SyndieURI uri = SyndieURI.createBookmarked(scopes, threaded, unreadOnly, useImportDate);
-        return uri;
-    }
+    private void viewBookmarked() { view(URIHelper.instance().createHighlightWatchedURI(_client, true, false, true)); }
     
     private void viewAllByForums() {
         SyndieURI defURI = SyndieURI.DEFAULT_SEARCH_URI;
@@ -2294,127 +2304,6 @@ public class Browser implements UI, BrowserControl, Translatable, Themeable {
         SyndieURI uri = new SyndieURI(defURI.getType(), attr);
         view(uri);
     }
-    
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
-        return createPostURI(forum, parent, false);
-    }
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply) {
-        return createPostURI(forum, parent, asPrivateReply, null, null);
-    }
-    
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, boolean asPrivateReply, List references, File attachments[]) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        else if (parent != null)
-            attributes.put("channel", parent.getScope());
-        if (parent != null)
-            attributes.put("parent", parent.toString());
-        attributes.put("reply", ""+asPrivateReply);
-        if (references != null)
-            attributes.put("refs", ReferenceNode.walk(references));
-        if (attachments != null) {
-            attributes.put("attachments", new Long(attachments.length));
-            for (int i = 0; i < attachments.length; i++)
-                attributes.put("attachment" + i, attachments[i].getAbsolutePath());
-        }
-        attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
-        return uri;
-    }
-    public SyndieURI createPostURI(Hash forum, SyndieURI parent, String pbePass, String pbePrompt, List references, File attachments[]) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        else if (parent != null)
-            attributes.put("channel", parent.getScope());
-        if (parent != null)
-            attributes.put("parent", parent.toString());
-        attributes.put("pbePass", pbePass);
-        attributes.put("pbePrompt", pbePrompt);
-        if (references != null)
-            attributes.put("refs", ReferenceNode.walk(references));
-        if (attachments != null) {
-            attributes.put("attachments", new Long(attachments.length));
-            for (int i = 0; i < attachments.length; i++)
-                attributes.put("attachment" + i, attachments[i].getAbsolutePath());
-        }
-        attributes.put("uniq", "" + System.currentTimeMillis() + attributes.hashCode()); // just a local uniq
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
-        return uri;
-    }
-    
-    
-    public SyndieURI createPostURI(long postponeId, int postponeVersion) {
-        Map attributes = new HashMap();
-        attributes.put("postponeid", new Long(postponeId));
-        attributes.put("postponever", new Long(postponeVersion));
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
-        return uri;
-    }
-    public SyndieURI createManageURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_MANAGE, attributes);
-        return uri;
-    }
-    public SyndieURI createMetaURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
-        return uri;
-    }
-    public SyndieURI createMetaRefsURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_REFS);
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
-        return uri;
-    }
-    public SyndieURI createMetaArchivesURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_ARCHIVES);
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
-        return uri;
-    }
-    public SyndieURI createMetaPostersURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_POSTERS);
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
-        return uri;
-    }
-    public SyndieURI createMetaManagersURI(Hash forum) {
-        Map attributes = new HashMap();
-        if (forum != null)
-            attributes.put("channel", forum.toBase64());
-        //attributes.put(ManageForum.DETAIL, ManageForum.DETAIL_MANAGER);
-        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_META, attributes);
-        return uri;
-    }
-    
-    public SyndieURI createTextUIURI() { return new SyndieURI(BrowserTab.TYPE_TEXTUI, new HashMap()); }
-    public SyndieURI createLogsURI() { return new SyndieURI(BrowserTab.TYPE_LOGS, new HashMap()); }
-    public SyndieURI createSQLURI() { return new SyndieURI(BrowserTab.TYPE_SQL, new HashMap()); }
-    public SyndieURI createTranslateURI() { return new SyndieURI(BrowserTab.TYPE_TRANSLATE, new HashMap()); }
-    public SyndieURI createSyndicationArchiveURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_ARCHIVES, new HashMap()); }
-    public SyndieURI createSyndicationConfigURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_CONFIG, new HashMap()); }
-    public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
-    public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
-    public SyndieURI createBugReportURI() { 
-        HashMap attr = new HashMap();
-        // not really random, just (likely) different from other values, so multiple instances of the bug report
-        // tab can come up (one per uri)
-        attr.put("rand", System.currentTimeMillis()+""); 
-        return new SyndieURI(BrowserTab.TYPE_BUGREPORT, attr);
-    }
-    public SyndieURI createBackupSecretsURI() { return new SyndieURI(BrowserTab.TYPE_BACKUPSECRETS, new HashMap()); }
     
     public CTabFolder getTabFolder() { return _tabs; }
     public DBClient getClient() { return _client; }

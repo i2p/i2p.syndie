@@ -43,9 +43,9 @@ public class ViewForumTab extends BrowserTab {
         }
         
         if (_editable)
-            _manage = new ManageForum(_client, _ui, _themeRegistry, _translationRegistry, getBrowser(), getBrowser(), getBrowser(), getRoot(), uri);
+            _manage = new ManageForum(_client, _ui, _themeRegistry, _translationRegistry, getBrowser().getNavControl(), URIHelper.instance(), getBrowser(), getRoot(), uri);
         else
-            _view = new ViewForum(_client, _ui, _themeRegistry, _translationRegistry, getBrowser(), getBrowser(), getBrowser(), getRoot(), getURI());
+            _view = new ViewForum(_client, _ui, _themeRegistry, _translationRegistry, getBrowser(), getBrowser().getNavControl(), URIHelper.instance(), getRoot(), getURI());
         reconfigItem();
     }
     

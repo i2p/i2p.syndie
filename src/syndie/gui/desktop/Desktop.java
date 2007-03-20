@@ -1,6 +1,8 @@
 package syndie.gui.desktop;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ShellEvent;
@@ -11,8 +13,11 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
+import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -26,6 +31,7 @@ class Desktop {
     private DesktopUI _ui;
     private Display _display;
     private Shell _shell;
+    private List _listeners;
     private Composite _edgeNorthWest;
     private Composite _edgeNorthEast;
     private Composite _edgeSouthEast;
@@ -40,7 +46,7 @@ class Desktop {
     private DesktopEdge _edgeNorthDefault;
     private DesktopEdge _edgeEastDefault;
     private DesktopEdge _edgeSouthDefault;
-    private DesktopEdge _edgeWestDefault;
+    private LinkEdge _edgeWestDefault;
     
     private Composite _centerDefault;
     
@@ -51,28 +57,65 @@ class Desktop {
     private StackLayout _edgeWestStack;
     
     private StartupPanel _startupPanel;
+    private ForumSelectionPanel _forumSelectionPanel;
+    private TabPanel _tabs;
     
     private DBClient _client;
-    //private TranslationRegistry _translation;
-    //private ThemeRegistry _themes;
+    private TranslationRegistry _translationRegistry;
+    private ThemeRegistry _themeRegistry;
+    
+    private List _loadedPanels;
+    private int _curPanelIndex;
+    
+    private NavigationControl _navControl;
     
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
         _ui = ui;
         _display = display;
+        _listeners = new ArrayList();
+        _loadedPanels = new ArrayList();
+        _curPanelIndex = -1;
+        _navControl = new DesktopNavigationControl(this);
         initComponents(timer);
     }
     
-    private boolean TRIM = true;
+    public interface DesktopListener {
+        public void panelShown(DesktopPanel panel);
+        public void panelHidden(DesktopPanel panel);
+        public void destroyed(DesktopPanel panel);
+    }
+    public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
+    public void removeListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
+    
+    private boolean TRIM = false;
     
     private void initComponents(Timer timer) {
+        timer.addEvent("init desktop components begin");
+        prepareShell(timer);
+        timer.addEvent("init desktop components: shell prepared");
+        _startupPanel = new StartupPanel(this, _center, _ui, timer);
+        show(_startupPanel, null, null, null);
+        timer.addEvent("init desktop components: startup panel shown");
+        
+        initKeyFilters();
+        timer.addEvent("init desktop components: key filters installed");
+        
+        show();
+        timer.addEvent("init desktop components: desktop shown");
+    }
+    private void prepareShell(Timer timer) {
         if (TRIM)
             _shell = new Shell(_display, SWT.SHELL_TRIM);
         else
             _shell = new Shell(_display, SWT.NO_TRIM);
+        timer.addEvent("shell created");
         prepareGrid();
+        timer.addEvent("grid prepared");
         _shell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellActivated(ShellEvent shellEvent) {
+                _center.forceFocus(); // when the key filters are triggered, swt seems to lose track of the focus
+            }
             public void shellClosed(ShellEvent evt) {
                 evt.doit = false;
                 close();
@@ -81,10 +124,9 @@ class Desktop {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
-
-        _startupPanel = new StartupPanel(_center, _ui, timer);
-        show(_startupPanel);
-        
+    }
+    
+    private void show() {
         Monitor mon[] = _display.getMonitors();
         Rectangle rect = null;
         if ( (mon != null) && (mon.length > 1) )
@@ -98,7 +140,41 @@ class Desktop {
         _shell.forceFocus();
     }
     
-    void show(DesktopPanel panel) {
+    private void initKeyFilters() {
+        _display.addFilter(SWT.KeyDown, new Listener() {
+            public void handleEvent(Event evt) {
+                if (evt.character == SWT.ESC) {
+                    DesktopPanel panel = getCurrentPanel();
+                    if (panel instanceof ForumSelectionPanel) {
+                        ((ForumSelectionPanel)panel).forumSelectorCancelled();
+                        evt.type = SWT.None;
+                    }
+                } else if ( (evt.character == 'l') && ((evt.stateMask & SWT.MOD3) == SWT.MOD3) ) { // ALT+L to show/hide forum selector
+                    DesktopPanel panel = getCurrentPanel();
+                    if (panel instanceof ForumSelectionPanel)
+                        ((ForumSelectionPanel)panel).forumSelectorCancelled();
+                    else
+                        showForumSelectionPanel();
+                    evt.type = SWT.None;
+                } else if ( (evt.keyCode == SWT.ARROW_DOWN) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-down
+                    evt.type = SWT.NONE;
+                    showNextPanel();
+                } else if ( (evt.keyCode == SWT.ARROW_UP) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-up
+                    evt.type = SWT.NONE;
+                    showPreviousPanel();
+                } else if ( (evt.character == '=') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^= (aka ^+)
+                    evt.type = SWT.NONE;
+                    _themeRegistry.increaseFont();
+                } else if ( (evt.character == '-') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^-
+                    evt.type = SWT.NONE;
+                    _themeRegistry.decreaseFont();
+                }
+            }
+        });
+    }
+    
+    void show(DesktopPanel panel, SyndieURI uri, String name, String desc) { show(panel, uri, name, desc, true); }
+    void show(DesktopPanel panel, SyndieURI uri, String name, String desc, boolean notifyPrev) {
         panel.buildNorth(_edgeNorth);
         panel.buildEast(_edgeEast);
         panel.buildSouth(_edgeSouth);
@@ -109,20 +185,93 @@ class Desktop {
         setEdge(_edgeEast, _edgeEastStack, panel.getEdgeEast(), _edgeEastDefault);
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
-        panel.shown(this);
+        panel.shown(this, uri, name, desc);
+        if (notifyPrev) {
+            if (_curPanelIndex >= 0) {
+                DesktopPanel prev = (DesktopPanel)_loadedPanels.get(_curPanelIndex);
+                if (prev != panel) {
+                    prev.hidden();
+                    synchronized (_listeners) {
+                        for (int i = 0; i < _listeners.size(); i++)
+                            ((DesktopListener)_listeners.get(i)).panelHidden(prev);
+                    }
+                }
+            }
+        }
+        int idx = _loadedPanels.indexOf(panel);
+        if (idx >= 0) {
+            _curPanelIndex = idx;
+        } else {
+            _loadedPanels.add(panel);
+            _curPanelIndex = _loadedPanels.size()-1;
+        }
+        synchronized (_listeners) {
+            for (int i = 0; i < _listeners.size(); i++)
+                ((DesktopListener)_listeners.get(i)).panelShown(panel);
+        }
     }
+    
+    DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
+    List getPanels() { return new ArrayList(_loadedPanels); }
+    NavigationControl getNavControl() { return _navControl; }
+    Composite getCenter() { return _center; }
+    
+    boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
+    
+    void showPreviousPanel() { showPreviousPanel(true); }
+    void showPreviousPanel(boolean notifyPrev) {
+        if (_loadedPanels.size() > 0) {
+            int idx = _curPanelIndex - 1;
+            if (idx < 0) idx = _loadedPanels.size()-1;
+            DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
+            show(panel, null, null, null, notifyPrev);
+        }
+    }
+    void showNextPanel() {
+        if (_loadedPanels.size() > 0) {
+            int idx = _curPanelIndex + 1;
+            if (idx >= _loadedPanels.size()) idx = 0;
+            DesktopPanel panel = (DesktopPanel)_loadedPanels.get(idx);
+            show(panel, null, null, null);
+        }
+    }
+    void panelDisposed(DesktopPanel panel, boolean showAnother) {
+        int idx = _loadedPanels.indexOf(panel);
+        if (idx >= 0) {
+            _loadedPanels.remove(idx);
+            synchronized (_listeners) {
+                for (int i = 0; i < _listeners.size(); i++)
+                    ((DesktopListener)_listeners.get(i)).destroyed(panel);
+            }
+            if (_curPanelIndex == idx) {
+                if (showAnother)
+                    showPreviousPanel(false);
+            } else if (_curPanelIndex > idx)
+                _curPanelIndex--;
+        }
+    }
+    
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
         if (specificEdge != null)
-            stack.topControl = specificEdge.getRoot();
+            stack.topControl = specificEdge.getEdgeRoot();
         else
-            stack.topControl = defEdge.getRoot();
+            stack.topControl = defEdge.getEdgeRoot();
         edge.layout();
     }
     
-    void showDesktopTabs() {
-        TabPanel panel = new TabPanel(_center, this);
-        show(panel);
+    void startupComplete(boolean ok) {
+        if (ok)
+            _display.asyncExec(new Runnable() { public void run() { showForumSelectionPanel(); } });
+        //if (ok)
+        //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
+
+    TabPanel getTabPanel(boolean create) {
+        if ((_tabs == null) && create)
+            _tabs = new TabPanel(_center, this);
+        return _tabs;
+    }
+    void showDesktopTabs() { show(getTabPanel(true), null, null, null); }
     
     void exit() { close(); }
     
@@ -130,6 +279,11 @@ class Desktop {
     void setDBClient(DBClient client) { _client = client; }
     DBClient getDBClient() { return _client; }
     UI getUI() { return _ui; }
+    ThemeRegistry getThemeRegistry() { return _themeRegistry; }
+    TranslationRegistry getTranslationRegistry() { return _translationRegistry; }
+    
+    void setTranslationRegistry(TranslationRegistry trans) { _translationRegistry = trans; }
+    void setThemeRegistry(ThemeRegistry themes) { _themeRegistry = themes; }
     
     StartupPanel getStartupPanel() { return _startupPanel; }
     //void setThemeRegistry(ThemeRegistry registry) { _themes = registry; }
@@ -142,8 +296,10 @@ class Desktop {
     
     private void prepareGrid() {
         GridLayout gl = new GridLayout(3, false);
+        gl.horizontalSpacing = 0;
         gl.marginWidth = 0;
         gl.marginHeight = 0;
+        gl.verticalSpacing = 0;
         _shell.setLayout(gl);
         
         _edgeNorthWest = new Composite(_shell, SWT.NONE);
@@ -189,7 +345,7 @@ class Desktop {
         _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
         _edgeSouthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeSouth, _ui);
-        _edgeWestDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
+        _edgeWestDefault = new LinkEdge(_edgeWest, _ui, this); //new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
         
         _centerStack = new StackLayout();
         _center.setLayout(_centerStack);
@@ -210,5 +366,11 @@ class Desktop {
         GridData gd = (GridData)c.getLayoutData();
         gd.heightHint = height;
         gd.widthHint = width;
+    }
+
+    public void showForumSelectionPanel() { 
+        if (_forumSelectionPanel == null)
+            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
+        show(_forumSelectionPanel, null, null, null);
     }
 }

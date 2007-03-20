@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
@@ -14,17 +15,16 @@ import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 import syndie.db.NullUI;
 import syndie.db.UI;
 
 /**
- * maintain the text / caret position / scroll index for the text, undoing
+ * maintain the text / caret position / scroll index for the styled text, undoing
  * them on ^Z and redoing them on ^Y (clearing any redoables on a non-redo text change)
  */
-public class TextChangeManager {
+public class StyledTextChangeManager {
     private UI _ui;
-    private Text _text;
+    private StyledText _text;
     /** list of mementos */
     private List _undoable;
     /** list of mementos */
@@ -37,14 +37,14 @@ public class TextChangeManager {
     
     private static final int MAX_UNDOABLE = 200;
     
-    public TextChangeManager(Text text, UI ui) {
+    public StyledTextChangeManager(StyledText text, UI ui) {
         _ui = ui;
         _text = text;
         _undoable = new ArrayList();
         _redoable = new ArrayList();
         _changeUpdateInProgress = false;
         _beforeText = text.getText();
-        _beforeTextPosition = text.getCaretPosition();
+        _beforeTextPosition = text.getCaretOffset();
         // verify is called before the modification is applied, and modify is called
         // afterwards.  we simply record the full text at both
         _text.addVerifyListener(new VerifyListener() {
@@ -52,8 +52,8 @@ public class TextChangeManager {
                 //_ui.debugMessage("verify [changeInProgress? " + _changeUpdateInProgress + "]");
                 if (!_changeUpdateInProgress) {
                     _beforeText = _text.getText();
-                    _beforeTextPosition = _text.getCaretPosition();
-                    _beforeTextScrollPixel = _text.getTopIndex();
+                    _beforeTextPosition = _text.getCaretOffset();
+                    _beforeTextScrollPixel = _text.getTopPixel();
                 }
             }
         });
@@ -62,8 +62,8 @@ public class TextChangeManager {
                 //_ui.debugMessage("modify [changeInProgress? " + _changeUpdateInProgress + "]");
                 if (!_changeUpdateInProgress) {
                     String txt = _text.getText();
-                    int pos = _text.getCaretPosition();
-                    int top = _text.getTopIndex();
+                    int pos = _text.getCaretOffset();
+                    int top = _text.getTopPixel();
                     Memento memento = new TextMemento(_beforeText, txt, _beforeTextPosition, pos, _beforeTextScrollPixel, top);
                     _beforeText = txt;
                     _beforeTextPosition = pos;
@@ -134,25 +134,25 @@ public class TextChangeManager {
         private String _after;
         private int _beforeCaret;
         private int _afterCaret;
-        private int _beforeTopIndex;
-        private int _afterTopIndex;
-        public TextMemento(String before, String after, int beforeCaret, int afterCaret, int beforeTopIndex, int afterTopIndex) {
+        private int _beforeScroll;
+        private int _afterScroll;
+        public TextMemento(String before, String after, int beforeCaret, int afterCaret, int beforeScroll, int afterScroll) {
             _before = before;
             _after = after;
             _beforeCaret = beforeCaret;
             _afterCaret = afterCaret;
-            _beforeTopIndex = beforeTopIndex;
-            _afterTopIndex = afterTopIndex;
+            _beforeScroll = beforeScroll;
+            _afterScroll = afterScroll;
         }
         public void undo() {
             _text.setText(_before);
-            _text.setSelection(_beforeCaret);
-            _text.setTopIndex(_beforeTopIndex);
+            _text.setCaretOffset(_beforeCaret);
+            _text.setTopPixel(_beforeScroll);
         }
         public void redo() { 
             _text.setText(_after);
-            _text.setSelection(_afterCaret);
-            _text.setTopIndex(_afterTopIndex);
+            _text.setCaretOffset(_afterCaret);
+            _text.setTopPixel(_afterScroll);
         }
         public long size() { return _before.length() + _after.length(); }
     }
@@ -170,8 +170,8 @@ public class TextChangeManager {
         Display d = Display.getDefault();
         final Shell shell = new Shell(d, SWT.SHELL_TRIM);
         shell.setLayout(new FillLayout());
-        Text txt = new Text(shell, SWT.MULTI | SWT.WRAP | SWT.BORDER);
-        TextChangeManager mgr = new TextChangeManager(txt, ui);
+        StyledText txt = new StyledText(shell, SWT.MULTI | SWT.WRAP | SWT.BORDER);
+        StyledTextChangeManager mgr = new StyledTextChangeManager(txt, ui);
         shell.setMaximized(true);
         shell.open();
         shell.addShellListener(new ShellListener() {

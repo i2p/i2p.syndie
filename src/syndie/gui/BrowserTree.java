@@ -635,14 +635,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         MenuItem item = new MenuItem(_menu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_WATCH_VIEW, "View the selected forum"));
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { _navControl.view(SyndieURI.createScope(scope)); }
+            public void fire() { _navControl.view(SyndieURI.createScope(scope)); }
         });
         new MenuItem(_menu, SWT.SEPARATOR);
         item = new MenuItem(_menu, SWT.CHECK);
         item.setText(_translationRegistry.getText(T_WATCH_HIGHLIGHT, "Highlight the forum's unread messages"));
         item.setSelection(watched.getHighlight());
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { 
+            public void fire() { 
                 _client.watchChannel(watched.getChannelId(), !watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
             }
         });
@@ -651,7 +651,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         item.setText(_translationRegistry.getText(T_WATCH_IMPBOOKMARKS, "Import their recommended bookmarks"));
         item.setSelection(watched.getImportBookmarks());
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { 
+            public void fire() { 
                 _client.watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), !watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
             }
         });
@@ -660,7 +660,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         item.setText(_translationRegistry.getText(T_WATCH_IMPARCHIVES, "Import their recommended archives"));
         item.setSelection(watched.getImportArchives());
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { 
+            public void fire() { 
                 _client.watchChannel(watched.getChannelId(), watched.getHighlight(), !watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), watched.getImportKeys());
             }
         });
@@ -669,7 +669,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         item.setText(_translationRegistry.getText(T_WATCH_IMPKEYS, "Import keys they recommended"));
         item.setSelection(watched.getImportKeys());
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { 
+            public void fire() { 
                 _client.watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), watched.getImportBans(), !watched.getImportKeys());
             }
         });
@@ -678,7 +678,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         item.setText(_translationRegistry.getText(T_WATCH_IMPBANS, "Import and honor bans they recommended"));
         item.setSelection(watched.getImportBans());
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { 
+            public void fire() { 
                 _client.watchChannel(watched.getChannelId(), watched.getHighlight(), watched.getImportArchives(), watched.getImportBookmarks(), !watched.getImportBans(), watched.getImportKeys());
             }
         });
@@ -688,7 +688,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         item = new MenuItem(_menu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_WATCH_UNWATCH, "Stop watching the selected forum"));
         item.addSelectionListener(new FireSelectionListener() {
-            void fire() { _client.unwatchChannel(watched); }
+            public void fire() { _client.unwatchChannel(watched); }
         });
     }
     
