@@ -68,6 +68,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     public void removeThreadLoadedListener(ThreadLoadedListener lsnr) { _threadLoadedListeners.remove(lsnr); }
     
     private void initComponents() {
+        _tabFolder = new CTabFolder(_root, SWT.BORDER | SWT.MULTI);
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
@@ -80,6 +81,21 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _maxView.dispose();
     }
     private void disposeDetails() {
+        if (_tabRoots != null) {
+            for (int i = 0; i < _tabRoots.length; i++)
+                _tabRoots[i].dispose();
+            _tabRoots = null;
+        }
+        if (_tabs != null) {
+            for (int i = 0; i < _tabs.length; i++)
+                _tabs[i].dispose();
+            _tabs = null;
+        }
+        if (_attachmentPreviews != null) {
+            for (int i = 0; i < _attachmentPreviews.length; i++)
+                _attachmentPreviews[i].dispose();
+            _attachmentPreviews = null;
+        }
         if (_body != null) {
             for (int i = 0; i < _body.length; i++)
                 _body[i].dispose();
@@ -126,129 +142,112 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         int threadSize = 2; // assume a reply so we build the tabs
 
         int attachments = msg.getAttachmentCount();
-        if ( (pageCount == 0) && (attachments == 0) && ( (refs == null) || (refs.size() <= 0) ) && (threadSize <= 1) ) {
-            _body = new PageRenderer[0];
-        } else if ( (pageCount == 1) && (attachments == 0) && ( (refs == null) || (refs.size() <= 0) ) && (threadSize <= 1) ) {
-            // create the renderer directly in the view, no tabs
-            _body = new PageRenderer[1];
-            _body[0] = ComponentBuilder.instance().createPageRenderer(_root, true);
-            timer.addEvent("initBody 1-page renderer constructed");
-            _body[0].setListener(new PageListener());
-            SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), 1);
-            _body[0].renderPage(new PageRendererSource(_client, _themeRegistry), uri);
-            timer.addEvent("initBody 1-page renderer rendered");
-            //_body[0].addKeyListener(new MaxViewListener(uri));
-        } else {
-            int tabs = pageCount + attachments;
-            if ( (refs != null) && (refs.size() > 0) ) tabs++;
-            if (threadSize > 1) tabs++;
-            
-            _ui.debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
-            
-            _tabFolder = new CTabFolder(_root, SWT.BORDER | SWT.MULTI);
-            _tabs = new CTabItem[tabs];
-            _tabRoots = new Composite[tabs];
-            _body = new PageRenderer[pageCount];
-            _tabFolder.setFont(_themeRegistry.getTheme().TAB_FONT);
-            PageListener lsnr = new PageListener();
-            for (int i = 0; i < pageCount; i++) {
-                _tabs[i] = new CTabItem(_tabFolder, SWT.NONE);
-                _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
-                _tabs[i].setControl(_tabRoots[i]);
-                _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
-                _tabRoots[i].setLayout(new FillLayout());
-                _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
-                timer.addEvent("initBody n-page renderer constructed");
-                _body[i].setListener(lsnr);
-                SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
-                _body[i].renderPage(new PageRendererSource(_client, _themeRegistry), uri);
-                timer.addEvent("initBody n-page renderer constructed");
-                //_body[i].addKeyListener(new MaxViewListener(uri));
-            }
-            int off = pageCount;
-            if (threadSize > 1) {
-                timer.addEvent("initBody building the thread subtab");
-                _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
-                _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
-                _tabs[off].setControl(_tabRoots[off]);
-                _tabs[off].setText(_translationRegistry.getText(T_TAB_THREAD, "Thread"));
-                _tabRoots[off].setLayout(new FillLayout());
-                
-                // no preview on the thread tree
-                _threadTree = ComponentBuilder.instance().createMessageTree(_tabRoots[off], new MessageTree.MessageTreeListener() {
-                        public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
-                            if (toView)
-                                _navControl.view(uri);
+        int tabs = pageCount + attachments;
+        if ( (refs != null) && (refs.size() > 0) ) tabs++;
+        if (threadSize > 1) tabs++;
+
+        _ui.debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
+        _tabs = new CTabItem[tabs];
+        _tabRoots = new Composite[tabs];
+        _body = new PageRenderer[pageCount];
+        _tabFolder.setFont(_themeRegistry.getTheme().TAB_FONT);
+        PageListener lsnr = new PageListener();
+        for (int i = 0; i < pageCount; i++) {
+            _tabs[i] = new CTabItem(_tabFolder, SWT.NONE);
+            _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
+            _tabs[i].setControl(_tabRoots[i]);
+            _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+            _tabRoots[i].setLayout(new FillLayout());
+            _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
+            timer.addEvent("initBody n-page renderer constructed");
+            _body[i].setListener(lsnr);
+            SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);
+            _body[i].renderPage(new PageRendererSource(_client, _themeRegistry), uri);
+            timer.addEvent("initBody n-page renderer constructed");
+            //_body[i].addKeyListener(new MaxViewListener(uri));
+        }
+        int off = pageCount;
+        if (threadSize > 1) {
+            timer.addEvent("initBody building the thread subtab");
+            _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
+            _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
+            _tabs[off].setControl(_tabRoots[off]);
+            _tabs[off].setText(_translationRegistry.getText(T_TAB_THREAD, "Thread"));
+            _tabRoots[off].setLayout(new FillLayout());
+
+            // no preview on the thread tree
+            _threadTree = ComponentBuilder.instance().createMessageTree(_tabRoots[off], new MessageTree.MessageTreeListener() {
+                    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
+                        if (toView)
+                            _navControl.view(uri);
+                    }
+                    public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
+            }, true);
+            //_threadTree.setMessages(msgs);
+            //_threadTree.select(_uri);
+            //_threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+
+            // deferred thread display
+            final int toff = off;
+            _tabFolder.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    _ui.debugMessage("tab folder selection fired");
+                    if (_tabFolder.getSelection() == _tabs[toff]) {
+                        _ui.debugMessage("tab folder: thread tab selected");
+                        if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) ) {
+                            loadThread(msg);
+                        } else {
+                            _ui.debugMessage("tab folder: thread tab already populated");
                         }
-                        public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
-                }, true);
-                //_threadTree.setMessages(msgs);
-                //_threadTree.select(_uri);
-                //_threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
-                
-                // deferred thread display
-                final int toff = off;
+                    }
+                }
+            });
+            _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+
+            off++;
+        }
+        if ( (refs != null) && (refs.size() > 0) ) {
+            _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
+            _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
+            _tabs[off].setControl(_tabRoots[off]);
+            _tabs[off].setText(_translationRegistry.getText(T_TAB_REFS, "References"));
+            _tabRoots[off].setLayout(new FillLayout());
+            _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
+            _refTree.setReferences(refs);
+            off++;
+        }
+        if (attachments > 0)
+            _attachmentPreviews = new AttachmentPreview[attachments];
+
+        Hash scope = msg.getScopeChannel();
+        long messageId = msg.getMessageId();
+
+        for (int i = 0; i < attachments; i++) {
+            _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
+            _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
+            _tabs[off+i].setControl(_tabRoots[off+i]);
+            _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
+            _tabRoots[off+i].setLayout(new FillLayout());
+
+            final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);
+            timer.addEvent("initBody attachment preview tab created");
+            _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
+            timer.addEvent("initBody attachment preview instantiated");
+
+            final int toff = off;
+            final int preview = i;
+            if (DEFERRED_ATTACHMENT_PREVIEW) {
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
-                        _ui.debugMessage("tab folder selection fired");
                         if (_tabFolder.getSelection() == _tabs[toff]) {
-                            _ui.debugMessage("tab folder: thread tab selected");
-                            if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) ) {
-                                loadThread(msg);
-                            } else {
-                                _ui.debugMessage("tab folder: thread tab already populated");
-                            }
+                            _attachmentPreviews[preview].showURI(uri);
                         }
                     }
                 });
-                _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
-                
-                off++;
-            }
-            if ( (refs != null) && (refs.size() > 0) ) {
-                _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
-                _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
-                _tabs[off].setControl(_tabRoots[off]);
-                _tabs[off].setText(_translationRegistry.getText(T_TAB_REFS, "References"));
-                _tabRoots[off].setLayout(new FillLayout());
-                _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
-                _refTree.setReferences(refs);
-                off++;
-            }
-            if (attachments > 0)
-                _attachmentPreviews = new AttachmentPreview[attachments];
-
-            Hash scope = msg.getScopeChannel();
-            long messageId = msg.getMessageId();
-            
-            for (int i = 0; i < attachments; i++) {
-                _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
-                _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
-                _tabs[off+i].setControl(_tabRoots[off+i]);
-                _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
-                _tabRoots[off+i].setLayout(new FillLayout());
-                
-                final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);
-                timer.addEvent("initBody attachment preview tab created");
-                _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
-                timer.addEvent("initBody attachment preview instantiated");
-            
-                final int toff = off;
-                final int preview = i;
-                if (DEFERRED_ATTACHMENT_PREVIEW) {
-                    _tabFolder.addSelectionListener(new FireSelectionListener() {
-                        public void fire() {
-                            if (_tabFolder.getSelection() == _tabs[toff]) {
-                                _attachmentPreviews[preview].showURI(uri);
-                            }
-                        }
-                    });
-                } else {
-                    _attachmentPreviews[preview].showURI(uri);
-                }
+            } else {
+                _attachmentPreviews[preview].showURI(uri);
             }
         }
-        //configGoTo(msgs, id, threadSize);
         timer.addEvent("initBody go to configured");
         
         if (_tabFolder != null) {
@@ -349,8 +348,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
 
     public void translate(TranslationRegistry registry) {}
     public void applyTheme(Theme theme) {
-        if (_tabFolder != null)
-            _tabFolder.setFont(theme.TAB_FONT);
+        _tabFolder.setFont(theme.TAB_FONT);
     }
         
     private class PageListener implements PageRenderer.PageActionListener {

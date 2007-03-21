@@ -172,6 +172,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     /** cached avg char width for the text in the tree */
     private int _avgCharWidth;
     
+    private MessageTreePreview _preview;
+    
     public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
     public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
         this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
@@ -207,6 +209,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     /** currently applied filter */
     public SyndieURI getCurrentFilter() { return _appliedFilter; }
     public Control getControl() { return _root; } //return _tree; }
+    Tree getTree() { return _tree; }
     /** uri to the currently selected message/item */
     public SyndieURI getSelected() {
         TreeItem items[] = _tree.getSelection();
@@ -219,6 +222,30 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
         // nothing selected (or at least no uris)
         return null;
+    }
+    public SyndieURI getMouseoverURI() {
+        Point cur = Display.getDefault().getCursorLocation();
+        Point local = _tree.toControl(cur);
+        TreeItem item = _tree.getItem(local);
+        _ui.debugMessage("getMouseoverURI: cur= " + cur + " local=" + local + " item=" + item);
+        if (item != null)
+            return (SyndieURI)_itemToURI.get(item);
+        else
+            return null;
+    }
+    public Point getSelectedLocation() {
+        TreeItem items[] = _tree.getSelection();
+        if (items != null) {
+            for (int i = 0; i < items.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(items[i]);
+                if (uri != null) {
+                    Rectangle rect = items[i].getBounds();
+                    Point rv = new Point(rect.x, rect.y + rect.height); // underneath it 
+                    return _tree.toDisplay(rv);
+                }
+            }
+        }
+        return Display.getDefault().getCursorLocation();
     }
     
     public void select(SyndieURI uri) {
@@ -447,8 +474,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _advancedPreview = new MenuItem(_advancedMenu, SWT.CHECK);
             _advancedMarkReadOnView = new MenuItem(_advancedMenu, SWT.CHECK);
             _advancedMarkReadOnPreview = new MenuItem(_advancedMenu, SWT.CHECK);
+            _advancedPreview.setEnabled(true);
             if (_listener == null) {
-                _advancedPreview.setEnabled(false);
                 _advancedMarkReadOnPreview.setEnabled(false);
             }
             new MenuItem(_advancedMenu, SWT.SEPARATOR);
@@ -1194,7 +1221,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _tree.addTraverseListener(lsnr);
         _tree.addKeyListener(lsnr);
         _tree.addMouseListener(lsnr);
-        
+
+        _preview = new MessageTreePreview(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _bookmarkControl, _uriControl, this);
+
         _translationRegistry.register(this);
         _themeRegistry.register(this);
         
@@ -1265,6 +1294,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     public void showTags(boolean show) { _showTags = show; }
     
     public void dispose() {
+        _preview.dispose();
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
         for (int i = 0; i < _bars.size(); i++)

@@ -422,6 +422,10 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _ban.setEnabled(false);
         }
         public void applyTheme(Theme theme) {
+            _post.setFont(theme.BUTTON_FONT);
+            _privmsg.setFont(theme.BUTTON_FONT);
+            _watch.setFont(theme.BUTTON_FONT);
+            _ban.setFont(theme.BUTTON_FONT);
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {

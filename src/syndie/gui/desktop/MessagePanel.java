@@ -43,6 +43,7 @@ import syndie.gui.URIHelper;
 public class MessagePanel extends DesktopPanel {
     private NavigationControl _navControl;
     private MessageViewBody _body;
+    private MessageInfo _msg;
     
     public MessagePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
         super(desktop, client, themes, trans, parent, ui, null);
@@ -56,6 +57,25 @@ public class MessagePanel extends DesktopPanel {
     private void initComponents() {
         Composite root = getRoot();
         _body = new MessageViewBody(_desktop.getDBClient(), _desktop.getUI(), _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getBookmarkControl(), _desktop.getBanControl(), root);
+    }
+    
+    public boolean canShow(SyndieURI uri) { 
+        boolean rv = false;
+        if (super.canShow(uri)) return true;
+        if (uri.isChannel() && (uri.getMessageId() != null)) {
+            if (_msg == null) return true; // we aren't yet initialized, so we can show any pages
+            if (uri.getScope().equals(_msg.getScopeChannel()) && (uri.getMessageId().longValue() == _msg.getMessageId()) )
+                return true;
+            
+            // should we have just one message panel, or should we have many?
+            // if just one, return true here.  if we should have many panels with different messages,
+            // do some work.  the following means one message panel per forum
+            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+            long target = _client.getMessageTarget(msgId);
+            if (target == _msg.getTargetChannelId())
+                return true;
+        }
+        return false;
     }
     
     public void shown(Desktop desktop, final SyndieURI uri, String suggestedName, String suggestedDescription) {
@@ -79,7 +99,17 @@ public class MessagePanel extends DesktopPanel {
         });
     }
     private void shown(SyndieURI uri, long msgId, MessageInfo msg, Timer timer) {
+        _msg = msg;
         _body.viewMessage(msg, 1, timer);
+        
+        Long pageNum = uri.getPage();
+        Long attachNum = uri.getAttachment();
+        if (pageNum != null) {
+            _body.switchPage(pageNum.intValue());
+        } else if (attachNum != null) {
+            _body.switchAttachment(attachNum.intValue());
+        }
+        
         ((SouthEdge)_edgeSouth).updateActions(uri, msgId, msg);
         timer.addEvent("actions updated");
         ((NorthEdge)_edgeNorth).updateMeta(uri, msgId, msg);
@@ -106,12 +136,16 @@ public class MessagePanel extends DesktopPanel {
     private static final String T_REPLYTOFORUM = "syndie.gui.desktop.messagepanel.replytoforum";
     private static final String T_REPLYTOAUTHOR = "syndie.gui.desktop.messagepanel.replytoauthor";
     private static final String T_REPLYTOADMINS = "syndie.gui.desktop.messagepanel.replytoadmins";
-    private static final String T_TOGGLEREAD= "syndie.gui.desktop.messagepanel.toggleread";
+    private static final String T_MARK_READ = "syndie.gui.desktop.messagepanel.toggleread.markread";
+    private static final String T_MARK_UNREAD = "syndie.gui.desktop.messagepanel.toggleread.markunread";
+    
     class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _replyToForum;
         private Button _replyToAuthor;
         private Button _replyToAdmins;
         private Button _toggleRead;
+        private boolean _alreadyRead;
+        private long _msgId;
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
@@ -121,19 +155,78 @@ public class MessagePanel extends DesktopPanel {
             root.setLayout(new FillLayout(SWT.HORIZONTAL));
             
             _replyToForum = new Button(root, SWT.PUSH);
+            _replyToForum.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), false));
+                }
+            });
             _replyToAuthor = new Button(root, SWT.PUSH);
+            _replyToAuthor.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    Hash author = _client.getChannelHash(_msg.getAuthorChannelId());
+                    _navControl.view(URIHelper.instance().createPostURI(author, _msg.getURI(), true));
+                }
+            });
             _replyToAdmins = new Button(root, SWT.PUSH);
+            _replyToAuthor.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), true));
+                }
+            });
             _toggleRead = new Button(root, SWT.PUSH);
+            _toggleRead.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if (_alreadyRead) {
+                        _client.markMessageUnread(_msgId);
+                        _alreadyRead = false;
+                        _toggleRead.setText(_translationRegistry.getText(T_MARK_READ, "Mark as read"));
+                    } else {
+                        _client.markMessageRead(_msgId);
+                        _alreadyRead = true;
+                        _toggleRead.setText(_translationRegistry.getText(T_MARK_UNREAD, "Mark as unread"));
+                    }
+                    getEdgeRoot().layout(true, true);
+                }
+            });
             
             _translationRegistry.register(SouthEdge.this);
             _themeRegistry.register(SouthEdge.this);
         }
-        public void updateActions(SyndieURI uri, long msgId, MessageInfo msg) {}
+        public void updateActions(SyndieURI uri, final long msgId, MessageInfo msg) {
+            final long forumId = msg.getTargetChannelId();
+            final long authorId = msg.getAuthorChannelId();
+            _replyToForum.setEnabled(false);
+            _replyToAdmins.setEnabled(authorId != forumId);
+            JobRunner.instance().enqueue(new Runnable() { 
+                public void run() {              
+                    DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true, false);
+                    final boolean postable = chans.getAllIds().contains(new Long(forumId));
+                    final int status = _client.getMessageStatus(msgId);
+                    Display.getDefault().asyncExec(new Runnable() { 
+                        public void run() {
+                            _msgId = msgId;
+                            switch (status) {
+                                case DBClient.MSG_STATUS_READ:
+                                    _alreadyRead = true;
+                                    _toggleRead.setText(_translationRegistry.getText(T_MARK_UNREAD, "Mark as unread"));
+                                    break;
+                                case DBClient.MSG_STATUS_UNREAD:
+                                    _alreadyRead = false;
+                                    _toggleRead.setText(_translationRegistry.getText(T_MARK_READ, "Mark as read"));
+                                    break;
+                            }
+                            _replyToForum.setEnabled(postable);
+                            
+                            getEdgeRoot().layout(true, true);
+                        }
+                    });
+                }
+            });
+        }
         public void translate(TranslationRegistry trans) {
             _replyToForum.setText(trans.getText(T_REPLYTOFORUM, "Reply to forum"));
             _replyToAuthor.setText(trans.getText(T_REPLYTOAUTHOR, "Reply to author"));
             _replyToAdmins.setText(trans.getText(T_REPLYTOADMINS, "Reply to admins"));
-            _toggleRead.setText(trans.getText(T_TOGGLEREAD, "Mark as read"));
         }
         public void applyTheme(Theme theme) { 
             _replyToForum.setFont(theme.BUTTON_FONT);
@@ -227,6 +320,9 @@ public class MessagePanel extends DesktopPanel {
                     final long authorId = msg.getAuthorChannelId();
                     final long forumId = msg.getTargetChannelId();
                     
+                    final boolean authorIsWatched = _client.isWatched(authorId);
+                    final boolean forumIsWatched = _client.isWatched(forumId);
+                    
                     final String authorName = _client.getChannelName(authorId);
                     final Hash authorHash = _client.getChannelHash(authorId);
                     final byte authorAvatar[] = _client.getChannelAvatar(authorId);
@@ -245,10 +341,16 @@ public class MessagePanel extends DesktopPanel {
                             ImageUtil.dispose(_forumAvatar.getImage());
                             
                             _currentURI = uri;
-                            
-                            if (authorAvatar != null) {
-                                Image img = ImageUtil.createImage(authorAvatar);
-                                _authorAvatar.setImage(img);
+                          
+                            if (authorIsWatched) {
+                                if (authorAvatar != null) {
+                                    Image img = ImageUtil.createImage(authorAvatar);
+                                    _authorAvatar.setImage(img);
+                                } else {
+                                    _authorAvatar.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
+                                }
+                            } else {
+                                _authorAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
                             }
                             String name = "";
                             if (authorHash != null)
@@ -260,9 +362,17 @@ public class MessagePanel extends DesktopPanel {
                             else
                                 name = "";
                             _forumName.setText(name);
-                            if (forumAvatar != null) {
-                                Image img = ImageUtil.createImage(forumAvatar);
-                                _forumAvatar.setImage(img);
+                            if (forumId != authorId) {
+                                if (forumIsWatched) {
+                                    if (forumAvatar != null) {
+                                        Image img = ImageUtil.createImage(forumAvatar);
+                                        _forumAvatar.setImage(img);
+                                    } else {
+                                        _forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+                                    }
+                                } else {
+                                    _forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+                                }
                             }
                             
                             if (subj != null)
