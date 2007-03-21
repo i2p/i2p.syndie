@@ -79,7 +79,6 @@ import syndie.db.UI;
  */
 public class MessageTree extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
-    private URIControl _uriControl;
     private DataCallback _dataCallback;
     private BookmarkControl _bookmarkControl;
     private Composite _parent;
@@ -181,7 +180,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
         super(client, ui, themes, trans);
         _navControl = navControl;
-        _uriControl = uriControl;
         _bookmarkControl = bookmarkControl;
         _dataCallback = callback;
         _parent = parent;
@@ -299,7 +297,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     public void createFilterBar(Composite row, PreviewControlListener lsnr) {
-        FilterBar bar = new FilterBar(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, this, row, lsnr);
+        FilterBar bar = new FilterBar(_client, _ui, _themeRegistry, _translationRegistry, _navControl, URIHelper.instance(), this, row, lsnr);
         _bars.add(bar);
     }
 
@@ -430,7 +428,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterKeyword.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
             _filterKeyword.addTraverseListener(new TraverseListener() {
                 public void keyTraversed(TraverseEvent evt) { 
-                    if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) )
+                    if (evt.detail == SWT.TRAVERSE_RETURN)
                         _msgTree.applyFilter();
                 }
             });
@@ -442,7 +440,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterTag.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
             _filterTag.addTraverseListener(new TraverseListener() {
                 public void keyTraversed(TraverseEvent evt) {
-                    if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) )
+                    if (evt.detail == SWT.TRAVERSE_RETURN)
                         _msgTree.applyFilter();
                 }
             });
@@ -999,18 +997,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navPageSize.setSelection(20);
         _navPageSize.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
-                if ( (evt.detail == SWT.TRAVERSE_RETURN) || (evt.detail == SWT.TRAVERSE_TAB_NEXT) || (evt.detail == SWT.TRAVERSE_TAB_PREVIOUS) ) {
+                if (evt.detail == SWT.TRAVERSE_RETURN) {
                     _currentPage = 0;
                     setMessages(_fullNodes, false);
                 }
             }
         });
-        _navPageSize.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                _currentPage = 0;
-                setMessages(_fullNodes, false);
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
+        _navPageSize.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 _currentPage = 0;
                 setMessages(_fullNodes, false);
             }
@@ -1228,7 +1222,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _tree.addKeyListener(lsnr);
         _tree.addMouseListener(lsnr);
 
-        _preview = new MessageTreePreview(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _bookmarkControl, _uriControl, this);
+        _preview = new MessageTreePreview(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _bookmarkControl, URIHelper.instance(), this);
 
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -1867,7 +1861,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                 long targetId = _client.getMessageTarget(msgId);
                 Hash target = _client.getChannelHash(targetId);
-                _navControl.view(_uriControl.createPostURI(target, uri));
+                _navControl.view(URIHelper.instance().createPostURI(target, uri));
             }
         }
     }
@@ -1893,12 +1887,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
-                    _navControl.view(_uriControl.createMetaURI(uri.getScope()));
+                    _navControl.view(URIHelper.instance().createMetaURI(uri.getScope()));
                 } else {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                     long targetId = _client.getMessageTarget(msgId);
                     Hash scope = _client.getChannelHash(targetId);
-                    _navControl.view(_uriControl.createMetaURI(scope));
+                    _navControl.view(URIHelper.instance().createMetaURI(scope));
                 }
             }
         }
@@ -1941,12 +1935,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
-                    _navControl.view(_uriControl.createMetaURI(uri.getScope()));
+                    _navControl.view(URIHelper.instance().createMetaURI(uri.getScope()));
                 } else {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                     long authorId = _client.getMessageAuthor(msgId);
                     Hash scope = _client.getChannelHash(authorId);
-                    _navControl.view(_uriControl.createMetaURI(scope));
+                    _navControl.view(URIHelper.instance().createMetaURI(scope));
                 }
             }
         }

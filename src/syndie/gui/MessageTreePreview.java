@@ -85,8 +85,10 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
     }
     
     public void dispose() { 
-        _shell.dispose();
-        _body.dispose();
+        if ( (_shell != null) && (!_shell.isDisposed()) )
+            _shell.dispose();
+        if (_body != null)
+            _body.dispose();
     }
     
     private long _msgId;
@@ -95,6 +97,8 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
     private boolean updatePreview() {
         if ( (_uri == null) || (_uri.getScope() == null) )
             return false;
+        if ( (_shell == null) || (_shell.isDisposed()) ) 
+            initComponents(); // in case hide() == dispose()
         long chanId = _client.getChannelId(_uri.getScope());
         MessageInfo msg = _client.getMessage(chanId, _uri.getMessageId());
         if (msg != null) {
@@ -118,7 +122,10 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         }
     }
     
-    private void hide() { _shell.setVisible(false); }
+    private void hide() { 
+        _shell.setVisible(false); 
+        //dispose();
+    }
     
     private void initComponents() {
         _shell = new Shell(_tree.getControl().getShell(), SWT.NO_TRIM);
@@ -151,12 +158,12 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
             public void keyPressed(KeyEvent evt) {
                 if ( (evt.keyCode == SWT.ARROW_DOWN) || (evt.keyCode == SWT.ARROW_RIGHT) ) {
                     hide();
-                    _tree.getTree().forceFocus();
-                    _tree.selectNext();
+                    //_tree.getTree().forceFocus();
+                    //_tree.selectNext();
                 } else if ( (evt.keyCode == SWT.ARROW_UP) || (evt.keyCode == SWT.ARROW_LEFT) ) {
                     hide();
-                    _tree.getTree().forceFocus();
-                    _tree.selectPrev();
+                    //_tree.getTree().forceFocus();
+                    //_tree.selectPrev();
                 }
             }
             public void keyReleased(KeyEvent keyEvent) {}
@@ -239,7 +246,6 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         }
         public void mouseMove(MouseEvent evt) {
             _lastEventWasMouse = true;
-            _ui.debugMessage("mouseMove");
             fireEvent();
         }
         
@@ -262,21 +268,18 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
                 return; // we left the tree's area
             }
             int delay = (int)(System.currentTimeMillis() - _lastMove);
-            _ui.debugMessage("popup after " + delay);
             if (delay >= PREVIEW_DELAY) {
                 synchronized (PopupListener.this) {
                     _scheduled = false;
                 }
                 showPreview();
             } else {
-                _ui.debugMessage("repopup in " + (PREVIEW_DELAY - delay));
                 Display.getDefault().timerExec(PREVIEW_DELAY-delay, new Runnable() { public void run() { popup(); } });
             }
         }
         private void showPreview() {
             if (!MessageTree.shouldShowPreview(_client))
                 return;
-            _ui.debugMessage("showing preview...");
             if (_lastEventWasMouse)
                 _uri = _tree.getMouseoverURI();
             else

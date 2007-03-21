@@ -60,9 +60,9 @@ on the sort of machines found in out of the way net cafes.</p>
  <li><a href="#edges">Edges</a></li>
  <li><a href="#corners">Corners</a><ul>
   <li><a href="#cornercontrol">Control menu</a></li>
+  <li><a href="#cornertask">Task menu</a></li>
   <li><a href="#cornerstatus">Status menu</a></li>
   <li><a href="#corneradvanced">Advanced menu</a></li>
-  <li><a href="#corneridentity">Identity menu</a></li>
   </ul></li>
  </ul></li>
 <li><a href="#screenstartup">Startup screen</a></li>
@@ -88,19 +88,17 @@ on the sort of machines found in out of the way net cafes.</p>
 <h4 id="edgewest">The default west edge</h4>
 
 <p>The west edge has special functionality - displaying quick link icon to access the 
-user's watched forums and selected bookmarks, buttons to switch between the already
-loaded screens, and drag&amp;drop targets to watch or bookmark resources.  Few if any
-screens should override the default west edge.</p>
-
-<img src="desktop_left_only.png" />
+user's watched forums and selected references as well as drag&amp;drop targets to watch
+forums or add references to resources.  Few if any screens should override the
+default west edge.</p>
 
 <h3 id="corners">Corners</h3>
 
 <p>As mentioned, the four corners have pegged functionality:<ul>
 <li>the "northwest" corner opens the control overlay menu</li>
-<li>the "northeast" corner opens the status overlay menu</li>
+<li>the "northeast" corner opens the task overlay menu</li>
 <li>the "southeast" corner opens the advanced overlay menu</li>
-<li>the "southwest" corner opens the identity overlay menu</li>
+<li>the "southwest" corner opens the status overlay menu</li>
 </ul>
 
 <p>These "overlay menus" are modal dialogs that display on top of the current screen, though do not take up the entire space.  When dismissed (either with a control inside the menu or by hitting the controlling corner again), the current screen becomes the focus again.  The intention of these displays are to serve as topical menus for certain functionality.</p>
@@ -114,9 +112,16 @@ screens should override the default west edge.</p>
 <li>configure user preferences</li>
 <li>minimize or exit the application</li></ul></p>
 
+<h4 id="cornertask">"task menu"</h4>
+<p>Launched by the northeast corner, the task menu is basically one control with a variety of options:<ul>
+<li>display all open panels</li>
+<li>switch to an individual panel</li>
+<li>close an individual panel</li>
+<li>exit out of Syndie entirely</li></ul></p>
+
 <h4 id="cornerstatus">"status menu"</h4>
 
-<p>Launched by the northeast corner, the status menu monitors the Syndie's archive and syndication status:<ul>
+<p>Launched by the southwest corner, the status menu monitors the Syndie's archive and syndication status:<ul>
 <li>toggle online/offline state</li>
 <li>manage archive syndication schedule</li>
 <li>summarize local archive content (basic stats)</li>
@@ -130,14 +135,6 @@ screens should override the default west edge.</p>
 <li>Text based interface</li>
 <li>SQL interface</li>
 <li>Logs</li>
-</ul></p>
-
-<h4 id="corneridentity">"identity menu"</h4>
-
-<p>Launched by the southwest corner, the identity menu exposes tools to manage the user's identities:<ul>
-<li>Create new identities and forums</li>
-<li>Update the privacy, security, and authentication policies of manageable forums</li>
-<li>Adjust the resources advertised by manageable forums and identities</li>
 </ul></p>
 
 <hr />

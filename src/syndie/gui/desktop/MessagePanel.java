@@ -201,6 +201,7 @@ public class MessagePanel extends DesktopPanel {
                 public void run() {              
                     DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true, false);
                     final boolean postable = chans.getAllIds().contains(new Long(forumId));
+                    final boolean pubReply = _client.getChannelAllowPublicReplies(forumId);
                     final int status = _client.getMessageStatus(msgId);
                     Display.getDefault().asyncExec(new Runnable() { 
                         public void run() {
@@ -215,7 +216,7 @@ public class MessagePanel extends DesktopPanel {
                                     _toggleRead.setText(_translationRegistry.getText(T_MARK_READ, "Mark as read"));
                                     break;
                             }
-                            _replyToForum.setEnabled(postable);
+                            _replyToForum.setEnabled(postable || pubReply);
                             
                             getEdgeRoot().layout(true, true);
                         }
