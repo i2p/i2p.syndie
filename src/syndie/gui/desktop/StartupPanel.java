@@ -235,6 +235,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
                 _desktop.setThemeRegistry(themes);
                 themes.register(StartupPanel.this);
                 themes.register((SouthEdge)_edgeSouth);
+                ComponentBuilder.instance().setThemeRegistry(themes);
             }});
             final TranslationRegistry trans = new TranslationRegistry(_ui, client.getRootDir());
             _desktop.setTranslationRegistry(trans);
@@ -243,6 +244,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
                     public void run() { trans.register((SouthEdge)_edgeSouth); }
                 });
             }
+            ComponentBuilder.instance().setTranslationRegistry(trans);
             //_startupTimer.addEvent("doStartup themes loaded");
 
             // doStartup stuff
@@ -273,6 +275,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
         o = ctx.keyGenerator();
         _startupTimer.addEvent("keyGenerator warmed up");
         DBClient client = new DBClient(ctx, _desktop.getRootFile());
+        ComponentBuilder.instance().setDBClient(client);
         _startupTimer.addEvent("db client instantiated");
         //final Browser browser = new Browser(client);
         //final Timer timer = new Timer("swtUI startup", browser.getUI());

@@ -51,6 +51,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
     private FileDialog _dialog;
 
     private byte _data[];
+    private SyndieURI _uri;
 
     public AttachmentPreview(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent) {
         super(client, ui, themes, trans);
@@ -164,9 +165,12 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _maxShell = null;
         _maxImage = null; // leave the image disposal to the _preview
     }
+
+    public SyndieURI getURI() { return _uri; }
     
     public void showURI(SyndieURI uri) {
         if (_data != null) return;
+        _uri = uri;
         Timer timer = new Timer("show attachment", _ui);
         long scope = _client.getChannelId(uri.getScope());
         long msgId = _client.getMessageId(scope, uri.getMessageId().longValue());

@@ -31,6 +31,8 @@ public class DesktopNavigationControl implements NavigationControl {
         if ( (uri.isChannel() && uri.getMessageId() == null) || (uri.isSearch()) ) {
             //System.out.println("creating a new message tree panel for " + uri);
             return new MessageTreePanel(_desktop, uri);
+        } else if (uri.isChannel() && (uri.getMessageId() != null)) {
+            return new MessagePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), _desktop.getNavControl());
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);

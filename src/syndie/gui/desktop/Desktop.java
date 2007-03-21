@@ -85,6 +85,11 @@ class Desktop {
         _navControl = new DesktopNavigationControl(this);
         _banControl = new DesktopBan();
         _bookmarkControl = new DesktopBookmark();
+        
+        ComponentBuilder.instance().setNavigationControl(_navControl);
+        ComponentBuilder.instance().setBanControl(_banControl);
+        ComponentBuilder.instance().setBookmarkControl(_bookmarkControl);
+        ComponentBuilder.instance().setUI(_ui);
         initComponents(timer);
     }
     
