@@ -51,8 +51,9 @@ public class MessagePanel extends DesktopPanel {
         initComponents();
     }
     
-    public String getPanelName() { return "Message"; }
+    public String getPanelName() { return (_msg != null ? _msg.getSubject() : "Message"); }
     public String getPanelDescription() { return "View message pages and attachments"; }
+    public SyndieURI getOriginalURI() { return (_msg != null ? _msg.getURI() : null); }
 
     private void initComponents() {
         Composite root = getRoot();
@@ -62,6 +63,9 @@ public class MessagePanel extends DesktopPanel {
     public boolean canShow(SyndieURI uri) { 
         boolean rv = false;
         if (super.canShow(uri)) return true;
+        if (true) return false; // no sharing
+        
+        
         if (uri.isChannel() && (uri.getMessageId() != null)) {
             if (_msg == null) return true; // we aren't yet initialized, so we can show any pages
             if (uri.getScope().equals(_msg.getScopeChannel()) && (uri.getMessageId().longValue() == _msg.getMessageId()) )

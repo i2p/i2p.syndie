@@ -3,7 +3,7 @@ package syndie.gui;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
-class BaseComponent {
+public class BaseComponent {
     protected DBClient _client;
     protected UI _ui;
     protected ThemeRegistry _themeRegistry;
