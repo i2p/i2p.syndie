@@ -13,6 +13,8 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -37,6 +39,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -89,9 +92,9 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
     private long _msgId;
     private SyndieURI _msgURI;
     
-    private void updatePreview() {
+    private boolean updatePreview() {
         if ( (_uri == null) || (_uri.getScope() == null) )
-            return;
+            return false;
         long chanId = _client.getChannelId(_uri.getScope());
         MessageInfo msg = _client.getMessage(chanId, _uri.getMessageId());
         if (msg != null) {
@@ -105,11 +108,13 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
             _shell.layout(true);
             if (MessageTree.shouldMarkReadOnPreview(_client))
                 _client.markMessageRead(_msgId);
+            return true;
         } else {
             _msgId = -1;
             _msgURI = null;
             _target = null;
             _author = null;
+            return false;
         }
     }
     
@@ -142,6 +147,20 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         _headerClose.setLayoutData(gd);
         _headerClose.setText("X");
         _headerClose.addSelectionListener(new FireSelectionListener() { public void fire() { hide(); } });
+        _headerClose.addKeyListener(new KeyListener() {
+            public void keyPressed(KeyEvent evt) {
+                if ( (evt.keyCode == SWT.ARROW_DOWN) || (evt.keyCode == SWT.ARROW_RIGHT) ) {
+                    hide();
+                    _tree.getTree().forceFocus();
+                    _tree.selectNext();
+                } else if ( (evt.keyCode == SWT.ARROW_UP) || (evt.keyCode == SWT.ARROW_LEFT) ) {
+                    hide();
+                    _tree.getTree().forceFocus();
+                    _tree.selectPrev();
+                }
+            }
+            public void keyReleased(KeyEvent keyEvent) {}
+        });
         
         _headerSubject = new Label(_shell, SWT.BORDER | SWT.SINGLE | SWT.WRAP);
         gd = new GridData(GridData.FILL, GridData.FILL, true, false);
@@ -207,7 +226,7 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         _view.setFont(theme.BUTTON_FONT);
     }
 
-    private static final int PREVIEW_DELAY = 2000;
+    private static final int PREVIEW_DELAY = 1000;
     
     private class PopupListener implements MouseMoveListener, SelectionListener, MouseListener {
         private long _lastMove;
@@ -263,18 +282,20 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
             else
                 _uri = _tree.getSelected();
             _ui.debugMessage("showPreview: " + _uri);
-            updatePreview();
-            Point loc = null;
-            if (_lastEventWasMouse)
-                loc = Display.getDefault().getCursorLocation();
-            else
-                loc = _tree.getSelectedLocation();
-            
-            int width = (_tree.getTree().getClientArea().width - loc.x)/1;
-            if (width < 300)
-                width = 300;
-            _shell.setBounds(loc.x+10, loc.y, width, 200);
-            _shell.open();
+            boolean ok = updatePreview();
+            if (ok) {
+                Point loc = null;
+                if (_lastEventWasMouse)
+                    loc = Display.getDefault().getCursorLocation();
+                else
+                    loc = _tree.getSelectedLocation();
+
+                int width = (_tree.getTree().getClientArea().width - loc.x)/1;
+                if (width < 300)
+                    width = 300;
+                _shell.setBounds(loc.x+10, loc.y, width, 200);
+                _shell.open();
+            }
         }
 
         public void widgetSelected(SelectionEvent selectionEvent) { sel(); }

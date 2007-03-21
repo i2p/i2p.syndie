@@ -247,6 +247,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
         return Display.getDefault().getCursorLocation();
     }
+    public void selectNext() {
+        // todo
+    }
+    public void selectPrev() {
+        // todo
+    }
     
     public void select(SyndieURI uri) {
         _highlight = uri;

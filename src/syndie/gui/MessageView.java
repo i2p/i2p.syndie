@@ -115,7 +115,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     private Composite _bodyContainer;
     private MessageViewBody _messageViewBody;
     
-    private MessagePreview _preview;
+    //private MessagePreview _preview;
     
     private SyndieURI _uri;
     private int _page;
@@ -157,8 +157,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     public void dispose() {
         _headerFlags.dispose();
-        if (_preview != null)
-            _preview.dispose();
+        //if (_preview != null)
+        //    _preview.dispose();
         _messageViewBody.dispose();
         _avatar.disposeImage();
     }

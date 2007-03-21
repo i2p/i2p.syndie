@@ -82,11 +82,11 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     private Combo _metaRefCombo;
     private MessageTree _tree;
     private MessageTree.MessageTreeListener _listener;
-    private MessagePreview _preview;
+    //private MessagePreview _preview;
     private Composite _filterRow;
     private Hash _scope;
     private boolean _viewOnly;
-    private boolean _shouldPreview;
+    //private boolean _shouldPreview;
     
     private boolean _byForum;
     
@@ -104,7 +104,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _listener = lsnr;
         _viewOnly = viewOnly;
         _byForum = byForum;
-        _shouldPreview = MessageTree.shouldShowPreview(client);
+        //_shouldPreview = MessageTree.shouldShowPreview(client);
         _ui.debugMessage("initializing browse");
         initComponents();
         _ui.debugMessage("browse initialized");
@@ -115,8 +115,8 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     
     void refresh() { if (_tree != null) _tree.applyFilter(); }
     public void toggleMaxView() {
-        if (_preview != null)
-            _preview.toggleMaxView();
+        //if (_preview != null)
+        //    _preview.toggleMaxView();
     }
     
     private void initComponents() {
@@ -358,14 +358,14 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         else
             _tree = ComponentBuilder.instance().createMessageTree(_top, this, true);
         _tree.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _ui.debugMessage("browseForum.initialize: creating preview");
-        _preview = ComponentBuilder.instance().createMessagePreview(_sash);
+        //_ui.debugMessage("browseForum.initialize: creating preview");
+        //_preview = ComponentBuilder.instance().createMessagePreview(_sash);
         _ui.debugMessage("browseForum.initialize: preview created");
-        _sash.setWeights(new int[] { 50, 50 });
+        //_sash.setWeights(new int[] { 50, 50 });
         
-        if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
-            _sash.setMaximizedControl(_preview.getControl());
-        else
+        //if (_viewOnly) // erm, lets not waste all this stuff on the Messagetree if we don't need it
+        //    _sash.setMaximizedControl(_preview.getControl());
+        //else
             _sash.setMaximizedControl(_top);
         
         _filterRow = new Composite(_root, SWT.BORDER);
@@ -373,9 +373,10 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _filterRow.setLayout(new GridLayout(8, false));
         
         // the tree keeps track of the components, updating 'em, etc, and disposing on tree disposal
-        _tree.createFilterBar(_filterRow, new MessageTree.PreviewControlListener() {
+        _tree.createFilterBar(_filterRow, null);
+        /*new MessageTree.PreviewControlListener() {
             public void togglePreview(boolean shouldShow) {
-                _shouldPreview = shouldShow;
+                //_shouldPreview = shouldShow;
                 if (shouldShow) {
                     SyndieURI uri = _tree.getSelected();
                     preview(uri, false);
@@ -385,6 +386,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
                 }
             }
         });
+         */
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -393,7 +395,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     public void dispose() {
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
-        _preview.dispose();
+        //_preview.dispose();
         _tree.dispose();
         ImageUtil.dispose(_metaAvatar.getImage());
     }
@@ -592,8 +594,8 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         //_ui.debugMessage("message selected: " + uri);
         if (toView)
             _navControl.view(uri);
-        else
-            preview(uri, false, nodelay);
+        //else
+        //    preview(uri, false, nodelay);
         if (_listener != null)
             _listener.messageSelected(tree, uri, toView, nodelay);
     }
@@ -604,7 +606,10 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         if (_listener != null)
             _listener.filterApplied(tree, searchURI);
     }
+    
+    void preview(SyndieURI uri) { _tree.select(uri); }
 
+    /*
     private SyndieURI _toPreview;
     private static final int PREVIEW_DELAY = 500;
     // only actually preview if 500ms passes w/out trying to preview something else
@@ -645,6 +650,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _preview.preview(uri);
         _ui.debugMessage("preview complete");
     }
+     */
     
     private void post() {
         _ui.debugMessage("posting...");

@@ -81,7 +81,7 @@ public class BrowseForumTab extends BrowserTab {
                 getBrowser().getUI().debugMessage("browse forum w/ channel & msgId");
                 _browse = ComponentBuilder.instance().createBrowseForum(getRoot(), new ForumListener(), true, byForum);
                 _browse.setFilter(uri.createSearch());
-                _browse.preview(uri, true);
+                _browse.preview(uri);
             } else {
                 getBrowser().getUI().debugMessage("browse forum w/out channel & msgId");
                 _browse = ComponentBuilder.instance().createBrowseForum(getRoot(), new ForumListener(), false, byForum);
