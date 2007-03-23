@@ -1,8 +1,10 @@
 package syndie.gui;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
@@ -14,6 +16,9 @@ import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
+import syndie.db.MessageCreator;
+import syndie.db.MessageCreatorDirect;
+import syndie.db.MessageCreatorSource;
 import syndie.db.UI;
 
 /**
@@ -144,8 +149,49 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
     private static final String T_ERROR_TITLE = "syndie.gui.webrippostpopup.err.title";
     
     private void post(final String html, final List attachmentNames, final List attachmentTypes, final List attachmentData, final Hash author, final Hash target, final String tags, final int privacy, final String passphrase, final String passphrasePrompt) {
-        MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
-            public DataCallback getDataCallback() { return _dataCallback; }
+        MessageCreator creator = new MessageCreatorDirect(new MessageCreatorSource() {
+            public MessageCreator.ExecutionListener getListener() {
+                return new MessageCreator.ExecutionListener() {
+                    public void creationComplete(MessageCreator exec, final SyndieURI uri, final String errors, boolean successful, SessionKey replySessionKey, byte[] replyIV, File msg) {
+                        if (successful) {
+                            boolean ok = exec.importCreated(_client, _ui, uri, msg, replyIV, replySessionKey, getPassphrase());
+                            if (ok) {
+                                _dataCallback.messageImported();
+                                _parent.getDisplay().asyncExec(new Runnable() { 
+                                    public void run() {
+                                        MessageBox box = new MessageBox(_parent, SWT.ICON_INFORMATION | SWT.OK);
+                                        box.setMessage(_translationRegistry.getText(T_CREATE_MSG, "Web rip created - please syndicate it to others if you want to share"));
+                                        box.setText(_translationRegistry.getText(T_CREATE_TITLE, "Web rip created"));
+                                        box.open();
+                                        _navControl.view(uri);
+                                    }
+                                });
+                            } else {
+                                _parent.getDisplay().asyncExec(new Runnable() { 
+                                    public void run() {
+                                        MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
+                                        box.setMessage(_translationRegistry.getText(T_CREATE_MSG, "Web rip failed: ") + errors);
+                                        box.setText(_translationRegistry.getText(T_CREATE_TITLE, "Web rip failed"));
+                                        box.open();
+                                    }
+                                });
+                            }
+                        } else {
+                            _parent.getDisplay().asyncExec(new Runnable() { 
+                                public void run() {
+                                    MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
+                                    box.setMessage(_translationRegistry.getText(T_CREATE_MSG, "Web rip failed: ") + errors);
+                                    box.setText(_translationRegistry.getText(T_CREATE_TITLE, "Web rip failed"));
+                                    box.open();
+                                }
+                            });
+                        }
+                        exec.cleanup();
+                    }
+
+                };
+            }
+            
             public DBClient getClient() { return _client; }
             public UI getUI() { return _ui; }
             public Hash getAuthor() { return author; }
@@ -175,28 +221,6 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
             public boolean getForceNewThread() { return false; }
             public boolean getRefuseReplies() { return false; }
         });
-        boolean ok = creator.execute();
-        if (ok) {
-            final SyndieURI uri = creator.getCreatedURI();
-            _parent.getDisplay().asyncExec(new Runnable() { 
-                public void run() {
-                    MessageBox box = new MessageBox(_parent, SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_translationRegistry.getText(T_CREATE_MSG, "Web rip created - please syndicate it to others if you want to share"));
-                    box.setText(_translationRegistry.getText(T_CREATE_TITLE, "Web rip created"));
-                    box.open();
-                    _navControl.view(uri);
-                }
-            });
-        } else {
-            final String errors = creator.getErrors();
-            _parent.getDisplay().asyncExec(new Runnable() { 
-                public void run() {
-                    MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_translationRegistry.getText(T_CREATE_MSG, "Web rip failed: ") + errors);
-                    box.setText(_translationRegistry.getText(T_CREATE_TITLE, "Web rip failed"));
-                    box.open();
-                }
-            });
-        }
+        creator.execute();
     }
 }

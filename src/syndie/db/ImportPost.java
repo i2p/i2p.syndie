@@ -341,6 +341,8 @@ public class ImportPost {
                    
         
         byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+        if (target == null)
+            target = _body.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
         Hash targetHash = null;
         if (target != null) {
             // may be separate from the author or scope
@@ -354,7 +356,23 @@ public class ImportPost {
         
         // includes managers, posters, and the owner
         List signingPubKeys = null;
-        if (targetHash != null) {
+        if (_enc.isReply()) {
+            // private replies are authorized against either their scope's owner or any authorized
+            // poster in the target.  authorized posters in the scope are not allowed, as that would
+            // mean anyone could effectively cancel out a private message you send if they can post
+            // to your blog
+            List both = new ArrayList();
+            long channelId = _client.getChannelId(_channel);
+            List scopePubKeys = _client.getAuthorizedPosters(channelId, true, false, false);
+            if (scopePubKeys != null)
+                both.addAll(scopePubKeys);
+            if (targetHash != null) {
+                List targetPubKeys = _client.getAuthorizedPosters(targetHash);
+                if (targetPubKeys != null)
+                    both.addAll(targetPubKeys);
+            }
+            signingPubKeys = both;
+        } else if (targetHash != null) { 
             signingPubKeys = _client.getAuthorizedPosters(targetHash);
         } else {
             signingPubKeys = _client.getAuthorizedPosters(_channel);
@@ -367,7 +385,7 @@ public class ImportPost {
         
         Signature authorizationSig = _enc.getAuthorizationSig();
         Hash authorizationHash = _enc.getAuthorizationHash();
-        _ui.debugMessage("attempting to authorize the post against " + signingPubKeys.size());
+        _ui.debugMessage("attempting to authorize the post against " + signingPubKeys.size() + " for " + (targetHash != null ? targetHash.toBase64().substring(0,6) : _channel.toBase64().substring(0,6)));
         for (int i = 0; i < signingPubKeys.size(); i++) {
             SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
             boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
@@ -379,21 +397,24 @@ public class ImportPost {
             }
         }
         
-        if (!_authorized && !_authenticated && !targetHash.equals(_channel) && (_enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT) != null) && (_body instanceof UnreadableEnclosureBody)) {
-            // the post may be a PBE replying to a post in another channel (which could be authorized once
-            // the PBE info is decrypted), so for now, lets try to import it as an unreadable post in the 
-            // source channel
-            signingPubKeys = _client.getAuthorizedPosters(_channel);
-            _ui.debugMessage("attempting pseudoauthorization authorize the unreadable PBE'd post against " + signingPubKeys.size());
-            for (int i = 0; i < signingPubKeys.size(); i++) {
-                SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
-                boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
-                if (ok) {
-                    _pseudoauthorized = true;
-                    _ui.debugMessage("pseudoauthorized unreadable PBE'd post");
-                    break;
-                } else {
-                    _ui.debugMessage("not authorized for key " + i);
+        if (!_authorized && !_authenticated) {
+            _ui.debugMessage("check pseudoauthorization: targetHash=" + targetHash + " channel=" + _channel);
+            if ((target != null) && !targetHash.equals(_channel) && (_enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT) != null) && (_body instanceof UnreadableEnclosureBody)) {
+                // the post may be a PBE replying to a post in another channel (which could be authorized once
+                // the PBE info is decrypted), so for now, lets try to import it as an unreadable post in the 
+                // source channel
+                signingPubKeys = _client.getAuthorizedPosters(_channel);
+                _ui.debugMessage("attempting pseudoauthorization authorize the unreadable PBE'd post against " + signingPubKeys.size());
+                for (int i = 0; i < signingPubKeys.size(); i++) {
+                    SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
+                    boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
+                    if (ok) {
+                        _pseudoauthorized = true;
+                        _ui.debugMessage("pseudoauthorized unreadable PBE'd post");
+                        break;
+                    } else {
+                        _ui.debugMessage("not authorized for key " + i);
+                    }
                 }
             }
         }
@@ -726,7 +747,10 @@ public class ImportPost {
                             // public replies but do not allow public posts.  perhaps this could just be addressed
                             // in a UI fashion though - only show the threads if there is a locally known authorized
                             // ancestor.
-                            if (scope == null) continue;
+                            if (scope == null) {
+                                _ui.debugMessage("parent " + i + " has no scope - we don't know it locally");
+                                continue;
+                            }
                             if (scope.equals(targetHash)) {
                                 _ui.debugMessage("Message is an unauthorized reply to an implicitly authorized post (which we may not have, and which may not even exist...), so allow it");
                                 return true;

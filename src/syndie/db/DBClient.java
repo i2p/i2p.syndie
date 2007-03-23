@@ -896,6 +896,46 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    /**
+     * return the set of channels (Hash) explicitly authorized to post in a scope.
+     * this does not include any implicitly authorized channels, such as those replying
+     * to an authorized post (if allowed) or those posting to a channel that allows anyone
+     * to post.
+     *
+     * @param includeIdent if true, include the target scope in the set
+     * @param includeManagers if true, include the explicit forum managers
+     * @param includePosters if true, include the explicit forum posters
+     */
+    public Set getChannelAuthorizedPosters(long scopeId, boolean includeIdent, boolean includeManagers, boolean includePosters) {
+        Set rv = new HashSet();
+        if (scopeId < 0) return rv;
+        
+        if (includeIdent)
+            rv.add(getChannelHash(scopeId));
+        
+        if (includeManagers) {
+            Set keys = getChannelManageKeys(scopeId);
+            if (keys != null) {
+                for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
+                    SigningPublicKey pub = (SigningPublicKey)iter.next();
+                    rv.add(pub.calculateHash());
+                }
+            }
+        }
+        
+        if (includePosters) {
+            Set keys = getChannelPostKeys(scopeId);
+            if (keys != null) {
+                for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
+                    SigningPublicKey pub = (SigningPublicKey)iter.next();
+                    rv.add(pub.calculateHash());
+                }
+            }
+        }
+        
+        return rv;
+    }
     
     private static final String SQL_GET_SIGNKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd " +
                                                    "FROM nymKey WHERE " + 
@@ -1734,52 +1774,16 @@ public class DBClient {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
-        stmt = null;
-        rs = null;
-        try {
-            stmt = _con.prepareStatement(SQL_GET_CHANNEL_POST_KEYS);
-            stmt.setLong(1, channelId);
-            rs = stmt.executeQuery();
-            Set keys = new HashSet();
-            while (rs.next()) {
-                // authPub
-                byte key[] = rs.getBytes(1);
-                if (!rs.wasNull())
-                    keys.add(new SigningPublicKey(key));
-            }
-            info.setAuthorizedPosters(keys);
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error retrieving the channel's posters", se);
+
+        Set postKeys = getChannelPostKeys(channelId);
+        if (postKeys == null)
             return null;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
+        info.setAuthorizedPosters(postKeys);
         
-        stmt = null;
-        rs = null;
-        try {
-            stmt = _con.prepareStatement(SQL_GET_CHANNEL_MANAGE_KEYS);
-            stmt.setLong(1, channelId);
-            rs = stmt.executeQuery();
-            Set keys = new HashSet();
-            while (rs.next()) {
-                // authPub
-                byte key[] = rs.getBytes(1);
-                if (!rs.wasNull())
-                    keys.add(new SigningPublicKey(key));
-            }
-            info.setAuthorizedManagers(keys);
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error retrieving the channel's managers", se);
+        Set manageKeys = getChannelManageKeys(channelId);
+        if (manageKeys == null)
             return null;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
+        info.setAuthorizedManagers(manageKeys);
         
         stmt = null;
         rs = null;
@@ -2014,6 +2018,56 @@ public class DBClient {
                 DBReferenceNode child = (DBReferenceNode)iter.next();
                 _children.add(child);
             }
+        }
+    }
+    
+    public Set getChannelPostKeys(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_POST_KEYS);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            Set keys = new HashSet();
+            while (rs.next()) {
+                // authPub
+                byte key[] = rs.getBytes(1);
+                if (!rs.wasNull())
+                    keys.add(new SigningPublicKey(key));
+            }
+            return keys;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel's posters", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    public Set getChannelManageKeys(long channelId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_MANAGE_KEYS);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            Set keys = new HashSet();
+            while (rs.next()) {
+                // authPub
+                byte key[] = rs.getBytes(1);
+                if (!rs.wasNull())
+                    keys.add(new SigningPublicKey(key));
+            }
+            return keys;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel's managers", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
     

@@ -29,6 +29,7 @@ import java.util.zip.ZipOutputStream;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -76,6 +77,9 @@ import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.MessageCreator;
+import syndie.db.MessageCreatorDirect;
+import syndie.db.MessageCreatorSource;
 import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
@@ -430,26 +434,42 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             showUnauthorizedWarning();
             return;
         }
-        MessageCreator creator = new MessageCreator(new CreatorSource());
-        boolean ok = creator.execute();
-        if (ok) {
-            dropSavedState();
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setMessage(_translationRegistry.getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
-            box.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
-            box.open();
-            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
-                ((LocalMessageCallback)iter.next()).messageCreated(creator.getCreatedURI());
-        } else {
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_translationRegistry.getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + creator.getErrors());
-            box.setText(_translationRegistry.getText(T_POST_ERROR_TITLE, "Error creating the message"));
-            box.open();
-        }
+        new MessageCreatorDirect(new CreatorSource()).execute();
     }
     
-    private class CreatorSource implements MessageCreator.MessageCreatorSource {
-        public DataCallback getDataCallback() { return _dataCallback; }
+    private class CreatorSource implements MessageCreatorSource {
+        public MessageCreator.ExecutionListener getListener() {
+            return new MessageCreator.ExecutionListener() {
+                public void creationComplete(MessageCreator exec, SyndieURI uri, String errors, boolean successful, SessionKey replySessionKey, byte[] replyIV, File msg) {
+                    if (successful) {
+                        boolean ok = exec.importCreated(_client, _ui, uri, msg, replyIV, replySessionKey, getPassphrase());
+                        if (ok) {
+                            dropSavedState();                    
+                            _dataCallback.messageImported();
+                            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
+                            box.setMessage(_translationRegistry.getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+                            box.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
+                            box.open();
+                            for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
+                                ((LocalMessageCallback)iter.next()).messageCreated(uri);
+                        } else {
+                            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+                            box.setMessage(_translationRegistry.getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + errors);
+                            box.setText(_translationRegistry.getText(T_POST_ERROR_TITLE, "Error creating the message"));
+                            box.open();
+                        }
+                    } else {
+                        MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+                        box.setMessage(_translationRegistry.getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + errors);
+                        box.setText(_translationRegistry.getText(T_POST_ERROR_TITLE, "Error creating the message"));
+                        box.open();
+                    }
+                    exec.cleanup();
+                }
+
+            };
+        }
+        
         public DBClient getClient() { return _client; }
         public UI getUI() { return _ui; }
         public Hash getAuthor() { return _author; }

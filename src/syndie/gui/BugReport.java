@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Properties;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+import net.i2p.data.SessionKey;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionEvent;
@@ -37,6 +38,9 @@ import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.MessageCreator;
+import syndie.db.MessageCreatorDirect;
+import syndie.db.MessageCreatorSource;
 import syndie.db.UI;
 
 /**
@@ -283,8 +287,33 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         
         savePrefs(os, jvm, swt);
                 
-        MessageCreator creator = new MessageCreator(new MessageCreator.MessageCreatorSource() {
-            public DataCallback getDataCallback() { return _dataCallback; }
+        final MessageCreator creator = new MessageCreatorDirect(new MessageCreatorSource() {
+            public MessageCreator.ExecutionListener getListener() {
+                return new MessageCreator.ExecutionListener() {
+                    public void creationComplete(MessageCreator exec, SyndieURI uri, String errors, boolean successful, SessionKey replySessionKey, byte[] replyIV, File msg) {
+                        if (successful) {
+                            boolean ok = exec.importCreated(_client, _ui, uri, msg, replyIV, replySessionKey, getPassphrase());
+                            if (ok) {
+                                _navControl.view(uri);
+                                _navControl.unview(_uri);
+                                _dataCallback.messageImported();
+                            } else {
+                                MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+                                box.setMessage(errors);
+                                box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
+                                box.open();
+                            }
+                        } else {
+                            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
+                            box.setMessage(errors);
+                            box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
+                            box.open();
+                        }
+                        exec.cleanup();
+                    }
+                    
+                };
+            }
             public DBClient getClient() { return _client; }
             public UI getUI() { return _ui; }
             public Hash getAuthor() {
@@ -386,18 +415,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             public boolean getForceNewThread() { return false; }
             public boolean getRefuseReplies() { return false; }
         });
-        boolean posted = creator.execute();
-        if (posted) {
-            SyndieURI uri = creator.getCreatedURI();
-            _navControl.view(uri);
-            _navControl.unview(_uri);
-        } else {
-            String err = creator.getErrors();
-            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(err);
-            box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
-            box.open();
-        }
+        creator.execute();
     }
     
     private static final String T_POST_OK = "syndie.gui.bugreport.postok";

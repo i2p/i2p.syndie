@@ -45,7 +45,7 @@ public abstract class CommandImpl implements CLI.Command {
         out.write(DataHelper.getUTF8("raw: " + data + "\n"));
     }
     
-    byte[] read(UI ui, String filename, int maxSize) {
+    public static byte[] read(UI ui, String filename, int maxSize) {
         if (filename == null) return null;
         FileInputStream fis = null;
         try {
@@ -91,7 +91,7 @@ public abstract class CommandImpl implements CLI.Command {
         }
     }
         
-    void write(Map headers, OutputStream out) throws IOException {
+    public static void write(Map headers, OutputStream out) throws IOException {
         TreeSet ordered = new TreeSet(headers.keySet());
         for (Iterator iter = ordered.iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();
@@ -105,6 +105,9 @@ public abstract class CommandImpl implements CLI.Command {
      * IV followed by the AES/256/CBC encrypted raw data
      */
     byte[] encryptBody(I2PAppContext ctx, byte raw[], SessionKey bodyKey) {
+        return encryptBody(ctx, raw, bodyKey, getClass());
+    }
+    public static byte[] encryptBody(I2PAppContext ctx, byte raw[], SessionKey bodyKey, Class cls) {
         byte iv[] = new byte[16];
         byte hmac[] = new byte[Hash.HASH_LENGTH];
         int pad = ctx.random().nextInt(256);
@@ -152,7 +155,7 @@ public abstract class CommandImpl implements CLI.Command {
         System.arraycopy(hmac, 0, rv, iv.length+prep.length, hmac.length);
         
         if (true) {
-            Log log = ctx.logManager().getLog(getClass());
+            Log log = ctx.logManager().getLog(cls);
             Sha256Standalone dbg = new Sha256Standalone();
             dbg.update(rv);
             byte h[] = dbg.digest();
@@ -174,7 +177,7 @@ public abstract class CommandImpl implements CLI.Command {
      * ElGamal/2048 encrypted AES/256 key and IV block, followed by the 
      * AES/256/CBC encrypted raw data
      */
-    byte[] encryptBody(I2PAppContext ctx, byte raw[], PublicKey encryptTo, byte ivOut[], SessionKey replySessionKey) {
+    public static byte[] encryptBody(I2PAppContext ctx, byte raw[], PublicKey encryptTo, byte ivOut[], SessionKey replySessionKey) {
         byte data[] = new byte[32+16];
         SessionKey key = null;
         if (replySessionKey != null)

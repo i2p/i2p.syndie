@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.db;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,28 +22,28 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.db.CommandImpl;
-import syndie.db.DBClient;
-import syndie.db.Importer;
-import syndie.db.MessageGen;
-import syndie.db.NestedUI;
-import syndie.db.NullUI;
-import syndie.db.Opts;
-import syndie.db.UI;
+import syndie.gui.*;
 
 /**
  
  */
-class MessageCreator {
+public class MessageCreator {
     //private MessageEditor _editor;
-    private MessageCreatorSource _editor;
+    protected MessageCreatorSource _source;
     private SyndieURI _createdURI;
     private StringBuffer _errorBuf;
-    private UI _ui;
+    protected UI _ui;
     
-    public MessageCreator(MessageCreatorSource editor) {
-        _editor = editor;
-        _ui = editor.getUI();
+    private List _tempFiles;
+    private File _refFile;
+
+    public interface ExecutionListener {
+        public void creationComplete(MessageCreator exec, SyndieURI uri, String errors, boolean successful, SessionKey replySessionKey, byte[] replyIV, File msg);
+    }
+    
+    public MessageCreator(MessageCreatorSource source) {
+        _source = source;
+        _ui = source.getUI();
         _errorBuf = new StringBuffer();
     }
     
@@ -68,7 +68,7 @@ class MessageCreator {
         if (!authorHidden)
             return author;
         
-        DBClient client = _editor.getClient();
+        DBClient client = _source.getClient();
         
         long chanId = client.getChannelId(target);
         ChannelInfo info = client.getChannel(chanId);
@@ -96,16 +96,14 @@ class MessageCreator {
     
     /**
      * a port of syndie.db.PostMenu.processExecute() to the GUI.
-     *
-     * @return true if the post was created and imported successfully
      */
-    public boolean execute() {
+    public void execute() {
         _errorBuf.setLength(0);
-        DBClient client = _editor.getClient();
-        Hash author = _editor.getAuthor();
-        Hash target = _editor.getTarget();
-        Hash signAs = _editor.getSignAs();
-        boolean authorHidden = _editor.getAuthorHidden();
+        DBClient client = _source.getClient();
+        Hash author = _source.getAuthor();
+        Hash target = _source.getTarget();
+        Hash signAs = _source.getSignAs();
+        boolean authorHidden = _source.getAuthorHidden();
         Hash scope = getScope(author, target, signAs, authorHidden);
         
         NestedUI ui = new NestedUI(_ui);
@@ -142,9 +140,9 @@ class MessageCreator {
         }
         genOpts.addOptValue("authorHidden", authorHidden ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         
-        for (int i = 0; i < _editor.getPageCount(); i++) {
-            String content = _editor.getPageContent(i);
-            String contentType = _editor.getPageType(i);
+        for (int i = 0; i < _source.getPageCount(); i++) {
+            String content = _source.getPageContent(i);
+            String contentType = _source.getPageType(i);
             
             FileOutputStream fos = null;
             try {
@@ -168,17 +166,18 @@ class MessageCreator {
             } catch (IOException ioe) {
                 _errorBuf.append("Error writing out the configuration for page " + i + ": " + ioe.getMessage());
                 cleanup(tempFiles, refFile);
-                return false;
+                _source.getListener().creationComplete(this, null, _errorBuf.toString(), false, null, null, null);
+                return;
             }
         }
 
-        List names = _editor.getAttachmentNames();
-        List types = _editor.getAttachmentTypes();
+        List names = _source.getAttachmentNames();
+        List types = _source.getAttachmentTypes();
         for (int i = 0; i < names.size(); i++) {
             String fname = (String)names.get(i);
             String desc = null; // the ui doesn't have a way to specify the attachment description
             String type = (String)types.get(i);
-            byte data[] = _editor.getAttachmentData(i+1);
+            byte data[] = _source.getAttachmentData(i+1);
             
             FileOutputStream fos = null;
             try {
@@ -210,7 +209,8 @@ class MessageCreator {
             } catch (IOException ioe) {
                 _errorBuf.append("Error writing out the configuration for attachment " + i + ": " + ioe.getMessage());
                 cleanup(tempFiles, refFile);
-                return false;
+                _source.getListener().creationComplete(this, null, _errorBuf.toString(), false, null, null, null);
+                return;
             }
         }
 
@@ -272,8 +272,8 @@ class MessageCreator {
                 if (targetChan.getAllowPublicPosts()) {
                     noAuthRequired = true;
                 } else if (targetChan.getAllowPublicReplies()) {
-                    for (int i = 0; i < _editor.getParentCount(); i++) {
-                        SyndieURI parent = _editor.getParent(i);
+                    for (int i = 0; i < _source.getParentCount(); i++) {
+                        SyndieURI parent = _source.getParent(i);
                         Set allowed = new HashSet();
                         for (Iterator iter = targetChan.getAuthorizedManagers().iterator(); iter.hasNext(); )
                             allowed.add(((SigningPublicKey)iter.next()).calculateHash());
@@ -292,22 +292,22 @@ class MessageCreator {
         }
         
         genOpts.setOptValue("messageId", Long.toString(messageId));
-        genOpts.setOptValue("subject", _editor.getSubject().trim());
+        genOpts.setOptValue("subject", _source.getSubject().trim());
  
-        String passphrase = (_editor.getPrivacyPBE() ? _editor.getPassphrase() : null);
-        String passphrasePrompt = _editor.getPassphrasePrompt();
-        if ( (_editor.getPrivacyPBE()) && (passphrase != null) && (passphrasePrompt != null) ) {
+        String passphrase = (_source.getPrivacyPBE() ? _source.getPassphrase() : null);
+        String passphrasePrompt = _source.getPassphrasePrompt();
+        if ( (_source.getPrivacyPBE()) && (passphrase != null) && (passphrasePrompt != null) ) {
             genOpts.setOptValue("bodyPassphrase", CommandImpl.strip(passphrase));
             genOpts.setOptValue("bodyPassphrasePrompt", CommandImpl.strip(passphrasePrompt));
-        } else if (_editor.getPrivacyPublic()) {
+        } else if (_source.getPrivacyPublic()) {
             genOpts.setOptValue("encryptContent", "false"); // if true, encrypt the content with a known read key for the channel
         } else {
             genOpts.setOptValue("encryptContent", "true"); // if true, encrypt the content with a known read key for the channel
         }
         
-        String avatarFilename = _editor.getAvatarUnmodifiedFilename();
+        String avatarFilename = _source.getAvatarUnmodifiedFilename();
         if (avatarFilename == null) {
-            byte avatar[] = _editor.getAvatarModifiedData();
+            byte avatar[] = _source.getAvatarModifiedData();
             if (avatar != null) {
                 try {
                     File avatarFile = File.createTempFile("avatar", ".png", tmpDir);
@@ -320,7 +320,8 @@ class MessageCreator {
                 } catch (IOException ioe) {
                     _errorBuf.append("Error writing out the avatar: " + ioe.getMessage());
                     cleanup(tempFiles, refFile);
-                    return false;
+                    _source.getListener().creationComplete(this, null, _errorBuf.toString(), false, null, null, null);
+                    return;
                 }
             }
         }
@@ -328,14 +329,14 @@ class MessageCreator {
             genOpts.setOptValue("avatar", avatarFilename);
         
         SessionKey replySessionKey = new SessionKey(true);
-        if (_editor.getPrivacyReply()) {
+        if (_source.getPrivacyReply()) {
             genOpts.setOptValue("postAsReply", "true"); // if true, the post should be encrypted to the channel's reply key
             genOpts.setOptValue("replySessionKey", replySessionKey.toBase64());
         } else {
             replySessionKey = null;
         }
         
-        String tags[] = _editor.getPublicTags();
+        String tags[] = _source.getPublicTags();
         for (int i = 0; i < tags.length; i++) {
             if (tags[i] != null) {
                 String str = tags[i].trim();
@@ -343,7 +344,7 @@ class MessageCreator {
                     genOpts.addOptValue("pubTag", str);
             }
         }
-        tags = _editor.getPrivateTags();
+        tags = _source.getPrivateTags();
         for (int i = 0; i < tags.length; i++) {
             if (tags[i] != null) {
                 String str = tags[i].trim();
@@ -352,7 +353,7 @@ class MessageCreator {
             }
         }
         
-        List referenceNodes = _editor.getReferenceNodes();
+        List referenceNodes = _source.getReferenceNodes();
         if (referenceNodes.size() > 0) {
             String refs = ReferenceNode.walk(referenceNodes);
             FileOutputStream fos = null;
@@ -367,7 +368,8 @@ class MessageCreator {
             } catch (IOException ioe) {
                 _errorBuf.append("Error writing out the references: " + ioe.getMessage());
                 cleanup(tempFiles, refFile);
-                return false;
+                _source.getListener().creationComplete(this, null, _errorBuf.toString(), false, null, null, null);
+                return;
             }
         }
         //* (--cancel $uri)*                // posts to be marked as cancelled (only honored if authorized to do so for those posts)
@@ -377,21 +379,21 @@ class MessageCreator {
         //    genOpts.setOptValue("overwrite", SyndieURI.createMessage(_currentMessage.getOverwriteChannel(), _currentMessage.getOverwriteMessage()).toString());
 
         StringBuffer parentBuf = new StringBuffer();
-        for (int i = 0; i < _editor.getParentCount(); i++) {
-            SyndieURI uri = _editor.getParent(i);
+        for (int i = 0; i < _source.getParentCount(); i++) {
+            SyndieURI uri = _source.getParent(i);
             parentBuf.append(uri.toString());
-            if (i + 1 < _editor.getParentCount())
+            if (i + 1 < _source.getParentCount())
                 parentBuf.append(",");
         }
         if (parentBuf.length() > 0)
             genOpts.setOptValue("references", parentBuf.toString());
 
-        String expiration = _editor.getExpiration();
+        String expiration = _source.getExpiration();
         if (expiration != null)
             genOpts.setOptValue("expiration", expiration);
         
-        genOpts.setOptValue("forceNewThread", ""+_editor.getForceNewThread());
-        genOpts.setOptValue("refuseReplies", ""+_editor.getRefuseReplies());
+        genOpts.setOptValue("forceNewThread", ""+_source.getForceNewThread());
+        genOpts.setOptValue("refuseReplies", ""+_source.getRefuseReplies());
         
         genOpts.setOptValue("out", out);
         
@@ -403,90 +405,60 @@ class MessageCreator {
         cmd.runCommand(genOpts, nestedUI, client);
         byte replyIV[] = cmd.getReplyIV();
         
-        if (nestedUI.getExitCode() >= 0) {
-            // generated fine, so lets import 'er
-            ui.statusMessage("Message generated and written to " + out);
-            
-            Importer msgImp = new Importer();
-            Opts msgImpOpts = new Opts();
-            msgImpOpts.setOptValue("in", out);
-            if (passphrase != null)
-                msgImpOpts.setOptValue("passphrase", CommandImpl.strip(passphrase));
-            
-            if ( (replySessionKey != null) && (replyIV != null) ) {
-                msgImpOpts.setOptValue("replySessionKey", replySessionKey.toBase64());
-                msgImpOpts.setOptValue("replyIV", Base64.encode(replyIV));
-            }
-                    
-            msgImpOpts.setCommand("import");
-            NestedUI dataNestedUI = new NestedUI(ui);
-            msgImp.runCommand(msgImpOpts, dataNestedUI, client);
-            if (dataNestedUI.getExitCode() < 0) {
-                _errorBuf.append("Failed in the nested import command");
-                cleanup(tempFiles, refFile);
-                return false;
-            } else {
-                _createdURI = SyndieURI.createMessage(scope, messageId);
-                ui.statusMessage("Post imported");
-                ui.commandComplete(0, null);
-                cleanup(tempFiles, refFile);
-                
-                long msgId = _editor.getClient().getMessageId(scope, messageId);
-                if (msgId >= 0)
-                    _editor.getClient().markMessageRead(msgId);
-                
-                _editor.getDataCallback().messageImported();
-                return true;
-            }
-        } else {
-            _errorBuf.append("Error generating the message");
-            cleanup(tempFiles, refFile);
-            return false;
+        _tempFiles = tempFiles;
+        _refFile = refFile;
+
+        _createdURI = SyndieURI.createMessage(scope, messageId);
+
+        if (nestedUI.getExitCode() < 0)
+            _source.getListener().creationComplete(this, null, _errorBuf.toString(), false, null, null, null);
+        else
+            _source.getListener().creationComplete(this, _createdURI, null, true, replySessionKey, replyIV, new File(out));
+    }
+    
+    public boolean importCreated(DBClient client, UI ui, SyndieURI uri, File out, byte[] replyIV, SessionKey replySessionKey, String passphrase) {
+        // generated fine, so lets import 'er
+        ui.statusMessage("Message generated and written to " + out);
+
+        Importer msgImp = new Importer();
+        Opts msgImpOpts = new Opts();
+        msgImpOpts.setOptValue("in", out.getAbsolutePath());
+        if (passphrase != null)
+            msgImpOpts.setOptValue("passphrase", CommandImpl.strip(passphrase));
+
+        if ( (replySessionKey != null) && (replyIV != null) ) {
+            msgImpOpts.setOptValue("replySessionKey", replySessionKey.toBase64());
+            msgImpOpts.setOptValue("replyIV", Base64.encode(replyIV));
         }
+
+        msgImpOpts.setCommand("import");
+        NestedUI dataNestedUI = new NestedUI(ui);
+        msgImp.runCommand(msgImpOpts, dataNestedUI, client);
+        if (dataNestedUI.getExitCode() < 0) {
+            _errorBuf.append("Failed in the nested import command");
+            cleanup();
+            return false;
+        } else {
+            ui.statusMessage("Post imported");
+            ui.commandComplete(0, null);
+            cleanup();
+
+            long msgId = _source.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0)
+                _source.getClient().markMessageRead(msgId);
+            return true;
+        }
+    }
+
+    public void cleanup() {
+        cleanup(_tempFiles, _refFile);
     }
     
     private void cleanup(List tempFiles, File refFile) {
-        for (int i = 0; i < tempFiles.size(); i++)
-            ((File)tempFiles.get(i)).delete();
+        if (tempFiles != null)
+            for (int i = 0; i < tempFiles.size(); i++)
+                ((File)tempFiles.get(i)).delete();
         if (refFile != null)
             refFile.delete();
     }
-    
-    public interface MessageCreatorSource {
-        public DataCallback getDataCallback();
-        public DBClient getClient();
-        public UI getUI();
-        public Hash getAuthor();
-        public Hash getTarget();
-        /** if not null, contains the hash of the public key that should be used to sign the post */
-        public Hash getSignAs();
-        /** 
-         * if true, the author should be hidden within the encrypted block (only makes sense if
-         * getSignAs() is set and not equal to getAuthor())
-         */
-        public boolean getAuthorHidden();
-        public int getPageCount();
-        public String getPageContent(int page);
-        public String getPageType(int page);
-        public List getAttachmentNames();
-        public List getAttachmentTypes();
-        /** @param attachmentIndex starts at 1 */
-        public byte[] getAttachmentData(int attachmentIndex);
-        public String getSubject();
-        public boolean getPrivacyPBE();
-        public String getPassphrase();
-        public String getPassphrasePrompt();
-        public boolean getPrivacyPublic();
-        public String getAvatarUnmodifiedFilename();
-        public byte[] getAvatarModifiedData();
-        public boolean getPrivacyReply();
-        public String[] getPublicTags();
-        public String[] getPrivateTags();
-        public List getReferenceNodes();
-        public int getParentCount();
-        public SyndieURI getParent(int depth);
-        public String getExpiration();
-        public boolean getForceNewThread();
-        public boolean getRefuseReplies();
-    }   
 }
