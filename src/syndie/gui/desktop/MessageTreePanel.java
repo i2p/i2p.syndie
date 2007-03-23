@@ -58,8 +58,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
     
     private void initComponents() {
-        BookmarkControl bookmarkControl = null;
-        DataCallback dataCallback = null;
+        BookmarkControl bookmarkControl = _desktop.getBookmarkControl();
+        DataCallback dataCallback = _desktop.getDataCallback();
         _tree = new WatchedMessageTree(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), 
                 bookmarkControl, dataCallback, getRoot(), new MessageTree.MessageTreeListener() {
             public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {

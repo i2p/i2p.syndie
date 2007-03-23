@@ -182,6 +182,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navControl = navControl;
         _bookmarkControl = bookmarkControl;
         _dataCallback = callback;
+        if (callback == null)
+            throw new IllegalArgumentException("callback is required");
         _parent = parent;
         _listener = lsnr;
         _showAuthor = showAuthor;

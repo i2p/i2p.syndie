@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -121,6 +122,12 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                 else
                     super.selected(evt);
             }
+            public void keyPressed(KeyEvent evt) {
+                if (evt.character == 'x')
+                    exit();
+                else
+                    super.keyPressed(evt);
+            }
         };
         _tree.addKeyListener(lsnr);
         _tree.addSelectionListener(lsnr);
@@ -132,16 +139,16 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         gd = new GridData(GridData.FILL, GridData.FILL, false, true);
         gd.widthHint = 64;
         _exit.setLayoutData(gd);
-        _exit.addSelectionListener(new FireSelectionListener() {
-            public void fire() {
-                for (int i = 0; i < _listeners.size(); i++)
-                    ((TaskTreeListener)_listeners.get(i)).exitSelected();
-            }
-        });
+        _exit.addSelectionListener(new FireSelectionListener() { public void fire() { exit(); } });
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
     
+    private void exit() {
+        for (int i = 0; i < _listeners.size(); i++)
+            ((TaskTreeListener)_listeners.get(i)).exitSelected();
+    }
+        
     private int getColumn(int x) {
         int width = _tree.getClientArea().width;
         if (x < width - 64)

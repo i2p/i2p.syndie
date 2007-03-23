@@ -84,7 +84,9 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         initComponents();
     }
     
-    public void dispose() { 
+    public void dispose() {
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         if ( (_shell != null) && (!_shell.isDisposed()) )
             _shell.dispose();
         if (_body != null)

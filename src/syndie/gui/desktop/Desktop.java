@@ -80,6 +80,7 @@ class Desktop {
     private NavigationControl _navControl;
     private BanControl _banControl;
     private BookmarkControl _bookmarkControl;
+    private DataCallback _dataCallback;
     
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
@@ -91,10 +92,12 @@ class Desktop {
         _navControl = new DesktopNavigationControl(this);
         _banControl = new DesktopBan();
         _bookmarkControl = new DesktopBookmark();
+        _dataCallback = new DesktopDataCallback();
         
         ComponentBuilder.instance().setNavigationControl(_navControl);
         ComponentBuilder.instance().setBanControl(_banControl);
         ComponentBuilder.instance().setBookmarkControl(_bookmarkControl);
+        ComponentBuilder.instance().setDataCallback(_dataCallback);
         ComponentBuilder.instance().setUI(_ui);
         initComponents(timer);
     }
@@ -176,22 +179,27 @@ class Desktop {
                         showForumSelectionPanel();
                     evt.type = SWT.None;
                 } else if ( (evt.character == 'f') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-f
-                    evt.type = SWT.NONE;
+                    evt.type = SWT.None;
                     showTaskTree();
                 } else if ( (evt.keyCode == SWT.ARROW_DOWN) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-down
-                    evt.type = SWT.NONE;
+                    evt.type = SWT.None;
                     showNextPanel();
                 } else if ( (evt.keyCode == SWT.ARROW_UP) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-up
-                    evt.type = SWT.NONE;
+                    evt.type = SWT.None;
                     showPreviousPanel();
+                } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
+                    evt.type = SWT.None;
+                    DesktopPanel panel = getCurrentPanel();
+                    if (panel != null)
+                        panel.close();
                 } else if ( (evt.character == '=') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^= (aka ^+)
-                    evt.type = SWT.NONE;
+                    evt.type = SWT.None;
                     _shell.setRedraw(false);
                     _themeRegistry.increaseFont();
                     _center.layout(true, true);
                     _shell.setRedraw(true);
                 } else if ( (evt.character == '-') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^-
-                    evt.type = SWT.NONE;
+                    evt.type = SWT.None;
                     _shell.setRedraw(false);
                     _themeRegistry.decreaseFont();
                     _center.layout(true, true);
@@ -246,6 +254,7 @@ class Desktop {
     NavigationControl getNavControl() { return _navControl; }
     BanControl getBanControl() { return _banControl; }
     BookmarkControl getBookmarkControl() { return _bookmarkControl; }
+    DataCallback getDataCallback() { return _dataCallback; }
     Composite getCenter() { return _center; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
@@ -464,6 +473,13 @@ class Desktop {
         /** get the bookmarks (NymReferenceNode) currently loaded */
         public List getBookmarks() { return null; }
         public boolean isBookmarked(SyndieURI syndieURI) { return false; }
+    }
+    
+    private class DesktopDataCallback implements DataCallback {
+        public void messageImported() {}
+        public void metaImported() {}
+        public void readStatusUpdated() {}
+        public void forumCreated() {}
     }
 }
 
