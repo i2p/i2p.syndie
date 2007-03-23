@@ -220,6 +220,8 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                         long chanId = _client.getMessageTarget(msgId);
                         scope = _client.getChannelHash(chanId);
                     }
+                } else if (panel instanceof MessageEditorPanel) {
+                    scope = ((MessageEditorPanel)panel).getTargetScope();
                 }
                 
                 if (scope != null) {

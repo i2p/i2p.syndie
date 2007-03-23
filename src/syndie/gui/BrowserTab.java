@@ -33,7 +33,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     private Composite _root;
     
     //private static final int TAB_ICON_SIZE = 16;
-    static final String TYPE_POST = "post";
+    public static final String TYPE_POST = "post";
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
     static final String TYPE_META = "meta";

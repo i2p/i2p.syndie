@@ -81,6 +81,7 @@ class Desktop {
     private BanControl _banControl;
     private BookmarkControl _bookmarkControl;
     private DataCallback _dataCallback;
+    private LocalMessageCallback _localMessageCallback;
     
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
@@ -93,11 +94,13 @@ class Desktop {
         _banControl = new DesktopBan();
         _bookmarkControl = new DesktopBookmark();
         _dataCallback = new DesktopDataCallback();
+        _localMessageCallback = new DesktopLocalMessageCallback();
         
         ComponentBuilder.instance().setNavigationControl(_navControl);
         ComponentBuilder.instance().setBanControl(_banControl);
         ComponentBuilder.instance().setBookmarkControl(_bookmarkControl);
         ComponentBuilder.instance().setDataCallback(_dataCallback);
+        ComponentBuilder.instance().setLocalMessageCallback(_localMessageCallback);
         ComponentBuilder.instance().setUI(_ui);
         initComponents(timer);
     }
@@ -255,6 +258,7 @@ class Desktop {
     BanControl getBanControl() { return _banControl; }
     BookmarkControl getBookmarkControl() { return _bookmarkControl; }
     DataCallback getDataCallback() { return _dataCallback; }
+    LocalMessageCallback getLocalMessageCallback() { return _localMessageCallback; }
     Composite getCenter() { return _center; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
@@ -480,6 +484,12 @@ class Desktop {
         public void metaImported() {}
         public void readStatusUpdated() {}
         public void forumCreated() {}
+    }
+    
+    private class DesktopLocalMessageCallback implements LocalMessageCallback {
+        public void messageCreated(SyndieURI postedURI) {}
+        public void messagePostponed(long postponementId) {}
+        public void messageCancelled() {}
     }
 }
 

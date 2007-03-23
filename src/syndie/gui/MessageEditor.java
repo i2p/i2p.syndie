@@ -3239,8 +3239,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             editor.insertAtCaret(html);
     }
 
-    boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
-    SyndieURI getURI() {
+    public boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
+    public SyndieURI getURI() {
         long prevVersion = _postponeVersion;
         saveState();
         SyndieURI rv = null;
