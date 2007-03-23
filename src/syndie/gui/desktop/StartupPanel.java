@@ -87,6 +87,8 @@ class StartupPanel extends DesktopPanel implements Themeable {
         t.start();
     }
     
+    protected boolean canClose() { return false; }
+    
     
     private void append(int type, String msg) { append(type, msg, null); }
     private void append(final int type, final String msg, final Exception e) {

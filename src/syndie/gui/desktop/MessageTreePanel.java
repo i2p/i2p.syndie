@@ -135,6 +135,12 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         getRoot().getDisplay().removeFilter(SWT.KeyDown, _keyListener);
     }
     
+    protected void dispose() {
+        _tree.dispose();
+        hidden();
+        super.dispose();
+    }
+    
     public void applyTheme(Theme theme) {
         if (_edgeNorth != null)
             ((Themeable)_edgeNorth).applyTheme(theme);

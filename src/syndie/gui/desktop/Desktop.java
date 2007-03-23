@@ -40,6 +40,11 @@ class Desktop {
     private Composite _edgeNorthEast;
     private Composite _edgeSouthEast;
     private Composite _edgeSouthWest;
+    
+    private DesktopCorner _cornerNorthWest;
+    private DesktopCorner _cornerNorthEast;
+    private DesktopCorner _cornerSouthEast;
+    private DesktopCorner _cornerSouthWest;
 
     private Composite _edgeNorth;
     private Composite _edgeEast;
@@ -172,7 +177,7 @@ class Desktop {
                     evt.type = SWT.None;
                 } else if ( (evt.character == 'f') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-f
                     evt.type = SWT.NONE;
-                    _taskTree.show();
+                    showTaskTree();
                 } else if ( (evt.keyCode == SWT.ARROW_DOWN) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-down
                     evt.type = SWT.NONE;
                     showNextPanel();
@@ -245,6 +250,7 @@ class Desktop {
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     
+    void showTaskTree() { _taskTree.show(); }
     void showPreviousPanel() { showPreviousPanel(true); }
     void showPreviousPanel(boolean notifyPrev) {
         if (_loadedPanels.size() > 0) {
@@ -288,8 +294,13 @@ class Desktop {
     
     void startupComplete(boolean ok) {
         if (ok) {        
-            _display.asyncExec(new Runnable() { public void run() { _taskTree = new TaskTreeShell(Desktop.this); } });
-            _display.asyncExec(new Runnable() { public void run() { showForumSelectionPanel(); } });
+            _display.asyncExec(new Runnable() { 
+                public void run() { 
+                    _taskTree = new TaskTreeShell(Desktop.this);
+                    ((ExitDesktopCorner)_cornerNorthEast).startupComplete();
+                    showForumSelectionPanel();
+                } 
+            });
         }
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
@@ -374,10 +385,10 @@ class Desktop {
         setSize(_edgeEast, BORDER_SIZE, -1);
         setSize(_edgeWest, BORDER_SIZE, -1);
         
-        new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
-        new ExitDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
-        new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
-        new DesktopCornerDummy(SWT.COLOR_RED, _edgeSouthWest, _ui);
+        _cornerNorthWest = new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
+        _cornerNorthEast = new ExitDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
+        _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
+        _cornerSouthWest = new DesktopCornerDummy(SWT.COLOR_RED, _edgeSouthWest, _ui);
         
         _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
@@ -458,19 +469,19 @@ class Desktop {
 
 class ExitDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
+    private Button _button;
     public ExitDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
         super(parent, ui);
         _desktop = desktop;
         initComponents(color);
     }
+    public void startupComplete() {
+        _button.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+    }
     private void initComponents(int color) {
-        Button b = new Button(getRoot(), SWT.PUSH);
-        b.setBackground(b.getDisplay().getSystemColor(color));
-        b.addSelectionListener(new FireSelectionListener() {
-            public void fire() {
-                _desktop.close();
-            }
-        });
+        _button = new Button(getRoot(), SWT.PUSH);
+        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
         getRoot().layout(true, true);
     }
 }

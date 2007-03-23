@@ -143,6 +143,9 @@ public class ImageUtil {
     public static Image ICON_ONLINE;
     public static Image ICON_OFFLINE;
     
+    public static Image ICON_TASKTREE_CLOSE_SELF;
+    public static Image ICON_TASKTREE_CLOSE_GROUP;
+    
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
@@ -239,6 +242,9 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_ONLINE);
         _indisposableImages.add(ICON_OFFLINE);
+        
+        _indisposableImages.add(ICON_TASKTREE_CLOSE_GROUP);
+        _indisposableImages.add(ICON_TASKTREE_CLOSE_SELF);
         _timer.addEvent("init complete");
         _timer.complete();
     }
@@ -333,6 +339,9 @@ public class ImageUtil {
     
         ICON_ONLINE = createImageFromResource("iconOnline.png");
         ICON_OFFLINE = createImageFromResource("iconOffline.png");
+        
+        ICON_TASKTREE_CLOSE_GROUP = createImageFromResource("iconTaskCloseGroup.png");
+        ICON_TASKTREE_CLOSE_SELF = createImageFromResource("iconTaskCloseSelf.png");
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

@@ -50,11 +50,20 @@ class DesktopPanel {
     
     public SyndieURI getOriginalURI() { return _origURI; }
     public boolean canShow(SyndieURI uri) { return _origURI != null && _origURI.equals(uri); }
-    public void close() { 
-        dispose();
-        _desktop.panelDisposed(this, true); 
+    public boolean close() { 
+        if (canClose()) {
+            dispose();
+            _desktop.panelDisposed(this, true); 
+            return true;
+        } else {
+            return false;
+        }
     }
-    protected void dispose() { _root.dispose(); }
+    protected boolean canClose() { return true; }
+    protected void dispose() { 
+        _root.dispose(); 
+        disposeEdges();
+    }
     
     protected Composite getRoot() { return _root; }
     

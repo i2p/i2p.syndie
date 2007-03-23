@@ -72,9 +72,14 @@ class TaskTreeShell implements TaskTree.TaskTreeListener {
 
     public void closeSelected(DesktopPanel panel) {
         hide();
+        panel.close();
     }
 
     public void closeSelected(List panels) {
         hide();
+        for (int i = 0; i < panels.size(); i++) {
+            DesktopPanel panel = (DesktopPanel)panels.get(i);
+            panel.close();
+        }
     }
 }

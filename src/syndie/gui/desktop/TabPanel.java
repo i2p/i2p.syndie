@@ -43,6 +43,8 @@ class TabPanel extends DesktopPanel {
     
     public void unview(SyndieURI uri) { _browser.unview(uri); }
     
+    protected boolean canClose() { return false; }
+    
     public String getPanelName() { return "tabs"; }
     public String getPanelDescription() { return "Old style tabbed interface"; }
 }

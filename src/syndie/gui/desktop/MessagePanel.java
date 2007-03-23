@@ -54,6 +54,11 @@ public class MessagePanel extends DesktopPanel {
     public String getPanelName() { return (_msg != null ? _msg.getSubject() : "Message"); }
     public String getPanelDescription() { return "View message pages and attachments"; }
     public SyndieURI getOriginalURI() { return (_msg != null ? _msg.getURI() : null); }
+    
+    protected void dispose() {
+        _body.dispose();
+        super.dispose();
+    }
 
     private void initComponents() {
         Composite root = getRoot();

@@ -10,6 +10,8 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Image;
@@ -20,6 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import syndie.data.SyndieURI;
 import syndie.db.JobRunner;
@@ -31,6 +34,8 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
     
     private Composite _root;
     private Tree _tree;
+    private TreeColumn _colName;
+    private TreeColumn _colClose;
     private Button _cancel;
     private Button _exit;
     private List _listeners;
@@ -70,8 +75,9 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         _root.setLayout(gl);
         
         _cancel = new Button(_root, SWT.PUSH);
+        _cancel.setBackground(ColorUtil.getColor("yellow"));
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, true);
-        gd.widthHint = 32;
+        gd.widthHint = 64;
         _cancel.setLayoutData(gd);
         _cancel.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -80,13 +86,41 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
             }
         });
         
-        _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL);
+        _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _tree.setHeaderVisible(false);
+        _tree.setLinesVisible(false);
+        
+        _colName = new TreeColumn(_tree, SWT.LEFT);
+        _colClose = new TreeColumn(_tree, SWT.RIGHT);
         
         SyndieTreeListener lsnr = new SyndieTreeListener(_tree) {
             public void doubleclick() { switchToSelected(); }
             public void returnHit() { switchToSelected(); }
+            public void mouseDoubleClick(MouseEvent evt) {
+                int col = getColumn(evt.x);
+                _ui.debugMessage("mouseDoubleclick in column " + col + " [" + evt.x + "]");
+                if (col == 1)
+                    closeSelected();
+                else
+                    super.mouseDoubleClick(evt);
+            }
+            public void mouseDown(MouseEvent evt) {
+                int col = getColumn(evt.x);
+                _ui.debugMessage("mouseDown in column " + col + " [" + evt.x + "]");
+                if (col == 1)
+                    closeSelected();
+                else
+                    super.mouseDown(evt);
+            }
+            protected void selected(SelectionEvent evt) { 
+                int col = getColumn(evt.x);
+                _ui.debugMessage("selected in column " + col + " [" + evt.x + "]");
+                if (col == 1)
+                    closeSelected();
+                else
+                    super.selected(evt);
+            }
         };
         _tree.addKeyListener(lsnr);
         _tree.addSelectionListener(lsnr);
@@ -94,8 +128,9 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         _tree.addTraverseListener(lsnr);
         
         _exit = new Button(_root, SWT.PUSH);
+        _exit.setBackground(ColorUtil.getColor("darkyellow"));
         gd = new GridData(GridData.FILL, GridData.FILL, false, true);
-        gd.widthHint = 32;
+        gd.widthHint = 64;
         _exit.setLayoutData(gd);
         _exit.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -105,6 +140,14 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         });
         _translationRegistry.register(this);
         _themeRegistry.register(this);
+    }
+    
+    private int getColumn(int x) {
+        int width = _tree.getClientArea().width;
+        if (x < width - 64)
+            return 0;
+        else
+            return 1;
     }
     
     public void dispose() {
@@ -124,15 +167,16 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
     }
     
     public void show() {
+        DesktopPanel current = _desktop.getCurrentPanel();
         _root.setRedraw(false);
         disposeDetails();
-        buildTree(_desktop.getPanels());
+        buildTree(_desktop.getPanels(), current);
         _tree.setFocus();
         _root.layout(true, true);
         _root.setRedraw(true);
     }
     
-    private void buildTree(final List panels) {
+    private void buildTree(final List panels, final DesktopPanel current) {
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 final Map forumNameToPanelList = new TreeMap();
@@ -143,7 +187,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                 
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {
-                        renderTreeInfo(forumNameToPanelList, otherPanelList, forumNameToImageData, panelToImageData);
+                        renderTreeInfo(forumNameToPanelList, otherPanelList, forumNameToImageData, panelToImageData, current);
                     }
                 });
             }
@@ -210,7 +254,9 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         }
     }
     
-    private void renderTreeInfo(Map forumNameToPanelList, List otherPanels, Map forumNameToImageData, Map panelToImageData) {
+    private void renderTreeInfo(Map forumNameToPanelList, List otherPanels, Map forumNameToImageData, Map panelToImageData, DesktopPanel current) {
+        TreeItem curItem = null;
+        TreeItem firstItem = null;
         for (Iterator iter = forumNameToPanelList.keySet().iterator(); iter.hasNext(); ) {
             String name = (String)iter.next();
             List panels = (List)forumNameToPanelList.get(name);
@@ -222,29 +268,37 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
             if (data != null)
                 img = ImageUtil.createImage(data);
             else
-                img = ImageUtil.ICON_TAB_BROWSE;
+                img = ImageUtil.ICON_REF_FORUM;
             
             TreeItem forumItem = new TreeItem(_tree, SWT.NONE);
             forumItem.setImage(img);
             forumItem.setText(name);
+            forumItem.setImage(1, ImageUtil.ICON_TASKTREE_CLOSE_GROUP);
+            if (firstItem == null)
+                firstItem = forumItem;
 
             _itemToImage.put(forumItem, img);
             
             DesktopPanel first = (DesktopPanel)panels.get(0);
             _itemToPanel.put(forumItem, first);
+            if (first == current)
+                curItem = forumItem;
             
             for (int i = 1; i < panels.size(); i++) {
                 DesktopPanel panel = (DesktopPanel)panels.get(i);
                 TreeItem item = new TreeItem(forumItem, SWT.NONE);
+                if (panel == current)
+                    curItem = item;
                 data = (byte[])panelToImageData.get(panel);
                 img = null;
                 if (data != null)
                     img = ImageUtil.createImage(data);
                 else
-                    img = ImageUtil.ICON_TAB_MSG;
+                    img = ImageUtil.ICON_REF_MSG;
                 item.setImage(img);
                 item.setText(panel.getPanelName());
-
+                item.setImage(1, ImageUtil.ICON_TASKTREE_CLOSE_SELF);
+                
                 _itemToImage.put(item, img);
                 _itemToPanel.put(item, panel);
             }
@@ -256,18 +310,33 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         for (int i = 0; i < otherPanels.size(); i++) {
             DesktopPanel panel = (DesktopPanel)otherPanels.get(i);
             TreeItem item = new TreeItem(_tree, SWT.NONE);
+            if (panel == current)
+                curItem = item;
+            if (firstItem == null)
+                firstItem = item;
             byte[] data = (byte[])panelToImageData.get(panel);
             Image img = null;
             if (data != null)
                 img = ImageUtil.createImage(data);
             else
-                img = ImageUtil.ICON_TAB_MSG;
+                img = ImageUtil.ICON_REF_SYNDIE;
             item.setImage(img);
             item.setText(panel.getPanelName());
-
+            item.setImage(1, ImageUtil.ICON_TASKTREE_CLOSE_SELF);
+                
             _itemToImage.put(item, img);
             _itemToPanel.put(item, panel);
         }
+        
+        if (curItem != null)
+            _tree.setSelection(curItem);
+        else
+            _tree.setSelection(firstItem);
+        _tree.showSelection();
+        
+        int width = _tree.getClientArea().width - 64 - _tree.getGridLineWidth()*2;
+        _colName.setWidth(width);
+        _colClose.setWidth(64);
     }
     
     private void switchToSelected() {
@@ -276,6 +345,21 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
             DesktopPanel panel = (DesktopPanel)_itemToPanel.get(items[0]);
             for (int i = 0; i < _listeners.size(); i++)
                 ((TaskTreeListener)_listeners.get(i)).viewSelected(panel);
+        }
+    }
+    private void closeSelected() {
+        TreeItem items[] = _tree.getSelection();
+        if ( (items == null) || (items.length == 1) ) {
+            List toClose = new ArrayList();
+            DesktopPanel panel = (DesktopPanel)_itemToPanel.get(items[0]);
+            toClose.add(panel);
+            TreeItem sub[] = items[0].getItems();
+            for (int i = 0; i < sub.length; i++) {
+                DesktopPanel subPanel = (DesktopPanel)_itemToPanel.get(sub[i]);
+                toClose.add(subPanel);
+            }
+            for (int i = 0; i < _listeners.size(); i++)
+                ((TaskTreeListener)_listeners.get(i)).closeSelected(toClose);
         }
     }
     

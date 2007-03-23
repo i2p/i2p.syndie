@@ -46,6 +46,10 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     public String getPanelName() { return "Forum selection"; }
     public String getPanelDescription() { return "Main screen to select forums"; }
 
+    protected void dispose() {
+        // noop.  do not call super.dispose, because we don't want to actually go away
+    }
+    
     private void initComponents() {
         Composite root = getRoot();
         _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this);
