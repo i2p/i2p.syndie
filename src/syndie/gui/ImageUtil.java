@@ -140,6 +140,15 @@ public class ImageUtil {
     public static Image ICON_EDITOR_SPELL;
     public static Image ICON_EDITOR_SEARCH;
     
+    public static Image ICON_EDITOR_ADDPAGE;
+    public static Image ICON_EDITOR_REMOVEPAGE;
+    public static Image ICON_EDITOR_WEBRIP;
+    public static Image ICON_EDITOR_TOGGLETYPE;
+    public static Image ICON_EDITOR_ADDIMAGE;
+    public static Image ICON_EDITOR_ADDFILE;
+    public static Image ICON_EDITOR_REMOVEFILE;
+    public static Image ICON_EDITOR_QUOTE;
+    
     public static Image ICON_ONLINE;
     public static Image ICON_OFFLINE;
     
@@ -239,6 +248,15 @@ public class ImageUtil {
         _indisposableImages.add(ICON_EDITOR_STYLE);
         _indisposableImages.add(ICON_EDITOR_SPELL);
         _indisposableImages.add(ICON_EDITOR_SEARCH);
+    
+        _indisposableImages.add(ICON_EDITOR_ADDPAGE);
+        _indisposableImages.add(ICON_EDITOR_REMOVEPAGE);
+        _indisposableImages.add(ICON_EDITOR_WEBRIP);
+        _indisposableImages.add(ICON_EDITOR_TOGGLETYPE);
+        _indisposableImages.add(ICON_EDITOR_ADDIMAGE);
+        _indisposableImages.add(ICON_EDITOR_ADDFILE);
+        _indisposableImages.add(ICON_EDITOR_REMOVEFILE);
+        _indisposableImages.add(ICON_EDITOR_QUOTE);
         
         _indisposableImages.add(ICON_ONLINE);
         _indisposableImages.add(ICON_OFFLINE);
@@ -333,9 +351,19 @@ public class ImageUtil {
         ICON_EDITOR_PAGETYPE_HTML = createImageFromResource("iconEdPageTypeHTML.png");
         ICON_EDITOR_ATTACH = createImageFromResource("iconEdAttach.png");
         ICON_EDITOR_LINK = createImageFromResource("iconEdLink.png");
-        ICON_EDITOR_STYLE = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
-        ICON_EDITOR_SPELL = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
-        ICON_EDITOR_SEARCH = resize(ImageUtil.ICON_MSG_FLAG_PUBLIC, 48, 48, false);
+        
+        ICON_EDITOR_STYLE = createImageFromResource("iconEdStyle.png");
+        ICON_EDITOR_SPELL = createImageFromResource("iconEdSpell.png");
+        ICON_EDITOR_SEARCH = createImageFromResource("iconEdSearch.png");
+    
+        ICON_EDITOR_ADDPAGE = createImageFromResource("iconEdAddPage.png");
+        ICON_EDITOR_REMOVEPAGE = createImageFromResource("iconEdRemovePage.png");
+        ICON_EDITOR_WEBRIP = createImageFromResource("iconEdWebRip.png");
+        ICON_EDITOR_TOGGLETYPE = createImageFromResource("iconEdToggleType.png");
+        ICON_EDITOR_ADDIMAGE = createImageFromResource("iconEdAddImage.png");
+        ICON_EDITOR_ADDFILE = createImageFromResource("iconEdAddFile.png");
+        ICON_EDITOR_REMOVEFILE = createImageFromResource("iconEdRemoveFile.png");
+        ICON_EDITOR_QUOTE = createImageFromResource("iconEdQuote.png");
     
         ICON_ONLINE = createImageFromResource("iconOnline.png");
         ICON_OFFLINE = createImageFromResource("iconOffline.png");

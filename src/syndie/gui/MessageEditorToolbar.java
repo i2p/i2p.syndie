@@ -136,7 +136,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
     }
     
-    public void statusUpdated(int page, int pages, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
+    public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
         _attachAddImage.setEnabled(isHTML);
         _linkMenu.setEnabled(isHTML);
         _linkArchive.setEnabled(isHTML);

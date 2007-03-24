@@ -135,6 +135,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private List _pageEditors;
     private List _pageTypes;
     
+    private List _attachmentRoots;
+    private List _attachmentPreviews;
     private List _attachmentConfig;
     private List _attachmentData;
     private List _attachmentSummary;
@@ -203,6 +205,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _parent = parent;
         _pageEditors = new ArrayList(1);
         _pageTypes = new ArrayList();
+        _attachmentRoots = new ArrayList();
+        _attachmentPreviews = new ArrayList();
         _attachmentConfig = new ArrayList();
         _attachmentData = new ArrayList();
         _attachmentSummary = new ArrayList();
@@ -249,7 +253,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public void pickPrivacyPrivate();
         public void pickPrivacyAuthorized();
         public void pickPageTypeHTML(boolean isHTML);
-        public void statusUpdated(int page, int pages, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors);
+        public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors);
         public void forumSelected(Hash forum, long channelId, String summary, boolean isManaged);
         public void authorSelected(Hash author, long channelId, String summary);
         public void attachmentsRebuilt(List attachmentData, List attachmentSummary);
@@ -950,13 +954,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** do we want to search around the end/beginning of the page? */
     boolean getSearchWrap() { return _finder.getSearchWrap(); }
     /** fire up the search/replace dialog w/ empty values */
-    void search() { 
+    public void search() { 
         // don't open unless there's a page to search...
         if (getPageEditor() != null)
             _finder.open();
     }
     
-    void quote() {
+    public void quote() {
         if (_parents.size() > 0) {
             SyndieURI parent = (SyndieURI)_parents.get(0);
             PageEditor editor = getPageEditor();
@@ -1004,7 +1008,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (editor != null)
             editor.spellReplaceWord(allOccurrences);
     }
-    void spellNext() {
+    public void spellNext() {
         PageEditor editor = getPageEditor();
         if (editor != null)
             editor.spellNext();
@@ -1073,7 +1077,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     // gui stuff..
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(1, true));
+        GridLayout gl = new GridLayout(1, true);
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        gl.horizontalSpacing = 0;
+        _root.setLayout(gl);
         
         initHeader();
         initAbbrHeader();
@@ -1363,13 +1372,27 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             return idx;
         else
             return -1;
-    } 
+    }
+    
+    /** 0-indexed attachment being shown, or -1 if not an attachment */
+    private int getCurrentAttachment() {
+        int idx = _pageTabs.getSelectionIndex();
+        int pages = _pageEditors.size();
+        int attachments = _attachmentData.size();
+        if ( (idx >= 0) && (idx >= pages) && (idx < pages+attachments) )
+            return idx-pages;
+        else
+            return -1;
+    }
     
     /** current page */
     public PageEditor getPageEditor() { return getPageEditor(getCurrentPage()); }
     /** grab the given (0-indexed) page */
     private PageEditor getPageEditor(int pageNum) {
-        return (PageEditor)_pageEditors.get(pageNum);
+        if ( (pageNum >= 0) && (pageNum < _pageEditors.size()) )
+            return (PageEditor)_pageEditors.get(pageNum);
+        else
+            return null;
     }
     /** current page */
     private String getPageType() { return getPageType(getCurrentPage()); }
@@ -1393,6 +1416,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private void updateToolbar() {
         int page = getCurrentPage();
         int pages = _pageEditors.size();
+        int attachment = getCurrentAttachment();
         int attachments = _attachmentData.size();
         String type = (page >= 0) ? getPageType(page) : null;
         boolean pageLoaded = (page >= 0) && (pages > 0);
@@ -1402,7 +1426,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _ui.debugMessage("updateToolbar: pages=" + pages + " (" + page + "/" + (pages-1) + ") attachments=" + attachments + " isHTML? " + isHTML + "/" + type + " pageLoaded? " + pageLoaded + " types: " + _pageTypes);
        
         for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachments, type, pageLoaded, isHTML, hasAncestors);
+            ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -1421,7 +1445,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
         _imagePopup.showPopup(forBodyBackground); 
     }
+    public void showLinkPopup() {
+        buildLinkPopup();
+        _linkPopup.showPopup();
+    }
     public void showLinkPopup(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+        buildLinkPopup();
+        _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive, true);
+        _linkPopup.showPopup();
+    }
+    private void buildLinkPopup() {
         if (_linkPopup == null)
             _linkPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
                 public void uriBuilt(SyndieURI uri, String text) {
@@ -1430,8 +1463,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 public int getPageCount() { return _pageEditors.size(); }
                 public List getAttachmentDescriptions() { return MessageEditor.this.getAttachmentDescriptions(); }
             });
-        _linkPopup.limitOptions(web, page, attach, forum, message, submessage, eepsite, i2p, freenet, archive, true);
-        _linkPopup.showPopup();
     }
     
     public Hash getForum() { return _forum; }
@@ -1576,7 +1607,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void initHeader() {
         Composite header = new Composite(_root, SWT.NONE);
-        header.setLayout(new GridLayout(6, false));
+        GridLayout gl = new GridLayout(6, false);
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        header.setLayout(gl);
         header.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _headers = header;
         
@@ -1665,7 +1699,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void initAbbrHeader() {
         _abbrHeaders = new Composite(_root, SWT.NONE);
-        _abbrHeaders.setLayout(new GridLayout(3, false));
+        GridLayout gl = new GridLayout(3, false);
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        _abbrHeaders.setLayout(gl);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.exclude = true;
         _abbrHeaders.setLayoutData(gd);
@@ -2435,6 +2473,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     // image popup stuff
     public void addAttachment() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
+        dialog.setText(_translationRegistry.getText(T_ADDATTACH, "Attach file"));
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
         String base = dialog.getFilterPath();
@@ -2449,6 +2488,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             }
         }
     }
+    private static final String T_ADDATTACH = "syndie.gui.messageeditor.addattach";
 
     private static final String T_TOOLARGE_MSG = "syndie.gui.messageeditor.toolarge.msg";
     private static final String T_TOOLARGE_TITLE = "syndie.gui.messageeditor.toolarge.title";
@@ -2485,7 +2525,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (!isValidSize(file.length()))
             return;
         
-        byte data[] = new byte[(int)file.length()];
+        final byte data[] = new byte[(int)file.length()];
         try {
             int read = DataHelper.read(new FileInputStream(file), data);
             if (read != data.length) {
@@ -2496,15 +2536,36 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _ui.debugMessage("Unable to read the attachment", ioe);
             return;
         }
-        Properties cfg = new Properties();
+        final Properties cfg = new Properties();
         cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, type);
         cfg.setProperty(Constants.MSG_ATTACH_NAME, name);
         _attachmentConfig.add(cfg);
         _attachmentData.add(data);
+        
+        addAttachmentTab(cfg, data);
+        
         rebuildAttachmentSummaries();
         updateToolbar();
         _ui.debugMessage("Attachment read and added");
     }
+    
+    private void addAttachmentTab(final Properties cfg, final byte data[]) {
+        int pages = _pageEditors.size();
+        CTabItem item = new CTabItem(_pageTabs, SWT.NONE, pages + _attachmentData.size() - 1);
+        //item.setText("attachment " + _attachmentData.size());
+        Composite root = new Composite(_pageTabs, SWT.NONE);
+        root.setLayout(new FillLayout());
+        _attachmentRoots.add(root);
+        item.setControl(root);
+        //DBClient client
+        AttachmentPreview preview = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, root);
+        preview.showURI(new AttachmentPreview.AttachmentSource() {
+            public Properties getAttachmentConfig(int attachmentNum) { return cfg; }
+            public byte[] getAttachmentData(int attachmentNum) { return data; }
+        }, SyndieURI.createAttachment(null, -1, _attachmentData.size()));
+        _attachmentPreviews.add(preview);
+    }
+    
     public int addAttachment(String contentType, String name, byte[] data) {
         if (data == null) return -1;
         if (!isValidSize(data.length)) return -1;
@@ -2517,6 +2578,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _attachmentConfig.add(cfg);
         _attachmentData.add(data);
         rv = _attachmentData.size();
+        addAttachmentTab(cfg, data);
         rebuildAttachmentSummaries();
         updateToolbar();
         return rv;
@@ -2530,6 +2592,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _attachmentConfig.remove(idx);
             _attachmentData.remove(idx);
             _attachmentSummary.remove(idx);
+            AttachmentPreview preview = (AttachmentPreview)_attachmentPreviews.remove(idx);
+            preview.dispose();
+            Composite root = (Composite)_attachmentRoots.remove(idx);
+            root.dispose();
+            CTabItem item = (CTabItem)_pageTabs.getItem(idx + _pageEditors.size());
+            item.dispose();
         }
         rebuildAttachmentSummaries();
         for (int i = 0; i < _pageEditors.size(); i++) {
@@ -2537,6 +2605,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             ed.updated();
         }
         updateToolbar();
+    }
+    public void removeAttachment() {
+        int attach = getCurrentAttachment();
+        if (attach >= 0) removeAttachment(attach);
     }
 
     public List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
@@ -2592,17 +2664,23 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         return -1;
     }
-    public void updateImageAttachment(int imageNum, String contentType, byte data[]) { 
+    public void updateImageAttachment(int imageNum, String contentType, final byte data[]) { 
         modified();
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
-            Properties cfg = (Properties)_attachmentConfig.get(i);
+            final Properties cfg = (Properties)_attachmentConfig.get(i);
             String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
             if ( (type == null) || (!type.startsWith("image")) )
                 continue;
             if (cur == imageNum) {
                 cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
                 _attachmentConfig.set(cur, data);
+                AttachmentPreview preview = (AttachmentPreview)_attachmentPreviews.get(i);
+                final int num = i;
+                preview.showURI(new AttachmentPreview.AttachmentSource() {
+                    public Properties getAttachmentConfig(int attachmentNum) { return cfg; }
+                    public byte[] getAttachmentData(int attachmentNum) { return data; }
+                }, SyndieURI.createAttachment(null, -1, num));
                 rebuildAttachmentSummaries();
                 updateToolbar();
                 return;
@@ -2625,7 +2703,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 if (type != null)
                     buf.append('(').append(type).append(") ");
                 buf.append("[" + data.length + " bytes]");
-                _attachmentSummary.add(buf.toString());
+                String summary = buf.toString();
+                _attachmentSummary.add(summary);
+                
+                CTabItem item = _pageTabs.getItem(_pageEditors.size()+i);
+                item.setText(_translationRegistry.getText(T_ATTACHMENT_PREFIX, "Attachment ") + (i+1));
             }
         } else {
             _attachmentSummary.add(_translationRegistry.getText(T_ATTACHMENTS_NONE, "none"));
@@ -2634,6 +2716,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).attachmentsRebuilt(_attachmentData, _attachmentSummary);
     }
+    
+    private static final String T_ATTACHMENT_PREFIX = "syndie.gui.messageeditor.attachment.prefix";
     
     private static final String T_PAGE_VIEW = "syndie.gui.messageeditor.pageview";
     private static final String T_PAGE_DELETE = "syndie.gui.messageeditor.pagedelete";

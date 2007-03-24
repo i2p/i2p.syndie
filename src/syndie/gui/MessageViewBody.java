@@ -3,6 +3,7 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
@@ -240,12 +241,12 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         if (_tabFolder.getSelection() == _tabs[toff]) {
-                            _attachmentPreviews[preview].showURI(uri);
+                            _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
                         }
                     }
                 });
             } else {
-                _attachmentPreviews[preview].showURI(uri);
+                _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
             }
         }
         timer.addEvent("initBody go to configured");
@@ -268,6 +269,21 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         });
         timer.addEvent("initBody root laid out");
         _root.setRedraw(true);
+    }
+    
+    private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
+        private SyndieURI _attachURI;
+        public URIAttachmentSource(SyndieURI uri) { _attachURI = uri; }
+
+        public Properties getAttachmentConfig(int attachmentNum) {
+            long msgId = _client.getMessageId(_attachURI.getScope(), _attachURI.getMessageId());
+            return _client.getMessageAttachmentConfig(msgId, attachmentNum);
+        }
+
+        public byte[] getAttachmentData(int attachmentNum) {
+            long msgId = _client.getMessageId(_attachURI.getScope(), _attachURI.getMessageId());
+            return _client.getMessageAttachmentData(msgId, attachmentNum);
+        }
     }
     
     public void toggleMaxView() {

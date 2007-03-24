@@ -8,6 +8,8 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -155,6 +157,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
     public void translate(TranslationRegistry registry) {
         if (_edgeNorth != null) ((Translatable)_edgeNorth).translate(registry);
         if (_edgeEast != null) ((Translatable)_edgeEast).translate(registry);
+        if (_edgeSouth != null) ((Translatable)_edgeSouth).translate(registry);
     }
     
     // callbacks from the message editor based on the message being posted/cancelled/postponed
@@ -179,7 +182,9 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
     public void pickPageTypeHTML(boolean isHTML) {
         ((EastEdge)_edgeEast).updatePageType(isHTML);
     }
-    public void statusUpdated(int page, int pages, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {}
+    public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
+        ((SouthEdge)_edgeSouth).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
+    }
     public void attachmentsRebuilt(List attachmentData, List attachmentSummary) {}
     
     private static final String T_PRIV_PUBLIC = "syndie.gui.desktop.messageeditorpanel.privpublic";
@@ -397,8 +402,8 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
         public void translate(TranslationRegistry registry) {
             _privacyLabel.setText(registry.getText(T_PRIVACY, "Who can read the post?"));
-            _forumNameLabel.setText(registry.getText(T_FORUMNAME, "Target forum:"));
-            _authorNameLabel.setText(registry.getText(T_AUTHORNAME, "Author/From:"));
+            _forumNameLabel.setText(registry.getText(T_FORUMNAME, "Forum (to):"));
+            _authorNameLabel.setText(registry.getText(T_AUTHORNAME, "Author (from):"));
         }
     }
     
@@ -446,6 +451,11 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _preview.setToolTipText(registry.getText(T_PREVIEW_TT, "Preview the page"));
             _post.setToolTipText(registry.getText(T_POST_TT, "Post the message"));
             _cancel.setToolTipText(registry.getText(T_CANCEL_TT, "Cancel the message entirely"));
+            
+            _saveForLater.setText(registry.getText(T_SAVEFORLATER, "Save"));
+            _preview.setText(registry.getText(T_PREVIEW, "Preview"));
+            _post.setText(registry.getText(T_POST, "Post"));
+            _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         }
         public void applyTheme(Theme theme) {
             _saveForLater.setFont(theme.BUTTON_FONT);
@@ -454,7 +464,154 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _cancel.setFont(theme.BUTTON_FONT);
         }
     }
-    private class SouthEdge extends DesktopEdge {
-        public SouthEdge(Composite edge, UI ui) { super(edge, ui); }
+    
+    private static final String T_SAVEFORLATER = "syndie.gui.desktop.messageeditorpanel.saveforlater";
+    private static final String T_PREVIEW = "syndie.gui.desktop.messageeditorpanel.preview";
+    private static final String T_POST = "syndie.gui.desktop.messageeditorpanel.post";
+    private static final String T_CANCEL = "syndie.gui.desktop.messageeditorpanel.cancel";
+    
+    private class SouthEdge extends DesktopEdge implements Translatable {
+        private Button _addPage;
+        private Button _removePage;
+        private Button _addWebRip;
+        private Button _toggleFormat;
+        private Button _addImg;
+        private Button _addFile;
+        private Button _removeFile;
+        private Button _addLink;
+        private Button _htmlStyle;
+        private Button _spell;
+        private Button _find;
+        private Button _quote;
+        
+        public SouthEdge(Composite edge, UI ui) {
+            super(edge, ui);
+            initComponents();
+        }
+        private void initComponents() {
+            Composite edge = getEdgeRoot();
+            RowLayout rl = new RowLayout(SWT.HORIZONTAL);
+            edge.setLayout(rl);
+            
+            _addPage = new Button(edge, SWT.PUSH);
+            _addPage.setLayoutData(new RowData(64, 64));
+            _removePage = new Button(edge, SWT.PUSH);
+            _removePage.setLayoutData(new RowData(64, 64));
+            _addWebRip = new Button(edge, SWT.PUSH);
+            _addWebRip.setLayoutData(new RowData(64, 64));
+            _toggleFormat = new Button(edge, SWT.PUSH);
+            _toggleFormat.setLayoutData(new RowData(64, 64));
+            _addImg = new Button(edge, SWT.PUSH);
+            _addImg.setLayoutData(new RowData(64, 64));
+            _addFile = new Button(edge, SWT.PUSH);
+            _addFile.setLayoutData(new RowData(64, 64));
+            _removeFile = new Button(edge, SWT.PUSH);
+            _removeFile.setLayoutData(new RowData(64, 64));
+            _addLink = new Button(edge, SWT.PUSH);
+            _addLink.setLayoutData(new RowData(64, 64));
+            _htmlStyle = new Button(edge, SWT.PUSH);
+            _htmlStyle.setLayoutData(new RowData(64, 64));
+            _spell = new Button(edge, SWT.PUSH);
+            _spell.setLayoutData(new RowData(64, 64));
+            _find = new Button(edge, SWT.PUSH);
+            _find.setLayoutData(new RowData(64, 64));
+            _quote = new Button(edge, SWT.PUSH);
+            _quote.setLayoutData(new RowData(64, 64));
+            
+            _addPage.setImage(ImageUtil.ICON_EDITOR_ADDPAGE);
+            _removePage.setImage(ImageUtil.ICON_EDITOR_REMOVEPAGE);
+            _addWebRip.setImage(ImageUtil.ICON_EDITOR_WEBRIP);
+            _toggleFormat.setImage(ImageUtil.ICON_EDITOR_TOGGLETYPE);
+            _addImg.setImage(ImageUtil.ICON_EDITOR_ADDIMAGE);
+            _addFile.setImage(ImageUtil.ICON_EDITOR_ADDFILE);
+            _removeFile.setImage(ImageUtil.ICON_EDITOR_REMOVEFILE);
+            _addLink.setImage(ImageUtil.ICON_EDITOR_LINK);
+            _htmlStyle.setImage(ImageUtil.ICON_EDITOR_STYLE);
+            _spell.setImage(ImageUtil.ICON_EDITOR_SPELL);
+            _find.setImage(ImageUtil.ICON_EDITOR_SEARCH);
+            _quote.setImage(ImageUtil.ICON_EDITOR_QUOTE);
+            
+            _addPage.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.addPage(); }
+            });
+            _removePage.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.removePage(); }
+            });
+            _addWebRip.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.addWebRip(); }
+            });
+            _toggleFormat.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.togglePageType(); }
+            });
+            _addImg.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.showImagePopup(false); }
+            });
+            _addFile.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.addAttachment(); }
+            });
+            _removeFile.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.removeAttachment(); }
+            });
+            _addLink.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.showLinkPopup(); }
+            });
+            _htmlStyle.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    // todo
+                }
+            });
+            _spell.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.spellNext(); }
+            });
+            _find.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.search(); }
+            });
+            _quote.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.quote(); }
+            });
+        }
+
+        public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
+            _addImg.setEnabled(isHTML);
+            _addLink.setEnabled(isHTML);
+            _htmlStyle.setEnabled(isHTML);
+            
+            _removeFile.setEnabled(attachment >= 0);
+            _removePage.setEnabled(page >= 0);
+
+            _toggleFormat.setEnabled(page >= 0);
+
+            _spell.setEnabled(pageLoaded && false); // disabled for the moment, pending revamp (line breaking, plurals, caps)
+
+            _find.setEnabled(pageLoaded);
+            _quote.setEnabled(page >= 0 && hasAncestors);
+        }
+        
+        public void translate(TranslationRegistry registry) {
+            _addPage.setToolTipText(registry.getText(T_ADDPAGE_TT, "Add page"));
+            _removePage.setToolTipText(registry.getText(T_REMOVEPAGE_TT, "Remove page"));
+            _addWebRip.setToolTipText(registry.getText(T_WEBRIP_TT, "Rip a web page"));
+            _toggleFormat.setToolTipText(registry.getText(T_TOGGLEFORMAT_TT, "Toggle HTML/plain text"));
+            _addImg.setToolTipText(registry.getText(T_ADDIMAGE_TT, "Add image"));
+            _addFile.setToolTipText(registry.getText(T_ADDFILE_TT, "Add file"));
+            _removeFile.setToolTipText(registry.getText(T_REMOVEFILE_TT, "Remove file"));
+            _addLink.setToolTipText(registry.getText(T_ADDLINK_TT, "Add link"));
+            _htmlStyle.setToolTipText(registry.getText(T_HTMLSTYLE_TT, "HTML style helper"));
+            _spell.setToolTipText(registry.getText(T_SPELL_TT, "Check spelling"));
+            _find.setToolTipText(registry.getText(T_FIND_TT, "Find/replace text"));
+            _quote.setToolTipText(registry.getText(T_QUOTE_TT, "Quote the parent message"));
+        }
     }
+    private static final String T_ADDPAGE_TT = "syndie.gui.desktop.messageeditorpanel.addpage.tt";
+    private static final String T_REMOVEPAGE_TT = "syndie.gui.desktop.messageeditorpanel.removepage.tt";
+    private static final String T_WEBRIP_TT = "syndie.gui.desktop.messageeditorpanel.webrip.tt";
+    private static final String T_TOGGLEFORMAT_TT = "syndie.gui.desktop.messageeditorpanel.toggleformat.tt";
+    private static final String T_ADDIMAGE_TT = "syndie.gui.desktop.messageeditorpanel.addimage.tt";
+    private static final String T_ADDFILE_TT = "syndie.gui.desktop.messageeditorpanel.addfile.tt";
+    private static final String T_REMOVEFILE_TT = "syndie.gui.desktop.messageeditorpanel.removefile.tt";
+    private static final String T_ADDLINK_TT = "syndie.gui.desktop.messageeditorpanel.addlink.tt";
+    private static final String T_HTMLSTYLE_TT = "syndie.gui.desktop.messageeditorpanel.htmlstyle.tt";
+    private static final String T_SPELL_TT = "syndie.gui.desktop.messageeditorpanel.spell.tt";
+    private static final String T_FIND_TT = "syndie.gui.desktop.messageeditorpanel.find.tt";
+    private static final String T_QUOTE_TT = "syndie.gui.desktop.messageeditorpanel.quote.tt";
 }

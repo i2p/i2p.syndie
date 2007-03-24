@@ -59,6 +59,11 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         initComponents();
     }
     
+    public interface AttachmentSource {
+        public Properties getAttachmentConfig(int attachmentNum);
+        public byte[] getAttachmentData(int attachmentNum);
+    }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(4, false));
@@ -168,17 +173,19 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
 
     public SyndieURI getURI() { return _uri; }
     
-    public void showURI(SyndieURI uri) {
+    //public void showURI(SyndieURI uri) {
+    
+    public void showURI(AttachmentSource source, SyndieURI uri) {
         if (_data != null) return;
         _uri = uri;
+        _ui.debugMessage("show URI: " + uri + " source=" + source);
         Timer timer = new Timer("show attachment", _ui);
-        long scope = _client.getChannelId(uri.getScope());
-        long msgId = _client.getMessageId(scope, uri.getMessageId().longValue());
-        timer.addEvent("msgId fetch");
-        int internalAttachmentNum = uri.getAttachment().intValue()-1;
-        Properties cfg = _client.getMessageAttachmentConfig(msgId, internalAttachmentNum);
-        timer.addEvent("cfg fetched");
-        int bytes = _client.getMessageAttachmentSize(msgId, internalAttachmentNum);
+        Long id = uri.getAttachment();
+        if (id == null) return;
+        int internalAttachmentNum = id.intValue()-1;
+        Properties cfg = source.getAttachmentConfig(internalAttachmentNum);
+        byte[] data = source.getAttachmentData(internalAttachmentNum);
+        int bytes = (data != null ? data.length : 0);
         timer.addEvent("size fetched");
         
         if (cfg.containsKey(Constants.MSG_ATTACH_NAME))
@@ -198,7 +205,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _size.setText((bytes+1023)/1024 + " KB");
         
         timer.addEvent("options displayed");
-        _data = _client.getMessageAttachmentData(msgId, internalAttachmentNum);
+        _data = data;
         timer.addEvent("data fetched");
         showPreviewIfPossible(type, _data, timer);
         timer.addEvent("data displayed");
