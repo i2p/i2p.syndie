@@ -8,16 +8,22 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.ColorUtil;
+import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageUtil;
 import syndie.gui.LocalMessageCallback;
 import syndie.gui.MessageEditor;
+import syndie.gui.PageEditor;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.Themeable;
@@ -30,6 +36,7 @@ import syndie.gui.URIHelper;
  */
 public class MessageEditorPanel extends DesktopPanel implements LocalMessageCallback, MessageEditor.EditorStatusListener, Translatable, Themeable {
     private MessageEditor _editor;
+    private Listener _keyListener;
     
     // if resuming
     private long _postponeId;
@@ -61,9 +68,26 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         super.dispose();
     }
     
+    public void shown(Desktop desktop, SyndieURI uri, String name, String description) {
+        Display.getDefault().addFilter(SWT.KeyDown, _keyListener);
+        super.shown(desktop, uri, name, description);
+    }
+    public void hidden() {
+        Display.getDefault().removeFilter(SWT.KeyDown, _keyListener);
+    }
+    
     Hash getTargetScope() { return _editor.getForum(); }
     
     private void initComponents() {
+        _keyListener = new Listener() {
+            public void handleEvent(Event evt) {
+                if ( (evt.character == ' ') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT+space to preview
+                    togglePreview();
+                    evt.type = SWT.None;
+                }
+            }
+        };
+        
         Composite root = getRoot();
         root.setLayout(new FillLayout());
         _editor = new MessageEditor(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getDataCallback(), _desktop.getNavControl(), _desktop.getBookmarkControl(), URIHelper.instance(), root, this, false, false, false);
@@ -112,15 +136,25 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
     }
     
+    private void togglePreview() {
+        PageEditor page = _editor.getPageEditor();
+        if (page != null) {
+            if (MessageEditor.TYPE_HTML.equals(page.getContentType()))
+                page.toggleFullPreview();
+        }
+    }
+    
     protected void buildNorth(Composite edge) { _edgeNorth = new NorthEdge(edge, _ui); }
     protected void buildEast(Composite edge) { _edgeEast = new EastEdge(edge, _ui); }
     protected void buildSouth(Composite edge) { _edgeSouth = new SouthEdge(edge, _ui); }
 
     public void applyTheme(Theme theme) {
         if (_edgeNorth != null) ((Themeable)_edgeNorth).applyTheme(theme);
+        if (_edgeEast != null) ((Themeable)_edgeEast).applyTheme(theme);
     }
     public void translate(TranslationRegistry registry) {
         if (_edgeNorth != null) ((Translatable)_edgeNorth).translate(registry);
+        if (_edgeEast != null) ((Translatable)_edgeEast).translate(registry);
     }
     
     // callbacks from the message editor based on the message being posted/cancelled/postponed
@@ -142,7 +176,9 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
     public void authorSelected(Hash author, long channelId, String summary) {
         ((NorthEdge)_edgeNorth).authorSelected(channelId, summary);
     }
-    public void pickPageTypeHTML(boolean isHTML) {}
+    public void pickPageTypeHTML(boolean isHTML) {
+        ((EastEdge)_edgeEast).updatePageType(isHTML);
+    }
     public void statusUpdated(int page, int pages, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {}
     public void attachmentsRebuilt(List attachmentData, List attachmentSummary) {}
     
@@ -365,8 +401,58 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _authorNameLabel.setText(registry.getText(T_AUTHORNAME, "Author/From:"));
         }
     }
-    private class EastEdge extends DesktopEdge {
-        public EastEdge(Composite edge, UI ui) { super(edge, ui); }
+    
+    private static final String T_SAVEFORLATER_TT = "syndie.gui.desktop.messageeditorpanel.saveforlater.tt";
+    private static final String T_PREVIEW_TT = "syndie.gui.desktop.messageeditorpanel.preview.tt";
+    private static final String T_POST_TT = "syndie.gui.desktop.messageeditorpanel.post.tt";
+    private static final String T_CANCEL_TT = "syndie.gui.desktop.messageeditorpanel.cancel.tt";
+    
+    private class EastEdge extends DesktopEdge implements Translatable, Themeable {
+        private Button _saveForLater;
+        private Button _preview;
+        private Button _post;
+        private Button _cancel;
+        public EastEdge(Composite edge, UI ui) { 
+            super(edge, ui); 
+            initComponents();
+        }
+        private void initComponents() {
+            Composite edge = getEdgeRoot();
+            edge.setLayout(new FillLayout(SWT.VERTICAL));
+            
+            _saveForLater = new Button(edge, SWT.PUSH);
+            _preview = new Button(edge, SWT.PUSH);
+            _post = new Button(edge, SWT.PUSH);
+            _cancel = new Button(edge, SWT.PUSH);
+            
+            _saveForLater.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.postponeMessage(); }
+            });
+            _preview.addSelectionListener(new FireSelectionListener() {
+                public void fire() { togglePreview(); }
+            });
+            _post.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.postMessage(); }
+            });
+            _cancel.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _editor.cancelMessage(); }
+            });
+        }
+        public void updatePageType(boolean isHTML) {
+            _preview.setEnabled(isHTML);
+        }
+        public void translate(TranslationRegistry registry) {
+            _saveForLater.setToolTipText(registry.getText(T_SAVEFORLATER_TT, "Save the message for later"));
+            _preview.setToolTipText(registry.getText(T_PREVIEW_TT, "Preview the page"));
+            _post.setToolTipText(registry.getText(T_POST_TT, "Post the message"));
+            _cancel.setToolTipText(registry.getText(T_CANCEL_TT, "Cancel the message entirely"));
+        }
+        public void applyTheme(Theme theme) {
+            _saveForLater.setFont(theme.BUTTON_FONT);
+            _preview.setFont(theme.BUTTON_FONT);
+            _post.setFont(theme.BUTTON_FONT);
+            _cancel.setFont(theme.BUTTON_FONT);
+        }
     }
     private class SouthEdge extends DesktopEdge {
         public SouthEdge(Composite edge, UI ui) { super(edge, ui); }

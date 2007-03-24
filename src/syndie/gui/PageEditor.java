@@ -190,6 +190,58 @@ public class PageEditor extends BaseComponent implements Themeable {
         _lastResizeWidth = _text.getBounds().width;
     }
     
+    public void toggleFullPreview() {
+        if (_root.isDisposed()) return; // called after a delay, so may have been disposed in the meantime
+        if (_editor != null) _editor.saveState();
+        if (!_isHTML) {
+            _sash.setMaximizedControl(_text);
+            return;
+        }
+        Composite previewControl = _preview.getComposite();
+        if (previewControl == _sash.getMaximizedControl()) {
+            if (_isPreviewable) {
+                _text.forceFocus();
+                _sash.setMaximizedControl(null);
+            } else {
+                _text.forceFocus();
+                _sash.setMaximizedControl(_text);
+            }
+            return;
+        }
+        MessageInfo msgInfo = new MessageInfo();
+        msgInfo.setURI(_dummyURI);
+        msgInfo.setTargetChannel(_dummyURI.getScope());
+        msgInfo.setTargetChannelId(Long.MAX_VALUE);
+        msgInfo.setScopeChannelId(Long.MAX_VALUE);
+        msgInfo.setAuthorChannelId(Long.MAX_VALUE);
+        msgInfo.setInternalId(Long.MAX_VALUE);
+        msgInfo.setMessageId(_dummyURI.getMessageId().longValue());
+        msgInfo.setPageCount(1);
+        ArrayList pageData = new ArrayList();
+        pageData.add(_text.getText());
+        ArrayList attachments = new ArrayList();
+        ArrayList attachmentOrder = new ArrayList();
+        List names = _editor.getAttachmentNames();
+        for (int i = 0; i < names.size(); i++) {
+            String name = (String)names.get(i);
+            byte data[] = _editor.getAttachmentData(i+1);
+            attachmentOrder.add(name);
+            attachments.add(data);
+        }
+        PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder);
+        _preview.setRender(true);
+        _sash.setMaximizedControl(_preview.getComposite());
+        long before = System.currentTimeMillis();
+        _preview.renderPage(src, _dummyURI);
+        long renderTime = System.currentTimeMillis()-before;
+        _ui.debugMessage("** render time: " + renderTime);
+        _preview.setRender(false);
+        _lastModified = -1;
+        _lastResized = -1;
+        _lastResizeWidth = _text.getBounds().width;
+        _preview.forceFocus();
+    }
+    
     private long _lastModified;
     private long _lastResized;
     private int _lastResizeWidth;

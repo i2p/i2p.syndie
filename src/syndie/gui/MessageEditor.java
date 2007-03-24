@@ -385,7 +385,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
     private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
     
-    private void postMessage() {
+    public void postMessage() {
         if (!validateAuthorForum()) {
             showUnauthorizedWarning();
             return;
@@ -1208,8 +1208,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _cancel.setText("Cancel the message");
     }
     
-    static final String TYPE_HTML = "text/html";
-    static final String TYPE_TEXT = "text/plain";
+    public static final String TYPE_HTML = "text/html";
+    public static final String TYPE_TEXT = "text/plain";
     private void setDefaultPageType(String type) {
         Properties prefs = _client.getNymPrefs();
         prefs.setProperty("editor.defaultFormat", type);
