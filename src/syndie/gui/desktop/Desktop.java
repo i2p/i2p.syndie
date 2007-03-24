@@ -216,10 +216,6 @@ class Desktop {
     void show(DesktopPanel panel, SyndieURI uri, String name, String desc) { show(panel, uri, name, desc, true); }
     void show(DesktopPanel panel, SyndieURI uri, String name, String desc, boolean notifyPrev) {
         if (panel == null) return;
-        panel.buildNorth(_edgeNorth);
-        panel.buildEast(_edgeEast);
-        panel.buildSouth(_edgeSouth);
-        panel.buildWest(_edgeWest);
         _centerStack.topControl = panel.getRoot();
         _center.layout();
         setEdge(_edgeNorth, _edgeNorthStack, panel.getEdgeNorth(), _edgeNorthDefault);
@@ -260,6 +256,10 @@ class Desktop {
     DataCallback getDataCallback() { return _dataCallback; }
     LocalMessageCallback getLocalMessageCallback() { return _localMessageCallback; }
     Composite getCenter() { return _center; }
+    Composite getNorth() { return _edgeNorth; }
+    Composite getEast() { return _edgeEast; }
+    Composite getSouth() { return _edgeSouth; }
+    Composite getWest() { return _edgeWest; }
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     

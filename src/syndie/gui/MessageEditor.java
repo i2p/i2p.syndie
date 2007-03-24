@@ -131,87 +131,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Composite _threadTabRoot;
     private MessageTree _threadTree;
     
-    // now for the toolbar...
-    
-    // forum control
-    private Group _forumGroup;
-    private Button _forumButton;
-    private Image _forumAvatar;
-    private Menu _forumMenu;
-    // author control
-    private Group _authorGroup;
-    private Button _authorButton;
-    private Image _authorAvatar;
-    private Menu _authorMenu;
-    private MenuItem _authorMenuOther;
-    // privacy control
-    private Group _privGroup;
-    private Button _privButton;
-    private Menu _privMenu;
-    private MenuItem _privPublic;
-    private MenuItem _privAuthorized;
-    private MenuItem _privPBE;
-    private MenuItem _privReply;
-    // page control
-    private Group _pageGroup;
-    private Button _pageButton;
-    private Menu _pageMenu;
-    private MenuItem _pageAdd;
-    private MenuItem _pageAddWebRip;
-    private MenuItem _pageRemove;
-    // page type control
-    private Group _pageTypeGroup;
-    private Button _pageType;
-    // attachment control
-    private Group _attachGroup;
-    private Button _attachButton;
-    private Menu _attachMenu;
-    private MenuItem _attachAdd;
-    private MenuItem _attachAddImage;
-    // link control
-    private Group _linkGroup;
-    private Button _linkButton;
-    private Menu _linkMenu;
-    private MenuItem _linkWeb;
-    private MenuItem _linkPage;
-    private MenuItem _linkAttach;
-    private MenuItem _linkForum;
-    private MenuItem _linkMsg;
-    private MenuItem _linkEepsite;
-    private MenuItem _linkI2P;
-    private MenuItem _linkFreenet;
-    private MenuItem _linkArchive;
-    private MenuItem _linkOther;
-    // style control
-    private Group _styleGroup;
-    private Button _styleButton;
-    private Menu _styleMenu;
-    private MenuItem _styleText;
-    private MenuItem _styleImage;
-    private MenuItem _styleBGColor;
-    private Menu _styleBGColorMenu;
-    private MenuItem _styleBGColorDefault;
-    private MenuItem _styleBGImage;
-    private MenuItem _styleListOrdered;
-    private MenuItem _styleListUnordered;
-    private MenuItem _styleHeading;
-    private Menu _styleHeadingMenu;
-    private MenuItem _styleHeading1;
-    private MenuItem _styleHeading2;
-    private MenuItem _styleHeading3;
-    private MenuItem _styleHeading4;
-    private MenuItem _styleHeading5;
-    private MenuItem _stylePre;
-    // spellcheck control
-    private Group _spellGroup;
-    private Button _spellButton;
-    // search control
-    private Group _searchGroup;
-    private Button _searchButton;
-    // quote control
-    private Group _quoteGroup;
-    private Button _quoteButton;
-    
     // state info
     private List _pageEditors;
     private List _pageTypes;
@@ -251,6 +170,20 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private long _postponeId;
     /** version is incremented each time the state is saved */
     private int _postponeVersion;
+    
+    private List _editorStatusListeners;
+    
+    private boolean _buildToolbar;
+    private boolean _allowPreview;
+    private boolean _showActions;
+    
+    private MessageEditorToolbar _bar;
+    
+    private Map _forumToChannelId;
+    private Map _forumToManaged;
+    private Map _forumToSummary;
+    private Map _authorToChannelId;
+    private Map _authorToSummary;
 
     private MessageEditorFind _finder;
     private MessageEditorSpell _spellchecker;
@@ -261,7 +194,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
-    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr) {
+    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr, boolean buildToolbar, boolean allowPreview, boolean showActions) {
         super(client, ui, themes, trans);
         _dataCallback = callback;
         _navControl = navControl;
@@ -275,8 +208,17 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _attachmentSummary = new ArrayList();
         _parents = new ArrayList();
         _signAsHashes = new ArrayList();
+        _editorStatusListeners = new ArrayList();
+        _forumToChannelId = new HashMap();
+        _forumToManaged = new HashMap();
+        _forumToSummary = new HashMap();
+        _authorToChannelId = new HashMap();
+        _authorToSummary = new HashMap();
         _modifiedSinceOpen = false;
         _modifiedSinceSave = false;
+        _buildToolbar = buildToolbar;
+        _allowPreview = allowPreview;
+        _showActions = showActions;
         _enableSave = false;
         _postponeId = -1;
         _postponeVersion = -1;
@@ -298,6 +240,21 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     public void addListener(LocalMessageCallback lsnr) { _listeners.add(lsnr); }
     
+    public void addStatusListener(EditorStatusListener lsnr) { _editorStatusListeners.add(lsnr); }
+    public void removeStatusListener(EditorStatusListener lsnr) { _editorStatusListeners.remove(lsnr); }
+    
+    public interface EditorStatusListener {
+        public void pickPrivacyPublic();
+        public void pickPrivacyPBE();
+        public void pickPrivacyPrivate();
+        public void pickPrivacyAuthorized();
+        public void pickPageTypeHTML(boolean isHTML);
+        public void statusUpdated(int page, int pages, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors);
+        public void forumSelected(Hash forum, long channelId, String summary, boolean isManaged);
+        public void authorSelected(Hash author, long channelId, String summary);
+        public void attachmentsRebuilt(List attachmentData, List attachmentSummary);
+    }
+    
     public void dispose() {
         if (_refAddPopup != null) _refAddPopup.dispose();
         if (_linkPopup != null) _linkPopup.dispose();
@@ -309,8 +266,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         while (_pageEditors.size() > 0)
             ((PageEditor)_pageEditors.remove(0)).dispose();
         
-        ImageUtil.dispose(_forumAvatar);
-        ImageUtil.dispose(_authorAvatar);
+        if (_bar != null) _bar.dispose();
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
     }
@@ -747,15 +703,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             _ui.debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
             boolean isHTML = TYPE_HTML.equals(type);
-            PageEditor editor = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, isHTML, i);
+            PageEditor editor = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, _allowPreview, isHTML, i);
             _pageEditors.add(editor);
             _pageTypes.add(type);
             editor.setContent(body);
             editor.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
-            if (isHTML)
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-            else
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+            //if (isHTML)
+            //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
+            //else
+            //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
         }
         
         _attachmentData.clear();
@@ -1183,19 +1139,19 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final int PRIVACY_PBE = 2;
     private static final int PRIVACY_REPLY = 3;
     
-    private void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
-    private void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
+    public void pickPrivacy(int privacyIndex) { pickPrivacy(privacyIndex, true); }
+    public void pickPrivacy(int privacyIndex, boolean promptForPassphrase) {
         modified();
         switch (privacyIndex) {
             case 0: // public 
                 _privacy.select(privacyIndex);
-                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
-                _privPublic.setSelection(true);
+                for (int i = 0; i < _editorStatusListeners.size(); i++)
+                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPublic();
                 break;
             case 2: //pbe
                 _privacy.select(privacyIndex);
-                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE); 
-                _privPBE.setSelection(true);
+                for (int i = 0; i < _editorStatusListeners.size(); i++)
+                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPBE();
                 if (promptForPassphrase) { // false when deserializing state
                     final PassphrasePrompt dialog = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), true);
                     dialog.setPassphrase(_passphrase);
@@ -1213,19 +1169,20 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 break;
             case 3: // private reply
                 _privacy.select(privacyIndex);
-                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
-                _privReply.setSelection(true);
+                for (int i = 0; i < _editorStatusListeners.size(); i++)
+                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPrivate();
                 break;
             case 1: // authorized only
             default:
                 _privacy.select(privacyIndex);
-                _privButton.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
-                _privAuthorized.setSelection(true);
+                for (int i = 0; i < _editorStatusListeners.size(); i++)
+                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyAuthorized();
                 break;
         }
     }
     
     private void initFooter() {
+        if (!_showActions) return;
         Composite c = new Composite(_root, SWT.NONE);
         c.setLayout(new FillLayout(SWT.HORIZONTAL));
         c.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -1259,7 +1216,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _client.setNymPrefs(prefs);
     }
     
-    private PageEditor addPage() {
+    public PageEditor addPage() {
         Properties prefs = _client.getNymPrefs();
         boolean html = true;
         String pref = prefs.getProperty("editor.defaultFormat", TYPE_TEXT);
@@ -1275,17 +1232,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private PageEditor addPage(String type) {
         saveState();
         modified();
-        PageEditor ed = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, TYPE_HTML.equals(type), _pageEditors.size());
+        PageEditor ed = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, _allowPreview, TYPE_HTML.equals(type), _pageEditors.size());
         _pageEditors.add(ed);
         _pageTypes.add(type);
         int pageNum = _pageEditors.size();
         ed.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + pageNum);
         
         viewPage(_pageEditors.size()-1);
-        if (type.equals(TYPE_HTML))
-            _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-        else
-            _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).pickPageTypeHTML(type.equals(TYPE_HTML));
         saveState();
         return ed;
     }
@@ -1315,7 +1270,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _ui.debugMessage("remove page " + pageNum + " is out of range");
         }
     }
-    private void togglePageType() {
+    public void togglePageType() {
         int page = getCurrentPage();
         if (page >= 0) {
             String type = getPageType(page);
@@ -1326,10 +1281,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             PageEditor ed = getPageEditor(page);
             ed.setContentType(type);
             _pageTypes.set(page, type);
-            if (type.equals(TYPE_HTML))
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-            else
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+            for (int i = 0; i < _editorStatusListeners.size(); i++)
+                ((EditorStatusListener)_editorStatusListeners.get(i)).pickPageTypeHTML(type.equals(TYPE_HTML));
             setDefaultPageType(type);
             updateToolbar();
         }
@@ -1338,7 +1291,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final String T_WEBRIP_TITLE = "syndie.gui.messageeditor.webrip";
     private static final String T_WEBRIP_FAIL = "syndie.gui.messageeditor.webrip.fail";
     
-    private void addWebRip() {
+    public void addWebRip() {
         Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         shell.setLayout(new FillLayout());
         final WebRipPageControl ctl = new WebRipPageControl(_client, _ui, _themeRegistry, _translationRegistry, shell);
@@ -1413,7 +1366,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     } 
     
     /** current page */
-    private PageEditor getPageEditor() { return getPageEditor(getCurrentPage()); }
+    public PageEditor getPageEditor() { return getPageEditor(getCurrentPage()); }
     /** grab the given (0-indexed) page */
     private PageEditor getPageEditor(int pageNum) {
         return (PageEditor)_pageEditors.get(pageNum);
@@ -1444,67 +1397,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         String type = (page >= 0) ? getPageType(page) : null;
         boolean pageLoaded = (page >= 0) && (pages > 0);
         boolean isHTML = pageLoaded && TYPE_HTML.equals(type);
+        boolean hasAncestors = pageLoaded && _parents.size() > 0;
         
         _ui.debugMessage("updateToolbar: pages=" + pages + " (" + page + "/" + (pages-1) + ") attachments=" + attachments + " isHTML? " + isHTML + "/" + type + " pageLoaded? " + pageLoaded + " types: " + _pageTypes);
        
-        _attachAddImage.setEnabled(isHTML);
-        _linkMenu.setEnabled(isHTML);
-        _linkArchive.setEnabled(isHTML);
-        _linkAttach.setEnabled(isHTML);
-        _linkButton.setEnabled(isHTML);
-        _linkEepsite.setEnabled(isHTML);
-        _linkForum.setEnabled(isHTML);
-        _linkFreenet.setEnabled(isHTML);
-        _linkGroup.setEnabled(isHTML);
-        _linkI2P.setEnabled(isHTML);
-        _linkMsg.setEnabled(isHTML);
-        _linkOther.setEnabled(isHTML);
-        _linkPage.setEnabled(isHTML);
-        _linkWeb.setEnabled(isHTML);
-        _styleMenu.setEnabled(isHTML);
-        _styleBGColor.setEnabled(isHTML);
-        _styleBGColorDefault.setEnabled(isHTML);
-        _styleBGColorMenu.setEnabled(isHTML);
-        _styleBGImage.setEnabled(isHTML);
-        _styleButton.setEnabled(isHTML);
-        _styleGroup.setEnabled(isHTML);
-        _styleHeading.setEnabled(isHTML);
-        _styleHeading1.setEnabled(isHTML);
-        _styleHeading2.setEnabled(isHTML);
-        _styleHeading3.setEnabled(isHTML);
-        _styleHeading4.setEnabled(isHTML);
-        _styleHeading5.setEnabled(isHTML);
-        _styleHeadingMenu.setEnabled(isHTML);
-        _styleImage.setEnabled(isHTML);
-        _styleListOrdered.setEnabled(isHTML);
-        _styleListUnordered.setEnabled(isHTML);
-        _stylePre.setEnabled(isHTML);
-        _styleText.setEnabled(isHTML);
-
-        if (isHTML) {
-            _linkPage.setEnabled(pages > 0);
-            _linkAttach.setEnabled(attachments > 0);
-        }
-        
-        if (page >= 0) {
-            if (isHTML)
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-            else
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
-            _pageType.setEnabled(true);
-            _pageTypeGroup.setEnabled(true);
-        } else {
-            _pageType.setEnabled(false);
-            _pageTypeGroup.setEnabled(false);
-        }
-        
-        _spellButton.setEnabled(pageLoaded && false); // disabled for the moment,
-        _spellGroup.setEnabled(pageLoaded && false); // pending revamp (line breaking, plurals, caps)
-        
-        _searchButton.setEnabled(pageLoaded);
-        _searchGroup.setEnabled(pageLoaded);
-        _quoteButton.setEnabled(pageLoaded && _parents.size() > 0);
-        _quoteGroup.setEnabled(pageLoaded && _parents.size() > 0);
+        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachments, type, pageLoaded, isHTML, hasAncestors);
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -1518,12 +1416,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _selectedPageBGColor = name;
         setBodyTags(_selectedPageBGImage);
     }
-    private void showImagePopup(boolean forBodyBackground) { 
+    public void showImagePopup(boolean forBodyBackground) { 
         if (_imagePopup == null)
             _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
         _imagePopup.showPopup(forBodyBackground); 
     }
-    private void showLinkPopup(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
+    public void showLinkPopup(boolean web, boolean page, boolean attach, boolean forum, boolean message, boolean submessage, boolean eepsite, boolean i2p, boolean freenet, boolean archive) { 
         if (_linkPopup == null)
             _linkPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
                 public void uriBuilt(SyndieURI uri, String text) {
@@ -1539,7 +1437,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public Hash getForum() { return _forum; }
     public int getParentCount() { return _parents.size(); }
     public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
-    public boolean getPrivacyReply() { return _privReply.getSelection(); }
+    public boolean getPrivacyReply() { return _privacy.getSelectionIndex() == PRIVACY_REPLY; }
     public void setParentMessage(SyndieURI uri) {
         _parents.clear();
         if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) ) {
@@ -1817,6 +1715,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private void initToolbar() {
+        if (!_buildToolbar) return;
         _toolbar = new Composite(_root, SWT.NONE);
         RowLayout rl = new RowLayout(SWT.HORIZONTAL);
         rl.wrap = false;
@@ -1824,24 +1723,27 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toolbar.setLayout(rl);
         _toolbar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        initForumControl();
-        initAuthorControl();
-        initPrivacyControl();
-        initPageControl();
-        initAttachControl();
-        initLinkControl();
-        initStyleControl();
-        initSpellControl();
-        initSearchControl();
-        initQuoteControl();
+        _bar = new MessageEditorToolbar(this, _client, _bookmarkControl, _translationRegistry);
+        _bar.initForumControl(_toolbar);
+        _bar.initAuthorControl(_toolbar);
+        _bar.initPrivacyControl(_toolbar);
+        _bar.initPageControl(_toolbar);
+        _bar.initAttachControl(_toolbar);
+        _bar.initLinkControl(_toolbar);
+        _bar.initStyleControl(_toolbar);
+        _bar.initSpellControl(_toolbar);
+        _bar.initSearchControl(_toolbar);
+        _bar.initQuoteControl(_toolbar);
+        addStatusListener(_bar);
     }
     
     private List _forumHashes = new ArrayList();
     
     private void updateForum() {
-        MenuItem items[] = _forumMenu.getItems();
-        for (int i = 0; i < items.length; i++)
-            items[i].dispose();
+        if (_bar != null) _bar.clearForumMenu();
+        _forumToChannelId.clear();
+        _forumToManaged.clear();
+        _forumToSummary.clear();
         
         _forumHashes.clear();
         _to.removeAll();
@@ -1887,19 +1789,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _forumHashes.add(info.getChannelHash());
             _to.add(summary);
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.setData("channel.managed", Boolean.TRUE);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-            });
+            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
+            _forumToSummary.put(info.getChannelHash(), summary);
+            
+            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);
             if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
                 targetFound = true;
         }
         if (itemsSinceSep) {
-            new MenuItem(_forumMenu, SWT.SEPARATOR);
+            if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -1934,19 +1833,17 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _forumHashes.add(info.getChannelHash());
             _to.add(summary);
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.setData("channel.managed", Boolean.TRUE);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-            });
+            
+            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
+            _forumToSummary.put(info.getChannelHash(), summary);
+            
+            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);            
             if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
                 targetFound = true;            
         }
         if (itemsSinceSep) {
-            new MenuItem(_forumMenu, SWT.SEPARATOR);
+            if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
@@ -1981,19 +1878,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _forumHashes.add(info.getChannelHash());
             _to.add(summary);
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.setData("channel.managed", Boolean.TRUE);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, true); }
-            });
+            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
+            _forumToSummary.put(info.getChannelHash(), summary);
+            
+            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);
             if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
                 targetFound = true;
         }
         if (itemsSinceSep) {
-            new MenuItem(_forumMenu, SWT.SEPARATOR);
+            if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
@@ -2028,14 +1922,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _forumHashes.add(info.getChannelHash());
             _to.add(summary);
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.setData("channel.managed", Boolean.FALSE);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
-            });
+            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _forumToManaged.put(info.getChannelHash(), Boolean.FALSE);
+            _forumToSummary.put(info.getChannelHash(), summary);
+            
+            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), false, summary);
             if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
                 targetFound = true;
         }
@@ -2045,7 +1936,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             long id = _client.getChannelId(_forum);
             if (id >= 0) {
                 if (itemsSinceSep)
-                    new MenuItem(_forumMenu, SWT.SEPARATOR);
+                    if (_bar != null) _bar.addForumMenuItem();
                 final ChannelInfo info = _client.getChannel(id);
 
                 StringBuffer buf = new StringBuffer();
@@ -2068,46 +1959,33 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _forumHashes.add(info.getChannelHash());
                 _to.add(summary);
 
-                MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-                item.setText(summary);
-                item.setData("channel.hash", info.getChannelHash());
-                item.setData("channel.managed", Boolean.FALSE);
-                item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { pickForum(info.getChannelHash(), info.getChannelId(), summary, false); }
-                });
+                _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+                _forumToManaged.put(info.getChannelHash(), Boolean.FALSE);
+                _forumToSummary.put(info.getChannelHash(), summary);
+            
+                if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), false, summary);
                 redrawForumAvatar(_forum, info.getChannelId(), summary, false);
             }
         } else if (!targetFound) {
             if (itemsSinceSep)
-                new MenuItem(_forumMenu, SWT.SEPARATOR);
+                if (_bar != null) _bar.addForumMenuItem();
             
             _to.add("other...");
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText("other...");
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
-            });
+            if (_bar != null) _bar.addForumMenuItemOther();
         } else {
             if (itemsSinceSep)
-                new MenuItem(_forumMenu, SWT.SEPARATOR);
+                if (_bar != null) _bar.addForumMenuItem();
             
             _to.add("other...");
             
-            MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
-            item.setText("other...");
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickOtherForum(); }
-            });
+            if (_bar != null) _bar.addForumMenuItemOther();
             redrawForumAvatar(_forum, forumId, forumSummary, managed);
         }
     }
     
     private static final String T_PICK_FORUM_KEY = "syndie.gui.messageeditor.pickotherforum";
-    private void pickOtherForum() {
+    public void pickOtherForum() {
         if (_refChooser == null) {
             String transKey = T_PICK_FORUM_KEY;
             String transDefaultVal = "Forum chooser";
@@ -2139,6 +2017,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private void pickForum(Hash forum) {
         modified();
         _forum = forum;
+        
+        Long channelId = (Long)_forumToChannelId.get(forum);
+        Boolean managed = (Boolean)_forumToManaged.get(forum);
+        String summary = (String)_forumToSummary.get(forum);
+        
+        if ( (channelId != null) && (summary != null) ) {
+            if (managed == null) managed = Boolean.FALSE;
+            redrawForumAvatar(forum, channelId.longValue(), summary, managed.booleanValue());
+        }
+        /*
         MenuItem items[] = _forumMenu.getItems();
         for (int i = 0; i < items.length; i++) {
             Hash cur = (Hash)items[i].getData("channel.hash");
@@ -2150,11 +2038,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 break;
             }
         }
+        */
         refreshAuthors();
         if (!validateAuthorForum())
             showUnauthorizedWarning();
     }
-    private void pickForum(Hash forum, long channelId, String summary, boolean isManaged) {
+    public void pickForum(Hash forum, long channelId, String summary, boolean isManaged) {
         _ui.debugMessage("pick forum " + forum + " / " + summary);
         _forum = forum;
         redrawForumAvatar(forum, channelId, summary, isManaged);
@@ -2163,7 +2052,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             showUnauthorizedWarning();
     }
     private void redrawForumAvatar(Hash forum, long channelId, String summary, boolean isManaged) {
-        _forumButton.setRedraw(false);
         for (int i = 0; i < _forumHashes.size(); i++) {
             Hash h = (Hash)_forumHashes.get(i);
             if (h.equals(forum)) {
@@ -2171,48 +2059,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 break;
             }
         }
-        ImageUtil.dispose(_forumAvatar);
-        _forumButton.setImage(null);
-        if (channelId >= 0) {
-            // don't show the forum avatar unless the forum is bookmarked or we own the channel -
-            // this should help fight phishing attacks (to prevent spoofing w/ same 
-            // icon & link <a href=...>send me your password</a>)
-            if (isManaged || _bookmarkControl.isBookmarked(SyndieURI.createScope(forum))) {
-                byte avatar[] = _client.getChannelAvatar(channelId);
-                if (avatar != null) {
-                    _forumAvatar = ImageUtil.createImage(avatar);
-                    _forumButton.setImage(_forumAvatar);
-                } else {
-                    _forumButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
-                }
-            } else {
-                _forumButton.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-            }
-            _forumButton.setToolTipText(summary);
-        } else {
-            _forumButton.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-            _forumButton.setToolTipText("");
-        }
-        _forumButton.setRedraw(true);
-    }
-    
-    private void initForumControl() {
-        _forumGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        //ctl.setLayoutData(new RowData(48, 48));
-        _forumGroup.setLayoutData(new RowData(50, 50));
-        _forumGroup.setLayout(new FillLayout());
         
-        _forumButton = new Button(_forumGroup, SWT.PUSH);
-        
-        _forumMenu = new Menu(_forumButton);
-        _forumGroup.setMenu(_forumMenu);
-        _forumButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _forumMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _forumMenu.setVisible(true); }
-        });
-        
-        _forumGroup.setText("Post to:");
-        _forumGroup.setToolTipText("Select the forum to post in");
+        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).forumSelected(forum, channelId, summary, isManaged);
     }
     
     private void refreshAuthors() {
@@ -2292,9 +2141,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private List _authorHashes = new ArrayList();
     private void updateAuthor() {
-        MenuItem items[] = _authorMenu.getItems();
-        for (int i = 0; i < items.length; i++)
-            items[i].dispose();
+        if (_bar != null) _bar.clearAuthorMenu();
+        _authorToChannelId.clear();
+        _authorToSummary.clear();
         
         _authorHashes.clear();
         _authorCombo.removeAll();
@@ -2335,19 +2184,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             _authorHashes.add(info.getChannelHash());
             _authorCombo.add(summary);
-                    
-            MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
-            });
+            
+            _authorToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _authorToSummary.put(info.getChannelHash(), summary);
+            if (_bar != null) _bar.addAuthorMenuItem(info.getChannelHash(), info.getChannelId(), summary);
             if ( (_author != null) && (_author.equals(info.getChannelHash())))
                 authorFound = true;
         }
         if (itemsSinceSep) {
-            new MenuItem(_authorMenu, SWT.SEPARATOR);
+            if (_bar != null) _bar.addAuthorMenuItem();
             itemsSinceSep = false;
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -2379,14 +2224,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
 
             _authorHashes.add(info.getChannelHash());
             _authorCombo.add(summary);
-            
-            MenuItem item = new MenuItem(_authorMenu, SWT.PUSH);
-            item.setText(summary);
-            item.setData("channel.hash", info.getChannelHash());
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickAuthor(info.getChannelHash(), info.getChannelId(), summary); }
-            });
+           
+            _authorToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
+            _authorToSummary.put(info.getChannelHash(), summary);
+            if (_bar != null) _bar.addAuthorMenuItem(info.getChannelHash(), info.getChannelId(), summary);
             if ( (_author != null) && (_author.equals(info.getChannelHash())))
                 authorFound = true;            
         }
@@ -2408,18 +2249,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             prefs.setProperty("editor.defaultAuthor", _author.toBase64());
             _client.setNymPrefs(prefs);
         }
-        MenuItem items[] = _authorMenu.getItems();
-        for (int i = 0; i < items.length; i++) {
-            Hash cur = (Hash)items[i].getData("channel.hash");
-            if ( (cur != null) && (cur.equals(author)) ) {
-                redrawAuthorAvatar(cur, _client.getChannelId(cur), items[i].getText());
-                break;
-            }
-        }
+        String summary = (String)_authorToSummary.get(author);
+        Long authorId = (Long)_authorToChannelId.get(author);
+        
+        if ( (summary != null) && (authorId != null) )
+            redrawAuthorAvatar(author, authorId.longValue(), summary);
         if (!validateAuthorForum())
             showUnauthorizedWarning();
     }
-    private void pickAuthor(Hash author, long channelId, String summary) {
+    public void pickAuthor(Hash author, long channelId, String summary) {
         _ui.debugMessage("pick author " + author + " / " + summary);
         _author = author;
         if (_author != null) {
@@ -2432,7 +2270,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             showUnauthorizedWarning();
     }
     private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
-        _authorButton.setRedraw(false);
         for (int i = 0; i < _authorHashes.size(); i++) {
             Hash h = (Hash)_authorHashes.get(i);
             if (h.equals(author)) {
@@ -2440,38 +2277,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 break;
             }
         }
-        ImageUtil.dispose(_authorAvatar);
-        _authorButton.setImage(null);
-        byte avatar[] = _client.getChannelAvatar(channelId);
-        if (avatar != null) {
-            _authorAvatar = ImageUtil.createImage(avatar);
-            _authorButton.setImage(_authorAvatar);
-        } else {
-            _authorButton.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
-        }
-        _authorButton.setToolTipText(summary);
-        _authorButton.setRedraw(true);
+        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).authorSelected(author, channelId, summary);
     }    
     
-    private void initAuthorControl() {
-        _authorGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _authorGroup.setLayoutData(new RowData(50, 50));
-        _authorGroup.setLayout(new FillLayout());
-        
-        _authorButton = new Button(_authorGroup, SWT.PUSH);
-        _authorButton.setSize(48, 48);
-        //_authorButton.setImage(ImageUtil.resize(ImageUtil.ICON_QUESTION, 48, 48, false));
-        
-        _authorMenu = new Menu(_authorButton);
-        _authorGroup.setMenu(_authorMenu);
-        _authorButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _authorMenu.setVisible(true); }
-        });
-        
-        _authorGroup.setText("Author:");
-        _authorGroup.setToolTipText("Who do you want to sign the post as?");
-    }
     
     /** 
      * make sure the author selected has the authority to post to the forum selected (or to
@@ -2580,381 +2389,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final String T_NOT_AUTHORIZED_MSG = "syndie.gui.messageeditor.notauthorized.msg";
     private static final String T_NOT_AUTHORIZED_TITLE = "syndie.gui.messageeditor.notauthorized.title";
     
-    private void initPrivacyControl() {
-        _privGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _privGroup.setLayout(new FillLayout());
-        
-        _privButton = new Button(_privGroup, SWT.PUSH);
-        
-        _privMenu = new Menu(_privButton);
-        _privGroup.setMenu(_privMenu);
-        _privButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privMenu.setVisible(true); }
-        });
-        
-        _privPublic = new MenuItem(_privMenu, SWT.PUSH);
-        _privAuthorized = new MenuItem(_privMenu, SWT.PUSH);
-        _privPBE = new MenuItem(_privMenu, SWT.PUSH);
-        _privReply = new MenuItem(_privMenu, SWT.PUSH);
-        
-        _privPublic.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
-        _privAuthorized.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
-        _privPBE.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE);
-        _privReply.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
-        
-        _privPublic.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(0); }
-            public void widgetSelected(SelectionEvent evt) { pickPrivacy(0); }
-        });
-        _privAuthorized.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(1);}
-            public void widgetSelected(SelectionEvent evt) { pickPrivacy(1); }
-        });
-        _privPBE.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(2); }
-            public void widgetSelected(SelectionEvent evt) { pickPrivacy(2); }
-        });
-        _privReply.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent evt) { pickPrivacy(3);}
-            public void widgetSelected(SelectionEvent evt) { pickPrivacy(3); }
-        });
-        
-        _privAuthorized.setSelection(true);
-        
-        _privPublic.setText("Anyone can read the post");
-        _privAuthorized.setText("Authorized readers of the forum can read the post");
-        _privPBE.setText("Passphrase required to read the post...");
-        _privReply.setText("Only forum administrators can read the post");
-        _privAuthorized.setSelection(true);
-        
-        _privGroup.setText("Privacy:");
-        _privGroup.setToolTipText("Who is allowed to read the post?");
-    }
-    
-    private void initPageControl() {
-        _pageGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _pageGroup.setLayout(new FillLayout());
-        
-        _pageButton = new Button(_pageGroup, SWT.PUSH);
-        _pageButton.setImage(ImageUtil.ICON_EDITOR_PAGEADD);
-        
-        _pageMenu = new Menu(_pageButton);
-        _pageGroup.setMenu(_pageMenu);
-        _pageButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _pageMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _pageMenu.setVisible(true); }
-        });
-        
-        _pageAdd = new MenuItem(_pageMenu, SWT.PUSH);
-        _pageAddWebRip = new MenuItem(_pageMenu, SWT.PUSH);
-        
-        _pageAdd.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addPage(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addPage(); }
-        });
-        _pageAddWebRip.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addWebRip(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addWebRip(); }
-        });
-        
-        _pageRemove = new MenuItem(_pageMenu, SWT.PUSH);
-        _pageRemove.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { removePage(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { removePage(); }
-        });
-        
-        _pageGroup.setText("Page:");
-        _pageGroup.setToolTipText("Manage pages in this post");
-        _pageAdd.setText("Add a new page");
-        _pageAddWebRip.setText("Add a new web rip");
-        _pageRemove.setText("Remove the current page");
-        
-        _pageTypeGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _pageTypeGroup.setLayout(new FillLayout());
-        _pageType = new Button(_pageTypeGroup, SWT.PUSH);
-        _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-        _pageType.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { togglePageType(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { togglePageType(); }
-        });
-        
-        _pageTypeGroup.setText("Type:");
-    }
-    
-    private void initAttachControl() {
-        _attachGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _attachGroup.setLayout(new FillLayout());
-        
-        _attachButton = new Button(_attachGroup, SWT.PUSH);
-        _attachButton.setImage(ImageUtil.ICON_EDITOR_ATTACH);
-        
-        _attachMenu = new Menu(_attachButton);
-        _attachGroup.setMenu(_attachMenu);
-        _attachButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _attachMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _attachMenu.setVisible(true); }
-        });
-        
-        _attachAddImage = new MenuItem(_attachMenu, SWT.PUSH);
-        _attachAddImage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
-        });
-        _attachAdd = new MenuItem(_attachMenu, SWT.PUSH);
-        _attachAdd.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { addAttachment(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { addAttachment(); }
-        });
-        
-        _attachGroup.setText("Attach:");
-        _attachGroup.setToolTipText("Manage attachments to this post");
-        _attachAddImage.setText("Insert a new image");
-        _attachAdd.setText("Add a new attachment");
-    }
-    
-    private void initLinkControl() {
-        _linkGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _linkGroup.setLayout(new FillLayout());
-        
-        _linkButton = new Button(_linkGroup, SWT.PUSH);
-        _linkButton.setImage(ImageUtil.ICON_EDITOR_LINK);
-        
-        _linkMenu = new Menu(_linkButton);
-        _linkGroup.setMenu(_linkMenu);
-        _linkButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _linkMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _linkMenu.setVisible(true); }
-        });
-        
-        _linkWeb = new MenuItem(_linkMenu, SWT.PUSH);
-        new MenuItem(_linkMenu, SWT.SEPARATOR);
-        _linkPage = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkAttach = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkForum = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkMsg = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkArchive = new MenuItem(_linkMenu, SWT.PUSH);
-        new MenuItem(_linkMenu, SWT.SEPARATOR);
-        _linkEepsite = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkI2P = new MenuItem(_linkMenu, SWT.PUSH);
-        new MenuItem(_linkMenu, SWT.SEPARATOR);
-        _linkFreenet = new MenuItem(_linkMenu, SWT.PUSH);
-        new MenuItem(_linkMenu, SWT.SEPARATOR);
-        _linkOther = new MenuItem(_linkMenu, SWT.PUSH);
-        
-        _linkPage.setEnabled(false);
-        _linkAttach.setEnabled(false);
-        
-        _linkWeb.setImage(ImageUtil.ICON_REF_URL);
-        _linkWeb.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(true, false, false, false, false, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(true, false, false, false, false, false, false, false, false, false); }
-        });
-        _linkPage.setImage(ImageUtil.ICON_REF_SYNDIE);
-        _linkPage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, true, false, false, false, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, true, false, false, false, false, false, false, false, false); }
-        });
-        _linkAttach.setImage(ImageUtil.ICON_REF_SYNDIE);
-        _linkAttach.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, true, false, false, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, true, false, false, false, false, false, false, false); }
-        });
-        _linkForum.setImage(ImageUtil.ICON_REF_FORUM);
-        _linkForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
-        });
-        _linkMsg.setImage(ImageUtil.ICON_REF_MSG);
-        _linkMsg.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, true, false, false, false, false, false); }
-        });
-        _linkEepsite.setImage(ImageUtil.ICON_REF_SYNDIE);
-        _linkEepsite.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, true, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, true, false, false, false); }
-        });
-        _linkI2P.setImage(ImageUtil.ICON_REF_SYNDIE);
-        _linkI2P.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, true, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, true, false, false); }
-        });
-        _linkFreenet.setImage(ImageUtil.ICON_REF_FREENET);
-        _linkFreenet.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, true, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, true, false); }
-        });
-        _linkArchive.setImage(ImageUtil.ICON_REF_ARCHIVE);
-        _linkArchive.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, false, true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, false, false, false, false, false, false, true); }
-        });
-        _linkOther.setImage(ImageUtil.ICON_REF_SYNDIE);
-        _linkOther.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
-        });
-        
-        _linkWeb.setText("Link to a website");
-        _linkPage.setText("Link to a page in this message");
-        _linkAttach.setText("Link to an attachment in this message");
-        _linkForum.setText("Link to a forum");
-        _linkMsg.setText("Link to a particular Syndie message");
-        _linkEepsite.setText("Link to an I2P eepsite");
-        _linkI2P.setText("Link to an I2P destination");
-        _linkFreenet.setText("Link to a Freenet freesite");
-        _linkArchive.setText("Link to a Syndie archive");
-        _linkOther.setText("Link to another Syndie URI");
-        
-        _linkGroup.setText("Link:");
-        _linkGroup.setToolTipText("Add a new link");
-    }
-    
-    private void initStyleControl() {
-        _ui.debugMessage("init styleControl");
-        _styleGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _styleGroup.setLayout(new FillLayout());
-        
-        _styleButton = new Button(_styleGroup, SWT.PUSH);
-        _styleButton.setImage(ImageUtil.ICON_EDITOR_STYLE);
-        
-        _styleMenu = new Menu(_styleButton);
-        _styleGroup.setMenu(_styleMenu);
-        _styleButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _styleMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _styleMenu.setVisible(true); }
-        });
-        
-        _styleText = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleText.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { styleText(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { styleText(); }
-        });
-        
-        _styleImage = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleImage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(false); }
-        });
-        new MenuItem(_styleMenu, SWT.SEPARATOR);
-        
-        _styleBGColor = new MenuItem(_styleMenu, SWT.CASCADE);
-        _styleBGColorMenu = new Menu(_styleBGColor);
-        _styleBGColor.setMenu(_styleBGColorMenu);
-        _styleBGColorDefault = new MenuItem(_styleBGColorMenu, SWT.PUSH);
-        _styleBGColorDefault .addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { setPageBGColor(null); }
-            public void widgetSelected(SelectionEvent selectionEvent) { setPageBGColor(null); }
-        });
-        ColorUtil.init();
-        List names = ColorUtil.getSystemColorNames();
-        _ui.debugMessage("color names: " + names);
-        for (int i = 0; i < names.size(); i++) {
-            final String name = (String)names.get(i);
-            Color color = ColorUtil.getColor(name);
-            MenuItem item = new MenuItem(_styleBGColorMenu, SWT.PUSH);
-            item.setImage(ColorUtil.getSystemColorSwatch(color));
-            item.setText(name);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { setPageBGColor(name); }
-                public void widgetSelected(SelectionEvent selectionEvent) { setPageBGColor(name); }
-            });
-        }
-        _styleBGImage = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleBGImage.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { showImagePopup(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { showImagePopup(true); }
-        });
-        new MenuItem(_styleMenu, SWT.SEPARATOR);
-        
-        _styleListOrdered = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleListOrdered.addSelectionListener(new InsertListener("<ol>\n\t<li>first list item</li>\n</ol>\n", true));
-        _styleListUnordered = new MenuItem(_styleMenu, SWT.PUSH);
-        _styleListUnordered.addSelectionListener(new InsertListener("<ul>\n\t<li>first list item</li>\n</ul>\n", true));
-        
-        new MenuItem(_styleMenu, SWT.SEPARATOR);
-        
-        _styleHeading = new MenuItem(_styleMenu, SWT.CASCADE);
-        _styleHeadingMenu = new Menu(_styleHeading);
-        _styleHeading.setMenu(_styleHeadingMenu);
-        _styleHeading1 = new MenuItem(_styleHeadingMenu, SWT.PUSH);
-        _styleHeading1.addSelectionListener(new InsertListener("<h1>TEXT</h1>", true));
-        _styleHeading2 = new MenuItem(_styleHeadingMenu, SWT.PUSH);
-        _styleHeading2.addSelectionListener(new InsertListener("<h2>TEXT</h2>", true));
-        _styleHeading3 = new MenuItem(_styleHeadingMenu, SWT.PUSH);
-        _styleHeading3.addSelectionListener(new InsertListener("<h3>TEXT</h3>", true));
-        _styleHeading4 = new MenuItem(_styleHeadingMenu, SWT.PUSH);
-        _styleHeading4.addSelectionListener(new InsertListener("<h4>TEXT</h4>", true));
-        _styleHeading5 = new MenuItem(_styleHeadingMenu, SWT.PUSH);
-        _styleHeading5.addSelectionListener(new InsertListener("<h5>TEXT</h5>", true));
-        _stylePre = new MenuItem(_styleMenu, SWT.PUSH);
-        _stylePre.addSelectionListener(new InsertListener("<pre>first line\n\tindented line</pre>", true));
-        
-        _styleGroup.setText("Style:");
-        _styleButton.setToolTipText("Insert style elements");
-        
-        _styleText.setText("Styled text...");
-        _styleImage.setText("Image...");
-        _styleBGColor.setText("Page background color");
-        _styleBGColorDefault.setText("standard");
-        _styleBGImage.setText("Page background image...");
-        _styleListOrdered.setText("List (ordered)");
-        _styleListUnordered.setText("List (unordered)");
-        _styleHeading.setText("Heading");
-        _styleHeading1.setText("Heading 1 (largest)");
-        _styleHeading2.setText("Heading 2");
-        _styleHeading3.setText("Heading 3");
-        _styleHeading4.setText("Heading 4");
-        _styleHeading5.setText("Heading 5 (smallest)");
-        _stylePre.setText("Preformatted text");
-    }
-
-    private void initSpellControl() {
-        _spellGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _spellGroup.setLayout(new FillLayout());
-        
-        _spellButton = new Button(_spellGroup, SWT.PUSH);
-        _spellButton.setImage(ImageUtil.ICON_EDITOR_SPELL);
-        _spellButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { spellNext(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { spellNext(); }
-        });
-        
-        _spellGroup.setText("Spell:");
-        _spellButton.setToolTipText("Check the spelling in the current page");
-    }
-    
-    private void initSearchControl() {
-        _searchGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _searchGroup.setLayout(new FillLayout());
-        
-        _searchButton = new Button(_searchGroup, SWT.PUSH);
-        _searchButton.setImage(ImageUtil.ICON_EDITOR_SEARCH);
-        _searchButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { search(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { search(); }
-        });
-        
-        _searchGroup.setText("Find:");
-        _searchButton.setToolTipText("Find or replace text in the current page");
-    }
-    
-    private void initQuoteControl() {
-        _quoteGroup = new Group(_toolbar, SWT.SHADOW_ETCHED_IN);
-        _quoteGroup.setLayout(new FillLayout());
-        
-        _quoteButton = new Button(_quoteGroup, SWT.PUSH);
-        _quoteButton.setImage(ImageUtil.ICON_EDITOR_SEARCH);
-        _quoteButton.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { quote(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { quote(); }
-        });
-        
-        _quoteGroup.setText("Quote:");
-        _quoteButton.setToolTipText("Quote a section of the previous message");
-    }
-    
     public void applyTheme(Theme theme) {
         _authorLabel.setFont(theme.DEFAULT_FONT);
         _authorCombo.setFont(theme.DEFAULT_FONT);
@@ -2967,9 +2401,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _subject.setFont(theme.DEFAULT_FONT);
         _tagLabel.setFont(theme.DEFAULT_FONT);
         _tag.setFont(theme.DEFAULT_FONT);
-        _post.setFont(theme.BUTTON_FONT);
-        _postpone.setFont(theme.BUTTON_FONT);
-        _cancel.setFont(theme.BUTTON_FONT);
+        if (_showActions) {
+            _post.setFont(theme.BUTTON_FONT);
+            _postpone.setFont(theme.BUTTON_FONT);
+            _cancel.setFont(theme.BUTTON_FONT);
+        }
         _privacyLabel.setFont(theme.DEFAULT_FONT);
         _privacy.setFont(theme.DEFAULT_FONT);
         _pageTabs.setFont(theme.TAB_FONT);
@@ -2978,17 +2414,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _hideHeaderButton.setFont(theme.BUTTON_FONT);
         _showHeaderButton.setFont(theme.BUTTON_FONT);
     
-        _forumGroup.setFont(theme.DEFAULT_FONT);
-        _authorGroup.setFont(theme.DEFAULT_FONT);
-        _privGroup.setFont(theme.DEFAULT_FONT);
-        _pageGroup.setFont(theme.DEFAULT_FONT);
-        _pageTypeGroup.setFont(theme.DEFAULT_FONT);
-        _attachGroup.setFont(theme.DEFAULT_FONT);
-        _linkGroup.setFont(theme.DEFAULT_FONT);
-        _styleGroup.setFont(theme.DEFAULT_FONT);
-        _spellGroup.setFont(theme.DEFAULT_FONT);
-        _searchGroup.setFont(theme.DEFAULT_FONT);
-        _quoteGroup.setFont(theme.DEFAULT_FONT);
+        if (_bar != null) _bar.applyTheme(theme);
         
         _root.layout(true);
     }
@@ -3007,7 +2433,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
 
     // image popup stuff
-    private void addAttachment() {
+    public void addAttachment() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
@@ -3095,7 +2521,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         updateToolbar();
         return rv;
     }
-    private void removeAttachment(int idx) {
+    public void removeAttachment(int idx) {
         saveState();
         modified();
         if (_attachmentData.size() > 0) {
@@ -3184,8 +2610,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             cur++;
         }
     }
-    private static final String T_ATTACHMENT_VIEW = "syndie.gui.messageeditornew.attachview";
-    private static final String T_ATTACHMENT_DELETE = "syndie.gui.messageeditornew.attachdelete";
     private void rebuildAttachmentSummaries() {
         _attachmentSummary.clear();
         if (_attachmentData.size() > 0) {
@@ -3207,27 +2631,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _attachmentSummary.add(_translationRegistry.getText(T_ATTACHMENTS_NONE, "none"));
         }
         
-        
-        MenuItem items[] = _attachMenu.getItems();
-        for (int i = 0; i < items.length; i++)
-            if ( (items[i] != _attachAdd) && (items[i] != _attachAddImage) )
-                items[i].dispose();
-        for (int i = 0; i < _attachmentData.size(); i++) {
-            MenuItem attachItem = new MenuItem(_attachMenu, SWT.CASCADE);
-            attachItem.setText((String)_attachmentSummary.get(i));
-            Menu sub = new Menu(attachItem);
-            attachItem.setMenu(sub);
-            MenuItem view = new MenuItem(sub, SWT.PUSH);
-            view.setEnabled(false);
-            view.setText(_translationRegistry.getText(T_ATTACHMENT_VIEW, "View"));
-            MenuItem delete = new MenuItem(sub, SWT.PUSH);
-            delete.setText(_translationRegistry.getText(T_ATTACHMENT_DELETE, "Delete"));
-            final int attachNum = i;
-            delete.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { removeAttachment(attachNum); }
-                public void widgetSelected(SelectionEvent selectionEvent) { removeAttachment(attachNum); }
-            });
-        }
+        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).attachmentsRebuilt(_attachmentData, _attachmentSummary);
     }
     
     private static final String T_PAGE_VIEW = "syndie.gui.messageeditor.pageview";
@@ -3252,423 +2657,4 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         return rv;
     }
     
-    /** simple hook to inert a buffer at the caret */
-    private class InsertListener implements SelectionListener {
-        private boolean _onNewline;
-        private String _toInsert;
-        public InsertListener(String toInsert, boolean onNewline) {
-            _onNewline = onNewline;
-            _toInsert = toInsert;
-        }
-        public void widgetSelected(SelectionEvent selectionEvent) { insert(); }
-        public void widgetDefaultSelected(SelectionEvent selectionEvent) { insert(); }
-        private void insert() {
-            PageEditor editor = getPageEditor();
-            if (editor != null)
-                editor.insert(_toInsert, _onNewline);
-        }
-    }
-}
-
-class MessageEditorFind implements Translatable, Themeable {
-    private ThemeRegistry _themeRegistry;
-    private TranslationRegistry _translationRegistry;
-    private MessageEditor _editor;
-    private Shell _findShell;
-    private Label _findTextLabel;
-    private Text _findText;
-    private Label _findReplaceLabel;
-    private Text _findReplace;
-    private Button _findMatchCase;
-    private Button _findWrapAround;
-    private Button _findBackwards;
-    private Button _findNext;
-    private Button _close;
-    private Button _replace;
-    private Button _replaceAll;
-    
-    public MessageEditorFind(ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor) {
-        _editor = editor;
-        _themeRegistry = themes;
-        _translationRegistry = trans;
-        initComponents();
-    }
-    
-    public void hide() { _findShell.setVisible(false); }
-    public void open() {
-        _findText.setText("");
-        _findReplace.setText("");
-        _findBackwards.setSelection(false);
-        _findMatchCase.setSelection(false);
-        _findWrapAround.setSelection(false);
-        _findShell.pack();
-        _findShell.open();
-        _findText.forceFocus();
-    }
-    public void dispose() {
-        _translationRegistry.unregister(this);
-        _translationRegistry.unregister(this);
-        _findShell.dispose();
-    }
-    
-    /** current search term used */
-    public String getSearchTerm() { return _findText.getText(); }
-    /** current replacement for the search term used */
-    public String getSearchReplacement() { return _findReplace.getText(); }
-    /** are searches case sensitive? */
-    public boolean getSearchCaseSensitive() { return _findMatchCase.getSelection(); }
-    /** do we want to search backwards? */
-    public boolean getSearchBackwards() { return _findBackwards.getSelection(); }
-    /** do we want to search around the end/beginning of the page? */
-    public boolean getSearchWrap() { return _findWrapAround.getSelection(); }
-    
-    private void initComponents() {
-        _findShell = new Shell(_editor.getPageRoot().getShell(), SWT.DIALOG_TRIM);
-        GridLayout gl = new GridLayout(2, false);
-        _findShell.setLayout(gl);
-    
-        _findTextLabel = new Label(_findShell, SWT.NONE);
-        _findTextLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _findText = new Text(_findShell, SWT.BORDER | SWT.SINGLE);
-        _findText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _findReplaceLabel = new Label(_findShell, SWT.NONE);
-        _findReplaceLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _findReplace = new Text(_findShell, SWT.BORDER | SWT.SINGLE);
-        _findReplace.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _findMatchCase = new Button(_findShell, SWT.CHECK | SWT.LEFT);
-        _findMatchCase.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        
-        _findWrapAround = new Button(_findShell, SWT.CHECK | SWT.LEFT);
-        _findWrapAround.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        
-        _findBackwards = new Button(_findShell, SWT.CHECK | SWT.LEFT);
-        _findBackwards.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        
-        Composite actionRow = new Composite(_findShell, SWT.NONE);
-        actionRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        actionRow.setLayout(new FillLayout(SWT.HORIZONTAL));
-        
-        _findNext = new Button(actionRow, SWT.PUSH);
-        _findNext.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.findNext(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.findNext(); }
-        });
-        
-        _close = new Button(actionRow, SWT.PUSH);
-        _close.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelFind(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { cancelFind(); }
-        });
-        
-        _replace = new Button(actionRow, SWT.PUSH);
-        _replace.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.findReplace(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.findReplace(); }
-        });
-        
-        _replaceAll = new Button(actionRow, SWT.PUSH);
-        _replaceAll.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.findReplaceAll(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.findReplaceAll(); }
-        });
-
-        _findText.addTraverseListener(new TraverseListener() {
-            public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN) {
-                    _editor.findNext();
-                    _findNext.forceFocus();
-                    evt.doit = false;
-                }
-            }
-        });
-        _findReplace.addTraverseListener(new TraverseListener() {
-            public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN) {
-                    _editor.findReplace();
-                    _replace.forceFocus();
-                    evt.doit = false;
-                }
-            }
-        });
-        
-        _findShell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; cancelFind(); }
-            public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
-        });
-        
-        _translationRegistry.register(this);
-        _translationRegistry.register(this);
-    }
-    
-    private void cancelFind() {
-        _findText.setText("");
-        _editor.cancelFind();
-    }
- 
-    public void applyTheme(Theme theme) {
-        _findShell.setFont(theme.SHELL_FONT);
-        _findTextLabel.setFont(theme.DEFAULT_FONT);
-        _findText.setFont(theme.DEFAULT_FONT);
-        _findReplaceLabel.setFont(theme.DEFAULT_FONT);
-        _findReplace.setFont(theme.DEFAULT_FONT);
-        _findMatchCase.setFont(theme.DEFAULT_FONT);
-        _findWrapAround.setFont(theme.DEFAULT_FONT);
-        _findBackwards.setFont(theme.DEFAULT_FONT);
-        _findNext.setFont(theme.BUTTON_FONT);
-        _close.setFont(theme.BUTTON_FONT);
-        _replace.setFont(theme.BUTTON_FONT);
-        _replaceAll.setFont(theme.BUTTON_FONT);
-        
-        _findShell.pack();
-    }
-    
-    private static final String T_FIND_ROOT = "syndie.gui.messageeditorfind.root";
-    private static final String T_FIND_TEXT = "syndie.gui.messageeditorfind.text";
-    private static final String T_FIND_REPLACE = "syndie.gui.messageeditorfind.replace";
-    private static final String T_FIND_MATCH = "syndie.gui.messageeditorfind.match";
-    private static final String T_FIND_WRAP = "syndie.gui.messageeditorfind.wrap";
-    private static final String T_FIND_BACKWARDS = "syndie.gui.messageeditorfind.backwards";
-    private static final String T_FIND_NEXT = "syndie.gui.messageeditorfind.next";
-    private static final String T_FIND_NEXT_TOOLTIP = "syndie.gui.messageeditorfind.nexttooltip";
-    private static final String T_FIND_CLOSE = "syndie.gui.messageeditorfind.close";
-    private static final String T_FIND_CLOSE_TOOLTIP = "syndie.gui.messageeditorfind.closetooltip";
-    private static final String T_FIND_REPLACE_ACTION = "syndie.gui.messageeditorfind.replace.action";
-    private static final String T_FIND_REPLACE_ACTION_TOOLTIP = "syndie.gui.messageeditorfind.replace.actiontooltip";
-    private static final String T_FIND_REPLACE_ALL_ACTION = "syndie.gui.messageeditorfind.replaceall.action";
-    private static final String T_FIND_REPLACE_ALL_ACTION_TOOLTIP = "syndie.gui.messageeditorfind.replaceall.actiontooltip";
-    
-    public void translate(TranslationRegistry registry) {
-        _findShell.setText(registry.getText(T_FIND_ROOT, "Find"));
-        _findTextLabel.setText(registry.getText(T_FIND_TEXT, "Find what: "));
-        _findReplaceLabel.setText(registry.getText(T_FIND_REPLACE, "Replace with: "));
-        _findMatchCase.setText(registry.getText(T_FIND_MATCH, "match case"));
-        _findWrapAround.setText(registry.getText(T_FIND_WRAP, "wrap around"));
-        _findBackwards.setText(registry.getText(T_FIND_BACKWARDS, "backwards"));
-        _findNext.setText(registry.getText(T_FIND_NEXT, "Find next"));
-        _findNext.setToolTipText(registry.getText(T_FIND_NEXT_TOOLTIP, "Find the next occurrence of the word"));
-        _close.setText(registry.getText(T_FIND_CLOSE, "Close"));
-        _close.setToolTipText(registry.getText(T_FIND_CLOSE_TOOLTIP, "Finish searching"));
-        _replace.setText(registry.getText(T_FIND_REPLACE_ACTION, "Replace"));
-        _replace.setToolTipText(registry.getText(T_FIND_REPLACE_ACTION_TOOLTIP, "Replace the current occurrence of the word"));
-        _replaceAll.setText(registry.getText(T_FIND_REPLACE_ALL_ACTION, "Replace all"));
-        _replaceAll.setToolTipText(registry.getText(T_FIND_REPLACE_ALL_ACTION_TOOLTIP, "Replace all remaining occurrences of the word"));
-    }
-}
-
-class MessageEditorSpell implements Themeable, Translatable {
-    private ThemeRegistry _themeRegistry;
-    private TranslationRegistry _translationRegistry;
-    private MessageEditor _editor;
-    private Shell _spellShell;
-    private StyledText _spellContext;
-    private Label _spellWordLabel;
-    private Text _spellWord;
-    private Label _spellSuggestionsLabel;
-    private Combo _spellSuggestions;
-    private Button _spellReplace;
-    private Button _spellReplaceAll;
-    private Button _spellIgnore;
-    private Button _spellIgnoreAll;
-    private Button _spellAdd;
-    private Button _spellCancel;
-    /** list of words we are ignoring for the current spellcheck iteration */
-    private ArrayList _spellIgnoreAllList;
-    
-    public MessageEditorSpell(ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor) {
-        _themeRegistry = themes;
-        _translationRegistry = trans;
-        _editor = editor;
-        initComponents();
-    }
- 
-    public void dispose() {
-        _translationRegistry.unregister(this);
-        _themeRegistry.unregister(this);
-        _spellShell.dispose();
-    }
-    
-    public String getSpellWordOrig() {
-        if (_spellShell.isDisposed()) return null;
-        return _spellWord.getText().trim();
-    }
-    public String getSuggestion() { 
-        if (_spellShell.isDisposed()) return null;
-        return _spellSuggestions.getText().trim();
-    }
-    public List getIgnoreAllList() { return _spellIgnoreAllList; }
-    public void updateSuggestions(ArrayList suggestions, String lineText, String word) {
-        if (_spellShell.isDisposed()) return;
-        _spellWord.setText(word);
-        _spellSuggestions.removeAll();
-        for (int i = 0; i < suggestions.size(); i++)
-            _spellSuggestions.add((String)suggestions.get(i));
-        _spellSuggestions.select(0);
-        _spellContext.setText(lineText);
-    }
-    public void showSpell(boolean wordSet) {
-        if (_spellShell.isDisposed()) return;
-        if (wordSet) {
-            _spellContext.setLineBackground(0, 1, null);
-            _spellWord.setEnabled(true);
-            _spellSuggestions.setEnabled(true);
-            _spellAdd.setEnabled(false); // todo: user-specific dictionary
-            _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText(T_SPELL_CANCEL, "cancel"));
-            _spellIgnore.setEnabled(true);
-            _spellIgnoreAll.setEnabled(true);
-            _spellReplace.setEnabled(true);
-            _spellReplaceAll.setEnabled(true);
-        } else {
-            _spellContext.setText(_translationRegistry.getText(T_SPELL_END, "End of content reached"));
-            _spellContext.setLineBackground(0, 1, ColorUtil.getColor("red", null));
-            _spellWord.setText("");
-            _spellWord.setEnabled(false);
-            _spellSuggestions.removeAll();
-            _spellSuggestions.setEnabled(false);
-            _spellAdd.setEnabled(false);
-            _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText(T_SPELL_END_OK, "ok"));
-            _spellIgnore.setEnabled(false);
-            _spellIgnoreAll.setEnabled(false);
-            _spellReplace.setEnabled(false);
-            _spellReplaceAll.setEnabled(false);
-        }
-        _spellShell.open();
-    }
-    
-    private void initComponents() {
-        _spellShell = new Shell(_editor.getPageRoot().getShell(), SWT.DIALOG_TRIM);
-        GridLayout gl = new GridLayout(2, false);
-        _spellShell.setLayout(gl);
-        
-        _spellIgnoreAllList = new ArrayList();
-        
-        _spellContext = new StyledText(_spellShell, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.READ_ONLY);
-        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalSpan = 2;
-        _spellContext.setLayoutData(gd);
-        
-        _spellWordLabel = new Label(_spellShell, SWT.NONE);
-        gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = false;
-        _spellWordLabel.setLayoutData(gd);
-        _spellWord = new Text(_spellShell, SWT.BORDER | SWT.READ_ONLY | SWT.SINGLE | SWT.LEFT);
-        gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = true;
-        _spellWord.setLayoutData(gd);
-
-        _spellSuggestionsLabel = new Label(_spellShell, SWT.NONE);
-        gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = false;
-        _spellSuggestionsLabel.setLayoutData(gd);
-        _spellSuggestions = new Combo(_spellShell, SWT.DROP_DOWN);
-        gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = true;
-        _spellSuggestions.setLayoutData(gd);
-        
-        Composite actionLine = new Composite(_spellShell, SWT.NONE);
-        actionLine.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _spellReplace = new Button(actionLine, SWT.PUSH);
-        _spellReplaceAll = new Button(actionLine, SWT.PUSH);
-        _spellIgnore = new Button(actionLine, SWT.PUSH);
-        _spellIgnoreAll = new Button(actionLine, SWT.PUSH);
-        _spellAdd = new Button(actionLine, SWT.PUSH);
-        _spellCancel = new Button(actionLine, SWT.PUSH);
-        gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalSpan = 2;
-        actionLine.setLayoutData(gd);
-        
-        _spellIgnore.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.spellIgnore(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.spellIgnore(); }
-        });
-        _spellIgnoreAll.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _spellIgnoreAllList.add(_spellWord.getText().trim().toLowerCase()); _editor.spellIgnore(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _spellIgnoreAllList.add(_spellWord.getText().trim().toLowerCase()); _editor.spellIgnore(); }
-        });
-        _spellReplace.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.spellReplaceWord(false); _editor.spellNext(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.spellReplaceWord(false); _editor.spellNext(); }
-        });
-        _spellReplaceAll.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _editor.spellReplaceWord(true); _editor.spellNext(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _editor.spellReplaceWord(true); _editor.spellNext(); }
-        });
-
-        _spellCancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelSpell(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { cancelSpell(); }
-        });
-        
-        _spellShell.addShellListener(new ShellListener() {
-            public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) {
-                evt.doit = false;
-                cancelSpell();
-            }
-            public void shellDeactivated(ShellEvent shellEvent) {}
-            public void shellDeiconified(ShellEvent shellEvent) {}
-            public void shellIconified(ShellEvent shellEvent) {}
-        });
-        
-        _translationRegistry.register(this);
-        _themeRegistry.register(this);
-    }
-    
-    void resetSpellcheck() {
-        _spellIgnoreAllList.clear();
-        _editor.resetSpellcheck();
-    }
-    void cancelSpell() {
-        resetSpellcheck();
-        if (_spellShell.isDisposed()) return;
-        _spellShell.setVisible(false); 
-    }
-    
-    public void applyTheme(Theme theme) {
-        _spellShell.setFont(theme.SHELL_FONT);
-        _spellWordLabel.setFont(theme.DEFAULT_FONT);
-        _spellWord.setFont(theme.DEFAULT_FONT);
-        _spellSuggestionsLabel.setFont(theme.DEFAULT_FONT);
-        _spellSuggestions.setFont(theme.DEFAULT_FONT);
-        _spellReplace.setFont(theme.BUTTON_FONT);
-        _spellReplaceAll.setFont(theme.BUTTON_FONT);
-        _spellIgnore.setFont(theme.BUTTON_FONT);
-        _spellIgnoreAll.setFont(theme.BUTTON_FONT);
-        _spellAdd.setFont(theme.BUTTON_FONT);
-        _spellCancel.setFont(theme.BUTTON_FONT);
-        _spellShell.pack();
-    }
-    
-    private static final String T_SPELL_ROOT = "syndie.gui.messageeditorspell.root";
-    private static final String T_SPELL_WORD = "syndie.gui.messageeditorspell.word";
-    private static final String T_SPELL_SUGGESTION = "syndie.gui.messageeditorspell.suggestion";
-    private static final String T_SPELL_REPLACE = "syndie.gui.messageeditorspell.replace";
-    private static final String T_SPELL_REPLACE_ALL = "syndie.gui.messageeditorspell.replaceall";
-    private static final String T_SPELL_IGNORE = "syndie.gui.messageeditorspell.ignore";
-    private static final String T_SPELL_IGNORE_ALL = "syndie.gui.messageeditorspell.ignoreall";
-    private static final String T_SPELL_ADD = "syndie.gui.messageeditorspell.add";
-    private static final String T_SPELL_CANCEL = "syndie.gui.messageeditorspell.cancel";
- 
-    private static final String T_SPELL_END = "syndie.gui.messageeditorspell.end";
-    private static final String T_SPELL_END_OK = "syndie.gui.messageeditorspell.end.ok";
-    
-    public void translate(TranslationRegistry registry) {
-        _spellShell.setText(registry.getText(T_SPELL_ROOT, "Spell checker"));
-        _spellWordLabel.setText(registry.getText(T_SPELL_WORD, "Word: "));
-        _spellSuggestionsLabel.setText(registry.getText(T_SPELL_SUGGESTION, "Suggestions: "));
-        _spellReplace.setText(registry.getText(T_SPELL_REPLACE, "replace"));
-        _spellReplaceAll.setText(registry.getText(T_SPELL_REPLACE_ALL, "replace all"));
-        _spellIgnore.setText(registry.getText(T_SPELL_IGNORE, "ignore"));
-        _spellIgnoreAll.setText(registry.getText(T_SPELL_IGNORE_ALL, "ignore all"));
-        _spellAdd.setText(registry.getText(T_SPELL_ADD, "add"));
-        _spellCancel.setText(registry.getText(T_SPELL_CANCEL, "cancel"));
-    }
 }

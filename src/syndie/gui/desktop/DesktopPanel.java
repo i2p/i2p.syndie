@@ -46,6 +46,11 @@ class DesktopPanel {
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new FillLayout());
+        
+        buildNorth(_desktop.getNorth());
+        buildEast(_desktop.getEast());
+        buildSouth(_desktop.getSouth());
+        buildWest(_desktop.getWest());
     }
     
     public SyndieURI getOriginalURI() { return _origURI; }

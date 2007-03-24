@@ -57,6 +57,7 @@ public class PageEditor extends BaseComponent implements Themeable {
     private PageRenderer _preview;
     private MaxPreview _maxPreview;
     private boolean _isPreviewable;
+    private boolean _isHTML;
     /** current search match (x=start, y=end) */
     private Point _findHighlight;
     /** has the current search wrapped the end at least once yet? */
@@ -64,10 +65,11 @@ public class PageEditor extends BaseComponent implements Themeable {
     private int _pageNum;
     
     /** Creates a new instance of PageEditorNew */
-    public PageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor, boolean previewable, int pageNum) {
+    public PageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor, boolean previewable, boolean isHTML, int pageNum) {
         super(client, ui, themes, trans);
         _editor = editor;
         _isPreviewable = previewable;
+        _isHTML = isHTML;
         _pageNum = pageNum;
         initComponents();
     }
@@ -79,12 +81,13 @@ public class PageEditor extends BaseComponent implements Themeable {
         else
             return _text.getText(); 
     }
-    public String getContentType() { return _isPreviewable ? "text/html" : "text/plain"; }
+    public String getContentType() { return _isHTML ? MessageEditor.TYPE_HTML : MessageEditor.TYPE_TEXT; }
     public CTabItem getItem() { return _item; }
     
     public void setContent(String body) { _text.setText(body); }
     public void setContentType(String type) {
-        _isPreviewable = MessageEditor.TYPE_HTML.equals(type);
+        _isHTML = MessageEditor.TYPE_HTML.equals(type);
+        //_isPreviewable = MessageEditor.TYPE_HTML.equals(type);
         preview();
     }
     
@@ -133,7 +136,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         });
 
         _sash.setWeights(new int[] { 80, 20 });
-        if (_isPreviewable) {
+        if (_isPreviewable && _isHTML) {
             _sash.setMaximizedControl(null);
         } else {
             _sash.setMaximizedControl(_text);
@@ -150,7 +153,7 @@ public class PageEditor extends BaseComponent implements Themeable {
     private void preview() {
         if (_root.isDisposed()) return; // called after a delay, so may have been disposed in the meantime
         if (_editor != null) _editor.saveState();
-        if (!_isPreviewable) {
+        if (!_isPreviewable || !_isHTML) {
             _sash.setMaximizedControl(_text);
             return;
         }
@@ -217,7 +220,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             public void modifyText(ModifyEvent evt) {
                 _lastModified = System.currentTimeMillis();
                 _editor.modified();
-                if (_isPreviewable)
+                if (_isPreviewable && _isHTML)
                     evt.display.timerExec(500, _timedPreview);
             }
         });
@@ -930,7 +933,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         }
     }
     void quote(String content, boolean contentIsHTML, SyndieURI source, Hash authorHash, String authorName) {
-        boolean quoteAsHTML = _isPreviewable;
+        boolean quoteAsHTML = _isHTML; //_isPreviewable;
         insert(getQuotable(content, contentIsHTML, quoteAsHTML, source, authorHash, authorName), true);
     }
     private String getQuotable(String src, boolean srcIsHTML, boolean quoteAsHTML, SyndieURI source, Hash authorHash, String authorName) {
