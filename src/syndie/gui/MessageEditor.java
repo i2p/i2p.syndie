@@ -1466,6 +1466,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     public Hash getForum() { return _forum; }
+    public Hash getAuthor() { return _author; }
     public int getParentCount() { return _parents.size(); }
     public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
     public boolean getPrivacyReply() { return _privacy.getSelectionIndex() == PRIVACY_REPLY; }
@@ -1741,7 +1742,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _root.layout(true);
         _showHeaderButton.forceFocus();
     }
-    private void showHeaders() {
+    public void showHeaders() {
         _root.setRedraw(false);
         ((GridData)_headers.getLayoutData()).exclude = false;
         _headers.setVisible(true);

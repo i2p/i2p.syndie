@@ -190,6 +190,14 @@ public class PageEditor extends BaseComponent implements Themeable {
         _lastResizeWidth = _text.getBounds().width;
     }
     
+    public boolean isPreviewShowing() {
+        if (!_isHTML)
+            return true; // editor == preview
+        
+        Composite previewControl = _preview.getComposite();
+        return previewControl == _sash.getMaximizedControl();
+    }
+    
     public void toggleFullPreview() {
         if (_root.isDisposed()) return; // called after a delay, so may have been disposed in the meantime
         if (_editor != null) _editor.saveState();

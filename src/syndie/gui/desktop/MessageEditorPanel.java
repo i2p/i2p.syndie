@@ -3,6 +3,8 @@ package syndie.gui.desktop;
 import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
@@ -145,6 +147,33 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                 page.toggleFullPreview();
         }
     }
+    private static final String T_POSTPREVIEW_TITLE = "syndie.gui.desktop.messageeditorpanel.postpreview.title";
+    private static final String T_POSTPREVIEW = "syndie.gui.desktop.messageeditorpanel.postpreview";
+    
+    private void post() {
+        PageEditor page = _editor.getPageEditor();
+        if (page != null) {
+            if (MessageEditor.TYPE_HTML.equals(page.getContentType())) {
+                if (page.isPreviewShowing()) {
+                    _editor.postMessage();
+                } else {
+                    page.toggleFullPreview();
+                    MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
+                    box.setText(_translationRegistry.getText(T_POSTPREVIEW_TITLE, "Preview post"));
+                    box.setMessage(_translationRegistry.getText(T_POSTPREVIEW, "Is this preview what you want to post?"));
+                    int rc = box.open();
+                    if (rc == SWT.YES)
+                        _editor.postMessage();
+                    else
+                        page.toggleFullPreview();
+                }
+            } else {
+                _editor.postMessage();
+            }
+        } else {
+            _editor.postMessage();
+        }
+    }
     
     protected void buildNorth(Composite edge) { _edgeNorth = new NorthEdge(edge, _ui); }
     protected void buildEast(Composite edge) { _edgeEast = new EastEdge(edge, _ui); }
@@ -233,6 +262,15 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             gd.verticalAlignment = GridData.CENTER;
             gd.horizontalAlignment = GridData.CENTER;
             _forumAvatar.setLayoutData(gd);
+            _forumAvatar.addMouseListener(new MouseListener() {
+                public void mouseDoubleClick(MouseEvent mouseEvent) {
+                    Hash scope = _editor.getForum();
+                    if (scope != null)
+                        _desktop.getNavControl().view(SyndieURI.createScope(scope));
+                }
+                public void mouseDown(MouseEvent mouseEvent) {}
+                public void mouseUp(MouseEvent mouseEvent) { _editor.showHeaders(); }
+            });
             
             _forumNameLabel = new Label(forumGroup, SWT.NONE);
             _forumNameLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.END, true, true));
@@ -254,6 +292,15 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             gd.verticalAlignment = GridData.CENTER;
             gd.horizontalAlignment = GridData.CENTER;
             _authorAvatar.setLayoutData(gd);
+            _authorAvatar.addMouseListener(new MouseListener() {
+                public void mouseDoubleClick(MouseEvent mouseEvent) {
+                    Hash scope = _editor.getAuthor();
+                    if (scope != null)
+                        _desktop.getNavControl().view(SyndieURI.createScope(scope));
+                }
+                public void mouseDown(MouseEvent mouseEvent) {}
+                public void mouseUp(MouseEvent mouseEvent) { _editor.showHeaders(); }
+            });
             
             _authorNameLabel = new Label(authorGroup, SWT.NONE);
             _authorNameLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.END, true, true));
@@ -437,7 +484,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                 public void fire() { togglePreview(); }
             });
             _post.addSelectionListener(new FireSelectionListener() {
-                public void fire() { _editor.postMessage(); }
+                public void fire() { post(); }
             });
             _cancel.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _editor.cancelMessage(); }
