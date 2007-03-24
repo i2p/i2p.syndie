@@ -556,9 +556,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                 public void fire() { _editor.showLinkPopup(); }
             });
             _htmlStyle.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    // todo
-                }
+                public void fire() { _editor.styleText(); }
             });
             _spell.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _editor.spellNext(); }

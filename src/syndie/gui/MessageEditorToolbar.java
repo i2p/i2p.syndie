@@ -693,7 +693,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _quoteGroup.setLayout(new FillLayout());
         
         _quoteButton = new Button(_quoteGroup, SWT.PUSH);
-        _quoteButton.setImage(ImageUtil.ICON_EDITOR_SEARCH);
+        _quoteButton.setImage(ImageUtil.ICON_EDITOR_QUOTE);
         _quoteButton.addSelectionListener(new FireSelectionListener() {
             public void fire() { _editor.quote(); }
         });

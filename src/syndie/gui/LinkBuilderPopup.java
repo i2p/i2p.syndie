@@ -12,6 +12,8 @@ import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellEvent;
@@ -184,11 +186,12 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeWebText.setLayoutData(gd);
         _linkTypeWebText.addTraverseListener(new GroupPickListener(_linkTypeWeb));
         _linkTypeWebText.addSelectionListener(new GroupPickListener(_linkTypeWeb));
+        _linkTypeWebText.addModifyListener(new GroupPickListener(_linkTypeWeb));
         
         _linkTypePage = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypePage.setText("Page:");
         _linkTypePage.setLayoutData(new GridData());
-        _linkTypePageCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
+        _linkTypePageCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         _linkTypePageCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         _linkTypePageCombo.addTraverseListener(new GroupPickListener(_linkTypePage));
         _linkTypePageCombo.addSelectionListener(new GroupPickListener(_linkTypePage));
@@ -196,7 +199,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeAttachment = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeAttachment.setText("Attachment:");
         _linkTypeAttachment.setLayoutData(new GridData());
-        _linkTypeAttachmentCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
+        _linkTypeAttachmentCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         _linkTypeAttachmentCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         _linkTypeAttachmentCombo.addTraverseListener(new GroupPickListener(_linkTypeAttachment));
         _linkTypeAttachmentCombo.addSelectionListener(new GroupPickListener(_linkTypeAttachment));
@@ -265,7 +268,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _syndieMessageDetailPage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailPage.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailPageNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN);
+        _syndieMessageDetailPageNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieMessageDetailPageNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailPageNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailPage));
         
@@ -278,7 +281,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _syndieMessageDetailAttachment.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailAttachment.addSelectionListener(new UpdateURIListener());
         
-        _syndieMessageDetailAttachmentNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN);
+        _syndieMessageDetailAttachmentNum = new Combo(_syndieMessageDetailGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         _syndieMessageDetailAttachmentNum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _syndieMessageDetailAttachmentNum.addSelectionListener(new GroupPickListener(_syndieMessageDetailAttachment));
         
@@ -352,6 +355,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeI2PName.setLayoutData(gd);
         _linkTypeI2PName.addTraverseListener(new GroupPickListener(_linkTypeI2P));
         _linkTypeI2PName.addSelectionListener(new GroupPickListener(_linkTypeI2P));
+        _linkTypeI2PName.addModifyListener(new GroupPickListener(_linkTypeI2P));
     
         _linkTypeI2PDestinationLabel = new Label(_linkTypeI2PRow, SWT.NONE);
         _linkTypeI2PDestinationLabel.setText("Destination:");
@@ -364,6 +368,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeI2PDestination.setLayoutData(gd);
         _linkTypeI2PDestination.addTraverseListener(new GroupPickListener(_linkTypeI2P));
         _linkTypeI2PDestination.addSelectionListener(new GroupPickListener(_linkTypeI2P));
+        _linkTypeI2PDestination.addModifyListener(new GroupPickListener(_linkTypeI2P));
         
         _linkTypeEepsite = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeEepsite.setText("I2P eepsite:");
@@ -387,6 +392,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeEepsiteName.setLayoutData(gd);
         _linkTypeEepsiteName.addTraverseListener(new GroupPickListener(_linkTypeEepsite));
         _linkTypeEepsiteName.addSelectionListener(new GroupPickListener(_linkTypeEepsite));
+        _linkTypeEepsiteName.addModifyListener(new GroupPickListener(_linkTypeEepsite));
         
         _linkTypeEepsiteDestinationLabel = new Label(_linkTypeEepsiteRow, SWT.NONE);
         _linkTypeEepsiteDestinationLabel.setText("Destination:");
@@ -399,7 +405,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeEepsiteDestination.setLayoutData(gd);
         _linkTypeEepsiteDestination.addTraverseListener(new GroupPickListener(_linkTypeEepsite));
         _linkTypeEepsiteDestination.addSelectionListener(new GroupPickListener(_linkTypeEepsite));
-    
+        _linkTypeEepsiteDestination.addModifyListener(new GroupPickListener(_linkTypeEepsite));
         
         _linkTypeFreenet = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeFreenet.setText("Freenet:");
@@ -413,14 +419,14 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _linkTypeFreenetText.setLayoutData(gd);
         _linkTypeFreenetText.addTraverseListener(new GroupPickListener(_linkTypeFreenet));
         _linkTypeFreenetText.addSelectionListener(new GroupPickListener(_linkTypeFreenet));
-        
+        _linkTypeFreenetText.addModifyListener(new GroupPickListener(_linkTypeFreenet));
         
         _linkTypeArchive = new Button(_linkTypeGroup, SWT.RADIO);
         _linkTypeArchive.setText("Archive:");
         gd = new GridData();
         _linkTypeArchive.setLayoutData(gd);
         
-        _linkTypeArchiveCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN);
+        _linkTypeArchiveCombo = new Combo(_linkTypeGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         _linkTypeArchiveCombo.setToolTipText("Full archive URL");
         gd = new GridData(GridData.FILL_BOTH);
         gd.grabExcessHorizontalSpace = true;
@@ -522,7 +528,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         } catch (URISyntaxException use) {}
     }
     
-    private class GroupPickListener implements SelectionListener, TraverseListener {
+    private class GroupPickListener implements SelectionListener, TraverseListener, ModifyListener {
         private Button _selectOnAction;
         public GroupPickListener(Button selectOnAction) {
             _selectOnAction = selectOnAction;
@@ -561,6 +567,12 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
                 _linkTypeEepsite.setSelection(false);
             if (_selectOnAction != _linkTypeI2P)
                 _linkTypeI2P.setSelection(false);
+        }
+
+        public void modifyText(ModifyEvent modifyEvent) {
+            _selectOnAction.setSelection(true);
+            unselectOthers();
+            updateSyndieURI();
         }
     }
     

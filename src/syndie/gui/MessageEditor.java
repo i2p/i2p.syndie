@@ -1035,7 +1035,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     void showSpell(boolean wordSet) { _spellchecker.showSpell(wordSet); }
     
-    void styleText() {
+    public void styleText() {
         if ((getPageType() != null) && (TYPE_HTML.equals(getPageType()))) {
             new MessageEditorStyler(_client, _ui, _themeRegistry, _translationRegistry, this).open();
             //_styler.open();
