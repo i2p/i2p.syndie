@@ -338,7 +338,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         client.setNymPrefs(prefs);
     }
  
-    static boolean shouldMarkReadOnView(DBClient client) {
+    public static boolean shouldMarkReadOnView(DBClient client) {
         Properties prefs = client.getNymPrefs();
         return ( (prefs != null) && (prefs.containsKey("browse.markReadOnView")) && (Boolean.valueOf(prefs.getProperty("browse.markReadOnView")).booleanValue()));
     }

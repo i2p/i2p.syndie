@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.RowLayout;
@@ -28,6 +29,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     private boolean _includeTooltips;
     private List _images;
     private boolean _realized;
+    private Color _bg;
     
     public MessageFlagBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, Composite parent, boolean includeTooltips) {
         super(client, ui, themes, trans);
@@ -36,6 +38,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         _includeTooltips = includeTooltips;
         _images = new ArrayList();
         _realized = false;
+        _bg = null;
         initComponents();
     }
     
@@ -70,6 +73,19 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         rebuildFlags();
     }
     
+    public void setBackground(Color bg) {
+        if (bg == null) return;
+        _bg = bg;
+        if (_realized) {
+            _root.setBackground(bg);
+            Control ctl[] = _root.getChildren();
+            for (int i = 0; i < ctl.length; i++) {
+                if (!ctl[i].isDisposed())
+                    ctl[i].setBackground(bg);
+            }
+        }
+    }
+    
     private void rebuildFlags() {
         if (_realized) {
             //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
@@ -84,6 +100,8 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
             for (int i = 0; i < _images.size(); i++) {
                 Label l = new Label(_root, SWT.NONE);
                 l.setImage((Image)_images.get(i));
+                if (_bg != null)
+                    l.setBackground(_bg);
             }
             translate(_translationRegistry);
             _root.layout(true, true);
@@ -183,6 +201,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         _root.setLayout(new FillLayout(SWT.HORIZONTAL));
         _translationRegistry.register(this);
         _realized = true;
+        setBackground(_bg);
     }
     
     private boolean hasArchives(ReferenceNode node) {

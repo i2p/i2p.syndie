@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.MessageInfo;
@@ -26,10 +27,12 @@ import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageUtil;
+import syndie.gui.MessageFlagBar;
 import syndie.gui.MessageTree;
 import syndie.gui.MessageView;
 import syndie.gui.MessageViewBody;
 import syndie.gui.NavigationControl;
+import syndie.gui.PassphrasePrompt;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.Themeable;
@@ -40,7 +43,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class MessagePanel extends DesktopPanel {
+public class MessagePanel extends DesktopPanel implements Translatable, Themeable {
     private NavigationControl _navControl;
     private MessageViewBody _body;
     private MessageInfo _msg;
@@ -56,6 +59,8 @@ public class MessagePanel extends DesktopPanel {
     public SyndieURI getOriginalURI() { return (_msg != null ? _msg.getURI() : null); }
     
     protected void dispose() {
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         _body.dispose();
         super.dispose();
     }
@@ -63,6 +68,8 @@ public class MessagePanel extends DesktopPanel {
     private void initComponents() {
         Composite root = getRoot();
         _body = new MessageViewBody(_desktop.getDBClient(), _desktop.getUI(), _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getBookmarkControl(), _desktop.getBanControl(), root);
+        _translationRegistry.register(this);
+        _themeRegistry.register(this);
     }
     
     public boolean canShow(SyndieURI uri) { 
@@ -90,12 +97,27 @@ public class MessagePanel extends DesktopPanel {
     public void shown(Desktop desktop, final SyndieURI uri, String suggestedName, String suggestedDescription) {
         super.shown(desktop, uri, suggestedName, suggestedDescription);
         if ( (uri == null) || (uri.getScope() == null) || (uri.getMessageId() == null) ) return;
+        
         final Timer timer = new Timer("show message", _ui);
         JobRunner.instance().enqueue(new Runnable() { 
             public void run() {
                 timer.addEvent("async run");
                 final long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                 timer.addEvent("getMsgId");
+                
+                if (msgId < 0) {
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
+                            box.setText(_translationRegistry.getText(T_NOMSG_TITLE, "Message unknown"));
+                            box.setMessage(_translationRegistry.getText(T_NOMSG, "The selected message is not known locally"));
+                            _navControl.unview(uri);
+                            box.open();
+                            return;
+                        }
+                    });
+                    return;
+                }
                 final MessageInfo msg = _client.getMessage(msgId);
                 timer.addEvent("getMessage");
                 Display.getDefault().asyncExec(new Runnable() { 
@@ -107,8 +129,40 @@ public class MessagePanel extends DesktopPanel {
             }
         });
     }
-    private void shown(SyndieURI uri, long msgId, MessageInfo msg, Timer timer) {
-        _msg = msg;
+
+    private static final String T_NOMSG_TITLE = "syndie.gui.desktop.messagepanel.nomsg.title";
+    private static final String T_NOMSG = "syndie.gui.desktop.messagepanel.nomsg";
+
+    private static final String T_UNAUTH_TITLE = "syndie.gui.desktop.messagepanel.unauth.title";
+    private static final String T_UNAUTH = "syndie.gui.desktop.messagepanel.unauth";
+
+    private void shown(final SyndieURI uri, long msgId, MessageInfo msg, Timer timer) {
+        _msg = msg;        
+        if (msg.getPassphrasePrompt() != null) {
+            getRoot().setVisible(false);
+            PassphrasePrompt prompt = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), false);
+            prompt.setPassphrasePrompt(msg.getPassphrasePrompt());
+            prompt.setPassphraseListener(new PassphrasePrompt.PassphraseListener() {
+                public void promptComplete(String passphraseEntered, String promptEntered) {
+                    reimport(passphraseEntered, uri);
+                }
+                public void promptAborted() { _navControl.unview(uri); }
+            });
+            prompt.open();
+            return;
+        } else if (msg.getReadKeyUnknown() || msg.getReplyKeyUnknown()) {
+            MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
+            box.setText(_translationRegistry.getText(T_UNAUTH_TITLE, "Not authorized"));
+            box.setMessage(_translationRegistry.getText(T_UNAUTH, "You are not authorized to read that message"));
+            _navControl.unview(uri);
+            box.open();
+            return;
+        } else {
+            getRoot().setVisible(true);
+            if (MessageTree.shouldMarkReadOnView(_client))
+                _client.markMessageRead(msg.getInternalId());
+        }
+        
         _body.viewMessage(msg, 1, timer);
         
         Long pageNum = uri.getPage();
@@ -131,7 +185,50 @@ public class MessagePanel extends DesktopPanel {
         root.layout(); //true, true);
     }
     public void hidden(Desktop desktop) {}
+    
+    private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.desktop.messagepanel.reimporterrtitle";
+    private static final String T_REIMPORT_ERR_MSG = "syndie.gui.desktop.messagepanel.reimporterrmsg";
+    private void reimport(final String passphrase, final SyndieURI uri) {
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                final boolean ok = _client.reimport(uri, passphrase);
+                Display.getDefault().asyncExec(new Runnable() { 
+                   public void run() {
+                       MessageBox box = null;
+                       if (!ok) {
+                           box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
+                           box.setText(_translationRegistry.getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
+                           box.setMessage(_translationRegistry.getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           int rc = box.open();
+                           if (rc == SWT.YES) {
+                               _navControl.unview(uri);
+                               _navControl.view(uri);
+                               //showPage();
+                           } else {
+                               _navControl.unview(uri);
+                           }
+                       } else {
+                           _navControl.unview(uri);
+                           _navControl.view(uri);
+                           //showPage();
+                       }
+                   }
+                });
+            }
+        });
+    }
 
+    public void applyTheme(Theme theme) {
+        if (_edgeSouth != null) ((Themeable)_edgeSouth).applyTheme(theme);
+        if (_edgeNorth != null) ((Themeable)_edgeNorth).applyTheme(theme);
+        if (_edgeEast != null) ((Themeable)_edgeEast).applyTheme(theme);
+    }
+    public void translate(TranslationRegistry registry) {
+        if (_edgeSouth != null) ((Translatable)_edgeSouth).translate(registry);
+        if (_edgeNorth != null) ((Translatable)_edgeNorth).translate(registry);
+        if (_edgeEast != null) ((Translatable)_edgeEast).translate(registry);
+    }
+    
     protected void buildSouth(Composite edge) { 
         if (_edgeSouth == null) _edgeSouth = new SouthEdge(edge, _ui); 
     }
@@ -197,9 +294,9 @@ public class MessagePanel extends DesktopPanel {
                     getEdgeRoot().layout(true, true);
                 }
             });
-            
-            _translationRegistry.register(SouthEdge.this);
-            _themeRegistry.register(SouthEdge.this);
+
+            translate(_translationRegistry);
+            applyTheme(_themeRegistry.getTheme());
         }
         public void updateActions(SyndieURI uri, final long msgId, MessageInfo msg) {
             final long forumId = msg.getTargetChannelId();
@@ -246,11 +343,12 @@ public class MessagePanel extends DesktopPanel {
         }
     }
 
-    class NorthEdge extends DesktopEdge implements Themeable {
+    class NorthEdge extends DesktopEdge implements Themeable, Translatable {
         private Label _authorAvatar;
         private Label _authorName;
         private Label _forumAvatar;
         private Label _forumName;
+        private MessageFlagBar _flagBar;
         private Label _subject;
         private Label _date;
         private SyndieURI _currentURI;
@@ -262,7 +360,7 @@ public class MessagePanel extends DesktopPanel {
         }
         private void initComponents() {
             Composite root = NorthEdge.this.getEdgeRoot();
-            GridLayout gl = new GridLayout(4, false);
+            GridLayout gl = new GridLayout(5, false);
             //gl.horizontalSpacing = 0;
             gl.verticalSpacing = 0;
             gl.marginHeight = 0;
@@ -279,7 +377,7 @@ public class MessagePanel extends DesktopPanel {
             _authorAvatar.setLayoutData(gd); // the frame pegs the height at 64
             
             _authorName = new Label(root, SWT.SINGLE);
-            _authorName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, true));
+            _authorName.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, true, 2, 1));
             
             _forumName = new Label(root, SWT.SINGLE);
             _forumName.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, true));
@@ -292,6 +390,9 @@ public class MessagePanel extends DesktopPanel {
             gd.horizontalAlignment = GridData.CENTER;
             gd.verticalAlignment = GridData.CENTER;
             _forumAvatar.setLayoutData(gd); // the frame pegs the height at 64
+            
+            _flagBar = new MessageFlagBar(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getBookmarkControl(), root, true);
+            _flagBar.getControl().setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
             
             _subject = new Label(root, SWT.SINGLE);
             _subject.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
@@ -308,13 +409,16 @@ public class MessagePanel extends DesktopPanel {
             _forumName.setBackground(white);
             _subject.setBackground(white);
             _date.setBackground(white);
+            _flagBar.setBackground(white);
             _authorName.setForeground(black);
             _forumName.setForeground(black);
             _subject.setForeground(black);
             _date.setForeground(black);
             root.setBackground(white);
             root.setForeground(black);
-            _themeRegistry.register(NorthEdge.this);
+            
+            translate(_translationRegistry);
+            applyTheme(_themeRegistry.getTheme());
         }
         public void updateMeta(final SyndieURI uri, final long msgId, final MessageInfo msg) {
             if ( (uri == null) || (uri.getScope() == null) || (uri.getMessageId() == null) ) return;
@@ -391,6 +495,8 @@ public class MessagePanel extends DesktopPanel {
                                 _subject.setText("");
                             
                             _date.setText(when);
+                    
+                            _flagBar.setMessage(msg);
                             
                             getEdgeRoot().layout(true, true);
                             getEdgeRoot().setRedraw(true);
@@ -406,6 +512,13 @@ public class MessagePanel extends DesktopPanel {
             _date.setFont(theme.SHELL_FONT);
             getEdgeRoot().layout(true, true);
         }
+        public void translate(TranslationRegistry trans) {}
+        public void dispose() {
+            ImageUtil.dispose(_authorAvatar.getImage());
+            ImageUtil.dispose(_forumAvatar.getImage());
+            _flagBar.dispose();
+            super.dispose();
+        }
     }
     
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
@@ -417,8 +530,8 @@ public class MessagePanel extends DesktopPanel {
             Composite root = getEdgeRoot();
             root.setLayout(new FillLayout(SWT.VERTICAL));
             
-            _translationRegistry.register(EastEdge.this);
-            _themeRegistry.register(EastEdge.this);
+            translate(_translationRegistry);
+            applyTheme(_themeRegistry.getTheme());
         }
         public void updateNav(SyndieURI uri, long msgId, MessageInfo msg) {}
         public void translate(TranslationRegistry trans) {}

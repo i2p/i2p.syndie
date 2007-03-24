@@ -136,6 +136,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
     
     protected void dispose() {
+        _translationRegistry.unregister(this);
+        _themeRegistry.unregister(this);
         _tree.dispose();
         hidden();
         super.dispose();
@@ -334,6 +336,11 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _refs.setForeground(black);
             root.setBackground(white);
             root.setForeground(black);
+        }
+        
+        public void dispose() {
+            ImageUtil.dispose(_avatar.getImage());
+            super.dispose();
         }
 
         public void applyTheme(Theme theme) {
