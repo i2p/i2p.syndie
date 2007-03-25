@@ -63,6 +63,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
+import syndie.data.MessageIterator;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -71,6 +72,7 @@ import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.ThreadAccumulator;
 import syndie.db.ThreadAccumulatorJWZ;
+import syndie.db.TreeMessageIterator;
 import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 
@@ -1497,6 +1499,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     private List getCurrentPageNodes(List referenceNodes) {
+        if (_root.isDisposed()) return referenceNodes;
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
         if (sz <= 0) {
@@ -1543,6 +1546,32 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
     
+    public MessageIterator getIterator(SyndieURI uri) {
+        ReferenceNode node = getNode(uri);
+        if (node == null)
+            return null;
+        TreeMessageIterator iter = new TreeMessageIterator(_ui, _fullNodes, getCurrentFilter());
+        iter.recenter(uri);
+        return iter;
+    }
+    
+    private Map _uriToNode;
+    private ReferenceNode getNode(final SyndieURI uri) {
+        if (_uriToNode == null) {
+            final Map uriToNode = new HashMap();
+            ReferenceNode.walk(_fullNodes, new ReferenceNode.Visitor() {
+                public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                    SyndieURI nuri = node.getURI();
+                    if (nuri != null)
+                        uriToNode.put(nuri, node);
+                }
+            });
+            _uriToNode = uriToNode;
+        }
+        ReferenceNode node = (ReferenceNode)_uriToNode.get(uri);
+        return node;
+    }
+    
     List getMessages() { return _threadReferenceNodes; }
     void setMessages(List allNodes) { 
         // this method is overridden in WatchedMessageTree to rewrite allNodes, injecting parents.
@@ -1552,6 +1581,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     void setMessages(List allNodes, boolean recalcTags) {
         if (allNodes == null) return;
+        if (_root.isDisposed()) return;
+        _uriToNode = null;
         List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();

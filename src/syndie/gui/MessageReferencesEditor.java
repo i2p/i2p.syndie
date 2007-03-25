@@ -173,7 +173,8 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
     public void dispose() {
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
-        _editPopup.dispose();
+        if (_editPopup != null)
+            _editPopup.dispose();
     }
     
     private void loadData() {

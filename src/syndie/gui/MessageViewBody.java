@@ -14,6 +14,7 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -196,7 +197,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                     if (_tabFolder.getSelection() == _tabs[toff]) {
                         _ui.debugMessage("tab folder: thread tab selected");
                         if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) ) {
-                            loadThread(msg);
+                            asyncLoadThread(msg);
                         } else {
                             _ui.debugMessage("tab folder: thread tab already populated");
                         }
@@ -264,7 +265,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             public void run() {
                 if (_root.isDisposed()) return;
                 if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) )
-                    loadThread(msg);
+                    asyncLoadThread(msg);
             }
         });
         timer.addEvent("initBody root laid out");
@@ -324,21 +325,29 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
 
-    private void loadThread(MessageInfo msg) {
+    private void asyncLoadThread(MessageInfo msg) {
         _ui.debugMessage("tab folder: populate thread tab");
         ThreadBuilder builder = new ThreadBuilder(_client, _ui);
-        List msgs = new ArrayList(1);
-        ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
+        final List msgs = new ArrayList(1);
+        final ThreadMsgId id = new ThreadMsgId(msg.getInternalId());
         id.messageId = msg.getMessageId();
         id.scope = msg.getScopeChannel();
         id.authorScopeId = msg.getAuthorChannelId();
         //timer.addEvent("initBody thread build prepared");
         msgs.add(builder.buildThread(id));
         //timer.addEvent("initBody thread built");
-        int threadSize = countMessages(msgs);
+        final int threadSize = countMessages(msgs);
         //timer.addEvent("initBody thread size counted");
         //_browser.getUI().debugMessage("thread for " + _uri + ":\n" + msgs);
 
+        Display.getDefault().asyncExec(new Runnable() {
+            public void run() {
+                if (!_root.isDisposed())
+                    syncLoadThread(msgs, id, threadSize);
+            }
+        });
+    }
+    private void syncLoadThread(List msgs, ThreadMsgId id, int threadSize) {
         _threadTree.setMessages(msgs);
         //timer.addEvent("initBody thread tree messages set");
         _threadTree.expandAll();

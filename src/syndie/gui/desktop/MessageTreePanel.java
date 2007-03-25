@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import syndie.Constants;
+import syndie.data.MessageIterator;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
@@ -78,6 +79,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
+    
+    public MessageIterator getIterator(SyndieURI uri) { return _tree.getIterator(uri); }
 
     public boolean canShow(SyndieURI uri) { 
         boolean rv = false;
@@ -479,6 +482,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
     
     private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";
+    private static final String T_PROFILE = "syndie.gui.messagetreepanel.profile";
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _profile;
@@ -500,6 +504,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
+            _profile.setText(registry.getText(T_PROFILE, "Profile"));
             _profile.setToolTipText(registry.getText(T_PROFILE_TT, "View the forum's profile"));
         }
         public void updateNav(SyndieURI uri) {

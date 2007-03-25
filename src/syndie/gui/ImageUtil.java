@@ -155,6 +155,14 @@ public class ImageUtil {
     public static Image ICON_TASKTREE_CLOSE_SELF;
     public static Image ICON_TASKTREE_CLOSE_GROUP;
     
+    public static Image ICON_MSGNAV_FORUM;
+    public static Image ICON_MSGNAV_NEXTINTHREAD;
+    public static Image ICON_MSGNAV_PREVINTHREAD;
+    public static Image ICON_MSGNAV_NEXTTHREAD;
+    public static Image ICON_MSGNAV_PREVTHREAD;
+    public static Image ICON_MSGNAV_NEXTNEW;
+    public static Image ICON_MSGNAV_PREVNEW;
+    
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
@@ -263,6 +271,14 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_TASKTREE_CLOSE_GROUP);
         _indisposableImages.add(ICON_TASKTREE_CLOSE_SELF);
+        
+        _indisposableImages.add(ICON_MSGNAV_FORUM);
+        _indisposableImages.add(ICON_MSGNAV_NEXTINTHREAD);
+        _indisposableImages.add(ICON_MSGNAV_NEXTNEW);
+        _indisposableImages.add(ICON_MSGNAV_NEXTTHREAD);
+        _indisposableImages.add(ICON_MSGNAV_PREVINTHREAD);
+        _indisposableImages.add(ICON_MSGNAV_PREVNEW);
+        _indisposableImages.add(ICON_MSGNAV_PREVTHREAD);
         _timer.addEvent("init complete");
         _timer.complete();
     }
@@ -370,6 +386,14 @@ public class ImageUtil {
         
         ICON_TASKTREE_CLOSE_GROUP = createImageFromResource("iconTaskCloseGroup.png");
         ICON_TASKTREE_CLOSE_SELF = createImageFromResource("iconTaskCloseSelf.png");
+        
+        ICON_MSGNAV_FORUM = createImageFromResource("iconMsgNavForum.png");
+        ICON_MSGNAV_NEXTINTHREAD = createImageFromResource("iconMsgNavNextInThread.png");
+        ICON_MSGNAV_NEXTNEW = createImageFromResource("iconMsgNavNextNew.png");
+        ICON_MSGNAV_NEXTTHREAD = createImageFromResource("iconMsgNavNextThread.png");
+        ICON_MSGNAV_PREVINTHREAD = createImageFromResource("iconMsgNavPrevInThread.png");
+        ICON_MSGNAV_PREVNEW = createImageFromResource("iconMsgNavPrevNew.png");
+        ICON_MSGNAV_PREVTHREAD = createImageFromResource("iconMsgNavPrevThread.png");
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

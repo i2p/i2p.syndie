@@ -264,6 +264,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (_linkPopup != null) _linkPopup.dispose();
         if (_refChooser != null) _refChooser.dispose();
         if (_imagePopup != null) _imagePopup.dispose();
+        if (_refEditor != null) _refEditor.dispose();
         //if (_styler != null) _styler.dispose();
         if (_spellchecker != null) _spellchecker.dispose();
         if (_finder != null) _finder.dispose();

@@ -18,11 +18,16 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.MessageInfo;
+import syndie.data.MessageIterator;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
+import syndie.db.ThreadBuilder;
+import syndie.db.ThreadMessageIterator;
+import syndie.db.ThreadMsgId;
+import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ChannelSelectorPanel;
@@ -558,19 +563,171 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     }
     
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
+        private Button _navNextNew;
+        private Button _navPrevNew;
+        private Button _navNextInThread;
+        private Button _navPrevInThread;
+        private Button _navNextThread;
+        private Button _navPrevThread;
+        private Button _navForum;
+        private MessageIterator _iter;
         public EastEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
         }
         private void initComponents() {
             Composite root = getEdgeRoot();
-            root.setLayout(new FillLayout(SWT.VERTICAL));
+            GridLayout gl = new GridLayout(1, true);
+            gl.marginHeight = 0;
+            gl.marginWidth = 0;
+            gl.verticalSpacing = 0;
+            gl.horizontalSpacing = 0;
+            root.setLayout(gl);
+            
+            _navNextNew = new Button(root, SWT.PUSH);
+            _navNextNew.setImage(ImageUtil.ICON_MSGNAV_NEXTNEW);
+            _navNextNew.setLayoutData(new GridData(64, 64));
+            _navNextNew.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getNextNew();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navPrevNew = new Button(root, SWT.PUSH);
+            _navPrevNew.setImage(ImageUtil.ICON_MSGNAV_PREVNEW);
+            _navPrevNew.setLayoutData(new GridData(64, 64));
+            _navPrevNew.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getPreviousNew();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navNextInThread = new Button(root, SWT.PUSH);
+            _navNextInThread.setImage(ImageUtil.ICON_MSGNAV_NEXTINTHREAD);
+            _navNextInThread.setLayoutData(new GridData(64, 64));
+            _navNextInThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getNextInThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navPrevInThread = new Button(root, SWT.PUSH);
+            _navPrevInThread.setImage(ImageUtil.ICON_MSGNAV_PREVINTHREAD);
+            _navPrevInThread.setLayoutData(new GridData(64, 64));
+            _navPrevInThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getPreviousInThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navNextThread = new Button(root, SWT.PUSH);
+            _navNextThread.setImage(ImageUtil.ICON_MSGNAV_NEXTTHREAD);
+            _navNextThread.setLayoutData(new GridData(64, 64));
+            _navNextThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getNextThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navPrevThread = new Button(root, SWT.PUSH);
+            _navPrevThread.setImage(ImageUtil.ICON_MSGNAV_PREVTHREAD);
+            _navPrevThread.setLayoutData(new GridData(64, 64));
+            _navPrevThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getPreviousThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null);
+                }
+            });
+            
+            _navForum = new Button(root, SWT.PUSH);
+            _navForum.setImage(ImageUtil.ICON_MSGNAV_FORUM);
+            _navForum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+            _navForum.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getMessageTreeURI();
+                    if (uri != null) {
+                        _navControl.view(uri);
+                        close();
+                    }
+                }
+            });
             
             translate(_translationRegistry);
             applyTheme(_themeRegistry.getTheme());
         }
-        public void updateNav(SyndieURI uri, long msgId, MessageInfo msg) {}
+        public void updateNav(final SyndieURI uri, final long msgId, final MessageInfo msg) {
+            JobRunner.instance().enqueue(new Runnable() {
+                public void run() {
+                    _iter = getIterator(uri, msgId, msg);
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            updateNav(_iter);
+                        }
+                    });
+                }
+            });
+        }
+        private void updateNav(MessageIterator iter) {
+            _navNextInThread.setEnabled(iter.getNextInThread() != null);
+            _navPrevInThread.setEnabled(iter.getPreviousInThread() != null);
+            _navNextThread.setEnabled(iter.getNextThread() != null);
+            _navPrevThread.setEnabled(iter.getPreviousThread() != null);
+            _navNextNew.setEnabled(iter.getNextNew() != null);
+            _navPrevNew.setEnabled(iter.getPreviousNew() != null);
+            _navForum.setEnabled(iter.getMessageTreeURI() != null);
+        }
         public void translate(TranslationRegistry trans) {}
         public void applyTheme(Theme theme) {}
+    }
+    
+    /**
+     * run this outside the gui thread to fetch the iterator to retrieve an iterator for
+     * navigating. two quirks:
+     * - if multiple forums are open that contain the same message, the traversal will work 
+     *   against the first open forum's nodes.  this only matters when dealing with message
+     *   tree panels that are browsing multiple forums at a time.
+     * - the traversal of a message that is within an open forum goes according to that forum's 
+     *   filters, even if it excludes some messages in the thread.  however, the traversal of 
+     *   a message that is NOT within an open forum will pull the full thread (but not offer
+     *   any traversal to other threads in that forum)
+     *
+     */
+    private MessageIterator getIterator(SyndieURI uri, long msgId, MessageInfo msg) {
+        Hash forum = msg.getTargetChannel();
+        List panels = _desktop.getPanels();
+        for (int i = 0; i < panels.size(); i++) {
+            DesktopPanel panel = (DesktopPanel)panels.get(i);
+            if (panel instanceof MessageTreePanel) {
+                MessageTreePanel mtp = (MessageTreePanel)panel;
+                MessageIterator iter = mtp.getIterator(uri);
+                if (iter != null)
+                    return iter;
+            }
+        }
+        
+        // no panels contained the message, so it must have been launched through a link
+        // or direct access.  build up a simple iterator that only operates against the
+        // message's thread
+        SyndieURI treeURI = SyndieURI.createScope(msg.getTargetChannel());
+        ThreadBuilder builder = new ThreadBuilder(_client, _ui);
+        ThreadMsgId tmi = new ThreadMsgId(msgId);
+        tmi.scope = msg.getScopeChannel();
+        tmi.authorScopeId = msg.getAuthorChannelId();
+        tmi.messageId = msg.getMessageId();
+        ThreadReferenceNode root = builder.buildThread(tmi);
+        ThreadMessageIterator iter = new ThreadMessageIterator(root, treeURI);
+        iter.recenter(msgId);
+        return iter;
     }
 }
