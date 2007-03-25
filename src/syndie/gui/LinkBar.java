@@ -137,8 +137,8 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
         // we dont need to remember the drop targets here, since they're necessary for the life
         // of the associated button and SWT disposes the drop targets as dispose listeners on them
         BookmarkDnDHelper.initWatchTarget(_client, _ui, _watchedButton);
-        BookmarkDnDHelper.initBookmarkDnDTarget(_client, _ui, _referencesButton, new BookmarkDnDHelper.BookmarkDnDTarget() {
-            public void dropped(SyndieURI uri) { _bookmarkControl.bookmark(uri); }        
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _referencesButton, new BookmarkDnDHelper.BookmarkDnDTarget() {
+            public void dropped(SyndieURI uri, String name, String desc) { _bookmarkControl.bookmark(uri); }        
         });
     }
     

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
@@ -23,6 +24,7 @@ import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
+import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
@@ -353,6 +355,16 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         private Label _date;
         private SyndieURI _currentURI;
         
+        private Hash _authorHash;
+        private String _authorNameStr;
+        private Hash _forumHash;
+        private String _forumNameStr;
+        
+        private DragSource _authorAvatarSrc;
+        private DragSource _authorNameSrc;
+        private DragSource _forumAvatarSrc;
+        private DragSource _forumNameSrc;
+        
         public NorthEdge(Composite edge, UI ui) {
             super(edge, ui);
             _currentURI = null;
@@ -417,6 +429,21 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             root.setBackground(white);
             root.setForeground(black);
             
+            BookmarkDnDHelper.SourceProvider authorSource = new BookmarkDnDHelper.SourceProvider() {
+                public SyndieURI getURI() { return SyndieURI.createScope(_authorHash); }
+                public String getName() { return _authorNameStr; }
+                public String getDescription() { return null; }
+            };
+            BookmarkDnDHelper.SourceProvider forumSource = new BookmarkDnDHelper.SourceProvider() {
+                public SyndieURI getURI() { return SyndieURI.createScope(_forumHash); }
+                public String getName() { return _forumNameStr; }
+                public String getDescription() { return null; }
+            };
+            _authorAvatarSrc = BookmarkDnDHelper.initSource(_authorAvatar, authorSource);
+            _authorNameSrc = BookmarkDnDHelper.initSource(_authorName, authorSource);
+            _forumAvatarSrc = BookmarkDnDHelper.initSource(_forumAvatar, forumSource);
+            _forumNameSrc = BookmarkDnDHelper.initSource(_forumName, forumSource);
+            
             translate(_translationRegistry);
             applyTheme(_themeRegistry.getTheme());
         }
@@ -446,6 +473,11 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                     final byte forumAvatar[] = (authorId != forumId ? _client.getChannelAvatar(forumId) : null);
                     
                     final long importDate = _client.getMessageImportDate(msgId);
+                    
+                    _forumHash = (authorId != forumId ? forumHash : authorHash);
+                    _forumNameStr = (authorId != forumId ? forumName : authorName);
+                    _authorHash = authorHash;
+                    _authorNameStr = authorName;
                     
                     final String when = Constants.getDate(messageId.longValue()) + " [" + Constants.getDate(importDate) + "]";
                     
@@ -516,6 +548,10 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         public void dispose() {
             ImageUtil.dispose(_authorAvatar.getImage());
             ImageUtil.dispose(_forumAvatar.getImage());
+            if (_authorAvatarSrc != null) _authorAvatarSrc.dispose();
+            if (_authorNameSrc != null) _authorNameSrc.dispose();
+            if (_forumAvatarSrc != null) _forumAvatarSrc.dispose();
+            if (_forumNameSrc != null) _forumNameSrc.dispose();
             _flagBar.dispose();
             super.dispose();
         }

@@ -4006,6 +4006,8 @@ public class DBClient {
         if (channelId < 0) return;
         
         unwatchChannel(nymId, channelId, false);
+        if (_ui != null)
+            _ui.debugMessage("watch channel " + channelId + " for nym " + nymId);
         
         PreparedStatement stmt = null;
         try {

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -26,6 +27,7 @@ import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
 import syndie.gui.BookmarkControl;
+import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ColorUtil;
 import syndie.gui.DataCallback;
 import syndie.gui.FireSelectionListener;
@@ -190,6 +192,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         private String _name;
         private String _description;
         
+        private DragSource _avatarSrc;
+        private DragSource _summarySrc;
+        
         public NorthEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
@@ -336,10 +341,21 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _refs.setForeground(black);
             root.setBackground(white);
             root.setForeground(black);
+            
+            
+            BookmarkDnDHelper.SourceProvider src = new BookmarkDnDHelper.SourceProvider() {
+                public SyndieURI getURI() { return SyndieURI.createScope(_scope); }
+                public String getName() { return _name; }
+                public String getDescription() { return _description; }
+            };
+            _avatarSrc = BookmarkDnDHelper.initSource(_avatar, src);
+            _summarySrc = BookmarkDnDHelper.initSource(_summary, src);
         }
         
         public void dispose() {
             ImageUtil.dispose(_avatar.getImage());
+            if (_avatarSrc != null) _avatarSrc.dispose();
+            if (_summarySrc != null) _summarySrc.dispose();
             super.dispose();
         }
 
@@ -460,14 +476,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         private void ban() {
             _desktop.getBanControl().ban(_actionScope);
         }
-    }
-
-    public String getT_MULTI() {
-        return T_MULTI;
-    }
-
-    public String getT_BAN() {
-        return T_BAN;
     }
     
     private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";

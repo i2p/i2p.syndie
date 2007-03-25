@@ -57,15 +57,21 @@ public class LinkEdge extends DesktopEdge {
         _watches.setBackground(ColorUtil.getColor("blue"));
         _watches.setForeground(ColorUtil.getColor("blue"));
         _watches.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
-        BookmarkDnDHelper.initWatchTarget(_desktop.getDBClient(), _ui, _watches);
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _watches, new BookmarkDnDHelper.WatchTarget() { 
+            public void dropped(SyndieURI uri, String name, String desc) {
+                _desktop.getDBClient().watchChannel(uri.getScope(), true, true, false, false, false);
+            }
+        });
         
         _refs = new Button(root, SWT.PUSH);
         _refs.setText(" ");
         _refs.setBackground(ColorUtil.getColor("yellow"));
         _refs.setForeground(ColorUtil.getColor("yellow"));
         _refs.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(true); } }); 
-        BookmarkDnDHelper.initBookmarkDnDTarget(_desktop.getDBClient(), _ui, _refs, new BookmarkDnDHelper.BookmarkDnDTarget() {
-            public void dropped(SyndieURI uri) { _desktop.getBookmarkControl().bookmark(uri); }
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _refs, new BookmarkDnDHelper.WatchTarget() { 
+            public void dropped(SyndieURI uri, String name, String desc) {
+                _desktop.getBookmarkControl().bookmark(uri);
+            }
         });
     }
 }
