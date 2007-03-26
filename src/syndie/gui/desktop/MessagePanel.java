@@ -411,7 +411,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _forumName = new Label(root, SWT.SINGLE);
             _forumName.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, true));
             
-            _forumAvatar = new ImageCanvas(root, false, false); //Label(root, SWT.NONE);
+            _forumAvatar = new ImageCanvas(root, false, false, false); //Label(root, SWT.NONE);
             _forumAvatar.setImage(null);
             _forumAvatar.forceSize(64, 64);
             gd = new GridData(64, SWT.DEFAULT);

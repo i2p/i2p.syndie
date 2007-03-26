@@ -55,7 +55,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private List _threadLoadedListeners;
     
     private MaxView _maxView;
-    private boolean _disposed;
+    private DetailState _viewState;
     
     private ThreadReferenceNode _messageThread;
     
@@ -71,7 +71,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _banControl = ban;
         _root = root;
         _threadLoadedListeners = new ArrayList();
-        _disposed = false;
+        _viewState = new DetailState();
         initComponents();
     }
     
@@ -84,6 +84,11 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _themeRegistry.register(this);
     }
     
+    private class DetailState {
+        public boolean disposed;
+        public DetailState() { disposed = false; }
+    }
+    
     public void dispose() {
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
@@ -92,7 +97,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _maxView.dispose();
     }
     private void disposeDetails() {
-        _disposed = true;
+        _viewState.disposed = true;
         //if (!_root.isDisposed()) _root.setRedraw(false);
         if (_tabRoots != null) {
             for (int i = 0; i < _tabRoots.length; i++)
@@ -143,7 +148,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _messageThread = messageThread;
         _root.setVisible(false);
         disposeDetails();
-        _disposed = false;
+        _viewState = new DetailState();
         if (msg == null) {
             _root.setVisible(true);
             return;
@@ -197,7 +202,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             final int toff = off;
             _tabFolder.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
-                    if (_disposed) return;
+                    if (_viewState.disposed) return;
                     if (_tabFolder.getSelection() == _tabs[toff]) {
                         _ui.debugMessage("tab folder: thread tab selected");
                         if (_threadTree == null) {
@@ -266,7 +271,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if (DEFERRED_ATTACHMENT_PREVIEW) {
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
-                        if (_disposed) return;
+                        if (_viewState.disposed) return;
                         if (_tabFolder.getSelection() == _tabs[toff]) {
                             _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
                         }
@@ -357,7 +362,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
 
     private void asyncLoadThread(MessageInfo msg, final Composite parent) {
-        if (_disposed) return;
+        if (_viewState.disposed) return;
         _ui.debugMessage("tab folder: populate thread tab");
         ThreadBuilder builder = new ThreadBuilder(_client, _ui);
         final List msgs = new ArrayList(1);
