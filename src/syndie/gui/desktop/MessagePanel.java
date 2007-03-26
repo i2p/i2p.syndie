@@ -608,6 +608,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _navNextNew;
         private Button _navPrevNew;
+        private Button _navNextViaThread;
+        private Button _navPrevViaThread;
         private Button _navNextInThread;
         private Button _navPrevInThread;
         private Button _navNextThread;
@@ -647,6 +649,28 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                     if (uri != null) {
                         shown(_desktop, uri, null, null, _iter);
                     }
+                }
+            });
+            
+            _navNextViaThread = new Button(root, SWT.PUSH);
+            _navNextViaThread.setImage(ImageUtil.ICON_MSGNAV_NEXTVIATHREAD);
+            _navNextViaThread.setLayoutData(new GridData(64, 64));
+            _navNextViaThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getNextViaThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null, _iter);
+                }
+            });
+            
+            _navPrevViaThread = new Button(root, SWT.PUSH);
+            _navPrevViaThread.setImage(ImageUtil.ICON_MSGNAV_PREVVIATHREAD);
+            _navPrevViaThread.setLayoutData(new GridData(64, 64));
+            _navPrevViaThread.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    SyndieURI uri = _iter.getPreviousViaThread();
+                    if (uri != null)
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -725,6 +749,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         private void updateNav(MessageIterator iter) {
             _navNextInThread.setEnabled(iter.getNextInThread() != null);
             _navPrevInThread.setEnabled(iter.getPreviousInThread() != null);
+            _navNextViaThread.setEnabled(iter.getNextViaThread() != null);
+            _navPrevViaThread.setEnabled(iter.getPreviousViaThread() != null);
             _navNextThread.setEnabled(iter.getNextThread() != null);
             _navPrevThread.setEnabled(iter.getPreviousThread() != null);
             _navNextNew.setEnabled(iter.getNextNew() != null);

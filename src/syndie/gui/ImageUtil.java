@@ -158,6 +158,8 @@ public class ImageUtil {
     public static Image ICON_MSGNAV_FORUM;
     public static Image ICON_MSGNAV_NEXTINTHREAD;
     public static Image ICON_MSGNAV_PREVINTHREAD;
+    public static Image ICON_MSGNAV_NEXTVIATHREAD;
+    public static Image ICON_MSGNAV_PREVVIATHREAD;
     public static Image ICON_MSGNAV_NEXTTHREAD;
     public static Image ICON_MSGNAV_PREVTHREAD;
     public static Image ICON_MSGNAV_NEXTNEW;
@@ -276,9 +278,11 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSGNAV_NEXTINTHREAD);
         _indisposableImages.add(ICON_MSGNAV_NEXTNEW);
         _indisposableImages.add(ICON_MSGNAV_NEXTTHREAD);
+        _indisposableImages.add(ICON_MSGNAV_NEXTVIATHREAD);
         _indisposableImages.add(ICON_MSGNAV_PREVINTHREAD);
         _indisposableImages.add(ICON_MSGNAV_PREVNEW);
         _indisposableImages.add(ICON_MSGNAV_PREVTHREAD);
+        _indisposableImages.add(ICON_MSGNAV_PREVVIATHREAD);
         _timer.addEvent("init complete");
         _timer.complete();
     }
@@ -391,9 +395,11 @@ public class ImageUtil {
         ICON_MSGNAV_NEXTINTHREAD = createImageFromResource("iconMsgNavNextInThread.png");
         ICON_MSGNAV_NEXTNEW = createImageFromResource("iconMsgNavNextNew.png");
         ICON_MSGNAV_NEXTTHREAD = createImageFromResource("iconMsgNavNextThread.png");
+        ICON_MSGNAV_NEXTVIATHREAD = createImageFromResource("iconMsgNavNextViaThread.png");
         ICON_MSGNAV_PREVINTHREAD = createImageFromResource("iconMsgNavPrevInThread.png");
         ICON_MSGNAV_PREVNEW = createImageFromResource("iconMsgNavPrevNew.png");
         ICON_MSGNAV_PREVTHREAD = createImageFromResource("iconMsgNavPrevThread.png");
+        ICON_MSGNAV_PREVVIATHREAD = createImageFromResource("iconMsgNavPrevViaThread.png");
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {

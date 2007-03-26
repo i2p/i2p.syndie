@@ -17,6 +17,10 @@ public interface MessageIterator {
     public SyndieURI getNextInThread();
     /** get the URI to the previous message in the current thread, or null if there are no more */
     public SyndieURI getPreviousInThread();
+    /** get the URI to the next message in the current thread or the beginning of the next thread, or null if there are no more */
+    public SyndieURI getNextViaThread();
+    /** get the URI to the previous message in the current thread or the end of the previous thread, or null if there are no more */
+    public SyndieURI getPreviousViaThread();
     /** get the URI to the root of the next thread, or null if there are no more */
     public SyndieURI getNextThread();
     /** get the URI to the root of the previous thread, or null if there are no more */

@@ -21,6 +21,8 @@ public class TreeMessageIterator implements MessageIterator {
     private SyndieURI _prevNew;
     private SyndieURI _nextInThread;
     private SyndieURI _prevInThread;
+    private SyndieURI _nextViaThread;
+    private SyndieURI _prevViaThread;
     private SyndieURI _nextThread;
     private SyndieURI _prevThread;
     
@@ -38,6 +40,8 @@ public class TreeMessageIterator implements MessageIterator {
         _prevNew = null;
         _nextInThread = null;
         _prevInThread = null;
+        _nextViaThread = null;
+        _prevViaThread = null;
         _nextThread = null;
         _prevThread = null;
     
@@ -54,6 +58,8 @@ public class TreeMessageIterator implements MessageIterator {
                 else
                     noPrevInThread = true;
             }
+            if (_prevViaThread == null)
+                _prevViaThread = prev.getURI();
             if (_prevNew == null) {
                 if (prev.getMessageStatus() == DBClient.MSG_STATUS_UNREAD) {
                     _prevNew = prev.getURI();
@@ -78,6 +84,8 @@ public class TreeMessageIterator implements MessageIterator {
                     _ui.debugMessage("next message is NOT in the same thread: \n" + nxt + "\nnext root: " + root + "\n current root: " + _currentThreadRoot);
                 }
             }
+            if (_nextViaThread == null)
+                _nextViaThread = nxt.getURI();
             if (_nextNew == null) {
                 if (nxt.getMessageStatus() == DBClient.MSG_STATUS_UNREAD) {
                     _nextNew = nxt.getURI();
@@ -132,6 +140,8 @@ public class TreeMessageIterator implements MessageIterator {
     public SyndieURI getPreviousNew() { return _prevNew; }
     public SyndieURI getNextInThread() { return _nextInThread; }
     public SyndieURI getPreviousInThread() { return _prevInThread; }
+    public SyndieURI getNextViaThread() { return _nextViaThread; }
+    public SyndieURI getPreviousViaThread() { return _prevViaThread; }
     public SyndieURI getNextThread() { return _nextThread; }
     public SyndieURI getPreviousThread() { return _prevThread; }
     public SyndieURI getMessageTreeURI() { return _treeURI; }

@@ -107,4 +107,6 @@ public class ThreadMessageIterator implements MessageIterator {
     // single thread only
     public SyndieURI getNextThread() { return null; }
     public SyndieURI getPreviousThread() { return null; }
+    public SyndieURI getNextViaThread() { return _nextInThread; }
+    public SyndieURI getPreviousViaThread() { return _prevInThread; }
 }
