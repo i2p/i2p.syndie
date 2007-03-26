@@ -57,6 +57,8 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
     public void applyTheme(Theme theme) {
         if (_edgeNorth != null)
             ((Themeable)_edgeNorth).applyTheme(theme);
+        if (_edgeEast != null)
+            ((Themeable)_edgeEast).applyTheme(theme);
         if (_edgeSouth != null)
             ((Themeable)_edgeSouth).applyTheme(theme);
     }
@@ -64,6 +66,8 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
     public void translate(TranslationRegistry registry) {
         if (_edgeNorth != null)
             ((Translatable)_edgeNorth).translate(registry);
+        if (_edgeEast != null)
+            ((Translatable)_edgeEast).translate(registry);
         if (_edgeSouth != null)
             ((Translatable)_edgeSouth).translate(registry);
     }
@@ -114,6 +118,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
         
         public void applyTheme(Theme theme) {
             _title.setFont(theme.SHELL_FONT);
+            getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
             _title.setText(registry.getText(T_TITLE, "Peer syndication"));
@@ -136,7 +141,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
         }
         
         public void applyTheme(Theme theme) {
-            _details.setFont(theme.SHELL_FONT);
+            _details.setFont(theme.DEFAULT_FONT);
         }
         public void translate(TranslationRegistry registry) {
             _details.setText(registry.getText(T_DETAILS, "Details"));
