@@ -224,6 +224,12 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     private static final String T_IDENT_TT = "syndie.gui.forumselectionpanel.ident.tt";
     private static final String T_MANAGEABLE_TT = "syndie.gui.forumselectionpanel.manageable.tt";
     private static final String T_POSTABLE_TT = "syndie.gui.forumselectionpanel.postable.tt";
+
+    private static final String T_WATCHED = "syndie.gui.forumselectionpanel.watched";
+    private static final String T_REFS = "syndie.gui.forumselectionpanel.refs";
+    private static final String T_IDENT = "syndie.gui.forumselectionpanel.ident";
+    private static final String T_MANAGEABLE = "syndie.gui.forumselectionpanel.manageable";
+    private static final String T_POSTABLE = "syndie.gui.forumselectionpanel.postable";
     
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _watched;
@@ -260,7 +266,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
                 public void fire() { _channels.showPostable(null); } 
             });
             
-            Color color = ColorUtil.getColor("blue");
+            Color color = ColorUtil.getColor("yellow");
             _watched.setBackground(color);
             _refs.setBackground(color);
             _ident.setBackground(color);
@@ -276,6 +282,12 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _ident.setToolTipText(trans.getText(T_IDENT_TT, "Show nyms"));
             _manageable.setToolTipText(trans.getText(T_MANAGEABLE_TT, "Show manageable forums"));
             _postable.setToolTipText(trans.getText(T_POSTABLE_TT, "Show postable forums"));
+
+            _watched.setText(trans.getText(T_WATCHED, "W\na\nt\nc\nh"));
+            _refs.setText(trans.getText(T_REFS, "R\ne\nf\ns"));
+            _ident.setText(trans.getText(T_IDENT, "N\ny\nm\ns"));
+            _manageable.setText(trans.getText(T_MANAGEABLE, "M\na\nn\na\ng\ne"));
+            _postable.setText(trans.getText(T_POSTABLE, "P\no\ns\nt"));
         }
         public void applyTheme(Theme theme) { 
             _watched.setFont(theme.BUTTON_FONT);

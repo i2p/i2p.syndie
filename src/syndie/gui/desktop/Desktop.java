@@ -312,6 +312,7 @@ class Desktop {
                     _taskTree = new TaskTreeShell(Desktop.this);
                     ((ExitDesktopCorner)_cornerNorthEast).startupComplete();
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
+                    _edgeWestDefault.startupComplete();
                     showForumSelectionPanel();
                 } 
             });

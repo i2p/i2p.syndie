@@ -33,15 +33,18 @@ import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageGrid;
 import syndie.gui.ImageUtil;
 import syndie.gui.BookmarkDnDHelper;
+import syndie.gui.Theme;
+import syndie.gui.Themeable;
+import syndie.gui.Translatable;
+import syndie.gui.TranslationRegistry;
 
 /**
  * desktop edge containing the watched forums, bookmarked references, and the
  * active panel list
  */
-public class LinkEdge extends DesktopEdge {
+public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
     private Desktop _desktop;
-    private Button _watches;
-    private Button _refs;
+    private Button _favorites;
     
     public LinkEdge(Composite parent, UI ui, Desktop desktop) {
         super(parent, ui);
@@ -52,17 +55,16 @@ public class LinkEdge extends DesktopEdge {
     private void initComponents() {
         Composite root = getEdgeRoot();
         root.setLayout(new FillLayout(SWT.VERTICAL));
-        _watches = new Button(root, SWT.PUSH);
-        _watches.setText(" ");
-        _watches.setBackground(ColorUtil.getColor("blue"));
-        _watches.setForeground(ColorUtil.getColor("blue"));
-        _watches.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
-        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _watches, new BookmarkDnDHelper.WatchTarget() { 
+        _favorites = new Button(root, SWT.PUSH);
+        _favorites.setBackground(ColorUtil.getColor("yellow"));
+        _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _favorites, new BookmarkDnDHelper.WatchTarget() { 
             public void dropped(SyndieURI uri, String name, String desc) {
                 _desktop.getDBClient().watchChannel(uri.getScope(), true, true, false, false, false);
             }
         });
         
+        /*
         _refs = new Button(root, SWT.PUSH);
         _refs.setText(" ");
         _refs.setBackground(ColorUtil.getColor("yellow"));
@@ -73,5 +75,17 @@ public class LinkEdge extends DesktopEdge {
                 _desktop.getBookmarkControl().bookmark(uri);
             }
         });
+         */
     }
+    
+    public void startupComplete() {
+        _desktop.getThemeRegistry().register(this);
+        _desktop.getTranslationRegistry().register(this);
+    }
+    
+    public void applyTheme(Theme theme) { _favorites.setFont(theme.SHELL_FONT); }
+    public void translate(TranslationRegistry registry) {
+        _favorites.setText(registry.getText(T_FAVORITES, "F\na\nv\no\nr\ni\nt\ne\ns"));
+    }
+    private static final String T_FAVORITES = "syndie.gui.desktop.linkedge.favorites";
 }

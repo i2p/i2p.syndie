@@ -86,8 +86,12 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     public boolean canShow(SyndieURI uri) { 
         boolean rv = false;
         if (super.canShow(uri)) return true;
+        if (uri.isChannel() && (uri.getMessageId() != null)) {
+            if (_msg == null) return true; // we aren't yet initialized, so we can show any pages
+            if (uri.getScope().equals(_msg.getScopeChannel()) && (uri.getMessageId().longValue() == _msg.getMessageId()) )
+                return true;
+        }
         if (true) return false; // no sharing
-        
         
         if (uri.isChannel() && (uri.getMessageId() != null)) {
             if (_msg == null) return true; // we aren't yet initialized, so we can show any pages
