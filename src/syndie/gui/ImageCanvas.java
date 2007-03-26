@@ -26,14 +26,19 @@ public class ImageCanvas extends Canvas {
     private int _forcedWidth;
     private int _forcedHeight;
     private boolean _scroll;
+    private boolean _scaleUp;
     
     public ImageCanvas(Composite parent) { this(parent, true); }
-    public ImageCanvas(Composite parent, boolean scroll) {
-        super(parent, SWT.BORDER | (scroll ? SWT.H_SCROLL | SWT.V_SCROLL : 0));// | SWT.NO_BACKGROUND);
+    public ImageCanvas(Composite parent, boolean scroll) { this(parent, scroll, true); }
+    public ImageCanvas(Composite parent, boolean scroll, boolean border) { this(parent, scroll, border, true); }
+    public ImageCanvas(Composite parent, boolean scroll, boolean border, boolean scaleUp) {
+        super(parent, (border ? SWT.BORDER : 0) | (scroll ? SWT.H_SCROLL | SWT.V_SCROLL : 0));// | SWT.NO_BACKGROUND);
         _scroll = scroll;
         _previewX = 0;
         _previewY = 0;
+        _scaleUp = scaleUp;
         _imageCurrent = null;
+        //setBackgroundMode(SWT.INHERIT_FORCE);
         addPaintListener(new PaintListener() {
             public void paintControl(PaintEvent evt) {
                 drawPreview(evt.gc);
@@ -47,7 +52,7 @@ public class ImageCanvas extends Canvas {
                 public void controlResized(ControlEvent controlEvent) { syncScrollbars(true); }
             });
         }
-        setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+        //setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_BLACK));
         
         _forcedWidth = 0;
         _forcedHeight = 0;
@@ -212,12 +217,15 @@ public class ImageCanvas extends Canvas {
             if (pane.y > bounds.height)
                 yOff = (pane.height - bounds.height)/2;
 
-            if (_scroll) {
+            if (_scroll || !_scaleUp) {
                 gc.drawImage(_imageCurrent, x, y, width, height, xOff, yOff, width, height);
             } else {
                 //System.out.println("x=" + x + " y=" + y + " img.w=" + bounds.width + " img.h=" + bounds.height + " xoff=" + xOff + " yoff=" + yOff + " p.w=" + pane.width + " p.h=" + pane.height);
-                gc.drawImage(_imageCurrent, x, y, bounds.width, bounds.height, xOff, yOff, pane.width, pane.height);
+                int targetWidth = (xOff > 0 ? bounds.width : pane.width);
+                int targetHeight = (yOff > 0 ? bounds.height : pane.height);
+                gc.drawImage(_imageCurrent, x, y, bounds.width, bounds.height, xOff, yOff, targetWidth, targetHeight);
             }
         }
     }
+    
 }

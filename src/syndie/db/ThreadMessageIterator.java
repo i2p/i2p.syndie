@@ -13,7 +13,6 @@ public class ThreadMessageIterator implements MessageIterator {
     private ThreadReferenceNode _root;
     
     private SyndieURI _treeURI;
-    private SyndieURI _currentURI;
     private SyndieURI _nextNew;
     private SyndieURI _prevNew;
     private SyndieURI _nextInThread;
@@ -24,10 +23,37 @@ public class ThreadMessageIterator implements MessageIterator {
         _treeURI = treeURI;
     }
 
-    public void recenter(SyndieURI uri) { throw new IllegalStateException("use the recenter(msgId)"); }
+    public void recenter(final SyndieURI uri) {
+        final List traversal = new ArrayList();
+        final ReferenceNode cur[] = new ReferenceNode[1];
+        
+        List roots = new ArrayList(1);
+        roots.add(_root);
+        ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
+            public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                SyndieURI curi = node.getURI();
+                if (curi != null) {
+                    traversal.add(node);
+                    if ( (cur[0] == null) && (curi.equals(uri)) )
+                        cur[0] = node;
+                }
+            }
+        });   
+        
+        recenter(traversal, cur[0]);
+    }
     public void recenter(long msgId) {
         List traversal = traverse();
         ReferenceNode cur = _root.getByUniqueId(msgId);
+        recenter(traversal, cur);
+    }
+    private void recenter(List traversal, ReferenceNode cur) {
+        _nextNew = null;
+        _prevNew = null;
+        _nextInThread = null;
+        _prevInThread = null;
+        
+        
         if (cur != null) {
             int idx = traversal.indexOf(cur);
             for (int i = idx-1; i >= 0; i--) {
@@ -55,6 +81,8 @@ public class ThreadMessageIterator implements MessageIterator {
             }
         }
     }
+    
+    public ThreadReferenceNode getThreadRoot() { return (ThreadReferenceNode)_root; }
     
     private List traverse() {
         List roots = new ArrayList(1);

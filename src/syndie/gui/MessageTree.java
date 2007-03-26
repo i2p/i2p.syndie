@@ -1539,7 +1539,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         buf.append(pages);
         _navState.setText(buf.toString());
         
-        _top.layout(true, true);
+        _top.layout(new Control[] { _navState }); //true, true);
         //_ui.debugMessage("currentPage[" + _currentPage + "/" + pages + "]Nodes("+start +","+end+"): all nodes=" + referenceNodes.size());
         if (start > end) start = end;
         return referenceNodes.subList(start, end);

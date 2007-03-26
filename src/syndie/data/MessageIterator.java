@@ -1,5 +1,7 @@
 package syndie.data;
 
+import syndie.db.ThreadReferenceNode;
+
 /**
  *
  */
@@ -21,4 +23,6 @@ public interface MessageIterator {
     public SyndieURI getPreviousThread();
     /** get the URI to the message tree itself */
     public SyndieURI getMessageTreeURI();
+    
+    public ThreadReferenceNode getThreadRoot();
 }

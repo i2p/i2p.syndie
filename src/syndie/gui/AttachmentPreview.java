@@ -108,8 +108,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { save(); }
             public void widgetSelected(SelectionEvent selectionEvent) { save(); }
         });
-
-        _dialog = new FileDialog(_root.getShell(), SWT.SAVE);
+        
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
@@ -246,6 +245,8 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
     }
     
     private void browse() {
+        if (_dialog == null)
+            _dialog = new FileDialog(_root.getShell(), SWT.SAVE);
         _dialog.setFileName(_saveAs.getText());
         String filename = _dialog.open();
         if (filename != null)

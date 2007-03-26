@@ -185,7 +185,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _disposed = false;
     
         buildMenus();
-        pickBodyMenu();
+        ////pickBodyMenu();
         
         _text.setDoubleClickEnabled(true);
         _text.addSelectionListener(new SelectionListener() {
@@ -454,9 +454,9 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _source = src;
         _msg = msg;
         _page = pageNum;
-        _styled = _bodyViewStyled.getSelection();
+        _styled = (_bodyViewStyled == null ? true : _bodyViewStyled.getSelection());
         //System.out.println("rendering "+ msg + ": " + pageNum);
-        _text.setCursor(_parent.getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
+        _text.setCursor(Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT));
         //_text.setRedraw(false);
         _ui.debugMessage("Enqueue html render");
         PageRendererThread.enqueue(this);
@@ -995,6 +995,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
     }
     
     private void pickImageLinkMenu(HTMLTag linkTag, HTMLTag imgTag) {
+        if (_imageLinkMenu == null)
+            buildImageLinkMenu();
         _text.setMenu(_imageLinkMenu);
         _ui.debugMessage("pickImageLinkMenu: " + imgTag);
         SyndieURI uri = null;
@@ -1069,6 +1071,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
     }
     
     private void pickLinkMenu(HTMLTag linkTag) {
+        if (_linkMenu == null)
+            buildLinkMenu();
         _text.setMenu(_linkMenu);
         _ui.debugMessage("pickLinkMenu: " + linkTag);
         SyndieURI uri = null;
@@ -1111,6 +1115,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
     }
     
     private void pickBodyMenu() {
+        if (_bodyMenu == null)
+            buildBodyMenu();
         _text.setMenu(_bodyMenu);
         //_browser.getUI().debugMessage("pickBodyMenu");
             
@@ -1175,6 +1181,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
     
     private void pickImageMenu(HTMLTag imgTag) {
         //_browser.getUI().debugMessage("pickImageMenu: " + imgTag);
+        if (_imageMenu == null)
+            buildImageMenu();
         _text.setMenu(_imageMenu);
             
         _currentEventURI = null;
@@ -1291,10 +1299,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
     
     
     private void buildMenus() {
-        buildBodyMenu();
-        buildLinkMenu();
-        buildImageMenu();
-        buildImageLinkMenu();
+        //buildBodyMenu();
+        //buildLinkMenu();
+        //buildImageMenu();
+        //buildImageLinkMenu();
     }
 
     private void toggleImages() {

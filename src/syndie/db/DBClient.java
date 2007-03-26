@@ -1342,6 +1342,18 @@ public class DBClient {
         public List getAllIds() { return _internalIds; }
     }
     
+    private ChannelCollector _channelCache;
+    /**
+     * the channel cache should be cleared when:
+     * - new channels are imported
+     * - new keys are imported
+     */
+    void clearNymChannelCache() { _channelCache = null; }
+    public ChannelCollector getNymChannels() {
+        if (_channelCache == null)
+            _channelCache = getChannels(true, true, true, true, false);
+        return _channelCache;
+    }
     
     private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
     private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";

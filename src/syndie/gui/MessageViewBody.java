@@ -14,6 +14,7 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
@@ -23,6 +24,7 @@ import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
+import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 
 public class MessageViewBody extends BaseComponent implements Themeable, Translatable {
@@ -41,6 +43,9 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private PageRenderer _body[];
     
     private MessageTree _threadTree;
+    private List _threadTreeMsgs;
+    private ThreadMsgId _threadTreeMsgId;
+    private int _threadTreeSize;
     private ManageReferenceChooser _refTree;
     private AttachmentPreview _attachmentPreviews[];
     
@@ -50,6 +55,9 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private List _threadLoadedListeners;
     
     private MaxView _maxView;
+    private boolean _disposed;
+    
+    private ThreadReferenceNode _messageThread;
     
     public interface ThreadLoadedListener {
         public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize);
@@ -63,6 +71,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _banControl = ban;
         _root = root;
         _threadLoadedListeners = new ArrayList();
+        _disposed = false;
         initComponents();
     }
     
@@ -83,6 +92,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _maxView.dispose();
     }
     private void disposeDetails() {
+        _disposed = true;
+        //if (!_root.isDisposed()) _root.setRedraw(false);
         if (_tabRoots != null) {
             for (int i = 0; i < _tabRoots.length; i++)
                 _tabRoots[i].dispose();
@@ -125,13 +136,16 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         }
     }
     
-    private static final boolean DEFERRED_ATTACHMENT_PREVIEW = false;
+    private static final boolean DEFERRED_ATTACHMENT_PREVIEW = true;
     
-    public void viewMessage(final MessageInfo msg, int startPage, Timer timer) {
-        _root.setRedraw(false);
+    public void viewMessage(final MessageInfo msg, int startPage, Timer timer) { viewMessage(msg, startPage, timer, null); }
+    public void viewMessage(final MessageInfo msg, int startPage, Timer timer, ThreadReferenceNode messageThread) {
+        _messageThread = messageThread;
+        _root.setVisible(false);
         disposeDetails();
+        _disposed = false;
         if (msg == null) {
-            _root.setRedraw(true);
+            _root.setVisible(true);
             return;
         }
         _msg = msg;
@@ -178,34 +192,45 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabRoots[off].setLayout(new FillLayout());
 
             // no preview on the thread tree
-            _threadTree = ComponentBuilder.instance().createMessageTree(_tabRoots[off], new MessageTree.MessageTreeListener() {
-                    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
-                        if (toView)
-                            _navControl.view(uri);
-                    }
-                    public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
-            }, true);
-            //_threadTree.setMessages(msgs);
-            //_threadTree.select(_uri);
-            //_threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
 
             // deferred thread display
             final int toff = off;
             _tabFolder.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
-                    _ui.debugMessage("tab folder selection fired");
+                    if (_disposed) return;
                     if (_tabFolder.getSelection() == _tabs[toff]) {
                         _ui.debugMessage("tab folder: thread tab selected");
-                        if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) ) {
-                            asyncLoadThread(msg);
+                        if (_threadTree == null) {
+                            _ui.debugMessage("tab folder: creating a new thread tree");
+                            _threadTree = ComponentBuilder.instance().createMessageTree(_tabRoots[toff], new MessageTree.MessageTreeListener() {
+                                    public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
+                                        if (toView)
+                                            _navControl.view(uri);
+                                    }
+                                    public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
+                            }, true);
+                            _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
+                            if (_threadTreeMsgs != null) {
+                                _ui.debugMessage("tab folder: messages already fetched");
+                                _threadTree.setMessages(_threadTreeMsgs);
+                                _threadTree.expandAll();
+                                _threadTree.select(_msg.getURI());
+                                _tabRoots[toff].layout(new Control[] { _threadTree.getControl() });
+                            } else {
+                                _ui.debugMessage("tab folder: messages not already fetched");
+                                JobRunner.instance().enqueue(new Runnable() {
+                                    public void run() {
+                                        asyncLoadThread(msg, _tabRoots[toff]);
+                                    }
+                                });
+                            }
                         } else {
-                            _ui.debugMessage("tab folder: thread tab already populated");
+                            _ui.debugMessage("thread tree is not null, noop");
                         }
                     }
                 }
             });
-            _threadTree.setFilterable(false); // no sorting/refiltering/etc.  just a thread tree
-
+            
             off++;
         }
         if ( (refs != null) && (refs.size() > 0) ) {
@@ -241,6 +266,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if (DEFERRED_ATTACHMENT_PREVIEW) {
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
+                        if (_disposed) return;
                         if (_tabFolder.getSelection() == _tabs[toff]) {
                             _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
                         }
@@ -261,15 +287,20 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         }
         
         //_root.layout(true, true);
-        _root.getDisplay().timerExec(500, new Runnable() {
+        _root.getDisplay().timerExec(100, new Runnable() {
             public void run() {
                 if (_root.isDisposed()) return;
-                if ( (_threadTree.getMessages() == null) || (_threadTree.getMessages().size() == 0) )
-                    asyncLoadThread(msg);
+                if (_threadTreeMsgs == null) {
+                    JobRunner.instance().enqueue(new Runnable() {
+                        public void run() {
+                            asyncLoadThread(msg, null);
+                        }
+                    });
+                }
             }
         });
         timer.addEvent("initBody root laid out");
-        _root.setRedraw(true);
+        _root.setVisible(true);
     }
     
     private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
@@ -325,7 +356,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
     private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
 
-    private void asyncLoadThread(MessageInfo msg) {
+    private void asyncLoadThread(MessageInfo msg, final Composite parent) {
+        if (_disposed) return;
         _ui.debugMessage("tab folder: populate thread tab");
         ThreadBuilder builder = new ThreadBuilder(_client, _ui);
         final List msgs = new ArrayList(1);
@@ -334,7 +366,10 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         id.scope = msg.getScopeChannel();
         id.authorScopeId = msg.getAuthorChannelId();
         //timer.addEvent("initBody thread build prepared");
-        msgs.add(builder.buildThread(id));
+        if (_messageThread != null)
+            msgs.add(_messageThread);
+        else
+            msgs.add(builder.buildThread(id));
         //timer.addEvent("initBody thread built");
         final int threadSize = countMessages(msgs);
         //timer.addEvent("initBody thread size counted");
@@ -343,16 +378,25 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         Display.getDefault().asyncExec(new Runnable() {
             public void run() {
                 if (!_root.isDisposed())
-                    syncLoadThread(msgs, id, threadSize);
+                    syncLoadThread(msgs, id, threadSize, parent);
             }
         });
     }
-    private void syncLoadThread(List msgs, ThreadMsgId id, int threadSize) {
-        _threadTree.setMessages(msgs);
-        //timer.addEvent("initBody thread tree messages set");
-        _threadTree.expandAll();
-        _threadTree.select(_msg.getURI());
+    private void syncLoadThread(List msgs, ThreadMsgId id, int threadSize, Composite parent) {
+        _threadTreeMsgs = msgs;
+        _threadTreeMsgId = id;
+        _threadTreeSize = threadSize;
     
+        if (_threadTree != null) {
+            _ui.debugMessage("sync load thread: tree exists, so populate it");
+            _threadTree.setMessages(_threadTreeMsgs);
+            //timer.addEvent("initBody thread tree messages set");
+            _threadTree.expandAll();
+            _threadTree.select(_msg.getURI());
+            if (parent != null)
+                parent.layout(new Control[] { _threadTree.getControl() });
+        }
+        
         for (int i = 0; i < _threadLoadedListeners.size(); i++)
             ((ThreadLoadedListener)_threadLoadedListeners.get(i)).threadLoaded(msgs, id, threadSize);
     }

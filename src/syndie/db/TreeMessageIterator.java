@@ -33,6 +33,14 @@ public class TreeMessageIterator implements MessageIterator {
     public void recenter(SyndieURI uri) {
         _currentURI = uri;
         _currentIndex = -1;
+        _currentThreadRoot = null;
+        _nextNew = null;
+        _prevNew = null;
+        _nextInThread = null;
+        _prevInThread = null;
+        _nextThread = null;
+        _prevThread = null;
+    
         List traversal = traverse(uri);
         boolean noPrevInThread = false;
         for (int i = _currentIndex-1; i >= 0; i--) {
@@ -85,6 +93,8 @@ public class TreeMessageIterator implements MessageIterator {
         if (threadIndex + 1 < _roots.size())
             _nextThread = ((ReferenceNode)_roots.get(threadIndex+1)).getURI();
     }
+    
+    public ThreadReferenceNode getThreadRoot() { return (ThreadReferenceNode)_currentThreadRoot; }
     
     private List traverse(final SyndieURI target) {
         Walker walker = new Walker(target);

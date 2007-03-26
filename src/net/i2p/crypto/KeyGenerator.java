@@ -63,8 +63,9 @@ public class KeyGenerator {
         System.arraycopy(salt, 0, salted, 0, Math.min(salt.length, 16));
         System.arraycopy(passphrase, 0, salted, 16, passphrase.length);
         byte h[] = _context.sha().calculateHash(salted).getData();
-        for (int i = 1; i < PBE_ROUNDS; i++)
-            _context.sha().calculateHash(h, 0, Hash.HASH_LENGTH, h, 0);
+        //for (int i = 1; i < PBE_ROUNDS; i++)
+        //    _context.sha().calculateHash(h, 0, Hash.HASH_LENGTH, h, 0);
+        _context.sha().calculateHash(h, 0, Hash.HASH_LENGTH, h, 0, PBE_ROUNDS-1);
         return new SessionKey(h);
     }
     

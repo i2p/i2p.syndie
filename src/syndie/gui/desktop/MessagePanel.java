@@ -12,6 +12,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
@@ -33,6 +34,7 @@ import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.ImageCanvas;
 import syndie.gui.ImageUtil;
 import syndie.gui.MessageFlagBar;
 import syndie.gui.MessageTree;
@@ -54,6 +56,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     private NavigationControl _navControl;
     private MessageViewBody _body;
     private MessageInfo _msg;
+    private ThreadReferenceNode _messageThread;
+    private MessageIterator _messageIterator;
     
     public MessagePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
         super(desktop, client, themes, trans, parent, ui, null);
@@ -102,8 +106,15 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     }
     
     public void shown(Desktop desktop, final SyndieURI uri, String suggestedName, String suggestedDescription) {
+        shown(desktop, uri, suggestedName, suggestedDescription, null);
+    }
+    private void shown(Desktop desktop, final SyndieURI uri, String suggestedName, String suggestedDescription, MessageIterator iter) {
         super.shown(desktop, uri, suggestedName, suggestedDescription);
         if ( (uri == null) || (uri.getScope() == null) || (uri.getMessageId() == null) ) return;
+        
+        _messageIterator = iter;
+        if (iter != null)
+            _messageIterator.recenter(uri);
         
         final Timer timer = new Timer("show message", _ui);
         JobRunner.instance().enqueue(new Runnable() { 
@@ -170,7 +181,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 _client.markMessageRead(msg.getInternalId());
         }
         
-        _body.viewMessage(msg, 1, timer);
+        _body.viewMessage(msg, 1, timer, _messageThread);
         
         Long pageNum = uri.getPage();
         Long attachNum = uri.getAttachment();
@@ -312,7 +323,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _replyToAdmins.setEnabled(authorId != forumId);
             JobRunner.instance().enqueue(new Runnable() { 
                 public void run() {              
-                    DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true, false);
+                    DBClient.ChannelCollector chans = _client.getNymChannels();
                     final boolean postable = chans.getAllIds().contains(new Long(forumId));
                     final boolean pubReply = _client.getChannelAllowPublicReplies(forumId);
                     final int status = _client.getMessageStatus(msgId);
@@ -351,9 +362,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     }
 
     class NorthEdge extends DesktopEdge implements Themeable, Translatable {
-        private Label _authorAvatar;
+        private ImageCanvas _authorAvatar;
         private Label _authorName;
-        private Label _forumAvatar;
+        private ImageCanvas _forumAvatar;
         private Label _forumName;
         private MessageFlagBar _flagBar;
         private Label _subject;
@@ -384,8 +395,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             gl.marginWidth = 0;
             root.setLayout(gl);
             
-            _authorAvatar = new Label(root, SWT.NONE);
+            _authorAvatar = new ImageCanvas(root, false, false, false); //Label(root, SWT.NONE);
             _authorAvatar.setImage(null);
+            _authorAvatar.forceSize(64, 64);
             GridData gd = new GridData(64, SWT.DEFAULT);
             gd.verticalSpan = 2;
             gd.grabExcessVerticalSpace = true;
@@ -399,8 +411,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _forumName = new Label(root, SWT.SINGLE);
             _forumName.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, true));
             
-            _forumAvatar = new Label(root, SWT.NONE);
+            _forumAvatar = new ImageCanvas(root, false, false); //Label(root, SWT.NONE);
             _forumAvatar.setImage(null);
+            _forumAvatar.forceSize(64, 64);
             gd = new GridData(64, SWT.DEFAULT);
             gd.verticalSpan = 2;
             gd.grabExcessVerticalSpace = true;
@@ -457,91 +470,121 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             if ( (_currentURI != null) && (_currentURI.equals(uri)) )
                 return; // no change
             
-            getEdgeRoot().setRedraw(false);
+            //getEdgeRoot().setRedraw(false);
             JobRunner.instance().enqueue(new Runnable() {
                 public void run() {
-                    Long messageId = uri.getMessageId();
-                    // we could do the expensive MessageView.calculateSubject here instead
-                    final String subj = msg.getSubject();
-                    final long authorId = msg.getAuthorChannelId();
-                    final long forumId = msg.getTargetChannelId();
-                    
-                    final boolean authorIsWatched = _client.isWatched(authorId);
-                    final boolean forumIsWatched = _client.isWatched(forumId);
-                    
-                    final String authorName = _client.getChannelName(authorId);
-                    final Hash authorHash = _client.getChannelHash(authorId);
-                    final byte authorAvatar[] = _client.getChannelAvatar(authorId);
-                    
-                    final String forumName = (authorId != forumId ? _client.getChannelName(forumId) : null);
-                    final Hash forumHash = (authorId != forumId ? msg.getTargetChannel() : null);
-                    final byte forumAvatar[] = (authorId != forumId ? _client.getChannelAvatar(forumId) : null);
-                    
-                    final long importDate = _client.getMessageImportDate(msgId);
-                    
-                    _forumHash = (authorId != forumId ? forumHash : authorHash);
-                    _forumNameStr = (authorId != forumId ? forumName : authorName);
-                    _authorHash = authorHash;
-                    _authorNameStr = authorName;
-                    
-                    final String when = Constants.getDate(messageId.longValue()) + " [" + Constants.getDate(importDate) + "]";
-                    
-                    Display.getDefault().asyncExec(new Runnable() {
-                        public void run() {
-                            ImageUtil.dispose(_authorAvatar.getImage());
-                            ImageUtil.dispose(_forumAvatar.getImage());
-                            
-                            _currentURI = uri;
-                          
-                            if (authorIsWatched) {
-                                if (authorAvatar != null) {
-                                    Image img = ImageUtil.createImage(authorAvatar);
-                                    _authorAvatar.setImage(img);
-                                } else {
-                                    _authorAvatar.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
-                                }
-                            } else {
-                                _authorAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-                            }
-                            String name = "";
-                            if (authorHash != null)
-                                name = (authorName != null ? authorName + " " : "") + "[" + authorHash.toBase64().substring(0,6) + "]";
-                            _authorName.setText(name);
-                            
-                            if (forumHash != null)
-                                name = (forumName != null ? forumName + " " : "") + "[" + forumHash.toBase64().substring(0,6) + "]";
-                            else
-                                name = "";
-                            _forumName.setText(name);
-                            if (forumId != authorId) {
-                                if (forumIsWatched) {
-                                    if (forumAvatar != null) {
-                                        Image img = ImageUtil.createImage(forumAvatar);
-                                        _forumAvatar.setImage(img);
-                                    } else {
-                                        _forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-                                    }
-                                } else {
-                                    _forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-                                }
-                            }
-                            
-                            if (subj != null)
-                                _subject.setText(subj);
-                            else 
-                                _subject.setText("");
-                            
-                            _date.setText(when);
-                    
-                            _flagBar.setMessage(msg);
-                            
-                            getEdgeRoot().layout(true, true);
-                            getEdgeRoot().setRedraw(true);
-                        }
-                    });
+                    calcMeta(uri, msgId, msg);
                 }
             });
         }
+        
+        private void calcMeta(final SyndieURI uri, final long msgId, final MessageInfo msg) {
+            Long messageId = uri.getMessageId();
+            // we could do the expensive MessageView.calculateSubject here instead
+            final String subj = msg.getSubject();
+            final long authorId = msg.getAuthorChannelId();
+            final long forumId = msg.getTargetChannelId();
+
+            final boolean authorIsWatched = _client.isWatched(authorId);
+            final boolean forumIsWatched = _client.isWatched(forumId);
+
+            final String authorName = _client.getChannelName(authorId);
+            final Hash authorHash = _client.getChannelHash(authorId);
+            final byte authorAvatar[] = _client.getChannelAvatar(authorId);
+
+            final String forumName = (authorId != forumId ? _client.getChannelName(forumId) : null);
+            final Hash forumHash = (authorId != forumId ? msg.getTargetChannel() : null);
+            final byte forumAvatar[] = (authorId != forumId ? _client.getChannelAvatar(forumId) : null);
+
+            final long importDate = _client.getMessageImportDate(msgId);
+
+            _forumHash = (authorId != forumId ? forumHash : authorHash);
+            _forumNameStr = (authorId != forumId ? forumName : authorName);
+            _authorHash = authorHash;
+            _authorNameStr = authorName;
+
+            final String when = Constants.getDate(messageId.longValue()) + " [" + Constants.getDate(importDate) + "]";
+
+            Display.getDefault().asyncExec(new Runnable() {
+                public void run() {
+                    redrawMeta(uri, authorIsWatched, authorAvatar, authorHash, authorName, forumHash, forumName, forumAvatar, forumId, authorId, forumIsWatched, subj, when, msg);
+                }
+            });
+        }
+        
+        private void redrawMeta(SyndieURI uri, boolean authorIsWatched, byte[] authorAvatar, Hash authorHash, String authorName, Hash forumHash, String forumName, byte[] forumAvatar, long forumId, long authorId, boolean forumIsWatched, String subj, String when, MessageInfo msg) {
+            _authorAvatar.disposeImage();
+            _forumAvatar.disposeImage();
+            //ImageUtil.dispose(_authorAvatar.getImage());
+            //ImageUtil.dispose(_forumAvatar.getImage());
+
+            _currentURI = uri;
+            
+            Image authorImg = null;
+            Image forumImg = null;
+
+            if (authorIsWatched) {
+                if (authorAvatar != null) {
+                    Image img = ImageUtil.createImage(authorAvatar);
+                    ///_authorAvatar.setImage(img);
+                    authorImg = img;
+                } else {
+                    ///_authorAvatar.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
+                    authorImg = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
+                }
+            } else {
+                ///_authorAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+                authorImg = ImageUtil.ICON_EDITOR_NOT_BOOKMARKED;
+            }
+            String name = "";
+            if (authorHash != null)
+                name = (authorName != null ? authorName + " " : "") + "[" + authorHash.toBase64().substring(0,6) + "]";
+            _authorName.setText(name);
+
+            if (forumHash != null)
+                name = (forumName != null ? forumName + " " : "") + "[" + forumHash.toBase64().substring(0,6) + "]";
+            else
+                name = "";
+            _forumName.setText(name);
+            if (forumId != authorId) {
+                if (forumIsWatched) {
+                    if (forumAvatar != null) {
+                        Image img = ImageUtil.createImage(forumAvatar);
+                        ///_forumAvatar.setImage(img);
+                        forumImg = img;
+                    } else {
+                        ///_forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+                        forumImg = ImageUtil.ICON_EDITOR_NOT_BOOKMARKED;
+                    }
+                } else {
+                    ///_forumAvatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+                    forumImg = ImageUtil.ICON_EDITOR_NOT_BOOKMARKED;
+                }
+            }
+
+            if (subj != null)
+                _subject.setText(subj);
+            else 
+                _subject.setText("");
+
+            _date.setText(when);
+
+            setMetaImages(authorImg, forumImg);
+            _flagBar.setMessage(msg, false);
+            layoutMeta();
+        }
+        private void setMetaImages(Image authorImg, Image forumImg) {
+            _authorAvatar.setImage(authorImg);
+            _forumAvatar.setImage(forumImg);
+            _authorAvatar.redraw();
+            _forumAvatar.redraw();
+        }
+        private void layoutMeta() {
+            getEdgeRoot().layout(true, true);
+            ////getEdgeRoot().layout(new Control[] { _authorAvatar, _forumAvatar, _authorName, _forumName, _subject, _date, _flagBar.getControl() });
+            //getEdgeRoot().setRedraw(true);
+        }
+        
         public void applyTheme(Theme theme) {
             _authorName.setFont(theme.SHELL_FONT);
             _forumName.setFont(theme.SHELL_FONT);
@@ -591,7 +634,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 public void fire() {
                     SyndieURI uri = _iter.getNextNew();
                     if (uri != null)
-                        shown(_desktop, uri, null, null);
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -601,8 +644,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _navPrevNew.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousNew();
-                    if (uri != null)
-                        shown(_desktop, uri, null, null);
+                    if (uri != null) {
+                        shown(_desktop, uri, null, null, _iter);
+                    }
                 }
             });
             
@@ -613,7 +657,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 public void fire() {
                     SyndieURI uri = _iter.getNextInThread();
                     if (uri != null)
-                        shown(_desktop, uri, null, null);
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -624,7 +668,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousInThread();
                     if (uri != null)
-                        shown(_desktop, uri, null, null);
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -635,7 +679,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 public void fire() {
                     SyndieURI uri = _iter.getNextThread();
                     if (uri != null)
-                        shown(_desktop, uri, null, null);
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -646,7 +690,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousThread();
                     if (uri != null)
-                        shown(_desktop, uri, null, null);
+                        shown(_desktop, uri, null, null, _iter);
                 }
             });
             
@@ -704,6 +748,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
      *
      */
     private MessageIterator getIterator(SyndieURI uri, long msgId, MessageInfo msg) {
+        if (_messageIterator != null) return _messageIterator;
         Hash forum = msg.getTargetChannel();
         List panels = _desktop.getPanels();
         for (int i = 0; i < panels.size(); i++) {
@@ -711,8 +756,10 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             if (panel instanceof MessageTreePanel) {
                 MessageTreePanel mtp = (MessageTreePanel)panel;
                 MessageIterator iter = mtp.getIterator(uri);
-                if (iter != null)
+                if (iter != null) {
+                    _messageThread = iter.getThreadRoot();
                     return iter;
+                }
             }
         }
         
@@ -726,6 +773,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         tmi.authorScopeId = msg.getAuthorChannelId();
         tmi.messageId = msg.getMessageId();
         ThreadReferenceNode root = builder.buildThread(tmi);
+        _messageThread = root;
         ThreadMessageIterator iter = new ThreadMessageIterator(root, treeURI);
         iter.recenter(msgId);
         return iter;

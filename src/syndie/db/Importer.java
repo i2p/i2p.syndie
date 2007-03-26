@@ -170,6 +170,11 @@ public class Importer extends CommandImpl {
             ui.debugMessage("Processing message with body passphrase " + bodyPassphrase);
         else
             ui.debugMessage("Processing message with no body passphrase");
+        
+        // we may be importing something that gives us keys or something that has metadata
+        // we'd consider in our cache
+        _client.clearNymChannelCache();
+        
         _wasPBE = false;
         boolean rv = true;
         boolean isMeta = false;

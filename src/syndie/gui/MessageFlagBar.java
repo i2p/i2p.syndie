@@ -68,9 +68,10 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         return rv.toString();
     }
     
-    public void setMessage(MessageInfo msg) { 
+    public void setMessage(MessageInfo msg) { setMessage(msg, true); }
+    public void setMessage(MessageInfo msg, boolean relayout) { 
         _msg = msg;
-        rebuildFlags();
+        rebuildFlags(relayout);
     }
     
     public void setBackground(Color bg) {
@@ -86,31 +87,45 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         }
     }
     
-    private void rebuildFlags() {
+    private void rebuildFlags(boolean relayout) {
         if (_realized) {
             //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
-            _root.setRedraw(false);
-            disposeImages();
-            Control ctl[] = _root.getChildren();
-            for (int i = 0; i < ctl.length; i++) {
-                if (!ctl[i].isDisposed())
-                    ctl[i].dispose();
-            }
+            //_root.setRedraw(false);
+            ////_root.setVisible(false);
+            clearFlags();
             buildImages();
-            for (int i = 0; i < _images.size(); i++) {
-                Label l = new Label(_root, SWT.NONE);
-                l.setImage((Image)_images.get(i));
-                if (_bg != null)
-                    l.setBackground(_bg);
-            }
+            createLabels();
             translate(_translationRegistry);
-            _root.layout(true, true);
-            _root.setRedraw(true);
+            if (relayout)
+                finishRebuild();
+            ////_root.setVisible(true);
         } else {
             //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
             disposeImages();
             buildImages();
         }
+    }
+    private void clearFlags() {
+        disposeImages();
+        Control ctl[] = _root.getChildren();
+        for (int i = 0; i < ctl.length; i++) {
+            if (!ctl[i].isDisposed())
+                ctl[i].dispose();
+        }
+    }
+    private void createLabels() {
+        for (int i = 0; i < _images.size(); i++) {
+            ImageCanvas c = new ImageCanvas(_root, false, false, false);
+            c.forceSize(16, 16);
+            //Label l = new Label(_root, SWT.NONE);
+            //l.setImage((Image)_images.get(i));
+            c.setImage((Image)_images.get(i));
+            if (_bg != null)
+               c.setBackground(_bg);
+        }
+    }
+    private void finishRebuild() {
+        _root.layout(true, true);
     }
     private void disposeImages() {
         for (int i = 0; i < _images.size(); i++) {
@@ -198,6 +213,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     private void realizeComponents() {
         if (_realized) return;
         _root = new Composite(_parent, SWT.NONE);
+        //_root.setBackgroundMode(SWT.INHERIT_FORCE);
         _root.setLayout(new FillLayout(SWT.HORIZONTAL));
         _translationRegistry.register(this);
         _realized = true;
@@ -275,44 +291,43 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         if (!_realized) return;
         Control ctl[] = _root.getChildren();
         for (int i = 0; i < ctl.length; i++) {
-            Label l = (Label)ctl[i];
-            if (!l.isDisposed()) {
+            if (!ctl[i].isDisposed()) {
                 _ui.debugMessage("translating icon " + i);
-                Image img = l.getImage();
+                Image img = (Image)_images.get(i); //l.getImage();
                 if (img == ImageUtil.ICON_MSG_FLAG_PBE)
-                    l.setToolTipText(registry.getText(T_PBE, "Post is passphrase protected"));
+                    ctl[i].setToolTipText(registry.getText(T_PBE, "Post is passphrase protected"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN)
-                    l.setToolTipText(registry.getText(T_READKEYUNKNOWN, "Read key unknown"));
+                    ctl[i].setToolTipText(registry.getText(T_READKEYUNKNOWN, "Read key unknown"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_REPLYKEYUNKNOWN)
-                    l.setToolTipText(registry.getText(T_REPLYKEYUNKNOWN, "Private key unknown"));
+                    ctl[i].setToolTipText(registry.getText(T_REPLYKEYUNKNOWN, "Private key unknown"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_UNREADABLE)
-                    l.setToolTipText(registry.getText(T_UNREADABLE, "Message is not readable"));
+                    ctl[i].setToolTipText(registry.getText(T_UNREADABLE, "Message is not readable"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_PUBLIC)
-                    l.setToolTipText(registry.getText(T_PUBLIC, "Message was publically readable"));
+                    ctl[i].setToolTipText(registry.getText(T_PUBLIC, "Message was publically readable"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_AUTHENTICATED)
-                    l.setToolTipText(registry.getText(T_AUTHENTICATED, "Author is authentic"));
+                    ctl[i].setToolTipText(registry.getText(T_AUTHENTICATED, "Author is authentic"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_AUTHORIZED)
-                    l.setToolTipText(registry.getText(T_AUTHORIZED, "Author is allowed to post in the forum"));
+                    ctl[i].setToolTipText(registry.getText(T_AUTHORIZED, "Author is allowed to post in the forum"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BANNED)
-                    l.setToolTipText(registry.getText(T_BANNED, "Post is banned"));
+                    ctl[i].setToolTipText(registry.getText(T_BANNED, "Post is banned"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR)
-                    l.setToolTipText(registry.getText(T_BOOKMARKED_AUTHOR, "Author is bookmarked"));
+                    ctl[i].setToolTipText(registry.getText(T_BOOKMARKED_AUTHOR, "Author is bookmarked"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_FORUM)
-                    l.setToolTipText(registry.getText(T_BOOKMARKED_FORUM, "Forum is bookmarked"));
+                    ctl[i].setToolTipText(registry.getText(T_BOOKMARKED_FORUM, "Forum is bookmarked"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE)
-                    l.setToolTipText(registry.getText(T_SCHEDULED, "Message is scheduled to expire"));
+                    ctl[i].setToolTipText(registry.getText(T_SCHEDULED, "Message is scheduled to expire"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASKEYS)
-                    l.setToolTipText(registry.getText(T_HASKEYS, "Message includes keys you can import"));
+                    ctl[i].setToolTipText(registry.getText(T_HASKEYS, "Message includes keys you can import"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASARCHIVES)
-                    l.setToolTipText(registry.getText(T_HASARCHIVES, "Message refers to archives"));
+                    ctl[i].setToolTipText(registry.getText(T_HASARCHIVES, "Message refers to archives"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASREFS)
-                    l.setToolTipText(registry.getText(T_HASREFS, "Message includes references"));
+                    ctl[i].setToolTipText(registry.getText(T_HASREFS, "Message includes references"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS)
-                    l.setToolTipText(registry.getText(T_HASATTACHMENTS, "Message includes attachments"));
+                    ctl[i].setToolTipText(registry.getText(T_HASATTACHMENTS, "Message includes attachments"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_ISNEW)
-                    l.setToolTipText(registry.getText(T_ISNEW, "Message is unread"));
+                    ctl[i].setToolTipText(registry.getText(T_ISNEW, "Message is unread"));
                 else if (img == ImageUtil.ICON_MSG_TYPE_PRIVATE)
-                    l.setToolTipText(registry.getText(T_ISPRIVATE, "Message was privately encrypted"));
+                    ctl[i].setToolTipText(registry.getText(T_ISPRIVATE, "Message was privately encrypted"));
                 else {
                     _ui.debugMessage("translating icon " + i + ": UNKNOWN icon");
                 }
