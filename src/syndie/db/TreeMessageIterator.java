@@ -28,8 +28,33 @@ public class TreeMessageIterator implements MessageIterator {
     
     public TreeMessageIterator(UI ui, List threadReferenceNodeRoots, SyndieURI treeURI) {
         _ui = ui;
-        _roots = threadReferenceNodeRoots;
+        _roots = stripLeadingBlank(threadReferenceNodeRoots);
         _treeURI = treeURI;
+    }
+    
+    /**
+     * browsing multiple forums will inject a dummy forum node at the top with no URI.
+     * don't traverse that node, obviously (and stripping it lets the inter thread traversal
+     * work fine)
+     */
+    private static List stripLeadingBlank(List nodes) {
+        List copy = ThreadReferenceNode.deepThreadCopy(nodes); // since we reparent nodes
+        List rv = new ArrayList();
+        for (int i = 0; i < copy.size(); i++) {
+            ThreadReferenceNode node = (ThreadReferenceNode)copy.get(i);
+            if ( (node.getURI() == null) || (node.getURI().getMessageId() == null) ) {
+                int kids = node.getChildCount();
+                for (int j = 0; j < kids; j++) {
+                    ThreadReferenceNode child = (ThreadReferenceNode)node.getChild(j);
+                    child.clearParent();
+                    rv.add(child);
+                }
+            } else {
+                node.clearParent();
+                rv.add(node);
+            }
+        }
+        return rv;
     }
 
     public void recenter(SyndieURI uri) {
@@ -108,7 +133,7 @@ public class TreeMessageIterator implements MessageIterator {
         Walker walker = new Walker(target);
         ReferenceNode.walk(_roots, walker);
         List rv = walker.getNodes();
-        _ui.debugMessage("traversal (selected=" + _currentIndex + " root=" + _currentThreadRoot.getURI() + ")");
+        _ui.debugMessage("traversal (selected=" + _currentIndex + " root=" + (_currentThreadRoot != null ? _currentThreadRoot.getURI()+"" : "null") + ")");
         for (int i = 0; i < rv.size(); i++)
             _ui.debugMessage(i + ": " + ((ReferenceNode)rv.get(i)).getURI().toString());
         return rv;
@@ -128,7 +153,7 @@ public class TreeMessageIterator implements MessageIterator {
                 if (uri.equals(_target)) {
                     _currentIndex = _rv.size()-1;
                     ReferenceNode cur = node;
-                    while (cur.getParent() != null)
+                    while ( (cur.getParent() != null) && (cur.getParent().getURI() != null) )
                         cur = cur.getParent();
                     _currentThreadRoot = cur;
                 }

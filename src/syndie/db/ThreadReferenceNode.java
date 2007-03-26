@@ -1,5 +1,7 @@
 package syndie.db;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -151,5 +153,45 @@ public class ThreadReferenceNode extends ReferenceNode {
             rv[i] = (ThreadReferenceNode)getChild(i);
         return rv;
     }
+    public void clearParent() { _parent = null; }
     public long getUniqueId() { return (_msg != null ? _msg.msgId : 0-super.getUniqueId()); }
+    
+    public static ArrayList deepThreadCopy(List orig) {
+        if (orig == null) return new ArrayList();
+        ArrayList rv = new ArrayList(orig.size());
+        for (int i = 0; i < orig.size(); i++) {
+            ThreadReferenceNode node = (ThreadReferenceNode)orig.get(i);
+            rv.add(deepThreadCopy(node));
+        }
+        return rv;
+    }
+    public static ReferenceNode deepThreadCopy(ThreadReferenceNode node) {
+        if (node == null) return null;
+        ThreadReferenceNode copy = new ThreadReferenceNode();
+        copy._name = node._name;
+        copy._uri = node._uri;
+        copy._description = node._description;
+        copy._refType = node._refType;
+        
+        copy._authorHash = node._authorHash;
+        copy._authorId = node._authorId;
+        copy._authorName = node._authorName;
+        copy._dummy = node._dummy;
+        copy._importDate = node._importDate;
+        copy._messageStatus = node._messageStatus;
+        copy._msg = node._msg;
+        copy._scopeHash = node._scopeHash;
+        copy._scopeId = node._scopeId;
+        copy._scopeName = node._scopeName;
+        copy._subject = node._subject;
+        copy._tags = node._tags != null ? new HashSet(node._tags) : null;
+        copy._targetChannelId = node._targetChannelId;
+        copy._targetHash = node._targetHash;
+        copy._targetId = node._targetId;
+        copy._targetName = node._targetName;
+        copy._treeIndex = node._treeIndex;
+        for (int i = 0; i < node.getChildCount(); i++)
+            copy.addChild(deepThreadCopy((ThreadReferenceNode)node.getChild(i)));
+        return copy;
+    }
 }

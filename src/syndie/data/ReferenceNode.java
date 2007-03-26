@@ -12,10 +12,10 @@ import net.i2p.data.DataHelper;
  * tree structure referencing resources
  */
 public class ReferenceNode {
-    private String _name;
-    private SyndieURI _uri;
-    private String _description;
-    private String _refType;
+    protected String _name;
+    protected SyndieURI _uri;
+    protected String _description;
+    protected String _refType;
     protected List _children;
     protected ReferenceNode _parent;
     /**
