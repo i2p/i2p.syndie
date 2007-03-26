@@ -501,10 +501,11 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _profile.setEnabled(false);
         }
         public void applyTheme(Theme theme) {
+            _profile.setFont(theme.BUTTON_FONT);
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
-            _profile.setText(registry.getText(T_PROFILE, "Profile"));
+            _profile.setText(registry.getText(T_PROFILE, "P\nr\no\nf\ni\nl\ne"));
             _profile.setToolTipText(registry.getText(T_PROFILE_TT, "View the forum's profile"));
         }
         public void updateNav(SyndieURI uri) {

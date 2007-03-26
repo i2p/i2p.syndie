@@ -68,7 +68,7 @@ import syndie.db.UI;
 /**
  *
  */
-class ViewForum extends BaseComponent implements Translatable, Themeable {
+public class ViewForum extends BaseComponent implements Translatable, Themeable {
     private BanControl _banControl;
     private NavigationControl _navControl;
     private URIControl _uriControl;

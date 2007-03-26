@@ -36,8 +36,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     public static final String TYPE_POST = "post";
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
-    static final String TYPE_META = "meta";
-    static final String TYPE_MANAGE = "manage";
+    public static final String TYPE_META = "meta";
+    public static final String TYPE_MANAGE = "manage";
     static final String TYPE_SYNDICATE_ARCHIVES = "syndicate";
     static final String TYPE_SYNDICATE_CONFIG = TYPE_SYNDICATE_ARCHIVES;
     public static final String TYPE_SYNDICATE_STATUS = TYPE_SYNDICATE_ARCHIVES;
@@ -46,7 +46,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     static final String TYPE_ARCHIVEMGR = "archivemgr";
     static final String TYPE_BUGREPORT = "bug";
     static final String TYPE_BACKUPSECRETS = "backupsecrets";
-    static final String TYPE_VIEWFORUM = "viewforum";
+    public static final String TYPE_VIEWFORUM = "viewforum";
     static final String TYPE_SYNC = "sync";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {

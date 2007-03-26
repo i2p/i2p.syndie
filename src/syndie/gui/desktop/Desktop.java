@@ -435,8 +435,13 @@ class Desktop {
     public void showForumSelectionPanel(boolean startWithRefs) { 
         if (_forumSelectionPanel == null)
             _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
-        _forumSelectionPanel.preferRefs(startWithRefs);
-        show(_forumSelectionPanel, null, null, null);
+        if (getCurrentPanel() == _forumSelectionPanel) {
+            _forumSelectionPanel.forumSelectorCancelled();
+            //showPreviousPanel();
+        } else {
+            _forumSelectionPanel.preferRefs(startWithRefs);
+            show(_forumSelectionPanel, null, null, null);
+        }
     }
     
     private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";

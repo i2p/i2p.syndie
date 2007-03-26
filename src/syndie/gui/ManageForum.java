@@ -59,7 +59,7 @@ import syndie.db.UI;
 /**
  *
  */
-class ManageForum extends BaseComponent implements Translatable, Themeable {
+public class ManageForum extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private URIControl _uriControl;
     private DataCallback _dataCallback;
@@ -118,7 +118,18 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
     private String _passphrase;
     private String _prompt;
     
+    private List _listeners;
+    
+    private boolean _showActions;
+    
+    public interface StateListener {
+        public void settingsModified(boolean canSave);
+    }
+    
     public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri) {
+        this(client, ui, themes, trans, navControl, uriControl, callback, parent, uri, showActions);
+    }
+    public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri, boolean showActions) {
         super(client, ui, themes, trans);
         _navControl = navControl;
         _uriControl = uriControl;
@@ -128,6 +139,8 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         _scope = null;
         _scopeId = -1;
         _initialized = false;
+        _showActions = showActions;
+        _listeners = new ArrayList();
         _avatarImgStandard = new ArrayList();
         _privArchiveURIs = new ArrayList();
         _pubArchiveURIs = new ArrayList();
@@ -310,23 +323,25 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
             }
         });
         
-        _actions = new Composite(_root, SWT.NONE);
-        _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 7, 1));
-        _save = new Button(_actions, SWT.PUSH);
-        _cancel = new Button(_actions, SWT.PUSH);
-        _save.setEnabled(false);
-        _cancel.setEnabled(false);
-        
-        _save.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveChanges(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { saveChanges(); }
-        });
-        
-        _cancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadData(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { loadData(); }
-        });
+        if (_showActions) {
+            _actions = new Composite(_root, SWT.NONE);
+            _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
+            _actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 7, 1));
+            _save = new Button(_actions, SWT.PUSH);
+            _cancel = new Button(_actions, SWT.PUSH);
+            _save.setEnabled(false);
+            _cancel.setEnabled(false);
+
+            _save.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveChanges(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { saveChanges(); }
+            });
+
+            _cancel.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelChanges(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { cancelChanges(); }
+            });
+        }
         
         ChannelInfo info = _client.getChannel(_scopeId);
         loadData();
@@ -334,6 +349,8 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
+    
+    public void cancelChanges() { loadData(); }
     
     ChannelInfo getChannelInfo() { return _client.getChannel(_scopeId); }
     
@@ -393,7 +410,7 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         prompt.open();
     }
     
-    private void saveChanges() {
+    public void saveChanges() {
         ManageForumExecutor exec = new ManageForumExecutor(_client, _ui, new ManageForumExecutor.ManageForumState() {
             public boolean getCreateReadKey() {
                 if (_manageForumAuthRead != null) {
@@ -700,11 +717,18 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         return rv;
     }
     
+    public void addListener(StateListener lsnr) { _listeners.add(lsnr); }
+    public void removeListener(StateListener lsnr) { _listeners.remove(lsnr); }
+    
     void modified() {
         if (!_initialized) return;
         if (!_modified) {
-            _save.setEnabled(true);
-            _cancel.setEnabled(true);
+            if (_showActions) {
+                _save.setEnabled(true);
+                _cancel.setEnabled(true);
+            }
+            for (int i = 0; i < _listeners.size(); i++)
+                ((StateListener)_listeners.get(i)).settingsModified(true);
         }
         _modified = true;
     }
@@ -852,8 +876,12 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         
         _initialized = true;
         _modified = false;
-        _save.setEnabled(false);
-        _cancel.setEnabled(false);
+        if (_showActions) {
+            _save.setEnabled(false);
+            _cancel.setEnabled(false);
+        }
+        for (int i = 0; i < _listeners.size(); i++)
+            ((StateListener)_listeners.get(i)).settingsModified(false);
     }
     private static final String str(String orig) { return (orig != null ? orig : ""); }
     private void loadArchives(ChannelInfo info) {
@@ -1056,8 +1084,10 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         _banRemoveAll.setFont(theme.DEFAULT_FONT);
         _banSelect.setFont(theme.DEFAULT_FONT);
         
-        _save.setFont(theme.BUTTON_FONT);
-        _cancel.setFont(theme.BUTTON_FONT);
+        if (_showActions) {
+            _save.setFont(theme.BUTTON_FONT);
+            _cancel.setFont(theme.BUTTON_FONT);
+        }
 
         _authGroup.setFont(theme.DEFAULT_FONT);
         _authLabel.setFont(theme.DEFAULT_FONT);
@@ -1110,8 +1140,10 @@ class ManageForum extends BaseComponent implements Translatable, Themeable {
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
-        _save.setText(registry.getText(T_SAVE, "Save changes"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
+        if (_showActions) {
+            _save.setText(registry.getText(T_SAVE, "Save changes"));
+            _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
+        }
 
         _authGroup.setText(registry.getText(T_AUTHGROUP, "Authorization and authentication"));
         _authLabel.setText(registry.getText(T_AUTHGROUP_LABEL, "Forum authorization and authentication takes four forms - those allowed to read a forum's posts, those allowed to post to a forum, those allowed to manage a forum, and those allowed to read the private replies to forum administrators"));

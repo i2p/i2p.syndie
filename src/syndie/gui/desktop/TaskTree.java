@@ -222,6 +222,8 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                     }
                 } else if (panel instanceof MessageEditorPanel) {
                     scope = ((MessageEditorPanel)panel).getTargetScope();
+                } else {
+                    scope = uri.getScope();
                 }
                 
                 if (scope != null) {

@@ -57,6 +57,8 @@ public class DesktopNavigationControl implements NavigationControl {
             }
         } else if (BrowserTab.TYPE_SYNDICATE_STATUS.equals(uri.getType()) || uri.isArchive()) {
             return new SyndicatorPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
+        } else if (BrowserTab.TYPE_MANAGE.equals(uri.getType()) || BrowserTab.TYPE_META.equals(uri.getType()) || BrowserTab.TYPE_VIEWFORUM.equals(uri.getType())) {
+            return new ProfilePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);
