@@ -127,7 +127,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     }
     
     public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri) {
-        this(client, ui, themes, trans, navControl, uriControl, callback, parent, uri, showActions);
+        this(client, ui, themes, trans, navControl, uriControl, callback, parent, uri, false);
     }
     public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri, boolean showActions) {
         super(client, ui, themes, trans);
