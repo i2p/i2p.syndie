@@ -176,6 +176,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
     
     public void showURI(AttachmentSource source, SyndieURI uri) {
         if (_data != null) return;
+        if (_root.isDisposed()) return;
         _uri = uri;
         _ui.debugMessage("show URI: " + uri + " source=" + source);
         Timer timer = new Timer("show attachment", _ui);

@@ -10,6 +10,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.data.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -30,8 +31,8 @@ class RefTree extends ReferenceChooserTree {
         }, false, false);
     }
 
-    protected void initComponents(boolean register, boolean multipleSelections) {
-        super.initComponents(register, true);
+    protected void initComponents(boolean register, boolean multipleSelections, Timer timer) {
+        super.initComponents(register, true, timer);
         _dndSrc = new ReferenceChooserTreeDnDSource(_client, _ui, RefTree.this, true);
     }
     public ReferenceNode getDragged() { 

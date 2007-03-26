@@ -547,6 +547,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             }
         });
         exec.execute();
+        for (int i = 0; i < _listeners.size(); i++)
+            ((StateListener)_listeners.get(i)).settingsModified(false);
+        
         String errs = exec.getErrors();
         if ( (errs != null) && (errs.trim().length() > 0) ) {
             MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);

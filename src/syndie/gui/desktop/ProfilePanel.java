@@ -14,6 +14,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import syndie.Constants;
 import syndie.data.ReferenceNode;
@@ -164,23 +165,27 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
         }
         
         public void update() {
+            _ui.debugMessage("North edge updated");
+            if (_avatar.isDisposed()) return;
             getEdgeRoot().setRedraw(false);
             ImageUtil.dispose(_avatar.getImage());
             _avatar.setImage(null);
             JobRunner.instance().enqueue(new Runnable() { public void run() { asyncUpdate(); } });
         }
         private void asyncUpdate() {
+            if (_avatar.isDisposed()) return;
             final long channelId = _client.getChannelId(_scope);
             final byte avatar[] = _client.getChannelAvatar(channelId);
             final String name = _client.getChannelName(channelId);
             final String desc = _client.getChannelDescription(channelId);
             final List refs = _client.getChannelReferences(channelId);
-            getEdgeRoot().getDisplay().asyncExec(new Runnable() {
+            Display.getDefault().asyncExec(new Runnable() {
                 public void run() { syncUpdate(channelId, avatar, name, desc, _scope, refs); }
             });
         }
         public void syncUpdate(long channelId, byte avatar[], String name, String desc, Hash scope, List refs) {
             //_scope = scope;
+            if (_avatar.isDisposed()) return;
             Image img = ImageUtil.createImage(avatar);
             if (img != null) {
                 Rectangle bounds = img.getBounds();
@@ -198,6 +203,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
                 buf.append(" - ").append(desc);
             _summary.setText(buf.toString());
             _refs.removeAll();
+            _ui.debugMessage("North edge updated w/ new summary=" + buf.toString() + " and refs=" + refs);
             _refNodes = new ArrayList();
             if (refs.size() > 0) {
                 _refs.add(_translationRegistry.getText(T_REFS, "* Forum notices and references:"));
@@ -337,18 +343,23 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             
             _saveChanges = new Button(edge, SWT.PUSH);
             _saveChanges.addSelectionListener(new FireSelectionListener() {
-                public void fire() { _manage.saveChanges(); }
+                public void fire() { 
+                    _manage.saveChanges(); 
+                }
             });
             _cancelChanges = new Button(edge, SWT.PUSH);
             _cancelChanges.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _manage.cancelChanges(); }
             });
-            settingsModified(false);
+            _saveChanges.setEnabled(false);
+            _cancelChanges.setEnabled(false);
             _watch = new Button(edge, SWT.PUSH);
             _ban = new Button(edge, SWT.PUSH);
         }
         
         public void settingsModified(boolean saveable) {
+            if (!saveable)
+                ((NorthEdge)_edgeNorth).update();
             _saveChanges.setEnabled(saveable);
             _cancelChanges.setEnabled(saveable);
         }

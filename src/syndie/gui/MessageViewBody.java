@@ -199,15 +199,17 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             // no preview on the thread tree
 
             // deferred thread display
-            final int toff = off;
+            final Composite root = _tabRoots[off];
+            final CTabItem threadItem = _tabs[off];
+            //final int toff = off;
             _tabFolder.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     if (_viewState.disposed) return;
-                    if (_tabFolder.getSelection() == _tabs[toff]) {
+                    if (_tabFolder.getSelection() == threadItem) {
                         _ui.debugMessage("tab folder: thread tab selected");
                         if (_threadTree == null) {
                             _ui.debugMessage("tab folder: creating a new thread tree");
-                            _threadTree = ComponentBuilder.instance().createMessageTree(_tabRoots[toff], new MessageTree.MessageTreeListener() {
+                            _threadTree = ComponentBuilder.instance().createMessageTree(root, new MessageTree.MessageTreeListener() {
                                     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                                         if (toView)
                                             _navControl.view(uri);
@@ -220,12 +222,12 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                                 _threadTree.setMessages(_threadTreeMsgs);
                                 _threadTree.expandAll();
                                 _threadTree.select(_msg.getURI());
-                                _tabRoots[toff].layout(new Control[] { _threadTree.getControl() });
+                                root.layout(new Control[] { _threadTree.getControl() });
                             } else {
                                 _ui.debugMessage("tab folder: messages not already fetched");
                                 JobRunner.instance().enqueue(new Runnable() {
                                     public void run() {
-                                        asyncLoadThread(msg, _tabRoots[toff]);
+                                        asyncLoadThread(msg, root);
                                     }
                                 });
                             }
@@ -266,14 +268,15 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
             timer.addEvent("initBody attachment preview instantiated");
 
-            final int toff = off;
             final int preview = i;
+            final CTabItem item = _tabs[off];
+            final AttachmentPreview attachPreview = _attachmentPreviews[i];
             if (DEFERRED_ATTACHMENT_PREVIEW) {
                 _tabFolder.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         if (_viewState.disposed) return;
-                        if (_tabFolder.getSelection() == _tabs[toff]) {
-                            _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
+                        if (_tabFolder.getSelection() == item) {
+                            attachPreview.showURI(new URIAttachmentSource(uri), uri);
                         }
                     }
                 });

@@ -342,7 +342,6 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _tree.setRedraw(true);
     }
     
-    protected void initComponents(boolean register, boolean multipleSelections) { initComponents(register, multipleSelections, null); }
     protected void initComponents(boolean register, boolean multipleSelections, Timer timer) {
         if (timer != null) timer.addEvent("refChooserTree init");
         long t1 = System.currentTimeMillis();
