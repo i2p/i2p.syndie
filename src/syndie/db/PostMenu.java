@@ -451,7 +451,7 @@ class PostMenu implements TextEngine.Menu {
             NymKey key = (NymKey)manageKeys.get(i);
             if (key.getAuthenticated()) {
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 Hash chan = pub.calculateHash();
                 long chanId = client.getChannelId(chan);
                 if (chanId >= 0)
@@ -503,12 +503,12 @@ class PostMenu implements TextEngine.Menu {
         
         if (_authenticationKey != null) {
             SigningPrivateKey priv = new SigningPrivateKey(_authenticationKey.getData());
-            SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+            SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
             ui.statusMessage("Authenticating with the private key for " + pub.calculateHash().toBase64().substring(0,6));
         }
         if (_authorizationKey != null) {
             SigningPrivateKey priv = new SigningPrivateKey(_authorizationKey.getData());
-            SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+            SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
             ui.statusMessage("Authorizing with the private key for " + pub.calculateHash().toBase64().substring(0,6));
         }
         
@@ -863,7 +863,7 @@ class PostMenu implements TextEngine.Menu {
         for (int i = 0; i < keys.size(); i++) {
             NymKey key = (NymKey)keys.get(i);
             SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-            SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+            SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
             if (key.getChannel().equals(pub.calculateHash())) {
                 ui.statusMessage("identity key " + _listedNymKeys.size() + ": " + key.getChannel().toBase64().substring(0,6) + " (for authentication only)");
                 _listedNymKeys.add(key);
@@ -890,7 +890,7 @@ class PostMenu implements TextEngine.Menu {
             if ( (num >= 0) && (num < _listedNymKeys.size()) ) {
                 _authenticationKey = (NymKey)_listedNymKeys.get(num);
                 SigningPrivateKey priv = new SigningPrivateKey(_authenticationKey.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 long authenticationId = client.getChannelId(pub.calculateHash());
                 _currentMessage.setScopeChannelId(authenticationId);
                 ui.statusMessage("Authenticating with the private key for " + pub.calculateHash().toBase64().substring(0,6));
@@ -922,7 +922,7 @@ class PostMenu implements TextEngine.Menu {
             if ( (num >= 0) && (num < _listedNymKeys.size()) ) {
                 _authorizationKey = (NymKey)_listedNymKeys.get(num);
                 SigningPrivateKey priv = new SigningPrivateKey(_authorizationKey.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 ui.statusMessage("Authorizing with the private key for " + pub.calculateHash().toBase64().substring(0,6));
                 ui.commandComplete(0, null);
             } else {
@@ -983,7 +983,7 @@ class PostMenu implements TextEngine.Menu {
                 NymKey key = (NymKey)scopeKeys.get(i);
                 if (Constants.KEY_FUNCTION_MANAGE.equalsIgnoreCase(key.getFunction())) {
                     SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                    SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                    SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                     if (pub.calculateHash().equals(chanHash)) {
                         ui.statusMessage("- identity key: " + client.ctx().sha().calculateHash(key.getData()).toBase64());
                     } else {
@@ -1079,7 +1079,7 @@ class PostMenu implements TextEngine.Menu {
                 Hash calcHash = client.ctx().sha().calculateHash(key.getData());
                 if (DataHelper.eq(calcHash.getData(), keyHash)) {
                     SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                    SigningPublicKey expectedPub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                    SigningPublicKey expectedPub = KeyGenerator.getSigningPublicKey(priv);
                     long channelId = client.getChannelId(chan);
                     ChannelInfo info = client.getChannel(channelId);
                     
@@ -1143,7 +1143,7 @@ class PostMenu implements TextEngine.Menu {
                 ui.debugMessage("key " + i + " has hash: " + calcHash.toBase64());
                 if (DataHelper.eq(calcHash.getData(), keyHash)) {
                     SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                    SigningPublicKey expectedPub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                    SigningPublicKey expectedPub = KeyGenerator.getSigningPublicKey(priv);
                     long channelId = client.getChannelId(chan);
                     ChannelInfo info = client.getChannel(channelId);
 
@@ -1191,7 +1191,7 @@ class PostMenu implements TextEngine.Menu {
                 Hash calcHash = client.ctx().sha().calculateHash(key.getData());
                 if (DataHelper.eq(calcHash.getData(), keyHash)) {
                     PrivateKey priv = new PrivateKey(key.getData());
-                    PublicKey expectedPub = client.ctx().keyGenerator().getPublicKey(priv);
+                    PublicKey expectedPub = KeyGenerator.getPublicKey(priv);
                     long channelId = client.getChannelId(chan);
                     ChannelInfo info = client.getChannel(channelId);
                     

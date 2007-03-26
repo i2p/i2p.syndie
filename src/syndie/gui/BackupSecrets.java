@@ -335,8 +335,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                     String name = entry.getName();
                     if (name.startsWith("nymkey")) {
                         ui.debugMessage("importing key "+ name);
-                        KeyImport imp = new KeyImport();
-                        imp.importKey(ui, client, zin, true, false);
+                        KeyImport.importKey(ui, client, zin, true, false);
                         keysRead++;
                     } else if (name.startsWith("meta")) {
                         ui.debugMessage("importing meta "+ name);

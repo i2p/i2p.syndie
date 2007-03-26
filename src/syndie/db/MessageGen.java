@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.EnclosureBody;
@@ -212,7 +213,7 @@ public class MessageGen extends CommandImpl {
                         Constants.KEY_FUNCTION_MANAGE.equals(nymKey.getFunction())) {
                         SigningPrivateKey authPriv = new SigningPrivateKey(nymKey.getData());
                         if (authPriv.calculateHash().equals(new Hash(key))) {
-                            ui.debugMessage("Authenticating as a third party: " + client.ctx().keyGenerator().getSigningPublicKey(authPriv).calculateHash().toBase64().substring(0,6));
+                            ui.debugMessage("Authenticating as a third party: " + KeyGenerator.getSigningPublicKey(authPriv).calculateHash().toBase64().substring(0,6));
                             authenticationPrivate = authPriv;
                             unauthorized = true;
                             break;
@@ -240,10 +241,10 @@ public class MessageGen extends CommandImpl {
             if (!args.getOptBoolean("postAsReply", false))
                 bodyKeyIsPublic = true;
             if (authenticationPrivate != null) {
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(authenticationPrivate);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(authenticationPrivate);
                 uriChannel = pub.calculateHash();
             } else if (authorizationPrivate != null) {
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(authorizationPrivate);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(authorizationPrivate);
                 uriChannel = pub.calculateHash();
             }
         } else {
@@ -589,7 +590,7 @@ public class MessageGen extends CommandImpl {
             rv.put(Constants.MSG_HEADER_EXPIRATION, strip(expiration));
 
         if (authenticationPrivate != null) {
-            SigningPublicKey ident = client.ctx().keyGenerator().getSigningPublicKey(authenticationPrivate);
+            SigningPublicKey ident = KeyGenerator.getSigningPublicKey(authenticationPrivate);
             rv.put(Constants.MSG_HEADER_AUTHOR, ident.calculateHash().toBase64());
             if (authenticationMask != null)
                 rv.put(Constants.MSG_HEADER_AUTHENTICATION_MASK, Base64.encode(authenticationMask));
@@ -620,7 +621,7 @@ public class MessageGen extends CommandImpl {
                 if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
                     if (channel == null) {
                         SigningPrivateKey k = new SigningPrivateKey(key.getData());
-                        SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(k);
+                        SigningPublicKey pub = KeyGenerator.getSigningPublicKey(k);
                         channel = pub.calculateHash();
                     } else {
                         ui.errorMessage("Cannot use simple mode, as no channel was specified but multiple management keys are known");
@@ -647,7 +648,7 @@ public class MessageGen extends CommandImpl {
             NymKey key = (NymKey)keys.get(i);
             if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 Hash privChan = pub.calculateHash();
                 // take the first authentication key found, as its probably our blog
                 if (authenticationKey == null) 

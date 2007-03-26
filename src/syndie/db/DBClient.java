@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
@@ -63,7 +64,7 @@ public class DBClient {
         // we are probably safe with the small exponent size, but asym 
         // encryption and decryption is rare enough in syndie that its reasonable
         // to go up to the full 2048bits
-        ctx.keyGenerator().PUBKEY_EXPONENT_SIZE = ctx.keyGenerator().PUBKEY_EXPONENT_SIZE_FULL;
+        KeyGenerator.PUBKEY_EXPONENT_SIZE = KeyGenerator.PUBKEY_EXPONENT_SIZE_FULL;
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
@@ -1377,7 +1378,7 @@ public class DBClient {
             NymKey key = (NymKey)manageKeys.get(i);
             if (key.getAuthenticated()) {
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 pubKeys.add(pub);
                 if (includeIdent) {
                     Hash chan = pub.calculateHash();

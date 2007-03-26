@@ -162,9 +162,9 @@ public class SyncArchive {
     }
     
     public interface SyncArchiveListener {
-        public void incomingUpdated(IncomingAction action);
+        public void incomingUpdated(SyncArchive.IncomingAction action);
         public void incomingUpdated(List actions);
-        public void outgoingUpdated(OutgoingAction action);
+        public void outgoingUpdated(SyncArchive.OutgoingAction action);
         public void archiveUpdated(SyncArchive archive);
     }
     

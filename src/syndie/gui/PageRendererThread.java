@@ -41,7 +41,7 @@ public final class PageRendererThread implements Runnable {
                 try {
                     long before = System.currentTimeMillis();
                     // on retheme, likely competing w/ the swt thread
-                    Thread.currentThread().yield();
+                    Thread.yield();
                     cur.threadedRender();
                     long renderTime = System.currentTimeMillis() - before;
                     //System.out.println("async render time: " + renderTime);

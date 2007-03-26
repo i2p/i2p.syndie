@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
@@ -158,7 +159,7 @@ class ManageMenu implements TextEngine.Menu {
             NymKey key = (NymKey)manageKeys.get(i);
             if (key.getAuthenticated()) {
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 pubKeys.add(pub);
                 Hash chan = pub.calculateHash();
                 long chanId = client.getChannelId(chan);
@@ -302,7 +303,7 @@ class ManageMenu implements TextEngine.Menu {
             NymKey key = (NymKey)manageKeys.get(i);
             if (key.getAuthenticated()) {
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 Hash chan = pub.calculateHash();
                 long chanId = client.getChannelId(chan);
                 if (chanId >= 0)

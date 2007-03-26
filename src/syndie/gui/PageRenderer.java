@@ -568,7 +568,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _ui.debugMessage("renderHTML: state built");
         final String rawText = builder.getAsText();
         final HTMLStyleBuilder sbuilder = new HTMLStyleBuilder(_ui, _source, builder.getTags(), rawText, _msg, _enableImages, _styled);
-        final String text = builder.stripPlaceholders(rawText);
+        final String text = HTMLStateBuilder.stripPlaceholders(rawText);
         
         _ui.debugMessage("renderHTML: building styles");
         //todo: do this in two parts, once in the current thread, another in the swt thread

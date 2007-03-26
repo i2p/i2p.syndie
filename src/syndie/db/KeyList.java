@@ -4,6 +4,7 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
@@ -62,7 +63,7 @@ public class KeyList extends CommandImpl {
                 ui.statusMessage(key.toString());
                 if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
                     SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                    SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                    SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                     Hash pubIdent = pub.calculateHash();
                     if (key.getChannel().equals(pubIdent)) {
                         ui.statusMessage(" - verifies as an identity key (size: " + key.getData().length + "/" + SigningPrivateKey.KEYSIZE_BYTES + ")");

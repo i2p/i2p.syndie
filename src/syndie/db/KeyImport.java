@@ -5,6 +5,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.NymKey;
@@ -99,6 +100,7 @@ public class KeyImport extends CommandImpl {
         return importKey(ui, client, null, null, null, type, scope, raw, authenticated, expireExisting);
     }
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
+        client.clearNymChannelCache();
         PreparedStatement stmt = null;
         try {
             long nymId = -1;
@@ -144,7 +146,7 @@ public class KeyImport extends CommandImpl {
             
             if (Constants.KEY_FUNCTION_MANAGE.equals(type) || Constants.KEY_FUNCTION_POST.equals(type)) {
                 SigningPrivateKey priv = new SigningPrivateKey(raw);
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 if (pub.calculateHash().equals(scope)) {
                     ui.statusMessage("Importing an identity key for " + scope.toBase64());
                 } else {

@@ -411,7 +411,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
                         long channelId = _client.getChannelId(actionScope);
-                        DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true, false);
+                        DBClient.ChannelCollector chans = _client.getNymChannels(); //getChannels(true, true, true, true, false);
                         final boolean postable = chans.getAllIds().contains(new Long(channelId));
                         final boolean privmsg = true; // true for all channels
                         final boolean watched = _client.isWatched(channelId);

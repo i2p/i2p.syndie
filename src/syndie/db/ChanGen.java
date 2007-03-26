@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.ChannelInfo;
@@ -96,7 +97,7 @@ public class ChanGen extends CommandImpl {
                 for (int i = 0; i < keys.size(); i++) {
                     NymKey k = (NymKey)keys.get(i);
                     PrivateKey priv = new PrivateKey(k.getData());
-                    PublicKey curPub = client.ctx().keyGenerator().getPublicKey(priv);
+                    PublicKey curPub = KeyGenerator.getPublicKey(priv);
                     if (curPub.equals(enc)) {
                         encPriv = priv;
                         break;
@@ -110,7 +111,7 @@ public class ChanGen extends CommandImpl {
                 for (int i = 0; i < keys.size(); i++) {
                     NymKey k = (NymKey)keys.get(i);
                     SigningPrivateKey priv = new SigningPrivateKey(k.getData());
-                    SigningPublicKey curPub = client.ctx().keyGenerator().getSigningPublicKey(priv);
+                    SigningPublicKey curPub = KeyGenerator.getSigningPublicKey(priv);
                     if (curPub.equals(ident)) {
                         identPriv = priv;
                         break;
@@ -168,7 +169,7 @@ public class ChanGen extends CommandImpl {
         }
     
         if (true) {
-            SigningPublicKey testPub = client.ctx().keyGenerator().getSigningPublicKey(identPrivate);
+            SigningPublicKey testPub = KeyGenerator.getSigningPublicKey(identPrivate);
             if (identPublic.equals(testPub)) {
                 // ok, gravity works
             } else {

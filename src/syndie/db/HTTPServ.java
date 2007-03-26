@@ -104,7 +104,7 @@ public class HTTPServ implements CLI.Command {
             while (_alive && _ssocket != null) {
                 if (!_client.isLoggedIn()) {
                     if (loggedIn) break; // if we logged in but then logged out, stop
-                    try { Thread.currentThread().sleep(1000); } catch (InterruptedException ie) {}
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
                     continue;
                 }
                 if (!loggedIn)

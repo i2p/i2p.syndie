@@ -1031,7 +1031,7 @@ class ReadMenu implements TextEngine.Menu {
             if (postKey != null) {
                 // consider the post key authentic if it is in the target channel's post or
                 // manage list
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(postKey);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(postKey);
                 boolean authenticated = false;
                 if (pub.calculateHash().equals(scope))
                     authenticated = true;
@@ -1060,7 +1060,7 @@ class ReadMenu implements TextEngine.Menu {
             SigningPrivateKey manageKey = uri.getManageKey();
             if (manageKey != null) {
                 // consider the manage key authentic if it is in the target channel's manage list
-                SigningPublicKey pub = client.ctx().keyGenerator().getSigningPublicKey(manageKey);
+                SigningPublicKey pub = KeyGenerator.getSigningPublicKey(manageKey);
                 boolean authenticated = false;
                 if (pub.calculateHash().equals(scope))
                     authenticated = true;
@@ -1088,7 +1088,7 @@ class ReadMenu implements TextEngine.Menu {
             PrivateKey replyKey = uri.getReplyKey();
             if (replyKey != null) {
                 // consider the reply key authentic if it is in the target channel's reply key
-                PublicKey pub = client.ctx().keyGenerator().getPublicKey(replyKey);
+                PublicKey pub = KeyGenerator.getPublicKey(replyKey);
                 boolean authenticated = false;
                 long scopeChan = client.getChannelId(scope);
                 if (scopeChan < 0) {

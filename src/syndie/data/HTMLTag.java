@@ -59,9 +59,9 @@ public class HTMLTag {
                         } else {
                             // whitespace does terminate an unquoted attribute value though
                             quoteChar = -1;
-                            String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                            String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                             String val = tagBody.substring(attribValueStart, i);
-                            attributes.setProperty(name, val);
+                            attributes.setProperty(lname, val);
                             attribNameStart = -1;
                             attribNameEnd = -1;
                             attribValueStart = -1;
@@ -70,9 +70,9 @@ public class HTMLTag {
                 }
             }  else if ((quoteChar != -1) && (quoteChar == c) && (attribValueStart != -1)) {
                 quoteChar = -1;
-                String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                 String val = tagBody.substring(attribValueStart, i);
-                attributes.setProperty(name, val);
+                attributes.setProperty(lname, val);
                 attribNameStart = -1;
                 attribNameEnd = -1;
                 attribValueStart = -1;
@@ -102,9 +102,9 @@ public class HTMLTag {
         
         if (attribValueStart > 0) {
             // eg <a href=foo>
-            String name = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+            String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
             String val = tagBody.substring(attribValueStart).trim();
-            attributes.setProperty(name, val);
+            attributes.setProperty(lname, val);
             attribNameStart = -1;
             attribNameEnd = -1;
             attribValueStart = -1;            
@@ -137,9 +137,9 @@ public class HTMLTag {
         rv.append(this.name);
         rv.append(' ');
         for (Iterator iter = attributes.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
-            String val = attributes.getProperty(name);
-            rv.append(name).append('=').append('\'').append(val).append('\'').append(' ');
+            String lname = (String)iter.next();
+            String val = attributes.getProperty(lname);
+            rv.append(lname).append('=').append('\'').append(val).append('\'').append(' ');
         }
         rv.append('>');
         return rv.toString();
