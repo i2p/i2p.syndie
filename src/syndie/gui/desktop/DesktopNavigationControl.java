@@ -55,6 +55,8 @@ public class DesktopNavigationControl implements NavigationControl {
                 
                 return new MessageEditorPanel(_desktop, _desktop.getDBClient(), _desktop.getUI(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), targetForum, parent, asReply, uri);
             }
+        } else if (BrowserTab.TYPE_SYNDICATE_STATUS.equals(uri.getType()) || uri.isArchive()) {
+            return new SyndicatorPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);

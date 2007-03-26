@@ -82,10 +82,16 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private boolean _disposed;
     
+    private boolean _showActions;
+    
     public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, Composite parent) {
+        this(client, ui, themes, trans, navControl, parent, true);
+    }
+    public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, Composite parent, boolean showActions) {
         super(client, ui, themes, trans);
         _navControl = navControl;
         _parent = parent;
+        _showActions = showActions;
         
         _archiveNameToRootItem = new HashMap();
         _archiveNameToIndexItem = new HashMap();
@@ -108,29 +114,36 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
-        _root.setLayout(new GridLayout(1, true));
+        GridLayout gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        _root.setLayout(gl);
         
-        _actions = new Composite(_root, SWT.NONE);
-        _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        // actual action buttons...
-        _add = new Button(_actions, SWT.PUSH);
-        _cancel = new Button(_actions, SWT.PUSH);
-        _delete = new Button(_actions, SWT.PUSH);
-        
-        _add.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { add(); }
-        });
-        _cancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
-        });
-        _delete.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
-        });
+        if (_showActions) {
+            _actions = new Composite(_root, SWT.NONE);
+            _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
+            _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+
+            // actual action buttons...
+            _add = new Button(_actions, SWT.PUSH);
+            _cancel = new Button(_actions, SWT.PUSH);
+            _delete = new Button(_actions, SWT.PUSH);
+
+            _add.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { add(); }
+            });
+            _cancel.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
+            });
+            _delete.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
+            });
+        }
         
         _sash = new SashForm(_root, SWT.VERTICAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -224,7 +237,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         _themeRegistry.unregister(this);
     }
     
-    private void add() {
+    public void add() {
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         viewDetailArchive(new SyncArchive(mgr, _client), false);
     }
@@ -236,7 +249,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         }
     }
     private static final String T_CANCELLED = "syndie.gui.syndicator.cancelled";
-    private void delete() { 
+    public void delete() { 
         if (_tree.getSelectionCount() != 1) return;
         TreeItem item = _tree.getSelection()[0];
         Object val = _items.get(item);
@@ -303,6 +316,32 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         } else {
             // unknown type
             _ui.debugMessage("Unknown type is selected: " + val + " for " + item);
+        }
+    }
+    
+    public void syncNowRecurring() {
+        if (_tree.getSelectionCount() != 1) return;
+        TreeItem item = _tree.getSelection()[0];
+        Object val = _items.get(item);
+        if (val == null) return;
+        if (val instanceof SyncArchive) {
+            SyncArchive archive = (SyncArchive)val;
+            archive.setNextSyncOneOff(false);
+            archive.setNextSyncTime(System.currentTimeMillis());
+            archive.store(true);
+        }
+    }
+    
+    public void syncNowOneTime() {
+        if (_tree.getSelectionCount() != 1) return;
+        TreeItem item = _tree.getSelection()[0];
+        Object val = _items.get(item);
+        if (val == null) return;
+        if (val instanceof SyncArchive) {
+            SyncArchive archive = (SyncArchive)val;
+            archive.setNextSyncOneOff(true);
+            archive.setNextSyncTime(System.currentTimeMillis());
+            archive.store(true);
         }
     }
     
@@ -491,6 +530,23 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= System.currentTimeMillis()) && (archive.getIndexFetchComplete() || archive.getIndexFetchInProgress()) )
             return true;
         return false;
+    }
+    
+    public int getSelectionCount() { return _tree.getSelectionCount(); }
+    
+    public void viewDetail() {
+        int sel = _tree.getSelectionCount();
+        _ui.debugMessage("view detail: sel=" + sel);
+        if (sel != 1) return;
+        TreeItem item = _tree.getSelection()[0];
+        Object val = _items.get(item);
+        _ui.debugMessage("view detail: val=" + val);
+        if (val == null) return;
+        if (val instanceof SyncArchive) {
+            _ui.debugMessage("viewing detail of archive");
+            SyncArchive archive = (SyncArchive)val;
+            viewDetailArchive(archive, true);
+        }
     }
     
     private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {
@@ -920,9 +976,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         _colStatus.setText(registry.getText(T_COLSTATUS, "Status"));
         _colSummary.setText(registry.getText(T_COLSUMMARY, "Summary"));
         
-        _add.setText(registry.getText(T_ADD, "Add archive"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel syndications"));
-        _delete.setText(registry.getText(T_DELETE, "Delete archive"));
+        if (_showActions) {
+            _add.setText(registry.getText(T_ADD, "Add archive"));
+            _cancel.setText(registry.getText(T_CANCEL, "Cancel syndications"));
+            _delete.setText(registry.getText(T_DELETE, "Delete archive"));
+        }
     }
     
     public void applyTheme(Theme theme) {
@@ -933,9 +991,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         _colStatus.pack();
         _colSummary.pack();
         
-        _add.setFont(theme.BUTTON_FONT);
-        _cancel.setFont(theme.BUTTON_FONT);
-        _delete.setFont(theme.BUTTON_FONT);
+        if (_showActions) {
+            _add.setFont(theme.BUTTON_FONT);
+            _cancel.setFont(theme.BUTTON_FONT);
+            _delete.setFont(theme.BUTTON_FONT);
+        }
     }
 
     //

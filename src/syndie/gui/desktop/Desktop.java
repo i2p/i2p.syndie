@@ -311,6 +311,7 @@ class Desktop {
                 public void run() { 
                     _taskTree = new TaskTreeShell(Desktop.this);
                     ((ExitDesktopCorner)_cornerNorthEast).startupComplete();
+                    ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
                     showForumSelectionPanel();
                 } 
             });
@@ -401,7 +402,7 @@ class Desktop {
         _cornerNorthWest = new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
         _cornerNorthEast = new ExitDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
         _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
-        _cornerSouthWest = new DesktopCornerDummy(SWT.COLOR_RED, _edgeSouthWest, _ui);
+        _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
         _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
@@ -508,6 +509,29 @@ class ExitDesktopCorner extends DesktopCorner {
         _button = new Button(getRoot(), SWT.PUSH);
         _button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
+        getRoot().layout(true, true);
+    }
+}
+
+class SyndicateDesktopCorner extends DesktopCorner {
+    private Desktop _desktop;
+    private Button _button;
+    public SyndicateDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
+        super(parent, ui);
+        _desktop = desktop;
+        initComponents(color);
+    }
+    public void startupComplete() {
+        _button.setImage(ImageUtil.ICON_TAB_ARCHIVE);
+    }
+    private void initComponents(int color) {
+        _button = new Button(getRoot(), SWT.PUSH);
+        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        _button.addSelectionListener(new FireSelectionListener() { 
+            public void fire() { 
+                _desktop.getNavControl().view(URIHelper.instance().createSyndicationStatusURI());
+            } 
+        });
         getRoot().layout(true, true);
     }
 }
