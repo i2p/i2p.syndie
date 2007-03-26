@@ -631,7 +631,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navNextNew = new Button(root, SWT.PUSH);
             _navNextNew.setImage(ImageUtil.ICON_MSGNAV_NEXTNEW);
-            _navNextNew.setLayoutData(new GridData(64, 64));
+            _navNextNew.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navNextNew.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getNextNew();
@@ -642,7 +642,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navPrevNew = new Button(root, SWT.PUSH);
             _navPrevNew.setImage(ImageUtil.ICON_MSGNAV_PREVNEW);
-            _navPrevNew.setLayoutData(new GridData(64, 64));
+            _navPrevNew.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navPrevNew.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousNew();
@@ -654,7 +654,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navNextViaThread = new Button(root, SWT.PUSH);
             _navNextViaThread.setImage(ImageUtil.ICON_MSGNAV_NEXTVIATHREAD);
-            _navNextViaThread.setLayoutData(new GridData(64, 64));
+            _navNextViaThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navNextViaThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getNextViaThread();
@@ -665,7 +665,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navPrevViaThread = new Button(root, SWT.PUSH);
             _navPrevViaThread.setImage(ImageUtil.ICON_MSGNAV_PREVVIATHREAD);
-            _navPrevViaThread.setLayoutData(new GridData(64, 64));
+            _navPrevViaThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navPrevViaThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousViaThread();
@@ -676,7 +676,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navNextInThread = new Button(root, SWT.PUSH);
             _navNextInThread.setImage(ImageUtil.ICON_MSGNAV_NEXTINTHREAD);
-            _navNextInThread.setLayoutData(new GridData(64, 64));
+            _navNextInThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navNextInThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getNextInThread();
@@ -687,7 +687,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navPrevInThread = new Button(root, SWT.PUSH);
             _navPrevInThread.setImage(ImageUtil.ICON_MSGNAV_PREVINTHREAD);
-            _navPrevInThread.setLayoutData(new GridData(64, 64));
+            _navPrevInThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navPrevInThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousInThread();
@@ -698,7 +698,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navNextThread = new Button(root, SWT.PUSH);
             _navNextThread.setImage(ImageUtil.ICON_MSGNAV_NEXTTHREAD);
-            _navNextThread.setLayoutData(new GridData(64, 64));
+            _navNextThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navNextThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getNextThread();
@@ -709,7 +709,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             
             _navPrevThread = new Button(root, SWT.PUSH);
             _navPrevThread.setImage(ImageUtil.ICON_MSGNAV_PREVTHREAD);
-            _navPrevThread.setLayoutData(new GridData(64, 64));
+            _navPrevThread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             _navPrevThread.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     SyndieURI uri = _iter.getPreviousThread();
