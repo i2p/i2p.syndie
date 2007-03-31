@@ -12,24 +12,23 @@ import syndie.db.UI;
 /**
  *
  */
-class BookmarkEditorPopup extends BaseComponent implements BookmarkEditor.BookmarkEditorListener, Translatable, Themeable {
-    private BookmarkControl _bookmarkControl;
+class ReferenceEditorPopup extends BaseComponent implements Translatable, Themeable, ReferenceEditor.ReferenceEditorListener {
     private Shell _parent;
     private Shell _shell;
-    private BookmarkEditor _editor;
+    private ReferenceEditor _editor;
+    private BookmarkControl _bookmarkControl;
     
-    public BookmarkEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, Shell parent) {
+    public ReferenceEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, Shell parent) {
         super(client, ui, themes, trans);
-        _bookmarkControl = bookmarkControl;
         _parent = parent;
+        _bookmarkControl = bookmarkControl;
         initComponents();
     }
     
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
-        _editor = new BookmarkEditor(_client, _ui, _themeRegistry, _translationRegistry, _shell, this);
-        _shell.pack();
+        _editor = new ReferenceEditor(_client, _ui, _themeRegistry, _translationRegistry, _shell, _bookmarkControl, this);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {
@@ -45,42 +44,36 @@ class BookmarkEditorPopup extends BaseComponent implements BookmarkEditor.Bookma
     }
     
     public void dispose() {
+        if (!_shell.isDisposed())
+            _shell.dispose();
+        _editor.dispose();
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
         _editor.dispose();
     }
     
-    public void setBookmark(NymReferenceNode node) { _editor.setBookmark(node); }
     public void open() { 
+        if ( (_shell == null) || (_shell.isDisposed()) )
+            initComponents();
+        
         _shell.layout(true, true);
-        _shell.setSize(_shell.computeSize(300, SWT.DEFAULT));
+        _shell.setSize(_editor.getControl().computeSize(500, 500));
         _shell.open();
     }
-    public void pickParent(boolean pick) { _editor.pickParent(pick); }
-    public void pickOrder(boolean pick) { _editor.pickOrder(pick); }
-    public void pickTarget(boolean pick) { _editor.pickTarget(pick); }
-    private void cancel() { _shell.setVisible(false); }
-
-    public void updateBookmark(BookmarkEditor editor, NymReferenceNode bookmark, boolean delete) {
-        _shell.setVisible(false);
-        if (bookmark.getGroupId() < 0)
-            _bookmarkControl.bookmark(bookmark, true);
-        else if (delete)
-            _bookmarkControl.deleteBookmark(bookmark.getGroupId());
-        else
-            _bookmarkControl.updateBookmark(bookmark);
-    }
-
-    public void cancelEditor(BookmarkEditor editor) {
-        _shell.setVisible(false);
-    }
     
-    private static final String T_TITLE = "syndie.gui.bookmarkeditor.title";
+    public void setReference(NymReferenceNode node) { _editor.setReference(node); }
+    
+    private void cancel() { dispose(); }
+    
+    private static final String T_TITLE = "syndie.gui.referenceeditorpopup.title";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Bookmark editor"));
+        _shell.setText(registry.getText(T_TITLE, "Reference editor"));
     }
     public void applyTheme(Theme theme) {
         _shell.setFont(theme.SHELL_FONT);
     }
+
+    public void cancelled(ReferenceEditor editor) { cancel(); }
+    public void saved(ReferenceEditor editor) { cancel(); }
 }

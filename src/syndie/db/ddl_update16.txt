@@ -1,0 +1,20 @@
+-- update the database from schema version 16
+-- this version 17 adds hooks for reference and forum petnames and icons
+--
+
+UPDATE appVersion SET versionNum = 17, visibleVersion = 'Pet names';
+
+CREATE TABLE nymChannelPetName (
+	channelId	BIGINT PRIMARY KEY
+	, petname	VARCHAR(256)
+	, petdesc	VARCHAR(256)
+);
+
+CREATE TABLE nymCustomIcon (
+	targetId	BIGINT PRIMARY KEY
+	-- for type 0, the targetId refers to a channelId
+	-- for type 1, the targetId refers to a nymReferenceGroupId
+	, targetType	INTEGER
+	, data		LONGVARBINARY
+);
+

@@ -65,7 +65,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private Button _searchAdvanced;
     
-    private BookmarkEditorPopup _bookmarkEditor;
     private ReferenceChooserSearch _searchDetail;
     private Shell _searchDetailPopup;
 
@@ -85,12 +84,6 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (_nymRefs != null)
             _browserInstance.bookmarksUpdated(_nymRefs);
         _nymRefs = null;
-    }
-    private BookmarkEditorPopup getBookmarkEditor() {
-        // only called by the swt thread, so no need to sync
-        if (_bookmarkEditor == null)
-            _bookmarkEditor = ComponentBuilder.instance().createBookmarkEditorPopup(getControl().getShell());
-        return _bookmarkEditor;
     }
     
     protected void initComponents(boolean register, boolean multi, Timer timer) {
@@ -482,24 +475,19 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 field.setFocus();
                 ed.setEditor(field, item);
             } else {
-                BookmarkEditorPopup popup = getBookmarkEditor();
-                popup.setBookmark(node);
-                popup.pickParent(false);
-                popup.pickOrder(false);
-                popup.pickTarget(true);
-                popup.open();
+                ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _bookmarkControl, getControl().getShell());
+                editor.setReference(node);
+                editor.open();
             }
         }
     }
     
     private void addBookmark(long parentGroupId) {
         _ui.debugMessage("addBookmark underneath " + parentGroupId);
-        BookmarkEditorPopup popup = getBookmarkEditor();
-        popup.pickParent(false);
-        popup.pickOrder(false);
-        popup.pickTarget(true);
-        popup.setBookmark(new NymReferenceNode("", null, "", -1, -1, parentGroupId, -1, false, false, false));
-        popup.open();
+        
+        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _bookmarkControl, getControl().getShell());
+        editor.setReference(new NymReferenceNode("", null, "", -1, -1, parentGroupId, -1, false, false, false));
+        editor.open();
     }
     
     private void addFolder(long parentGroupId) {

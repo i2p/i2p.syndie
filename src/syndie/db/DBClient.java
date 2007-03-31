@@ -825,7 +825,7 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_GET_CHANNEL_NAME = "SELECT name FROM channel WHERE channelHash = ?";
+    private static final String SQL_GET_CHANNEL_NAME = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelHash = ?";
     public String getChannelName(Hash channel) {
         if (channel == null) return null;
         PreparedStatement stmt = null;
@@ -836,7 +836,11 @@ public class DBClient {
             rs = stmt.executeQuery();
             if (rs.next()) {
                 String name = rs.getString(1);
-                return name;
+                String petName = rs.getString(2);
+                if ( (petName == null) || (petName.trim().length() == 0) )
+                    return name;
+                else
+                    return petName;
             } else {
                 return null;
             }
@@ -850,7 +854,7 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_GET_CHANNEL_NAME_ID = "SELECT name FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_CHANNEL_NAME_ID = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelId = ?";
     public String getChannelName(long chanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -860,7 +864,11 @@ public class DBClient {
             rs = stmt.executeQuery();
             if (rs.next()) {
                 String name = rs.getString(1);
-                return name;
+                String petName = rs.getString(2);
+                if ( (petName == null) || (petName.trim().length() == 0) )
+                    return name;
+                else
+                    return petName;
             } else {
                 return null;
             }
@@ -874,7 +882,7 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_GET_CHANNEL_DESCRIPTION = "SELECT description FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_CHANNEL_DESCRIPTION = "SELECT description, petdesc FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelId = ?";
     public String getChannelDescription(long chanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -884,7 +892,11 @@ public class DBClient {
             rs = stmt.executeQuery();
             if (rs.next()) {
                 String desc = rs.getString(1);
-                return desc;
+                String petDesc = rs.getString(2);
+                if ( (petDesc == null) || (petDesc.trim().length() == 0) )
+                    return desc;
+                else
+                    return petDesc;
             } else {
                 return null;
             }
@@ -1691,7 +1703,7 @@ public class DBClient {
         return rv;
     }
     
-    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt, importDate FROM channel WHERE channelId = ?";
+    private static final String SQL_GET_CHANNEL_INFO = "SELECT channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, expiration, readKeyMissing, pbePrompt, importDate, petname, petdesc FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_TAG = "SELECT tag, wasEncrypted FROM channelTag WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
@@ -1729,14 +1741,16 @@ public class DBClient {
                 if (rs.wasNull()) readKeyMissing = false;
                 String pbePrompt = rs.getString(12);
                 Date importDate = rs.getDate(13);
+                String petname = rs.getString(14);
+                String petdesc = rs.getString(15);
                 
                 info.setChannelId(channelId);
                 info.setChannelHash(new Hash(chanHash));
                 info.setIdentKey(new SigningPublicKey(identKey));
                 info.setEncryptKey(new PublicKey(encryptKey));
                 info.setEdition(edition);
-                info.setName(name);
-                info.setDescription(desc);
+                info.setName(petname == null ? name : petname);
+                info.setDescription(petdesc == null ? desc : petdesc);
                 info.setAllowPublicPosts(allowPost);
                 info.setAllowPublicReplies(allowReply);
                 if (exp != null)
@@ -2084,9 +2098,171 @@ public class DBClient {
         }
     }
     
+    private static final String SQL_GET_NYM_CHANNEL_PETNAME_DEFINED = "SELECT COUNT(channelId) FROM nymChannelPetName WHERE channelId = ? AND petname IS NOT NULL";
+    public boolean getNymChannelPetNameDefined(long channelId) { 
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_CHANNEL_PETNAME_DEFINED);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long count = rs.getLong(1);
+                return !rs.wasNull() && (count > 0);
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error determining if the petname was defined", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    private static final String SQL_GET_NYM_CHANNEL_PETDESC_DEFINED = "SELECT COUNT(channelId) FROM nymChannelPetName WHERE channelId = ? AND petdesc IS NOT NULL";
+    public boolean getNymChannelPetDescriptionDefined(long channelId) { 
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_NYM_CHANNEL_PETDESC_DEFINED);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                long count = rs.getLong(1);
+                return !rs.wasNull() && (count > 0);
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error determining if the petdesc was defined", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+                
+    private static final String SQL_UNSET_PETNAME = "DELETE FROM nymChannelPetName WHERE channelId = ?";
+    private static final String SQL_SET_PETNAME = "INSERT INTO nymChannelPetName (channelId, petname, petdesc) VALUES (?, ?, ?)";
+    /**
+     * override the channel's name and description locally
+     */
+    public void setNymChannelPetName(long channelId, String name, String desc) {
+        ensureLoggedIn();
+        
+        PreparedStatement stmt = null;
+        try {
+            exec(SQL_UNSET_PETNAME, channelId);
+            stmt = _con.prepareStatement(SQL_SET_PETNAME);
+            stmt.setLong(1, channelId);
+            if ( (name != null) && (name.trim().length() > 0) )
+                stmt.setString(2, name);
+            else
+                stmt.setNull(2, Types.VARCHAR);
+            if ( (desc != null) && (desc.trim().length() > 0) )
+                stmt.setString(3, desc);
+            else
+                stmt.setNull(3, Types.VARCHAR);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error setting the petname", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_UNSET_CUSTOM_AVATAR = "DELETE FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
+    private static final String SQL_SET_CUSTOM_AVATAR = "INSERT INTO nymCustomIcon (targetType, targetId, data) VALUES (0, ?, ?)";
+    /**
+     * user-specified avatar overriding the channel's published avatar
+     */
+    public void setNymChannelAvatar(long channelId, byte avatar[]) {
+        ensureLoggedIn();
+        
+        _ui.debugMessage("Setting custom avatar for " + channelId + ": " + (avatar != null ? avatar.length : -1));
+        
+        PreparedStatement stmt = null;
+        try {
+            exec(SQL_UNSET_CUSTOM_AVATAR, channelId);
+            stmt = _con.prepareStatement(SQL_SET_CUSTOM_AVATAR);
+            stmt.setLong(1, channelId);
+            stmt.setBytes(2, avatar);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error setting the custom avatar", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_CUSTOM_AVATAR = "SELECT data FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
+    /**
+     * user-specified avatar overriding the channel's published avatar
+     */
+    public byte[] getNymChannelAvatar(long channelId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CUSTOM_AVATAR);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                return data;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the custom avatar", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
+    }
+
+    private static final String SQL_GET_CUSTOM_AVATAR_DEFINED = "SELECT COUNT(targetId) FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
+    /**
+     * returns true if a custom channel avatar has been defined
+     */
+    public boolean getNymChannelAvatarDefined(long channelId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CUSTOM_AVATAR_DEFINED);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1) > 0;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error determining if the custom avatar is defined", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private static final String SQL_GET_CHANNEL_AVATAR = "SELECT avatarData FROM channelAvatar WHERE channelId = ?";
     public byte[] getChannelAvatar(long channelId) {
         ensureLoggedIn();
+        byte rv[] = getNymChannelAvatar(channelId);
+        if (rv != null)
+            return rv;
+        
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -3227,7 +3403,7 @@ public class DBClient {
         return null;
     }
 
-    private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name FROM channel WHERE allowPubPost = TRUE ORDER BY name ASC";
+    private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name, petname FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE allowPubPost = TRUE ORDER BY petname, name ASC";
     /** list of channel ids (Long) that anyone is allowed to post to */
     public List getPublicPostingChannelIds() {
         ensureLoggedIn();
@@ -3563,6 +3739,7 @@ public class DBClient {
 
     private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
+    public List getNymReferences() { return getNymReferences(_nymId); }
     public List getNymReferences(long nymId) {
         ensureLoggedIn();
         Map groupIdToNode = new TreeMap();
@@ -3912,6 +4089,87 @@ public class DBClient {
         }
     }
     
+    
+    private static final String SQL_UNSET_REFERENCE_ICON = "DELETE FROM nymCustomIcon WHERE targetType = 1 AND targetId = ?";
+    private static final String SQL_SET_REFERENCE_ICON = "INSERT INTO nymCustomIcon (targetType, targetId, data) VALUES (1, ?, ?)";
+    /**
+     * user-specified avatar overriding the channel's published avatar
+     */
+    public void setNymReferenceIcon(long groupId, byte avatar[]) {
+        ensureLoggedIn();
+
+        _ui.debugMessage("Setting custom icon for " + groupId + ": " + (avatar != null ? avatar.length : -1));
+        
+        PreparedStatement stmt = null;
+        try {
+            exec(SQL_UNSET_REFERENCE_ICON, groupId);
+            
+            stmt = _con.prepareStatement(SQL_SET_REFERENCE_ICON);
+            stmt.setLong(1, groupId);
+            stmt.setBytes(2, avatar);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error setting the reference avatar", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_GET_REFERENCE_ICON = "SELECT data FROM nymCustomIcon WHERE targetType = 1 AND targetId = ?";
+    /**
+     * user-specified avatar overriding the channel's published avatar
+     */
+    public byte[] getNymReferenceIcon(long groupId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_REFERENCE_ICON);
+            stmt.setLong(1, groupId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                byte data[] = rs.getBytes(1);
+                return data;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the custom reference group icon", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
+    }
+
+    private static final String SQL_GET_REFERENCE_ICON_DEFINED = "SELECT COUNT(targetId) FROM nymCustomIcon WHERE targetType = 1 AND targetId = ?";
+    /**
+     * returns true if a custom channel avatar has been defined
+     */
+    public boolean getNymReferenceIconDefined(long groupId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_REFERENCE_ICON_DEFINED);
+            stmt.setLong(1, groupId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1) > 0;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error determining if the custom reference icon is defined", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
     /*
      * CREATE TABLE nymWatchedChannel (
      *        nymId                   INTEGER

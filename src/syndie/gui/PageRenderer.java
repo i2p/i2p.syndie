@@ -971,18 +971,19 @@ public class PageRenderer extends BaseComponent implements Themeable {
                     break;
                 }
             }
+            Menu m = _text.getMenu();
             if ( (imgTag != null) && (linkTag != null) ) {
-                _text.getMenu().setVisible(false);
+                if (m != null) m.setVisible(false);
                 pickImageLinkMenu(linkTag, imgTag);
                 if (showMenu && isRightClick) _text.getMenu().setVisible(true);
                 return;
             } else if (linkTag != null) {
-                _text.getMenu().setVisible(false);
+                if (m != null) m.setVisible(false);
                 pickLinkMenu(linkTag);
                 if (showMenu) _text.getMenu().setVisible(true);
                 return;
             } else if (imgTag != null) {
-                _text.getMenu().setVisible(false);
+                if (m != null) m.setVisible(false);
                 pickImageMenu(imgTag);
                 if (showMenu && isRightClick) _text.getMenu().setVisible(true);
                 return;

@@ -58,10 +58,6 @@ public class ComponentBuilder {
         return new ReferenceChooserPopup(_client, _ui, _themes, _trans, parent, _navControl, _uriControl);
     }
     
-    public BookmarkEditorPopup createBookmarkEditorPopup(Shell parent) {
-        return new BookmarkEditorPopup(_client, _ui, _themes, _trans, _bookmarkControl, parent);
-    }
-    
     public BrowserTree createBrowserTree(Browser browser, Timer timer, Composite parent, ReferenceChooserTree.ChoiceListener choiceListener, ReferenceChooserTree.AcceptanceListener acceptListener) {
         return new BrowserTree(browser, _client, _ui, _themes, _trans, _navControl, _uriControl, _bookmarkControl, parent, choiceListener, acceptListener, timer);
     }

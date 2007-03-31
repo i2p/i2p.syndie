@@ -512,7 +512,10 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
             _ui.debugMessage("uri is null: " + uri);
         }
         
-        _text.setText(linkText);
+        if (linkText != null)
+            _text.setText(linkText);
+        else
+            _text.setText("");
     }
 
     private class UpdateURIListener implements SelectionListener {
@@ -857,6 +860,11 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         if (title != null)
             _shell.setText(title);
         showPopup(null, _text.getText()); 
+    }
+    public void showPopup(String title, SyndieURI uri, String text) { 
+        if (title != null)
+            _shell.setText(title);
+        showPopup(uri, text); 
     }
     public void showPopup(SyndieURI uri) { showPopup(uri, _text.getText()); }
     public void showPopup(SyndieURI uri, String text) {

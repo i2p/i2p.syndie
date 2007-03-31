@@ -190,7 +190,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private DirectoryDialog _importDirDialog;
     
     private StatusBar _statusBar;
-    private BookmarkEditorPopup _bookmarkEditor;
     /** uri to BrowserTab */
     private Map _openTabs;
     /** CTabItem to uri */
@@ -1603,11 +1602,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         if (tab != null)
             tab.dispose();
     }
-    private BookmarkEditorPopup getBookmarkEditor() {
-        if (_bookmarkEditor == null)
-            _bookmarkEditor = ComponentBuilder.instance().createBookmarkEditorPopup(_shell);
-        return _bookmarkEditor;
-    }
     
     public void bookmarkCurrentTab() {
         CTabItem item = _tabs.getSelection();
@@ -1706,10 +1700,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         NymReferenceNode node = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, siblingOrder, ignored, banned, loadOnStart);
     
-        BookmarkEditorPopup editor = getBookmarkEditor();
-        editor.setBookmark(node);
-        editor.pickParent(pickParent);
-        editor.pickOrder(false);
+        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, getUI(), _themes, _translation, this, _shell);
+        //BookmarkEditorPopup editor = getBookmarkEditor();
+        editor.setReference(node);
+        //editor.pickParent(pickParent);
+        //editor.pickOrder(false);
         editor.open();
     }
     /** called by the bookmark editor, or other things that can populate the fields properly */
