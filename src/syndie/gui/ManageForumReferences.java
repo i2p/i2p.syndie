@@ -3,6 +3,7 @@ package syndie.gui;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -62,6 +63,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     private TreeColumn _colDesc;
     private TreeColumn _colTarget;
     private Menu _targetMenu;
+    private MenuItem _targetMenuAdd;
     private MenuItem _targetMenuRemove;
     private List _targetReferenceNodes;
     private Map _targetItemToNode;
@@ -110,6 +112,10 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
         _targetMenu = new Menu(_targetTree);
         _targetTree.setMenu(_targetMenu);
         
+        _targetMenuAdd = new MenuItem(_targetMenu, SWT.PUSH);
+        _targetMenuAdd.addSelectionListener(new FireSelectionListener() {
+            public void fire() { addRef(); }
+        });
         _targetMenuRemove = new MenuItem(_targetMenu, SWT.PUSH);
         _targetMenuRemove.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -152,6 +158,24 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
         
         _shell.open();
     }
+    
+    private void addRef() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+            public void uriBuilt(SyndieURI uri, String text) {
+                if (uri == null) return;
+                String name = text;
+                String desc = "";
+                String type = "ref";
+                ReferenceNode toAdd = new ReferenceNode(name, uri, desc, type);
+                _targetReferenceNodes.add(toAdd);
+                redrawTarget();
+            }
+            public int getPageCount() { return 0; }
+            public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
+        });
+        popup.showPopup(_translationRegistry.getText(T_ADDREF, "Add reference"));
+    }
+    private static final String T_ADDREF = "syndie.gui.manageforumreferences.addref";
     
     public void dispose() {
         _translationRegistry.unregister(this);
@@ -506,6 +530,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     private static final String T_OK = "syndie.gui.manageforumreferences.ok";
     private static final String T_CANCEL = "syndie.gui.manageforumreferences.cancel";
     private static final String T_TARGET_REMOVE = "syndie.gui.manageforumreferences.target.remove";
+    private static final String T_TARGET_ADD = "syndie.gui.manageforumreferences.target.add";
     
     public void translate(TranslationRegistry registry) {
         _colDesc.setText(registry.getText(T_COLDESC, "Description"));
@@ -515,5 +540,6 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
         _ok.setText(registry.getText(T_OK, "OK"));
         _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
         _targetMenuRemove.setText(registry.getText(T_TARGET_REMOVE, "Remove reference"));
+        _targetMenuAdd.setText(registry.getText(T_TARGET_ADD, "Add reference"));
     }
 }

@@ -117,7 +117,7 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
             public void menuShown(MenuEvent menuEvent) {
                 int sel = _targetTree.getSelectionCount();
                 _targetMenuRemove.setEnabled(sel > 0);
-                _targetMenuAdd.setEnabled(sel == 0);
+                _targetMenuAdd.setEnabled(true);
                 _targetMenuView.setEnabled(sel > 0);
             }
         });
