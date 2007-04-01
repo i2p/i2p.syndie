@@ -499,10 +499,10 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _post.setToolTipText(registry.getText(T_POST_TT, "Post the message"));
             _cancel.setToolTipText(registry.getText(T_CANCEL_TT, "Cancel the message entirely"));
             
-            _saveForLater.setText(registry.getText(T_SAVEFORLATER, "Save"));
-            _preview.setText(registry.getText(T_PREVIEW, "Preview"));
-            _post.setText(registry.getText(T_POST, "Post"));
-            _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+            _saveForLater.setText(registry.getText(T_SAVEFORLATER, "S\na\nv\ne"));
+            _preview.setText(registry.getText(T_PREVIEW, "P\nr\ne\nv\ni\ne\nw"));
+            _post.setText(registry.getText(T_POST, "P\no\ns\nt"));
+            _cancel.setText(registry.getText(T_CANCEL, "C\na\nn\nc\ne\nl"));
         }
         public void applyTheme(Theme theme) {
             _saveForLater.setFont(theme.BUTTON_FONT);

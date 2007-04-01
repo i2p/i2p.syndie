@@ -50,7 +50,32 @@ public class TranslationRegistry {
     public void unregister(Translatable entry) { _translatable.remove(entry); }
     
     public String getTranslation() { return _lang; }
-    public String getText(String key, String defaultVal) { return _text.getProperty(key, defaultVal); }
+    /**
+     * retrieve the translation's value for the given key, or the default value if no translated
+     * value is known.  the returned string is postprocessed as well, turning any newlines into
+     * the current platform's newline character
+     */
+    public String getText(String key, String defaultVal) { 
+        String val = _text.getProperty(key, defaultVal);
+        return postprocess(val);
+    }
+    
+    private static final String NL = System.getProperty("line.separator");
+    private static final String postprocess(String val) {
+        if (val.indexOf('\n') == -1)
+            return val;
+        StringBuffer buf = new StringBuffer();
+        int len = val.length();
+        for (int i = 0; i < len; i++) {
+            char c = val.charAt(i);
+            if (c == '\n')
+                buf.append(NL);
+            else
+                buf.append(c);
+        }
+        return buf.toString();
+    }
+    
     /** 
      * get the translation for the given key, using the current language selected and falling
      * back on the base language if it isn't known

@@ -144,7 +144,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             _details.setFont(theme.DEFAULT_FONT);
         }
         public void translate(TranslationRegistry registry) {
-            _details.setText(registry.getText(T_DETAILS, "Details"));
+            _details.setText(registry.getText(T_DETAILS, "D\ne\nt\na\ni\nl\ns"));
         }
     }
     private static final String T_DETAILS = "syndie.gui.desktop.syndicatorpanel.details";
