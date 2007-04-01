@@ -93,6 +93,10 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     
     public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
+    public void dispose() {
+        if (!_shell.isDisposed()) _shell.dispose();
+        _tree.dispose();
+    }
 
     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
         if (toView)
