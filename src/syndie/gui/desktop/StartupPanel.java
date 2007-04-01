@@ -224,7 +224,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
         if (client.isLoggedIn()) {
             
             _startupTimer.addEvent("begin initComponents");
-            _display.syncExec(new Runnable() { public void run() { ImageUtil.init(client.getTempDir()); } });
+            _display.syncExec(new Runnable() { public void run() { ImageUtil.init(client.getTempDir(), _startupTimer); } });
             _startupTimer.addEvent("image init");
             SpellUtil.init();
             _startupTimer.addEvent("spell init");

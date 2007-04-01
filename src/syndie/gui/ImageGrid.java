@@ -24,6 +24,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
+import syndie.data.Timer;
+import syndie.db.NullUI;
 
 /**
  * create a grid of square images of the specified size and fill the grid from
@@ -149,7 +151,7 @@ public class ImageGrid extends Composite {
     
     public static void main(String args[]) {
         Display d = Display.getDefault();
-        ImageUtil.init(new File("."));
+        ImageUtil.init(new File("."), new Timer("image init", new NullUI()));
         final int internalSize = 32;
         Image imgs[] = new Image[] {
             ImageUtil.resize(ImageUtil.createImageFromResource("iconAvatar" + 0 + ".png"), internalSize, internalSize, true),

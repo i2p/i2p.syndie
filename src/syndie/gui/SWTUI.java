@@ -194,7 +194,7 @@ public class SWTUI {
                     public void complete() {
                         browser.startup(timer);
                     }
-                });
+                }, timer);
                 screen.open();
             } else {
                 browser.debugMessage("db login complete, starting browser...");

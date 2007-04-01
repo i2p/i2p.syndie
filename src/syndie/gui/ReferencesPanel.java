@@ -259,7 +259,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
                 createdImages.add(avatar);
         }
         if ( (avatar == null) && (uri != null) )
-            avatar = ImageUtil.ICON_QUESTION;
+            avatar = ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR;
         //if (img == null)
         //    img = ImageUtil.getTypeIcon(uri);
         Image type = ImageUtil.getTypeIcon(uri);

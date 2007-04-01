@@ -269,7 +269,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         timer.addEvent("begin initComponents");
         ColorUtil.init();
         timer.addEvent("color init");
-        ImageUtil.init(_client.getTempDir());
+        ImageUtil.init(_client.getTempDir(), timer);
         timer.addEvent("image init");
         SpellUtil.init();
         timer.addEvent("spell init");

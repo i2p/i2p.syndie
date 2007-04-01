@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
+import syndie.data.Timer;
 
 /**
  *
@@ -56,12 +57,12 @@ public class WelcomeScreen implements Themeable, Translatable {
     
     private Image _avatarImage;
     
-    public WelcomeScreen(Display display, Browser browser, CompleteListener lsnr) {
+    public WelcomeScreen(Display display, Browser browser, CompleteListener lsnr, Timer timer) {
         _display = display;
         _browser = browser;
         _lsnr = lsnr;
         _avatarImages = new ArrayList();
-        ImageUtil.init(browser.getClient().getTempDir());
+        ImageUtil.init(browser.getClient().getTempDir(), timer);
         initComponents();
     }
     

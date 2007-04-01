@@ -37,9 +37,7 @@ public class ImageUtil {
     private static final Map _loadedResources = new HashMap();
     private static File _tmpDir;
     
-    private static final Timer _timer = new Timer("image util init", new NullUI() {
-        //public void debugMessage(String msg) { System.out.println(msg); }
-    }, false, -1);
+    private static Timer _timer;
     
     public static boolean dispose(Image img) {
         if ( (img == null) || (img.isDisposed()) || (_indisposableImages.contains(img)) )
@@ -47,12 +45,14 @@ public class ImageUtil {
         img.dispose();
         return true;
     }
-    
+
+    /*
     public static Image ICON_ERROR;
     public static Image ICON_INFORMATION;
     public static Image ICON_QUESTION;
     public static Image ICON_WARNING;
     public static Image ICON_WORKING;
+     */
     
     public static Image ICON_SHELL;
     
@@ -168,7 +168,8 @@ public class ImageUtil {
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
-    public static void init(File tmpDir) {
+    public static void init(File tmpDir, Timer timer) {
+        _timer = timer;
         _timer.addEvent("init begin");
         _tmpDir = tmpDir;
         synchronized (ImageUtil.class) {
@@ -176,11 +177,13 @@ public class ImageUtil {
             initImages();
             _initialized = true;
         }
+        /*
         _indisposableImages.add(ICON_ERROR);
         _indisposableImages.add(ICON_INFORMATION);
         _indisposableImages.add(ICON_QUESTION);
         _indisposableImages.add(ICON_WARNING);
         _indisposableImages.add(ICON_WORKING);
+         */
         
         _indisposableImages.add(ICON_SHELL);
         
@@ -283,17 +286,20 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSGNAV_PREVNEW);
         _indisposableImages.add(ICON_MSGNAV_PREVTHREAD);
         _indisposableImages.add(ICON_MSGNAV_PREVVIATHREAD);
-        _timer.addEvent("init complete");
-        _timer.complete();
+        _timer.addEvent("image init add complete");
+        //_timer.complete();
     }
     
     private static void initImages() {
+        /*
         ICON_ERROR = Display.getDefault().getSystemImage(SWT.ICON_ERROR);
         ICON_INFORMATION = Display.getDefault().getSystemImage(SWT.ICON_INFORMATION);
         ICON_QUESTION = Display.getDefault().getSystemImage(SWT.ICON_QUESTION);
         ICON_WARNING = Display.getDefault().getSystemImage(SWT.ICON_WARNING);
         ICON_WORKING = Display.getDefault().getSystemImage(SWT.ICON_WORKING);
+         */
         
+        _timer.addEvent("image init: system images fetched");
         
         ICON_SHELL = createImageFromResource("iconShell.png");
         ICON_LINK_END = createImageFromResource("iconLink.png");
@@ -348,18 +354,22 @@ public class ImageUtil {
         ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
         ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
         ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
-    
-        ICON_TAB_EDIT = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_TEXTUI = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_LOGS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_SQL = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_PAGE = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_MSG = resize(ImageUtil.ICON_WARNING, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+
+        _timer.addEvent("image init: bulk icons created");
+        
+        ICON_TAB_EDIT = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_TEXTUI = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_LOGS = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_SQL = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_PAGE = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_MSG = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_BROWSE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
 
+        _timer.addEvent("image init: tab icons resized");
+        
         ICON_EDITOR_PRIVACY_PUBLIC = createImageFromResource("iconPrivPublic.png");
         ICON_EDITOR_PRIVACY_PBE = createImageFromResource("iconPrivPBE.png");
         ICON_EDITOR_PRIVACY_AUTHORIZED = createImageFromResource("iconPrivAuthorized.png");
@@ -400,6 +410,8 @@ public class ImageUtil {
         ICON_MSGNAV_PREVNEW = createImageFromResource("iconMsgNavPrevNew.png");
         ICON_MSGNAV_PREVTHREAD = createImageFromResource("iconMsgNavPrevThread.png");
         ICON_MSGNAV_PREVVIATHREAD = createImageFromResource("iconMsgNavPrevViaThread.png");
+        
+        _timer.addEvent("image init: remaining images created");
     }
     
     public static Image resize(Image orig, int width, int height, boolean dispose) {
@@ -474,9 +486,9 @@ public class ImageUtil {
             Image img = (Image)_loadedResources.get(resource);
             if (cache && (img != null))
                 return img;
-            _timer.addEvent("before getResource("+resource+")");
+            //_timer.addEvent("before getResource("+resource+")");
             InputStream in = ImageUtil.class.getResourceAsStream(resource);
-            _timer.addEvent("after getResource("+resource+")");
+            //_timer.addEvent("after getResource("+resource+")");
             if (in != null) {
                 if (_tmpDir != null) {
                     try {
@@ -512,7 +524,7 @@ public class ImageUtil {
                         return null;
                     }                    
                 }
-                _timer.addEvent("after image instantiation ("+resource+")");
+                //_timer.addEvent("after image instantiation ("+resource+")");
                 _indisposableImages.add(img);
                 _loadedResources.put(resource, img);
                 return img;
