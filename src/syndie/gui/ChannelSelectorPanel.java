@@ -237,17 +237,26 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             if (r.avatarData != null) {
                 Record oldRecord = (Record)chanIdToOldRecord.get(new Long(id));
                 if (oldRecord != null) {
-                    r.avatar = oldRecord.avatar;
+                    if ( (oldRecord.avatar != ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR) &&
+                         (oldRecord.avatar != ImageUtil.ICON_EDITOR_LINK) )
+                        r.avatar = oldRecord.avatar;
+                    //_ui.debugMessage("setChannelData: " + id + ": old record exists and we have the avatar data, so use the old avatar: " + oldRecord.avatar);
                     oldRecord.avatar = null; // so we don't dispose it
-                } else {
-                   r.avatar = ImageUtil.createImage(r.avatarData);
-                   if (r.avatar != null) {
+                }
+                if (r.avatar == null) {
+                    r.avatar = ImageUtil.createImage(r.avatarData);
+                    //_ui.debugMessage("setChannelData: " + id + ": old record does not exist, but we have the avatar data: " + r.avatar);
+                    if (r.avatar != null) {
                        Rectangle rect = r.avatar.getBounds();
                        if ( (rect.height > Constants.MAX_AVATAR_HEIGHT) || (rect.width > Constants.MAX_AVATAR_WIDTH) )
                            r.avatar = ImageUtil.resize(r.avatar, Constants.MAX_AVATAR_WIDTH, Constants.MAX_AVATAR_HEIGHT, true);
-                   }
+                    }
+                    if (r.avatar == null)
+                        _ui.debugMessage("** setChannelData: " + id + " was not a valid avatar (" + r.avatarData.length + ")");
                 }
                 r.avatarData = null;
+            } else {
+                //_ui.debugMessage("setChannelData: " + id + ": we do not have the avatar data");
             }
             if (r.avatar == null) {
                 if ( (r.node == null) || (r.node.getChildCount() == 0) ) {
@@ -355,8 +364,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     
         for (int i = 0; i < existingRecords.size(); i++) {
             Record r = (Record)existingRecords.get(i);
-            if (r.avatar != null)
+            if (r.avatar != null) {
+                //_ui.debugMessage("disposing avatar for " + r.channelId + ": " + r.avatar);
                 ImageUtil.dispose(r.avatar);
+            }
         }
         timer.addEvent("columns packed");
         Rectangle bounds = _scrollContainer.getBounds();
@@ -380,8 +391,11 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     protected void configButtonMenu(Button button, long channelId, Hash scope, String name) {}
     
     private void disposeExisting() {
-        while (_records.size() > 0)
-            ImageUtil.dispose(((Record)_records.remove(0)).avatar);
+        while (_records.size() > 0) {
+            Record r = (Record)_records.remove(0);
+            //_ui.debugMessage("disposing avatar for " + r.channelId + ": " + r.avatar);
+            ImageUtil.dispose(r.avatar);
+        }
         _records.clear();
     }
     
@@ -478,8 +492,13 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             if ( (r.node != null) && (r.node.getURI() != null) && (r.node.getURI().getMessageId() != null) ) {
                 // dont use the avatar for messages
                 r.avatarData = null;
+                _ui.debugMessage("Not fetching the avatar for " + r);
             } else {
                 byte avatar[] = (r.channelId >= 0 ? _client.getChannelAvatar(r.channelId) : null);
+                String target = null;
+                if ( (r.node != null) && (r.node.getURI() != null) )
+                    target = r.node.getURI().toString();
+                _ui.debugMessage("Avatar fetched for " + target + "/" + r.channelId + ": " + (avatar == null ? "no avatar" : avatar.length +""));
                 r.avatarData = avatar;
             }
             //if (avatar == null)
