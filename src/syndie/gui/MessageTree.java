@@ -588,7 +588,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         private void pickForum() {
             if (_forumChooser == null) {
-                _forumChooser = new ReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _filterRow.getShell(), _barNavControl, _barURIControl, new ReferenceChooserTree.AcceptanceListener () {
+                _forumChooser = ComponentBuilder.instance().createReferenceChooserPopup(_filterRow.getShell());
+                //   new ReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _filterRow.getShell(), _barNavControl, _barURIControl, 
+                _forumChooser.setListener(new ReferenceChooserTree.AcceptanceListener () {
                     public void referenceAccepted(SyndieURI uri) {
                         Hash scope = uri.getScope();
                         _forumScopeOther = new Hash[] { scope };

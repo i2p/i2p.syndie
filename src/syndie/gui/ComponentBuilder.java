@@ -46,16 +46,20 @@ public class ComponentBuilder {
     }
     
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr) {
-        return new ReferenceChooserPopup(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr);
+        //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, lsnr);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
-        return new ReferenceChooserPopup(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr, titleKey, titleVal);
+        //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr, titleKey, titleVal);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, lsnr);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, String titleKey, String titleVal) {
-        return new ReferenceChooserPopup(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, titleKey, titleVal);
+        //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, titleKey, titleVal);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, null);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent) {
-        return new ReferenceChooserPopup(_client, _ui, _themes, _trans, parent, _navControl, _uriControl);
+        //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, null);
     }
     
     public BrowserTree createBrowserTree(Browser browser, Timer timer, Composite parent, ReferenceChooserTree.ChoiceListener choiceListener, ReferenceChooserTree.AcceptanceListener acceptListener) {

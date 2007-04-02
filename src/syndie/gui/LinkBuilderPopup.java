@@ -124,7 +124,8 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
     private Button _actionOk;
     private Button _actionCancel;
 
-    private ReferenceChooserPopup _refChooser;
+    //private ReferenceChooserPopup _refChooser;
+    private ForumReferenceChooserPopup _forumChooser;
     private MessageChooserPopup _messageChooser;
     
     private SyndieURI _selectedURI;
@@ -433,8 +434,8 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
         });
         
-        _refChooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell, this);
-        _messageChooser = new MessageChooserPopup(_shell, this);
+        //_refChooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell, this);
+        //_messageChooser = new MessageChooserPopup(_shell, this);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {
@@ -523,8 +524,10 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         if (!_shell.isDisposed()) _shell.dispose();
         if (_messageChooser != null)
             _messageChooser.dispose();
-        if (_refChooser != null)
-            _refChooser.dispose();
+        //if (_refChooser != null)
+        //    _refChooser.dispose();
+        if (_forumChooser != null)
+            _forumChooser.dispose();
     }
     
     private void setURI(SyndieURI uri, String linkText) {
@@ -610,11 +613,19 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         }
     }
     
-    private void pickForum() { _refChooser.show(); }
+    private void pickForum() { 
+        //_refChooser.show(); 
+        if (_forumChooser == null)
+            _forumChooser = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _shell, this);
+        _forumChooser.open();
+    }
     private void pickMessage() {
         SyndieURI searchURI = SyndieURI.DEFAULT_SEARCH_URI;
         if (_forum != null)
             searchURI = SyndieURI.createSearch(_forum);
+        if (_messageChooser != null)
+            _messageChooser.dispose();
+        _messageChooser = new MessageChooserPopup(_shell, this);
         _messageChooser.setFilter(searchURI);
         _messageChooser.show();
     }
@@ -711,7 +722,11 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         }
         
         uriBuilt(_selectedURI);
-        _refChooser.hide();
+        //_refChooser.hide();
+        if (_forumChooser != null) {
+            _forumChooser.dispose();
+            _forumChooser = null;
+        }
         _shell.setVisible(false);
     }
     
@@ -721,7 +736,10 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
     }
     
     private void onCancel() {
-        _refChooser.hide();
+        if (_forumChooser != null) {
+            _forumChooser.dispose();
+            _forumChooser = null;
+        }
         _shell.setVisible(false);
         _selectedURI = null;
     }
@@ -1118,6 +1136,10 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
 
     public void referenceAccepted(SyndieURI uri) {
         displaySyndieURI(uri);
+        if (_forumChooser != null) {
+            _forumChooser.dispose();
+            _forumChooser = null;
+        }
     }
     private void displaySyndieURI(SyndieURI uri) {
         _ui.debugMessage("displaying syndieURI: " + uri);
@@ -1418,11 +1440,21 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         //_shell.pack();
     }
 
-    public void referenceChoiceAborted() {}
+    public void referenceChoiceAborted() {
+        if (_forumChooser != null) {
+            _forumChooser.dispose();
+            _forumChooser = null;
+        }
+    }
 
     public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
-        if (toView)
+        if (toView) {
             displaySyndieURI(uri);
+            if (_messageChooser != null) {
+                _messageChooser.dispose();
+                _messageChooser = null;
+            }
+        }
     }
     public void filterApplied(MessageTree tree, SyndieURI searchURI) {}
     
