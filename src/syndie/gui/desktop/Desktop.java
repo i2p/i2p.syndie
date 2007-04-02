@@ -67,6 +67,7 @@ class Desktop {
     
     private StartupPanel _startupPanel;
     private ForumSelectionPanel _forumSelectionPanel;
+    private ControlMenuPanel _controlPanel;
     private TabPanel _tabs;
     private TaskTreeShell _taskTree;
     
@@ -312,6 +313,7 @@ class Desktop {
                     _taskTree = new TaskTreeShell(Desktop.this);
                     ((ExitDesktopCorner)_cornerNorthEast).startupComplete();
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
+                    ((ControlDesktopCorner)_cornerNorthWest).startupComplete();
                     _edgeWestDefault.startupComplete();
                     showForumSelectionPanel();
                 } 
@@ -343,6 +345,11 @@ class Desktop {
     StartupPanel getStartupPanel() { return _startupPanel; }
     //void setThemeRegistry(ThemeRegistry registry) { _themes = registry; }
     //void setTranslationRegistry(TranslationRegistry registry) { _translations = registry; }
+    void viewControlMenu() {
+        if (_controlPanel == null)
+            _controlPanel = new ControlMenuPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui);
+        show(_controlPanel);
+    }
     
     void close() {
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
@@ -400,7 +407,7 @@ class Desktop {
         setSize(_edgeEast, BORDER_SIZE, -1);
         setSize(_edgeWest, BORDER_SIZE, -1);
         
-        _cornerNorthWest = new DesktopCornerDummy(SWT.COLOR_YELLOW, _edgeNorthWest, _ui);
+        _cornerNorthWest = new ControlDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthWest, _ui);
         _cornerNorthEast = new ExitDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
         _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
@@ -538,6 +545,25 @@ class SyndicateDesktopCorner extends DesktopCorner {
                 _desktop.getNavControl().view(URIHelper.instance().createSyndicationStatusURI());
             } 
         });
+        getRoot().layout(true, true);
+    }
+}
+
+class ControlDesktopCorner extends DesktopCorner {
+    private Desktop _desktop;
+    private Button _button;
+    public ControlDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
+        super(parent, ui);
+        _desktop = desktop;
+        initComponents(color);
+    }
+    public void startupComplete() {
+        _button.setImage(ImageUtil.ICON_TAB_SQL);
+    }
+    private void initComponents(int color) {
+        _button = new Button(getRoot(), SWT.PUSH);
+        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.viewControlMenu(); } });
         getRoot().layout(true, true);
     }
 }
