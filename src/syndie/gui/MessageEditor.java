@@ -271,6 +271,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         while (_pageEditors.size() > 0)
             ((PageEditor)_pageEditors.remove(0)).dispose();
         
+        if (_threadTree != null)
+            _threadTree.dispose();
         if (_bar != null) _bar.dispose();
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);

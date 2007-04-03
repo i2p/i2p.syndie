@@ -72,6 +72,16 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
     private void initComponents() {
         _shell = new Shell(_manage.getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         _shell.setLayout(new GridLayout(3, false));
+        _shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent evt) {
+                evt.doit = false;
+                dispose();
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
         
         _table = new Table(_shell, SWT.MULTI | SWT.CHECK | SWT.BORDER);
         _table.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1));

@@ -33,6 +33,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Button _importFile;
     private Button _importBulk;
     private Text _importLocation;
+    private Label _importStatus;
     private Button _importBrowse;
     private Button _import;
     
@@ -66,7 +67,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         Composite row = new Composite(root, SWT.NONE);
         row.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
-        gl = new GridLayout(6, false);
+        gl = new GridLayout(7, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
         gl.marginHeight = 0;
@@ -87,6 +88,9 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         _importFile.setSelection(true);
         _importBulk.setSelection(false);
+        
+        _importStatus = new Label(row, SWT.NONE);
+        _importStatus.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _importBrowse = new Button(row, SWT.PUSH);
         _importBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -163,6 +167,8 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
             return;
         }
         
+        _import.setEnabled(false);
+        _importBrowse.setEnabled(false);
         _ui.debugMessage("enqueieing import of " + loc);
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
@@ -172,6 +178,12 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                 sortFiles(matches);
                 _ui.debugMessage("matching files: " + matches);
                 final int total = matches.size();
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() { 
+                        _importStatus.setText(0 + "/" + total); 
+                        _importStatus.getParent().layout(true, true);
+                    }
+                });
                 for (int i = 0; i < total; i++) {
                     boolean ok = importFile((File)matches.get(i));
                     if (ok) {
@@ -180,6 +192,15 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                     } else {
                         _ui.debugMessage("NOT imported: " + matches.get(i));
                     }
+                    
+                    final int pass = i+1;
+                    final int okCount = imported;
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() { 
+                            _importStatus.setText(pass + " (" + okCount + ") /" + total); 
+                            _importStatus.getParent().layout(true, true);
+                        }
+                    });
                 }
                 final int successful = imported;
                 Display.getDefault().asyncExec(new Runnable() {
@@ -188,6 +209,9 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                         box.setText(_translationRegistry.getText(T_IMPORT_COMPLETE, "Import complete"));
                         box.setMessage(_translationRegistry.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
                         box.open();
+                        _import.setEnabled(true);
+                        _importBrowse.setEnabled(true);
+                        _importStatus.getParent().layout(true, true);
                     }
                 });
             }
