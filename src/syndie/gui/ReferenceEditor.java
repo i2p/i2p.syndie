@@ -574,7 +574,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
                 _refNewCatCreate.setEnabled(_location.getText().trim().length() > 0);
             
             Hash scope = null;
-            if (uri.isChannel()) {
+            if ( (uri.isChannel()) && (uri.getScope() != null) && (uri.getMessageId() == null) ) {
                 scope = uri.getScope();
             } else if (uri.isSearch()) {
                 Hash scopes[] = uri.getSearchScopes();
