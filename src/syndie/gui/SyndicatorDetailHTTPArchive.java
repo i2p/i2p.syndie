@@ -569,7 +569,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         String key = publicSSK.substring(index+4);
         while (key.endsWith("/"))
             key = key.substring(0, key.length()-1);
-        return "USK@" + key + "/archive/-1/";
+        return "USK@" + key + "/archive/-1";
     }
     
     /** 
@@ -581,7 +581,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         String key = privateSSK.substring(index+4);
         while (key.endsWith("/"))
             key = key.substring(0, key.length()-1);
-        return "USK@" + key + "/archive/0/";
+        return "USK@" + key + "/archive/0";
     }
     
     private boolean save() { return save(true); }
