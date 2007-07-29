@@ -60,7 +60,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     
     private Composite _root;
     private Composite _top;
+    private Label _filterLabel;
     private Button _unreadOnly;
+    private Button _privateOnly;
     private Text _search;
     private Button _searchButton;
     private Composite _scrollContainer;
@@ -68,7 +70,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private Composite _buttons;
     
     private List _records;
-    private boolean _isUnreadOnly; // whether _records contains unread only
+    /** whether _records contains only forums with (readable) unread messages in them */
+    private boolean _isUnreadOnly; 
+    /** whether _records contains only forums with (readable) private messages in them */
+    private boolean _isPrivateOnly;
     
     public interface ChannelSelectorListener {
         public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar);
@@ -89,6 +94,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _lsnr = lsnr;
         _records = new ArrayList();
         _isUnreadOnly = false;
+        _isPrivateOnly = false;
         initComponents();
     }
 
@@ -113,6 +119,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         return rv;
     }
     public boolean isUnreadOnly() { return _isUnreadOnly; }
+    public boolean isPrivateOnly() { return _isPrivateOnly; }
     
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
@@ -154,15 +161,24 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
     
     protected void initTop() {
-        GridLayout gl = new GridLayout(3, false);
+        GridLayout gl = new GridLayout(5, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         _top.setLayout(gl);
+        
+        _filterLabel = new Label(_top, SWT.NONE);
+        _filterLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
+        
         _unreadOnly = new Button(_top, SWT.CHECK);
-        _unreadOnly.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _unreadOnly.addSelectionListener(new FireSelectionListener() { public void fire() { recalcChannels(); } });    
+        _unreadOnly.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        _unreadOnly.addSelectionListener(new FireSelectionListener() { public void fire() { recalcChannels(); } });
+        
+        _privateOnly = new Button(_top, SWT.CHECK);
+        _privateOnly.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _privateOnly.addSelectionListener(new FireSelectionListener() { public void fire() { recalcChannels(); } });
+        
         _search = new Text(_top, SWT.SINGLE);
         _search.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
         _search.addTraverseListener(new TraverseListener() {
@@ -191,10 +207,11 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
      * swt thread.
      * @param src either a list of channel ids (Long) or bookmarks (ReferenceNode) to render
      */
-    public void setChannels(List src, final Runnable afterSet) { setChannels(false, src, afterSet); }
-    private void setChannels(boolean unreadOnly, List src, final Runnable afterSet) {
+    public void setChannels(List src, final Runnable afterSet) { setChannels(false, false, src, afterSet); }
+    private void setChannels(boolean unreadOnly, boolean privateOnly, List src, final Runnable afterSet) {
         if ( (src == null) || (src.size() == 0) ) return;
         _isUnreadOnly = unreadOnly;
+        _isPrivateOnly = privateOnly;
         
         final Timer timer = new Timer("set channels", _ui);
         Display d = _root.getDisplay();
@@ -336,7 +353,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 MenuItem viewAll = new MenuItem(m, SWT.PUSH);
                 viewAll.addSelectionListener(new FireSelectionListener() {
                     public void fire() { 
-                        SyndieURI mergedURI = SyndieURI.createSearch(scopes, _unreadOnly.getSelection(), true, useImportDate);
+                        SyndieURI mergedURI = SyndieURI.createSearch(scopes, _unreadOnly.getSelection(), _privateOnly.getSelection(), true, useImportDate);
                         _lsnr.channelSelected(mergedURI, -1); 
                     }
                 });
@@ -532,9 +549,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     public void recalcChannels() { recalcChannels(null); }
     /** @param afterSet task to run in the SWT thread after the panel has been updated */
     public void recalcChannels(final Runnable afterSet) {
-        recalcChannels(_unreadOnly.getSelection(), afterSet);
+        recalcChannels(_unreadOnly.getSelection(), _privateOnly.getSelection(), afterSet);
     }
-    public void recalcChannels(final boolean unreadOnly, final Runnable afterSet) {
+    public void recalcChannels(final boolean unreadOnly, final boolean privateOnly, final Runnable afterSet) {
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 final Timer timer = new Timer("recalc channels, unread only? " + unreadOnly, _ui);
@@ -542,7 +559,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 if (chanIds != null) {
                     for (int i = 0; i < chanIds.size(); i++) {
                         Long id = (Long)chanIds.get(i);
-                        if (unreadOnly) {
+                        if (privateOnly) {
+                            int priv = _client.countPrivateMessages(id.longValue(), unreadOnly);
+                            if (priv == 0) {
+                                chanIds.remove(i);
+                                i--;
+                                continue;
+                            }
+                        } else if (unreadOnly) {
                             int unread = _client.countUnreadMessages(id.longValue());
                             if (unread == 0) {
                                 chanIds.remove(i);
@@ -554,13 +578,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 } else {
                     chanIds = _idSource.getReferenceNodes();
                 }
-                setChannels(unreadOnly, chanIds, afterSet);
+                setChannels(unreadOnly, privateOnly, chanIds, afterSet);
             }
         });
     }
     
-    public void showWatched(Runnable afterSet) { showWatched(_unreadOnly.getSelection(), afterSet); }
-    public void showWatched(boolean unreadOnly, Runnable afterSet) {
+    public void showWatched(Runnable afterSet) { showWatched(_unreadOnly.getSelection(), _privateOnly.getSelection(), afterSet); }
+    public void showWatched(boolean unreadOnly, Runnable afterSet) { showWatched(unreadOnly, _privateOnly.getSelection(), afterSet); }
+    public void showWatched(boolean unreadOnly, boolean privateOnly, Runnable afterSet) {
         setChannelIdSource(new BasicIdSource() {
             public List listChannelIds() {
                 List chans = _client.getWatchedChannels(); 
@@ -572,7 +597,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 return chanIds;
             }
         });
-        recalcChannels(unreadOnly, afterSet);
+        recalcChannels(unreadOnly, privateOnly, afterSet);
     }
     public void showIdent(Runnable afterSet) {
         setChannelIdSource(new BasicIdSource() {
@@ -613,18 +638,24 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
     
     
+    private static final String T_FILTER = "syndie.gui.channelselectorpanel.filterunreadonly";
     private static final String T_UNREADONLY = "syndie.gui.channelselectorpanel.unreadonly";
+    private static final String T_PRIVATEONLY = "syndie.gui.channelselectorpanel.privateonly";
     private static final String T_SEARCH = "syndie.gui.channelselectorpanel.search";
     private static final String T_SEARCH_BUTTON = "syndie.gui.channelselectorpanel.search.button";
 
     public void translate(TranslationRegistry registry) {
-        _unreadOnly.setText(registry.getText(T_UNREADONLY, "Only include forums with unread messages"));
+        _filterLabel.setText(registry.getText(T_FILTER, "Only include forums with: "));
+        _unreadOnly.setText(registry.getText(T_UNREADONLY, "unread messages"));
+        _privateOnly.setText(registry.getText(T_PRIVATEONLY, "private messages"));
         _search.setText(registry.getText(T_SEARCH, "search term"));
         _searchButton.setText(registry.getText(T_SEARCH_BUTTON, "search"));
     }
     
     public void applyTheme(Theme theme) {
+        _filterLabel.setFont(theme.DEFAULT_FONT);
         _unreadOnly.setFont(theme.DEFAULT_FONT);
+        _privateOnly.setFont(theme.DEFAULT_FONT);
         _search.setFont(theme.DEFAULT_FONT);
         _searchButton.setFont(theme.BUTTON_FONT);
         _root.layout(true, true);

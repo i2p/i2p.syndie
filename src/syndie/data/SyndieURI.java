@@ -86,7 +86,16 @@ public class SyndieURI {
             channels.add(channel);
         return createSearch(channels, unreadOnly, threaded, useImportDate);
     }
+    public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean privateOnly, boolean threaded, boolean useImportDate) {
+        List channels = new ArrayList();
+        if (channel != null)
+            channels.add(channel);
+        return createSearch(channels, unreadOnly, privateOnly, threaded, useImportDate);
+    }
     public static SyndieURI createSearch(List channels, boolean unreadOnly, boolean threaded, boolean useImportDate) {
+        return createSearch(channels, unreadOnly, false, threaded, useImportDate);
+    }
+    public static SyndieURI createSearch(List channels, boolean unreadOnly, boolean privateOnly, boolean threaded, boolean useImportDate) {
         String scopes[] = null;
         if (channels != null) {
             scopes = new String[channels.size()];
@@ -101,7 +110,7 @@ public class SyndieURI {
         else
             postDays = new Long(7);
         return createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
-                            null, null, null, null, null, null, null, null, false, true, false, threaded, unreadOnly);
+                            null, null, null, null, null, null, null, null, false, true, privateOnly, threaded, unreadOnly);
     }
     
     public static SyndieURI createBookmarked(List scopeHashes, boolean threaded, boolean unreadOnly, boolean useImportDate) {

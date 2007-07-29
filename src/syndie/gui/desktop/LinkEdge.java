@@ -57,7 +57,7 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
         root.setLayout(new FillLayout(SWT.VERTICAL));
         _favorites = new Button(root, SWT.PUSH);
         _favorites.setBackground(ColorUtil.getColor("yellow"));
-        _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
+        _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(); } }); 
         BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _favorites, new BookmarkDnDHelper.WatchTarget() { 
             public void dropped(SyndieURI uri, String name, String desc) {
                 _desktop.getDBClient().watchChannel(uri.getScope(), true, true, false, false, false);

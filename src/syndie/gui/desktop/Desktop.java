@@ -14,6 +14,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
@@ -50,17 +51,20 @@ class Desktop {
     private Composite _edgeEast;
     private Composite _edgeSouth;
     private Composite _edgeWest;
+    private Composite _centerInfo;
     private Composite _center;
 
-    private DesktopEdge _edgeNorthDefault;
+    private CommandBar _commandBar;
+    //private DesktopEdge _edgeNorthDefault;
     private DesktopEdge _edgeEastDefault;
     private DesktopEdge _edgeSouthDefault;
     private LinkEdge _edgeWestDefault;
     
     private Composite _centerDefault;
     
+    private StackLayout _centerInfoStack;
     private StackLayout _centerStack;
-    private StackLayout _edgeNorthStack;
+    //private StackLayout _edgeNorthStack;
     private StackLayout _edgeEastStack;
     private StackLayout _edgeSouthStack;
     private StackLayout _edgeWestStack;
@@ -180,7 +184,7 @@ class Desktop {
                     if (panel instanceof ForumSelectionPanel)
                         ((ForumSelectionPanel)panel).forumSelectorCancelled();
                     else
-                        showForumSelectionPanel();
+                        toggleForumSelectionPanel();
                     evt.type = SWT.None;
                 } else if ( (evt.character == 'f') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-f
                     evt.type = SWT.None;
@@ -217,9 +221,20 @@ class Desktop {
     void show(DesktopPanel panel, SyndieURI uri, String name, String desc) { show(panel, uri, name, desc, true); }
     void show(DesktopPanel panel, SyndieURI uri, String name, String desc, boolean notifyPrev) {
         if (panel == null) return;
+        
+        DesktopEdge infoEdge = panel.getEdgeNorth();
+        if (infoEdge != null) {
+            _centerInfoStack.topControl = infoEdge.getEdgeRoot();
+            _centerInfo.layout();
+            setSize(_centerInfo, -1, BORDER_SIZE);
+        } else {
+            setSize(_centerInfo, -1, 0);
+        }
         _centerStack.topControl = panel.getRoot();
         _center.layout();
-        setEdge(_edgeNorth, _edgeNorthStack, panel.getEdgeNorth(), _edgeNorthDefault);
+        _shell.layout(new Control[] { _centerInfo, _center });
+        
+        //setEdge(_edgeNorth, _edgeNorthStack, panel.getEdgeNorth(), _edgeNorthDefault);
         setEdge(_edgeEast, _edgeEastStack, panel.getEdgeEast(), _edgeEastDefault);
         setEdge(_edgeSouth, _edgeSouthStack, panel.getEdgeSouth(), _edgeSouthDefault);
         setEdge(_edgeWest, _edgeWestStack, panel.getEdgeWest(), _edgeWestDefault);
@@ -257,7 +272,7 @@ class Desktop {
     DataCallback getDataCallback() { return _dataCallback; }
     LocalMessageCallback getLocalMessageCallback() { return _localMessageCallback; }
     Composite getCenter() { return _center; }
-    Composite getNorth() { return _edgeNorth; }
+    Composite getNorth() { return _centerInfo; }
     Composite getEast() { return _edgeEast; }
     Composite getSouth() { return _edgeSouth; }
     Composite getWest() { return _edgeWest; }
@@ -315,7 +330,7 @@ class Desktop {
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
                     ((ControlDesktopCorner)_cornerNorthWest).startupComplete();
                     _edgeWestDefault.startupComplete();
-                    showForumSelectionPanel();
+                    toggleForumSelectionPanel();
                 } 
             });
         }
@@ -376,8 +391,9 @@ class Desktop {
         _edgeNorth = new Composite(_shell, SWT.NONE);
         _edgeNorthEast = new Composite(_shell, SWT.NONE);
         _edgeWest = new Composite(_shell, SWT.NONE);
-        _center = new Composite(_shell, SWT.NONE);
+        _centerInfo = new Composite(_shell, SWT.NONE);
         _edgeEast = new Composite(_shell, SWT.NONE);
+        _center = new Composite(_shell, SWT.NONE);
         _edgeSouthWest = new Composite(_shell, SWT.NONE);
         _edgeSouth = new Composite(_shell, SWT.NONE);
         _edgeSouthEast = new Composite(_shell, SWT.NONE);
@@ -385,9 +401,15 @@ class Desktop {
         _edgeNorthWest.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _edgeNorth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _edgeNorthEast.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _edgeWest.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
-        _center.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        GridData gd = new GridData(GridData.FILL, GridData.FILL, false, true);
+        gd.verticalSpan = 2;
+        _edgeWest.setLayoutData(gd);
+        _centerInfo.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
         _edgeEast.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
+        gd = new GridData(GridData.FILL, GridData.FILL, false, true);
+        gd.verticalSpan = 2;
+        _edgeEast.setLayoutData(gd);
+        _center.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _edgeSouthWest.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _edgeSouth.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _edgeSouthEast.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -403,6 +425,7 @@ class Desktop {
         setSize(_edgeSouthEast, BORDER_SIZE, BORDER_SIZE);
         
         setSize(_edgeNorth, -1, BORDER_SIZE);
+        setSize(_centerInfo, -1, BORDER_SIZE);
         setSize(_edgeSouth, -1, BORDER_SIZE);
         setSize(_edgeEast, BORDER_SIZE, -1);
         setSize(_edgeWest, BORDER_SIZE, -1);
@@ -412,16 +435,20 @@ class Desktop {
         _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
-        _edgeNorthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeNorth, _ui);
+        _commandBar = new CommandBar(this, _edgeNorth, _ui);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
         _edgeSouthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeSouth, _ui);
         _edgeWestDefault = new LinkEdge(_edgeWest, _ui, this); //new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
         
+        _centerInfoStack = new StackLayout();
+        _centerInfo.setLayout(_centerInfoStack);
+        
         _centerStack = new StackLayout();
         _center.setLayout(_centerStack);
 
-        _edgeNorthStack = new StackLayout();
-        _edgeNorth.setLayout(_edgeNorthStack);
+        _edgeNorth.setLayout(new FillLayout(SWT.HORIZONTAL));
+        //_edgeNorthStack = new StackLayout();
+        //_edgeNorth.setLayout(_edgeNorthStack);
         _edgeEastStack = new StackLayout();
         _edgeEast.setLayout(_edgeEastStack);
         _edgeSouthStack = new StackLayout();
@@ -438,17 +465,30 @@ class Desktop {
         gd.widthHint = width;
     }
 
-    public void showForumSelectionPanel() { showForumSelectionPanel(false); }
-    public void showForumSelectionPanel(boolean startWithRefs) { 
+    public void showForumSelectionPanel() { toggleForumSelectionPanel(false, true); }
+    public void toggleForumSelectionPanel() { toggleForumSelectionPanel(false, false); }
+    public void toggleForumSelectionPanel(boolean startWithRefs) { toggleForumSelectionPanel(startWithRefs, false); }
+    private void toggleForumSelectionPanel(boolean startWithRefs, boolean alwaysShow) { 
         if (_forumSelectionPanel == null)
             _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
         if (getCurrentPanel() == _forumSelectionPanel) {
-            _forumSelectionPanel.forumSelectorCancelled();
-            //showPreviousPanel();
+            if (alwaysShow) {
+                // noop - already showing
+            } else {
+                _forumSelectionPanel.forumSelectorCancelled();
+                //showPreviousPanel();
+            }
         } else {
             _forumSelectionPanel.preferRefs(startWithRefs);
             show(_forumSelectionPanel, null, null, null);
         }
+    }
+    public void showForumManagementSelectionPanel() {
+        if (_forumSelectionPanel == null)
+            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
+        _forumSelectionPanel.showManageable(this, null, null, null);
+        if (getCurrentPanel() != _forumSelectionPanel)
+            show(_forumSelectionPanel, null, null, null);
     }
     
     private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";
@@ -566,4 +606,64 @@ class ControlDesktopCorner extends DesktopCorner {
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.viewControlMenu(); } });
         getRoot().layout(true, true);
     }
+}
+
+class CommandBar {
+    private UI _ui;
+    private Composite _parent;
+    private Composite _root;
+    private Desktop _desktop;
+    private Button _syndicate;
+    private Button _read;
+    private Button _post;
+    private Button _manageForum;
+    private Button _closePanel;
+    private Button _switchPanel;
+
+    public CommandBar(Desktop desktop, Composite parent, UI ui) { 
+        _parent = parent;
+        _ui = ui;
+        _desktop = desktop;
+        initComponents();
+    }
+    
+    private void initComponents() {
+        _root = new Composite(_parent, SWT.NONE);
+        _root.setLayout(new FillLayout());
+        Composite bar = _root;
+        FillLayout fl = new FillLayout(SWT.HORIZONTAL);
+        bar.setLayout(fl);
+                
+        _read = new Button(bar, SWT.PUSH);
+        _read.setText("read");
+        _read.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
+        
+        _post = new Button(bar, SWT.PUSH);
+        _post.setText("write");
+        _post.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                _desktop.getNavControl().view(URIHelper.instance().createPostURI(null, null));
+            }
+        });
+
+        _syndicate = new Button(bar, SWT.PUSH);
+        _syndicate.setText("share");
+        _syndicate.addSelectionListener(new FireSelectionListener() { 
+            public void fire() { 
+                _desktop.getNavControl().view(URIHelper.instance().createSyndicationStatusURI());
+            } 
+        });
+
+        _manageForum = new Button(bar, SWT.PUSH);
+        _manageForum.setText("manage");
+        _manageForum.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumManagementSelectionPanel(); } }); 
+        
+        _switchPanel = new Button(bar, SWT.PUSH);
+        _switchPanel.setText("switch");
+        _switchPanel.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
+        
+        bar.layout(true, true);
+    }
+    
+    public void dispose() { _root.dispose(); }
 }

@@ -36,6 +36,8 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     private ChannelSelectorPanel _channels;
     private NavigationControl _navControl;
     private boolean _preferRefs;
+    /** last time we picked a forum, were we looking at the manageable forums only? */
+    private boolean _prevWasManageable;
     
     public ForumSelectionPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
         super(desktop, client, themes, trans, parent, ui, null);
@@ -59,15 +61,22 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
-        if (_channels.getRecordCount() == 0) {
+        if ( (_channels.getRecordCount() == 0) || (_prevWasManageable) ) {
             if (_preferRefs)
                 _channels.showReferences(null);
             else
                 _channels.showWatched(false, null);
         }
+        _prevWasManageable = false;
         super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
     public void hidden(Desktop desktop) {}
+    public void showManageable(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
+        _prevWasManageable = true;
+        _desktop = desktop;
+        _channels.showManageable(null);
+        super.shown(desktop, uri, suggestedName, suggestedDescription);
+    }
 
     public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {
         //_ui.debugMessage("channel reviewed: " + scope + ": " + name);

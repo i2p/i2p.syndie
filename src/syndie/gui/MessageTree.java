@@ -551,23 +551,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
             });
             
-            _advancedPassphraseRequired.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent evt) {
+            _advancedPassphraseRequired.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     if (_advancedPassphraseRequired.getSelection()) {
                         _advancedPrivacyPublic.setSelection(false);
                         _advancedPrivacyAuthorized.setSelection(false);
                         _advancedPrivacyPrivate.setSelection(false);
                         _advancedPrivacyPBE.setSelection(true);
                     }
-                    _msgTree.applyFilter();
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    if (_advancedPassphraseRequired.getSelection()) {
-                        _advancedPrivacyPublic.setSelection(false);
-                        _advancedPrivacyAuthorized.setSelection(false);
-                        _advancedPrivacyPrivate.setSelection(false);
-                        _advancedPrivacyPBE.setSelection(true);
-                    }
+                    _ui.debugMessage("advanced pbe selected - no more private");
                     _msgTree.applyFilter();
                 }
             });
@@ -656,11 +648,11 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             else
                 _advancedScopeAll.setSelection(true);
             
-            //_ui.debugMessage("filterBar.setFilter(" + uri + ")");
+            _ui.debugMessage("filterBar.setFilter has private? (" + uri.getString("private") + "): "+ uri + ")");
             _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
             _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
             _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
-            _advancedPrivacyPrivate.setSelection(uri.getBoolean("private", true));
+            _advancedPrivacyPrivate.setSelection(true); //uri.getBoolean("private", true));
         }
         
         
@@ -853,6 +845,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 attributes.put("private", Boolean.TRUE.toString());
             else
                 attributes.put("private", Boolean.FALSE.toString());
+            _ui.debugMessage("buildFilter: private? (" + _advancedPrivacyPrivate.getSelection() + "): "+ attributes+ ")");
             if (_advancedPrivacyPublic.getSelection())
                 attributes.put("public", Boolean.TRUE.toString());
             else

@@ -4914,6 +4914,43 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    
+    private static final String SQL_COUNT_UNREAD_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
+    private static final String SQL_COUNT_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage cm WHERE cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
+    public int countPrivateMessages(long chan, boolean unreadOnly) { return countPrivateMessages(_nymId, chan, unreadOnly); }
+    public int countPrivateMessages(long nymId, long chan, boolean unreadOnly) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            if (unreadOnly) {
+                stmt = _con.prepareStatement(SQL_COUNT_UNREAD_PRIVATE_MESSAGES);
+                stmt.setLong(1, nymId);
+                stmt.setLong(2, chan);
+            } else {
+                stmt = _con.prepareStatement(SQL_COUNT_PRIVATE_MESSAGES);
+                stmt.setLong(1, chan);
+            }
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (rs.wasNull())
+                    return 0;
+                else
+                    return count;
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting private message count", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
     
     private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM nymUnreadChannel WHERE nymId = ?";
     /** channels may have been deleted (banned), so drop 'em */

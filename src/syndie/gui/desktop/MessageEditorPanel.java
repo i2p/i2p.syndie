@@ -146,7 +146,10 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             if (MessageEditor.TYPE_HTML.equals(page.getContentType()))
                 page.toggleFullPreview();
         }
+        
+        ((EastEdge)_edgeEast).setPreviewText(_translationRegistry);
     }
+    
     private static final String T_POSTPREVIEW_TITLE = "syndie.gui.desktop.messageeditorpanel.postpreview.title";
     private static final String T_POSTPREVIEW = "syndie.gui.desktop.messageeditorpanel.postpreview";
     
@@ -322,6 +325,11 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             gd.verticalAlignment = GridData.CENTER;
             gd.horizontalAlignment = GridData.CENTER;
             _privacyIcon.setLayoutData(gd);
+            _privacyIcon.addMouseListener(new MouseListener() {
+                public void mouseDoubleClick(MouseEvent mouseEvent) {}
+                public void mouseDown(MouseEvent mouseEvent) {}
+                public void mouseUp(MouseEvent mouseEvent) { _editor.showHeaders(); }
+            });
             
             _privacyLabel = new Label(privacyGroup, SWT.NONE);
             _privacyLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.END, true, true));
@@ -492,6 +500,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
         public void updatePageType(boolean isHTML) {
             _preview.setEnabled(isHTML);
+            setPreviewText(_translationRegistry);
         }
         public void translate(TranslationRegistry registry) {
             _saveForLater.setToolTipText(registry.getText(T_SAVEFORLATER_TT, "Save the message for later"));
@@ -503,7 +512,21 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _preview.setText(registry.getText(T_PREVIEW, "P\nr\ne\nv\ni\ne\nw"));
             _post.setText(registry.getText(T_POST, "P\no\ns\nt"));
             _cancel.setText(registry.getText(T_CANCEL, "C\na\nn\nc\ne\nl"));
+            
+            setPreviewText(registry);
         }
+        
+        public void setPreviewText(TranslationRegistry registry) {
+            boolean previewing = false;
+            if ( (_editor == null) || (_editor.getPageEditor() == null) || (_editor.getPageEditor().isPreviewShowing()) )
+                previewing = true;
+            
+            if (previewing)
+                _preview.setText(registry.getText(T_PREVIEW, "E\nd\ni\nt"));
+            else
+                _preview.setText(registry.getText(T_PREVIEW, "P\nr\ne\nv\ni\ne\nw"));
+        }
+
         public void applyTheme(Theme theme) {
             _saveForLater.setFont(theme.BUTTON_FONT);
             _preview.setFont(theme.BUTTON_FONT);
