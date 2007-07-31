@@ -5,6 +5,8 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
@@ -96,8 +98,8 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         root.setLayout(new FillLayout());
         _editor = new MessageEditor(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getDataCallback(), _desktop.getNavControl(), _desktop.getBookmarkControl(), URIHelper.instance(), root, this, false, false, false);
         _editor.addStatusListener(this);
-        
-        if ( (_postponeId > 0) && (_postponeVersion > 0) ) {
+
+        if ( (_postponeId > 0) && (_postponeVersion >= 0) ) {
             _editor.loadState(_postponeId, _postponeVersion);
             _editor.addListener(_desktop.getLocalMessageCallback());
             _editor.configurationComplete(getOriginalURI());
@@ -497,6 +499,35 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _cancel.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _editor.cancelMessage(); }
             });
+                        
+            _saveForLater.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _saveForLater, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_SAVEFORLATER, "Save"));
+                }
+            });
+            _preview.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    boolean previewing = false;
+                    if ( (_editor == null) || (_editor.getPageEditor() == null) || (_editor.getPageEditor().isPreviewShowing()) )
+                        previewing = true;
+
+                    if (previewing)
+                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_EDIT, "Edit"));
+                    else
+                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_PREVIEW, "Preview"));
+                    
+                }
+            });
+            _post.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _post, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_POST, "Post"));
+                }
+            });
+            _cancel.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _cancel, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_CANCEL, "Cancel"));
+                }
+            });
         }
         public void updatePageType(boolean isHTML) {
             _preview.setEnabled(isHTML);
@@ -508,35 +539,29 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             _post.setToolTipText(registry.getText(T_POST_TT, "Post the message"));
             _cancel.setToolTipText(registry.getText(T_CANCEL_TT, "Cancel the message entirely"));
             
-            _saveForLater.setText(registry.getText(T_SAVEFORLATER, "S\na\nv\ne"));
-            _preview.setText(registry.getText(T_PREVIEW, "P\nr\ne\nv\ni\ne\nw"));
-            _post.setText(registry.getText(T_POST, "P\no\ns\nt"));
-            _cancel.setText(registry.getText(T_CANCEL, "C\na\nn\nc\ne\nl"));
+            _saveForLater.redraw();
+            _preview.redraw();
+            _post.redraw();
+            _cancel.redraw();
             
             setPreviewText(registry);
         }
         
         public void setPreviewText(TranslationRegistry registry) {
-            boolean previewing = false;
-            if ( (_editor == null) || (_editor.getPageEditor() == null) || (_editor.getPageEditor().isPreviewShowing()) )
-                previewing = true;
-            
-            if (previewing)
-                _preview.setText(registry.getText(T_PREVIEW, "E\nd\ni\nt"));
-            else
-                _preview.setText(registry.getText(T_PREVIEW, "P\nr\ne\nv\ni\ne\nw"));
+            _preview.redraw();
         }
 
         public void applyTheme(Theme theme) {
-            _saveForLater.setFont(theme.BUTTON_FONT);
-            _preview.setFont(theme.BUTTON_FONT);
-            _post.setFont(theme.BUTTON_FONT);
-            _cancel.setFont(theme.BUTTON_FONT);
+            _saveForLater.redraw();
+            _preview.redraw();
+            _post.redraw();
+            _cancel.redraw();
         }
     }
     
     private static final String T_SAVEFORLATER = "syndie.gui.desktop.messageeditorpanel.saveforlater";
     private static final String T_PREVIEW = "syndie.gui.desktop.messageeditorpanel.preview";
+    private static final String T_EDIT = "syndie.gui.desktop.messageeditorpanel.edit";
     private static final String T_POST = "syndie.gui.desktop.messageeditorpanel.post";
     private static final String T_CANCEL = "syndie.gui.desktop.messageeditorpanel.cancel";
     

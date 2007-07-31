@@ -37,6 +37,8 @@ public class DesktopNavigationControl implements NavigationControl {
             return new MessageTreePanel(_desktop, uri);
         } else if (uri.isChannel() && (uri.getMessageId() != null)) {
             return new MessagePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), _desktop.getNavControl());
+        } else if (BrowserTab.TYPE_RESUMEABLE.equals(uri.getType())) {
+            return new ResumeablePanel(_desktop, _desktop.getDBClient(), _desktop.getUI(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), uri);
         } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
             Long postponeId = uri.getLong("postponeid");
             Long postponeVer = uri.getLong("postponever");
@@ -59,6 +61,8 @@ public class DesktopNavigationControl implements NavigationControl {
             return new SyndicatorPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         } else if (BrowserTab.TYPE_MANAGE.equals(uri.getType()) || BrowserTab.TYPE_META.equals(uri.getType()) || BrowserTab.TYPE_VIEWFORUM.equals(uri.getType())) {
             return new ProfilePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
+        } else if (BrowserTab.TYPE_SQL.equals(uri.getType())) {
+            return new SQLPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         return _desktop.getTabPanel(true);

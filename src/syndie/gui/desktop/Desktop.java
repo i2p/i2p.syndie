@@ -3,6 +3,7 @@ package syndie.gui.desktop;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
@@ -652,7 +653,14 @@ class CommandBar implements Themeable, Translatable {
         _post.setText("write");
         _post.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                _desktop.getNavControl().view(URIHelper.instance().createPostURI(null, null));
+                TreeMap resumeable = _desktop.getDBClient().getResumeable();
+                if ( (resumeable == null) || (resumeable.size() == 0) ) {
+                    // nothing to resume, so jump straight to posting
+                    _desktop.getNavControl().view(URIHelper.instance().createPostURI(null, null));
+                } else {
+                    // lets check to see if they want to resume a postponed message
+                    _desktop.getNavControl().view(URIHelper.instance().createResumeableURI());
+                }
             }
         });
 

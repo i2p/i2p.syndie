@@ -34,6 +34,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     
     //private static final int TAB_ICON_SIZE = 16;
     public static final String TYPE_POST = "post";
+    public static final String TYPE_RESUMEABLE = "resumeable";
     static final String TYPE_TEXTUI = "textui";
     static final String TYPE_LOGS = "logs";
     public static final String TYPE_META = "meta";
@@ -41,7 +42,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     static final String TYPE_SYNDICATE_ARCHIVES = "syndicate";
     static final String TYPE_SYNDICATE_CONFIG = TYPE_SYNDICATE_ARCHIVES;
     public static final String TYPE_SYNDICATE_STATUS = TYPE_SYNDICATE_ARCHIVES;
-    static final String TYPE_SQL = "sql";
+    public static final String TYPE_SQL = "sql";
     static final String TYPE_TRANSLATE = "translate";
     static final String TYPE_ARCHIVEMGR = "archivemgr";
     static final String TYPE_BUGREPORT = "bug";

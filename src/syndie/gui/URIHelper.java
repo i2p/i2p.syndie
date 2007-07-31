@@ -86,6 +86,10 @@ public class URIHelper implements URIControl {
     }
     public SyndieURI createBackupSecretsURI() { return new SyndieURI(BrowserTab.TYPE_BACKUPSECRETS, new HashMap()); }    
 
+    public SyndieURI createResumeableURI() {
+        SyndieURI uri = new SyndieURI(BrowserTab.TYPE_RESUMEABLE, new HashMap());
+        return uri;
+    }
     public SyndieURI createPostURI(Hash forum, SyndieURI parent) {
         return createPostURI(forum, parent, false);
     }

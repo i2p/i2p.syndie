@@ -335,28 +335,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private static final String SQL_RESUME = "SELECT encryptedData FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion = ?";
     public boolean loadState(long postponeId, int version) {
-        Connection con = _client.con();
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        String state = null;
-        try {
-            stmt = con.prepareStatement(SQL_RESUME);
-            stmt.setLong(1, _client.getLoggedInNymId());
-            stmt.setLong(2, postponeId);
-            stmt.setInt(3, version);
-            rs = stmt.executeQuery();
-            if (rs.next()) {
-                state = rs.getString(1);
-            } else {
-                return false;
-            }
-            stmt.close();
-            stmt = null;
-        } catch (SQLException se) {
-            _ui.errorMessage("Internal error resuming", se);
-        } finally {
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
+        String state = readState(_client, _ui, postponeId, version);
         
         if (state != null) {
             deserializeStateFromB64(state, postponeId, version);
@@ -368,20 +347,125 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
     }
     
+    private static String readState(DBClient client, UI ui, long postponeId, int version) {
+        Connection con = client.con();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        String state = null;
+        try {
+            stmt = con.prepareStatement(SQL_RESUME);
+            stmt.setLong(1, client.getLoggedInNymId());
+            stmt.setLong(2, postponeId);
+            stmt.setInt(3, version);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                state = rs.getString(1);
+            } else {
+                return null;
+            }
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            ui.errorMessage("Internal error resuming", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return state;
+    }
+    
+    public static class MessageSummary {
+        public String subject;
+        public Hash author;
+        public Hash forum;
+        public long postponeId;
+        public int version;
+    }
+    public static MessageSummary loadSummary(DBClient client, UI ui, TranslationRegistry trans, long postponeId, int version) {
+        MessageSummary summary = new MessageSummary();
+        summary.postponeId = postponeId;
+        summary.version = version;
+        
+        String state = readState(client, ui, postponeId, version);
+        if (state == null) return null;
+        
+        byte decr[] = decryptState(client, state);
+        if (decr == null) return null;
+        
+        ZipInputStream zin = null;
+        try {
+            zin = new ZipInputStream(new ByteArrayInputStream(decr));
+        
+            ZipEntry entry = null;
+            while ( (entry = zin.getNextEntry()) != null) {
+                String name = entry.getName();
+                if (name.equals(SER_ENTRY_CONFIG)) {
+                    Properties cfg = readCfg(read(zin));
+
+                    summary.author = getHash(ui, cfg, SER_AUTHOR);
+                    summary.forum = getHash(ui, cfg, SER_TARGET);
+        
+                    int parents = 0;
+                    if ( (cfg.getProperty(SER_PARENTS) != null) && (cfg.getProperty(SER_PARENTS).length() > 0) )
+                        try { parents = Integer.parseInt(cfg.getProperty(SER_PARENTS)); } catch (NumberFormatException nfe) {}
+
+                    List parentURIs = null;
+                    if (parents <= 0)
+                        parentURIs = new ArrayList();
+                    else
+                        parentURIs = new ArrayList(parents);
+                    
+                    for (int i = 0; i < parents; i++) {
+                        String uriStr = cfg.getProperty(SER_PARENTS_PREFIX + i);
+                        try {
+                            SyndieURI uri = new SyndieURI(uriStr);
+                            parentURIs.add(uri);
+                        } catch (URISyntaxException use) {
+                            //
+                        }
+                    }
+                    
+                    if (cfg.containsKey(SER_SUBJECT)) {
+                        summary.subject = cfg.getProperty(SER_SUBJECT);
+                    } else if ( (parentURIs != null) && (parentURIs.size() > 0) ) {
+                        SyndieURI parent = (SyndieURI)parentURIs.get(0);
+                        String parentSubject = MessageView.calculateSubject(client, ui, trans, parent).trim();
+                        if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+                            summary.subject = "re: " + parentSubject;
+                        } else {
+                            summary.subject = parentSubject;
+                        }
+                    } else {
+                        summary.subject = "";
+                    }
+                    
+                    break;
+                } // end if (isCFG)
+            } // end while
+        } catch (IOException ioe) {
+            ui.errorMessage("Internal error deserializing message state", ioe);
+            return null;
+        } finally {
+            if (zin != null) try { zin.close(); } catch (IOException ioe) {}
+        }
+        
+        return summary;
+    }
+    
     private static final String SQL_DROP = "DELETE FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ?";
-    void dropSavedState() {
-        _ui.debugMessage("dropping saved state for postponeId " + _postponeId);
-        Connection con = _client.con();
+    void dropSavedState() { dropSavedState(_client, _ui, _postponeId); }
+    public static void dropSavedState(DBClient client, UI ui, long postponeId) {
+        ui.debugMessage("dropping saved state for postponeId " + postponeId);
+        Connection con = client.con();
         PreparedStatement stmt = null;
         try {
             stmt = con.prepareStatement(SQL_DROP);
-            stmt.setLong(1, _client.getLoggedInNymId());
-            stmt.setLong(2, _postponeId);
+            stmt.setLong(1, client.getLoggedInNymId());
+            stmt.setLong(2, postponeId);
             stmt.executeUpdate();
             stmt.close();
             stmt = null;
         } catch (SQLException se) {
-            _ui.errorMessage("Internal error dropping saved state", se);
+            ui.errorMessage("Internal error dropping saved state", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
@@ -560,10 +644,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public long getPostponementId() { return _postponeId; }
     public int getPostponementVersion() { return _postponeVersion; }
     
-    public void deserializeStateFromB64(String state, long postponeId, int version) {
+    private static byte[] decryptState(DBClient client, String state) {
         String salt = state.substring(0, 24);
         String body = state.substring(24);
-        byte decr[] = _client.pbeDecrypt(Base64.decode(body), Base64.decode(salt));
+        return client.pbeDecrypt(Base64.decode(body), Base64.decode(salt));
+    }
+    
+    public void deserializeStateFromB64(String state, long postponeId, int version) {
+        byte decr[] = decryptState(_client, state);
         
         if (decr == null) {
             _ui.errorMessage("Error pbe decrypting " + postponeId + "." + version + ": state: " + state);
@@ -813,12 +901,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         return rv;
     }
     
-    private Hash getHash(Properties cfg, String prop) {
+    private Hash getHash(Properties cfg, String prop) { return getHash(_ui, cfg, prop); }
+    private static Hash getHash(UI ui, Properties cfg, String prop) {
         String t = cfg.getProperty(prop);
         if (t == null) return null;
         byte d[] = Base64.decode(t);
         if ( (d == null) || (d.length != Hash.HASH_LENGTH) ) {
-            _ui.debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
+            ui.debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
             return null;
         } else {
             return new Hash(d);
@@ -915,7 +1004,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     
-    private byte[] readBytes(InputStream in) throws IOException {
+    private static byte[] readBytes(InputStream in) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte buf[] = new byte[4096];
         int read = -1;
@@ -923,10 +1012,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             baos.write(buf, 0, read);
         return baos.toByteArray();
     }
-    private String read(InputStream in) throws IOException {
+    private static String read(InputStream in) throws IOException {
         return DataHelper.getUTF8(readBytes(in));
     }
-    private Properties readCfg(String str) throws IOException {
+    private static Properties readCfg(String str) throws IOException {
         Properties cfg = new Properties();
         
         BufferedReader in = new BufferedReader(new StringReader(str));

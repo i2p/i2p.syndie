@@ -40,6 +40,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Label _openLabel;
     private Text _openLocation;
     private Button _open;
+    private Button _sql;
 
     private Button _exit;
     
@@ -116,6 +117,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _open = new Button(row, SWT.PUSH);
         _open.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _open.addSelectionListener(new FireSelectionListener() { public void fire() { fireOpen(); } });
+        
+        _sql = new Button(root, SWT.PUSH);
+        _sql.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        _sql.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.getNavControl().view(URIHelper.instance().createSQLURI()); } });
         
         _exit = new Button(root, SWT.PUSH);
         _exit.setLayoutData(new GridData(GridData.FILL, GridData.END, true, true));
@@ -274,6 +279,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _openLocation.setFont(theme.DEFAULT_FONT);
         _open.setFont(theme.BUTTON_FONT);
         _exit.setFont(theme.BUTTON_FONT);
+        _sql.setFont(theme.BUTTON_FONT);
     }
     
     private static final String T_IMPORTLABEL = "syndie.gui.desktop.controlmenupanel.importlabel";
@@ -284,6 +290,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private static final String T_OPENLABEL = "syndie.gui.desktop.controlmenupanel.openlabel";
     private static final String T_OPEN = "syndie.gui.desktop.controlmenupanel.open";
     private static final String T_EXIT = "syndie.gui.desktop.controlmenupanel.exit";
+    private static final String T_SQL = "syndie.gui.desktop.controlmenupanel.sql";
     
     public void translate(TranslationRegistry registry) {
         _importLabel.setText(registry.getText(T_IMPORTLABEL, "Import: "));
@@ -292,6 +299,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
         _import.setText(registry.getText(T_IMPORT, "Import"));
         _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
+        _sql.setText(registry.getText(T_SQL, "Advanced SQL interface"));
         _open.setText(registry.getText(T_OPEN, "Open"));
         _exit.setText(registry.getText(T_EXIT, "Exit"));
     }

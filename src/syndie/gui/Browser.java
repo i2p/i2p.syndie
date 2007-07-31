@@ -1461,7 +1461,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    private static final String getVersionTime(long ts) {
+    public static final String getVersionTime(long ts) {
         synchronized (_fmt) { return _fmt.format(new Date(ts)); }
     }
     
