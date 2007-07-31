@@ -56,6 +56,14 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
         Composite root = getEdgeRoot();
         root.setLayout(new FillLayout(SWT.VERTICAL));
         _favorites = new Button(root, SWT.PUSH);
+        _favorites.addPaintListener(new PaintListener() {
+            public void paintControl(PaintEvent evt) {
+                if ( (_desktop.getThemeRegistry() == null) || (_desktop.getTranslationRegistry() == null) )
+                    return;
+                ImageUtil.drawAscending(evt.gc, _favorites, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_FAVORITES, "Favorites"));
+            }
+        });
+            
         _favorites.setBackground(ColorUtil.getColor("yellow"));
         _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(); } }); 
         BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _favorites, new BookmarkDnDHelper.WatchTarget() { 
@@ -83,9 +91,13 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
         _desktop.getTranslationRegistry().register(this);
     }
     
-    public void applyTheme(Theme theme) { _favorites.setFont(theme.SHELL_FONT); }
+    public void applyTheme(Theme theme) {
+        _favorites.redraw();
+        //_favorites.setFont(theme.SHELL_FONT); 
+    }
     public void translate(TranslationRegistry registry) {
-        _favorites.setText(registry.getText(T_FAVORITES, "F\na\nv\no\nr\ni\nt\ne\ns"));
+        _favorites.redraw();
+        //_favorites.setText(registry.getText(T_FAVORITES, "F\na\nv\no\nr\ni\nt\ne\ns"));
     }
     private static final String T_FAVORITES = "syndie.gui.desktop.linkedge.favorites";
 }

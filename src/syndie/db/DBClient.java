@@ -42,6 +42,12 @@ public class DBClient {
     private UI _ui;
     private Log _log;
     
+    /**
+     * should we defrag the hsqldb every 10 shutdowns?  it can take a while, so
+     * its probably best to disable this when doing development 
+     */
+    private static final boolean DEFRAG = false;
+    
     private Connection _con;
     private SyndieURIDAO _uriDAO;
     private String _login;
@@ -150,7 +156,7 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+            if (DEFRAG && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             else
                 stmt = _con.prepareStatement("SHUTDOWN");

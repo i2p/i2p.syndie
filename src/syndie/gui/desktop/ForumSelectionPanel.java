@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -20,6 +23,7 @@ import syndie.db.UI;
 import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.ImageUtil;
 import syndie.gui.MessageTree;
 import syndie.gui.NavigationControl;
 import syndie.gui.Theme;
@@ -283,22 +287,50 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _watched.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showWatched(null); } 
             });
+            _watched.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _watched, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_WATCHED, "Watch"));
+                }
+            });
+            
             _refs = new Button(root, SWT.PUSH);
             _refs.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showReferences(null); } 
+            });
+            _refs.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _refs, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_REFS, "References"));
+                }
             });
             _ident = new Button(root, SWT.PUSH);
             _ident.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showIdent(null); } 
             });
+            _ident.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _ident, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_IDENT, "Identities"));
+                }
+            });
             _manageable = new Button(root, SWT.PUSH);
             _manageable.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showManageable(null); } 
             });
+            _manageable.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _manageable, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_MANAGEABLE, "Manageable"));
+                }
+            });
+
             _postable = new Button(root, SWT.PUSH);
             _postable.addSelectionListener(new FireSelectionListener() { 
                 public void fire() { _channels.showPostable(null); } 
+            });            
+            _postable.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _postable, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_POSTABLE, "Postable"));
+                }
             });
+
             
             Color color = ColorUtil.getColor("yellow");
             _watched.setBackground(color);
@@ -317,18 +349,19 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _manageable.setToolTipText(trans.getText(T_MANAGEABLE_TT, "Show manageable forums"));
             _postable.setToolTipText(trans.getText(T_POSTABLE_TT, "Show postable forums"));
 
-            _watched.setText(trans.getText(T_WATCHED, "W\na\nt\nc\nh"));
-            _refs.setText(trans.getText(T_REFS, "R\ne\nf\ns"));
-            _ident.setText(trans.getText(T_IDENT, "N\ny\nm\ns"));
-            _manageable.setText(trans.getText(T_MANAGEABLE, "M\na\nn\na\ng\ne"));
-            _postable.setText(trans.getText(T_POSTABLE, "P\no\ns\nt"));
+            _watched.redraw();
+            _refs.redraw();
+            _ident.redraw();
+            _manageable.redraw();
+            _postable.redraw();
         }
+        
         public void applyTheme(Theme theme) { 
-            _watched.setFont(theme.BUTTON_FONT);
-            _refs.setFont(theme.BUTTON_FONT);
-            _ident.setFont(theme.BUTTON_FONT);
-            _manageable.setFont(theme.BUTTON_FONT);
-            _postable.setFont(theme.BUTTON_FONT);
+            _watched.redraw();
+            _refs.redraw();
+            _ident.redraw();
+            _manageable.redraw();
+            _postable.redraw();
         }
     }
 }

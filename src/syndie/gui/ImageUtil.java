@@ -17,12 +17,16 @@ import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Drawable;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
@@ -629,5 +633,55 @@ public class ImageUtil {
         } else {
             return TYPE_SYNDIE;
         }
+    }
+    
+    /**
+     * vertically draw the given text on the control in the specified font so that the
+     * bottom of the words are on the right hand side
+     */
+    public static void drawAscending(GC gc, Control ctl, Font font, String text) {
+        drawRotated(gc, ctl, font, text, -90);
+    }
+    
+    /**
+     * vertically draw the given text on the control in the specified font so that the
+     * bottom of the words are on the left hand side
+     */
+    public static void drawDescending(GC gc, Control ctl, Font font, String text) {
+        drawRotated(gc, ctl, font, text, 90);
+    }
+    
+    /**
+     * create a new image containing the rotated text, and draw that image onto the control
+     */
+    private static void drawRotated(GC gc, Control ctl, Font font, String text, int angle) {
+        gc.setFont(font);
+        Point size = gc.stringExtent(text);
+
+        Image img = new Image(ctl.getDisplay(), size.y, size.x);
+        GC imgGC = new GC(img);
+        
+        imgGC.setForeground(gc.getBackground());
+        imgGC.setBackground(gc.getBackground());
+        imgGC.setFont(font);
+        // the drawString leaves some white spots around the text, so fill 'er with the bgcolor
+        imgGC.fillRectangle(0, 0, size.y+20, size.x+20);
+
+        Transform transform = new Transform(ctl.getDisplay());
+        transform.rotate(angle);
+        imgGC.setTransform(transform);
+
+        imgGC.setForeground(ColorUtil.getColor("black"));
+        if (angle > 0)
+            imgGC.drawString(text, 0, -size.y);
+        else
+            imgGC.drawString(text, -size.x, 0);
+        imgGC.dispose();
+        transform.dispose();
+
+        Rectangle ctlSize = ctl.getBounds();
+        Rectangle textSize = img.getBounds();
+
+        gc.drawImage(img, (ctlSize.width - textSize.width) / 2, (ctlSize.height - textSize.height) / 2);
     }
 }
