@@ -354,8 +354,14 @@ class Desktop {
     ThemeRegistry getThemeRegistry() { return _themeRegistry; }
     TranslationRegistry getTranslationRegistry() { return _translationRegistry; }
     
-    void setTranslationRegistry(TranslationRegistry trans) { _translationRegistry = trans; }
-    void setThemeRegistry(ThemeRegistry themes) { _themeRegistry = themes; }
+    void setTranslationRegistry(TranslationRegistry trans) { 
+        _translationRegistry = trans; 
+        _commandBar.setTranslationRegistry(trans);
+    }
+    void setThemeRegistry(ThemeRegistry themes) { 
+        _themeRegistry = themes; 
+        _commandBar.setThemeRegistry(themes);
+    }
     
     StartupPanel getStartupPanel() { return _startupPanel; }
     //void setThemeRegistry(ThemeRegistry registry) { _themes = registry; }
@@ -435,7 +441,7 @@ class Desktop {
         _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
-        _commandBar = new CommandBar(this, _edgeNorth, _ui);
+        _commandBar = new CommandBar(this, _edgeNorth, _ui, _translationRegistry, _themeRegistry);
         _edgeEastDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeEast, _ui);
         _edgeSouthDefault = new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeSouth, _ui);
         _edgeWestDefault = new LinkEdge(_edgeWest, _ui, this); //new DesktopEdgeDummy(SWT.COLOR_GREEN, _edgeWest, _ui);
@@ -608,7 +614,7 @@ class ControlDesktopCorner extends DesktopCorner {
     }
 }
 
-class CommandBar {
+class CommandBar implements Themeable, Translatable {
     private UI _ui;
     private Composite _parent;
     private Composite _root;
@@ -619,11 +625,15 @@ class CommandBar {
     private Button _manageForum;
     private Button _closePanel;
     private Button _switchPanel;
+    private TranslationRegistry _translationRegistry;
+    private ThemeRegistry _themeRegistry;
 
-    public CommandBar(Desktop desktop, Composite parent, UI ui) { 
+    public CommandBar(Desktop desktop, Composite parent, UI ui, TranslationRegistry trans, ThemeRegistry themes) { 
         _parent = parent;
         _ui = ui;
         _desktop = desktop;
+        _translationRegistry = trans;
+        _themeRegistry = themes;
         initComponents();
     }
     
@@ -663,7 +673,59 @@ class CommandBar {
         _switchPanel.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
         
         bar.layout(true, true);
+        
+        if (_translationRegistry != null)
+            _translationRegistry.register(this);
+        if (_themeRegistry != null)
+            _themeRegistry.register(this);
     }
     
-    public void dispose() { _root.dispose(); }
+    public void setTranslationRegistry(TranslationRegistry registry) { 
+        if (_translationRegistry != null) return;
+        if (registry == null) return;
+        
+        _translationRegistry = registry;
+        Display.getDefault().asyncExec(new Runnable() {
+            public void run() { _translationRegistry.register(CommandBar.this); }
+        });
+    }
+    public void setThemeRegistry(ThemeRegistry registry) { 
+        if (_themeRegistry != null) return;
+        if (registry == null) return;
+        
+        _themeRegistry = registry;
+        Display.getDefault().asyncExec(new Runnable() {
+            public void run() { _themeRegistry.register(CommandBar.this); }
+        });
+    }
+    
+    public void dispose() {
+        if (_translationRegistry != null)
+            _translationRegistry.unregister(this);
+        if (_themeRegistry != null)
+            _themeRegistry.unregister(this);
+        _root.dispose(); 
+    }
+
+    public void applyTheme(Theme theme) {
+        _syndicate.setFont(theme.BUTTON_FONT);
+        _read.setFont(theme.BUTTON_FONT);
+        _post.setFont(theme.BUTTON_FONT);
+        _manageForum.setFont(theme.BUTTON_FONT);
+        _switchPanel.setFont(theme.BUTTON_FONT);
+    }
+
+    public void translate(TranslationRegistry registry) {
+        _syndicate.setText(registry.getText(T_SYNDICATE, "Share"));
+        _read.setText(registry.getText(T_READ, "Read"));
+        _post.setText(registry.getText(T_POST, "Write"));
+        _manageForum.setText(registry.getText(T_MANAGE, "Manage"));
+        _switchPanel.setText(registry.getText(T_SWITCH, "Switch task"));
+    }
+    
+    private static final String T_SYNDICATE = "syndie.gui.desktop.CommandBar.syndicate";
+    private static final String T_READ = "syndie.gui.desktop.CommandBar.read";
+    private static final String T_POST = "syndie.gui.desktop.CommandBar.post";
+    private static final String T_MANAGE = "syndie.gui.desktop.CommandBar.manage";
+    private static final String T_SWITCH = "syndie.gui.desktop.CommandBar.switch";
 }

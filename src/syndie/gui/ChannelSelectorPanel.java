@@ -169,7 +169,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _top.setLayout(gl);
         
         _filterLabel = new Label(_top, SWT.NONE);
-        _filterLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
+        _filterLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
         
         _unreadOnly = new Button(_top, SWT.CHECK);
         _unreadOnly.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
