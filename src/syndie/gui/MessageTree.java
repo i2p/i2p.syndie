@@ -1545,7 +1545,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         ReferenceNode node = getNode(uri);
         if (node == null)
             return null;
-        TreeMessageIterator iter = new TreeMessageIterator(_ui, _fullNodes, getCurrentFilter());
+        TreeMessageIterator iter = new TreeMessageIterator(_client, _ui, _fullNodes, getCurrentFilter());
         iter.recenter(uri);
         return iter;
     }

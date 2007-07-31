@@ -11,6 +11,7 @@ import syndie.data.MessageIterator;
  *
  */
 public class TreeMessageIterator implements MessageIterator {
+    private DBClient _client;
     private UI _ui;
     private List _roots;
     private SyndieURI _treeURI;
@@ -26,7 +27,8 @@ public class TreeMessageIterator implements MessageIterator {
     private SyndieURI _nextThread;
     private SyndieURI _prevThread;
     
-    public TreeMessageIterator(UI ui, List threadReferenceNodeRoots, SyndieURI treeURI) {
+    public TreeMessageIterator(DBClient client, UI ui, List threadReferenceNodeRoots, SyndieURI treeURI) {
+        _client = client;
         _ui = ui;
         _roots = stripLeadingBlank(threadReferenceNodeRoots);
         _treeURI = treeURI;
@@ -56,7 +58,7 @@ public class TreeMessageIterator implements MessageIterator {
         }
         return rv;
     }
-
+    
     public void recenter(SyndieURI uri) {
         _currentURI = uri;
         _currentIndex = -1;
@@ -149,6 +151,10 @@ public class TreeMessageIterator implements MessageIterator {
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             SyndieURI uri = node.getURI();
             if (uri != null) {
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                if (msgId < 0)
+                    return;
+                
                 _rv.add(node);
                 if (uri.equals(_target)) {
                     _currentIndex = _rv.size()-1;
