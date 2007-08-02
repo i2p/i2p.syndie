@@ -107,7 +107,8 @@ public class DBClient {
                     byte val[] = new byte[16];
                     _context.random().nextBytes(val);
                     String rand = Base64.encode(val);
-                    rand = rand.substring(0, rand.length()-2); // drop the b64 padding 
+                    rand = rand.replace('=', '_');
+                    rand = rand.replace('~', 'Z');
                     _ui.debugMessage("changing default admin account passphrase to something random");
                     stmt = _con.createStatement();
                     stmt.execute("ALTER USER sa SET PASSWORD " + rand);
@@ -118,7 +119,7 @@ public class DBClient {
                     _con.close();
                     _con = null;
                 } catch (SQLException se) {
-                    _ui.debugMessage("Unable to check up on " + _login + ", so lets create the account (" + se.getMessage() + ")", se);
+                    _ui.debugMessage("Unable to check up on " + _login + ", so lets create the account (" + se.getMessage() + ")");
                     if (stmt != null)
                         stmt.close();
                     stmt = null;
@@ -5266,7 +5267,7 @@ public class DBClient {
             try {
                 _ui.debugMessage("changing db passphrase...");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER " + TextEngine.DEFAULT_LOGIN + " SET PASSWORD " + newPass);
+                stmt.execute("ALTER USER " + TextEngine.DEFAULT_LOGIN + " SET PASSWORD \"" + newPass + "\"");
                 stmt.close();
                 stmt = null;
                 _ui.debugMessage("Passphrase changed to " + newPass);
@@ -5274,6 +5275,8 @@ public class DBClient {
                 byte val[] = new byte[16];
                 _context.random().nextBytes(val);
                 String rand = Base64.encode(val);
+                rand = rand.replace('=', '_');
+                rand = rand.replace('~', 'Z');
                 _ui.debugMessage("changing default admin account passphrase to something random");
                 stmt = _con.createStatement();
                 stmt.execute("ALTER USER sa SET PASSWORD " + rand);
