@@ -36,6 +36,8 @@ class StartupPanel extends DesktopPanel implements Themeable {
     private boolean _error;
     private List _pendingMessages;
     
+    private static final boolean MSGS_TO_STDERR = false;
+    
     public StartupPanel(Desktop desktop, Composite parent, DesktopUI ui, Timer timer) {
         super(desktop, parent, ui, null);
         _startupTimer = timer;
@@ -128,6 +130,8 @@ class StartupPanel extends DesktopPanel implements Themeable {
             }
             
             final String str = buf.toString();
+            if (MSGS_TO_STDERR)
+                System.err.print(str);
             _display.asyncExec(new Runnable() { 
                 public void run() { 
                     int count = _text.getCharCount();
@@ -260,16 +264,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
         }
     }
     
-    /**
-     * If true, remove the 30 second timeout when connecting to the database,
-     * as slow computers w/ lots in their redo logs could take that long.  The
-     * reason the timeout is here in the first place is to deal with those 
-     * running Syndie off pre-1.0 installs that didn't automatically log in
-     */
-    private static final boolean ALLOW_SLOW_STARTUP = true;
-    
     private boolean startClient() {
-        StartupListener lsnr = new StartupListener(_startupTimer);
         I2PAppContext ctx = I2PAppContext.getGlobalContext();
         _startupTimer.addEvent("i2pappcontext fetched");
         Object o = ctx.logManager();
@@ -277,136 +272,12 @@ class StartupPanel extends DesktopPanel implements Themeable {
         o = ctx.keyGenerator();
         _startupTimer.addEvent("keyGenerator warmed up");
         DBClient client = new DBClient(ctx, _desktop.getRootFile());
+        client.setDefaultUI(_ui);
+        _desktop.setDBClient(client);
         ComponentBuilder.instance().setDBClient(client);
         _startupTimer.addEvent("db client instantiated");
-        //final Browser browser = new Browser(client);
-        //final Timer timer = new Timer("swtUI startup", browser.getUI());
         final UI ui = _ui;
-        final TextEngine engine = new TextEngine(client, ui, lsnr);
-        _startupTimer.addEvent("text engine instantiated");
-        client.setDefaultUI(ui);
-        
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                ui.debugMessage("starting the engine");
-                try {
-                    engine.run();
-                } catch (Exception e) {
-                    ui.errorMessage("error running the engine", e);
-                }
-                ui.debugMessage("engine stopped");
-            }
-        }, "text ui");
-        t.setPriority(Thread.MIN_PRIORITY);
-        t.start();
-        _startupTimer.addEvent("text engine started");
-        
-        ui.debugMessage("waiting for login completion...");
-        
-        // to allow the startup scripts to run, which may include 'login',
-        // so we dont have to show a login prompt.  perhaps toss up a splash screen
-        boolean ok = lsnr.waitFor("login", ALLOW_SLOW_STARTUP ? -1 : 30*1000);
-        if (lsnr.getAlreadyRunning()) {
-            // show a special warning/error screen
-            /*
-            final Shell s = new Shell(d, SWT.DIALOG_TRIM);
-            s.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_TITLE, "Already running"));
-            s.setLayout(new GridLayout(1, true));
-            Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
-            l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
-            Button b = new Button(s, SWT.PUSH);
-            b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            b.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_EXIT, "Exit"));
-            b.addSelectionListener(new FireSelectionListener() { 
-                public void fire() {
-                    s.dispose();
-                    System.exit(-1);
-                }
-            });
-            s.addShellListener(new ShellListener() {
-                public void shellActivated(ShellEvent shellEvent) {}
-                public void shellClosed(ShellEvent shellEvent) {
-                    s.dispose();
-                    System.exit(-1);
-                }
-                public void shellDeactivated(ShellEvent shellEvent) {}
-                public void shellDeiconified(ShellEvent shellEvent) {}
-                public void shellIconified(ShellEvent shellEvent) {}
-            });
-            Splash.dispose();
-            s.pack();
-            Rectangle sSize = s.getBounds();
-            Rectangle screenSize = Splash.getScreenSize(s);
-            int x = screenSize.width/2-sSize.width/2;
-            int y = screenSize.height/2-sSize.height/2;
-            s.setBounds(x, y, sSize.width, sSize.height);
-            s.open();
-             */
-            return false;
-        } else if (lsnr.getLoginFailedCause() != null) {
-            // show a special warning/error screen
-            /*
-            final Shell s = new Shell(d, SWT.DIALOG_TRIM);
-            s.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_TITLE, "Internal error"));
-            s.setLayout(new GridLayout(1, true));
-            Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
-            l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED, "Syndie ran into an internal error trying to start up - please see the logs: ") + lsnr.getLoginFailedCause().getMessage());
-            Button b = new Button(s, SWT.PUSH);
-            b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            b.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_EXIT, "Exit"));
-            b.addSelectionListener(new FireSelectionListener() { 
-                public void fire() {
-                    s.dispose();
-                    System.exit(-1);
-                }
-            });
-            s.addShellListener(new ShellListener() {
-                public void shellActivated(ShellEvent shellEvent) {}
-                public void shellClosed(ShellEvent shellEvent) {
-                    s.dispose();
-                    System.exit(-1);
-                }
-                public void shellDeactivated(ShellEvent shellEvent) {}
-                public void shellDeiconified(ShellEvent shellEvent) {}
-                public void shellIconified(ShellEvent shellEvent) {}
-            });
-            Splash.dispose();
-            s.pack();
-            Rectangle sSize = s.getBounds();
-            Rectangle screenSize = Splash.getScreenSize(s);
-            int x = screenSize.width/2-sSize.width/2;
-            int y = screenSize.height/2-sSize.height/2;
-            s.setBounds(x, y, sSize.width, sSize.height);
-            s.open();
-             */
-            return false;
-        } else {
-            if (!ok) {
-                ui.errorMessage("Timed out trying to start syndie up.  Please review the logs");
-                _desktop.exit();
-                return false;
-            }
-            _startupTimer.addEvent("login complete");
-            if (engine.newNymCreated()) {
-                /*
-                WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
-                    public void complete() {
-                        browser.startup(timer);
-                    }
-                });
-                screen.open();
-                 */
-            } else {
-                ui.debugMessage("db login complete, starting browser...");
-                //browser.startup(timer);
-                ui.debugMessage("browser started");
-            }
-            _startupTimer.addEvent("startupClient complete");
-            _desktop.setDBClient(client);
-            return true;
-        }
+        return _desktop.startEngine();
     }
     
     public void applyTheme(Theme theme) { _text.setFont(theme.LOG_FONT); }
@@ -448,6 +319,8 @@ class StartupListener implements TextEngine.ScriptListener {
     private boolean _alreadyRunning;
     private Exception _loginFailedCause;
     private Timer _timer;
+    private static final Exception BAD_LOGIN = new Exception();
+    private static final Exception BAD_PASS = new Exception();
 
     public StartupListener(Timer timer) { 
         _complete = new HashSet(); 
@@ -466,9 +339,27 @@ class StartupListener implements TextEngine.ScriptListener {
         _loginFailedCause = cause;
         synchronized (_complete) { _complete.notifyAll(); }
     }
+    public void loginFailedBadPassphrase() {
+        _loginFailedCause = BAD_PASS;
+        synchronized (_complete) { _complete.notifyAll(); }
+    }
+    public void loginFailedBadLogin() {
+        _loginFailedCause = BAD_LOGIN;
+        synchronized (_complete) { _complete.notifyAll(); }
+    }
+    public void clearLoginState() {
+        synchronized (_complete) {
+            _complete.remove("login");
+            _complete.notifyAll();
+        }
+    }
     public boolean getAlreadyRunning() { return _alreadyRunning; }
     public Exception getLoginFailedCause() { return _loginFailedCause; }
+    public boolean getLoginFailedBadPassphrase() { return _loginFailedCause == BAD_PASS; }
+    public boolean getLoginFailedBadLogin() { return _loginFailedCause == BAD_LOGIN; }
     public boolean waitFor(String scriptName, long maxPeriod) {
+        _alreadyRunning = false;
+        _loginFailedCause = null;
         long endAt = System.currentTimeMillis() + maxPeriod;
         for (;;) {
             if (_alreadyRunning) return false;

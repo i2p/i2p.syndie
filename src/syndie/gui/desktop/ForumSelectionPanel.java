@@ -55,6 +55,8 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
 
     protected void dispose() {
         // noop.  do not call super.dispose, because we don't want to actually go away
+        _channels.resetPanel();
+        ((NorthEdge)_edgeNorth).updateInfo(null, -1, null, null, null);
     }
     
     private void initComponents() {

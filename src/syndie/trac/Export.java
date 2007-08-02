@@ -68,6 +68,8 @@ public class Export {
         _ui = new TextUI(args, new TextEngine.ScriptListener() {
             public void alreadyRunning() {}
             public void loginFailed(Exception e) {}
+            public void loginFailedBadPassphrase() {}
+            public void loginFailedBadLogin() {}
             public void scriptComplete(String script) {
                 if ("login".equals(script)) {
                     new Thread(new Runnable() { public void run() { export(dbFile); } }, "Exporter").start();

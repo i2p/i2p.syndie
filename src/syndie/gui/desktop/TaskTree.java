@@ -11,6 +11,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -86,6 +88,11 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                     ((TaskTreeListener)_listeners.get(i)).cancelSelected();
             }
         });
+        _cancel.addPaintListener(new PaintListener() {
+            public void paintControl(PaintEvent evt) {
+                ImageUtil.drawAscending(evt.gc, _cancel, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_CANCEL, "Cancel task switch"));
+            }
+        });
         
         _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -140,6 +147,11 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         gd.widthHint = 64;
         _exit.setLayoutData(gd);
         _exit.addSelectionListener(new FireSelectionListener() { public void fire() { exit(); } });
+        _exit.addPaintListener(new PaintListener() {
+            public void paintControl(PaintEvent evt) {
+                ImageUtil.drawDescending(evt.gc, _exit, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_EXIT, "Exit Syndie"));
+            }
+        });
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
@@ -375,15 +387,15 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
     }
     
     public void applyTheme(Theme theme) {
-        _cancel.setFont(theme.BUTTON_FONT);
+        _cancel.redraw();
+        _exit.redraw();
         _tree.setFont(theme.TREE_FONT);
-        _exit.setFont(theme.BUTTON_FONT);
     }
     
     private static final String T_CANCEL = "syndie.gui.tasktree.cancel";
     private static final String T_EXIT = "syndie.gui.tasktree.exit";
     public void translate(TranslationRegistry trans) {
-        _cancel.setToolTipText(trans.getText(T_CANCEL, "Cancel the task switch"));
-        _exit.setToolTipText(trans.getText(T_EXIT, "Exit Syndie"));
+        _cancel.redraw();
+        _exit.redraw();
     }
 }

@@ -93,11 +93,9 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
     
     public void applyTheme(Theme theme) {
         _favorites.redraw();
-        //_favorites.setFont(theme.SHELL_FONT); 
     }
     public void translate(TranslationRegistry registry) {
         _favorites.redraw();
-        //_favorites.setText(registry.getText(T_FAVORITES, "F\na\nv\no\nr\ni\nt\ne\ns"));
     }
     private static final String T_FAVORITES = "syndie.gui.desktop.linkedge.favorites";
 }

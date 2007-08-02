@@ -1,6 +1,8 @@
 package syndie.gui.desktop;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -76,10 +78,17 @@ public class DesktopMain {
             try { 
                 if (!d.readAndDispatch()) d.sleep(); 
             } catch (RuntimeException e) {
+                System.out.println(now() + ": uncaught error");
                 e.printStackTrace();
                 ui.errorMessage("Internal error: " + e.getMessage(), e);
             }
         }
+    }
+    
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
+    private static final String now() {
+        Date now = new Date(System.currentTimeMillis());
+        synchronized (_fmt) { return _fmt.format(now); }
     }
 
     private static final boolean trackResources(String args[]) {

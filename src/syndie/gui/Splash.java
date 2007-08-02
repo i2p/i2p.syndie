@@ -45,7 +45,7 @@ public class Splash {
         ImageUtil.dispose(_img);
     }
     
-    static Rectangle getScreenSize(Shell shell) {
+    public static Rectangle getScreenSize(Shell shell) {
         Monitor monitors[] = shell.getDisplay().getMonitors();
         if ( (monitors == null) || (monitors.length <= 1) ) {
             return shell.getDisplay().getBounds();

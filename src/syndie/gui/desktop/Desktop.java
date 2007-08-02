@@ -9,6 +9,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -18,14 +21,18 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
+import syndie.db.JobRunner;
+import syndie.db.TextEngine;
 import syndie.db.UI;
 import syndie.gui.*;
 
@@ -34,6 +41,9 @@ import syndie.gui.*;
  */
 class Desktop {
     private File _rootFile;
+    private String _login;
+    private String _passphrase;
+    private TextEngine _engine;
     private DesktopUI _ui;
     private Display _display;
     private Shell _shell;
@@ -155,6 +165,333 @@ class Desktop {
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
         });
+    }
+    
+    public void setEngine(TextEngine engine) { 
+        synchronized (this) {
+            _engine = engine;
+            notifyAll();
+        }
+    }
+    
+    void restart(final String rootDir) {
+        boolean startupClosed = false;
+        while (_loadedPanels.size() > (startupClosed ? 1 : 0)) {
+            DesktopPanel panel = (DesktopPanel)_loadedPanels.get((startupClosed ? 1 : 0));
+            _ui.debugMessage("closing " + panel);
+            if (panel instanceof StartupPanel) {
+                _ui.debugMessage("never closing the startup panel");
+                startupClosed = true;
+            } else if (!panel.close()) {
+                _ui.debugMessage("could not close " + panel);
+                return;
+            }
+        }
+        if (_engine != null) {
+            _ui.debugMessage("inserting exit...");
+            _ui.insertCommand("exit");
+        } else {
+            _ui.debugMessage("engine already gone (?)");
+        }
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                while (_engine != null) {
+                    synchronized (this) {
+                        try { wait(1000); } catch (InterruptedException ie) {}
+                    }
+                    _ui.debugMessage("waiting for engine to disappear...");
+                }
+                _rootFile = new File(rootDir);
+                _client.restart(rootDir);
+                _ui.debugMessage("client restarted");
+
+                boolean ok = startEngine();
+                if (!ok) {
+                    _ui.errorMessage("Error - engine startup failed!  die die die");
+                    _display.syncExec(new Runnable() {
+                        public void run() { close(); }
+                    });
+                    System.exit(0); // reached if the user says they don't want to exit
+                    return;
+                }
+                _ui.debugMessage("engine restarted");
+
+                _display.asyncExec(new Runnable() { 
+                    public void run() { 
+                        refreshPrimaryAvatar(); 
+                        _themeRegistry.loadTheme();
+                        _translationRegistry.loadTranslations();
+                        showForumSelectionPanel();
+                    }
+                });
+                _ui.debugMessage("restart complete");
+            }
+        });
+    }
+    
+    /**
+     * If true, remove the 30 second timeout when connecting to the database,
+     * as slow computers w/ lots in their redo logs could take that long.  The
+     * reason the timeout is here in the first place is to deal with those 
+     * running Syndie off pre-1.0 installs that didn't automatically log in
+     */
+    private static final boolean ALLOW_SLOW_STARTUP = true;
+    
+    private static final String T_ALREADY_RUNNING_TITLE = "syndie.gui.desktop.alreadyrunning.title";
+    private static final String T_ALREADY_RUNNING = "syndie.gui.desktop.alreadyrunning";
+    private static final String T_ALREADY_RUNNING_EXIT = "syndie.gui.desktop.alreadyrunning.exit";
+    
+    private static final String T_LOGIN_FAILED_TITLE = "syndie.gui.desktop.loginfailed.title";
+    private static final String T_LOGIN_FAILED = "syndie.gui.desktop.loginfailed";
+    private static final String T_LOGIN_FAILED_EXIT = "syndie.gui.desktop.loginfailed.exit";
+    
+    boolean startEngine() {
+        final Timer startupTimer = new Timer("restart engine", _ui);
+        final StartupListener lsnr = new StartupListener(startupTimer);
+        final TextEngine engine = new TextEngine(_client, _ui, lsnr);
+        startupTimer.addEvent("text engine instantiated");
+        
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                _ui.debugMessage("starting the engine");
+                try {
+                    setEngine(engine);
+                    engine.run();
+                } catch (Exception e) {
+                    _ui.errorMessage("error running the engine", e);
+                }
+                _ui.debugMessage("engine stopped");
+                setEngine(null);
+            }
+        }, "text ui");
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
+        startupTimer.addEvent("text engine started");
+        
+        _ui.debugMessage("waiting for login completion...");
+        
+        while (true) {
+            int rc = proceedAfterLogin(engine, startupTimer, lsnr);
+            _ui.debugMessage("proceedAfterLogin returned " + rc);
+            if (rc == 1) {
+                while ( !(_client.isLoggedIn() && _client.verifyNymKeyEncryption()) ) {
+                    _ui.debugMessage("invalid pass, try again");
+                    promptForPass();
+                    // invalid pasphrase, so loop
+                }
+                return true;
+            } else if (rc == 2) { 
+                return false; 
+            } else if (rc == 0) {
+                _ui.debugMessage("clearing login state");
+                lsnr.clearLoginState();
+                _ui.debugMessage("trying to proceed again");
+                continue; // redundant, yes, but just clarifying the value that is returned
+            }
+        }
+    }
+    
+    
+    private static final String T_PASSPHRASE_REQ = "syndie.gui.desktop.passphrase.req";
+    private static final String T_LOGIN_PROCEED = "syndie.gui.desktop.login.proceed";
+    private static final String T_LOGIN_EXIT = "syndie.gui.desktop.login.exit";
+    private static final String T_LOGIN = "syndie.gui.desktop.login";
+    
+    private int proceedAfterLogin(final TextEngine engine, final Timer timer, final StartupListener lsnr) {
+        // to allow the startup scripts to run, which may include 'login',
+        // so we dont have to show a login prompt.  perhaps toss up a splash screen
+        boolean ok = lsnr.waitFor("login", ALLOW_SLOW_STARTUP ? -1 : 30*1000);
+        _ui.debugMessage("after login: listener found ok? " + ok);
+        if (lsnr.getAlreadyRunning()) {
+            // show a special warning/error screen
+            
+            _display.asyncExec(new Runnable() { 
+                public void run() {
+                    final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+                    s.setText(_translationRegistry.getText(T_ALREADY_RUNNING_TITLE, "Already running"));
+                    s.setFont(_themeRegistry.getTheme().SHELL_FONT);
+                    s.setLayout(new GridLayout(1, true));
+                    Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
+                    l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+                    l.setText(_translationRegistry.getText(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
+                    l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                    Button b = new Button(s, SWT.PUSH);
+                    b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+                    b.setText(_translationRegistry.getText(T_ALREADY_RUNNING_EXIT, "Exit"));
+                    b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                    b.addSelectionListener(new FireSelectionListener() { 
+                        public void fire() {
+                            s.dispose();
+                            exit();
+                        }
+                    });
+                    s.addShellListener(new ShellListener() {
+                        public void shellActivated(ShellEvent shellEvent) {}
+                        public void shellClosed(ShellEvent shellEvent) {
+                            s.dispose();
+                            exit();
+                        }
+                        public void shellDeactivated(ShellEvent shellEvent) {}
+                        public void shellDeiconified(ShellEvent shellEvent) {}
+                        public void shellIconified(ShellEvent shellEvent) {}
+                    });
+                    s.pack();
+                    Rectangle sSize = s.getBounds();
+                    Rectangle screenSize = Splash.getScreenSize(s);
+                    int x = screenSize.width/2-sSize.width/2;
+                    int y = screenSize.height/2-sSize.height/2;
+                    s.setBounds(x, y, sSize.width, sSize.height);
+                    s.open();
+                }
+            });
+            return 2;
+        } else if (lsnr.getLoginFailedCause() != null) {
+            return 1;
+        } else {
+            if (!ok) {
+                _ui.errorMessage("Timed out trying to start syndie up.  Please review the logs");
+                close(false);
+                return 2;
+            }
+            timer.addEvent("login complete");
+            if (engine.newNymCreated()) {
+                /*
+                WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
+                    public void complete() {
+                        browser.startup(timer);
+                    }
+                });
+                screen.open();
+                 */
+            }
+            timer.addEvent("startupClient complete");
+            timer.complete();
+            
+            return 1;
+        }
+    }
+    
+    /** safe translate for startup before the translation registry has been created */
+    private String strans(String key, String defValue) {
+        if (_translationRegistry != null)
+            return _translationRegistry.getText(key, defValue);
+        else
+            return defValue;
+    }
+    
+    private int promptForPass() {
+        final ArrayList loginMutex = new ArrayList();
+        _ui.debugMessage("Prompting for the passphrase...");
+        _display.asyncExec(new Runnable() { 
+            public void run() {
+                // show a special warning/error screen
+                final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+                s.setText(_translationRegistry.getText(T_PASSPHRASE_REQ, "Passphrase..."));
+                s.setFont(_themeRegistry.getTheme().SHELL_FONT);
+                s.setLayout(new GridLayout(2, false));
+
+                Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
+                l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+                l.setText(_translationRegistry.getText(T_LOGIN, "Passphrase:"));
+                l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                final Text pass = new Text(s, SWT.SINGLE | SWT.WRAP);
+                pass.setText(TextEngine.DEFAULT_PASS);
+                pass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+                pass.addTraverseListener(new TraverseListener() {
+                    public void keyTraversed(TraverseEvent evt) {
+                        if (evt.detail == SWT.TRAVERSE_RETURN)
+                            recon(pass, s, loginMutex);
+                    }
+                });
+                pass.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+
+                Button b = new Button(s, SWT.PUSH);
+                b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+                b.setText(_translationRegistry.getText(T_LOGIN_PROCEED, "Login"));
+                b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                b.addSelectionListener(new FireSelectionListener() { 
+                    public void fire() {
+                        recon(pass, s, loginMutex);
+                    }
+                });
+
+                b = new Button(s, SWT.PUSH);
+                b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+                b.setText(_translationRegistry.getText(T_LOGIN_EXIT, "Exit"));
+                b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                b.addSelectionListener(new FireSelectionListener() { 
+                    public void fire() {
+                        s.dispose();
+                        close(false);
+                    }
+                });
+
+                s.addShellListener(new ShellListener() {
+                    public void shellActivated(ShellEvent shellEvent) {}
+                    public void shellClosed(ShellEvent shellEvent) {
+                        s.dispose();
+                        close(false);
+                    }
+                    public void shellDeactivated(ShellEvent shellEvent) {}
+                    public void shellDeiconified(ShellEvent shellEvent) {}
+                    public void shellIconified(ShellEvent shellEvent) {}
+                });
+                s.pack();
+                Rectangle sSize = s.getBounds();
+                Rectangle screenSize = Splash.getScreenSize(s);
+                int x = screenSize.width/2-sSize.width/2;
+                int y = screenSize.height/2-sSize.height/2;
+                s.setBounds(x, y, sSize.width, sSize.height);
+                s.open();
+            }
+        });
+
+        while (true) {
+            synchronized (loginMutex) {
+                if (loginMutex.size() > 0) {
+                    Integer rv = (Integer)loginMutex.remove(0);
+                    loginMutex.clear();
+                    return rv.intValue();
+                } else {
+                    try {
+                        loginMutex.wait(1000);
+                    } catch (InterruptedException ie) {}
+                }
+            }
+        }
+    }
+    
+    private void recon(final Text pass, final Shell s, final ArrayList loginMutex) {
+        _login = TextEngine.DEFAULT_LOGIN; //login.getText();
+        _passphrase = pass.getText();
+        boolean ok = false;
+        ok = _client.reconnect(_passphrase);
+        if (!ok) {
+            _ui.errorMessage("Database password is incorrect");
+        } else if (_client.verifyNymKeyEncryption()) {
+            _ui.debugMessage("nym keys are valid");
+            _client.setPass(_passphrase);
+            ok = true;
+        } else {
+            _ui.debugMessage("database password is correct, but the nym keys are not encrypted with that pass.  b0rked ident!");
+            _client.disconnect();
+        }
+        s.dispose();
+        synchronized (loginMutex) {
+            loginMutex.clear();
+            if (ok)
+                loginMutex.add(new Integer(1));
+            else
+                loginMutex.add(new Integer(0));
+            loginMutex.notifyAll();
+        }
+    }
+    
+    public String getLogin() { return _login == null ? _login : TextEngine.DEFAULT_LOGIN; }
+    public String getPassphrase() { return _passphrase; }
+    public void changePassphrase(String pass) {
+        _client.changePassphrase(pass);
+        _passphrase = pass;
     }
     
     private void show() {
@@ -373,12 +710,15 @@ class Desktop {
         show(_controlPanel);
     }
     
-    void close() {
-        MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        box.setMessage("exit?");
-        int rc = box.open();
-        if (rc != SWT.YES)
-            return;
+    void close() { close(true); }
+    void close(boolean prompt) {
+        if (prompt) {
+            MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage("exit?");
+            int rc = box.open();
+            if (rc != SWT.YES)
+                return;
+        }
         
         _shell.setVisible(false);
         if (_taskTree != null)
@@ -498,6 +838,8 @@ class Desktop {
             show(_forumSelectionPanel, null, null, null);
     }
     
+    public void refreshPrimaryAvatar() { ((ControlDesktopCorner)_cornerNorthWest).refreshPrimaryAvatar(); }
+    
     private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";
     private static final String T_CONFIRMBAN_NAME = "syndie.gui.desktop.desktop.confirmbanname";
     
@@ -605,7 +947,20 @@ class ControlDesktopCorner extends DesktopCorner {
         initComponents(color);
     }
     public void startupComplete() {
-        _button.setImage(ImageUtil.ICON_TAB_SQL);
+        refreshPrimaryAvatar();
+    }
+    public void refreshPrimaryAvatar() {
+        byte avatar[] = _desktop.getDBClient().getChannelAvatar(0);
+        Image img = null;
+        if (avatar != null) {
+            img = ImageUtil.createImage(avatar);
+        }
+        if (img != null) {
+            ImageUtil.dispose(_button.getImage());
+            _button.setImage(img);
+        } else {
+            _button.setImage(ImageUtil.ICON_TAB_SQL);
+        }
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);

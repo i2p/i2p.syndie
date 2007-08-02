@@ -7,21 +7,29 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.Importer;
 import syndie.db.JobRunner;
+import syndie.db.TextEngine;
 import syndie.db.UI;
 import syndie.gui.*;
 
@@ -40,6 +48,13 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Label _openLabel;
     private Text _openLocation;
     private Button _open;
+    private Button _changePass;
+    
+    private Label _switchLabel;
+    private Text _switchDir;
+    private Button _switchBrowse;
+    private Button _switchOpen;
+    
     private Button _sql;
 
     private Button _exit;
@@ -86,6 +101,12 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         _importLocation = new Text(row, SWT.SINGLE | SWT.BORDER);
         _importLocation.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _importLocation.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN)
+                    fireImport();
+            }
+        });
         
         _importFile.setSelection(true);
         _importBulk.setSelection(false);
@@ -117,6 +138,52 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _open = new Button(row, SWT.PUSH);
         _open.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _open.addSelectionListener(new FireSelectionListener() { public void fire() { fireOpen(); } });
+        _open.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN)
+                    fireOpen();
+            }
+        });
+
+        _changePass = new Button(root, SWT.PUSH);
+        _changePass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _changePass.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                changePass();
+            }
+        });
+        
+        row = new Composite(root, SWT.NONE);
+        row.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        gl = new GridLayout(4, false);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        row.setLayout(gl);
+        
+        _switchLabel = new Label(row, SWT.NONE);
+        _switchLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _switchDir = new Text(row, SWT.SINGLE | SWT.BORDER);
+        _switchDir.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _switchDir.addTraverseListener(new TraverseListener() {
+            public void keyTraversed(TraverseEvent evt) {
+                if (evt.detail == SWT.TRAVERSE_RETURN)
+                    switchRootDir();
+            }
+        });
+        _switchBrowse = new Button(row, SWT.PUSH);
+        _switchBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _switchBrowse.addSelectionListener(new FireSelectionListener() {
+            public void fire() { browseForRootDir(); }
+        });
+        _switchOpen = new Button(row, SWT.PUSH);
+        _switchOpen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _switchOpen.addSelectionListener(new FireSelectionListener() {
+            public void fire() { switchRootDir(); }
+        });
+        
+        _switchDir.setText(_client.getRootDir().getAbsolutePath());
         
         _sql = new Button(root, SWT.PUSH);
         _sql.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
@@ -129,6 +196,140 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
+    
+    private static final String T_ROOTDIR_MSG = "syndie.gui.desktop.controlmenupanel.rootdirmsg";
+    private static final String T_ROOTDIR_TEXT = "syndie.gui.desktop.controlmenupanel.rootdirtext";
+    private void browseForRootDir() {
+        DirectoryDialog dialog = new DirectoryDialog(getRoot().getShell(), SWT.OPEN);
+        dialog.setFilterPath(_switchDir.getText());
+        dialog.setMessage(_translationRegistry.getText(T_ROOTDIR_MSG, "Root of the Syndie directory tree (containing db/, archive/, etc)"));
+        dialog.setText(_translationRegistry.getText(T_ROOTDIR_TEXT, "Root directory"));
+        String dir = dialog.open();
+        if (dir != null)
+            _switchDir.setText(dir);
+    }
+    private void switchRootDir() {
+        String dir = _switchDir.getText();
+        _ui.debugMessage("switching to " + dir);
+        _desktop.restart(dir);
+    }
+    
+    private static final String T_CHANGEPASS_TITLE = "syndie.gui.desktop.controlmenupanel.changepass.title";
+    private static final String T_CHANGEPASS_OLDPASS = "syndie.gui.desktop.controlmenupanel.changepass.oldpass";
+    private static final String T_CHANGEPASS_NEWPASS = "syndie.gui.desktop.controlmenupanel.changepass.newpass";
+    private static final String T_CHANGEPASS_NEWPASS2 = "syndie.gui.desktop.controlmenupanel.changepass.newpass2";
+    private static final String T_CHANGEPASS_OK = "syndie.gui.desktop.controlmenupanel.changepass.ok";
+    private static final String T_CHANGEPASS_CANCEL = "syndie.gui.desktop.controlmenupanel.changepass.cancel";
+    
+    private void changePass() {
+        // show a special warning/error screen
+        final Shell s = new Shell(getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        s.setText(_translationRegistry.getText(T_CHANGEPASS_TITLE, "Change passphrase"));
+        s.setLayout(new GridLayout(2, false));
+        s.setFont(_themeRegistry.getTheme().SHELL_FONT);
+
+        Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
+        l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_CHANGEPASS_OLDPASS, "Old passphrase:"));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        final Text oldPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
+        oldPass.setText("");
+        oldPass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        oldPass.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+
+        l = new Label(s, SWT.SINGLE | SWT.WRAP);
+        l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_CHANGEPASS_NEWPASS, "New passphrase:"));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        final Text newPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
+        newPass.setText("");
+        newPass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        newPass.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        
+        l = new Label(s, SWT.SINGLE | SWT.WRAP);
+        l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_CHANGEPASS_NEWPASS2, "New passphrase (again):"));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        final Text newPass2 = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
+        newPass2.setText("");
+        newPass2.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        newPass2.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+
+        Button b = new Button(s, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        b.setText(_translationRegistry.getText(T_CHANGEPASS_OK, "Reset passphrase"));
+        b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+        b.addSelectionListener(new FireSelectionListener() { 
+            public void fire() {
+                String old = oldPass.getText();
+                String newP = newPass.getText();
+                String newP2 = newPass2.getText();
+                
+                s.dispose();
+                changePass(old, newP, newP2);
+            }
+        });
+
+        b = new Button(s, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        b.setText(_translationRegistry.getText(T_CHANGEPASS_CANCEL, "Cancel"));
+        b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+        b.addSelectionListener(new FireSelectionListener() { 
+            public void fire() {
+                s.dispose();
+            }
+        });
+
+        s.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent shellEvent) {
+                s.dispose();
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        s.pack();
+        Rectangle sSize = s.getBounds();
+        Rectangle screenSize = Splash.getScreenSize(s);
+        int x = screenSize.width/2-sSize.width/2;
+        int y = screenSize.height/2-sSize.height/2;
+        s.setBounds(x, y, sSize.width, sSize.height);
+        s.open();
+    }
+    
+    private void changePass(String old, String newPass, String newPass2) {
+        if (old.equals("")) {
+            if (_desktop.getPassphrase() == null)
+                old = TextEngine.DEFAULT_PASS;
+        }
+        if ( (_desktop.getPassphrase() != null) && (!_desktop.getPassphrase().equals(old)) ) {
+            _ui.debugMessage("old passphrase is not correct");
+            MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.OK | SWT.PRIMARY_MODAL);
+            box.setMessage(_translationRegistry.getText(T_CHANGEPASS_OLD_DOESNTMATCH, "Old passphrase is incorrect"));
+            box.setText(_translationRegistry.getText(T_CHANGEPASS_OLD_DOESNTMATCH_TEXT, "Invalid passphrase"));
+            box.open();
+            return;
+        }
+        
+        _ui.debugMessage("old passphrase is correct");
+        
+        if (newPass.equals(newPass2)) {
+            _ui.debugMessage("new passphrases match");
+            _desktop.changePassphrase(newPass);
+        } else {
+            _ui.debugMessage("new passphrases do not match");
+            MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.OK | SWT.PRIMARY_MODAL);
+            box.setMessage(_translationRegistry.getText(T_CHANGEPASS_NEW_DOESNTMATCH, "New passphrases don't match"));
+            box.setText(_translationRegistry.getText(T_CHANGEPASS_NEW_DOESNTMATCH_TEXT, "Invalid passphrase"));
+            box.open();
+            return;
+        }
+    }
+    private static final String T_CHANGEPASS_OLD_DOESNTMATCH = "syndie.gui.desktop.controlmenupanel.changepass.old.doesntmatch";
+    private static final String T_CHANGEPASS_OLD_DOESNTMATCH_TEXT = "syndie.gui.desktop.controlmenupanel.changepass.old.doesntmatch.text";
+    private static final String T_CHANGEPASS_NEW_DOESNTMATCH = "syndie.gui.desktop.controlmenupanel.changepass.new.doesntmatch";
+    private static final String T_CHANGEPASS_NEW_DOESNTMATCH_TEXT = "syndie.gui.desktop.controlmenupanel.changepass.new.doesntmatch.text";
     
     private void fireImportBrowse() {
         if (_importBulk.getSelection()) {
@@ -278,8 +479,13 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _openLabel.setFont(theme.DEFAULT_FONT);
         _openLocation.setFont(theme.DEFAULT_FONT);
         _open.setFont(theme.BUTTON_FONT);
+        _switchBrowse.setFont(theme.BUTTON_FONT);
+        _switchDir.setFont(theme.DEFAULT_FONT);
+        _switchLabel.setFont(theme.DEFAULT_FONT);
+        _switchOpen.setFont(theme.BUTTON_FONT);
         _exit.setFont(theme.BUTTON_FONT);
         _sql.setFont(theme.BUTTON_FONT);
+        _changePass.setFont(theme.BUTTON_FONT);
     }
     
     private static final String T_IMPORTLABEL = "syndie.gui.desktop.controlmenupanel.importlabel";
@@ -291,6 +497,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private static final String T_OPEN = "syndie.gui.desktop.controlmenupanel.open";
     private static final String T_EXIT = "syndie.gui.desktop.controlmenupanel.exit";
     private static final String T_SQL = "syndie.gui.desktop.controlmenupanel.sql";
+    private static final String T_SWITCH = "syndie.gui.desktop.controlmenupanel.switch";
+    private static final String T_SWITCH_BROWSE = "syndie.gui.desktop.controlmenupanel.switchbrowse";
+    private static final String T_SWITCH_OPEN = "syndie.gui.desktop.controlmenupanel.switchopen";
+    private static final String T_CHANGEPASS = "syndie.gui.desktop.controlmenupanel.changepass";
     
     public void translate(TranslationRegistry registry) {
         _importLabel.setText(registry.getText(T_IMPORTLABEL, "Import: "));
@@ -298,9 +508,13 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importBulk.setText(registry.getText(T_IMPORTBULK, "directory (recursively)"));
         _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
         _import.setText(registry.getText(T_IMPORT, "Import"));
+        _changePass.setText(registry.getText(T_CHANGEPASS, "Change Syndie instance passphrase"));
         _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
         _sql.setText(registry.getText(T_SQL, "Advanced SQL interface"));
         _open.setText(registry.getText(T_OPEN, "Open"));
+        _switchLabel.setText(registry.getText(T_SWITCH, "Log in to a different Syndie instance:"));
+        _switchBrowse.setText(registry.getText(T_SWITCH_BROWSE, "Browse..."));
+        _switchOpen.setText(registry.getText(T_SWITCH_OPEN, "Open selected"));
         _exit.setText(registry.getText(T_EXIT, "Exit"));
     }
 }

@@ -1,6 +1,8 @@
 package syndie.gui.desktop;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -13,6 +15,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
+import syndie.gui.ImageUtil;
 import syndie.gui.Syndicator;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
@@ -138,13 +141,19 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             _details.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _syndicator.viewDetail(); }
             });
+            _details.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _details, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_DETAILS, "Archive details"));
+                }
+            });
+
         }
         
         public void applyTheme(Theme theme) {
-            _details.setFont(theme.DEFAULT_FONT);
+            _details.redraw();
         }
         public void translate(TranslationRegistry registry) {
-            _details.setText(registry.getText(T_DETAILS, "D\ne\nt\na\ni\nl\ns"));
+            _details.redraw();
         }
     }
     private static final String T_DETAILS = "syndie.gui.desktop.syndicatorpanel.details";

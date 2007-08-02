@@ -1904,7 +1904,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             buf.append(info.getChannelHash().toBase64().substring(0,6));
             
             final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
+            //_ui.debugMessage("summary: " + summary);
             
             if (_forum == null) {
                 _forum = info.getChannelHash();

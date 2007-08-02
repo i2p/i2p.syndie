@@ -751,6 +751,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             });
         }
         private void updateNav(MessageIterator iter) {
+            if (_navNextInThread.isDisposed()) return;
             _navNextInThread.setEnabled(iter.getNextInThread() != null);
             _navPrevInThread.setEnabled(iter.getPreviousInThread() != null);
             _navNextViaThread.setEnabled(iter.getNextViaThread() != null);

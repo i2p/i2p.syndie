@@ -32,6 +32,7 @@ public final class SHA256Generator {
      * @return hash of the source
      */
     public final Hash calculateHash(byte[] source) {
+        if (source == null) return null;
         return calculateHash(source, 0, source.length);
     }
     public final Hash calculateHash(byte[] source, int start, int len) {

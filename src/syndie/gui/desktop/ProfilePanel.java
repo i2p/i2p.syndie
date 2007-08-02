@@ -5,6 +5,8 @@ import java.util.List;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -316,13 +318,19 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
                     _desktop.getNavControl().view(SyndieURI.createScope(getOriginalURI().getScope()));
                 }
             });
+            _messages.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _messages, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_MESSAGES, "Messages"));
+                }
+            });
+
         }
         
         public void applyTheme(Theme theme) {
-            _messages.setFont(theme.DEFAULT_FONT);
+            _messages.redraw();
         }
         public void translate(TranslationRegistry registry) {
-            _messages.setText(registry.getText(T_MESSAGES, "M\ne\ns\ns\na\ng\ne\ns"));
+            _messages.redraw();
         }
     }
     private static final String T_MESSAGES = "syndie.gui.desktop.profilepanel.messages";

@@ -397,7 +397,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         //_ui.errorMessage("bounds for the scroll container: " + bounds.width + "x" + bounds.height + " : " + sz);
         _buttons.setSize(sz);
         _root.layout(true, true);
-        first.forceFocus();
+        if (first != null)
+            first.forceFocus();
         _buttons.setRedraw(true);
         timer.addEvent("redraw reenabled");
         timer.complete();
@@ -407,7 +408,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     
     protected void configButtonMenu(Button button, long channelId, Hash scope, String name) {}
     
-    private void disposeExisting() {
+    void disposeExisting() {
         while (_records.size() > 0) {
             Record r = (Record)_records.remove(0);
             //_ui.debugMessage("disposing avatar for " + r.channelId + ": " + r.avatar);
@@ -415,6 +416,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         }
         _records.clear();
     }
+    
+    public void resetPanel() { disposeExisting(); setChannelData(new ArrayList(), null, new Timer("reset panel", _ui)); }
     
     private static final String SQL_GET_RECORD_BEGIN = "SELECT name, channelHash, description, channelId FROM channel WHERE channelId IN (";
     private List getRecordsBasic(List src) {

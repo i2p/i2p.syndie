@@ -83,6 +83,8 @@ public class TextEngine {
         public void scriptComplete(String script);
         public void alreadyRunning();
         public void loginFailed(Exception cause);
+        public void loginFailedBadPassphrase();
+        public void loginFailedBadLogin();
     }
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
@@ -273,8 +275,8 @@ public class TextEngine {
     public static String getRootPath() { return System.getProperty("user.home") + File.separator + ".syndie"; }
     public DBClient getClient() { return _client; }
     
-    static final String DEFAULT_LOGIN = "user";
-    static final String DEFAULT_PASS = "pass";
+    public static final String DEFAULT_LOGIN = "user";
+    public static final String DEFAULT_PASS = "pass";
     
     private String getDefaultURL() { return "jdbc:hsqldb:file:" + getDBFile() + ";hsqldb.nio_data_file=false"; }
     
@@ -314,6 +316,22 @@ public class TextEngine {
                 _client.runScript(_ui, "login");
             } else {
                 _ui.statusMessage("Login failed");
+                if (nymId == DBClient.NYM_ID_LOGIN_UNKNOWN) {
+                    for (int i = 0; i < _scriptListeners.size(); i++) {
+                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        lsnr.loginFailedBadLogin();
+                    }
+                } else if (nymId == DBClient.NYM_ID_PASSPHRASE_INVALID) {
+                    for (int i = 0; i < _scriptListeners.size(); i++) {
+                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        lsnr.loginFailedBadPassphrase();
+                    }
+                } else {
+                    for (int i = 0; i < _scriptListeners.size(); i++) {
+                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        lsnr.loginFailed(new Exception("Unknown error - connect rv = " + nymId));
+                    }
+                }
                 rebuildMenus();
             }
         } catch (SQLException se) {
@@ -336,7 +354,7 @@ public class TextEngine {
                     lsnr.alreadyRunning();
                 }
             } else {
-                _ui.errorMessage("Error trying to login", se);
+                _ui.errorMessage("Error trying to login: " + se.getMessage());
                 for (int i = 0; i < _scriptListeners.size(); i++) {
                     ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
                     lsnr.loginFailed(se);

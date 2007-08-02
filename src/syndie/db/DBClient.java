@@ -64,6 +64,8 @@ public class DBClient {
     private int _fcpPort;
     private String _freenetPrivateKey;
     private String _freenetPublicKey;
+    
+    private int _numNymKeysWithoutPass;
         
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
@@ -76,11 +78,84 @@ public class DBClient {
         _shutdownInProgress = false;
     }
     
+    public void restart(String rootDir) {
+        _rootDir = new File(rootDir);
+        _shutdownInProgress = false;
+        disconnect();
+    }
+    
+    private static final String SQL_CREATE_USER = "CREATE USER ? PASSWORD ? ADMIN";
+    
     public void connect(String url) throws SQLException { 
+        _login = TextEngine.DEFAULT_LOGIN;
+        if (_pass == null) _pass = TextEngine.DEFAULT_PASS;
         long start = System.currentTimeMillis();
         //System.out.println("Connecting to " + url);
         _url = url;
-        _con = DriverManager.getConnection(url);
+        try {
+            _con = DriverManager.getConnection(url);
+            if (_con != null) {
+                _ui.debugMessage("default connection successful, check to see if the account exists...");
+                Statement stmt = null;
+                try {
+                    stmt = _con.createStatement();
+                    stmt.execute("GRANT ALL ON CLASS \"java.lang.String\" TO " + _login);
+                    _ui.debugMessage("Account " + _login + " already exists");
+                    stmt.close();
+                    stmt = null;
+                    
+                    byte val[] = new byte[16];
+                    _context.random().nextBytes(val);
+                    String rand = Base64.encode(val);
+                    rand = rand.substring(0, rand.length()-2); // drop the b64 padding 
+                    _ui.debugMessage("changing default admin account passphrase to something random");
+                    stmt = _con.createStatement();
+                    stmt.execute("ALTER USER sa SET PASSWORD " + rand);
+                    stmt.close();
+                    stmt = null;
+                    _ui.debugMessage("sysadmin passphrase changed to a random value");
+                    
+                    _con.close();
+                    _con = null;
+                } catch (SQLException se) {
+                    _ui.debugMessage("Unable to check up on " + _login + ", so lets create the account (" + se.getMessage() + ")", se);
+                    if (stmt != null)
+                        stmt.close();
+                    stmt = null;
+                    
+                    try {
+                        stmt = _con.createStatement();
+                        stmt.execute("CREATE USER " + _login + " PASSWORD " + _pass + " ADMIN");
+                        stmt.close();
+                        stmt = null;
+                        _ui.debugMessage("new user created [" + _login + "] / [" + _pass + "]");
+
+                        _con.close();
+                        _con = null;
+                    } catch (SQLException cse) {
+                        _ui.errorMessage("Error creating new db account", cse);
+                        _con.close();
+                        _con = null;
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            _ui.debugMessage("Unable to connect with default db params: " + se);
+            if (_con != null) _con.close();
+            _con = null;
+        }
+         
+        try {
+            _ui.debugMessage("connecting as [" + _login + "] / [" + _pass + "]");
+            _con = DriverManager.getConnection(url, _login, _pass);
+            _ui.debugMessage("connection created: " + _con);
+        } catch (SQLException se) {
+            _con = null;
+            throw se;
+        }
+        if (_con == null) // might be redundant...
+            throw new SQLException("Unable to connect to [" + _login + "]");
+        
         long connected = System.currentTimeMillis();
         if (_shutdownHook == null) {
             _shutdownHook = new Thread(new Runnable() {
@@ -91,21 +166,64 @@ public class DBClient {
             }, "DB shutdown");
             Runtime.getRuntime().addShutdownHook(_shutdownHook);
         } else {
-            throw new RuntimeException("already connected");
+            //throw new RuntimeException("already connected");
         }
         
         initDB();
         long init = System.currentTimeMillis();
         _uriDAO = new SyndieURIDAO(this);
-        _login = null;
-        _pass = null;
+        //_login = null;
+        //_pass = null;
         _nymId = -1;
         long now = System.currentTimeMillis();
         _ui.debugMessage("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
+        
+        boolean ok = verifyNymKeyEncryption();
+        if (!ok) {
+            _ui.errorMessage("db connection successfull, but we can't access the nym keys, so discon");
+            disconnect();
+        }
     }
     public long connect(String url, String login, String passphrase) throws SQLException {
-        connect(url);
+        _login = login;
+        _pass = passphrase;
+        try {
+            connect(url);
+            if (!isLoggedIn())
+                return -1;
+        } catch (SQLException se) {
+            _con = null;
+            throw se;
+        }
         return getNymId(login, passphrase);
+    }
+    public boolean reconnect(String passphrase) {
+        _ui.debugMessage("reconnecting to url=[" + _url + "] login=[" + _login + "] pass=[" + passphrase + "]");
+        try {
+            long id = connect(_url, _login, passphrase);
+            _ui.debugMessage("connected w/ id=" + id);
+            if (id >= 0) {
+                return true;
+            } else {
+                _con = null;
+                return false;
+            }
+        } catch (SQLException se) {
+            _ui.errorMessage("Error reconnecting: " + se.getMessage());
+            _con = null;
+            return false;
+        }
+    }
+    public void disconnect() {
+        try {
+            if ( (_con != null) && (!_con.isClosed()) ) {
+                _con.close();
+                _con = null;
+            }
+        } catch (SQLException se) {
+            _ui.errorMessage("Error disconnecting", se);
+            _con = null;
+        }
     }
     I2PAppContext ctx() { return _context; }
     public Connection con() { return _con; }
@@ -116,7 +234,8 @@ public class DBClient {
     String getLogin() { return _login; }
     /** if logged in, the password authenticating it is returned here */
     String getPass() { return _pass; }
-    public boolean isLoggedIn() { return _login != null; }
+    public void setPass(String encryptionPass) { _pass = encryptionPass; }
+    public boolean isLoggedIn() { return _con != null && _login != null; }
     /** if logged in, the internal nymId associated with that login */
     public long getLoggedInNymId() { return _nymId; }
     
@@ -231,20 +350,22 @@ public class DBClient {
                         _login = login;
                         _pass = passphrase;
                         _nymId = nymId;
+                        _ui.debugMessage("passphrase is correct in the nym table");
                         
                         Properties prefs = getNymPrefs(nymId);
                         loadProxyConfig(prefs);
                         return nymId;
                     } else {
+                        _ui.debugMessage("Invalid passphrase for the nymId");
                         return NYM_ID_PASSPHRASE_INVALID;
                     }
                 }
             } else {
+                _ui.debugMessage("no nymId values are known");
                 return NYM_ID_LOGIN_UNKNOWN;
             }
         } catch (SQLException se) {
-            if (_log.shouldLog(Log.WARN))
-                _log.warn("Unable to check the get the nymId", se);
+            _ui.debugMessage("Unable to check the get the nymId", se);
             return NYM_ID_LOGIN_UNKNOWN;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
@@ -1046,7 +1167,10 @@ public class DBClient {
                                                    "FROM nymKey WHERE nymId = ?";
     /** return a list of NymKey structures */
     public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
-        ensureLoggedIn();
+        return getNymKeys(nymId, pass, channel, keyFunction, false);
+    }
+    public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction, boolean verifyEncryption) {
+        ensureLoggedIn(!verifyEncryption);
         List rv = new ArrayList(1);
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1066,6 +1190,7 @@ public class DBClient {
                 stmt.setString(2, keyFunction);
             }
             
+            _numNymKeysWithoutPass = 0;
             rs = stmt.executeQuery();
             while (rs.next()) {
                 String type = rs.getString(1);
@@ -1080,6 +1205,12 @@ public class DBClient {
                 if (salt != null) {
                     byte key[] = pbeDecrypt(data, salt);
                     data = key;
+                    if (key == null) {
+                        _ui.errorMessage("Invalid passphrase to a nymKey");
+                        _numNymKeysWithoutPass++;
+                        continue;
+                    }
+                    
                     /*
                     SessionKey saltedKey = _context.keyGenerator().generateSessionKey(salt, passB);
                     //_log.debug("salt: " + Base64.encode(salt));
@@ -1106,6 +1237,11 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         return rv;        
+    }
+    
+    public boolean verifyNymKeyEncryption() {
+        getNymKeys(0, _pass, null, null, true);
+        return _numNymKeysWithoutPass == 0;
     }
     
     public List getReplyKeys(Hash identHash, long nymId, String pass) {
@@ -4359,9 +4495,10 @@ public class DBClient {
         synchronized (_watchListeners) { _watchListeners.remove(lsnr); }
     }
     
-    private void ensureLoggedIn() throws IllegalStateException {
+    private void ensureLoggedIn() throws IllegalStateException { ensureLoggedIn(true); }
+    private void ensureLoggedIn(boolean verifyNymId) throws IllegalStateException {
         try {
-            if ( (_con != null) && (!_con.isClosed()) && (_nymId >= 0) )
+            if ( (_con != null) && (!_con.isClosed()) && (_nymId >= 0 || !verifyNymId) )
                 return;
         } catch (SQLException se) {
             // problem detecting isClosed?
@@ -4988,7 +5125,7 @@ public class DBClient {
         return rv;
     }
 
-    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";    
+    private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";
     /**
      * ordered map of postponeId (Long) to the most recent version (Integer),
      * with the most recent messages first 
@@ -5083,6 +5220,257 @@ public class DBClient {
         ui.debugMessage("added notifyscriptend " + scriptName);
     }
     
+    
+    private static final String SQL_UPDATE_NYM_PASS = "UPDATE nym SET passSalt = ?, passHash = ? WHERE nymId = ?";
+    public void changePassphrase(String newPass) {
+        try {
+            _con.setAutoCommit(false);
+            _ui.debugMessage("changing passphrase from [" + _pass + "] to [" + newPass + "]");
+            // reencrypt all of the keys under the new passphrase
+            if (!reencryptKeys(_pass, newPass)) {
+                _ui.errorMessage("reencryptKeys failed");
+                _ui.errorMessage("Passphrase NOT changed");
+                _con.rollback();
+                return;
+            }
+            // reencrypt all of the postponed messages under the new passphrase
+            if (!reencryptPostponed(_pass, newPass)) {
+                _ui.errorMessage("reencryptPostponed failed");
+                _ui.errorMessage("Passphrase NOT changed");
+                _con.rollback();
+                return;
+            }
+
+            byte salt[] = new byte[16];
+            _context.random().nextBytes(salt);
+            byte hash[] = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(newPass)).getData();
+
+            PreparedStatement pstmt = null;
+            try {
+                pstmt = _con.prepareStatement(SQL_UPDATE_NYM_PASS);
+                pstmt.setBytes(1, salt);
+                pstmt.setBytes(2, hash);
+                pstmt.setLong(3, _nymId);
+                int rows = pstmt.executeUpdate();
+                _ui.debugMessage("nym pass hash updated");
+            } catch (SQLException se) {
+                _ui.errorMessage("Unable to update the nym pass hash", se);
+                _ui.errorMessage("Passphrase NOT changed");
+                _con.rollback();
+                return;
+            } finally {
+                if (pstmt != null) try { pstmt.close(); } catch (SQLException se) {}
+            }
+
+            Statement stmt = null;
+            try {
+                _ui.debugMessage("changing db passphrase...");
+                stmt = _con.createStatement();
+                stmt.execute("ALTER USER " + TextEngine.DEFAULT_LOGIN + " SET PASSWORD " + newPass);
+                stmt.close();
+                stmt = null;
+                _ui.debugMessage("Passphrase changed to " + newPass);
+                
+                byte val[] = new byte[16];
+                _context.random().nextBytes(val);
+                String rand = Base64.encode(val);
+                _ui.debugMessage("changing default admin account passphrase to something random");
+                stmt = _con.createStatement();
+                stmt.execute("ALTER USER sa SET PASSWORD " + rand);
+                stmt.close();
+                stmt = null;
+                _ui.debugMessage("sysadmin passphrase changed to a random value");
+            } catch (SQLException se) {
+                _ui.errorMessage("Error changing the database passphrase", se);
+                _ui.errorMessage("Passphrase NOT changed");
+                _con.rollback();
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+            _pass = newPass;
+            _con.commit();
+        } catch (SQLException se) {
+            _ui.errorMessage("Error partway through the passphrase changing...?", se);
+        } finally {
+            try { _con.setAutoCommit(true); } catch (SQLException se) {}
+        }
+    }
+
+    private class NymKeyData {
+        String keyType;
+        byte keyData[];
+        byte keySalt[];
+        boolean auth;
+        Date periodBegin;
+        Date periodEnd;
+        String function;
+        Hash channel;
+        long nymId;
+    }
+    
+    private static final String SQL_DELETE_NYMKEYS = "DELETE FROM nymKey WHERE nymId = ?";
+    private static final String SQL_INSERT_NYMKEY = "INSERT INTO nymKey " +
+                                                    "(nymId, keyChannel, keyFunction, keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd)" +
+                                                    " VALUES " +
+                                                    "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private boolean reencryptKeys(String oldPass, String newPass) {
+        ensureLoggedIn();
+        List rv = new ArrayList(1);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            String query = SQL_GET_NYMKEYS;
+            stmt = _con.prepareStatement(query);
+            stmt.setLong(1, _nymId);
+            
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                // keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel
+                NymKeyData data = new NymKeyData();
+                data.keyType = rs.getString(1);
+                data.keyData = rs.getBytes(2);
+                data.keySalt = rs.getBytes(3);
+                data.auth = rs.getBoolean(4);
+                data.periodBegin = rs.getDate(5);
+                data.periodEnd = rs.getDate(6);
+                data.function = rs.getString(7);
+                data.channel = new Hash(rs.getBytes(8));
+                
+                if (data.keySalt != null) {
+                    byte key[] = pbeDecrypt(data.keyData, oldPass, data.keySalt);
+                    if (key == null) {
+                        _ui.debugMessage("decrypt of old key failed: " + rv.size());
+                        continue;
+                    }
+                    data.keySalt = null;
+                    data.keyData = key;
+                }
+                
+                rv.add(data);
+                _ui.debugMessage("decrypted old key " + rv.size());
+            }
+            
+            rs.close();
+            rs = null;
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_DELETE_NYMKEYS);
+            stmt.setLong(1, _nymId);
+            stmt.executeUpdate();
+            
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_INSERT_NYMKEY);
+            for (int i = 0; i < rv.size(); i++) {
+                NymKeyData data = (NymKeyData)rv.get(i);
+                
+                byte salt[] = new byte[16]; // overwritten by pbeEncrypt
+                byte encr[] = pbeEncrypt(data.keyData, newPass, salt);
+
+                stmt.setLong(1, _nymId);
+                stmt.setBytes(2, data.channel.getData());
+                stmt.setString(3, data.function);
+                stmt.setString(4, data.keyType);
+                stmt.setBytes(5, encr);
+                stmt.setBytes(6, salt);
+                stmt.setBoolean(7, data.auth);
+                stmt.setDate(8, data.periodBegin);
+                stmt.setDate(9, data.periodEnd);
+                
+                int rows = stmt.executeUpdate();
+                if (rows != 1)
+                    throw new SQLException("Error importing a key: row count of " + rows);
+                _ui.debugMessage("reencrypted old key " + (i+1));
+            }
+            _ui.debugMessage("keys reencrypted: " + rv.size());
+            return true;
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error reencrypting the keys", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private class PostponedData {
+        long nymId;
+        long postponeId;
+        int version;
+        String rawB64;
+    }
+    
+    private static final String SQL_GET_POSTPONED = "SELECT nymId, postponeId, postponeVersion, encryptedData FROM nymMsgPostpone WHERE nymId = ?";
+    private static final String SQL_DROP_POSTPONED = "DELETE FROM nymMsgPostpone WHERE nymId = ?";
+    private static final String SQL_INSERT_POSTPONED = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData) VALUES (?, ?, ?, ?)";
+    private boolean reencryptPostponed(String oldPass, String newPass) {
+        ensureLoggedIn();
+        List rv = new ArrayList(1);
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_POSTPONED);
+            stmt.setLong(1, _nymId);
+            
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                PostponedData data = new PostponedData();
+                data.nymId = rs.getLong(1);
+                data.postponeId = rs.getLong(2);
+                data.version = rs.getInt(3);
+                data.rawB64 = rs.getString(4);
+                rv.add(data);
+            }
+            
+            rs.close();
+            rs = null;
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_DROP_POSTPONED);
+            stmt.setLong(1, _nymId);
+            stmt.executeUpdate();
+            stmt.close();
+            stmt = null;
+            
+            stmt = _con.prepareStatement(SQL_INSERT_POSTPONED);
+            int count = 0;
+            for (int i = 0; i < rv.size(); i++) {
+                PostponedData data = (PostponedData)rv.get(i);
+                
+                String salt = data.rawB64.substring(0, 24);
+                String body = data.rawB64.substring(24);
+                byte decr[] = pbeDecrypt(Base64.decode(body), oldPass, Base64.decode(salt));
+                
+                _ui.debugMessage("decrypted old postponed: " + (i+1));
+                
+                byte newSalt[] = new byte[16];
+                byte encr[] = pbeEncrypt(decr, newPass, newSalt);
+                data.rawB64 = Base64.encode(newSalt) + Base64.encode(encr);
+                _ui.debugMessage("reencrypted old postponed: " + (i+1));
+
+                //(nymId, postponeId, postponeVersion, encryptedData) 
+                stmt.setLong(1, data.nymId);
+                stmt.setLong(2, data.postponeId);
+                stmt.setInt(3, data.version);
+                stmt.setString(4, data.rawB64);
+                stmt.executeUpdate();
+                count++;
+            }
+            _ui.debugMessage("done reencrypting postponed messages [" + count + "]");
+            return true;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error reencrypting the postponed msgs", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
     private void log(SQLException se) {
         if (_ui != null)
             _ui.errorMessage("Internal error", se);
@@ -5136,8 +5524,9 @@ public class DBClient {
     }
     
     /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
-    public byte[] pbeDecrypt(byte orig[], byte salt[]) {
-        return pbeDecrypt(orig, 0, salt, 0, _pass, orig.length, _context);
+    public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _pass, salt); }
+    public byte[] pbeDecrypt(byte orig[], String pass, byte salt[]) {
+        return pbeDecrypt(orig, 0, salt, 0, pass, orig.length, _context);
     }
     
     public byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len) {
@@ -5150,6 +5539,8 @@ public class DBClient {
         byte decr[] = new byte[len];
         ctx.aes().decrypt(orig, origOffset, decr, 0, saltedKey, saltCopy, len);
         int pad = (int)decr[decr.length-1];
+        if ( (pad < 0) || (pad > decr.length) ) // decrypt failed
+            return null;
         byte rv[] = new byte[decr.length-pad];
         System.arraycopy(decr, 0, rv, 0, rv.length);
         return rv;

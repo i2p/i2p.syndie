@@ -7,6 +7,8 @@ import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -499,13 +501,19 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _profile = new Button(root, SWT.PUSH);
             _profile.addSelectionListener(new FireSelectionListener() { public void fire() { viewProfile(); } });
             _profile.setEnabled(false);
+            _profile.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_PROFILE, "Profile"));
+                }
+            });
+
         }
         public void applyTheme(Theme theme) {
-            _profile.setFont(theme.BUTTON_FONT);
+            _profile.redraw();
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
-            _profile.setText(registry.getText(T_PROFILE, "P\nr\no\nf\ni\nl\ne"));
+            _profile.redraw();
             _profile.setToolTipText(registry.getText(T_PROFILE_TT, "View the forum's profile"));
         }
         public void updateNav(SyndieURI uri) {

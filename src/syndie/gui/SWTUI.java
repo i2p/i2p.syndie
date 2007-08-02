@@ -220,6 +220,9 @@ public class SWTUI {
     private static final String T_LOGIN_FAILED_TITLE = "syndie.gui.swtui.loginfailed.title";
     private static final String T_LOGIN_FAILED_EXIT = "syndie.gui.swtui.loginfailed.exit";
     private static final String T_LOGIN_FAILED = "syndie.gui.swtui.loginfailed";
+
+    private static final Exception BAD_LOGIN = new Exception();
+    private static final Exception BAD_PASS = new Exception();
     
     private static class StartupListener implements TextEngine.ScriptListener {
         private Set _complete;
@@ -239,6 +242,14 @@ public class SWTUI {
         }
         public void loginFailed(Exception cause) {
             _loginFailedCause = cause;
+            synchronized (_complete) { _complete.notifyAll(); }
+        }
+        public void loginFailedBadPassphrase() {
+            _loginFailedCause = BAD_PASS;
+            synchronized (_complete) { _complete.notifyAll(); }
+        }
+        public void loginFailedBadLogin() {
+            _loginFailedCause = BAD_LOGIN;
             synchronized (_complete) { _complete.notifyAll(); }
         }
         public boolean getAlreadyRunning() { return _alreadyRunning; }

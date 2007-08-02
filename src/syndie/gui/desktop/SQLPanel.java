@@ -274,7 +274,7 @@ class SQLPanel extends DesktopPanel implements Translatable, Themeable {
     
     public void dispose() { 
         _translationRegistry.unregister(this);
-        _themeRegistry.register(this);
+        _themeRegistry.unregister(this);
         super.dispose();
     }
 
