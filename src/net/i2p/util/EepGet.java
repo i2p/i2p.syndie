@@ -18,6 +18,7 @@ import java.util.Properties;
 
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
+import syndie.db.SocketTimeout;
 
 /**
  * EepGet [-p localhost:4444] 
@@ -59,6 +60,8 @@ public class EepGet {
     private boolean _headersRead;
     private boolean _aborted;
     private long _fetchHeaderTimeout;
+    private long _fetchEndTime;
+    private long _fetchInactivityTimeout;
     private int _redirects;
     private String _redirectLocation;
     
@@ -336,21 +339,41 @@ public class EepGet {
      * wait indefinitely.
      */
     public boolean fetch(long fetchHeaderTimeout) {
+        return fetch(fetchHeaderTimeout, -1, -1);
+    }
+    public boolean fetch(long fetchHeaderTimeout, long totalTimeout, long inactivityTimeout) {
         _fetchHeaderTimeout = fetchHeaderTimeout;
+        _fetchEndTime = (totalTimeout > 0 ? System.currentTimeMillis() + totalTimeout : -1);
+        _fetchInactivityTimeout = inactivityTimeout;
         _keepFetching = true;
 
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Fetching (proxied? " + _shouldProxy + ") url=" + _actualURL);
         while (_keepFetching) {
+            SocketTimeout timeout = null;
+            if (_fetchHeaderTimeout > 0)
+                timeout = new SocketTimeout(_fetchHeaderTimeout);
+            final SocketTimeout stimeout = timeout; // ugly
+            timeout.setTimeoutCommand(new Runnable() {
+                public void run() {
+                    if (_log.shouldLog(Log.DEBUG))
+                        _log.debug("timeout reached on " + _url + ": " + stimeout);
+                    _aborted = true;
+                }
+            });
+            timeout.setTotalTimeoutPeriod(_fetchEndTime);
             try {
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).attempting(_url);
-                sendRequest();
-                doFetch();
+                sendRequest(timeout);
+                timeout.resetTimer();
+                doFetch(timeout);
+                timeout.cancel();
                 if (!_transferFailed)
                     return true;
                 break;
             } catch (IOException ioe) {
+                timeout.cancel();
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).attemptFailed(_url, _bytesTransferred, _bytesRemaining, _currentAttempt, _numRetries, ioe);
             } finally {
@@ -379,63 +402,10 @@ public class EepGet {
         return false;
     }
 
-    private class DisconnectIfNoHeaders implements SimpleTimer.TimedEvent {
-        public void timeReached() {
-            if (_headersRead) {
-                // cool.  noop
-            } else {
-                _aborted = true;
-                if (_proxyIn != null)
-                    try { _proxyIn.close(); } catch (IOException ioe) {}
-                _proxyIn = null;
-                if (_proxyOut != null)
-                    try { _proxyOut.close(); } catch (IOException ioe) {}
-                _proxyOut = null;
-                if (_proxy != null)
-                    try { _proxy.close(); } catch (IOException ioe) {}
-                _proxy = null;
-            }
-        }
-    }
-    
-    private class DisconnectIfIdle implements SimpleTimer.TimedEvent {
-        private long _lastActivity;
-        private long _timeout;
-        private boolean _cancelled;
-        public DisconnectIfIdle(long timeout) {
-            _lastActivity = System.currentTimeMillis();
-            _timeout = timeout;
-            _cancelled = false;
-        }
-        public void resetTimeout() { _lastActivity = System.currentTimeMillis(); }
-        public void cancelTimeout() { _cancelled = true; }
-        public void timeReached() {
-            long idle = System.currentTimeMillis()-_lastActivity;
-            if (_cancelled) return;
-            
-            if (idle >= _timeout) {
-                _aborted = true;
-                if (_proxyIn != null)
-                    try { _proxyIn.close(); } catch (IOException ioe) {}
-                _proxyIn = null;
-                if (_proxyOut != null)
-                    try { _proxyOut.close(); } catch (IOException ioe) {}
-                _proxyOut = null;
-                if (_proxy != null)
-                    try { _proxy.close(); } catch (IOException ioe) {}
-                _proxy = null;
-            } else {
-                SimpleTimer.getInstance().addEvent(DisconnectIfIdle.this, 10*1000);
-            }
-        }
-    }
-    
     /** return true if the URL was completely retrieved */
-    private void doFetch() throws IOException {
+    private void doFetch(SocketTimeout timeout) throws IOException {
         _headersRead = false;
         _aborted = false;
-        if (_fetchHeaderTimeout > 0)
-            SimpleTimer.getInstance().addEvent(new DisconnectIfNoHeaders(), _fetchHeaderTimeout);
         try {
             readHeaders();
         } finally {
@@ -443,6 +413,12 @@ public class EepGet {
         }
         if (_aborted)
             throw new IOException("Timed out reading the HTTP headers");
+        
+        timeout.resetTimer();
+        if (_fetchInactivityTimeout > 0)
+            timeout.setInactivityTimeout(_fetchInactivityTimeout);
+        else
+            timeout.setInactivityTimeout(60*1000);
         
         if (_redirectLocation != null) {
             try {
@@ -472,16 +448,13 @@ public class EepGet {
             if (_redirects > 5)
                 throw new IOException("Too many redirects: to " + _redirectLocation);
             if (_log.shouldLog(Log.INFO)) _log.info("Redirecting to " + _redirectLocation);
-            sendRequest();
-            doFetch();
+            sendRequest(timeout);
+            doFetch(timeout);
             return;
         }
         
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Headers read completely, reading " + _bytesRemaining);
-        
-        DisconnectIfIdle idle = new DisconnectIfIdle(_fetchHeaderTimeout);
-        SimpleTimer.getInstance().addEvent(idle, 10*1000);
         
         boolean strictSize = (_bytesRemaining >= 0);
             
@@ -494,9 +467,8 @@ public class EepGet {
             int read = _proxyIn.read(buf, 0, toRead);
             if (read == -1)
                 break;
-            idle.resetTimeout();
+            timeout.resetTimer();
             _out.write(buf, 0, read);
-            idle.resetTimeout();
             _bytesTransferred += read;
             remaining -= read;
             if (remaining==0 && _encodingChunked) {
@@ -519,7 +491,7 @@ public class EepGet {
                     read++;
                 }
             }
-            idle.resetTimeout();
+            timeout.resetTimer();
             if (read > 0) 
                 for (int i = 0; i < _listeners.size(); i++) 
                     ((StatusListener)_listeners.get(i)).bytesTransferred(
@@ -537,7 +509,7 @@ public class EepGet {
         if (_aborted)
             throw new IOException("Timed out reading the HTTP data");
         
-        idle.cancelTimeout();
+        timeout.cancel();
         
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Done transferring " + _bytesTransferred + " (ok? " + !_transferFailed + ")");
@@ -759,7 +731,7 @@ public class EepGet {
     private static final byte NL = '\n';
     private boolean isNL(byte b) { return (b == NL); }
 
-    private void sendRequest() throws IOException {
+    private void sendRequest(SocketTimeout timeout) throws IOException {
         File outFile = new File(_outputFile);
         if (outFile.exists())
             _alreadyTransferred = outFile.length();
@@ -790,7 +762,9 @@ public class EepGet {
         }
         _proxyIn = _proxy.getInputStream();
         _proxyOut = _proxy.getOutputStream();
-
+        
+        timeout.setSocket(_proxy);
+        
         _proxyOut.write(DataHelper.getUTF8(req.toString()));
         _proxyOut.flush();
         

@@ -121,7 +121,8 @@ class IndexFetcher {
                 get.addStatusListener(lsnr);
                 Thread t = new Thread(new Runnable() { 
                     public void run() {
-                        get.fetch(5*60*1000); // 5 minutes is beyond reasonable, so disable the retries above
+                        // 5 minutes for the headers, 10 minutes total, and up to 60s of inactivity
+                        get.fetch(5*60*1000, 10*60*1000, 60*1000);
                     }
                 }, "IndexFetch " + url);
                 t.setDaemon(true);
@@ -271,7 +272,8 @@ class IndexFetcher {
             EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
             GetListener lsnr = new GetListener(archive, indexFile);
             get.addStatusListener(lsnr);
-            get.fetch(60*1000);
+            // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity
+            get.fetch(60*1000, 5*60*1000, 60*1000);
         } catch (IOException ioe) {
             archive.indexFetchFail("Internal error writing temp file", ioe, true);
         }

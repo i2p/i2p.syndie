@@ -198,7 +198,7 @@ public class HTTPServ implements CLI.Command {
     
     private void handle(Socket socket) throws IOException {
         _ui.debugMessage("handling a client");
-        Timeout timeout = new Timeout(socket, 30*1000);
+        SocketTimeout timeout = new SocketTimeout(socket, 60*1000);
         InputStream in = socket.getInputStream();
         OutputStream out = socket.getOutputStream();
         String line = null;
@@ -257,7 +257,7 @@ public class HTTPServ implements CLI.Command {
         if ( (idx < 0) || (idx + 1 >= path.length()) ) return null;
         return path.substring(idx+1);
     }
-    private void handleGet(Socket socket, InputStream in, OutputStream out, String path, Timeout timeout) throws IOException {
+    private void handleGet(Socket socket, InputStream in, OutputStream out, String path, SocketTimeout timeout) throws IOException {
         if (path == null) path = "/index.html";
         _ui.debugMessage("GET " + path);
         String chan = getChannel(path);
@@ -304,7 +304,7 @@ public class HTTPServ implements CLI.Command {
         return _archive;
     }
     
-    private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         // we only send a file if it is in our published shared archive index, which
         // doesn't necessarily contain everything we have (for anonymity reasons)
         SharedArchive archive = getSharedArchive();
@@ -351,7 +351,7 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
-    private void send(Socket socket, InputStream in, OutputStream out, File file, Timeout timeout) throws IOException {
+    private void send(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
         String type = "application/octet-stream";
         String name = file.getName();
         if (name.endsWith(".html"))
@@ -398,7 +398,7 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
-    private static void close(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private static void close(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         try {
             long dieAfter = System.currentTimeMillis() + 30*1000;
             if (!socket.isClosed()) {
@@ -429,7 +429,7 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
-    private void handlePost(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         if (!_allowPost) {
             fail403(socket, in, out, timeout);
             return;
@@ -554,15 +554,15 @@ public class HTTPServ implements CLI.Command {
         dir.delete();
     }
     
-    private void fail404(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private void fail404(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         out.write(ERR_404);
         fail(socket, in, out, timeout);
     }
-    private void fail403(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private void fail403(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         out.write(ERR_403);
         fail(socket, in, out, timeout);
     }
-    private void fail(Socket socket, InputStream in, OutputStream out, Timeout timeout) throws IOException {
+    private void fail(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         _ui.debugMessage("failing socket", new Exception("source"));
         close(socket, in, out, timeout);
     }
@@ -572,41 +572,10 @@ public class HTTPServ implements CLI.Command {
     private static final byte[] ERR_403 = DataHelper.getUTF8("HTTP/1.0 403 Not authorized\r\nConnection: close\r\n");
     
     private static final void tooBusy(Socket socket) throws IOException {
-        Timeout timeout = new Timeout(socket, 20*1000);
+        SocketTimeout timeout = new SocketTimeout(socket, 20*1000);
         OutputStream out = socket.getOutputStream();
         out.write(TOO_BUSY);
         close(socket, socket.getInputStream(), out, timeout);
     }
-    
-    private static class Timeout implements SimpleTimer.TimedEvent {
-        private Socket _targetSocket;
-        private long _expireDelay;
-        private long _lastActivity;
-        private boolean _cancelled;
-        public Timeout(Socket socket, long delay) {
-            _expireDelay = delay;
-            _targetSocket = socket;
-            _cancelled = false;
-            _lastActivity = System.currentTimeMillis();
-            SimpleTimer.getInstance().addEvent(Timeout.this, delay);
-        }
-        public void timeReached() {
-            if (_cancelled) return;
-            
-            if (_expireDelay + _lastActivity <= System.currentTimeMillis()) {
-                try {
-                    if (!_targetSocket.isClosed())
-                        _targetSocket.close();
-                } catch (IOException ioe) {}
-            } else {
-                SimpleTimer.getInstance().addEvent(Timeout.this, _expireDelay);
-            }
-        }
-        
-        public void cancel() {
-            _cancelled = true;
-            SimpleTimer.getInstance().removeEvent(Timeout.this);
-        }
-        public void resetTimer() { _lastActivity = System.currentTimeMillis(); }
-    }
+
 }

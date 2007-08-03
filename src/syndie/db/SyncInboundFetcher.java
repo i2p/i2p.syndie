@@ -144,7 +144,8 @@ class SyncInboundFetcher {
                     // new messages.  much to optimize on this front though
                     GetListener lsnr = new GetListener(action, dataFile, importer);
                     get.addStatusListener(lsnr);
-                    get.fetch(5*60*1000); // no retries, but let it sit for up to 5 minutes
+                    // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity
+                    get.fetch(60*1000, 5*60*1000, 60*1000);
                 } catch (IOException ioe) {
                     action.fetchFailed("Internal error writing temp file", ioe);
                 }
@@ -330,7 +331,8 @@ class SyncInboundFetcher {
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
                     GetListener lsnr = new GetListener(action, dataFile, _importer);
                     get.addStatusListener(lsnr);
-                    get.fetch(30*1000);
+                    // 1m for headers, 10m total, 60s idle
+                    get.fetch(60*1000, 10*60*1000, 60*1000);
                 } catch (IOException ioe) {
                     action.fetchFailed("Internal error writing temp file", ioe);
                 }
