@@ -161,6 +161,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     
     private void addRef() {
         LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+            public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 if (uri == null) return;
                 String name = text;

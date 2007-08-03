@@ -628,6 +628,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
     
     private void selectURI() {
         LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
+            public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 _ui.debugMessage("uri built: " + uri);
                 uriSelected(uri);

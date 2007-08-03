@@ -4064,19 +4064,42 @@ public class DBClient {
             }
         }
     }
+    
+    private static final String SQL_GET_MAX_GROUPID = "SELECT MAX(groupId) FROM resourceGroup WHERE nymId = ?";
     private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
-        createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
+        //createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
         long groupId = newValue.getGroupId();
-        if (groupId < 0)
-            groupId = nextId("resourceGroupIdSequence");
+        if (groupId < 0) {
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = _con.prepareStatement(SQL_GET_MAX_GROUPID);
+                stmt.setLong(1, nymId);
+                rs = stmt.executeQuery();
+                if (rs.next())
+                    groupId = rs.getLong(1) + 1;
+                else
+                    groupId = 1;
+                rs.close();
+                rs = null;
+                stmt.close();
+                stmt = null;
+            } catch (SQLException se) {
+                _ui.errorMessage("Error figuring out the new groupId to use", se);
+                return;
+            } finally {
+                if (rs != null) try { rs.close(); } catch (SQLException se) {}
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
         int siblingOrder = newValue.getSiblingOrder();
         long uriId = -1;
         if (newValue.getURI() != null)
             uriId = addURI(newValue.getURI());
         
         if (_ui != null)
-            _ui.debugMessage("add nym reference [" + groupId + "/" + siblingOrder + "/" + newValue.getParentGroupId() + "/" + uriId + "]: " + newValue.getURI());
+            _ui.debugMessage("add nym reference [" + groupId + "/" + newValue.getParentGroupId() + "/" + siblingOrder + "/" + newValue.getName() + "/" + newValue.getDescription() + "/" +  uriId + "]: " + newValue.getURI());
         
         PreparedStatement stmt = null;
         try {

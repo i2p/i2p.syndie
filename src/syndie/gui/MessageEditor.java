@@ -1549,6 +1549,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private void buildLinkPopup() {
         if (_linkPopup == null)
             _linkPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
+                public void uriBuildingCancelled() {}
                 public void uriBuilt(SyndieURI uri, String text) {
                     insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
                 }

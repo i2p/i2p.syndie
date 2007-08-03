@@ -48,7 +48,7 @@ import syndie.db.UI;
 /**
  *
  */
-class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener, Themeable, Translatable {
+public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener, Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
     private LinkBuilderSource _target;
@@ -160,6 +160,7 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
     
     public interface LinkBuilderSource {
         public void uriBuilt(SyndieURI uri, String text);
+        public void uriBuildingCancelled();
         public int getPageCount();
         public List getAttachmentDescriptions();
     }
@@ -730,6 +731,8 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
         _shell.setVisible(false);
     }
     
+    public boolean isDisposed() { return _shell.isDisposed(); }
+    
     protected void uriBuilt(SyndieURI uri) {
         if (_target != null)
             _target.uriBuilt(uri, _text.getText());
@@ -740,6 +743,8 @@ class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.Acc
             _forumChooser.dispose();
             _forumChooser = null;
         }
+        if (_target != null)
+            _target.uriBuildingCancelled();
         _shell.setVisible(false);
         _selectedURI = null;
     }

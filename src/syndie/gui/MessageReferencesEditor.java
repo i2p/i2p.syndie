@@ -544,6 +544,7 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
     private class EditListener implements LinkBuilderPopup.LinkBuilderSource {
         public int getPageCount() { return 0; }
         public List getAttachmentDescriptions() { return new ArrayList(); }
+        public void uriBuildingCancelled() {}
         public void uriBuilt(SyndieURI uri, String text) {
             if (_currentNode == null) {
                 add(uri, _parentNode, text);

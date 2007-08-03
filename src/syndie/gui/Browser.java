@@ -2186,6 +2186,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private void exportMessage() {
         LinkBuilderPopup popup = new LinkBuilderPopup(_client, this, _themes, _translation, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+            public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 exportMessage(uri);
             }

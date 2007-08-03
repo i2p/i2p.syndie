@@ -638,6 +638,7 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
         private ReferenceNode _parentNode;
         private ReferenceNode _currentNode;
         public EditPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans) { super(client, ui, themes, trans, _parent.getShell(), null); }//_editor); }
+        public void uriBuildingCancelled() {}
         protected void uriBuilt(SyndieURI uri) {
             if (_currentNode == null) {
                 add(uri, _parentNode);
