@@ -102,6 +102,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         return rv;
     }
     
+    public void forceFocus() { _tree.forceFocus(); }
+    
     private Set getScopes(SyndieURI uri) {
         Set rv = new HashSet();
         if (uri != null) {
@@ -480,6 +482,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         }
         private void ban() {
             _desktop.getBanControl().ban(_actionScope);
+            _ban.setEnabled(false);
         }
     }
     

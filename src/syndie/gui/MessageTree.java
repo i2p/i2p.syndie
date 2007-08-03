@@ -249,6 +249,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
         return Display.getDefault().getCursorLocation();
     }
+    
+    void focusOnMessages() { _tree.forceFocus(); }
+    
     public void selectNext() {
         // todo
     }

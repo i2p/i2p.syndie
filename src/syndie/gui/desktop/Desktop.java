@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.Version;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
@@ -150,12 +151,16 @@ class Desktop {
             _shell = new Shell(_display, SWT.SHELL_TRIM);
         else
             _shell = new Shell(_display, SWT.NO_TRIM);
+        _shell.setText("Syndie " + Version.VERSION);
         timer.addEvent("shell created");
         prepareGrid();
         timer.addEvent("grid prepared");
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {
-                _center.forceFocus(); // when the key filters are triggered, swt seems to lose track of the focus
+                DesktopPanel panel = getCurrentPanel();
+                if (panel != null) {
+                    panel.forceFocus(); // when the key filters are triggered, swt seems to lose track of the focus
+                }
             }
             public void shellClosed(ShellEvent evt) {
                 evt.doit = false;
@@ -508,6 +513,10 @@ class Desktop {
         _shell.forceFocus();
     }
     
+    void hide() {
+        _shell.setMinimized(true);
+    }
+    
     private void initKeyFilters() {
         _display.addFilter(SWT.KeyDown, new Listener() {
             public void handleEvent(Event evt) {
@@ -538,6 +547,11 @@ class Desktop {
                     DesktopPanel panel = getCurrentPanel();
                     if (panel != null)
                         panel.close();
+                    panel = getCurrentPanel();
+                    if (panel != null) {
+                        _ui.debugMessage("forcing focus onto panel: " + panel);
+                        panel.forceFocus();
+                    }
                 } else if ( (evt.character == '=') && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^= (aka ^+)
                     evt.type = SWT.None;
                     _shell.setRedraw(false);
@@ -664,7 +678,7 @@ class Desktop {
             _display.asyncExec(new Runnable() { 
                 public void run() { 
                     _taskTree = new TaskTreeShell(Desktop.this);
-                    ((ExitDesktopCorner)_cornerNorthEast).startupComplete();
+                    ((HideDesktopCorner)_cornerNorthEast).startupComplete();
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
                     ((ControlDesktopCorner)_cornerNorthWest).startupComplete();
                     _edgeWestDefault.startupComplete();
@@ -778,7 +792,7 @@ class Desktop {
         setSize(_edgeWest, BORDER_SIZE, -1);
         
         _cornerNorthWest = new ControlDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthWest, _ui);
-        _cornerNorthEast = new ExitDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
+        _cornerNorthEast = new HideDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
         _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
@@ -844,7 +858,7 @@ class Desktop {
     private static final String T_CONFIRMBAN_NAME = "syndie.gui.desktop.desktop.confirmbanname";
     
     private class DesktopBan implements BanControl {
-        public boolean ban(Hash scope) { 
+        public boolean ban(final Hash scope) { 
             String scopeName = _client.getChannelName(scope);
             if (scopeName == null)
                 scopeName = "";
@@ -858,7 +872,9 @@ class Desktop {
             box.setText(_translationRegistry.getText(T_CONFIRMBAN_NAME, "Confirm ban"));
             int rc = box.open();
             if (rc == SWT.YES) {
-                _client.ban(scope, _ui, true, true);
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() { _client.ban(scope, _ui, true, true); }
+                });
                 return true;
             } else {
                 return false;
@@ -896,10 +912,10 @@ class Desktop {
     }
 }
 
-class ExitDesktopCorner extends DesktopCorner {
+class HideDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
-    public ExitDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
+    public HideDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
         super(parent, ui);
         _desktop = desktop;
         initComponents(color);
@@ -910,7 +926,7 @@ class ExitDesktopCorner extends DesktopCorner {
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
         _button.setBackground(_button.getDisplay().getSystemColor(color));
-        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
+        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.hide(); } });
         getRoot().layout(true, true);
     }
 }

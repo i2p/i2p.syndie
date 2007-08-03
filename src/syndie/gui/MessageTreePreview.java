@@ -125,7 +125,8 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
     }
     
     private void hide() { 
-        _shell.setVisible(false); 
+        _shell.setVisible(false);
+        _tree.focusOnMessages();
         //dispose();
     }
     

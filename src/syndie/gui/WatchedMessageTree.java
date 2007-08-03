@@ -54,6 +54,8 @@ public class WatchedMessageTree extends MessageTree {
         super.applyFilter(filter);
     }
     
+    public void forceFocus() { _tree.forceFocus(); }
+    
     /** given the list of thread roots, munge them into forums w/ threads underneath */
     void setMessages(List referenceNodes) {
         if (!_multiforum) { super.setMessages(referenceNodes); return; }

@@ -91,6 +91,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
     
     protected boolean canClose() { return false; }
     
+    public void forceFocus() { _text.forceFocus(); }
     
     private void append(int type, String msg) { append(type, msg, null); }
     private void append(final int type, final String msg, final Exception e) {

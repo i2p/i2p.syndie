@@ -71,6 +71,9 @@ class DesktopPanel {
     }
     
     protected Composite getRoot() { return _root; }
+    public void forceFocus() { 
+        getRoot().forceFocus(); 
+    }
     
     public String getPanelName() { return "desktop panel"; }
     public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
