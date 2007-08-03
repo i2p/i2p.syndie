@@ -37,6 +37,9 @@ public class HTTPServ implements CLI.Command {
     private static boolean _alive;
     private boolean _allowPost;
     private static SharedArchive _archive;
+    private int _minListeners;
+    private int _curListeners;
+    private static final int MAX_LISTENERS = 50;
     
     public HTTPServ() {
         _runners = new ArrayList();
@@ -73,13 +76,13 @@ public class HTTPServ implements CLI.Command {
         }
         
         int port = (int)opts.getOptLong("port", 8080);
-        int listeners = (int)opts.getOptLong("listeners", 5);
+        _minListeners = (int)opts.getOptLong("listeners", 5);
         _allowPost = opts.getOptBoolean("writable", true);
         try {
             _ssocket = new ServerSocket(port);
             _alive = true;
             _ui.debugMessage("Set server socket to " + _ssocket);
-            for (int i = 0; i < listeners; i++) {
+            for (int i = 0; i < _minListeners; i++) {
                 Thread t = new Thread(new Runner(), "HTTPServ run " + i);
                 t.setDaemon(true);
                 t.start();
@@ -128,12 +131,23 @@ public class HTTPServ implements CLI.Command {
                     Socket socket = _ssocket.accept();
                     _ui.debugMessage("Connection accepted");
                     boolean added = false;
+                    boolean createNewHandler = false;
                     synchronized (_pendingSockets) {
                         if (_pendingSockets.size() < MAX_PENDING) {
                             _pendingSockets.add(socket);
                             added = true;
+                            
+                            if (_client.ctx().random().nextInt(MAX_PENDING) <= _pendingSockets.size()) {
+                                if (_curListeners < MAX_LISTENERS)
+                                    createNewHandler = true;
+                            }
                         }
                         _pendingSockets.notifyAll();
+                    }
+                    if (createNewHandler) {
+                        Thread t = new Thread(new Runner(true), "HTTPServ run [on demand]");
+                        t.setDaemon(true);
+                        t.start();
                     }
                     if (!added)
                         tooBusy(socket);
@@ -149,15 +163,27 @@ public class HTTPServ implements CLI.Command {
     }
     
     private class Runner implements Runnable {
+        private boolean _isDynamic;
+        public Runner() { this(false); }
+        public Runner(boolean isDynamic) { 
+            _isDynamic = isDynamic; 
+            _curListeners++;
+        }
         public void run() {
             while (_alive) {
                 try {
                     Socket socket = null;
                     synchronized (_pendingSockets) {
-                        if (_pendingSockets.size() <= 0)
+                        if (_pendingSockets.size() <= 0) {
+                            if (_isDynamic) {
+                                _ui.debugMessage("Terminating dynamic HTTP runner as the pending queue is clear");
+                                _curListeners--;
+                                return;
+                            }
                             _pendingSockets.wait();
-                        else
+                        } else {
                             socket = (Socket)_pendingSockets.remove(0);
+                        }
                     }
                     if (socket != null)
                         handle(socket);
@@ -166,6 +192,7 @@ public class HTTPServ implements CLI.Command {
                 } catch (InterruptedException ie) {}
             }
             _ui.debugMessage("Terminating runner " + Thread.currentThread().getName());
+            _curListeners--;
         }
     }
     
