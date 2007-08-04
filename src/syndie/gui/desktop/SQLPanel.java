@@ -102,6 +102,12 @@ class SQLPanel extends DesktopPanel implements Translatable, Themeable {
         _themeRegistry.register(this);
     }
 
+    public void shown(Desktop desktop, SyndieURI uri, String name, String desc) {
+        super.shown(desktop, uri, name, desc);
+        forceFocus();
+    }
+    public void forceFocus() { _in.forceFocus(); }
+    
     private static final SimpleDateFormat _dateFmt = new SimpleDateFormat("yyyy/MM/dd");
     private static final SimpleDateFormat _timeFmt = new SimpleDateFormat("HH:mm:ss.SSS");
     private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");

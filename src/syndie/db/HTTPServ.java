@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
@@ -34,7 +35,10 @@ public class HTTPServ implements CLI.Command {
     private static List _pendingSockets = new ArrayList();
     private DBClient _client;
     private static UI _ui;
-    private static boolean _alive;
+    private static boolean _alive = false;
+    private static boolean _starting = false;
+    private static boolean _startFailed = false;
+    private static String _startFailedMessage;
     private boolean _allowPost;
     private static SharedArchive _archive;
     private int _minListeners;
@@ -42,13 +46,73 @@ public class HTTPServ implements CLI.Command {
     private static final int MAX_LISTENERS = 50;
     
     public HTTPServ() {
+        if (isAlive()) return;
         _runners = new ArrayList();
         _client = null;
         _allowPost = false;
+        _startFailed = false;
+        _startFailedMessage = null;
+        _starting = true;
+    }
+    public HTTPServ(DBClient client, UI ui, int listenPort, int minListeners, boolean writable) {
+        if (isAlive()) return;
+        
+        _client = client;
+        _ui = ui;
+        _startFailed = false;
+        _startFailedMessage = null;
+        _starting = true;
+        if (listenPort <= 0)
+            listenPort = 8080;
+        if (minListeners <= 0)
+            minListeners = 5;
+        else if (minListeners > MAX_LISTENERS)
+            minListeners = MAX_LISTENERS;
+        
+        _minListeners = minListeners;
+        _allowPost = writable;
+        
+        startup(listenPort);
     }
     
+    public HTTPServ(DBClient client, UI ui) {
+        this(client, ui, getListenPort(client), getMinListeners(client), getWritable(client));
+    }
+    
+    public static int getListenPort(DBClient client) {
+        Properties prefs = client.getNymPrefs();
+        String portStr = prefs.getProperty("httpserv.port");
+        if (portStr != null) {
+            try {
+                return Integer.parseInt(portStr);
+            } catch (NumberFormatException nfe) {}
+        }
+        return 8080;
+    }
+    public static boolean getWritable(DBClient client) {
+        Properties prefs = client.getNymPrefs();
+        boolean writable = false;
+        String writableStr = prefs.getProperty("httpserv.writable");
+        if (writableStr != null)
+            writable = Boolean.valueOf(writableStr).booleanValue();
+        return writable;
+    }
+    public static int getMinListeners(DBClient client) {
+        Properties prefs = client.getNymPrefs();
+        String minStr = prefs.getProperty("httpserv.minListeners");
+        if (minStr != null) {
+            try {
+                return Integer.parseInt(minStr);
+            } catch (NumberFormatException nfe) {}
+        }
+        return 5;
+    }
+    
+    public static boolean startFailed() { return _startFailed; }
+    public static boolean startInProgress() { return _starting; }
+    
     public static void killAll() { 
-        _alive = false; 
+        _alive = false;
         _ui.debugMessage("Marking server as dead");
         synchronized (_pendingSockets) { 
             _pendingSockets.notifyAll(); 
@@ -78,6 +142,16 @@ public class HTTPServ implements CLI.Command {
         int port = (int)opts.getOptLong("port", 8080);
         _minListeners = (int)opts.getOptLong("listeners", 5);
         _allowPost = opts.getOptBoolean("writable", true);
+        if (startup(port)) {
+            ui.statusMessage("HTTP archive server listening on " + port);
+            ui.commandComplete(0, null);
+        } else {
+            ui.commandComplete(-1, null);
+        }
+        return client;
+    }
+    
+    private boolean startup(int port) {
         try {
             _ssocket = new ServerSocket(port);
             _alive = true;
@@ -90,14 +164,18 @@ public class HTTPServ implements CLI.Command {
             Thread t = new Thread(new AcceptRunner(), "HTTPServ accept");
             t.setDaemon(true);
             t.start();
-            ui.statusMessage("HTTP archive server listening on " + port);
-            ui.commandComplete(0, null);
+            _starting = false;
+            return true;
         } catch (IOException ioe) {
-            ui.errorMessage("error listening to " + port, ioe);
-            ui.commandComplete(-1, null);
+            _ui.errorMessage("error listening to " + port, ioe);
+            _startFailedMessage = ioe.getMessage();
+            _startFailed = true;
+            _starting = false;
+            return false;
         }
-        return client;
     }
+    public static String getStartFailedMessage() { return _startFailedMessage; }
+    public static void clearFailedMessage() { _startFailedMessage = null; }
     
     private static final int MAX_PENDING = 10;
     

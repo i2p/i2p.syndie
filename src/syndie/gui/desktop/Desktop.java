@@ -32,6 +32,7 @@ import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
+import syndie.db.HTTPServ;
 import syndie.db.JobRunner;
 import syndie.db.TextEngine;
 import syndie.db.UI;
@@ -181,6 +182,7 @@ class Desktop {
     
     void restart(final String rootDir) {
         boolean startupClosed = false;
+        HTTPServ.killAll();
         while (_loadedPanels.size() > (startupClosed ? 1 : 0)) {
             DesktopPanel panel = (DesktopPanel)_loadedPanels.get((startupClosed ? 1 : 0));
             _ui.debugMessage("closing " + panel);
@@ -226,9 +228,11 @@ class Desktop {
                         refreshPrimaryAvatar(); 
                         _themeRegistry.loadTheme();
                         _translationRegistry.loadTranslations();
+                        
                         showForumSelectionPanel();
                     }
                 });
+                
                 _ui.debugMessage("restart complete");
             }
         });
@@ -284,6 +288,16 @@ class Desktop {
                     promptForPass();
                     // invalid pasphrase, so loop
                 }
+                
+                // reached both on initial startup and on restarts
+                JobRunner.instance().enqueue(new Runnable() { 
+                    public void run() { 
+                        String onStartup = _client.getNymPrefs().getProperty("httpserv.runOnStartup");
+                        if ( (onStartup != null) && ("true".equalsIgnoreCase(onStartup)) )
+                            new HTTPServ(_client, _ui); // starts it up in its own threads
+                    }
+                });
+                
                 return true;
             } else if (rc == 2) { 
                 return false; 
@@ -737,7 +751,13 @@ class Desktop {
         _shell.setVisible(false);
         if (_taskTree != null)
             _taskTree.dispose();
-        new Thread(new Runnable() { public void run() { System.exit(0); } }).start();
+        new Thread(new Runnable() { 
+            public void run() {
+                if (HTTPServ.isAlive())
+                    HTTPServ.killAll();
+                System.exit(0); 
+            } 
+        }).start();
     }
     
     private void prepareGrid() {

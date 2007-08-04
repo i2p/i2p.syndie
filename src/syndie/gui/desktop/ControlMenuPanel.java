@@ -6,7 +6,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import net.i2p.util.SimpleTimer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -23,10 +29,12 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.HTTPServ;
 import syndie.db.Importer;
 import syndie.db.JobRunner;
 import syndie.db.TextEngine;
@@ -48,6 +56,12 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Label _openLabel;
     private Text _openLocation;
     private Button _open;
+    
+    private Label _httpservLabel;
+    private Button _httpservStatus;
+    private Button _httpservOnStart;
+    private Button _httpservOptions;
+    
     private Button _changePass;
     
     private Label _switchLabel;
@@ -144,6 +158,37 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                     fireOpen();
             }
         });
+        
+        row = new Composite(root, SWT.NONE);
+        row.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        gl = new GridLayout(4, false);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        row.setLayout(gl);
+        
+        _httpservLabel = new Label(row, SWT.NONE);
+        _httpservLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        _httpservStatus = new Button(row, SWT.PUSH);
+        _httpservStatus.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _httpservStatus.addSelectionListener(new FireSelectionListener() {
+            public void fire() { toggleHttpservStatus(); }
+        });
+        _httpservOnStart = new Button(row, SWT.CHECK);
+        _httpservOnStart.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
+        _httpservOnStart.addSelectionListener(new FireSelectionListener() {
+            public void fire() { httpservOnStartChanged(); }
+        });
+        _httpservOptions = new Button(row, SWT.PUSH);
+        _httpservOptions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _httpservOptions.addSelectionListener(new FireSelectionListener() {
+            public void fire() { showHttpservOptions(); }
+        });
+        
+        String onStartup = _client.getNymPrefs().getProperty("httpserv.runOnStartup");
+        if ( (onStartup != null) && ("true".equalsIgnoreCase(onStartup)) )
+            _httpservOnStart.setSelection(true);
 
         _changePass = new Button(root, SWT.PUSH);
         _changePass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -195,10 +240,176 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
+        getRoot().layout(true, true);
+    }
+    
+    private static final String T_HTTPSERV_RUNNING = "syndie.gui.desktop.controlmenupanel.httpserv.running";
+    private static final String T_HTTPSERV_NOTRUNNING = "syndie.gui.desktop.controlmenupanel.httpserv.notrunning";
+    private static final String T_HTTPSERV_STARTING = "syndie.gui.desktop.controlmenupanel.httpserv.starting";
+    private static final String T_HTTPSERV_STARTFAILED_TITLE = "syndie.gui.desktop.controlmenupanel.httpserv.startfailed.title";
+    private static final String T_HTTPSERV_STARTFAILED_PREFIX = "syndie.gui.desktop.controlmenupanel.httpserv.startfailed.prefix";
+    
+    private void updateHttpservStatus() {
+        if (HTTPServ.startFailed() && (HTTPServ.getStartFailedMessage() != null)) {
+            MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.OK);
+            box.setText(_translationRegistry.getText(T_HTTPSERV_STARTFAILED_TITLE, "Server failed"));
+            box.setMessage(_translationRegistry.getText(T_HTTPSERV_STARTFAILED_PREFIX, "There was an error starting up the HTTP server: ") + HTTPServ.getStartFailedMessage());
+            box.open();
+            HTTPServ.clearFailedMessage();
+        }
+        
+        if (HTTPServ.isAlive() && !HTTPServ.startInProgress()) {
+            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_RUNNING, "Running - press to stop"));
+            _httpservStatus.setEnabled(true);
+        } else if (HTTPServ.startInProgress()) {
+            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_STARTING, "Startup in progress..."));
+            _httpservStatus.setEnabled(false);
+        } else {
+            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_NOTRUNNING, "Not running - press to start"));
+            _httpservStatus.setEnabled(true);
+        }
+        getRoot().layout(true, true); // resized due to text changes
+    }
+    private void toggleHttpservStatus() {
+        if (HTTPServ.isAlive()) {
+            _ui.debugMessage("Killing the httpserv");
+            JobRunner.instance().enqueue(new Runnable() {
+                public void run() {
+                    HTTPServ.killAll();
+                    getRoot().getDisplay().asyncExec(new Runnable() {
+                        public void run() { updateHttpservStatus(); }
+                    });
+                }
+            });
+        } else {
+            JobRunner.instance().enqueue(new Runnable() {
+                public void run() {
+                    // this spawns all necessary threads using the config options saved in the nym prefs
+                    new HTTPServ(_client, _ui);
+                    getRoot().getDisplay().asyncExec(new Runnable() {
+                        public void run() { updateHttpservStatus(); }
+                    });
+                    SimpleTimer.getInstance().addEvent(new UpdateStatusOnStart(), 100);
+                }
+            });
+        }
+    }
+    private class UpdateStatusOnStart implements SimpleTimer.TimedEvent {
+        public void timeReached() {
+            getRoot().getDisplay().asyncExec(new Runnable() {
+                public void run() { updateHttpservStatus(); }
+            });
+
+            if (HTTPServ.isAlive() || HTTPServ.startFailed())
+                return;
+            else
+                SimpleTimer.getInstance().addEvent(UpdateStatusOnStart.this, 100, false);
+        }
+    }
+    private void httpservOnStartChanged() {
+        Properties prefs = _client.getNymPrefs();
+        if (_httpservOnStart.getSelection())
+            prefs.setProperty("httpserv.runOnStartup", "true");
+        else
+            prefs.setProperty("httpserv.runOnStartup", "false");
+        _client.setNymPrefs(prefs);
+    }
+    
+    private static final String T_HTTPSERV_OPTIONS_SHELL = "syndie.gui.desktop.controlmenupanel.httpserv.options.shell";
+    private static final String T_HTTPSERV_OPTIONS_LISTENPORT = "syndie.gui.desktop.controlmenupanel.httpserv.options.listenport";
+    private static final String T_HTTPSERV_OPTIONS_MINLISTENERS = "syndie.gui.desktop.controlmenupanel.httpserv.options.minlisteners";
+    private static final String T_HTTPSERV_OPTIONS_WRITABLE = "syndie.gui.desktop.controlmenupanel.httpserv.options.writable";
+    private static final String T_HTTPSERV_OPTIONS_DONE = "syndie.gui.desktop.controlmenupanel.httpserv.options.done";
+    
+    private void showHttpservOptions() {
+        final Shell shell = new Shell(getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
+        shell.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_SHELL, "Archive server options"));
+        
+        GridLayout gl = new GridLayout(2, false);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        shell.setLayout(gl);
+        
+        Label l = new Label(shell, SWT.SINGLE);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_LISTENPORT, "TCP port to listen on: "));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        
+        final Text port = new Text(shell, SWT.SINGLE | SWT.BORDER);
+        port.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        port.setText(HTTPServ.getListenPort(_client) + "");
+        port.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        // overzealous to update on focus, but it works
+        port.addFocusListener(new FocusListener() {
+            public void focusGained(FocusEvent focusEvent) {}
+            public void focusLost(FocusEvent focusEvent) {
+                String val = port.getText();
+                int num = -1;
+                try { num = Integer.parseInt(val); } catch (NumberFormatException nfe) {}
+                if (num > 0) {
+                    Properties prefs = _client.getNymPrefs();
+                    prefs.setProperty("httpserv.port", port.getText());
+                    _client.setNymPrefs(prefs);
+                }
+            }
+        });
+
+        l = new Label(shell, SWT.SINGLE);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_MINLISTENERS, "Minimum number of handlers: "));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        
+        final Spinner minListeners = new Spinner(shell, SWT.READ_ONLY | SWT.BORDER);
+        minListeners.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        minListeners.setMinimum(1);
+        minListeners.setMaximum(50);
+        minListeners.setIncrement(1);
+        minListeners.setSelection(HTTPServ.getMinListeners(_client));
+        minListeners.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        minListeners.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                Properties prefs = _client.getNymPrefs();
+                prefs.setProperty("httpserv.minListeners", minListeners.getSelection()+"");
+                _client.setNymPrefs(prefs);
+            }
+        });
+        
+        l = new Label(shell, SWT.SINGLE);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_WRITABLE, "Can people post messages to the server? "));
+        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        
+        final Button writable = new Button(shell, SWT.CHECK);
+        writable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        writable.setSelection(HTTPServ.getWritable(_client));
+        writable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                Properties prefs = _client.getNymPrefs();
+                prefs.setProperty("httpserv.writable", writable.getSelection() ? "true" : "false");
+                _client.setNymPrefs(prefs);
+            }
+        });
+        
+        Button done = new Button(shell, SWT.PUSH);
+        done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        done.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_DONE, "Done"));
+        done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+        done.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                shell.dispose();
+            }
+        });
+        
+        shell.pack();
+        shell.open();
     }
     
     private static final String T_ROOTDIR_MSG = "syndie.gui.desktop.controlmenupanel.rootdirmsg";
     private static final String T_ROOTDIR_TEXT = "syndie.gui.desktop.controlmenupanel.rootdirtext";
+
     private void browseForRootDir() {
         DirectoryDialog dialog = new DirectoryDialog(getRoot().getShell(), SWT.OPEN);
         dialog.setFilterPath(_switchDir.getText());
@@ -486,6 +697,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _exit.setFont(theme.BUTTON_FONT);
         _sql.setFont(theme.BUTTON_FONT);
         _changePass.setFont(theme.BUTTON_FONT);
+        _httpservLabel.setFont(theme.DEFAULT_FONT);
+        _httpservOnStart.setFont(theme.DEFAULT_FONT);
+        _httpservOptions.setFont(theme.BUTTON_FONT);
+        _httpservStatus.setFont(theme.BUTTON_FONT);
     }
     
     private static final String T_IMPORTLABEL = "syndie.gui.desktop.controlmenupanel.importlabel";
@@ -502,6 +717,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private static final String T_SWITCH_OPEN = "syndie.gui.desktop.controlmenupanel.switchopen";
     private static final String T_CHANGEPASS = "syndie.gui.desktop.controlmenupanel.changepass";
     
+    private static final String T_HTTPSERV_LABEL = "syndie.gui.desktop.controlmenupanel.httpserv.label";
+    private static final String T_HTTPSERV_ONSTARTUP = "syndie.gui.desktop.controlmenupanel.httpserv.onstartup";
+    private static final String T_HTTPSERV_OPTIONS = "syndie.gui.desktop.controlmenupanel.httpserv.options";
+    
     public void translate(TranslationRegistry registry) {
         _importLabel.setText(registry.getText(T_IMPORTLABEL, "Import: "));
         _importFile.setText(registry.getText(T_IMPORTFILE, "individual message"));
@@ -516,5 +735,11 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _switchBrowse.setText(registry.getText(T_SWITCH_BROWSE, "Browse..."));
         _switchOpen.setText(registry.getText(T_SWITCH_OPEN, "Open selected"));
         _exit.setText(registry.getText(T_EXIT, "Exit"));
+
+        _httpservLabel.setText(registry.getText(T_HTTPSERV_LABEL, "Integrated HTTP-accessible archive server:"));
+        _httpservOnStart.setText(registry.getText(T_HTTPSERV_ONSTARTUP, "Run on startup"));
+        _httpservOptions.setText(registry.getText(T_HTTPSERV_OPTIONS, "Configure..."));
+        
+        updateHttpservStatus();
     }
 }
