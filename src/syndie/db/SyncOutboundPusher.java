@@ -24,6 +24,7 @@ import syndie.data.SyndieURI;
 public class SyncOutboundPusher {
     private SyncManager _manager;
     private static Map _runnerToArchive = new HashMap();
+    private boolean _die;
     
     public SyncOutboundPusher(SyncManager mgr) {
         _manager = mgr;
@@ -38,16 +39,19 @@ public class SyncOutboundPusher {
     }
     
     public void wakeUp() { synchronized (this) { notifyAll(); } }
+    public void kill() { _die = true; wakeUp(); }
     
     private class Runner implements Runnable {
         public void run() {
             while (true) {
+                if (_die) return;
                 while (!_manager.isOnline()) {
                     try {
                         synchronized (SyncOutboundPusher.this) {
                             SyncOutboundPusher.this.wait(60*1000);
                         } 
                     } catch (InterruptedException ie) {}
+                    if (_die) return;
                 }
                 
                 SyncArchive archive = getNextToPush(Runner.this);

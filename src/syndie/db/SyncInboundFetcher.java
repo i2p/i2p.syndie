@@ -16,6 +16,7 @@ import syndie.data.SyndieURI;
 class SyncInboundFetcher {
     private SyncManager _manager;
     private static Map _runnerToArchive = new HashMap();
+    private boolean _die;
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
@@ -30,6 +31,7 @@ class SyncInboundFetcher {
     }
 
     public void wakeUp() { synchronized (this) { notifyAll(); } }
+    public void kill() { _die = true; wakeUp(); }
         
     private class Runner implements Runnable {
         public void run() {

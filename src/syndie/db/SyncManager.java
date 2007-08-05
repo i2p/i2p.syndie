@@ -19,6 +19,9 @@ public class SyncManager {
     public static SyncManager getInstance(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
+        synchronized (SyncManager.class) {
+            if (_instance == null) _instance = new SyncManager();
+        }
         _instance.loadArchives();
         return _instance; 
     }
@@ -38,6 +41,35 @@ public class SyncManager {
         _archivesLoaded = false;
         _online = false;
         _listeners = new ArrayList();
+    }
+    
+    public static void unloadAll() {
+        SyncManager instance = null;
+        synchronized (SyncManager.class) {
+            instance = _instance;
+            _instance = null;
+        }
+        if (instance != null) {
+            instance._online = false;
+            instance._archives.clear();
+            instance._listeners.clear();
+            instance._archivesLoaded = false;
+            instance._defaultPullStrategy = null;
+            instance._defaultPushStrategy = null;
+            if (instance._inboundFetcher != null)
+                instance._inboundFetcher.kill();
+            instance._inboundFetcher = null;
+            if (instance._indexFetcher != null)
+                instance._indexFetcher.kill();
+            instance._indexFetcher = null;
+            if (instance._outboundPusher != null)
+                instance._outboundPusher.kill();
+            instance._outboundPusher = null;
+        }
+        if (_ui != null)
+            _ui.debugMessage("syncManager instance unloaded");
+        _client = null;
+        _ui = null;
     }
     
     public interface SyncListener {
@@ -124,47 +156,6 @@ public class SyncManager {
     public void setDefaultPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _defaultPullStrategy = strategy; saveDefaultStrategies(); }
     public void setDefaultPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _defaultPushStrategy = strategy; saveDefaultStrategies(); }
     
-    public void importDefaultArchives() {
-        for (Iterator iter = Constants.DEFAULT_ARCHIVES.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            String name = (String)entry.getKey();
-            String url = (String)entry.getValue();
-            String pullPolicy = (String)Constants.DEFAULT_ARCHIVE_PULLPOLICY.get(name);
-            String pushPolicy = (String)Constants.DEFAULT_ARCHIVE_PUSHPOLICY.get(name);
-            String proxyInfo = (String)Constants.DEFAULT_ARCHIVE_PROXIES.get(name);
-            String syncByDefault = (String)Constants.DEFAULT_ARCHIVE_SYNCBYDEFAULT.get(name);
-            String proxyHost = null;
-            int proxyPort = -1;
-            if (proxyInfo != null) {
-                String str[] = Constants.split(':', proxyInfo);
-                if ( (str != null) && (str.length == 2) ) {
-                    try {
-                        int port = Integer.parseInt(str[1]);
-                        if (port > 0) {
-                            proxyPort = port;
-                            proxyHost = str[0].trim();
-                        }
-                    } catch (NumberFormatException nfe) {}
-                }
-            }
-            SyncArchive archive = new SyncArchive(this, _client);
-            archive.setName(name);
-            archive.setURL(url);
-            archive.setHTTPProxyHost(proxyHost);
-            archive.setHTTPProxyPort(proxyPort);
-            //_archives.add(archive);
-            if (pullPolicy != null)
-                archive.setPullStrategy(new SharedArchiveEngine.PullStrategy(pullPolicy));
-            if (pushPolicy != null)
-                archive.setPushStrategy(new SharedArchiveEngine.PushStrategy(pushPolicy));
-            if (syncByDefault != null)
-                archive.setNextSyncTime(Boolean.valueOf(syncByDefault).booleanValue() ? System.currentTimeMillis() : -1);
-            archive.store();
-            //for (int j = 0; j < _listeners.size(); j++)
-            //    ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
-        }
-    }
-    
     private void loadDefaultStrategies() {
        if (!_client.isLoggedIn()) return;
         Properties prefs = _client.getNymPrefs();
@@ -201,7 +192,6 @@ public class SyncManager {
         // .. load 'em up
         List names = _client.getNymArchiveNames();
         if (names.size() == 0) {
-            importDefaultArchives();
             names = _client.getNymArchiveNames();
         }
         for (int i = 0; i < names.size(); i++) {

@@ -36,6 +36,7 @@ import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.HTTPServ;
 import syndie.db.JobRunner;
+import syndie.db.SyncManager;
 import syndie.db.TextEngine;
 import syndie.db.UI;
 import syndie.gui.*;
@@ -210,6 +211,10 @@ class Desktop {
                 return;
             }
         }
+        
+        SyncManager.unloadAll();
+        _ui.debugMessage("sync manager unloaded for restart");
+        
         if (_engine != null) {
             _ui.debugMessage("inserting exit...");
             _ui.insertCommand("exit");

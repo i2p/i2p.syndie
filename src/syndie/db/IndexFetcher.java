@@ -11,6 +11,7 @@ import syndie.data.SyndieURI;
 
 class IndexFetcher {
     private SyncManager _manager;
+    private boolean _die;
     
     public IndexFetcher(SyncManager mgr) {
         _manager = mgr;
@@ -23,10 +24,13 @@ class IndexFetcher {
     }
     
     public void wakeUp() { synchronized (this) { notifyAll(); } }
+    public void kill() { _die = true; wakeUp(); }
     
     private class Runner implements Runnable {
         public void run() {
             while (true) {
+                if (_die) return;
+                
                 while (!_manager.isOnline()) {
                     try {
                         synchronized (IndexFetcher.this) {
@@ -34,6 +38,7 @@ class IndexFetcher {
                         } 
                     } catch (InterruptedException ie) {}
                     //_manager.getUI().debugMessage("not fetching indexes, as we aren't online");
+                    if (_die) return;
                 }
                 
                 SyncArchive archive = getNextToFetch();

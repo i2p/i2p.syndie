@@ -45,14 +45,12 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private Composite _root;
     private Composite _actions;
-    private SashForm _sash;
     private Tree _tree;
     private TreeColumn _colName;
     private TreeColumn _colTime;
     private TreeColumn _colStatus;
     private TreeColumn _colSummary;
     private Menu _treeMenu;
-    private ScrolledComposite _detailRoot;
     private Disposable _detail;
     
     private Button _add;
@@ -145,11 +143,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             });
         }
         
-        _sash = new SashForm(_root, SWT.VERTICAL);
-        _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        
-        _tree = new Tree(_sash, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
-        //_tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _tree = new Tree(_root, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
+        _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _tree.setHeaderVisible(true);
         _tree.setLinesVisible(true);
         
@@ -186,14 +181,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent evt) { buildMenu(); }
         });
-        
-        _detailRoot = new ScrolledComposite(_sash, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-        //_detailRoot.setLayout(new FillLayout());
-        //_detailRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        
-        _sash.setWeights(new int[] { 50, 50 });
-        _sash.setMaximizedControl(_tree);
-        //_sash.setMaximizedControl(null);
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -551,7 +538,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {
         if (_detail != null) _detail.dispose();
-        //_sash.setMaximizedControl(null);
         // SyndicatorDetailHTTPArchive deals with HTTP and Freenet archives (and though
         // it covers for the file based archives, a separate file based archive config
         // would be better).  down the line we may need to pick different ones here
@@ -560,7 +546,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         s.setText(_translationRegistry.getText(T_DETAIL_HTTPARCHIVE, "HTTP archive"));
         s.setFont(_themeRegistry.getTheme().SHELL_FONT);
         s.setLayout(new FillLayout());
-        //_detail = new SyndicatorDetailHTTPArchive(_browser, _detailRoot, archive);
         _detail = new SyndicatorDetailHTTPArchive(_client, _ui, _themeRegistry, _translationRegistry, s, archive, new SyndicationDetailListener() {
             public void cancelled() { s.dispose(); }
             public void saved() { s.dispose(); }
@@ -568,13 +553,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         });
         s.pack();
         s.open();
-        //_detailRoot.setExpandHorizontal(true);
-        //_detailRoot.setExpandVertical(true);
-        ////_detailRoot.setContent(_detail.getControl());
-        //Rectangle rect = _tree.getClientArea();
-        //Point dSz = _detail.getControl().computeSize(rect.width-50, SWT.DEFAULT);
-        //_detail.getControl().setSize(dSz);
-        //_root.layout(true, true);
         TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
         if (item != null) // null for new ones
             _tree.showItem(item);
@@ -598,12 +576,18 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
         int cnt = mgr.getArchiveCount();
         _ui.debugMessage("archives loaded: " + cnt);
-        for (int i = 0; i < cnt; i++) {
-            SyncArchive archive = mgr.getArchive(i);
-            archive.addListener(this);
-            loadData(archive);
+        if (cnt == 0) {
+            showArchiveDefaults();
+        } else {
+            for (int i = 0; i < cnt; i++) {
+                SyncArchive archive = mgr.getArchive(i);
+                archive.addListener(this);
+                loadData(archive);
+            }
         }
     }
+    
+    private void showArchiveDefaults() { new ArchiveDefaultsPopup(_client, _ui, _root.getShell(), _themeRegistry, _translationRegistry); }
     
     // create or update a subtree for the archive, including an item for the index fetch (if scheduled),
     // a subtree for scheduled message/meta fetches, and a subtree for scheduled pushes.  do we want
