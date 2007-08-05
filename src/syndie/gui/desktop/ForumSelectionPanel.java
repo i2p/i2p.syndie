@@ -529,7 +529,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             });
             _watched.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _watched, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_WATCHED, "Watch"));
+                    ImageUtil.drawDescending(evt.gc, _watched, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_WATCHED, "Watched"));
                 }
             });
             
