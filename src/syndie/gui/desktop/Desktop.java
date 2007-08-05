@@ -551,10 +551,14 @@ class Desktop {
                     evt.type = SWT.None;
                     showTaskTree();
                 } else if ( (evt.keyCode == SWT.ARROW_DOWN) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-down
+                    //_ui.debugMessage("showNext: evt.keyCode=" + evt.keyCode + " state=" + evt.stateMask + " detail=" + evt.detail + " type=" + evt.type + " end=" + evt.end + " doit=" + evt.doit + " start=" + evt.start + " time=" + evt.time + " hashcode=" + evt.hashCode());
                     evt.type = SWT.None;
+                    evt.doit = false; // not sure why this is necessary for pressing alt+up/down...
                     showNextPanel();
                 } else if ( (evt.keyCode == SWT.ARROW_UP) && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-up
+                    //_ui.debugMessage("showPrev: evt.keyCode=" + evt.keyCode + " state=" + evt.stateMask + " detail=" + evt.detail + " hashcode=" + evt.hashCode());
                     evt.type = SWT.None;
+                    evt.doit = false;
                     showPreviousPanel();
                 } else if ( (evt.character == 0x17) && ((evt.stateMask & SWT.MOD1) != 0) ) { // ^W
                     evt.type = SWT.None;
