@@ -27,7 +27,9 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import syndie.Constants;
 import syndie.Version;
+import syndie.data.NymKey;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
@@ -101,6 +103,9 @@ class Desktop {
     private DataCallback _dataCallback;
     private LocalMessageCallback _localMessageCallback;
     
+    /** true when syndie creates a new instance on startup, and we then fire up a welcomepopup when ready */
+    private boolean _shouldShowWelcome;
+    
     public Desktop(File rootFile, DesktopUI ui, Display display, Timer timer) {
         _rootFile = rootFile;
         _ui = ui;
@@ -108,6 +113,7 @@ class Desktop {
         _listeners = new ArrayList();
         _loadedPanels = new ArrayList();
         _curPanelIndex = -1;
+        _shouldShowWelcome = false;
         _navControl = new DesktopNavigationControl(this);
         _banControl = new DesktopBan();
         _bookmarkControl = new DesktopBookmark();
@@ -180,6 +186,16 @@ class Desktop {
         }
     }
     
+    public Hash getDefaultIdent() {
+        List keys = _client.getNymKeys(null, Constants.KEY_FUNCTION_MANAGE);
+        for (int i = 0; i < keys.size(); i++) {
+            NymKey key = (NymKey)keys.get(i);
+            if (key.isIdentity())
+                return key.getChannel();
+        }
+        return null;
+    }
+    
     void restart(final String rootDir) {
         boolean startupClosed = false;
         HTTPServ.killAll();
@@ -230,6 +246,8 @@ class Desktop {
                         _translationRegistry.loadTranslations();
                         
                         showForumSelectionPanel();
+                        if (_shouldShowWelcome)
+                            new WelcomePopup(Desktop.this, _ui, _shell, _themeRegistry, _translationRegistry);
                     }
                 });
                 
@@ -373,16 +391,8 @@ class Desktop {
                 return 2;
             }
             timer.addEvent("login complete");
-            if (engine.newNymCreated()) {
-                /*
-                WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
-                    public void complete() {
-                        browser.startup(timer);
-                    }
-                });
-                screen.open();
-                 */
-            }
+            if (engine.newNymCreated())
+                _shouldShowWelcome = true;
             timer.addEvent("startupClient complete");
             timer.complete();
             

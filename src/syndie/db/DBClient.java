@@ -107,11 +107,9 @@ public class DBClient {
                     byte val[] = new byte[16];
                     _context.random().nextBytes(val);
                     String rand = Base64.encode(val);
-                    rand = rand.replace('=', '_');
-                    rand = rand.replace('~', 'Z');
                     log("changing default admin account passphrase to something random");
                     stmt = _con.createStatement();
-                    stmt.execute("ALTER USER sa SET PASSWORD " + rand);
+                    stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
                     stmt.close();
                     stmt = null;
                     log("sysadmin passphrase changed to a random value");
@@ -5294,11 +5292,9 @@ public class DBClient {
                 byte val[] = new byte[16];
                 _context.random().nextBytes(val);
                 String rand = Base64.encode(val);
-                rand = rand.replace('=', '_');
-                rand = rand.replace('~', 'Z');
                 log("changing default admin account passphrase to something random");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER sa SET PASSWORD " + rand);
+                stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
                 stmt.close();
                 stmt = null;
                 log("sysadmin passphrase changed to a random value");

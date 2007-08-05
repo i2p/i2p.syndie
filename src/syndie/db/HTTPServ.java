@@ -113,17 +113,20 @@ public class HTTPServ implements CLI.Command {
     
     public static void killAll() { 
         _alive = false;
-        _ui.debugMessage("Marking server as dead");
+        if (_ui != null)
+            _ui.debugMessage("Marking server as dead");
         synchronized (_pendingSockets) { 
             _pendingSockets.notifyAll(); 
         }
         try {
             if (_ssocket != null) {
-                _ui.debugMessage("Closing server socket");
+                if (_ui != null)
+                    _ui.debugMessage("Closing server socket");
                 _ssocket.close();
             }
         } catch (IOException ioe) {
-            _ui.debugMessage("Problem closing server socket", ioe);
+            if (_ui != null)
+                _ui.debugMessage("Problem closing server socket", ioe);
         }
         _ssocket = null;
     }
