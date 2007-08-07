@@ -555,6 +555,19 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         recalcChannels(_unreadOnly.getSelection(), _privateOnly.getSelection(), afterSet);
     }
     public void recalcChannels(final boolean unreadOnly, final boolean privateOnly, final Runnable afterSet) {
+        final long start = System.currentTimeMillis();
+        _ui.debugMessage("starting recalc channels...");
+        _buttons.setBackground(ColorUtil.getColor("gray"));
+        _scroll.setBackground(ColorUtil.getColor("gray"));
+        Control ctl[] = _buttons.getChildren();
+        for (int i = 0; i < ctl.length; i++)
+            ctl[i].setEnabled(false);
+        _search.setEnabled(false);
+        _searchButton.setEnabled(false);
+        _privateOnly.setEnabled(false);
+        _unreadOnly.setEnabled(false);
+        _filterLabel.setEnabled(false);
+        
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 final Timer timer = new Timer("recalc channels, unread only? " + unreadOnly, _ui);
@@ -582,6 +595,21 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                     chanIds = _idSource.getReferenceNodes();
                 }
                 setChannels(unreadOnly, privateOnly, chanIds, afterSet);
+                _root.getDisplay().asyncExec(new Runnable() {
+                    public void run() {
+                        Control ctl[] = _buttons.getChildren();
+                        for (int i = 0; i < ctl.length; i++)
+                            ctl[i].setEnabled(true);
+                        _search.setEnabled(true);
+                        _searchButton.setEnabled(true);
+                        _privateOnly.setEnabled(true);
+                        _unreadOnly.setEnabled(true);
+                        _filterLabel.setEnabled(true);
+                        _buttons.setBackground(ColorUtil.getColor("green"));
+                        _scroll.setBackground(ColorUtil.getColor("green"));
+                        _ui.debugMessage("set channels complete: " + (System.currentTimeMillis()-start));
+                    }
+                });
             }
         });
     }
