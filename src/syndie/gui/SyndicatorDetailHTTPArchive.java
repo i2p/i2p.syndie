@@ -314,6 +314,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         
         _backOffOnFailures = new Button(row, SWT.CHECK);
         _backOffOnFailures.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _backOffOnFailures.setSelection(true);
         
         // action row
         
@@ -800,7 +801,16 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
         if (_name.getText().trim().length() > 0)
             _save.setEnabled(true);
-        _nextSyncDelay.setEnabled(false);
+        //_nextSyncDelay.setEnabled(false);
+        int delay = _archive.getNextSyncDelay();
+        int delayIndex = SYNC_DELAY_DEFAULT_INDEX;
+        for (int i = 0; i < SYNC_DELAY.length; i++) {
+            if (delay == SYNC_DELAY[i]) {
+                delayIndex = i;
+                break;
+            }
+        }
+        _nextSyncDelay.select(delayIndex);
         _failures.setText(_archive.getConsecutiveFailures() + "");
         _backOffOnFailures.setEnabled(false);
     }
@@ -954,7 +964,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final int SIZE_DEFAULT_INDEX = 7; // 512KB
     
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
-    private static final int SYNC_DELAY_DEFAULT_INDEX = 0;
+    private static final int SYNC_DELAY_DEFAULT_INDEX = 6;
     
     private static final String T_NEWAGE_DEFAULT = "syndie.gui.syndicatordetailhttparchive.newage.default";
     private static final String T_NEWAGE_1W = "syndie.gui.syndicatordetailhttparchive.newage.1w";

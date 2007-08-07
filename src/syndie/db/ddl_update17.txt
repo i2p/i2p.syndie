@@ -1,0 +1,7 @@
+-- update the database from schema version 17
+-- this version 18 adds a sync delay attribute to archives
+--
+
+UPDATE appVersion SET versionNum = 18, visibleVersion = 'Sync delay';
+
+ALTER TABLE nymArchive ADD nextSyncDelayHours INTEGER DEFAULT 24;

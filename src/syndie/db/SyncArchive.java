@@ -31,6 +31,7 @@ public class SyncArchive {
     private int _consecutiveFailures;
     private long _nextSyncTime;
     private long _lastSyncTime;
+    private int _nextSyncDelayHours;
     private long _uriId;
     private boolean _nextSyncOneOff;
     private List _incomingActions;
@@ -53,6 +54,7 @@ public class SyncArchive {
         _uriId = -1;
         _lastSyncTime = -1;
         _nextSyncTime = -1;
+        _nextSyncDelayHours = 24;
         _nextSyncOneOff = false;
         _consecutiveFailures = 0;
         _incomingActions = new ArrayList();
@@ -415,7 +417,7 @@ public class SyncArchive {
         fireUpdated();
     }
     
-    private static final String SQL_GET_ATTRIBUTES = "SELECT uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy FROM nymArchive WHERE name = ? AND nymId = ?";
+    private static final String SQL_GET_ATTRIBUTES = "SELECT uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, nextSyncDelayHours FROM nymArchive WHERE name = ? AND nymId = ?";
     /** (re)load all of the archive's attributes */
     private void load() {
         if (_name == null) return;
@@ -425,7 +427,8 @@ public class SyncArchive {
         try {
             // uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, 
             // customProxyHost, customProxyPort, customFCPHost, customFCPPort, 
-            // nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy
+            // nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy,
+            // nextSyncDelayHours
             // FROM nymArchive WHERE name = ? AND nymId = ?
             stmt = _client.con().prepareStatement(SQL_GET_ATTRIBUTES);
             stmt.setString(1, _name);
@@ -448,6 +451,7 @@ public class SyncArchive {
                 Timestamp lastPush = rs.getTimestamp(14);
                 String pullPolicy = rs.getString(15);
                 String pushPolicy = rs.getString(16);
+                int nextSyncDelayHours = rs.getInt(17);
                 
                 // now store 'em
                 if (uriId >= 0) {
@@ -500,6 +504,8 @@ public class SyncArchive {
                 _pullStrategy = new SharedArchiveEngine.PullStrategy(pullPolicy);
                 _pushStrategy = new SharedArchiveEngine.PushStrategy(pushPolicy);
                 
+                _nextSyncDelayHours = nextSyncDelayHours;
+                
                 _uriId = uriId;
             }
         } catch (SQLException se) {
@@ -518,8 +524,8 @@ public class SyncArchive {
     private static final String SQL_INSERT = "INSERT INTO nymArchive (uriId, postKey, postKeySalt, readKey, readKeySalt, " +
             "consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, " +
             "nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, " +
-            "name, nymId) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "name, nymId, nextSyncDelayHours) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     /** persist all of the archive's attributes */
     public void store() { store(false); }
     public void store(boolean notifyListeners) {
@@ -600,6 +606,7 @@ public class SyncArchive {
 
                 stmt.setString(17, _name);
                 stmt.setLong(18, _client.getLoggedInNymId());
+                stmt.setInt(19, _nextSyncDelayHours);
 
                 stmt.executeUpdate();
             } catch (SQLException se) {
@@ -682,6 +689,8 @@ public class SyncArchive {
     public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _pullStrategy = strategy; }
     public SharedArchiveEngine.PushStrategy getPushStrategy() { return _pushStrategy; }
     public void setPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _pushStrategy = strategy; }
+    public void setNextSyncDelay(int hours) { _nextSyncDelayHours = hours; }
+    public int getNextSyncDelay() { return _nextSyncDelayHours; }
 
     public boolean getIndexFetchInProgress() { return _indexFetching; }
     public void setIndexFetchInProgress(boolean now) {
@@ -799,12 +808,15 @@ public class SyncArchive {
         long delay = 0;
         int hours = 1;
         if (!success)
-            hours = 1 << getConsecutiveFailures();
+            hours = _nextSyncDelayHours * getConsecutiveFailures();
         
         _indexFetchComplete = false;
         _indexFetching = false;
         
-        if (hours > 24) hours = 24;
+        if (hours > 72) hours = 72;
+        if (hours < _nextSyncDelayHours)
+            hours = _nextSyncDelayHours;
+        
         delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
         
         if (getNextSyncOneOff())
