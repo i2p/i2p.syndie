@@ -9,6 +9,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -35,6 +37,7 @@ import syndie.gui.ColorUtil;
 import syndie.gui.DataCallback;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageUtil;
+import syndie.gui.LinkBuilderPopup;
 import syndie.gui.MessageTree;
 import syndie.gui.Theme;
 import syndie.gui.ThemeRegistry;
@@ -68,8 +71,21 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         _tree = new WatchedMessageTree(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), 
                 bookmarkControl, dataCallback, getRoot(), new MessageTree.MessageTreeListener() {
             public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
-                if (toView)
+                if (toView) {
                     _desktop.getNavControl().view(uri);
+                } else {
+                    SyndieURI origURI = uri;
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    if (msgId >= 0) {
+                        long targetId = _client.getMessageTarget(msgId);
+                        if (targetId >= 0) {
+                            Hash target = _client.getChannelHash(targetId);
+                            if (target != null)
+                                uri = SyndieURI.createScope(target);
+                        }
+                    }
+                    setFocus(uri, origURI);
+                }
             }
 
             public void filterApplied(MessageTree tree, SyndieURI searchURI) {
@@ -134,10 +150,14 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
              ( (description != null) && (description.length() > 0) ) ) {
             ((NorthEdge)_edgeNorth).updateMulti(name, description);
         }
-        ((SouthEdge)_edgeSouth).updateActions(uri);
-        ((EastEdge)_edgeEast).updateNav(uri);
+        setFocus(uri, uri);
         getRoot().getDisplay().addFilter(SWT.KeyDown, _keyListener);
         super.shown(desktop, uri, name, description);
+    }
+    
+    private void setFocus(SyndieURI uri, SyndieURI detailURI) {
+        ((SouthEdge)_edgeSouth).updateActions(uri, detailURI);
+        ((EastEdge)_edgeEast).updateNav(uri, detailURI);
     }
     
     public void hidden() {
@@ -375,23 +395,28 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
     
     private static final String T_POST = "syndie.gui.messagetreepanel.post";
+    private static final String T_REPLY = "syndie.gui.messagetreepanel.reply";
     private static final String T_PRIVMSG = "syndie.gui.messagetreepanel.privmsg";
     private static final String T_WATCH = "syndie.gui.messagetreepanel.watch";
     private static final String T_BAN = "syndie.gui.messagetreepanel.ban";
     
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _post;
+        private Button _reply;
         private Button _privmsg;
         private Button _watch;
         private Button _ban;
         private Hash _actionScope;
+        private SyndieURI _detailURI;
         
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
             _actionScope = null;
             initComponents();
         }
-        public void updateActions(final SyndieURI uri) {
+        public void updateActions(final SyndieURI uri, final SyndieURI detailURI) {
+            _ui.debugMessage("updateActions: " + uri);
+            _detailURI = detailURI;
             if (uri == null) return; // no change, panel was just reshown
             Hash scope = null;
             if (uri.isChannel()) {
@@ -419,11 +444,14 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                         final boolean postable = chans.getAllIds().contains(new Long(channelId));
                         final boolean privmsg = true; // true for all channels
                         final boolean watched = _client.isWatched(channelId);
+                        final boolean repliable = postable || _client.getChannelAllowPublicReplies(channelId);
                         final boolean banned = _client.getBannedChannels().contains(actionScope);
+                        _ui.debugMessage("update actions: scope=" + actionScope + " channelId=" + channelId + " postable? " + postable);
                         Display.getDefault().asyncExec(new Runnable() {
                             public void run() {
                                 _actionScope = actionScope;
                                 _post.setEnabled(postable);
+                                _reply.setEnabled(repliable);
                                 _privmsg.setEnabled(privmsg);
                                 _watch.setEnabled(!watched);
                                 _ban.setEnabled(!banned);
@@ -445,6 +473,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             
             _post = new Button(root, SWT.PUSH);
             _post.addSelectionListener(new FireSelectionListener() { public void fire() { post(); } });
+            _reply = new Button(root, SWT.PUSH);
+            _reply.addSelectionListener(new FireSelectionListener() { public void fire() { reply(); } });
             _privmsg = new Button(root, SWT.PUSH);
             _privmsg.addSelectionListener(new FireSelectionListener() { public void fire() { sendPM(); } });
             _watch = new Button(root, SWT.PUSH);
@@ -453,12 +483,14 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _ban.addSelectionListener(new FireSelectionListener() { public void fire() { ban(); } });
             
             _post.setEnabled(false);
+            _reply.setEnabled(false);
             _privmsg.setEnabled(false);
             _watch.setEnabled(false);
             _ban.setEnabled(false);
         }
         public void applyTheme(Theme theme) {
             _post.setFont(theme.BUTTON_FONT);
+            _reply.setFont(theme.BUTTON_FONT);
             _privmsg.setFont(theme.BUTTON_FONT);
             _watch.setFont(theme.BUTTON_FONT);
             _ban.setFont(theme.BUTTON_FONT);
@@ -466,6 +498,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         }
         public void translate(TranslationRegistry registry) {
             _post.setText(registry.getText(T_POST, "Post a new message"));
+            _reply.setText(registry.getText(T_REPLY, "Reply"));
             _privmsg.setText(registry.getText(T_PRIVMSG, "Send a private message"));
             _watch.setText(registry.getText(T_WATCH, "Watch the forum"));
             _ban.setText(registry.getText(T_BAN, "Ban the forum"));
@@ -473,6 +506,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         
         private void post() {
             _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, false));
+        }
+        private void reply() {
+            _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, _detailURI, false));
         }
         private void sendPM() {
             _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, true));
@@ -488,10 +524,21 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     
     private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";
     private static final String T_PROFILE = "syndie.gui.messagetreepanel.profile";
+    private static final String T_EXPAND = "syndie.gui.messagetreepanel.expand";
+    private static final String T_COLLAPSE = "syndie.gui.messagetreepanel.collapse";
+    private static final String T_VIEW = "syndie.gui.messagetreepanel.view";
+    private static final String T_TOGGLEREAD = "syndie.gui.messagetreepanel.toggleread";
+    private static final String T_CREATEREF = "syndie.gui.messagetreepanel.createref";
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
-        private Button _profile;
         private Hash _actionScope;
+        private SyndieURI _detailURI;
+        private Button _expand;
+        private Button _collapse;
+        private Button _profile;
+        private Button _view;
+        private Button _toggleRead;
+        private Button _createRef;
         
         public EastEdge(Composite edge, UI ui) {
             super(edge, ui);
@@ -499,10 +546,76 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             initComponents();
         }
         private void initComponents() {
-            Composite root = getEdgeRoot();
-            root.setLayout(new FillLayout());
+            final Composite root = getEdgeRoot();
+            root.setLayout(new FillLayout(SWT.VERTICAL));
+            
+            _expand = new Button(root, SWT.PUSH);
+            _expand.setEnabled(false);
+            _expand.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent evt) {
+                    if ((evt.stateMask & SWT.MOD1) == SWT.MOD1) {
+                        _ui.debugMessage("expand all (default selected)");
+                        expand(true);
+                    } else {
+                        _ui.debugMessage("expand single (default selected)");
+                        expand(false);
+                    }
+                    _tree.forceFocus();
+                }
+                public void widgetSelected(SelectionEvent evt) {
+                    if ((evt.stateMask & SWT.MOD1) == SWT.MOD1) {
+                        _ui.debugMessage("expand all (selected)");
+                        expand(true);
+                    } else {
+                        _ui.debugMessage("expand single (selected)");
+                        expand(false);
+                    }
+                    _tree.forceFocus();
+                }
+            });
+            _expand.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_EXPAND, "Expand"));
+                }
+            });
+            
+            _collapse = new Button(root, SWT.PUSH);
+            _collapse.setEnabled(false);
+            _collapse.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent evt) {
+                    if ((evt.stateMask & SWT.MOD1) == SWT.MOD1) {
+                        _ui.debugMessage("collapse all (default selected)");
+                        collapse(true);
+                    } else {
+                        _ui.debugMessage("collapse (default selected)");
+                        collapse(false);
+                    }
+                    _tree.forceFocus();
+                }
+                public void widgetSelected(SelectionEvent evt) {
+                    if ((evt.stateMask & SWT.MOD1) == SWT.MOD1) {
+                        _ui.debugMessage("collapse all (selected)");
+                        collapse(true);
+                    } else {
+                        _ui.debugMessage("collapse (selected)");
+                        collapse(false);
+                    }
+                    _tree.forceFocus();
+                }
+            });
+            _collapse.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_COLLAPSE, "Collapse"));
+                }
+            });
+            
             _profile = new Button(root, SWT.PUSH);
-            _profile.addSelectionListener(new FireSelectionListener() { public void fire() { viewProfile(); } });
+            _profile.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    viewProfile(); 
+                    _tree.forceFocus();
+                } 
+            });
             _profile.setEnabled(false);
             _profile.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
@@ -510,17 +623,68 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 }
             });
 
+            _view = new Button(root, SWT.PUSH);
+            _view.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    viewMessage(); 
+                    _tree.forceFocus();
+                } 
+            });
+            _view.setEnabled(false);
+            _view.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_VIEW, "View"));
+                }
+            });
+
+            _toggleRead = new Button(root, SWT.PUSH);
+            _toggleRead.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    toggleRead(); 
+                    _tree.forceFocus();
+                } 
+            });
+            _toggleRead.setEnabled(false);
+            _toggleRead.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_TOGGLEREAD, "Read/unread"));
+                }
+            });
+
+            _createRef = new Button(root, SWT.PUSH);
+            _createRef.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    createRef(); 
+                    _tree.forceFocus();
+                } 
+            });
+            _createRef.setEnabled(false);
+            _createRef.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_CREATEREF, "Create ref"));
+                }
+            });
         }
         public void applyTheme(Theme theme) {
+            _expand.redraw();
+            _collapse.redraw();
             _profile.redraw();
+            _view.redraw();
+            _toggleRead.redraw();
+            _createRef.redraw();
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
+            _expand.redraw();
+            _collapse.redraw();
             _profile.redraw();
-            _profile.setToolTipText(registry.getText(T_PROFILE_TT, "View the forum's profile"));
+            _view.redraw();
+            _toggleRead.redraw();
+            _createRef.redraw();
         }
-        public void updateNav(SyndieURI uri) {
+        public void updateNav(SyndieURI uri, SyndieURI detailURI) {
             if (uri == null) return; // no change, reshown
+            _ui.debugMessage("updating nav w/ detailURI: " + detailURI);
             Hash scope = null;
             if (uri.isChannel()) {
                 scope = uri.getScope();
@@ -530,11 +694,31 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                     scope = scopes[0];
             }
             _actionScope = scope;
+            _detailURI = detailURI;
             _profile.setEnabled(scope != null);
+            _expand.setEnabled(detailURI != null);
+            _collapse.setEnabled(detailURI != null);
+            _toggleRead.setEnabled(detailURI != null);
+            _view.setEnabled(detailURI != null);
+            _createRef.setEnabled(detailURI != null);
         }
         private void viewProfile() {
             if (_actionScope != null)
                 _desktop.getNavControl().view(URIHelper.instance().createMetaURI(_actionScope));
+        }
+        
+        private void expand(boolean all) { _tree.expandSelected(all); }
+        private void collapse(boolean all) { _tree.collapseSelected(all); }
+        private void toggleRead() { _tree.toggleRead(); }
+        private void viewMessage() {
+            if (_detailURI != null)
+                _desktop.getNavControl().view(_detailURI);
+        }
+        private void createRef() {
+            AddReferenceSource src = new AddReferenceSource(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
+            LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), src);
+            src.setPopup(popup);
+            popup.showPopup(_detailURI);
         }
     }
 }

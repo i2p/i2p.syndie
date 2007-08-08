@@ -1726,6 +1726,18 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         for (int i = 0; i < items.length; i++)
             expandAll(items[i]);
     }
+    public void collapseAll() {
+        TreeItem items[] = _tree.getItems();
+        for (int i = 0; i < items.length; i++)
+            collapseAll(items[i]);
+    }
+    private void collapseAll(TreeItem item) {
+        if (item.getItemCount() <= 0) return;
+        item.setExpanded(false);
+        TreeItem items[] = item.getItems();
+        for (int i = 0; i < items.length; i++)
+            collapseAll(items[i]);
+    }
     
     /** build up the thread in a nonvirtual tree */
     private long add(ThreadReferenceNode node, TreeItem parent) {
@@ -2169,14 +2181,33 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
             if (_itemsNewUnread.contains(item)) {
+                _ui.debugMessage("marking message read: " + msgId);
                 _client.markMessageRead(msgId.longValue());
                 item.setFont(_themeRegistry.getTheme().MSG_NEW_READ_FONT);
                 _itemsNewUnread.remove(item);
+            } else {
+                _ui.debugMessage("message was already unread: " + msgId);
             }
         }
         TreeItem children[] = item.getItems();
         for (int i = 0; i < children.length; i++)
             markThreadRead(children[i]);
+    }
+    private void markThreadUnread(TreeItem item) {
+        Long msgId = (Long)_itemToMsgId.get(item);
+        if (msgId != null) {
+            if (!_itemsNewUnread.contains(item)) {
+                _ui.debugMessage("marking message unread: " + msgId);
+                _client.markMessageUnread(msgId.longValue());
+                item.setFont(_themeRegistry.getTheme().MSG_NEW_UNREAD_FONT);
+                _itemsNewUnread.add(item);
+            } else {
+                _ui.debugMessage("message was already read: " + msgId);
+            }
+        }
+        TreeItem children[] = item.getItems();
+        for (int i = 0; i < children.length; i++)
+            markThreadUnread(children[i]);
     }
     private void markAllRead() {
         TreeItem selected[] = _tree.getSelection();
@@ -2378,5 +2409,46 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             item = new TreeItem(parent, SWT.NONE);
         item.setData("parent", parent); // see getParentItem(item)
         return item;
+    }
+    
+    public void expandSelected(boolean all) { 
+        if (all)
+            expandAll();
+        else
+            expandThread(); 
+    }
+    public void collapseSelected(boolean all) {
+        if (all)
+            collapseAll();
+        else
+            collapseThread(); 
+    }
+    public void toggleRead() { 
+        TreeItem selected[] = _tree.getSelection();
+        boolean statusDetected = false;
+        boolean statusWasRead = false;
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                TreeItem root = getThreadRoot(selected[i]);
+                if (!statusDetected) {
+                    statusDetected = true;
+                    Long msgId = (Long)_itemToMsgId.get(root);
+                    if (msgId != null) {
+                        if (_itemsNewUnread.contains(root)) {
+                            statusWasRead = false;
+                        } else {
+                            statusWasRead = true;
+                        }
+                    }
+                    _ui.debugMessage("toggleRead: item was read? " + statusWasRead);
+                }
+                if (statusWasRead)
+                    markThreadUnread(root);
+                else
+                    markThreadRead(root);
+            }
+            if (selected.length > 0)
+                _dataCallback.readStatusUpdated();
+        }
     }
 }

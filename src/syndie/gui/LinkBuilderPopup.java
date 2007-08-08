@@ -745,7 +745,8 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         }
         if (_target != null)
             _target.uriBuildingCancelled();
-        _shell.setVisible(false);
+        if (!_shell.isDisposed())
+            _shell.setVisible(false);
         _selectedURI = null;
     }
     
