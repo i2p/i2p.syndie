@@ -305,6 +305,7 @@ public class TextEngine {
             if (pass == null)
                 pass = "";
             _ui.debugMessage("Attempting to log into [" + db + "] w/ ["+login + "]=["+pass +"]");
+            _client.setDefaultUI(_ui);
             long nymId = _client.connect(db, login, pass);
             if (nymId >= 0) {
                 _ui.statusMessage("Login successful (nymId " + nymId + ")");
