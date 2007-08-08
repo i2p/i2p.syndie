@@ -1,0 +1,7 @@
+-- update the database from schema version 18
+-- this version 19 adds a whitelist group id to archives
+--
+
+UPDATE appVersion SET versionNum = 19, visibleVersion = 'Whitelist';
+
+ALTER TABLE nymArchive ADD whitelistGroupId INTEGER DEFAULT -1;

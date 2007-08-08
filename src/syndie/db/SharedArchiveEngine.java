@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
@@ -34,6 +35,7 @@ public class SharedArchiveEngine {
             pullNothing = false;
             discoverArchives = true;
             newAgeDays = -1;
+            pullWhitelistOnly = false;
         }
         public PullStrategy(String serialized) {
             this();
@@ -46,6 +48,7 @@ public class SharedArchiveEngine {
                     includePBEMessages = (serialized.indexOf("DontIncludePBE") == -1);
                     includePrivateMessages = (serialized.indexOf("DontIncludePrivate") == -1);
                     knownChannelsOnly = (serialized.indexOf("KnownChannelsOnly") != -1);
+                    pullWhitelistOnly = (serialized.indexOf("PullWhitelistOnly") != -1);
                     int maxPerIdx = serialized.indexOf("MaxPerMsg");
                     if (maxPerIdx >= 0) {
                         int end = serialized.indexOf(' ', maxPerIdx);
@@ -131,6 +134,14 @@ public class SharedArchiveEngine {
          */
         public int newAgeDays;
         
+        /**
+         * if there is a whitelist for the archive, try to only pull messages that will match the list,
+         * even though this exposes the whitelist to the remote archive.  if false, the messages will be
+         * pulled as otherwise determined, but any whitelist will be applied before importing the fetched
+         * messages.
+         */
+        public boolean pullWhitelistOnly;
+        
         public String toString() {
             StringBuffer buf = new StringBuffer();
             if (includeDupForPIR) {
@@ -157,6 +168,8 @@ public class SharedArchiveEngine {
                     buf.append("MaxTotal").append(maxKBTotal).append(" ");
                 if (newAgeDays > 0)
                     buf.append("NewAgeDays").append(newAgeDays).append(" ");
+                if (pullWhitelistOnly)
+                    buf.append("PullWhitelistOnly ");
             }
             if (discoverArchives)
                 buf.append("DiscoverArchives ");
@@ -274,7 +287,7 @@ public class SharedArchiveEngine {
      * for parallel execution, all metadata URIs should be run prior to the messages.
      *
      */
-    public List selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy) {
+    public List selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy, long whitelistGroupId) {
         int totalAllocatedKB = 0;
         List uris = new ArrayList();
         if (strategy.pullNothing)
@@ -303,6 +316,9 @@ public class SharedArchiveEngine {
                 }
             }
         }
+        
+        Set whitelistScopes = client.getReferencedScopes(whitelistGroupId);
+        
         SharedArchive.Message messages[] = archive.getMessages();
         for (int i = 0; i < messages.length; i++) {
             Hash scope = new Hash(channels[messages[i].getScopeIndex()].getScope());
@@ -343,6 +359,14 @@ public class SharedArchiveEngine {
                 if (banned.contains(scope) || banned.contains(target))
                     continue;
                 
+                if (strategy.pullWhitelistOnly) {
+                    if (whitelistScopes.contains(target) || whitelistScopes.contains(scope)) {
+                        // ok, passes the whitelist
+                    } else {
+                        continue;
+                    }
+                }
+                        
                 long targetChanId = client.getChannelId(target);
                 long scopeChanId = client.getChannelId(scope);
                 if ( ( (scopeChanId < 0) || (targetChanId < 0) ) && (strategy.knownChannelsOnly) )

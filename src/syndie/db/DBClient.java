@@ -3951,6 +3951,41 @@ public class DBClient {
         
         return roots;
     }
+    
+    public Set getReferencedScopes(long groupId) {
+        HashSet scopes = new HashSet();
+        if (groupId < 0)
+            return scopes;
+        List refs = getNymReferences();
+        for (int i = 0; i < refs.size(); i++) {
+            NymReferenceNode ref = (NymReferenceNode)refs.get(i);
+            getReferencedScopes(ref, scopes, groupId, false);
+        }
+        return scopes;
+    }
+    private void getReferencedScopes(NymReferenceNode ref, Set scopes, long groupId, boolean groupFound) {
+        if (ref == null) return;
+        if (ref.getGroupId() == groupId)
+            groupFound = true;
+        int kids = ref.getChildCount();
+        if (kids > 0) {
+            for (int i = 0; i < kids; i++)
+                getReferencedScopes((NymReferenceNode)ref.getChild(i), scopes, groupId, groupFound);
+        } else if (groupFound) {
+            SyndieURI uri = ref.getURI();
+            if (uri != null) {
+                if (uri.getScope() != null) {
+                    scopes.add(uri.getScope());
+                } else if (uri.getSearchScopes() != null) {
+                    Hash s[] = uri.getSearchScopes();
+                    for (int i = 0; i < s.length; i++)
+                        scopes.add(s[i]);
+                } else if (uri.getHash("scope") != null) {
+                    scopes.add(uri.getHash("scope"));
+                }
+            }
+        }
+    }
 
     private static final String SQL_EXPAND_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = siblingOrder + 1 WHERE parentGroupId = ? AND nymId = ? AND siblingOrder >= ?";
     //private static final String SQL_UPDATE_NYM_REFERENCE_ORDER = "UPDATE resourceGroup SET siblingOrder = ? WHERE groupId = ? AND nymId = ?";
@@ -4063,6 +4098,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MAX_GROUPID = "SELECT MAX(groupId) FROM resourceGroup WHERE nymId = ?";
+    private static final String SQL_GET_MAX_SIBLING = "SELECT MAX(siblingOrder) FROM resourceGroup WHERE nymId = ? AND parentGroupId = ?";
     private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
         //createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
@@ -4091,13 +4127,36 @@ public class DBClient {
             }
         }
         int siblingOrder = newValue.getSiblingOrder();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MAX_SIBLING);
+            stmt.setLong(1, nymId);
+            stmt.setLong(2, newValue.getParentGroupId());
+            rs = stmt.executeQuery();
+            if (rs.next())
+                siblingOrder = rs.getInt(1) + 1;
+            else
+                siblingOrder = 1;
+            newValue.setSiblingOrder(siblingOrder);
+            rs.close();
+            rs = null;
+            stmt.close();
+            stmt = null;
+        } catch (SQLException se) {
+            log("Error figuring out the new sibling order to use", se);
+            return;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
         long uriId = -1;
         if (newValue.getURI() != null)
             uriId = addURI(newValue.getURI());
         
         log("add nym reference [" + groupId + "/" + newValue.getParentGroupId() + "/" + siblingOrder + "/" + newValue.getName() + "/" + newValue.getDescription() + "/" +  uriId + "]: " + newValue.getURI());
         
-        PreparedStatement stmt = null;
         try {
             stmt = _con.prepareStatement(SQL_ADD_NYM_REFERENCE);
             // (groupId,parentGroupId,siblingOrder,name,description,uriId,nymId)

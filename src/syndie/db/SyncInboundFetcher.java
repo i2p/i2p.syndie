@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
 import syndie.Constants;
@@ -115,7 +116,10 @@ class SyncInboundFetcher {
     }
     
     private void fetchFreenet(SyncArchive archive) {
-        DataImporter importer = new DataImporter();
+        long whitelistGroupId = archive.getWhitelistGroupId();
+        Set whitelistScopes = _manager.getClient().getReferencedScopes(whitelistGroupId);
+
+        DataImporter importer = new DataImporter(whitelistScopes);
         Thread t = new Thread(importer, "Data importer");
         t.start();
         int actions = archive.getIncomingActionCount();
@@ -144,7 +148,7 @@ class SyncInboundFetcher {
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, dataFile.getAbsolutePath(), url);
                     // the index fetch runs async, but these run synchronously, since we don't want to fire up e.g. 500 threads to pull
                     // new messages.  much to optimize on this front though
-                    GetListener lsnr = new GetListener(action, dataFile, importer);
+                    GetListener lsnr = new GetListener(action, dataFile, importer, whitelistScopes);
                     get.addStatusListener(lsnr);
                     // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity
                     get.fetch(60*1000, 5*60*1000, 60*1000);
@@ -168,7 +172,10 @@ class SyncInboundFetcher {
         } else {
             archiveDir = f.getParentFile();
         }
-        
+
+        long whitelistGroupId = archive.getWhitelistGroupId();
+        Set whitelistScopes = _manager.getClient().getReferencedScopes(whitelistGroupId);
+
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
             while (!_manager.isOnline())
@@ -184,8 +191,8 @@ class SyncInboundFetcher {
                 src = new File(new File(archiveDir, uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             else
                 src = new File(new File(archiveDir, uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-            
-            importData(action, src, false);
+        
+            importData(action, src, false, whitelistScopes);
         }
     }
     
@@ -233,20 +240,23 @@ class SyncInboundFetcher {
         else
             archiveURL = archiveURL.substring(0, dir) + '/';
 
+        long whitelistGroupId = archive.getWhitelistGroupId();
+        Set whitelistScopes = _manager.getClient().getReferencedScopes(whitelistGroupId);
+        
         // successful fetches are enqueued in the importer thread so we can import serially without
         // blocking the fetches
-        DataImporter importer = new DataImporter();
+        DataImporter importer = new DataImporter(whitelistScopes);
         Thread t = new Thread(importer, "Data importer");
         t.start();
         
         // fetch all of the meta before any of the messages, as we need the meta for the channels
         // we are importing the messages with (to verify signatures).  within these fetches there
         // are 5 concurrent fetches running through the individual files to fetch
-        fetchHTTPMeta(archive, pendingMeta, archiveURL, query, importer);
+        fetchHTTPMeta(archive, pendingMeta, archiveURL, query, importer, whitelistScopes);
         _manager.getUI().debugMessage("meta fetches run, waiting for the queue to finish");
         importer.finishQueue();
         _manager.getUI().debugMessage("meta fetches imported, fetching msgs");
-        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query, importer);
+        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query, importer, whitelistScopes);
         _manager.getUI().debugMessage("msg fetches run, waiting for the queue to finish");
         importer.finishQueue();
         _manager.getUI().debugMessage("msgs imported, complete");
@@ -255,10 +265,10 @@ class SyncInboundFetcher {
     
     private static final int CONCURRENT_FETCHES = 5;
     
-    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
+    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
         List fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer), "MetaFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MetaFetcher " + i);
             t.start();
             fetchers.add(t);
         }
@@ -268,10 +278,10 @@ class SyncInboundFetcher {
         }
     }
     
-    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
+    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
         List fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer), "MsgFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MsgFetcher " + i);
             t.start();
             fetchers.add(t);
         }
@@ -287,13 +297,15 @@ class SyncInboundFetcher {
         private String _archiveURL;
         private String _query;
         private DataImporter _importer;
+        private Set _whitelistScopes;
         
-        public Fetch(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer) {
+        public Fetch(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
             _archive = archive;
             _actions = actions;
             _archiveURL = archiveURL;
             _query = query;
             _importer = importer;
+            _whitelistScopes = whitelistScopes;
         }
         public void run() {
             while (true) {
@@ -331,7 +343,7 @@ class SyncInboundFetcher {
                 try {
                     File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
-                    GetListener lsnr = new GetListener(action, dataFile, _importer);
+                    GetListener lsnr = new GetListener(action, dataFile, _importer, _whitelistScopes);
                     get.addStatusListener(lsnr);
                     // 1m for headers, 10m total, 60s idle
                     get.fetch(60*1000, 10*60*1000, 60*1000);
@@ -356,10 +368,12 @@ class SyncInboundFetcher {
         private DataImporter _importer;
         private File _dataFile;
         private Exception _err;
-        public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer) {
+        private Set _whitelistScopes;
+        public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer, Set whitelistScopes) {
             _importer = importer;
             _incomingAction = action;
             _dataFile = dataFile;
+            _whitelistScopes = whitelistScopes;
         }
 
         public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {
@@ -367,7 +381,7 @@ class SyncInboundFetcher {
             if (_importer != null)
                 _importer.enqueueData(_incomingAction, _dataFile, true);
             else // only the http fetch uses the multithreaded importer (files are sequential, and freenet fetches are slow enough)
-                importData(_incomingAction, _dataFile, true);
+                importData(_incomingAction, _dataFile, true, _whitelistScopes);
         }
         
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
@@ -390,13 +404,17 @@ class SyncInboundFetcher {
         private List _files;
         private List _toDelete;
         private boolean _complete;
+        private Set _whitelistScopes;
         
-        public DataImporter() { 
+        public DataImporter(Set whitelistScopes) { 
             _actions = new ArrayList();
             _files = new ArrayList();
             _toDelete = new ArrayList();
             _complete = false;
+            _whitelistScopes = whitelistScopes;
         }
+
+        public Set getWhitelistScopes() { return _whitelistScopes; }
         
         public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
             _manager.getUI().statusMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
@@ -451,13 +469,13 @@ class SyncInboundFetcher {
                 
                 if (action != null) {
                     _manager.getUI().statusMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
-                    importData(action, datafile, delete);
+                    importData(action, datafile, delete, _whitelistScopes);
                 }
             }
         }
     }
     
-    private void importData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
+    private void importData(SyncArchive.IncomingAction action, File datafile, boolean delete, Set whitelistScopes) {
         Importer imp = new Importer(_manager.getClient());
         InputStream src = null;
         try {
@@ -476,6 +494,25 @@ class SyncInboundFetcher {
                         action.importMissingReadKey();
                     }
                 } else {
+                    SyndieURI uri = imp.getURI();
+                    boolean matchesWhitelist = false;
+                    if ( (whitelistScopes.size() == 0) || (uri.getMessageId() == null) ) {
+                        matchesWhitelist = true;
+                    } else if (whitelistScopes.contains(uri.getScope())) {
+                        matchesWhitelist = true;
+                    } else {
+                        long msgId = _manager.getClient().getMessageId(uri.getScope(), uri.getMessageId());
+                        long targetId = _manager.getClient().getMessageTarget(msgId);
+                        if (whitelistScopes.contains(_manager.getClient().getChannelHash(targetId))) {
+                            matchesWhitelist = true;
+                        }
+                    }
+                    if (!matchesWhitelist) {
+                        action.importFailed("Message valid, but does not match the whitelist", null);
+                        _manager.getUI().debugMessage("Message imported on fetch, but does not match the whitelist: " + uri);
+                        delete = true;
+                        _manager.getClient().deleteFromDB(uri, _manager.getUI());
+                    }
                     action.importSuccessful();
                 }
             }

@@ -290,7 +290,7 @@ class SyndicateMenu implements TextEngine.Menu {
         strategy.maxKBPerMessage = 512;
         strategy.maxKBTotal = 4096;
         SharedArchiveEngine engine = new SharedArchiveEngine();
-        List uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        List uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy, -1);
         //List uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         int msgs = 0;
         int meta = 0;
@@ -396,7 +396,7 @@ class SyndicateMenu implements TextEngine.Menu {
         
         SharedArchiveEngine engine = new SharedArchiveEngine();
         
-        uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy);
+        uris = engine.selectURIsToPull(client, ui, _currentIndex, strategy, -1);
         //uris = _currentIndex.selectURIsToPull(client, ui, strategy);
         ui.debugMessage("Fetching " + uris.size() + " entries: " + uris);
         

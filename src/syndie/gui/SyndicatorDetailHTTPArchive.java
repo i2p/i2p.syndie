@@ -3,14 +3,22 @@ package syndie.gui;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -26,6 +34,7 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
+import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
 import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
@@ -66,6 +75,11 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private Combo _pullNewAge;
     private Label _pushAgeLabel;
     private Combo _pushAge;
+    private Button _whitelistEnable;
+    private Combo _whitelist;
+    private ArrayList _whitelistIds;
+    private Button _whitelistPull;
+    private Button _whitelistPreview;
     private Button _pullPrivate;
     private Button _pullPrivateLocalOnly;
     private Button _pullPBE;
@@ -90,6 +104,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _parent = parent;
         _archive = archive;
         _listener = lsnr;
+        _whitelistIds = new ArrayList();
         initComponents();
         _archive.addListener(this);
     }
@@ -276,6 +291,32 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pushAge = new Combo(pushAge, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
         _pushAge.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
+        // whitelist row
+        
+        // stub for the first column
+        new Composite(_root, SWT.NONE).setLayoutData(new GridData(1, 1));
+        
+        Composite whitelist = new Composite(_root, SWT.NONE);
+        whitelist.setLayout(new GridLayout(3, false));
+        whitelist.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
+        _whitelistEnable = new Button(whitelist, SWT.CHECK);
+        _whitelistEnable.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+        
+        _whitelist = new Combo(whitelist, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+        _whitelist.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        _whitelistPreview = new Button(whitelist, SWT.PUSH);
+        _whitelistPreview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
+        // whitelist pull row
+        
+        // stub for the first column
+        new Composite(_root, SWT.NONE).setLayoutData(new GridData(1, 1));
+        
+        _whitelistPull = new Button(_root, SWT.CHECK);
+        _whitelistPull.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        
         // pull private row
         
         // stub for the first column
@@ -371,6 +412,15 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 }
             }
         });
+        _whitelistEnable.addSelectionListener(new FireSelectionListener() {
+            public void fire() { 
+                _whitelist.setEnabled(_whitelistEnable.getSelection()); 
+                _whitelistPreview.setEnabled(_whitelistEnable.getSelection());
+            }
+        });
+        _whitelistPreview.addSelectionListener(new FireSelectionListener() {
+            public void fire() { previewWhitelist(); }
+        });
         
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadData(); _listener.cancelled(); }
@@ -380,6 +430,83 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { if (save()) _listener.cancelled(); }
             public void widgetSelected(SelectionEvent selectionEvent) { if (save()) _listener.cancelled(); }
         });
+    }
+    
+    private static final String T_PREVIEW_PREFIX = "syndie.gui.syndicatordetailhttparchive.preview.prefix";
+    private static final String T_PREVIEW_DONE = "syndie.gui.syndicatordetailhttparchive.preview.done";
+    
+    private void previewWhitelist() {
+        Set scopes = _client.getReferencedScopes(((Long)_whitelistIds.get(_whitelist.getSelectionIndex())).longValue());
+        
+        final Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+        GridLayout gl = new GridLayout(1, true);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        shell.setLayout(gl);
+        shell.setText(_translationRegistry.getText(T_PREVIEW_PREFIX, "Whitelist: ") + scopes.size());
+        
+        ScrolledComposite scroll = new ScrolledComposite(shell, SWT.V_SCROLL);
+        scroll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        
+        final Composite buttons = new Composite(scroll, SWT.NONE);
+        scroll.setContent(buttons);
+        
+        gl = new GridLayout(6, true);
+        gl.horizontalSpacing = 0;
+        gl.verticalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        buttons.setLayout(gl);
+        
+        TreeSet ordered = new TreeSet(scopes);
+        for (Iterator iter = ordered.iterator(); iter.hasNext(); ) {
+            Hash scope = (Hash)iter.next();
+            long id = _client.getChannelId(scope);
+            byte avatar[] = _client.getChannelAvatar(id);
+            String name = _client.getChannelName(id);
+            
+            Button b = new Button(buttons, SWT.PUSH);
+            if (avatar != null)
+                b.setImage(ImageUtil.createImage(avatar));
+            else
+                b.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
+            if (name != null)
+                b.setToolTipText(name + ": [" + scope.toBase64().substring(0, 6) + ']');
+            else
+                b.setToolTipText("[" + scope.toBase64().substring(0, 6) + ']');
+        }
+        
+        buttons.setSize(64*6+12, 400);
+        
+        Button done = new Button(shell, SWT.PUSH);
+        done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        done.setText(_translationRegistry.getText(T_PREVIEW_DONE, "Ok"));
+        done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+        done.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                Control c[] = buttons.getChildren();
+                for (int i = 0; i < c.length; i++)
+                    ImageUtil.dispose(((Button)c[i]).getImage());
+                shell.dispose();
+            }
+        });
+        shell.addShellListener(new ShellListener() {
+            public void shellActivated(ShellEvent shellEvent) {}
+            public void shellClosed(ShellEvent shellEvent) {
+                Control c[] = buttons.getChildren();
+                for (int i = 0; i < c.length; i++)
+                    ImageUtil.dispose(((Button)c[i]).getImage());
+                shell.dispose();
+            }
+            public void shellDeactivated(ShellEvent shellEvent) {}
+            public void shellDeiconified(ShellEvent shellEvent) {}
+            public void shellIconified(ShellEvent shellEvent) {}
+        });
+        
+        shell.pack();
+        shell.open();
     }
     
     private void configFreenet() {
@@ -613,6 +740,13 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         
         _archive.setURL(_location.getText().trim());
         
+        if (_whitelistEnable.getSelection()) {
+            Long id = (Long)_whitelistIds.get(_whitelist.getSelectionIndex());
+            _archive.setWhitelistGroupId(id.longValue());
+        } else {
+            _archive.setWhitelistGroupId(-1);
+        }
+        
         if (store)
             _archive.store(true);
         return true;
@@ -626,6 +760,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         pullStrategy.includePrivateMessages = _pullPrivate.getSelection();
         pullStrategy.maxKBPerMessage = SIZES[_pullMaxSize.getSelectionIndex()];
         pullStrategy.newAgeDays = NEWAGEDAYS[_pullNewAge.getSelectionIndex()];
+        pullStrategy.pullWhitelistOnly = _whitelistPull.getSelection();
         
         switch (_pullPolicy.getSelectionIndex()) {
             case PULL_POLICY_ALL_DELTA: 
@@ -798,6 +933,26 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         } else {
             _nextSync.setText(_translationRegistry.getText(T_NEVER, "Never"));
         }
+        
+        _whitelistPull.setSelection(pull.pullWhitelistOnly);
+        
+        _whitelist.removeAll();
+        _whitelistIds.clear();
+        long whitelistId = _archive.getWhitelistGroupId();
+        if (whitelistId >= 0) {
+            _whitelistEnable.setSelection(true);
+            _whitelist.setEnabled(true);
+            _whitelistPreview.setEnabled(true);
+        } else {
+            _whitelistEnable.setSelection(false);
+            _whitelist.setEnabled(false);
+            _whitelistPreview.setEnabled(false);
+        }
+        List refs = _client.getNymReferences();
+        for (int i = 0; i < refs.size(); i++) {
+            NymReferenceNode ref = (NymReferenceNode)refs.get(i);
+            addGroup(ref, whitelistId, "");
+        }
     
         if (_name.getText().trim().length() > 0)
             _save.setEnabled(true);
@@ -813,6 +968,29 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _nextSyncDelay.select(delayIndex);
         _failures.setText(_archive.getConsecutiveFailures() + "");
         _backOffOnFailures.setEnabled(false);
+    }
+    
+    private static final int MAX_WHITELIST_NAME_LEN = 30;
+    
+    private void addGroup(NymReferenceNode ref, long whitelistId, String parentName) {
+        if (ref == null) return;
+        if (ref.getChildCount() > 0) {
+            String name = null;
+            if (parentName.length() <= 0)
+                name = ref.getName();
+            else
+                name = parentName + " > " + ref.getName();
+            if (name.length() > MAX_WHITELIST_NAME_LEN)
+                _whitelist.add("..." + name.substring(name.length()-MAX_WHITELIST_NAME_LEN));
+            else
+                _whitelist.add(name);
+            _whitelistIds.add(new Long(ref.getGroupId()));
+            if (ref.getGroupId() == whitelistId)
+                _whitelist.select(_whitelist.getItemCount()-1);
+            
+            for (int i = 0; i < ref.getChildCount(); i++)
+                addGroup((NymReferenceNode)ref.getChild(i), whitelistId, name);
+        }
     }
     
     private static final String T_NEVER = "syndie.gui.syndicatordetailhttparchive.never";
@@ -873,6 +1051,11 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _nextSyncOneOff.setFont(theme.BUTTON_FONT);
         _save.setFont(theme.BUTTON_FONT);
         _cancel.setFont(theme.BUTTON_FONT);
+        
+        _whitelistEnable.setFont(theme.DEFAULT_FONT);
+        _whitelist.setFont(theme.DEFAULT_FONT);
+        _whitelistPreview.setFont(theme.BUTTON_FONT);
+        _whitelistPull.setFont(theme.DEFAULT_FONT);
     }
     
     private static final String T_NAME = "syndie.gui.syndicatordetailhttparchive.name";
@@ -913,6 +1096,10 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final String T_CANCEL = "syndie.gui.syndicatordetailhttparchive.cancel";
     private static final String T_PULLNEWAGE = "syndie.gui.syndicatordetailhttparchive.pullnewage";
     private static final String T_PUSHAGE = "syndie.gui.syndicatordetailhttparchive.pushage";
+    private static final String T_WHITELIST = "syndie.gui.syndicatordetailhttparchive.whitelist";
+    private static final String T_WHITELIST_TT = "syndie.gui.syndicatordetailhttparchive.whitelist.tt";
+    private static final String T_WHITELIST_PULL = "syndie.gui.syndicatordetailhttparchive.whitelist.pull";
+    private static final String T_WHITELIST_PREVIEW = "syndie.gui.syndicatordetailhttparchive.whitelist.preview";
     
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText(T_NAME, "Name:"));
@@ -943,6 +1130,11 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
 
         _pullNewAgeLabel.setText(registry.getText(T_PULLNEWAGE, "Age to treat as 'recent'"));
         _pushAgeLabel.setText(registry.getText(T_PUSHAGE, "Oldest message to send"));
+        _whitelistEnable.setText(registry.getText(T_WHITELIST, "Whitelisted category:"));
+        
+        _whitelist.setToolTipText(registry.getText(T_WHITELIST_TT, "Forums that are referenced in the specified category (and posts to those forums) are allowed to be imported"));
+        _whitelistPull.setText(registry.getText(T_WHITELIST_PULL, "Only pull whitelisted content (reduces anonymity but saves bandwidth)"));
+        _whitelistPreview.setText(registry.getText(T_WHITELIST_PREVIEW, "Preview"));
         
         translateCombos(registry);
     }
@@ -1042,8 +1234,12 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         cnt = _nextSyncDelay.getItemCount();
         sel = (cnt > 0 ? _nextSyncDelay.getSelectionIndex() : SYNC_DELAY_DEFAULT_INDEX);
         _nextSyncDelay.removeAll();
-        for (int i = 0; i < SYNC_DELAY.length; i++)
-            _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(T_SYNC_DELAY_SUFFIX, " hour(s)"));
+        for (int i = 0; i < SYNC_DELAY.length; i++) {
+            if (SYNC_DELAY[i] == 1)
+                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(T_SYNC_DELAY_SUFFIX, " hour"));
+            else
+                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(T_SYNC_DELAY_SUFFIX, " hours"));
+        }
         _nextSyncDelay.select(sel);
     }
 }
