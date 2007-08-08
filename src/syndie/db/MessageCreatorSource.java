@@ -21,6 +21,7 @@ public interface MessageCreatorSource {
     public int getPageCount();
     public String getPageContent(int page);
     public String getPageType(int page);
+    public String getPageTitle(int page);
     public List getAttachmentNames();
     public List getAttachmentTypes();
     /** @param attachmentIndex starts at 1 */

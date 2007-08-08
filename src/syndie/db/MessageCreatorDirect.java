@@ -363,7 +363,17 @@ public class MessageCreatorDirect extends MessageCreator {
             for (int page = 0; page < pages; page++) {
                 byte data[] = DataHelper.getUTF8(_source.getPageContent(page));
                 String contentType = _source.getPageType(page);
-                byte cfgData[] = DataHelper.getUTF8(Constants.MSG_PAGE_CONTENT_TYPE + '=' + contentType + '\n');
+                String title = _source.getPageTitle(page);
+                if (title != null) {
+                    title = title.replace('\n', ' ');
+                    title = title.replace('\r', ' ');
+                    title = title.replace('\t', ' ');
+                }
+                String cfg = Constants.MSG_PAGE_CONTENT_TYPE + '=' + contentType + '\n';
+                if (title != null)
+                    cfg = cfg + Constants.MSG_PAGE_TITLE + '=' + title + '\n';
+             
+                byte cfgData[] = DataHelper.getUTF8(cfg);
 
                 ZipEntry entry = new ZipEntry(EnclosureBody.ENTRY_PAGE_PREFIX + page + EnclosureBody.ENTRY_PAGE_DATA_SUFFIX);
                 entry.setTime(0);

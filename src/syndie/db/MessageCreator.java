@@ -143,6 +143,12 @@ public class MessageCreator {
         for (int i = 0; i < _source.getPageCount(); i++) {
             String content = _source.getPageContent(i);
             String contentType = _source.getPageType(i);
+            String title = _source.getPageTitle(i);
+            if (title != null) {
+                title = title.replace('\n', ' ');
+                title = title.replace('\r', ' ');
+                title = title.replace('\t', ' ');
+            }
             
             FileOutputStream fos = null;
             try {
@@ -158,6 +164,8 @@ public class MessageCreator {
                 File cfgFile = File.createTempFile("pageConfig", ""+ i, tmpDir);
                 fos = new FileOutputStream(cfgFile);
                 fos.write(DataHelper.getUTF8(Constants.MSG_PAGE_CONTENT_TYPE + '=' + contentType + '\n'));
+                if (title != null)
+                    fos.write(DataHelper.getUTF8(Constants.MSG_PAGE_TITLE + '=' + title + '\n'));
                 fos.close();
                 fos = null;
                 tempFiles.add(cfgFile);

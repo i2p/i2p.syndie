@@ -95,6 +95,7 @@ public class Constants {
     public static final Boolean DEFAULT_ALLOW_PUBLIC_REPLIES = Boolean.FALSE;
 
     public static final String MSG_PAGE_CONTENT_TYPE = "Content-type";
+    public static final String MSG_PAGE_TITLE = "Title";
     public static final String MSG_ATTACH_CONTENT_TYPE = "Content-type";
     public static final String MSG_ATTACH_NAME = "Name";
     public static final String MSG_ATTACH_DESCRIPTION = "Description";

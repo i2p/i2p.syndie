@@ -180,6 +180,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private boolean _showActions;
     
     private MessageEditorToolbar _bar;
+
+    private Menu _titleMenu;
+    private List _pageTitles;
     
     private Map _forumToChannelId;
     private Map _forumToManaged;
@@ -205,6 +208,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _parent = parent;
         _pageEditors = new ArrayList(1);
         _pageTypes = new ArrayList();
+        _pageTitles = new ArrayList();
         _attachmentRoots = new ArrayList();
         _attachmentPreviews = new ArrayList();
         _attachmentConfig = new ArrayList();
@@ -537,6 +541,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public String getPageContent(int page) { return ((PageEditor)_pageEditors.get(page)).getContent(); }
         /** 0-indexed page type */
         public String getPageType(int page) { return ((PageEditor)_pageEditors.get(page)).getContentType(); }
+        public String getPageTitle(int page) { 
+            String title = (String)_pageTitles.get(page); 
+            if ( (title != null) && (title.trim().length() > 0) )
+                return title;
+            else
+                return null;
+        }
         public List getAttachmentNames() {             
             ArrayList rv = new ArrayList();
             for (int i = 0; i < _attachmentConfig.size(); i++) {
@@ -679,6 +690,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final String SER_ENTRY_CONFIG = "config.txt";
     private static final String SER_ENTRY_PAGE_PREFIX = "page";
     private static final String SER_ENTRY_PAGE_CFG_PREFIX = "pageCfg";
+    private static final String SER_ENTRY_PAGE_TITLE_PREFIX = "pageTitle";
     private static final String SER_ENTRY_ATTACH_PREFIX = "attach";
     private static final String SER_ENTRY_ATTACH_CFG_PREFIX = "attachCfg";
     private static final String SER_ENTRY_REFS = "refs.txt";
@@ -711,12 +723,18 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             PageEditor editor = (PageEditor)_pageEditors.get(i);
             String type = editor.getContentType();
             String data = editor.getContent();
+            String title = getTitle(i);
+            
             zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_PREFIX + i));
             zos.write(DataHelper.getUTF8(data));
             zos.closeEntry();
             
             zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_CFG_PREFIX + i));
             zos.write(DataHelper.getUTF8(type));
+            zos.closeEntry();
+            
+            zos.putNextEntry(new ZipEntry(SER_ENTRY_PAGE_TITLE_PREFIX + i));
+            zos.write(DataHelper.getUTF8(title));
             zos.closeEntry();
         }
         
@@ -758,6 +776,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ZipEntry entry = null;
         Map pages = new TreeMap();
         Map pageCfgs = new TreeMap();
+        Map pageTitles = new TreeMap();
         Map attachments = new TreeMap();
         Map attachmentCfgs = new TreeMap();
         byte avatar[] = null;
@@ -770,6 +789,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _refEditor.setReferenceNodes(ReferenceNode.buildTree(zin));
             } else if (name.startsWith(SER_ENTRY_PAGE_CFG_PREFIX)) {
                 pageCfgs.put(name, read(zin));
+            } else if (name.startsWith(SER_ENTRY_PAGE_TITLE_PREFIX)) {
+                pageTitles.put(name, read(zin));
             } else if (name.startsWith(SER_ENTRY_PAGE_PREFIX)) {
                 pages.put(name, read(zin));
             } else if (name.startsWith(SER_ENTRY_ATTACH_CFG_PREFIX)) {
@@ -792,22 +813,30 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         while (_pageEditors.size() > 0)
             ((PageEditor)_pageEditors.remove(0)).dispose();
         
+        _pageTitles.clear();
+        
         for (int i = 0; i < pageCount; i++) {
             String body = (String)pages.get(SER_ENTRY_PAGE_PREFIX + i);
             String type = (String)pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
+            String title = (String)pageTitles.get(SER_ENTRY_PAGE_TITLE_PREFIX + i);
             
             _ui.debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
             boolean isHTML = TYPE_HTML.equals(type);
             PageEditor editor = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, _allowPreview, isHTML, i);
             _pageEditors.add(editor);
             _pageTypes.add(type);
+            _pageTitles.add(title);
             editor.setContent(body);
-            editor.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+            if ( (title != null) && (title.trim().length() > 0) )
+                editor.getItem().setText(title);
+            else
+                editor.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
             //if (isHTML)
             //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
             //else
             //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
         }
+        _pageTabs.setMenu(_titleMenu);
         
         _attachmentData.clear();
         _attachmentConfig.clear();
@@ -1199,6 +1228,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         updateForum();
         updateAuthor();
 
+        _titleMenu = new Menu(_pageTabs);
+        MenuItem item = new MenuItem(_titleMenu, SWT.PUSH);
+        item.setText("Set page title");
+        item.addSelectionListener(new FireSelectionListener() { public void fire() { setTitle(); } });
+        
         _pageTabs.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { switchPage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { switchPage(); }
@@ -1209,10 +1243,86 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     String type = getPageType(idx);
                     _ui.debugMessage("switching to page " + idx + " [" + type + "]");
                     ed.setContentType(type);
+                    _pageTabs.setMenu(_titleMenu);
+                } else {
+                    _pageTabs.setMenu(null);
                 }
-                updateToolbar(); 
+                updateToolbar();
             }
         });
+    }
+    
+    private static final String T_TITLE = "syndie.gui.messageeditor.title";
+    private static final String T_TITLE_LABEL = "syndie.gui.messageeditor.title.label";
+    private static final String T_TITLE_DONE = "syndie.gui.messageeditor.title.done";
+    
+    private void setTitle() {
+        final int page = _pageTabs.getSelectionIndex();
+        if ( (page >= 0) && (page < _pageTitles.size()) ) {
+            String title = (String)_pageTitles.get(page);
+            
+            final Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+            GridLayout gl = new GridLayout(3, false);
+            gl.marginHeight = 0;
+            gl.marginWidth = 0;
+            gl.horizontalSpacing = 0;
+            gl.verticalSpacing = 0;
+            shell.setLayout(gl);
+            shell.addShellListener(new ShellListener() {
+                public void shellActivated(ShellEvent shellEvent) {}
+                public void shellClosed(ShellEvent shellEvent) { shell.dispose(); }
+                public void shellDeactivated(ShellEvent shellEvent) {}
+                public void shellDeiconified(ShellEvent shellEvent) {}
+                public void shellIconified(ShellEvent shellEvent) {}
+            });
+            shell.setText(_translationRegistry.getText(T_TITLE, "Page title"));
+            
+            Label l = new Label(shell, SWT.NONE);
+            l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+            l.setText(_translationRegistry.getText(T_TITLE_LABEL, "Page title:"));
+            l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+            
+            final Text titleField = new Text(shell, SWT.SINGLE | SWT.BORDER);
+            titleField.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            titleField.setText(title != null ? title : "");
+            titleField.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+            titleField.setTextLimit(40);
+            titleField.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent evt) {
+                    if (evt.detail == SWT.TRAVERSE_RETURN) {
+                        _pageTitles.set(page, titleField.getText());
+                        CTabItem item = _pageTabs.getItem(page);
+                        if (item != null)
+                            item.setText(titleField.getText());
+                        shell.dispose();
+                    }
+                }
+            });
+            
+            Button done = new Button(shell, SWT.PUSH);
+            done.setText(_translationRegistry.getText(T_TITLE_DONE, "OK"));
+            done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+            done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+            done.addSelectionListener(new FireSelectionListener() { 
+                public void fire() {
+                    _pageTitles.set(page, titleField.getText());
+                    CTabItem item = _pageTabs.getItem(page);
+                    if (item != null)
+                        item.setText(titleField.getText());
+                    shell.dispose();
+                }
+            });
+            
+            shell.pack();
+            //shell.setSize(300, shell.computeSize(SWT.DEFAULT, SWT.DEFAULT).y);
+            shell.open();
+        }
+    }
+    private String getTitle(int page) {
+        if ( (page >= 0) && (page < _pageTitles.size()) )
+            return (String)_pageTitles.get(page);
+        else
+            return null;
     }
     
     private void initPrivacyCombo() {
@@ -1336,6 +1446,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         PageEditor ed = new PageEditor(_client, _ui, _themeRegistry, _translationRegistry, this, _allowPreview, TYPE_HTML.equals(type), _pageEditors.size());
         _pageEditors.add(ed);
         _pageTypes.add(type);
+        _pageTitles.add("");
         int pageNum = _pageEditors.size();
         ed.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + pageNum);
         
@@ -1359,6 +1470,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _ui.debugMessage("remove page " + pageNum + "/" + _pageEditors.size());
             PageEditor editor = (PageEditor)_pageEditors.remove(pageNum);
             _pageTypes.remove(pageNum);
+            _pageTitles.remove(pageNum);
             editor.dispose();
             
             for (int i = 0; i < _pageEditors.size(); i++) {
@@ -1499,6 +1611,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** view the given (0-indexed) page */
     private void viewPage(int pageNum) {
         _pageTabs.setSelection(pageNum);
+        _pageTabs.setMenu(_titleMenu);
         updateToolbar();
     }
     

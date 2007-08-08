@@ -16,10 +16,12 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import syndie.Constants;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
+import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.ThreadBuilder;
@@ -177,7 +179,16 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[i] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[i] = new Composite(_tabFolder, SWT.NONE);
             _tabs[i].setControl(_tabRoots[i]);
-            _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+            
+            String cfg = _client.getMessagePageConfig(_msg.getInternalId(), i);
+            Properties props = new Properties();
+            CommandImpl.parseProps(cfg, props);
+            String title = props.getProperty(Constants.MSG_PAGE_TITLE, "");
+            if ( (title != null) && (title.trim().length() > 0) ) 
+                _tabs[i].setText(title);
+            else
+                _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+            
             _tabRoots[i].setLayout(new FillLayout());
             _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
             timer.addEvent("initBody n-page renderer constructed");
