@@ -327,6 +327,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             }
             public Hash getSignAs() { return null; }
             public boolean getAuthorHidden() { return false; }
+            public String getPageTitle(int page) { return null; }
 
             public Hash getTarget() {
                 int idx = _target.getSelectionIndex();

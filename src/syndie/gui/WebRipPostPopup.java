@@ -199,6 +199,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
             public Hash getSignAs() { return null; }
             public boolean getAuthorHidden() { return false; }
             public int getPageCount() { return 1; }
+            public String getPageTitle(int page) { return null; }
             public String getPageContent(int page) { return html; }
             public String getPageType(int page) { return "text/html"; }
             public List getAttachmentNames() { return attachmentNames; }
