@@ -263,7 +263,7 @@ class SyncInboundFetcher {
         importer.complete();
     }
     
-    private static final int CONCURRENT_FETCHES = 5;
+    private static final int CONCURRENT_FETCHES = 3;
     
     private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
         List fetchers = new ArrayList(CONCURRENT_FETCHES);

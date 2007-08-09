@@ -394,7 +394,10 @@ public class EepGet {
             _currentAttempt++;
             if (_currentAttempt > _numRetries) 
                 break;
-            try { Thread.sleep(5*1000); } catch (InterruptedException ie) {}
+            try { 
+                long delay = _context.random().nextInt(60*1000);
+                Thread.sleep(5*1000+delay); 
+            } catch (InterruptedException ie) {}
         }
 
         for (int i = 0; i < _listeners.size(); i++) 
