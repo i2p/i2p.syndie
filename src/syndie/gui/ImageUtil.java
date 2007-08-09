@@ -645,6 +645,8 @@ public class ImageUtil {
         }
     }
     
+    private static final boolean BUTTONS_HAVE_BG = !System.getProperty("os.name").toLowerCase().contains("win");
+    
     /**
      * vertically draw the given text on the control in the specified font so that the
      * bottom of the words are on the right hand side
@@ -671,11 +673,19 @@ public class ImageUtil {
         Image img = new Image(ctl.getDisplay(), size.y, size.x);
         GC imgGC = new GC(img);
         
-        imgGC.setForeground(gc.getBackground());
-        imgGC.setBackground(gc.getBackground());
-        imgGC.setFont(font);
+        // windows doesn't support background colors on buttons (at least not in swt), so
+        // on windows, use the system gray as the bgcolor
+        if (BUTTONS_HAVE_BG) {
+            imgGC.setForeground(gc.getBackground());
+            imgGC.setBackground(gc.getBackground());
+        } else {
+            imgGC.setForeground(ColorUtil.getColor("#D4D0C8")); // ms xp gray
+            imgGC.setBackground(ColorUtil.getColor("#D4D0C8"));
+        }
         // the drawString leaves some white spots around the text, so fill 'er with the bgcolor
         imgGC.fillRectangle(0, 0, size.y+20, size.x+20);
+        imgGC.setFont(font);
+        imgGC.setAntialias(SWT.ON);
 
         Transform transform = new Transform(ctl.getDisplay());
         transform.rotate(angle);

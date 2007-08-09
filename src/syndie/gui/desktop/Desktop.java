@@ -421,14 +421,16 @@ class Desktop {
             public void run() {
                 // show a special warning/error screen
                 final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-                s.setText(_translationRegistry.getText(T_PASSPHRASE_REQ, "Passphrase..."));
-                s.setFont(_themeRegistry.getTheme().SHELL_FONT);
+                s.setText(strans(T_PASSPHRASE_REQ, "Passphrase..."));
+                if (_themeRegistry != null)
+                    s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                 s.setLayout(new GridLayout(2, false));
 
                 Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                 l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                l.setText(_translationRegistry.getText(T_LOGIN, "Passphrase:"));
-                l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                l.setText(strans(T_LOGIN, "Passphrase:"));
+                if (_themeRegistry != null)
+                    l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                 final Text pass = new Text(s, SWT.SINGLE | SWT.WRAP);
                 pass.setText(TextEngine.DEFAULT_PASS);
                 pass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -438,12 +440,14 @@ class Desktop {
                             recon(pass, s, loginMutex);
                     }
                 });
-                pass.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                if (_themeRegistry != null)
+                    pass.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
 
                 Button b = new Button(s, SWT.PUSH);
                 b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-                b.setText(_translationRegistry.getText(T_LOGIN_PROCEED, "Login"));
-                b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                b.setText(strans(T_LOGIN_PROCEED, "Login"));
+                if (_themeRegistry != null)
+                    b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 b.addSelectionListener(new FireSelectionListener() { 
                     public void fire() {
                         recon(pass, s, loginMutex);
@@ -452,8 +456,9 @@ class Desktop {
 
                 b = new Button(s, SWT.PUSH);
                 b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-                b.setText(_translationRegistry.getText(T_LOGIN_EXIT, "Exit"));
-                b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                b.setText(strans(T_LOGIN_EXIT, "Exit"));
+                if (_themeRegistry != null)
+                    b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 b.addSelectionListener(new FireSelectionListener() { 
                     public void fire() {
                         s.dispose();

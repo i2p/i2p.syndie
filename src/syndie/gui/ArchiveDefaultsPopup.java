@@ -76,18 +76,24 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
         _explanationWhy = new Label(_shell, SWT.WRAP);
         _explanationWhy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         
-        _archives = new Table(_shell, SWT.SINGLE | SWT.CHECK | SWT.BORDER);
+        _archives = new Table(_shell, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.FULL_SELECTION);
         _archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         _archives.setHeaderVisible(true);
         _archives.setLinesVisible(true);
         
         _archives.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent evt) {
+                TableItem item = _archives.getSelection()[0];
+                int col = getCol();
+                edit(item, col);
+            }
+            public void widgetSelected(SelectionEvent selectionEvent) {}
+            private int getCol() {
                 Point loc = _shell.getDisplay().getCursorLocation();
                 Point reloc = _shell.getDisplay().map(null, _archives, loc);
-                TableItem item = _archives.getSelection()[0];
                 int col = -1;
                 int cols = _archives.getColumnCount();
+                TableItem item = _archives.getSelection()[0];
                 for (int i = 0; i < cols; i++) {
                     Rectangle rect = item.getBounds(i);
                     if (rect.x + rect.width > reloc.x) {
@@ -96,10 +102,8 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
                     }
                 }
                 if (col < 0) col = cols-1;
-                
-                edit(item, col);
+                return col;
             }
-            public void widgetSelected(SelectionEvent selectionEvent) {}
         });
         
         _colImport = new TableColumn(_archives, SWT.LEFT);
@@ -133,7 +137,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
 
         loadDefaults(); // packed on translate
         
-        _archives.setSize(TABLE_WIDTH, 500);
+        _archives.setSize(TABLE_WIDTH, 700);
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -278,7 +282,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
     private static final String T_EDIT_NAME_CANCEL = "syndie.gui.archivedefaultspopup.editname.cancel";
     
     private void editName(final TableItem item) {
-        final Shell shell = new Shell(_shell, SWT.PRIMARY_MODAL | SWT.BORDER);
+        final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL | SWT.BORDER);
         GridLayout gl = new GridLayout(4, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
@@ -342,7 +346,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
     private static final String T_EDIT_URL_CANCEL = "syndie.gui.archivedefaultspopup.editurl.cancel";
     
     private void editURL(final TableItem item) {
-        final Shell shell = new Shell(_shell, SWT.BORDER | SWT.PRIMARY_MODAL);
+        final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.BORDER | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(4, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
@@ -421,7 +425,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
             }
         }
         
-        final Shell shell = new Shell(_shell, SWT.BORDER | SWT.PRIMARY_MODAL);
+        final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.BORDER | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(6, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
@@ -618,11 +622,11 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
         _colPullOnly.pack();
          */
         
-        _colAutomatic.setWidth(25);
+        _colAutomatic.setWidth(100);
         _colPullOnly.setWidth(50);
         _colProxy.setWidth(150);
         _colImport.setWidth(300);
-        _colLocation.setWidth(225);
+        _colLocation.setWidth(200);
     }
     public void applyTheme(Theme theme) {
         _shell.setFont(theme.SHELL_FONT);
