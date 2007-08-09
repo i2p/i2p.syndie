@@ -61,6 +61,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     
     private ThreadReferenceNode _messageThread;
     
+    private boolean _hideThreadTab;
+    
     public interface ThreadLoadedListener {
         public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize);
     }
@@ -72,6 +74,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _bookmarkControl = bookmarkControl;
         _banControl = ban;
         _root = root;
+        _hideThreadTab = false;
         _threadLoadedListeners = new ArrayList();
         _viewState = new DetailState();
         initComponents();
@@ -167,7 +170,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         int attachments = msg.getAttachmentCount();
         int tabs = pageCount + attachments;
         if ( (refs != null) && (refs.size() > 0) ) tabs++;
-        if (threadSize > 1) tabs++;
+        if ( (threadSize > 1) && (!_hideThreadTab) ) tabs++;
 
         _ui.debugMessage("tabs: " + tabs + " pages: " + pageCount + " attach: " + attachments + " refs? " + (refs != null ? refs.size() : 0) + " threadSize: " + threadSize);
         _tabs = new CTabItem[tabs];
@@ -199,7 +202,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             //_body[i].addKeyListener(new MaxViewListener(uri));
         }
         int off = pageCount;
-        if (threadSize > 1) {
+        if ( (threadSize > 1) && (!_hideThreadTab) ) {
             timer.addEvent("initBody building the thread subtab");
             _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
@@ -299,6 +302,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         
         if (_tabFolder != null) {
             if (_page > 0) {
+                if (_page > _tabs.length)
+                    _page = _tabs.length;
                 _tabFolder.setSelection(_tabs[_page-1]);
             } else {
                 _tabFolder.setSelection(_tabs[0]);
@@ -321,6 +326,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         timer.addEvent("initBody root laid out");
         _root.setVisible(true);
     }
+    
+    public void hideThreadTab() { _hideThreadTab = true; }
     
     private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
         private SyndieURI _attachURI;

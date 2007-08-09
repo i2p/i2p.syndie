@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.Version;
+import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
@@ -546,6 +547,42 @@ class Desktop {
         _shell.setMinimized(true);
     }
     
+    void showHelp() {        
+        long msgId = _client.getMessageId(Constants.HELP_MSG.getScope(), Constants.HELP_MSG.getMessageId());
+        MessageInfo msg = _client.getMessage(msgId);
+        int page = getHelpPage();
+        new StandaloneMessageViewer(_client, _ui, _shell, msg, page, _navControl, _themeRegistry, _translationRegistry, _bookmarkControl, _banControl);
+    }
+    private int getHelpPage() {
+        // this will obviously need to be updated as the help text is.  fooey.
+        DesktopPanel panel = getCurrentPanel();
+        if (panel == null) {
+            return 0;
+        } else if (panel instanceof StartupPanel) {
+            return 1;
+        } else if (panel instanceof ForumSelectionPanel) {
+            return 2;
+        } else if (panel instanceof MessageEditorPanel) {
+            return 3;
+        } else if (panel instanceof MessagePanel) {
+            return 4;
+        } else if (panel instanceof MessageTreePanel) {
+            return 5;
+        } else if (panel instanceof ProfilePanel) {
+            return 6;
+        } else if (panel instanceof ResumeablePanel) {
+            return 7;
+        } else if (panel instanceof SQLPanel) {
+            return 8;
+        } else if (panel instanceof SyndicatorPanel) {
+            return 9;
+        } else if (panel instanceof TabPanel) {
+            return 10;
+        } else {
+            return 0;
+        }
+    }
+    
     private void initKeyFilters() {
         _display.addFilter(SWT.KeyDown, new Listener() {
             public void handleEvent(Event evt) {
@@ -714,6 +751,7 @@ class Desktop {
                     ((HideDesktopCorner)_cornerNorthEast).startupComplete();
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
                     ((ControlDesktopCorner)_cornerNorthWest).startupComplete();
+                    ((HelpDesktopCorner)_cornerSouthEast).startupComplete();
                     _edgeWestDefault.startupComplete();
                     toggleForumSelectionPanel();
                 } 
@@ -832,7 +870,7 @@ class Desktop {
         
         _cornerNorthWest = new ControlDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthWest, _ui);
         _cornerNorthEast = new HideDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
-        _cornerSouthEast = new DesktopCornerDummy(SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
+        _cornerSouthEast = new HelpDesktopCorner(this, SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
         _commandBar = new CommandBar(this, _edgeNorth, _ui, _translationRegistry, _themeRegistry);
@@ -960,12 +998,31 @@ class HideDesktopCorner extends DesktopCorner {
         initComponents(color);
     }
     public void startupComplete() {
-        _button.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
+        _button.setImage(ImageUtil.ICON_HIDE);
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
         _button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.hide(); } });
+        getRoot().layout(true, true);
+    }
+}
+
+class HelpDesktopCorner extends DesktopCorner {
+    private Desktop _desktop;
+    private Button _button;
+    public HelpDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
+        super(parent, ui);
+        _desktop = desktop;
+        initComponents(color);
+    }
+    public void startupComplete() {
+        _button.setImage(ImageUtil.ICON_HELP);
+    }
+    private void initComponents(int color) {
+        _button = new Button(getRoot(), SWT.PUSH);
+        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showHelp(); } });
         getRoot().layout(true, true);
     }
 }

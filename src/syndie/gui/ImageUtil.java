@@ -169,6 +169,9 @@ public class ImageUtil {
     public static Image ICON_MSGNAV_NEXTNEW;
     public static Image ICON_MSGNAV_PREVNEW;
     
+    public static Image ICON_HIDE;
+    public static Image ICON_HELP;
+    
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
@@ -290,6 +293,10 @@ public class ImageUtil {
         _indisposableImages.add(ICON_MSGNAV_PREVNEW);
         _indisposableImages.add(ICON_MSGNAV_PREVTHREAD);
         _indisposableImages.add(ICON_MSGNAV_PREVVIATHREAD);
+        
+        _indisposableImages.add(ICON_HIDE);
+        _indisposableImages.add(ICON_HELP);
+        
         _timer.addEvent("image init add complete");
         //_timer.complete();
     }
@@ -358,6 +365,9 @@ public class ImageUtil {
         ICON_BROWSE_POSTABLE = createImageFromResource("iconBrowsePost.png");
         ICON_BROWSE_ARCHIVES = createImageFromResource("iconBrowseArchives.png");
         ICON_BROWSE_REFS = createImageFromResource("iconBrowseRefs.png");
+        
+        ICON_HIDE = createImageFromResource("iconHide.png");
+        ICON_HELP = createImageFromResource("iconHelp.png");
 
         _timer.addEvent("image init: bulk icons created");
         

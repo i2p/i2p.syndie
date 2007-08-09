@@ -3,6 +3,9 @@ package syndie;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import net.i2p.data.Base64;
+import net.i2p.data.Hash;
+import syndie.data.SyndieURI;
 
 /**
  * ugly centralized place to put shared constants.  who needs ooad?
@@ -115,6 +118,11 @@ public class Constants {
     public static final long MAX_ATTACHMENT_SIZE = 4*1024*1024;
     
     public static final String REF_TYPE_BANNED = "banned";
+
+    /** this refers to the tour uri - this url is just there for testing until the tour is written */
+    public static final SyndieURI TOUR_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1172161522466l);
+    /** this refers to the (context-sensitive) help uri - this url is just there for testing until the help is written */
+    public static final SyndieURI HELP_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1174602686180l);
 
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }

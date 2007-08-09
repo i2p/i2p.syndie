@@ -1,5 +1,6 @@
 package syndie.gui.desktop;
 
+import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellEvent;
@@ -9,6 +10,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import syndie.Constants;
+import syndie.data.MessageInfo;
+import syndie.data.SyndieURI;
 import syndie.db.UI;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.Theme;
@@ -124,9 +128,14 @@ public class WelcomePopup implements Themeable, Translatable {
     }
     
     private void continueToSyndie() { dispose(); }
+    
     private void beginTour() { 
         // show tour popup...
-        dispose(); 
+        dispose();
+        long msgId = _desktop.getDBClient().getMessageId(Constants.TOUR_MSG.getScope(), Constants.TOUR_MSG.getMessageId());
+        MessageInfo msg = _desktop.getDBClient().getMessage(msgId);
+        int page = 0;
+        new StandaloneMessageViewer(_desktop.getDBClient(), _desktop.getUI(), _parent, msg, page, _desktop.getNavControl(), _themeRegistry, _translationRegistry, _desktop.getBookmarkControl(), _desktop.getBanControl());
         //_desktop.hide();
     } 
     private void configSharing() {
