@@ -135,7 +135,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     }
     
     public void viewMatches() {
-        List scopes = _channels.getMatches();
+        List scopes = _channels.getMatches(true);
         boolean unread = _channels.isUnreadOnly();
         boolean threaded = true;
         boolean useImportDate = MessageTree.shouldUseImportDate(_client);

@@ -102,13 +102,43 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     protected Composite getTop() { return _top; }
     
     public int getRecordCount() { return _records.size(); }
-    public List getMatches() {
+    public List getMatches() { return getMatches(false); }
+    public List getMatches(boolean recursive) {
         List rv = new ArrayList();
         for (int i = 0; i < _records.size(); i++) {
             Record r = (Record)_records.get(i);
-            rv.add(r.scope);
+            if (r.scope != null) {
+                rv.add(r.scope);
+            } else if ( recursive && (r.node != null) && (r.node.getChildCount() > 0) ) {
+                getMatches(r.node, rv);
+            }
         }
         return rv;
+    }
+    private void getMatches(ReferenceNode node, List rv) {
+        if (node == null) return;
+        SyndieURI uri = node.getURI();
+        if (uri != null) {
+            Hash scope = uri.getScope();
+            if (scope == null)
+                scope = uri.getHash("scope");
+            if (scope != null) {
+                if (!rv.contains(scope))
+                    rv.add(scope);
+            } else {
+                Hash scopes[] = uri.getSearchScopes();
+                if (scopes != null) {
+                    for (int i = 0; i < scopes.length; i++) {
+                        if (!rv.contains(scopes[i]))
+                            rv.add(scopes[i]);
+                    }
+                }
+            }
+        } else {
+            int kids = node.getChildCount();
+            for (int i = 0; i < kids; i++)
+                getMatches(node.getChild(i), rv);
+        }
     }
     public List getMatchingNodes() {
         List rv = new ArrayList();
