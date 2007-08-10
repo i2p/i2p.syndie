@@ -333,6 +333,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                     final int status = _client.getMessageStatus(msgId);
                     Display.getDefault().asyncExec(new Runnable() { 
                         public void run() {
+                            if (_toggleRead.isDisposed()) return;
                             _msgId = msgId;
                             switch (status) {
                                 case DBClient.MSG_STATUS_READ:

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -384,11 +385,15 @@ public class ImageBuilderPopup {
         if (!_choiceUpdated) return _configPreviewCanvas.getImage(); 
         if (_choiceFile.getSelection()) {
             File fname = new File(_choiceFileText.getText().trim());
-            if (fname.exists()) {
-                Image rv = ImageUtil.createImageFromFile(fname.getPath());
-                _configPreviewImageOrig = rv;
-                _configPreviewCanvas.setImage(rv);
-                return rv;
+            if (fname.exists() && fname.isFile()) {
+                try {
+                    Image rv = ImageUtil.createImageFromFile(fname.getPath());
+                    _configPreviewImageOrig = rv;
+                    _configPreviewCanvas.setImage(rv);
+                    return rv;
+                } catch (SWTException se) {
+                    return null;
+                }
             } else {
                 return null;
             }

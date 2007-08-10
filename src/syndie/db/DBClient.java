@@ -1631,10 +1631,20 @@ public class DBClient {
             sortChannels(pubPostIds);
         }
         
+        int totalGetEvents = 0;
+        long totalGetTime = 0;
+        ArrayList getTimes = new ArrayList();
+        
         for (int i = 0; i < identIds.size(); i++) {
             Long chanId = (Long)identIds.get(i);
             if (fetchInfo) {
+                long before = System.currentTimeMillis();
                 ChannelInfo info = getChannel(chanId.longValue());
+                long time = System.currentTimeMillis()-before;
+                getTimes.add(new Long(time));
+                totalGetTime += time;
+                totalGetEvents++;
+                
                 if (info != null) {
                     rv._internalIds.add(chanId);
                     rv._identityChannels.add(info);
@@ -1647,7 +1657,13 @@ public class DBClient {
         for (int i = 0; i < manageIds.size(); i++) {
             Long chanId = (Long)manageIds.get(i);
             if (fetchInfo) {
+                long before = System.currentTimeMillis();
                 ChannelInfo info = getChannel(chanId.longValue());
+                long time = System.currentTimeMillis()-before;
+                getTimes.add(new Long(time));
+                totalGetTime += time;
+                totalGetEvents++;
+                
                 if (info != null) {
                     rv._internalIds.add(chanId);
                     rv._managedChannels.add(info);
@@ -1660,7 +1676,13 @@ public class DBClient {
         for (int i = 0; i < postIds.size(); i++) {
             Long chanId = (Long)postIds.get(i);
             if (fetchInfo) {
+                long before = System.currentTimeMillis();
                 ChannelInfo info = getChannel(chanId.longValue());
+                long time = System.currentTimeMillis()-before;
+                getTimes.add(new Long(time));
+                totalGetTime += time;
+                totalGetEvents++;
+                
                 if (info != null) {
                     rv._internalIds.add(chanId);
                     rv._postChannels.add(info);
@@ -1673,7 +1695,13 @@ public class DBClient {
         for (int i = 0; i < pubPostIds.size(); i++) {
             Long chanId = (Long)pubPostIds.get(i);
             if (fetchInfo) {
+                long before = System.currentTimeMillis();
                 ChannelInfo info = getChannel(chanId.longValue());
+                long time = System.currentTimeMillis()-before;
+                getTimes.add(new Long(time));
+                totalGetTime += time;
+                totalGetEvents++;
+                
                 if (info != null) {
                     rv._internalIds.add(chanId);
                     rv._publicPostChannels.add(info);
@@ -1684,6 +1712,7 @@ public class DBClient {
             }
         }
         
+        _ui.debugMessage("getChannels: total time: " + totalGetTime + "ms\n" + getTimes);
         return rv;
     }
     private void sortChannels(List chanIds) {
@@ -1849,14 +1878,51 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_POST_KEYS = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_MANAGE_KEYS = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_ARCHIVES = "SELECT archiveId, wasEncrypted FROM channelArchive WHERE channelId = ?";
-    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT DISTINCT keyData, wasPublic FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
-    private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ? ORDER BY headerName";
+    private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT keyData, wasPublic FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
+    private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
     public ChannelInfo getChannel(long channelId) {
         ensureLoggedIn();
         long start = System.currentTimeMillis();
         if (_trace) _getChanCount++;
         ChannelInfo info = new ChannelInfo();
+        if (!getChannelInfo(channelId, info))
+            return null;
+        
+        if (!getChannelTags(channelId, info))
+            return null;
+
+        Set postKeys = getChannelPostKeys(channelId);
+        if (postKeys == null)
+            return null;
+        info.setAuthorizedPosters(postKeys);
+        
+        Set manageKeys = getChannelManageKeys(channelId);
+        if (manageKeys == null)
+            return null;
+        info.setAuthorizedManagers(manageKeys);
+        
+        if (!getChannelArchives(channelId, info))
+            return null;
+        
+        if (!getChannelReadKeys(channelId, info))
+            return null;
+        
+        if (!getChannelMetaHeaders(channelId, info))
+            return null;
+        
+        List roots = getChannelReferences(channelId);
+        if (roots == null)
+            return null;
+        info.setReferences(roots);
+        
+        long end = System.currentTimeMillis();
+        if (_trace)
+            _getChanTime += (end-start);
+        return info;
+    }
+    
+    private boolean getChannelInfo(long channelId, ChannelInfo info) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1901,20 +1967,23 @@ public class DBClient {
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
                 info.setReceiveDate(importDate.getTime());
+                return true;
             } else {
-                return null;
+                return false;
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's info", se);
-            return null;
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
-        stmt = null;
-        rs = null;
+    }
+    
+    private boolean getChannelTags(long channelId, ChannelInfo info) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_TAG);
             stmt.setLong(1, channelId);
@@ -1934,27 +2003,20 @@ public class DBClient {
             }
             info.setPublicTags(unencrypted);
             info.setPrivateTags(encrypted);
+            return true;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's tags", se);
-            return null;
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-
-        Set postKeys = getChannelPostKeys(channelId);
-        if (postKeys == null)
-            return null;
-        info.setAuthorizedPosters(postKeys);
-        
-        Set manageKeys = getChannelManageKeys(channelId);
-        if (manageKeys == null)
-            return null;
-        info.setAuthorizedManagers(manageKeys);
-        
-        stmt = null;
-        rs = null;
+    }
+    
+    private boolean getChannelArchives(long channelId, ChannelInfo info) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_ARCHIVES);
             stmt.setLong(1, channelId);
@@ -1996,17 +2058,20 @@ public class DBClient {
             
             info.setPublicArchives(pub);
             info.setPrivateArchives(priv);
+            return true;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
-            return null;
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-        
-        stmt = null;
-        rs = null;
+    }
+    
+    private boolean getChannelReadKeys(long channelId, ChannelInfo info) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_READ_KEYS);
             stmt.setLong(1, channelId);
@@ -2024,17 +2089,20 @@ public class DBClient {
             }
             info.setReadKeys(keys);
             info.setReadKeysArePublic(pub);
+            return true;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
-            return null;
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-
-        stmt = null;
-        rs = null;
+    }
+    
+    private boolean getChannelMetaHeaders(long channelId, ChannelInfo info) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_META_HEADERS);
             stmt.setLong(1, channelId);
@@ -2055,24 +2123,15 @@ public class DBClient {
             }
             info.setPublicHeaders(pub);
             info.setPrivateHeaders(priv);
+            return true;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error retrieving the channel's managers", se);
-            return null;
+            return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
-
-        List roots = getChannelReferences(channelId);
-        if (roots == null)
-            return null;
-        info.setReferences(roots);
-        
-        long end = System.currentTimeMillis();
-        if (_trace)
-            _getChanTime += (end-start);
-        return info;
     }
     
     public List getChannelReferences(long channelId) {

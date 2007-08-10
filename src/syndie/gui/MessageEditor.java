@@ -77,6 +77,7 @@ import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
+import syndie.db.JobRunner;
 import syndie.db.MessageCreator;
 import syndie.db.MessageCreatorDirect;
 import syndie.db.MessageCreatorSource;
@@ -274,6 +275,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (_finder != null) _finder.dispose();
         while (_pageEditors.size() > 0)
             ((PageEditor)_pageEditors.remove(0)).dispose();
+        while (_attachmentPreviews.size() > 0)
+            ((AttachmentPreview)_attachmentPreviews.remove(0)).dispose();
+        while (_attachmentRoots.size() > 0)
+            ((Composite)_attachmentRoots.remove(0)).dispose();
+        _attachmentConfig.clear();
+        _attachmentData.clear();
+        _attachmentSummary.clear();
+            
         
         if (_threadTree != null)
             _threadTree.dispose();
@@ -1224,7 +1233,21 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 
         addPage();
         
-        _nymChannels = _client.getChannels(true, true, true, true);
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() { 
+                long beforeGet = System.currentTimeMillis();
+                _nymChannels = _client.getChannels(true, true, true, true);
+                _ui.debugMessage("get channels took " + (System.currentTimeMillis()-beforeGet) + "ms");
+
+                _root.getDisplay().asyncExec(new Runnable() {
+                    public void run() {
+                        updateForum();
+                        updateAuthor();
+                    }
+                });
+            }
+        });
+        
         updateForum();
         updateAuthor();
 
@@ -1232,7 +1255,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         MenuItem item = new MenuItem(_titleMenu, SWT.PUSH);
         item.setText("Set page title");
         item.addSelectionListener(new FireSelectionListener() { public void fire() { setTitle(); } });
-        
+
         _pageTabs.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { switchPage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { switchPage(); }
@@ -2002,7 +2025,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         boolean itemsSinceSep = false;
         
-        for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getIdentityChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getIdentityChannel(i);
             
@@ -2046,7 +2069,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
-        for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getManagedChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getManagedChannel(i);
 
@@ -2091,7 +2114,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
-        for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getPostChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getPostChannel(i);
             
@@ -2135,7 +2158,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if (_bar != null) _bar.addForumMenuItem();
             itemsSinceSep = false;
         }
-        for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getPublicPostChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             
@@ -2176,7 +2199,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 targetFound = true;
         }
         
-        if (!targetFound && (_forum != null)) {
+        if ((_nymChannels != null) && !targetFound && (_forum != null)) {
             // other forum chosen
             long id = _client.getChannelId(_forum);
             if (id >= 0) {
@@ -2400,7 +2423,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         boolean itemsSinceSep = false;
         
-        for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getIdentityChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getIdentityChannel(i);
             
@@ -2440,7 +2463,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if (_bar != null) _bar.addAuthorMenuItem();
             itemsSinceSep = false;
         }
-        for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
+        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getManagedChannelCount(); i++) {
             itemsSinceSep = true;
             final ChannelInfo info = _nymChannels.getManagedChannel(i);
 
