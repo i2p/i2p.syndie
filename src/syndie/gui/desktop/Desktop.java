@@ -139,7 +139,7 @@ class Desktop {
     public void addListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     public void removeListener(DesktopListener lsnr) { synchronized (_listeners) { _listeners.add(lsnr); } }
     
-    private boolean TRIM = false;
+    private boolean TRIM = true;
     
     private void initComponents(Timer timer) {
         timer.addEvent("init desktop components begin");
