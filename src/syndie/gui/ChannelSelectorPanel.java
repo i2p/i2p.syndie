@@ -65,6 +65,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private Button _privateOnly;
     private Text _search;
     private Button _searchButton;
+    private Button _searchAll;
     private Composite _scrollContainer;
     private ScrolledComposite _scroll;
     private Composite _buttons;
@@ -188,10 +189,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
+        
+        GridData data = (GridData)_search.getLayoutData();
+        Point point = _search.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        data.widthHint = point.x;
+        _top.layout(true, true);
     }
     
     protected void initTop() {
-        GridLayout gl = new GridLayout(5, false);
+        GridLayout gl = new GridLayout(6, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
         gl.marginHeight = 0;
@@ -225,6 +231,10 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _searchButton = new Button(_top, SWT.PUSH);
         _searchButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _searchButton.addSelectionListener(new FireSelectionListener() { public void fire() { search(_search.getText()); } });
+        
+        _searchAll = new Button(_top, SWT.PUSH);
+        _searchAll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _searchAll.addSelectionListener(new FireSelectionListener() { public void fire() { search(""); } });
     }
 
     protected void search(final String term) {
@@ -594,6 +604,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             ctl[i].setEnabled(false);
         _search.setEnabled(false);
         _searchButton.setEnabled(false);
+        _searchAll.setEnabled(false);
         _privateOnly.setEnabled(false);
         _unreadOnly.setEnabled(false);
         _filterLabel.setEnabled(false);
@@ -632,6 +643,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                             ctl[i].setEnabled(true);
                         _search.setEnabled(true);
                         _searchButton.setEnabled(true);
+                        _searchAll.setEnabled(true);
                         _privateOnly.setEnabled(true);
                         _unreadOnly.setEnabled(true);
                         _filterLabel.setEnabled(true);
@@ -704,6 +716,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private static final String T_PRIVATEONLY = "syndie.gui.channelselectorpanel.privateonly";
     private static final String T_SEARCH = "syndie.gui.channelselectorpanel.search";
     private static final String T_SEARCH_BUTTON = "syndie.gui.channelselectorpanel.search.button";
+    private static final String T_SEARCH_ALL = "syndie.gui.channelselectorpanel.search.all";
 
     public void translate(TranslationRegistry registry) {
         _filterLabel.setText(registry.getText(T_FILTER, "Only include forums with: "));
@@ -711,6 +724,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _privateOnly.setText(registry.getText(T_PRIVATEONLY, "private messages"));
         _search.setText(registry.getText(T_SEARCH, "search term"));
         _searchButton.setText(registry.getText(T_SEARCH_BUTTON, "search"));
+        _searchAll.setText(registry.getText(T_SEARCH_ALL, "view all"));
     }
     
     public void applyTheme(Theme theme) {
@@ -719,6 +733,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         _privateOnly.setFont(theme.DEFAULT_FONT);
         _search.setFont(theme.DEFAULT_FONT);
         _searchButton.setFont(theme.BUTTON_FONT);
+        _searchAll.setFont(theme.BUTTON_FONT);
         _root.layout(true, true);
     }
 }
