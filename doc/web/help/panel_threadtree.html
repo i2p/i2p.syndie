@@ -1,0 +1,155 @@
+<html><head><title>Syndie help - Thread tree panel</title></head>
+<body>
+<h1>Syndie help - Thread tree panel</h1>
+<a href="index.html">up</a><br /><br />
+
+<center><img src="panel_threadtree.png"></center>
+
+<p>The thread tree panel offers a way to review the messages in the selected
+forum(s) and take appropriate action.  Individual messages are organized into
+<i>threads</i> where possible - replies are listed under the message they are
+in reply to, etc.</p>
+
+<hr />
+<center><img src="panel_threadtree_title_single.png">
+<img src="panel_threadtree_title_multi.png"></center>
+
+<p>The top of the panel displays what forum is being shown, including the avatar,
+title, and description.  However, if more than one forum is being shown, it instead
+shows a generic avatar and displays the title as
+<code>"Browsing multiple forums"</code>.</p>
+
+<hr />
+<center><img src="panel_threadtree_pagination.png"></center>
+
+<p>The number of threads can grow very large, depending upon the filter criteria
+used, and when it does, the threads are split up into <code>pages</code> - groups
+of 20 threads at a time.  Underneath the title bar and above the actual thread
+tree, the pagination bar offers buttons to go back to the first page ("<b>&lt;&lt;</b>"),
+to the previous page ("<b>&lt;</b>"), the next page ("<b>&gt;</b>"), and the last
+page ("<b>&gt;&gt;</b>").  In addition, the page size can be adjusted from the default
+value of 20.</p>
+
+<hr />
+<center><img src="panel_threadtree_tree.png"></center>
+
+<p>The thread tree itself is the meat of the panel, displaying the subject, author,
+target forum, and posting date of relevent messages.  When multiple forums are displayed,
+the top level item refers to the forum itself, prefixed by the number of threads
+underneath it (e.g. "<b>(1) Polecat</b>" or "<b>(1) Potatomus</b>").  The font used
+shows the read status - normal text means the message has been read, <i>italics</i>
+means the message has been read but something underneath it hasn't been, and <b>bold</b>
+means the message has not yet been read (or at least not yet marked as read).</p>
+
+<p>When individual messages or forums are right clicked, the context menu is shown, 
+though most of that functionality is available through the buttons on the right and
+bottom of the panel.</p>
+
+<center><img src="panel_threadtree_context.png"></center>
+<ul>
+<li><b>View the message</b> brings up the selected message in a new 
+    <a href="panel_message.html">Message panel</a></li>
+<li><b>Reply to the message</b> brings up a new
+    <a href="panel_editor.html">Message editor panel</a> in reply to the selected
+    message, targetting the forum (when possible)</li>
+<li><b>View the forum's messages</b> brings up a new
+    <a href="panel_threadtree.html">Thread tree panel</a> focusing in on just the
+    targetted forum of the selected message</li>
+<li><b>View the forum's profile</b> brings up a new
+    <a href="panel_profile.html">Profile panel</a> displaying the targetted forum's
+    profile</li>
+<li><b>Bookmark the forum</b> adds the targetted forum to the user's <i>watched list</i>,
+    allowing for easy and more secure access. <i>the security aspects come from the
+    fact that Syndie only shows the avatars of watched forums, except on the forum
+    selection panel, so as to reduce any confusion between similarly named
+    forums</i>.</li>
+<li><b>View the author's blog</b> brings up a new
+    <a href="panel_threadtree.html">Thread tree panel</a> focusing in on just the
+    author of the selected message</li>
+<li><b>View the author's profile</b> brings up a new
+    <a href="panel_profile.html">Profile panel</a> displaying the author's profile</li>
+<li><b>Bookmark the author</b> adds the author to the user's <i>watched list</i></li>
+<li><b>Expand the thread fully</b> simply expands any messages and replies in the
+    currently selected thread</li>
+<li><b>Collapse the thread fully</b> simply unexpands any messages and replies in the
+    currently selected thread</li>
+<li><b>Mark the message as read</b> marks only the selected message as read</li>
+<li><b>Mark the message as unread</b> marks only the selected message as unread</li>
+<li><b>Mark the thread as read</b> marks all messages in the current thread as read</li>
+<li><b>Mark the thread as unread</b> marks all messages in the current thread as 
+    unread</li>
+</ul>
+
+<hr />
+<center><img src="panel_threadtree_filter.png"></center>
+
+<p>The filter bar offers a number of powerful controls to limit what threads and
+messages to show.  The first is a drop down specifying the message's age - anything
+as recent as the selected value is allowed (e.g. "<b>This week</b>" means any message
+posted or received in the last 7 days).  The second is a full text search for a word
+or phrase - if "<i>foo</i>" is entered, only messages whose subject, author, keywords,
+or the body of any of its pages are allowed.  Note that currently it is a strict 
+substring match - entering "<i>foo bar</i>" will not match messages containing
+"foo baz bar".  The third filter only matches messages who have been tagged by their
+author with one of the selected tags (or if "<b>Any tags</b>" is selected, this filter
+is not applied).  The fourth is a checkbox to limit messages to those that the user
+hasn't already read.</p>
+
+<p>The basic filter bar covers most scenarios, but there are a number of advanced 
+filtering options, accessible by hitting the "<b>Advanced</b>" button:</p>
+<center><img src="panel_threadtree_filter_advanced.png"></center>
+<p>The first three options allow the set of forums whose messages are being matched
+to be adjusted - <b>All forums</b> means all locally known forums,
+<b>Bookmarked forums</b> means all of the forums the user is watching, and
+<b>Specific forum...</b> means a specific forum or forums (this is almost always the
+case).</p>
+
+<p>The next four options filter the messages based on the privacy level used by the
+authors - <b>Readable by anyone</b> means messages that the author allowed anyone to
+read, <b>Readable by authorized readers</b> means messages that the author used one
+of the forum's secret <i>read keys</i> to limit the message's readership, 
+<b>Readable by those with a passphrase</b> means messages that the author protected
+with a passphrase, and <b>Readable by forum administrators</b> means messages that
+the author protected so that only the authorized administrators of the forum it was
+written in could read it.</p>
+
+<p>The next four options adjust the tree's display and behavior - if the
+<b>Organize results in threads</b> option is not checked, the messages will be 
+ordered chronologically without regard to any relationship between them.  If the
+<b>Show a preview of the selected message</b> option is selected, when the user
+hovers their mouse over a message or selects it by the keyboard, a preview window
+will pop up showing the body of the message's first page.  If the
+<b>Mark messages read when opened</b> option is selected, whenever a message is
+shown in a <a href="panel_message.html">Message panel</a>, it is automatically
+marked as read.  If the <b>Mark messages read when previewed</b> option is selected,
+the popup previews will trigger the message to be marked as read as well.</p>
+
+<hr />
+<center><img src="panel_threadtree_rhs.png"></center>
+<p>The right hand side of the panel has size buttons - <b>Expand</b> adjusts the
+tree so that the currently selected thread is fully expanded, while <b>Collapse</b>
+does the opposite.  <b>Profile</b> pulls up the profile of the selected forum.
+<b>View</b> opens up the selected message in a new
+<a href="panel_message.html">Message panel</a>.  <b>Read/unread</b> toggles the
+read/unread status of the selected message.  <b>Create ref</b> fires up a wizard 
+to save a reference to the selected message or forum in the user's references
+(accessed through the <a href="panel_forumselection.html">Forum selection panel</a>).</p>
+
+<hr />
+<center><img src="panel_threadtree_actions.png"></center>
+<p>The bottom row of buttons offer access to some key actions -
+<b>Post a new message</b> fires up a new
+<a href="panel_editor.html">Message editor panel</a> targetting the selected forum
+(the button is disabled if the user is not authorized to create new threads in that
+forum).  The <b>Reply</b> button fires up a new 
+<a href="panel_editor.html">Message editor panel</a> targetting the selected forum
+as well, acting as a reply to the selected message (the button is disabled if the user
+is not authorized to reply to messages in that forum).  The <b>Send a private message</b>
+fires up (yet another) <a href="panel_editor.html">Message editor panel</a> targetting
+the selected forum, except it has the privacy level set so that only that forum's
+administrators can read it.  <b>Watch the forum</b> adds the currently selected forum
+to the user's <i>watched list</i>, and <b>Ban the forum</b> deletes all messages in
+the forum, all messages written by the forum's owner, and makes sure their messages are
+never imported again</p>
+
+</body></html>
