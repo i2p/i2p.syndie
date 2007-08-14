@@ -1,6 +1,8 @@
 package syndie.gui.desktop;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -36,6 +38,7 @@ import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.HTTPServ;
+import syndie.db.Importer;
 import syndie.db.JobRunner;
 import syndie.db.SyncManager;
 import syndie.db.TextEngine;
@@ -759,11 +762,35 @@ class Desktop {
                     ((HelpDesktopCorner)_cornerSouthEast).startupComplete();
                     _edgeWestDefault.startupComplete();
                     toggleForumSelectionPanel();
+                    JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
                 } 
             });
         }
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
+    }
+    
+    private void importMsgs() {
+        int index = 1;
+        while (importMsgs("import_meta" + index + ".syndie"))
+            index++;
+        index = 1;
+        while (importMsgs("import_post" + index + ".syndie"))
+            index++;
+    }
+    private boolean importMsgs(String resourceName) {
+        try {
+            InputStream in = getClass().getResourceAsStream(resourceName);
+            if (in == null)
+                return false;
+            
+            Importer imp = new Importer(_client);
+            boolean ok = imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
+            return true;
+        } catch (IOException ioe) {
+            _ui.errorMessage("Error importing packaged message " + resourceName);
+            return false;
+        }
     }
 
     TabPanel getTabPanel(boolean create) {

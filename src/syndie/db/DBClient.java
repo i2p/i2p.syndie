@@ -232,7 +232,7 @@ public class DBClient {
     /** if logged in, the login used is returned here */
     String getLogin() { return _login; }
     /** if logged in, the password authenticating it is returned here */
-    String getPass() { return _pass; }
+    public String getPass() { return _pass; }
     public void setPass(String encryptionPass) { _pass = encryptionPass; }
     public boolean isLoggedIn() { return _con != null && _login != null; }
     /** if logged in, the internal nymId associated with that login */
