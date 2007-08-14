@@ -64,7 +64,7 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
             }
         });
             
-        _favorites.setBackground(ColorUtil.getColor("yellow"));
+        //_favorites.setBackground(ColorUtil.getColor("yellow"));
         _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(); } }); 
         BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _favorites, new BookmarkDnDHelper.WatchTarget() { 
             public void dropped(SyndieURI uri, String name, String desc) {

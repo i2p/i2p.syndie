@@ -1,5 +1,7 @@
 package syndie.gui.desktop;
 
+import java.util.ArrayList;
+import java.util.Set;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -22,6 +24,7 @@ import syndie.gui.ThemeRegistry;
 import syndie.gui.Themeable;
 import syndie.gui.Translatable;
 import syndie.gui.TranslationRegistry;
+import syndie.gui.URIHelper;
 
 /**
  *
@@ -131,12 +134,15 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _details;
+        private Button _viewFetched;
         public EastEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
         }
         
         private void initComponents() {
+            getEdgeRoot().setLayout(new FillLayout(SWT.VERTICAL));
+
             _details = new Button(getEdgeRoot(), SWT.PUSH);
             _details.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _syndicator.viewDetail(); }
@@ -144,6 +150,19 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             _details.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
                     ImageUtil.drawDescending(evt.gc, _details, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_DETAILS, "Archive details"));
+                }
+            });
+            _viewFetched = new Button(getEdgeRoot(), SWT.PUSH);
+            _viewFetched.addSelectionListener(new FireSelectionListener() {
+                public void fire() { 
+                    Set scopes = _syndicator.getFetchedScopes();
+                    if (scopes.size() > 0)
+                        _desktop.getNavControl().view(SyndieURI.createSearch(new ArrayList(scopes), true, true, true));
+                }
+            });
+            _viewFetched.addPaintListener(new PaintListener() {
+                public void paintControl(PaintEvent evt) {
+                    ImageUtil.drawDescending(evt.gc, _viewFetched, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_DETAILS, "View fetched messages"));
                 }
             });
 

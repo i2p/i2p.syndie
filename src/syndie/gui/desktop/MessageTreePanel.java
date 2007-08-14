@@ -647,7 +647,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _toggleRead.setEnabled(false);
             _toggleRead.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_TOGGLEREAD, "Read/unread"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_TOGGLEREAD, "Mark read"));
                 }
             });
 

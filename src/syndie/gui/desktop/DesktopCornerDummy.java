@@ -9,6 +9,6 @@ class DesktopCornerDummy extends DesktopCorner {
     public DesktopCornerDummy(int sysColor, Composite parent, UI ui) {
         super(parent, ui);
         Canvas c = new Canvas(getRoot(), SWT.NONE);
-        c.setBackground(getRoot().getDisplay().getSystemColor(sysColor));
+        //c.setBackground(getRoot().getDisplay().getSystemColor(sysColor));
     }
 }

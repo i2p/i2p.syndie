@@ -349,12 +349,12 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             });
 
             
-            Color color = ColorUtil.getColor("yellow");
-            _watched.setBackground(color);
-            _refs.setBackground(color);
-            _ident.setBackground(color);
-            _manageable.setBackground(color);
-            _postable.setBackground(color);
+            //Color color = ColorUtil.getColor("yellow");
+            //_watched.setBackground(color);
+            //_refs.setBackground(color);
+            //_ident.setBackground(color);
+            //_manageable.setBackground(color);
+            //_postable.setBackground(color);
             
             _translationRegistry.register(EastEdge.this);
             _themeRegistry.register(EastEdge.this);

@@ -78,7 +78,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         _root.setLayout(gl);
         
         _cancel = new Button(_root, SWT.PUSH);
-        _cancel.setBackground(ColorUtil.getColor("yellow"));
+        //_cancel.setBackground(ColorUtil.getColor("yellow"));
         GridData gd = new GridData(GridData.FILL, GridData.FILL, false, true);
         gd.widthHint = 64;
         _cancel.setLayoutData(gd);
@@ -142,7 +142,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         _tree.addTraverseListener(lsnr);
         
         _exit = new Button(_root, SWT.PUSH);
-        _exit.setBackground(ColorUtil.getColor("darkyellow"));
+        //_exit.setBackground(ColorUtil.getColor("darkyellow"));
         gd = new GridData(GridData.FILL, GridData.FILL, false, true);
         gd.widthHint = 64;
         _exit.setLayoutData(gd);

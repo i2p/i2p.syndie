@@ -329,7 +329,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     public static boolean shouldShowPreview(DBClient client) {
         Properties prefs = client.getNymPrefs();
-        return ( (prefs == null) || (!prefs.containsKey("showPreview")) || (Boolean.valueOf(prefs.getProperty("showPreview")).booleanValue()));
+        return ( (prefs != null) && (prefs.containsKey("showPreview")) && (Boolean.valueOf(prefs.getProperty("showPreview")).booleanValue()));
     }
     public static void setShouldShowPreview(DBClient client, boolean shouldShow) {
         Properties prefs = client.getNymPrefs();

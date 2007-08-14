@@ -1007,7 +1007,7 @@ class HideDesktopCorner extends DesktopCorner {
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
-        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        //_button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.hide(); } });
         getRoot().layout(true, true);
     }
@@ -1026,7 +1026,7 @@ class HelpDesktopCorner extends DesktopCorner {
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
-        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        //_button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showHelp(); } });
         getRoot().layout(true, true);
     }
@@ -1045,7 +1045,7 @@ class SyndicateDesktopCorner extends DesktopCorner {
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
-        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        //_button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { 
             public void fire() { 
                 _desktop.getNavControl().view(URIHelper.instance().createSyndicationStatusURI());
@@ -1081,7 +1081,7 @@ class ControlDesktopCorner extends DesktopCorner {
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
-        _button.setBackground(_button.getDisplay().getSystemColor(color));
+        //_button.setBackground(_button.getDisplay().getSystemColor(color));
         _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.viewControlMenu(); } });
         getRoot().layout(true, true);
     }

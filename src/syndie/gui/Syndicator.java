@@ -1,8 +1,11 @@
 package syndie.gui;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -534,6 +537,23 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             SyncArchive archive = (SyncArchive)val;
             viewDetailArchive(archive, true);
         }
+    }
+    public Set getFetchedScopes() {
+        Set scopes = new HashSet();
+        for (Iterator iter = _archiveNameToIncoming.values().iterator(); iter.hasNext(); ) {
+            Map uriToItem = (Map)iter.next();
+            for (Iterator uriIter = uriToItem.keySet().iterator(); uriIter.hasNext(); ) {
+                SyndieURI uri = (SyndieURI)uriIter.next();
+                if (uri == null) continue;
+                if (scopes.contains(uri.getScope())) continue;
+                if (uri.getMessageId() != null) {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    if (msgId >= 0)
+                        scopes.add(uri.getScope());
+                }
+            }
+        }
+        return scopes;
     }
     
     private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {

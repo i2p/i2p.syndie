@@ -9,6 +9,6 @@ class DesktopEdgeDummy extends DesktopEdge {
     public DesktopEdgeDummy(int sysColor, Composite parent, UI ui) {
         super(parent, ui);
         Canvas c = new Canvas(getEdgeRoot(), SWT.NONE);
-        c.setBackground(getEdgeRoot().getDisplay().getSystemColor(sysColor));
+        //c.setBackground(getEdgeRoot().getDisplay().getSystemColor(sysColor));
     }
 }
