@@ -559,6 +559,7 @@ class Desktop {
         long msgId = _client.getMessageId(Constants.HELP_MSG.getScope(), Constants.HELP_MSG.getMessageId());
         MessageInfo msg = _client.getMessage(msgId);
         int page = getHelpPage();
+        _ui.debugMessage("view help page " + page);
         new StandaloneMessageViewer(_client, _ui, _shell, msg, page, _navControl, _themeRegistry, _translationRegistry, _bookmarkControl, _banControl);
     }
     private int getHelpPage() {
@@ -566,26 +567,26 @@ class Desktop {
         DesktopPanel panel = getCurrentPanel();
         if (panel == null) {
             return 0;
-        } else if (panel instanceof StartupPanel) {
-            return 1;
         } else if (panel instanceof ForumSelectionPanel) {
-            return 2;
-        } else if (panel instanceof MessageEditorPanel) {
             return 3;
-        } else if (panel instanceof MessagePanel) {
-            return 4;
         } else if (panel instanceof MessageTreePanel) {
+            return 4;
+        } else if (panel instanceof MessagePanel) {
             return 5;
-        } else if (panel instanceof ProfilePanel) {
+        } else if (panel instanceof MessageEditorPanel) {
             return 6;
-        } else if (panel instanceof ResumeablePanel) {
+        } else if (panel instanceof ProfilePanel) {
             return 7;
-        } else if (panel instanceof SQLPanel) {
+        } else if (panel instanceof ResumeablePanel) {
             return 8;
-        } else if (panel instanceof SyndicatorPanel) {
+        } else if (panel instanceof SQLPanel) {
             return 9;
-        } else if (panel instanceof TabPanel) {
+        } else if (panel instanceof SyndicatorPanel) {
             return 10;
+        } else if (panel instanceof TabPanel) {
+            return 11;
+        } else if (panel instanceof StartupPanel) {
+            return 12;
         } else {
             return 0;
         }
