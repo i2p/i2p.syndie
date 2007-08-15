@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.MessageInfo;
+import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
@@ -48,7 +49,7 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
         _parent = parent;
         _msg = msg;
         _startPage = startPage;
-        _nav = nav;
+        _nav = new StubNav(nav, _msg);
         _themeRegistry = themes;
         _translationRegistry = trans;
         _bookmarkCtl = bookmarkCtl;
@@ -81,6 +82,7 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
         body.setLayout(new FillLayout());
         _view = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _nav, URIHelper.instance(), _bookmarkCtl, _banCtl, body);
         _view.hideThreadTab();
+        _view.hideAttachmentTabs();
         Timer timer = new Timer("standalone viewer", _ui);
         _view.viewMessage(_msg, _startPage, timer);
         
@@ -115,4 +117,32 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
     public void applyTheme(Theme theme) { _close.setFont(theme.BUTTON_FONT); _shell.layout(true, true); }
     public void translate(TranslationRegistry registry) { _close.setText(registry.getText(T_CLOSE, "Close")); }
     private static final String T_CLOSE = "syndie.gui.desktop.standalonemessageviewer.close";
+
+    private class StubNav implements NavigationControl {
+        private NavigationControl _stubNav;
+        private MessageInfo _stubMsg;
+
+        public StubNav(NavigationControl parent, MessageInfo msg) {
+            _stubMsg = msg;
+            _stubNav = parent;
+        }
+
+        public void view(SyndieURI uri) { view(uri, null, null); }
+        public void view(SyndieURI uri, String suggestedName, String suggestedDescription) { 
+            if (uri == null) return;
+            if (_stubMsg == null) _stubNav.view(uri, suggestedName, suggestedDescription);
+            if ( (uri.getScope() != null) && (uri.getMessageId() != null) &&
+                 (_stubMsg.getScopeChannel().equals(uri.getScope())) && 
+                 (_stubMsg.getMessageId() == uri.getMessageId().longValue()) ) {
+                int page = 1;
+                if (uri.getPage() != null) page = (int)uri.getPage().intValue();
+                _view.viewMessage(_msg, page, new Timer("review page", _ui));
+            } else {
+                _stubNav.view(uri, suggestedName, suggestedDescription);
+            }
+        }
+        public void unview(SyndieURI uri) { _stubNav.unview(uri); }
+        public void resumePost(long postponeId, int postponeVersion) { _stubNav.resumePost(postponeId, postponeVersion); }
+        public void showWaitCursor(boolean wait) { _stubNav.showWaitCursor(wait); }
+    }
 }

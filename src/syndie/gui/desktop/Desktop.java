@@ -763,27 +763,28 @@ class Desktop {
                     ((HelpDesktopCorner)_cornerSouthEast).startupComplete();
                     _edgeWestDefault.startupComplete();
                     toggleForumSelectionPanel();
-                    JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
                 } 
             });
         }
+        JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
     
     private void importMsgs() {
         int index = 1;
-        while (importMsgs("import_meta" + index + ".syndie"))
+        while (importMsgs("/import_meta" + index + ".syndie"))
             index++;
         index = 1;
-        while (importMsgs("import_post" + index + ".syndie"))
+        while (importMsgs("/import_post" + index + ".syndie"))
             index++;
     }
     private boolean importMsgs(String resourceName) {
         try {
             InputStream in = getClass().getResourceAsStream(resourceName);
-            if (in == null)
+            if (in == null) {
                 return false;
+            }
             
             Importer imp = new Importer(_client);
             boolean ok = imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);

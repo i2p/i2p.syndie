@@ -122,7 +122,7 @@ public class Constants {
     /** this refers to the tour uri - this url is just there for testing until the tour is written */
     public static final SyndieURI TOUR_MSG = SyndieURI.createMessage(new Hash(Base64.decode("Jx3gl5m8XzjIBcYVTNbVG1VlVb0nAXP41d-MbvlxPbY=")), 1187120476998l);
     /** this refers to the (context-sensitive) help uri - this url is just there for testing until the help is written */
-    public static final SyndieURI HELP_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1187189445668l);
+    public static final SyndieURI HELP_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1187210851042l);
 
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }

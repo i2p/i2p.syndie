@@ -62,6 +62,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private ThreadReferenceNode _messageThread;
     
     private boolean _hideThreadTab;
+    private boolean _hideAttachmentTabs;
     
     public interface ThreadLoadedListener {
         public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize);
@@ -75,6 +76,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _banControl = ban;
         _root = root;
         _hideThreadTab = false;
+        _hideAttachmentTabs = false;
         _threadLoadedListeners = new ArrayList();
         _viewState = new DetailState();
         initComponents();
@@ -168,7 +170,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         int threadSize = 2; // assume a reply so we build the tabs
 
         int attachments = msg.getAttachmentCount();
-        int tabs = pageCount + attachments;
+        int tabs = pageCount;
+        if (!_hideAttachmentTabs) tabs += attachments;
         if ( (refs != null) && (refs.size() > 0) ) tabs++;
         if ( (threadSize > 1) && (!_hideThreadTab) ) tabs++;
 
@@ -264,38 +267,41 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _refTree.setReferences(refs);
             off++;
         }
-        if (attachments > 0)
-            _attachmentPreviews = new AttachmentPreview[attachments];
 
-        Hash scope = msg.getScopeChannel();
-        long messageId = msg.getMessageId();
+        if (!_hideAttachmentTabs) {
+            if (attachments > 0)
+                _attachmentPreviews = new AttachmentPreview[attachments];
 
-        for (int i = 0; i < attachments; i++) {
-            _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
-            _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
-            _tabs[off+i].setControl(_tabRoots[off+i]);
-            _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
-            _tabRoots[off+i].setLayout(new FillLayout());
+            Hash scope = msg.getScopeChannel();
+            long messageId = msg.getMessageId();
 
-            final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);
-            timer.addEvent("initBody attachment preview tab created");
-            _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
-            timer.addEvent("initBody attachment preview instantiated");
-
-            final int preview = i;
-            final CTabItem item = _tabs[off];
-            final AttachmentPreview attachPreview = _attachmentPreviews[i];
-            if (DEFERRED_ATTACHMENT_PREVIEW) {
-                _tabFolder.addSelectionListener(new FireSelectionListener() {
-                    public void fire() {
-                        if (_viewState.disposed) return;
-                        if (_tabFolder.getSelection() == item) {
-                            attachPreview.showURI(new URIAttachmentSource(uri), uri);
+            for (int i = 0; i < attachments; i++) {
+                _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
+                _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
+                _tabs[off+i].setControl(_tabRoots[off+i]);
+                _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
+                _tabRoots[off+i].setLayout(new FillLayout());
+    
+                final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);
+                timer.addEvent("initBody attachment preview tab created");
+                _attachmentPreviews[i] = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, _tabRoots[off+i]);
+                timer.addEvent("initBody attachment preview instantiated");
+    
+                final int preview = i;
+                final CTabItem item = _tabs[off];
+                final AttachmentPreview attachPreview = _attachmentPreviews[i];
+                if (DEFERRED_ATTACHMENT_PREVIEW) {
+                    _tabFolder.addSelectionListener(new FireSelectionListener() {
+                        public void fire() {
+                            if (_viewState.disposed) return;
+                            if (_tabFolder.getSelection() == item) {
+                                attachPreview.showURI(new URIAttachmentSource(uri), uri);
+                            }
                         }
-                    }
-                });
-            } else {
-                _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
+                    });
+                } else {
+                    _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
+                }
             }
         }
         timer.addEvent("initBody go to configured");
@@ -328,6 +334,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     }
     
     public void hideThreadTab() { _hideThreadTab = true; }
+    public void hideAttachmentTabs() { _hideAttachmentTabs = true; }
     
     private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
         private SyndieURI _attachURI;
@@ -447,9 +454,15 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     }
         
     private class PageListener implements PageRenderer.PageActionListener {
-        public void viewScopeMessages(PageRenderer renderer, Hash scope) { _navControl.view(SyndieURI.createScope(scope)); }
+        public void viewScopeMessages(PageRenderer renderer, Hash scope) { 
+            _ui.debugMessage("viewScopeMessages");
+            _navControl.view(SyndieURI.createScope(scope)); 
+        }
         public void viewScopeMetadata(PageRenderer renderer, Hash scope) { _navControl.view(_uriControl.createManageURI(scope)); }
-        public void view(PageRenderer renderer, SyndieURI uri) { _navControl.view(SyndieURI.resolveRelative(_msg.getURI(), uri)); }
+        public void view(PageRenderer renderer, SyndieURI uri) {
+            SyndieURI rel = SyndieURI.resolveRelative(_msg.getURI(), uri);
+            _navControl.view(rel);
+        }
         public void bookmark(PageRenderer renderer, SyndieURI uri) { _bookmarkControl.bookmark(uri); }
         public void banScope(PageRenderer renderer, Hash scope) {
             if (_banControl.ban(scope))
