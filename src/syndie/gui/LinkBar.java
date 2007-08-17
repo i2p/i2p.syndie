@@ -198,6 +198,12 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
                 public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleWatchedShell(); }
                 public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleWatchedShell(); }
+                public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
+                    if ( (uri != null) && (uri.getScope() != null) ) {
+                        _nav.view(URIHelper.instance().createManageURI(uri.getScope()));
+                        toggleWatchedShell();
+                    }
+                }
             });
             
             s.addShellListener(new ShellListener() {
@@ -242,6 +248,12 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
                 public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleMyForumsShell(); }
                 public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleMyForumsShell(); }
+                public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
+                    if ( (uri != null) && (uri.getScope() != null) ) {
+                        _nav.view(URIHelper.instance().createManageURI(uri.getScope()));
+                        toggleWatchedShell();
+                    }
+                }
             });
             
             s.addShellListener(new ShellListener() {
@@ -286,6 +298,12 @@ public class LinkBar extends BaseComponent implements Translatable, Themeable {
                 public void channelSelected(SyndieURI uri, int idx) { _nav.view(uri); toggleMyNymsShell(); }
                 public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {}
                 public void channelSelectorCancelled() { toggleMyNymsShell(); }
+                public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
+                    if ( (uri != null) && (uri.getScope() != null) ) {
+                        _nav.view(URIHelper.instance().createManageURI(uri.getScope()));
+                        toggleWatchedShell();
+                    }
+                }
             });
             
             s.addShellListener(new ShellListener() {

@@ -79,6 +79,7 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     public interface ChannelSelectorListener {
         public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar);
         public void channelSelected(SyndieURI uri, int matchedIndex);
+        public void channelProfileSelected(SyndieURI uri, int matchedIndex);
     }
     private ChannelSelectorListener _lsnr;
     
@@ -266,6 +267,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     }
     
     private static final String T_VIEWALL = "syndie.gui.channelselectorpanel.viewall";
+    private static final String T_VIEWMSGS = "syndie.gui.channelselectorpanel.viewmsgs";
+    private static final String T_VIEWPROFILE = "syndie.gui.channelselectorpanel.viewprofile";
     
     private void setChannelData(List records, Runnable afterSet, Timer timer) {
         _buttons.setRedraw(false);
@@ -398,6 +401,19 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                     }
                 });
                 viewAll.setText(_translationRegistry.getText(T_VIEWALL, "Combined view of this category's forums, recursively"));
+            } else {
+                Menu m = new Menu(b);
+                b.setMenu(m);
+                MenuItem viewMsgs = new MenuItem(m, SWT.PUSH);
+                viewMsgs.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { _lsnr.channelSelected(r.uri, matchedIndex); }
+                });
+                viewMsgs.setText(_translationRegistry.getText(T_VIEWMSGS, "View messages"));
+                MenuItem viewProfile = new MenuItem(m, SWT.PUSH);
+                viewProfile.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { _lsnr.channelProfileSelected(r.uri, matchedIndex); }
+                });
+                viewProfile.setText(_translationRegistry.getText(T_VIEWPROFILE, "View profile"));
             }
             
             // buttons don't traverse on arrow keys by default, but these should

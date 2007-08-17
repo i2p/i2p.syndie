@@ -362,7 +362,25 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _saveChanges.setEnabled(false);
             _cancelChanges.setEnabled(false);
             _watch = new Button(edge, SWT.PUSH);
+            _watch.addSelectionListener(new FireSelectionListener() {
+                public void fire() { 
+                    if (_client.isWatched(_scopeId))
+                        _client.unwatchChannel(_scope);
+                    else
+                        _client.watchChannel(_scopeId, true, false, false, false, false);
+                }
+            });
             _ban = new Button(edge, SWT.PUSH);
+            _ban.addSelectionListener(new FireSelectionListener() {
+                public void fire() { 
+                    if (_scope != null) {
+                        if (_client.getBannedChannels().contains(_scope))
+                            _client.unban(_scope);
+                        else
+                            _client.ban(_scope, _ui, true);
+                    }
+                }
+            });
         }
         
         public void settingsModified(boolean saveable) {
@@ -377,7 +395,9 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _cancelChanges.setEnabled(false);
             if (_scopeId >= 0) {
                 if (_manage != null) _manage.addListener(SouthEdge.this);
-                _watch.setEnabled(!_client.isWatched(_scopeId));
+                _watch.setEnabled(true);
+                translateWatch();
+                translateBan();
             } else {
                 _watch.setEnabled(false);
                 _ban.setEnabled(false);
@@ -391,15 +411,30 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _ban.setFont(theme.BUTTON_FONT);
         }
         public void translate(TranslationRegistry registry) {
-            _watch.setText(registry.getText(T_WATCH, "Watch the forum"));
+            translateWatch();
+            translateBan();
             _saveChanges.setText(registry.getText(T_SAVE, "Save changes"));
             _cancelChanges.setText(registry.getText(T_CANCEL, "Cancel changes"));
-            _ban.setText(registry.getText(T_BAN, "Ban the forum"));
         }
+        private void translateWatch() {
+            if (_client.isWatched(_scopeId))
+                _watch.setText(_translationRegistry.getText(T_UNWATCH, "Unwatch the forum"));
+            else
+                _watch.setText(_translationRegistry.getText(T_WATCH, "Watch the forum"));
+        }
+        private void translateBan() {
+            if ((_scope != null) && (_client.getBannedChannels().contains(_scope)))
+                _ban.setText(_translationRegistry.getText(T_UNBAN, "Unban the forum"));
+            else
+                _ban.setText(_translationRegistry.getText(T_BAN, "Ban the forum"));
+        }
+
     }
     
     private static final String T_WATCH = "syndie.gui.desktop.profilepanel.watch";
+    private static final String T_UNWATCH = "syndie.gui.desktop.profilepanel.unwatch";
     private static final String T_BAN = "syndie.gui.desktop.profilepanel.ban";
+    private static final String T_UNBAN = "syndie.gui.desktop.profilepanel.unban";
     private static final String T_SAVE = "syndie.gui.desktop.profilepanel.save";
     private static final String T_CANCEL = "syndie.gui.desktop.profilepanel.cancel";
 }

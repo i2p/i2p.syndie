@@ -182,6 +182,10 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
         }
     }
     
+    public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
+        // ignore in this scenario
+    }
+    
     public void forumSelectorCancelled() {
         _ui.debugMessage("channel selector cancelled");
         _acceptListener.referenceChoiceAborted();

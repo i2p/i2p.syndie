@@ -134,6 +134,13 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         }
     }
     
+    public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
+        if ( (uri != null) && (uri.getScope() != null) ) {
+            _navControl.view(URIHelper.instance().createManageURI(uri.getScope()));
+            _desktop.panelDisposed(this, false);
+        }
+    }
+    
     public void viewMatches() {
         List scopes = _channels.getMatches(true);
         boolean unread = _channels.isUnreadOnly();
