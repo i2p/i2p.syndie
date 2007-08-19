@@ -11,6 +11,7 @@ package net.i2p.crypto;
 
 import gnu.crypto.hash.Sha256Standalone;
 import java.math.BigInteger;
+import java.util.ArrayList;
 
 import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
@@ -56,9 +57,24 @@ public class KeyGenerator {
         return key;
     }
     
+    private static final int PBE_KEY_CACHE_SIZE = 256;
+    private static final byte _pbeCacheSalt[][] = new byte[PBE_KEY_CACHE_SIZE][];
+    private static final byte _pbeCachePassphrase[][] = new byte[PBE_KEY_CACHE_SIZE][];
+    private static final SessionKey _pbeCacheSessionKey[] = new SessionKey[PBE_KEY_CACHE_SIZE];
+    private static int _pbeCacheNextEntry = 0;
+    
     private static final int PBE_ROUNDS = 1000;
     /** PBE the passphrase with the salt */
     public SessionKey generateSessionKey(byte salt[], byte passphrase[]) {
+        synchronized (_pbeCacheSalt) {
+            for (int i = 0; i < _pbeCacheNextEntry; i++) {
+                if (DataHelper.eq(_pbeCacheSalt[i], salt) && DataHelper.eq(_pbeCachePassphrase[i], passphrase)) {
+                    //System.out.println("cached pbe key found");
+                    return _pbeCacheSessionKey[i];
+                }
+            }
+            //System.out.println("cached pbe key NOT found");
+        }
         byte salted[] = new byte[16+passphrase.length];
         System.arraycopy(salt, 0, salted, 0, Math.min(salt.length, 16));
         System.arraycopy(passphrase, 0, salted, 16, passphrase.length);
@@ -66,7 +82,20 @@ public class KeyGenerator {
         //for (int i = 1; i < PBE_ROUNDS; i++)
         //    _context.sha().calculateHash(h, 0, Hash.HASH_LENGTH, h, 0);
         _context.sha().calculateHash(h, 0, Hash.HASH_LENGTH, h, 0, PBE_ROUNDS-1);
-        return new SessionKey(h);
+        SessionKey key = new SessionKey(h);
+        synchronized (_pbeCacheSalt) {
+            if (_pbeCacheNextEntry >= PBE_KEY_CACHE_SIZE) {
+                _pbeCacheSalt[0] = _pbeCacheSalt[PBE_KEY_CACHE_SIZE-1];
+                _pbeCachePassphrase[0] = _pbeCachePassphrase[PBE_KEY_CACHE_SIZE-1];
+                _pbeCacheSessionKey[0] = _pbeCacheSessionKey[PBE_KEY_CACHE_SIZE-1];
+                _pbeCacheNextEntry = PBE_KEY_CACHE_SIZE-1;
+            }
+            _pbeCacheSalt[_pbeCacheNextEntry] = salt;
+            _pbeCachePassphrase[_pbeCacheNextEntry] = passphrase;
+            _pbeCacheSessionKey[_pbeCacheNextEntry] = key;
+            _pbeCacheNextEntry++;
+        }
+        return key;
     }
     
     /** standard exponent size */
@@ -143,16 +172,48 @@ public class KeyGenerator {
         return keys;
     }
 
+    private static final int MAX_SIGNING_PUBLIC_CACHE_SIZE = 128;    
+    private static final byte _signingPublicPrivData[][] = new byte[MAX_SIGNING_PUBLIC_CACHE_SIZE][];
+    private static final SigningPublicKey _signingPublicPubKey[] = new SigningPublicKey[MAX_SIGNING_PUBLIC_CACHE_SIZE];
+    private static int _signingPubCacheNextEntry = 0;
+    
     /** Convert a SigningPrivateKey to a SigningPublicKey
      * @param priv a SigningPrivateKey object
      * @return a SigningPublicKey object
      */
     public static SigningPublicKey getSigningPublicKey(SigningPrivateKey priv) {
+        synchronized (_signingPublicPrivData) {
+            int idx = -1;
+            byte data[] = priv.getData();
+            for (int i = 0; i < _signingPubCacheNextEntry; i++) {
+                if (DataHelper.eq(_signingPublicPrivData[i], data)) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx >= 0) {
+                //System.out.println("cached signing pubkey hit");
+                return _signingPublicPubKey[idx];
+            }
+            //SHA1 dgst = new SHA1();
+            //dgst.engineUpdate(priv.getData(), 0, priv.getData().length);
+            //System.out.println("cached signing pubkey NOT hit: " + Base64.encode(dgst.engineDigest()));
+        }
         BigInteger x = new NativeBigInteger(1, priv.toByteArray());
         BigInteger y = CryptoConstants.dsag.modPow(x, CryptoConstants.dsap);
         SigningPublicKey pub = new SigningPublicKey();
         byte [] pubBytes = padBuffer(y.toByteArray(), SigningPublicKey.KEYSIZE_BYTES);
         pub.setData(pubBytes);
+        synchronized (_signingPublicPrivData) {
+            if (_signingPubCacheNextEntry >= MAX_SIGNING_PUBLIC_CACHE_SIZE) {
+                _signingPublicPrivData[0] = _signingPublicPrivData[MAX_SIGNING_PUBLIC_CACHE_SIZE-1];
+                _signingPublicPubKey[0] = _signingPublicPubKey[MAX_SIGNING_PUBLIC_CACHE_SIZE-1];
+                _signingPubCacheNextEntry = MAX_SIGNING_PUBLIC_CACHE_SIZE-1;
+            }
+            _signingPublicPrivData[_signingPubCacheNextEntry] = priv.getData();
+            _signingPublicPubKey[_signingPubCacheNextEntry] = pub;
+            _signingPubCacheNextEntry++;
+        }
         return pub;
     }
 

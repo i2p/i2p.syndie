@@ -217,9 +217,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _externalShell = true;
         else
             _externalShell = false;
-        if (navControl != null)
-            _navControl = navControl;
-        else
+        //if (navControl != null)
+        //    _navControl = navControl;
+        //else
             _navControl = this;
         _openTabs = new HashMap();
         _openTabURIs = new HashMap();
@@ -264,7 +264,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         b.setThemeRegistry(_themes);
         b.setTranslationRegistry(_translation);
     }
-
+    
     private void initComponents(Timer timer) {
         timer.addEvent("begin initComponents");
         ColorUtil.init();

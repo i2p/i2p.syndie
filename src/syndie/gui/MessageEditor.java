@@ -1995,8 +1995,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _bar.initForumControl(_toolbar);
         _bar.initAuthorControl(_toolbar);
         _bar.initPrivacyControl(_toolbar);
-        _bar.initPageControl(_toolbar);
+        _bar.initPageAddControl(_toolbar);
+        _bar.initPageRemoveControl(_toolbar);
+        _bar.initWebRipControl(_toolbar);
+        _bar.initAttachImageControl(_toolbar);
         _bar.initAttachControl(_toolbar);
+        _bar.initAttachRemoveControl(_toolbar);
         _bar.initLinkControl(_toolbar);
         _bar.initStyleControl(_toolbar);
         _bar.initSpellControl(_toolbar);
@@ -2816,7 +2820,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public void removeAttachment(int idx) {
         saveState();
         modified();
-        if (_attachmentData.size() > 0) {
+        if ( (_attachmentData.size() > 0) && (idx < _attachmentData.size()) ) {
             // should this check to make sure there aren't any pages referencing
             // this attachment first?
             _attachmentConfig.remove(idx);

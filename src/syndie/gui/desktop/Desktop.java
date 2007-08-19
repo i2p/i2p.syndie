@@ -698,6 +698,7 @@ class Desktop {
     DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
     List getPanels() { return new ArrayList(_loadedPanels); }
     NavigationControl getNavControl() { return _navControl; }
+    void setNavControl(NavigationControl ctl) { _navControl = ctl; }
     BanControl getBanControl() { return _banControl; }
     BookmarkControl getBookmarkControl() { return _bookmarkControl; }
     DataCallback getDataCallback() { return _dataCallback; }
@@ -1162,6 +1163,8 @@ class CommandBar implements Themeable, Translatable {
                     // lets check to see if they want to resume a postponed message
                     _desktop.getNavControl().view(URIHelper.instance().createResumeableURI());
                 }
+                if (_desktop.getTabPanel(false) != null)
+                    _desktop.showDesktopTabs();
             }
         });
 
@@ -1170,12 +1173,20 @@ class CommandBar implements Themeable, Translatable {
         _syndicate.addSelectionListener(new FireSelectionListener() { 
             public void fire() { 
                 _desktop.getNavControl().view(URIHelper.instance().createSyndicationStatusURI());
+                if (_desktop.getTabPanel(false) != null)
+                    _desktop.showDesktopTabs();
             } 
         });
 
         _manageForum = new Button(bar, SWT.PUSH);
         _manageForum.setText("manage");
-        _manageForum.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumManagementSelectionPanel(); } }); 
+        _manageForum.addSelectionListener(new FireSelectionListener() { 
+            public void fire() { 
+                _desktop.showForumManagementSelectionPanel(); 
+                if (_desktop.getTabPanel(false) != null)
+                    _desktop.showDesktopTabs();
+            } 
+        }); 
         
         _switchPanel = new Button(bar, SWT.PUSH);
         _switchPanel.setText("switch");

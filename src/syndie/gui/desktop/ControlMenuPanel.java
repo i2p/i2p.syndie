@@ -62,6 +62,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Button _httpservOnStart;
     private Button _httpservOptions;
     
+    private Button _tabbedUI;
     private Button _changePass;
     
     private Label _switchLabel;
@@ -194,6 +195,14 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         if ( (onStartup != null) && ("true".equalsIgnoreCase(onStartup)) )
             _httpservOnStart.setSelection(true);
 
+        _tabbedUI = new Button(root, SWT.PUSH);
+        _tabbedUI.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _tabbedUI.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                showTabbedUI();
+            }
+        });
+        
         _changePass = new Button(root, SWT.PUSH);
         _changePass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _changePass.addSelectionListener(new FireSelectionListener() {
@@ -435,6 +444,8 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     
     private void changePass() { new ChangePassPopup(_desktop, _ui, getRoot().getShell(), _themeRegistry, _translationRegistry); }
     
+    private void showTabbedUI() { _desktop.showDesktopTabs(); }
+    
     private void fireImportBrowse() {
         if (_importBulk.getSelection()) {
             DirectoryDialog dialog = new DirectoryDialog(getRoot().getShell(), SWT.NONE);
@@ -590,6 +601,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _exit.setFont(theme.BUTTON_FONT);
         _sql.setFont(theme.BUTTON_FONT);
         _welcome.setFont(theme.BUTTON_FONT);
+        _tabbedUI.setFont(theme.BUTTON_FONT);
         _changePass.setFont(theme.BUTTON_FONT);
         _httpservLabel.setFont(theme.DEFAULT_FONT);
         _httpservOnStart.setFont(theme.DEFAULT_FONT);
@@ -611,6 +623,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private static final String T_SWITCH_OPEN = "syndie.gui.desktop.controlmenupanel.switchopen";
     private static final String T_CHANGEPASS = "syndie.gui.desktop.controlmenupanel.changepass";
     private static final String T_WELCOME = "syndie.gui.desktop.controlmenupanel.welcome";
+    private static final String T_TABBEDUI = "syndie.gui.desktop.controlmenupanel.tabbedui";
     
     private static final String T_HTTPSERV_LABEL = "syndie.gui.desktop.controlmenupanel.httpserv.label";
     private static final String T_HTTPSERV_ONSTARTUP = "syndie.gui.desktop.controlmenupanel.httpserv.onstartup";
@@ -622,6 +635,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importBulk.setText(registry.getText(T_IMPORTBULK, "directory (recursively)"));
         _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
         _import.setText(registry.getText(T_IMPORT, "Import"));
+        _tabbedUI.setText(registry.getText(T_TABBEDUI, "Display the tabbed UI"));
         _changePass.setText(registry.getText(T_CHANGEPASS, "Change Syndie instance passphrase"));
         _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
         _sql.setText(registry.getText(T_SQL, "Advanced SQL interface"));

@@ -40,22 +40,27 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
     private MenuItem _privAuthorized;
     private MenuItem _privPBE;
     private MenuItem _privReply;
-    // page control
-    private Group _pageGroup;
-    private Button _pageButton;
-    private Menu _pageMenu;
-    private MenuItem _pageAdd;
-    private MenuItem _pageAddWebRip;
-    private MenuItem _pageRemove;
-    // page type control
-    private Group _pageTypeGroup;
-    private Button _pageType;
+    // page add control
+    private Group _pageAddGroup;
+    private Button _pageAddButton;
+    // page remove control
+    private Group _pageRemoveGroup;
+    private Button _pageRemoveButton;
+    // web rip control
+    private Group _webRipGroup;
+    private Button _webRipButton;
+    // add image control
+    private Group _attachImageGroup;
+    private Button _attachImageButton;
     // attachment control
     private Group _attachGroup;
     private Button _attachButton;
-    private Menu _attachMenu;
-    private MenuItem _attachAdd;
-    private MenuItem _attachAddImage;
+    // attachment remove control
+    private Group _attachRemoveGroup;
+    private Button _attachRemoveButton;
+    // page type control
+    private Group _pageTypeGroup;
+    private Button _pageType;
     // link control
     private Group _linkGroup;
     private Button _linkButton;
@@ -130,14 +135,17 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
     }
     
     public void pickPageTypeHTML(boolean isHTML) {
-        if (isHTML)
-            _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-        else
-            _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+        //if (isHTML)
+        //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
+        //else
+        //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
     }
     
     public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
-        _attachAddImage.setEnabled(isHTML);
+        _attachImageButton.setEnabled(isHTML);
+        _attachImageGroup.setEnabled(isHTML);
+        _webRipButton.setEnabled(isHTML);
+        _webRipGroup.setEnabled(isHTML);
         _linkMenu.setEnabled(isHTML);
         _linkArchive.setEnabled(isHTML);
         _linkAttach.setEnabled(isHTML);
@@ -177,10 +185,10 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         }
         
         if (page >= 0) {
-            if (isHTML)
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
-            else
-                _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
+            //if (isHTML)
+            //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
+            //else
+            //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_TEXT);
             _pageType.setEnabled(true);
             _pageTypeGroup.setEnabled(true);
         } else {
@@ -240,6 +248,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
     }
     
     public void attachmentsRebuilt(List attachmentData, List attachmentSummary) {
+        /*
         MenuItem items[] = _attachMenu.getItems();
         for (int i = 0; i < items.length; i++)
             if ( (items[i] != _attachAdd) && (items[i] != _attachAddImage) )
@@ -259,6 +268,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
                 public void fire() { _editor.removeAttachment(attachNum); }
             });
         }
+         */
     }
     
     private static final String T_ATTACHMENT_VIEW = "syndie.gui.messageeditortoolbar.attachview";
@@ -393,49 +403,59 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _privGroup.setToolTipText("Who is allowed to read the post?");
     }
     
-    public void initPageControl(Composite toolbar) {   
-        _pageGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
-        _pageGroup.setLayout(new FillLayout());
+    public void initPageAddControl(Composite toolbar) {   
+        _pageAddGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
+        _pageAddGroup.setLayout(new FillLayout());
         
-        _pageButton = new Button(_pageGroup, SWT.PUSH);
-        _pageButton.setImage(ImageUtil.ICON_EDITOR_PAGEADD);
+        _pageAddButton = new Button(_pageAddGroup, SWT.PUSH);
+        _pageAddButton.setImage(ImageUtil.ICON_EDITOR_ADDPAGE);
         
-        _pageMenu = new Menu(_pageButton);
-        _pageGroup.setMenu(_pageMenu);
-        _pageButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() { _pageMenu.setVisible(true); }
-        });
-        
-        _pageAdd = new MenuItem(_pageMenu, SWT.PUSH);
-        _pageAddWebRip = new MenuItem(_pageMenu, SWT.PUSH);
-        
-        _pageAdd.addSelectionListener(new FireSelectionListener() {
+        _pageAddButton.addSelectionListener(new FireSelectionListener() {
             public void fire() { _editor.addPage(); }
         });
-        _pageAddWebRip.addSelectionListener(new FireSelectionListener() {
-            public void fire() { _editor.addWebRip(); }
-        });
         
-        _pageRemove = new MenuItem(_pageMenu, SWT.PUSH);
-        _pageRemove.addSelectionListener(new FireSelectionListener() {
+        _pageAddGroup.setText("+Page:");
+        _pageAddGroup.setToolTipText("Add a new blank page");
+    }
+    
+    public void initPageRemoveControl(Composite toolbar) {   
+        _pageRemoveGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
+        _pageRemoveGroup.setLayout(new FillLayout());
+        
+        _pageRemoveButton = new Button(_pageRemoveGroup, SWT.PUSH);
+        _pageRemoveButton.setImage(ImageUtil.ICON_EDITOR_REMOVEPAGE);
+        
+        _pageRemoveButton.addSelectionListener(new FireSelectionListener() {
             public void fire() { _editor.removePage(); }
         });
         
-        _pageGroup.setText("Page:");
-        _pageGroup.setToolTipText("Manage pages in this post");
-        _pageAdd.setText("Add a new page");
-        _pageAddWebRip.setText("Add a new web rip");
-        _pageRemove.setText("Remove the current page");
-        
+        _pageRemoveGroup.setText("-Page:");
+        _pageRemoveGroup.setToolTipText("Remove the current page");
+    }
+    
+    public void initWebRipControl(Composite toolbar) {
         _pageTypeGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
         _pageTypeGroup.setLayout(new FillLayout());
         _pageType = new Button(_pageTypeGroup, SWT.PUSH);
-        _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
+        _pageType.setImage(ImageUtil.ICON_EDITOR_TOGGLETYPE);
         _pageType.addSelectionListener(new FireSelectionListener() {
             public void fire() { _editor.togglePageType(); }
         });
         
         _pageTypeGroup.setText("Type:");
+        
+        _webRipGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
+        _webRipGroup.setLayout(new FillLayout());
+        
+        _webRipButton = new Button(_webRipGroup, SWT.PUSH);
+        _webRipButton.setImage(ImageUtil.ICON_EDITOR_WEBRIP);
+        
+        _webRipButton.addSelectionListener(new FireSelectionListener() {
+            public void fire() { _editor.addWebRip(); }
+        });
+        
+        _webRipGroup.setText("Rip:");
+        _webRipGroup.setToolTipText("Rip a web page and add it as a new page in the message");
     }
     
     public void initAttachControl(Composite toolbar) {   
@@ -443,27 +463,36 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _attachGroup.setLayout(new FillLayout());
         
         _attachButton = new Button(_attachGroup, SWT.PUSH);
-        _attachButton.setImage(ImageUtil.ICON_EDITOR_ATTACH);
-        
-        _attachMenu = new Menu(_attachButton);
-        _attachGroup.setMenu(_attachMenu);
-        _attachButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() { _attachMenu.setVisible(true); }
-        });
-        
-        _attachAddImage = new MenuItem(_attachMenu, SWT.PUSH);
-        _attachAddImage.addSelectionListener(new FireSelectionListener() {
-            public void fire() { _editor.showImagePopup(false); }
-        });
-        _attachAdd = new MenuItem(_attachMenu, SWT.PUSH);
-        _attachAdd.addSelectionListener(new FireSelectionListener() {
-            public void fire() { _editor.addAttachment(); }
-        });
+        _attachButton.setImage(ImageUtil.ICON_EDITOR_ADDFILE);
         
         _attachGroup.setText("Attach:");
         _attachGroup.setToolTipText("Manage attachments to this post");
-        _attachAddImage.setText("Insert a new image");
-        _attachAdd.setText("Add a new attachment");
+    }
+    
+    public void initAttachImageControl(Composite toolbar) {   
+        _attachImageGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
+        _attachImageGroup.setLayout(new FillLayout());
+        
+        _attachImageButton = new Button(_attachImageGroup, SWT.PUSH);
+        _attachImageButton.setImage(ImageUtil.ICON_EDITOR_ADDIMAGE);
+        
+        _attachImageButton.addSelectionListener(new FireSelectionListener() {
+            public void fire() { _editor.showImagePopup(false); }
+        });
+        
+        _attachImageGroup.setText("Image:");
+        _attachImageGroup.setToolTipText("Insert a new image into the current page");
+    }
+
+    public void initAttachRemoveControl(Composite toolbar) {   
+        _attachRemoveGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);
+        _attachRemoveGroup.setLayout(new FillLayout());
+        
+        _attachRemoveButton = new Button(_attachRemoveGroup, SWT.PUSH);
+        _attachRemoveButton.setImage(ImageUtil.ICON_EDITOR_REMOVEFILE);
+        
+        _attachRemoveGroup.setText("-Attach:");
+        _attachRemoveGroup.setToolTipText("Remove the selected attachment");
     }
     
     public void initLinkControl(Composite toolbar) {
@@ -706,9 +735,13 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _forumGroup.setFont(theme.DEFAULT_FONT);
         _authorGroup.setFont(theme.DEFAULT_FONT);
         _privGroup.setFont(theme.DEFAULT_FONT);
-        _pageGroup.setFont(theme.DEFAULT_FONT);
+        _pageAddGroup.setFont(theme.DEFAULT_FONT);
+        _pageRemoveGroup.setFont(theme.DEFAULT_FONT);
+        _webRipGroup.setFont(theme.DEFAULT_FONT);
         _pageTypeGroup.setFont(theme.DEFAULT_FONT);
         _attachGroup.setFont(theme.DEFAULT_FONT);
+        _attachImageGroup.setFont(theme.DEFAULT_FONT);
+        _attachRemoveGroup.setFont(theme.DEFAULT_FONT);
         _linkGroup.setFont(theme.DEFAULT_FONT);
         _styleGroup.setFont(theme.DEFAULT_FONT);
         _spellGroup.setFont(theme.DEFAULT_FONT);

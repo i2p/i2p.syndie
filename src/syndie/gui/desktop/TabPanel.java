@@ -29,13 +29,19 @@ class TabPanel extends DesktopPanel {
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         if (_browser == null) {
+            getRoot().getShell().setRedraw(false);
+            getRoot().setRedraw(false);
             _browser = new Browser(_desktop.getDBClient(), getRoot().getShell(), _browserBase, _desktop.getNavControl(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry());
             _browser.addUI(_desktop.getUI());
             Timer t = new Timer("tab panel startup", _desktop.getUI());
             _browser.startup(t);
             t.addEvent("done with the nested browser startup");
             t.complete();
+            getRoot().setRedraw(true);
+            getRoot().getShell().setRedraw(true);
         }
+        // tell the desktop to start using the tabs
+        _desktop.setNavControl(_browser.getNavControl());
         if (uri != null)
             _browser.view(uri, suggestedName, suggestedDescription);
         super.shown(desktop, uri, suggestedName, suggestedDescription);
