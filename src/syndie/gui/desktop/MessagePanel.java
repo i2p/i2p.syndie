@@ -763,10 +763,30 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _navPrevNew.setEnabled(iter.getPreviousNew() != null);
             _navForum.setEnabled(iter.getMessageTreeURI() != null);
         }
-        public void translate(TranslationRegistry trans) {}
+        public void translate(TranslationRegistry registry) {
+            _navNextNew.setToolTipText(registry.getText(T_NAV_NEXT_NEW, "Next unread message"));
+            _navPrevNew.setToolTipText(registry.getText(T_NAV_PREV_NEW, "Previous unread message"));
+            _navNextViaThread.setToolTipText(registry.getText(T_NAV_NEXT_VIA_THREAD, "Next message (by threads)"));
+            _navPrevViaThread.setToolTipText(registry.getText(T_NAV_PREV_VIA_THREAD, "Previous message (by threads)"));
+            _navNextInThread.setToolTipText(registry.getText(T_NAV_NEXT_IN_THREAD, "Next message in the current thread only"));
+            _navPrevInThread.setToolTipText(registry.getText(T_NAV_PREV_IN_THREAD, "Previous message in the current thread only"));
+            _navNextThread.setToolTipText(registry.getText(T_NAV_NEXT_THREAD, "Beginning of the next thread"));
+            _navPrevThread.setToolTipText(registry.getText(T_NAV_PREV_THREAD, "Beginning of the previous thread"));
+            _navForum.setToolTipText(registry.getText(T_NAV_FORUM, "Jump back to the thread tree"));
+        }
         public void applyTheme(Theme theme) {}
     }
-    
+
+    private static final String T_NAV_NEXT_NEW = "syndie.gui.desktop.messagepanel.nav.next.new";
+    private static final String T_NAV_PREV_NEW = "syndie.gui.desktop.messagepanel.nav.prev.new";
+    private static final String T_NAV_NEXT_VIA_THREAD = "syndie.gui.desktop.messagepanel.nav.next.via.thread";
+    private static final String T_NAV_PREV_VIA_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.via.thread";
+    private static final String T_NAV_NEXT_IN_THREAD = "syndie.gui.desktop.messagepanel.nav.next.in.thread";
+    private static final String T_NAV_PREV_IN_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.in.thread";
+    private static final String T_NAV_NEXT_THREAD = "syndie.gui.desktop.messagepanel.nav.next.thread";
+    private static final String T_NAV_PREV_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.thread";
+    private static final String T_NAV_FORUM = "syndie.gui.desktop.messagepanel.nav.forum";
+
     /**
      * run this outside the gui thread to fetch the iterator to retrieve an iterator for
      * navigating. two quirks:

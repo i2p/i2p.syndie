@@ -401,7 +401,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     private static final String T_REPLY = "syndie.gui.messagetreepanel.reply";
     private static final String T_PRIVMSG = "syndie.gui.messagetreepanel.privmsg";
     private static final String T_WATCH = "syndie.gui.messagetreepanel.watch";
+    private static final String T_UNWATCH = "syndie.gui.messagetreepanel.unwatch";
     private static final String T_BAN = "syndie.gui.messagetreepanel.ban";
+    private static final String T_UNBAN = "syndie.gui.messagetreepanel.unban";
     
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _post;
@@ -410,11 +412,13 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         private Button _watch;
         private Button _ban;
         private Hash _actionScope;
+        private long _actionScopeId;
         private SyndieURI _detailURI;
         
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
             _actionScope = null;
+            _actionScopeId = -1;
             initComponents();
         }
         public void updateActions(final SyndieURI uri, final SyndieURI detailURI) {
@@ -442,22 +446,23 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 final Hash actionScope = scope;
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
-                        long channelId = _client.getChannelId(actionScope);
+                        final long channelId = _client.getChannelId(actionScope);
                         DBClient.ChannelCollector chans = _client.getNymChannels(); //getChannels(true, true, true, true, false);
                         final boolean postable = chans.getAllIds().contains(new Long(channelId));
                         final boolean privmsg = true; // true for all channels
-                        final boolean watched = _client.isWatched(channelId);
-                        final boolean repliable = postable || _client.getChannelAllowPublicReplies(channelId);
-                        final boolean banned = _client.getBannedChannels().contains(actionScope);
+                        final boolean watched = false; //_client.isWatched(channelId);
+                        final boolean repliable = ((detailURI != null) && (detailURI.getMessageId() != null)) && (postable || _client.getChannelAllowPublicReplies(channelId));
+                        final boolean banned = false; //_client.getBannedChannels().contains(actionScope);
                         _ui.debugMessage("update actions: scope=" + actionScope + " channelId=" + channelId + " postable? " + postable);
                         Display.getDefault().asyncExec(new Runnable() {
                             public void run() {
                                 _actionScope = actionScope;
+                                _actionScopeId = channelId;
                                 _post.setEnabled(postable);
                                 _reply.setEnabled(repliable);
                                 _privmsg.setEnabled(privmsg);
-                                _watch.setEnabled(!watched);
-                                _ban.setEnabled(!banned);
+                                translateWatch();
+                                translateBan();
                             }
                         });
                     }
@@ -466,8 +471,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 // multiple scopes
                 _post.setEnabled(false);
                 _privmsg.setEnabled(false);
-                _watch.setEnabled(false);
-                _ban.setEnabled(false);
+                translateWatch();
+                translateBan();
             }
         }
         private void initComponents() {
@@ -481,15 +486,38 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _privmsg = new Button(root, SWT.PUSH);
             _privmsg.addSelectionListener(new FireSelectionListener() { public void fire() { sendPM(); } });
             _watch = new Button(root, SWT.PUSH);
-            _watch.addSelectionListener(new FireSelectionListener() { public void fire() { watch(); } });
+            _watch.addSelectionListener(new FireSelectionListener() {
+                public void fire() { 
+                    if (_actionScope != null) {
+                        if (_client.isWatched(_actionScopeId))
+                            _client.unwatchChannel(_actionScope);
+                        else
+                            _client.watchChannel(_actionScopeId, true, false, false, false, false);
+                    }
+                    translateWatch();
+                }
+            });
             _ban = new Button(root, SWT.PUSH);
-            _ban.addSelectionListener(new FireSelectionListener() { public void fire() { ban(); } });
+            _ban.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if (_actionScope != null) {
+                        if (_client.getBannedChannels().contains(_actionScope)) {
+                            _client.unban(_actionScope);
+                        } else {
+                            JobRunner.instance().enqueue(new Runnable() { public void run() {
+                                _client.ban(_actionScope, _ui, true);
+                                _ban.getDisplay().asyncExec(new Runnable() { public void run() { translateBan(); } });
+                            }});
+                        }
+                    }
+                } 
+            });
             
             _post.setEnabled(false);
             _reply.setEnabled(false);
             _privmsg.setEnabled(false);
-            _watch.setEnabled(false);
-            _ban.setEnabled(false);
+            translateWatch();
+            translateBan();
         }
         public void applyTheme(Theme theme) {
             _post.setFont(theme.BUTTON_FONT);
@@ -503,8 +531,31 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _post.setText(registry.getText(T_POST, "Post a new message"));
             _reply.setText(registry.getText(T_REPLY, "Reply"));
             _privmsg.setText(registry.getText(T_PRIVMSG, "Send a private message"));
-            _watch.setText(registry.getText(T_WATCH, "Watch the forum"));
-            _ban.setText(registry.getText(T_BAN, "Ban the forum"));
+            translateWatch();
+            translateBan();
+        }
+
+        private void translateWatch() {
+            if ( (_actionScope != null) && (_actionScopeId >= 0) ) {
+                _watch.setEnabled(true);
+                if (_client.isWatched(_actionScopeId))
+                    _watch.setText(_translationRegistry.getText(T_UNWATCH, "Unwatch the forum"));
+                else
+                    _watch.setText(_translationRegistry.getText(T_WATCH, "Watch the forum"));
+            } else {
+                _watch.setEnabled(false);
+            }
+        }
+        private void translateBan() {
+            if ( (_actionScope != null) && (_actionScopeId >= 0) ) {
+                _ban.setEnabled(true);
+                if (_client.getBannedChannels().contains(_actionScope))
+                    _ban.setText(_translationRegistry.getText(T_UNBAN, "Unban the forum"));
+                else
+                    _ban.setText(_translationRegistry.getText(T_BAN, "Ban the forum"));
+            } else {
+                _ban.setEnabled(false);
+            }
         }
         
         private void post() {
@@ -515,13 +566,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         }
         private void sendPM() {
             _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, true));
-        }
-        private void watch() {
-            _client.watchChannel(_actionScope, true, false, false, false, false);
-        }
-        private void ban() {
-            _desktop.getBanControl().ban(_actionScope);
-            _ban.setEnabled(false);
         }
     }
     
