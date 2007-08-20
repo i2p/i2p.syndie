@@ -695,6 +695,55 @@ class Desktop {
         }
     }
     
+    void uriUnhandled(SyndieURI uri) {
+        if (uri.isURL()) {
+            final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+            GridLayout gl = new GridLayout(1, true);
+            shell.setLayout(gl);
+            shell.setText(_translationRegistry.getText(T_EXTERNAL_TITLE, "External URL selected"));
+            
+            Text msg = new Text(shell, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
+            msg.setText(_translationRegistry.getText(T_EXTERNAL_MSG, "The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
+            GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            msg.setLayoutData(gd);
+            
+            String urlStr = uri.getURL();
+            if (urlStr == null) urlStr = "";
+            
+            Text url = new Text(shell, SWT.BORDER | SWT.SINGLE);
+            url.setText(urlStr);
+            gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            url.setLayoutData(gd);
+            
+            Button b = new Button(shell, SWT.PUSH);
+            b.setText(_translationRegistry.getText(T_EXTERNAL_OK, "Close"));
+            gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 400;
+            b.setLayoutData(gd);
+            b.addSelectionListener(new FireSelectionListener() { public void fire() { shell.dispose(); } });
+            
+            //shell.setSize(shell.computeSize(400, SWT.DEFAULT));
+            shell.pack(true);
+            shell.open();
+            //url.selectAll()
+            url.forceFocus();
+        } else {
+            MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
+            box.setText(_translationRegistry.getText(T_BADURI_TITLE, "Invalid URI"));
+            box.setMessage(_translationRegistry.getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri.toString());
+            box.open();
+        }
+    }
+    
+    private static final String T_EXTERNAL_TITLE = "syndie.gui.desktop.desktop.external.title";
+    private static final String T_EXTERNAL_MSG = "syndie.gui.desktop.desktop.external.msg";
+    private static final String T_EXTERNAL_OK = "syndie.gui.desktop.desktop.external.ok";
+    private static final String T_BADURI_TITLE = "syndie.gui.desktop.desktop.baduri.title";
+    private static final String T_BADURI_MSG = "syndie.gui.desktop.desktop.baduri.msg";
+    
+    
     DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
     List getPanels() { return new ArrayList(_loadedPanels); }
     NavigationControl getNavControl() { return _navControl; }

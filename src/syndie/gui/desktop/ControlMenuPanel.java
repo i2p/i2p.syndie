@@ -154,15 +154,15 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _openLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _openLocation = new Text(row, SWT.SINGLE | SWT.BORDER);
         _openLocation.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _open = new Button(row, SWT.PUSH);
-        _open.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _open.addSelectionListener(new FireSelectionListener() { public void fire() { fireOpen(); } });
-        _open.addTraverseListener(new TraverseListener() {
+        _openLocation.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN)
                     fireOpen();
             }
         });
+        _open = new Button(row, SWT.PUSH);
+        _open.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _open.addSelectionListener(new FireSelectionListener() { public void fire() { fireOpen(); } });
         
         row = new Composite(root, SWT.NONE);
         row.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
@@ -195,14 +195,6 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         if ( (onStartup != null) && ("true".equalsIgnoreCase(onStartup)) )
             _httpservOnStart.setSelection(true);
 
-        _tabbedUI = new Button(root, SWT.PUSH);
-        _tabbedUI.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _tabbedUI.addSelectionListener(new FireSelectionListener() {
-            public void fire() {
-                showTabbedUI();
-            }
-        });
-        
         _changePass = new Button(root, SWT.PUSH);
         _changePass.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _changePass.addSelectionListener(new FireSelectionListener() {
@@ -250,7 +242,15 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _sql = new Button(root, SWT.PUSH);
         _sql.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
         _sql.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.getNavControl().view(URIHelper.instance().createSQLURI()); } });
-        
+
+        _tabbedUI = new Button(root, SWT.PUSH);
+        _tabbedUI.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _tabbedUI.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                showTabbedUI();
+            }
+        });
+                
         _exit = new Button(root, SWT.PUSH);
         _exit.setLayoutData(new GridData(GridData.FILL, GridData.END, true, true));
         _exit.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.exit(); } });
@@ -635,10 +635,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importBulk.setText(registry.getText(T_IMPORTBULK, "directory (recursively)"));
         _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
         _import.setText(registry.getText(T_IMPORT, "Import"));
-        _tabbedUI.setText(registry.getText(T_TABBEDUI, "Display the tabbed UI"));
+        _tabbedUI.setText(registry.getText(T_TABBEDUI, "Advanced: Display the tabbed UI"));
         _changePass.setText(registry.getText(T_CHANGEPASS, "Change Syndie instance passphrase"));
         _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
-        _sql.setText(registry.getText(T_SQL, "Advanced SQL interface"));
+        _sql.setText(registry.getText(T_SQL, "Advanced: SQL interface"));
         _open.setText(registry.getText(T_OPEN, "Open"));
         _switchLabel.setText(registry.getText(T_SWITCH, "Log in to a different Syndie instance:"));
         _switchBrowse.setText(registry.getText(T_SWITCH_BROWSE, "Browse..."));

@@ -23,8 +23,11 @@ public class DesktopNavigationControl implements NavigationControl {
             _desktop.show(panel, uri, suggestedName, suggestedDescription);
         } else {
             panel = createPanel(uri, suggestedName, suggestedDescription);
-            if (panel != null)
+            if (panel != null) {
                 _desktop.show(panel, uri, suggestedName, suggestedDescription);
+            } else {
+                _desktop.uriUnhandled(uri);
+            }
         }
     }
     
@@ -65,7 +68,8 @@ public class DesktopNavigationControl implements NavigationControl {
             return new SQLPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
-        return _desktop.getTabPanel(true);
+        //return _desktop.getTabPanel(true);
+        return null;
     }
     
     public void unview(SyndieURI uri) {
