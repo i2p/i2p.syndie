@@ -42,6 +42,7 @@ class TabPanel extends DesktopPanel {
         }
         // tell the desktop to start using the tabs
         _desktop.setNavControl(_browser.getNavControl());
+        ComponentBuilder.instance().setNavigationControl(_browser.getNavControl());
         if (uri != null)
             _browser.view(uri, suggestedName, suggestedDescription);
         super.shown(desktop, uri, suggestedName, suggestedDescription);

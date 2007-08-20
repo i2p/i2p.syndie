@@ -691,7 +691,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     }
     
     private void refetchNymChannels() {
-        _nymChannels = _client.getChannels(true, true, true, true);
+        _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
     }
     private void redrawManageable() {
         _manageRoot.removeAll();

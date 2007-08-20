@@ -516,10 +516,15 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 _shell.forceFocus();
             }
             timer.addEvent("doStartup shell displayed");
-            while (_runAfterStartup.size() > 0) {
-                ((Runnable)_runAfterStartup.remove(0)).run();
-                timer.addEvent("doStartup: run deferred");
-            }
+            JobRunner.instance().enqueue(new Runnable() { 
+                public void run() {
+                    while (_runAfterStartup.size() > 0) {
+                        Runnable task = (Runnable)_runAfterStartup.remove(0);
+                        _shell.getDisplay().asyncExec(task);
+                        //timer.addEvent("doStartup: run deferred");
+                    }
+                }
+            });
         }
     }
     
@@ -1279,7 +1284,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private void populatePostMenus() {
-        final DBClient.ChannelCollector chans = _client.getChannels(true, true, true, true);
+        final DBClient.ChannelCollector chans = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
         Display.getDefault().asyncExec(new Runnable() {
             public void run() { 
                 populateManageable(chans); 

@@ -1236,7 +1236,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         JobRunner.instance().enqueue(new Runnable() {
             public void run() { 
                 long beforeGet = System.currentTimeMillis();
-                _nymChannels = _client.getChannels(true, true, true, true);
+                _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
                 _ui.debugMessage("get channels took " + (System.currentTimeMillis()-beforeGet) + "ms");
 
                 _root.getDisplay().asyncExec(new Runnable() {
