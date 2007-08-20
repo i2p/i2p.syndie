@@ -82,6 +82,9 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         Display.getDefault().removeFilter(SWT.KeyDown, _keyListener);
     }
     
+    public String getPanelName() { return "editor"; }
+    public String getPanelDescription() { return "Message editor panel"; }
+    
     Hash getTargetScope() { return _editor.getForum(); }
     
     private void initComponents() {

@@ -14,7 +14,7 @@ import syndie.gui.*;
 /**
  *
  */
-class DesktopPanel {
+abstract class DesktopPanel {
     protected DBClient _client;
     protected ThemeRegistry _themeRegistry;
     protected TranslationRegistry _translationRegistry;
@@ -75,8 +75,8 @@ class DesktopPanel {
         getRoot().forceFocus(); 
     }
     
-    public String getPanelName() { return "desktop panel"; }
-    public String getPanelDescription() { return "default desktop panel description for " + getClass().getName(); }
+    public abstract String getPanelName();// { return "desktop panel"; }
+    public abstract String getPanelDescription();// { return "default desktop panel description for " + getClass().getName(); }
     
     /** callback after the panel has been completely shown on the desktop */
     void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {

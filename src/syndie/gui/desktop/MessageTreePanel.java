@@ -65,6 +65,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         initComponents();
     }
     
+    public String getPanelName() { return "threads"; }
+    public String getPanelDescription() { return "Message tree panel"; }
+    
     private void initComponents() {
         BookmarkControl bookmarkControl = _desktop.getBookmarkControl();
         DataCallback dataCallback = _desktop.getDataCallback();
