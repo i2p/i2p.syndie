@@ -50,6 +50,9 @@ import syndie.gui.WatchedMessageTree;
 public class MessageTreePanel extends DesktopPanel implements Themeable, Translatable {
     private WatchedMessageTree _tree;
     private Listener _keyListener;
+    private Hash _actionScope;
+    private long _actionScopeId;
+    private SyndieURI _detailURI;
     
     public MessageTreePanel(Desktop desktop, SyndieURI origURI) {
         super(desktop, desktop.getDBClient(), desktop.getThemeRegistry(), desktop.getTranslationRegistry(), desktop.getCenter(), desktop.getUI(), origURI);
@@ -59,6 +62,33 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                 if (evt.keyCode == SWT.F5) {
                     _tree.applyFilter();
                     evt.type = SWT.None;
+                } else if ((evt.stateMask & SWT.MOD1) == SWT.MOD1) {
+                    if (evt.character == 24) { // ^X
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        expand(false);
+                    } else if (evt.character == 3) { // ^C
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        collapse(false);
+                    } else if (evt.character == 16) { // ^P
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        viewProfile();
+                    } else if (evt.character == 22) { // ^V
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        viewMessage();
+                    } else if (evt.character == 13) { // ^M
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        toggleRead();
+                    } else if (evt.character == 18) { // ^R
+                        evt.type = SWT.None;
+                        evt.doit = false;
+                        createRef();
+                    }
+                    forceFocus();
                 }
             }
         };
@@ -411,9 +441,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         private Button _privmsg;
         private Button _watch;
         private Button _ban;
-        private Hash _actionScope;
-        private long _actionScopeId;
-        private SyndieURI _detailURI;
         
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
@@ -749,24 +776,25 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _view.setEnabled(detailURI != null);
             _createRef.setEnabled(detailURI != null);
         }
-        private void viewProfile() {
-            if (_actionScope != null)
-                _desktop.getNavControl().view(URIHelper.instance().createMetaURI(_actionScope));
-        }
-        
-        private void expand(boolean all) { _tree.expandSelected(all); }
-        private void collapse(boolean all) { _tree.collapseSelected(all); }
-        private void toggleRead() { _tree.toggleRead(); }
-        private void viewMessage() {
-            if (_detailURI != null)
-                _desktop.getNavControl().view(_detailURI);
-        }
-        private void createRef() {
-            AddReferenceSource src = new AddReferenceSource(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
-            LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), src);
-            src.setPopup(popup);
-            popup.showPopup(_detailURI);
-        }
     }
+    
+    private void expand(boolean all) { _tree.expandSelected(all); }
+    private void collapse(boolean all) { _tree.collapseSelected(all); }
+    private void toggleRead() { _tree.toggleRead(); }
+    private void viewProfile() {
+        if (_actionScope != null)
+            _desktop.getNavControl().view(URIHelper.instance().createMetaURI(_actionScope));
+    }
+    private void viewMessage() {
+        if (_detailURI != null)
+            _desktop.getNavControl().view(_detailURI);
+    }
+    private void createRef() {
+        AddReferenceSource src = new AddReferenceSource(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), src);
+        src.setPopup(popup);
+        popup.showPopup(_detailURI);
+    }
+
 }
 
