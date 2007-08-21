@@ -1233,20 +1233,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 
         addPage();
         
-        JobRunner.instance().enqueue(new Runnable() {
-            public void run() { 
-                long beforeGet = System.currentTimeMillis();
-                _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
-                _ui.debugMessage("get channels took " + (System.currentTimeMillis()-beforeGet) + "ms");
-
-                _root.getDisplay().asyncExec(new Runnable() {
-                    public void run() {
-                        updateForum();
-                        updateAuthor();
-                    }
-                });
-            }
-        });
+        _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
         
         updateForum();
         updateAuthor();
@@ -2423,7 +2410,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         long authorId = -1;
         String authorSummary = "";
-        _ui.debugMessage("updateAuthor: " + _author);
+        _ui.debugMessage("updateAuthor: " + _author + " nymChannels: " + _nymChannels + " ident: " + _nymChannels.getIdentityChannelCount() + " managed: " + _nymChannels.getManagedChannelCount());
         
         boolean itemsSinceSep = false;
         
@@ -2496,7 +2483,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
 
             _authorHashes.add(info.getChannelHash());
             _authorCombo.add(summary);
-           
+            
             _authorToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
             _authorToSummary.put(info.getChannelHash(), summary);
             if (_bar != null) _bar.addAuthorMenuItem(info.getChannelHash(), info.getChannelId(), summary);

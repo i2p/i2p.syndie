@@ -18,6 +18,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -27,6 +28,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import syndie.Constants;
 import syndie.data.SyndieURI;
 import syndie.db.JobRunner;
 import syndie.gui.*;
@@ -287,11 +289,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                 continue;
             
             byte data[] = (byte[])forumNameToImageData.get(name);
-            Image img = null;
-            if (data != null)
-                img = ImageUtil.createImage(data);
-            else
-                img = ImageUtil.ICON_REF_FORUM;
+            Image img = createImage(data, ImageUtil.ICON_REF_FORUM);
             
             TreeItem forumItem = new TreeItem(_tree, SWT.NONE);
             forumItem.setImage(img);
@@ -313,11 +311,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
                 if (panel == current)
                     curItem = item;
                 data = (byte[])panelToImageData.get(panel);
-                img = null;
-                if (data != null)
-                    img = ImageUtil.createImage(data);
-                else
-                    img = ImageUtil.ICON_REF_MSG;
+                img = createImage(data, ImageUtil.ICON_REF_MSG);
                 item.setImage(img);
                 item.setText(panel.getPanelName());
                 item.setImage(1, ImageUtil.ICON_TASKTREE_CLOSE_SELF);
@@ -338,11 +332,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
             if (firstItem == null)
                 firstItem = item;
             byte[] data = (byte[])panelToImageData.get(panel);
-            Image img = null;
-            if (data != null)
-                img = ImageUtil.createImage(data);
-            else
-                img = ImageUtil.ICON_REF_SYNDIE;
+            Image img = createImage(data, ImageUtil.ICON_REF_SYNDIE);
             item.setImage(img);
             item.setText(panel.getPanelName());
             item.setImage(1, ImageUtil.ICON_TASKTREE_CLOSE_SELF);
@@ -360,6 +350,32 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         int width = _tree.getClientArea().width - 64 - _tree.getGridLineWidth()*2;
         _colName.setWidth(width);
         _colClose.setWidth(64);
+    }
+    
+    private static final int ICON_SIZE = 48; // Constants.MAX_AVATAR_WIDTH
+    private Image createImage(byte data[], Image defValue) {
+        Image img = null;
+        if (data != null) {
+            img = ImageUtil.createImage(data);
+        } else {
+            img = defValue;
+        }
+        
+        if (img != null) {
+            Rectangle sz = img.getBounds();
+            if ( (sz.width < ICON_SIZE) || (sz.height < ICON_SIZE) ) {
+                img = ImageUtil.resize(img, ICON_SIZE, ICON_SIZE, true);
+                //_ui.debugMessage("resizing tree image from " + sz + " to " + img.getBounds());
+            } else {
+                //_ui.debugMessage("tree image size ok @ " + sz);
+            }
+        } else {
+            //_ui.debugMessage("tree image is null, using default (" + defValue.getBounds() + ")");
+        }
+        
+        if (img == null)
+            img = defValue;
+        return img;
     }
     
     private void switchToSelected() {

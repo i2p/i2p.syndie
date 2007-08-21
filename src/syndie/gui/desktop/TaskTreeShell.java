@@ -37,6 +37,9 @@ class TaskTreeShell implements TaskTree.TaskTreeListener {
         _tree.addListener(this);
     }
     
+    private static final int SHELL_WIDTH = 600;
+    private static final int SHELL_HEIGHT = 400;
+    
     public void show() { 
         _tree.show(); 
         //_shell.setSize(_tree.getRoot().computeSize(400, 400));
@@ -47,7 +50,7 @@ class TaskTreeShell implements TaskTree.TaskTreeListener {
             bounds = m[0].getBounds();
         //Point pt = Display.getDefault().getCursorLocation();
         //_shell.setBounds(pt.x, pt.y, 400, 400);
-        _shell.setBounds(bounds.width/2-200, bounds.height/2-200, 400, 400);
+        _shell.setBounds(bounds.width/2-SHELL_WIDTH/2, bounds.height/2-SHELL_HEIGHT/2, SHELL_WIDTH, SHELL_HEIGHT);
         _shell.open();
     }
     public void dispose() { _tree.dispose(); }
