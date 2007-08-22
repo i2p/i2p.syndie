@@ -5,7 +5,7 @@ Syndie as a standard java application:
   - lib/hsqldb.jar
   - swt.jar (likely in lib/, but you may use another one)
  - specify the main class:
-  - syndie.gui.SWTUI
+  - syndie.gui.desktop.DesktopMain
  - specify any command line parameters:
   - use "--cli" if you want to run the text interface
   - an additional parameter defines an alternate Syndie data directory
@@ -24,11 +24,11 @@ English dictionary is bundled with Syndie, and on linux, Syndie uses
 the contents of /usr/share/dict/words by default.
 
 So, as a windows example:
- javaw -cp lib\syndie.jar;lib\hsqldb.jar;lib\swt.jar syndie.gui.SWTUI
+ javaw -cp lib\syndie.jar;lib\hsqldb.jar;lib\swt.jar syndie.gui.desktop.DesktopMain
 or as a linux example:
  SWTDIR=../swt-I20060922-0010-gtk-linux-x86 \
       java -cp lib/syndie.jar:lib/hsqldb.jar:${SWTDIR}/swt.jar \
-      -Djava.library.path=${SWTDIR} syndie.gui.SWTUI /tmp/syndieroot
+      -Djava.library.path=${SWTDIR} syndie.gui.desktop.DesktopMain /tmp/syndieroot
 or on OSX:
  java -XstartOnFirstThread -cp lib/syndie.jar:lib/hsqldb.jar:lib/swt.jar \
-      Syndie.gui.SWTUI
+      syndie.gui.desktop.DesktopMain
