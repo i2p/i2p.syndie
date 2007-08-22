@@ -4617,6 +4617,24 @@ public class DBClient {
         synchronized (_watchListeners) { _watchListeners.remove(lsnr); }
     }
     
+    public interface MessageStatusListener {
+        public void messageStatusUpdated(long msgId, int newStatus);
+    }
+    private List _msgStatusListeners = new ArrayList();
+    public void addMessageStatusListener(MessageStatusListener lsnr) { 
+        synchronized (_msgStatusListeners) { _msgStatusListeners.add(lsnr); }
+    }
+    public void removeMessageStatusListener(MessageStatusListener lsnr) {
+        synchronized (_msgStatusListeners) { _msgStatusListeners.remove(lsnr); }
+    }
+    private void notifyMessageStatusListeners(long msgId, int newStatus) {
+        List toNotify = new ArrayList();
+        synchronized (_msgStatusListeners) { toNotify.addAll(_msgStatusListeners); }
+        _ui.debugMessage("notifyMessageStatus(" + msgId + ", " + newStatus + "): listener count = " + toNotify.size());
+        for (int i = 0; i < toNotify.size(); i++)
+            ((MessageStatusListener)toNotify.get(i)).messageStatusUpdated(msgId, newStatus);
+    }
+    
     private void ensureLoggedIn() throws IllegalStateException { ensureLoggedIn(true); }
     private void ensureLoggedIn(boolean verifyNymId) throws IllegalStateException {
         try {
@@ -5086,6 +5104,8 @@ public class DBClient {
         long chanId = getMessageTarget(msgId);
         if (chanId >= 0)
             markChannelNotNew(chanId);
+        
+        notifyMessageStatusListeners(msgId, DBClient.MSG_STATUS_READ);
     }
 
     private static final String SQL_MARK_MESSAGE_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
@@ -5106,6 +5126,8 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+        
+        notifyMessageStatusListeners(msgId, DBClient.MSG_STATUS_UNREAD);
     }
 
     private static final String SQL_MARK_CHANNELMSG_READ = "DELETE FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ?)";

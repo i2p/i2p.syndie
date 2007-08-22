@@ -52,7 +52,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class MessagePanel extends DesktopPanel implements Translatable, Themeable {
+public class MessagePanel extends DesktopPanel implements Translatable, Themeable, DBClient.MessageStatusListener {
     private NavigationControl _navControl;
     private MessageViewBody _body;
     private MessageInfo _msg;
@@ -70,6 +70,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     public SyndieURI getOriginalURI() { return (_msg != null ? _msg.getURI() : null); }
     
     protected void dispose() {
+        _client.removeMessageStatusListener(this);
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
         _body.dispose();
@@ -79,8 +80,19 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     private void initComponents() {
         Composite root = getRoot();
         _body = new MessageViewBody(_desktop.getDBClient(), _desktop.getUI(), _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getBookmarkControl(), _desktop.getBanControl(), root);
+        _client.addMessageStatusListener(this);
         _translationRegistry.register(this);
         _themeRegistry.register(this);
+    }
+
+    public void messageStatusUpdated(final long msgId, final int status) {
+        if ( (_msg != null) && (_msg.getInternalId() == msgId) ) {
+            Display.getDefault().asyncExec(new Runnable() { 
+                public void run() { 
+                    ((SouthEdge)_edgeSouth).updateActions(_msg.getURI(), msgId, _msg);
+                }
+            });
+        }
     }
     
     public boolean canShow(SyndieURI uri) { 

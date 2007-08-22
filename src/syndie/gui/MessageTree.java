@@ -82,7 +82,7 @@ import syndie.db.UI;
 /**
  * 
  */
-public class MessageTree extends BaseComponent implements Translatable, Themeable {
+public class MessageTree extends BaseComponent implements Translatable, Themeable, DBClient.MessageStatusListener {
     private NavigationControl _navControl;
     private DataCallback _dataCallback;
     private BookmarkControl _bookmarkControl;
@@ -153,6 +153,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private Set _itemsNewUnread;
     /** item to msgId (Long) */
     private Map _itemToMsgId;
+    /** msgId (Long) to item */
+    private Map _msgIdToItem;
     /** ordered list of ReferenceNode instances describing the tree */
     private List _threadReferenceNodes;
     /** TreeItem to ReferenceNode */
@@ -202,6 +204,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _itemToURI = new HashMap();
         _itemsNewUnread = new HashSet();
         _itemToMsgId = new HashMap();
+        _msgIdToItem = new HashMap();
         _itemToNode = new HashMap();
         _tags = new HashSet();
         _bars = new ArrayList();
@@ -1319,10 +1322,37 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
 
         _preview = new MessageTreePreview(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _bookmarkControl, URIHelper.instance(), this);
 
+        _client.addMessageStatusListener(this);
         _translationRegistry.register(this);
         _themeRegistry.register(this);
         
         initDnD();
+    }
+    
+    public void messageStatusUpdated(final long msgId, final int status) {
+        ThreadReferenceNode node = null;
+        TreeItem item = null;
+        synchronized (_msgIdToItem) {
+            item = (TreeItem)_msgIdToItem.get(new Long(msgId));
+        }
+        _ui.debugMessage("tree: messageStatusUpdated(" + msgId + "): item=" + item);
+        if (item != null) {
+            synchronized (_itemToNode) {
+                node = (ThreadReferenceNode)_itemToNode.get(item);
+            }
+            _ui.debugMessage("tree: messageStatusUpdated(" + msgId + ", " + status + "): node is known? " + (node != null));
+            if (node != null) {
+                node.setMessageStatus(status);
+                final ThreadReferenceNode updateNode = node;
+                final TreeItem updateItem = item;
+                _root.getDisplay().asyncExec(new Runnable() {
+                    public void run() {
+                        _ui.debugMessage("rendering updated status node");
+                        renderNode(updateNode, updateItem);
+                    }
+                });
+            }
+        }
     }
     
     protected int getMessageSelectedCount() { return _tree.getSelectionCount(); }
@@ -1390,6 +1420,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     public void dispose() {
         _preview.dispose();
+        _client.removeMessageStatusListener(this);
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
         for (int i = 0; i < _bars.size(); i++)
@@ -1679,6 +1710,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _tree.removeAll();
         _itemToURI.clear();
         _itemToMsgId.clear();
+        _msgIdToItem.clear();
         _itemsNewUnread.clear();
         if (recalcTags)
             _tags.clear();
@@ -1749,6 +1781,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _itemToNode.put(item, node);
         _itemToURI.put(item, node.getURI());
         _itemToMsgId.put(item, new Long(node.getUniqueId()));
+        _msgIdToItem.put(new Long(node.getUniqueId()), item);
         
         if ( _expandAll || ( (parent == null) && (_expandRoots) ) ) {
             if (node.getChildCount() > 0)
@@ -1809,6 +1842,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             
             if (msgId >= 0) {
                 _itemToMsgId.put(item, new Long(msgId));
+                _msgIdToItem.put(new Long(msgId), item);
                 subj = node.getSubject(); //_client.getMessageSubject(msgId);
                 long authorId = node.getAuthorId(); //_client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
                 if (authorId != chanId) {
