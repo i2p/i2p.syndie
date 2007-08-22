@@ -17,6 +17,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
@@ -43,7 +45,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class ForumSelectionPanel extends DesktopPanel implements ChannelSelectorPanel.ChannelSelectorListener {
+public class ForumSelectionPanel extends DesktopPanel implements ChannelSelectorPanel.ChannelSelectorListener, ChannelSelectorPanel.MenuBuilder {
     private ChannelSelectorPanel _channels;
     private NavigationControl _navControl;
     private boolean _preferRefs;
@@ -68,7 +70,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
     
     private void initComponents() {
         Composite root = getRoot();
-        _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this);
+        _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this, this);
     }
     public void preferRefs(boolean preferRefs) { _preferRefs = preferRefs; }
     
@@ -122,7 +124,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
                                 rv.add(node.getChild(i));
                             return rv;
                         }
-                    });
+                    }, _channels.getSourceType());
                     _channels.recalcChannels();
                 } else {
                     // view an empty folder.  noop
@@ -158,6 +160,60 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         _desktop.panelDisposed(this, true);
     }
 
+    /** 
+     * add a menu or menu items to the button related to the reference node,
+     * returning true if more menu items can be added, false if no more should be
+     * added
+     */
+    public void addMenu(final Button itemButton, final ReferenceNode node, final SyndieURI uri) {
+        _ui.debugMessage("add menu w/ source type: " + _channels.getSourceType());
+        Menu menu = itemButton.getMenu();
+        switch (_channels.getSourceType()) {
+            case ChannelSelectorPanel.SOURCE_IDENT:
+            case ChannelSelectorPanel.SOURCE_MANAGEABLE:
+            case ChannelSelectorPanel.SOURCE_POSTABLE:
+            case ChannelSelectorPanel.SOURCE_OTHER:
+                return;
+            case ChannelSelectorPanel.SOURCE_WATCHED:
+                final Hash scope = uri.getScope();
+                if (scope != null) {
+                    if (menu == null) menu = new Menu(itemButton);
+                    itemButton.setMenu(menu);
+
+                    MenuItem unwatch = new MenuItem(menu, SWT.PUSH);
+                    unwatch.addSelectionListener(new FireSelectionListener() {
+                        public void fire() {
+                            _ui.debugMessage("unwatching " + scope + " [" + uri + "]");
+                            _client.unwatchChannel(scope);
+                            _channels.recalcChannels();
+                        }
+                    });
+                    unwatch.setText(_translationRegistry.getText(T_MENU_UNWATCH, "Unwatch forum"));
+                }
+                return;
+            case ChannelSelectorPanel.SOURCE_REFERENCES:
+                if (menu == null) menu = new Menu(itemButton);
+                itemButton.setMenu(menu);
+                
+                MenuItem remove = new MenuItem(menu, SWT.PUSH);
+                remove.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { 
+                        _client.deleteNymReference(_client.getLoggedInNymId(), node.getUniqueId());
+                        // when traversing the tree of refs, the id source is overwritten with various
+                        // ad-hoc id lists which do not query the db, so instead of recalcChannels
+                        // (which would just view the unmodified list), jump up to the top of the refs
+                        //    _channels.recalcChannels();
+                        _channels.showReferences(null);
+                    }
+                });
+                remove.setText(_translationRegistry.getText(T_MENU_REMOVE_REFERENCE, "Drop reference"));
+                return;
+        }
+    }
+    
+    private static final String T_MENU_REMOVE_REFERENCE = "syndie.gui.desktop.forumselectionpanel.menu.removereference";
+    private static final String T_MENU_UNWATCH = "syndie.gui.desktop.forumselectionpanel.menu.unwatch";
+    
     protected void buildSouth(Composite edge) { 
         if (_edgeSouth == null) _edgeSouth = new SouthEdge(edge, _ui); 
     }

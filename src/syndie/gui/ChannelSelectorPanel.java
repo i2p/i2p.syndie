@@ -75,7 +75,22 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private boolean _isUnreadOnly; 
     /** whether _records contains only forums with (readable) private messages in them */
     private boolean _isPrivateOnly;
+
+    private int _source;
+    public static final int SOURCE_WATCHED = 0;
+    public static final int SOURCE_IDENT = 1;
+    public static final int SOURCE_MANAGEABLE = 2;
+    public static final int SOURCE_POSTABLE = 3;
+    public static final int SOURCE_REFERENCES = 4;
+    public static final int SOURCE_OTHER = 5;
     
+    private MenuBuilder _menuBuilder;
+
+    public interface MenuBuilder {
+        /** add a menu or menu items to the button related to the reference node */
+        public void addMenu(Button itemButton, ReferenceNode node, SyndieURI uri);
+    }
+        
     public interface ChannelSelectorListener {
         public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar);
         public void channelSelected(SyndieURI uri, int matchedIndex);
@@ -91,9 +106,13 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     private ChannelIdSource _idSource;
     
     public ChannelSelectorPanel(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, ChannelSelectorPanel.ChannelSelectorListener lsnr) {
+        this(client, ui, themes, trans, parent, lsnr, null);
+    }
+    public ChannelSelectorPanel(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, ChannelSelectorPanel.ChannelSelectorListener lsnr, ChannelSelectorPanel.MenuBuilder builder) {
         super(client, ui, themes, trans);
         _parent = parent;
         _lsnr = lsnr;
+        _menuBuilder = builder;
         _records = new ArrayList();
         _isUnreadOnly = false;
         _isPrivateOnly = false;
@@ -102,6 +121,9 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
 
     public Control getRoot() { return _root; }
     protected Composite getTop() { return _top; }
+    
+    /** the appropriate SOURCE_* value, depending on what the most recent id source is */
+    public int getSourceType() { return _source; }
     
     public int getRecordCount() { return _records.size(); }
     public List getMatches() { return getMatches(false); }
@@ -350,7 +372,6 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             final Button b = new Button(_buttons, SWT.PUSH);
             b.setImage(r.avatar);
             b.setToolTipText(tooltip);
-            configButtonMenu(b, r.channelId, r.scope, r.name);
             final int matchedIndex = i;
             b.addSelectionListener(new FireSelectionListener() { public void fire() { _lsnr.channelSelected(r.uri, matchedIndex); } });
             b.addFocusListener(new FocusListener() {
@@ -366,55 +387,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
                 public void mouseExit(MouseEvent mouseEvent) {}
                 public void mouseHover(MouseEvent mouseEvent) {}
             });
-            if ( (r.node != null) && (r.node.getChildCount() > 0) ) {
-                Menu m = new Menu(b);
-                b.setMenu(m);
-                List roots = new ArrayList(1);
-                roots.add(r.node);
-                final List scopes = new ArrayList();
-                ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
-                    public void visit(ReferenceNode node, int depth, int siblingOrder) {
-                        SyndieURI uri = node.getURI();
-                        if (uri == null) {
-                            // ignore
-                        } else if (uri.isChannel() && (uri.getMessageId() == null)) {
-                            Hash scope = uri.getScope();
-                            if (!scopes.contains(scope))
-                                scopes.add(scope);
-                        } else if (uri.isSearch()) {
-                            Hash search[] = uri.getSearchScopes();
-                            if (search != null) {
-                                for (int i = 0; i < search.length; i++) {
-                                    if (!scopes.contains(search[i]))
-                                        scopes.add(search[i]);
-                                }
-                            }
-                        }
-                    }
-                });
-                final boolean useImportDate = MessageTree.shouldUseImportDate(_client);
-                MenuItem viewAll = new MenuItem(m, SWT.PUSH);
-                viewAll.addSelectionListener(new FireSelectionListener() {
-                    public void fire() { 
-                        SyndieURI mergedURI = SyndieURI.createSearch(scopes, _unreadOnly.getSelection(), _privateOnly.getSelection(), true, useImportDate);
-                        _lsnr.channelSelected(mergedURI, -1); 
-                    }
-                });
-                viewAll.setText(_translationRegistry.getText(T_VIEWALL, "Combined view of this category's forums, recursively"));
-            } else {
-                Menu m = new Menu(b);
-                b.setMenu(m);
-                MenuItem viewMsgs = new MenuItem(m, SWT.PUSH);
-                viewMsgs.addSelectionListener(new FireSelectionListener() {
-                    public void fire() { _lsnr.channelSelected(r.uri, matchedIndex); }
-                });
-                viewMsgs.setText(_translationRegistry.getText(T_VIEWMSGS, "View messages"));
-                MenuItem viewProfile = new MenuItem(m, SWT.PUSH);
-                viewProfile.addSelectionListener(new FireSelectionListener() {
-                    public void fire() { _lsnr.channelProfileSelected(r.uri, matchedIndex); }
-                });
-                viewProfile.setText(_translationRegistry.getText(T_VIEWPROFILE, "View profile"));
-            }
+            
+            addMenu(b, r, matchedIndex);
             
             // buttons don't traverse on arrow keys by default, but these should
             final boolean isFirst = (i == 0);
@@ -462,7 +436,64 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
             afterSet.run();
     }
     
-    protected void configButtonMenu(Button button, long channelId, Hash scope, String name) {}
+    private void addMenu(final Button b, final Record r, final int matchedIndex) {
+        if ( (r.node != null) && (r.node.getChildCount() > 0) ) {
+            Menu m = b.getMenu();
+            if (m == null)
+                m = new Menu(b);
+            b.setMenu(m);
+            List roots = new ArrayList(1);
+            roots.add(r.node);
+            final List scopes = new ArrayList();
+            ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
+                public void visit(ReferenceNode node, int depth, int siblingOrder) {
+                    SyndieURI uri = node.getURI();
+                    if (uri == null) {
+                        // ignore
+                    } else if (uri.isChannel() && (uri.getMessageId() == null)) {
+                        Hash scope = uri.getScope();
+                        if (!scopes.contains(scope))
+                            scopes.add(scope);
+                    } else if (uri.isSearch()) {
+                        Hash search[] = uri.getSearchScopes();
+                        if (search != null) {
+                            for (int i = 0; i < search.length; i++) {
+                                if (!scopes.contains(search[i]))
+                                    scopes.add(search[i]);
+                            }
+                        }
+                    }
+                }
+            });
+            final boolean useImportDate = MessageTree.shouldUseImportDate(_client);
+            MenuItem viewAll = new MenuItem(m, SWT.PUSH);
+            viewAll.addSelectionListener(new FireSelectionListener() {
+                public void fire() { 
+                    SyndieURI mergedURI = SyndieURI.createSearch(scopes, _unreadOnly.getSelection(), _privateOnly.getSelection(), true, useImportDate);
+                    _lsnr.channelSelected(mergedURI, -1); 
+                }
+            });
+            viewAll.setText(_translationRegistry.getText(T_VIEWALL, "Combined view of this category's forums, recursively"));
+        } else {
+            Menu m = b.getMenu();
+            if (m == null)
+                m = new Menu(b);
+            b.setMenu(m);
+            MenuItem viewMsgs = new MenuItem(m, SWT.PUSH);
+            viewMsgs.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _lsnr.channelSelected(r.uri, matchedIndex); }
+            });
+            viewMsgs.setText(_translationRegistry.getText(T_VIEWMSGS, "View messages"));
+            MenuItem viewProfile = new MenuItem(m, SWT.PUSH);
+            viewProfile.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _lsnr.channelProfileSelected(r.uri, matchedIndex); }
+            });
+            viewProfile.setText(_translationRegistry.getText(T_VIEWPROFILE, "View profile"));
+        }
+        
+        if (_menuBuilder != null)
+            _menuBuilder.addMenu(b, r.node, r.uri);
+    }
     
     void disposeExisting() {
         while (_records.size() > 0) {
@@ -601,7 +632,14 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         disposeExisting();
     }
     
-    public void setChannelIdSource(ChannelIdSource source) { _idSource = source; }
+    public void setChannelIdSource(ChannelIdSource source) { setChannelIdSource(source, SOURCE_OTHER); }
+    public void setChannelIdSource(ChannelIdSource source, int sourceType) { 
+        _source = sourceType;
+        doSetChannelIdSource(source);
+    }
+    private void doSetChannelIdSource(ChannelIdSource source) { 
+        _idSource = source;
+    }
     /** 
      * queue up the recalc task - call this from the SWT thread
      */
@@ -675,7 +713,8 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
     public void showWatched(Runnable afterSet) { showWatched(_unreadOnly.getSelection(), _privateOnly.getSelection(), afterSet); }
     public void showWatched(boolean unreadOnly, Runnable afterSet) { showWatched(unreadOnly, _privateOnly.getSelection(), afterSet); }
     public void showWatched(boolean unreadOnly, boolean privateOnly, Runnable afterSet) {
-        setChannelIdSource(new BasicIdSource() {
+        _source = SOURCE_WATCHED;
+        doSetChannelIdSource(new BasicIdSource() {
             public List listChannelIds() {
                 List chans = _client.getWatchedChannels(); 
                 List chanIds = new ArrayList();
@@ -689,13 +728,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
         recalcChannels(unreadOnly, privateOnly, afterSet);
     }
     public void showIdent(Runnable afterSet) {
-        setChannelIdSource(new BasicIdSource() {
+        _source = SOURCE_IDENT;
+        doSetChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(false, true, false, false, false).getAllIds(); }
         });
         recalcChannels(afterSet);
     }
     public void showManageable(Runnable afterSet) {
-        setChannelIdSource(new BasicIdSource() {
+        _source = SOURCE_MANAGEABLE;
+        doSetChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(true, true, false, false, false).getAllIds(); }
         });
         recalcChannels(afterSet);
@@ -713,13 +754,15 @@ public class ChannelSelectorPanel extends BaseComponent implements Themeable, Tr
          */
     }
     public void showPostable(Runnable afterSet) {
-        setChannelIdSource(new BasicIdSource() {
+        _source = SOURCE_POSTABLE;
+        doSetChannelIdSource(new BasicIdSource() {
             public List listChannelIds() { return _client.getChannels(true, true, true, false, false).getAllIds(); }
         });
         recalcChannels(afterSet);
     }
     public void showReferences(Runnable afterSet) {
-        setChannelIdSource(new ChannelIdSource() {
+        _source = SOURCE_REFERENCES;
+        doSetChannelIdSource(new ChannelIdSource() {
             public List listChannelIds() { return null; }
             public List getReferenceNodes() { return _client.getNymReferences(_client.getLoggedInNymId()); }
         });
