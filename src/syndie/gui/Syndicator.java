@@ -217,6 +217,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         }
     }
     
+    public void forceFocus() { _tree.forceFocus(); }
+
     public void dispose() {
         _disposed = true;
         if (_detail != null) _detail.dispose();

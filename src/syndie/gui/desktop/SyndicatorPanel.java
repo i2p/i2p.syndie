@@ -59,6 +59,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
         super.dispose();
     }
     
+    public void forceFocus() { _syndicator.forceFocus(); }
     
     public void applyTheme(Theme theme) {
         if (_edgeNorth != null)
