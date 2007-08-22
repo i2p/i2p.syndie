@@ -548,8 +548,10 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 if (scopes.contains(uri.getScope())) continue;
                 if (uri.getMessageId() != null) {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
-                    if (msgId >= 0)
-                        scopes.add(uri.getScope());
+                    if (msgId >= 0) {
+                        long targetId = _client.getMessageTarget(msgId);
+                        scopes.add(_client.getChannelHash(targetId));
+                    }
                 }
             }
         }
