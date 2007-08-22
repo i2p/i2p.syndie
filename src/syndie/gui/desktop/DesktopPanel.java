@@ -54,6 +54,7 @@ abstract class DesktopPanel {
     }
     
     public SyndieURI getOriginalURI() { return _origURI; }
+    public SyndieURI getSelectedURI() { return getOriginalURI(); }
     public boolean canShow(SyndieURI uri) { return _origURI != null && _origURI.equals(uri); }
     public boolean close() { 
         if (canClose()) {

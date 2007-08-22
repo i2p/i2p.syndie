@@ -8,7 +8,11 @@ import java.util.List;
 import java.util.TreeMap;
 import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -608,6 +612,16 @@ class Desktop {
                     else
                         toggleForumSelectionPanel();
                     evt.type = SWT.None;
+                } else if ( (evt.character == 'u') && ((evt.stateMask & SWT.MOD3) == SWT.MOD3) ) { // ALT+u to copy the current URI to the clipboard
+                    DesktopPanel panel = getCurrentPanel();
+                    SyndieURI uri = panel.getSelectedURI();
+                    if (uri != null) {
+                        addToClipboard(uri.toString());
+                    } else {
+                        addToClipboard("");
+                        _ui.debugMessage("no uri to add to the clipboard: " + panel + ", setting as blank");
+                    }
+                    evt.type = SWT.None;
                 } else if ( (evt.character == 'f') && ((evt.stateMask & SWT.MOD3) != 0) ) { // ALT-f
                     evt.type = SWT.None;
                     showTaskTree();
@@ -646,6 +660,21 @@ class Desktop {
                 }
             }
         });
+    }
+    
+    void addToClipboard(final String value) {
+        Clipboard clipboard = new Clipboard(_display);
+        Object data[] = new Object[] { value };
+        TextTransfer transfer = TextTransfer.getInstance();
+        TextTransfer types[] = new TextTransfer[] { transfer };
+        try {
+            clipboard.setContents(data, types);
+        } catch (SWTException se) {
+            _ui.debugMessage("unable to add to the clipboard: [" + value + "] - " + se.getMessage());
+        } catch (SWTError se) {
+            _ui.debugMessage("error: unable to add to the clipboard: [" + value + "] - " + se.getMessage());
+        }
+        clipboard.dispose();
     }
     
     void show(DesktopPanel panel) { show(panel, null, null, null, true); }
