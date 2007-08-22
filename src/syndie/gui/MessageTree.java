@@ -2459,30 +2459,23 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     public void toggleRead() { 
         TreeItem selected[] = _tree.getSelection();
-        boolean statusDetected = false;
         boolean statusWasRead = false;
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                TreeItem root = getThreadRoot(selected[i]);
-                if (!statusDetected) {
-                    statusDetected = true;
-                    Long msgId = (Long)_itemToMsgId.get(root);
-                    if (msgId != null) {
-                        if (_itemsNewUnread.contains(root)) {
-                            statusWasRead = false;
-                        } else {
-                            statusWasRead = true;
-                        }
+                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                if (msgId != null) {
+                    if (_itemsNewUnread.contains(selected[i])) {
+                        statusWasRead = false;
+                    } else {
+                        statusWasRead = true;
                     }
-                    _ui.debugMessage("toggleRead: item was read? " + statusWasRead);
                 }
+                _ui.debugMessage("toggleRead: item was read? " + statusWasRead);
                 if (statusWasRead)
-                    markThreadUnread(root);
+                    markUnread();
                 else
-                    markThreadRead(root);
+                    markRead();
             }
-            if (selected.length > 0)
-                _dataCallback.readStatusUpdated();
         }
     }
 }
