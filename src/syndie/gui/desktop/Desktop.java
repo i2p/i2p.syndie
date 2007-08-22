@@ -875,8 +875,24 @@ class Desktop {
     }
 
     TabPanel getTabPanel(boolean create) {
-        if ((_tabs == null) && create)
+        if ((_tabs == null) && create) {
             _tabs = new TabPanel(_center, this);
+
+            // when switching to the tab panel, close all of the loaded panels so
+            // they can be opened in the tabs (if necessary)
+            int unclosed = 0;
+            while (_loadedPanels.size() > unclosed) {
+                DesktopPanel panel = (DesktopPanel)_loadedPanels.get(unclosed);
+                _ui.debugMessage("closing " + panel);
+                if (panel instanceof StartupPanel) {
+                    _ui.debugMessage("never closing the startup panel");
+                    unclosed++;
+                } else if (!panel.close()) {
+                    _ui.debugMessage("could not close " + panel);
+                    unclosed++;
+                }
+            }
+        }
         return _tabs;
     }
     void showDesktopTabs() { show(getTabPanel(true), null, null, null); }
