@@ -151,7 +151,7 @@ public class Version {
         <copy todir="syndie-${syndie.version}/" file="resources/welcome.txt" />
         <copy todir="syndie-${syndie.version}/doc/" file="doc/syndie.1" />
         <copy todir="syndie-${syndie.version}/doc/web/">
-               <fileset dir="doc/web/" includes="*" />
+               <fileset dir="doc/web/" includes="*.png, *.css, *.html, *.ico" excludes="help**, tour**" />
         </copy>
         <copy todir="syndie-${syndie.version}/bin/">
                <fileset dir="bin/" includes="*" />
@@ -173,7 +173,7 @@ public class Version {
         <mkdir dir="doc/web/dist" />
         <delete dir="syndie-${syndie.version}" />
         <tar compression="bzip2" destfile="doc/web/dist/syndie-${syndie.version}.src.nodeps.tar.bz2">
-               <tarfileset dir="." includes="**" excludes=".svn, _MTN, _MTN/**, lib/**, *.bz2, *.exe, doc/web/dist/**, resources/words.txt**, nbproject/private/**" prefix="syndie-${syndie.version}" />
+               <tarfileset dir="." includes="**" excludes=".svn, _MTN, _MTN/**, lib/**, *.bz2, *.exe, doc/web/dist/**, doc/web/help/**, doc/web/tour/**, resources/words.txt**, nbproject/private/**" prefix="syndie-${syndie.version}" />
         </tar>
     </target>
 
@@ -841,7 +841,7 @@ exec java -XstartOnFirstThread \
         <copy todir="binpackage/syndie-${syndie.version}/" file="resources/welcome.txt" />
         <copy todir="binpackage/syndie-${syndie.version}/doc/" file="doc/syndie.1" />
         <copy todir="binpackage/syndie-${syndie.version}/doc/web/">
-               <fileset dir="doc/web/" includes="*" />
+               <fileset dir="doc/web/" includes="*.png, *.css, *.html, *.ico" excludes="help**, tour**" />
         </copy>
         <copy todir="binpackage/syndie-${syndie.version}/bin/">
                <fileset dir="bin/" includes="*" />
