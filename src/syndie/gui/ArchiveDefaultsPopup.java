@@ -238,7 +238,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
             item.setText(2, proxyHost + ":" + proxyPort);
         else
             item.setText(2, _translationRegistry.getText(T_PROXY_NONE, "no proxy"));
-        if ( (pushPolicy != null) && (pushPolicy.contains("SendNothing")) )
+        if ( (pushPolicy != null) && (pushPolicy.indexOf("SendNothing") != -1) )
             item.setText(3, "X");
         else
             item.setText(3, "");
@@ -539,7 +539,7 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
             if (items[i].getText(3).equals("X")) {
                 if (pushPolicy == null)
                     pushPolicy = "SendNothing";
-                else if (!pushPolicy.contains("SendNothing"))
+                else if (pushPolicy.indexOf("SendNothing") == -1)
                     pushPolicy = pushPolicy + " SendNothing";
             } else {
                 if (pushPolicy != null) {

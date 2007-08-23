@@ -645,7 +645,7 @@ public class ImageUtil {
         }
     }
     
-    private static final boolean BUTTONS_HAVE_BG = !System.getProperty("os.name").toLowerCase().contains("win");
+    private static final boolean BUTTONS_HAVE_BG = System.getProperty("os.name").toLowerCase().indexOf("win") == -1;
     
     /**
      * vertically draw the given text on the control in the specified font so that the
