@@ -52,6 +52,12 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
         return super.canShow(uri) || getOriginalURI().getType().equals(uri.getType()) || uri.isArchive();
     }
     
+    void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
+        super.shown(desktop, uri, suggestedName, suggestedDescription);
+        if (uri != null)
+            _syndicator.show(uri);
+    }
+    
     public void dispose() {
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
