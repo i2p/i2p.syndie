@@ -10,6 +10,15 @@
            description="Launch Syndie">
      <createForPack name="Base" />
  </shortcut>
+ <shortcut name="Syndie tabs"
+           programGroup="yes"
+           desktop="yes"
+	   applications="no"
+           target="$INSTALL_PATH\bin\syndie-tabs.exe" 
+           iconFile="$INSTALL_PATH\doc\web\favicon.ico"
+           description="Launch Syndie">
+     <createForPack name="Base" />
+ </shortcut>
  <shortcut name="Syndie documentation"
            programGroup="yes"
            desktop="yes"

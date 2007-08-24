@@ -15,6 +15,19 @@
            terminal="false"
            iconFile="$INSTALL_PATH/doc/web/favicon.ico"
            type="Application" />
+ <shortcut name="Syndie tabs"
+           target="java"
+           commandLine="-jar $INSTALL_PATH/bin/syndie-tabs.exe"
+           workingDirectory="$INSTALL_PATH"
+           initialState="normal"
+           programGroup="yes"
+           startMenu="no"
+           desktop="yes"
+           startup="no"
+           encoding="UTF-8"
+           terminal="false"
+           iconFile="$INSTALL_PATH/doc/web/favicon.ico"
+           type="Application" />
  <!--
  <shortcut name="Syndie documentation"
            programGroup="yes"
