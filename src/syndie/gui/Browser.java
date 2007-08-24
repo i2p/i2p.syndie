@@ -2465,6 +2465,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private static final Integer TYPE_ORDER_DEBUG = new Integer(2);
     private static final Integer TYPE_ORDER_COMMAND_COMPLETE = new Integer(3);
 
+    private static final boolean LOG_TO_STDERR = false;
+    
     private class UIListenerPusher implements Runnable {
         private List _errMsgs;
         private List _errCauses;
@@ -2540,6 +2542,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
         
         void errorMessage(String msg, Exception cause) {
+            if (LOG_TO_STDERR) {
+                if (msg != null)
+                    System.err.println(now() + ": " + msg);
+                if (cause != null)
+                    cause.printStackTrace();
+            }
             synchronized (UIListenerPusher.this) {
                 _typeOrder.add(TYPE_ORDER_ERROR);
                 _errMsgs.add(msg);
@@ -2551,6 +2559,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
         void statusMessage(String msg) {
+            if (LOG_TO_STDERR) {
+                if (msg != null)
+                    System.err.println(now() + ": " + msg);
+            }
             synchronized (UIListenerPusher.this) {
                 _typeOrder.add(TYPE_ORDER_STATUS);
                 _statusMsgs.add(msg);
@@ -2558,6 +2570,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
         void debugMessage(String msg, Exception cause) {
+            if (LOG_TO_STDERR) {
+                if (msg != null)
+                    System.err.println(now() + ": " + msg);
+                if (cause != null)
+                    cause.printStackTrace();
+            }
             synchronized (UIListenerPusher.this) {
                 _typeOrder.add(TYPE_ORDER_DEBUG);
                 _debugMsgs.add(msg);
@@ -2580,6 +2598,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
     }
+    
+    private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+    private static final String now() { synchronized (_tsFmt) { return _tsFmt.format(new Date(System.currentTimeMillis())); } }
     
     public void errorMessage(String msg) { errorMessage(msg, null); }
     public void errorMessage(String msg, Exception cause) {

@@ -44,6 +44,7 @@ public class HTTPServ implements CLI.Command {
     private int _minListeners;
     private int _curListeners;
     private static final int MAX_LISTENERS = 50;
+    private static boolean _rebuilding;
     
     public HTTPServ() {
         if (isAlive()) return;
@@ -53,6 +54,7 @@ public class HTTPServ implements CLI.Command {
         _startFailed = false;
         _startFailedMessage = null;
         _starting = true;
+        _rebuilding = false;
     }
     public HTTPServ(DBClient client, UI ui, int listenPort, int minListeners, boolean writable) {
         if (isAlive()) return;
@@ -194,16 +196,46 @@ public class HTTPServ implements CLI.Command {
                 if (!loggedIn)
                     _ui.debugMessage("Starting acceptance runner");
                 loggedIn = true;
-                File sharedIndex = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
-                SyncManager mgr = SyncManager.getInstance(_client, _ui);
+                final File sharedIndex = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+                final SyncManager mgr = SyncManager.getInstance(_client, _ui);
                 //SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
                 //manager.loadArchives();
                 if (!sharedIndex.exists()) {
                     _ui.debugMessage("shared index does not exist: building it");
                     LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy());
-                } else if (sharedIndex.lastModified() + LocalArchiveManager.getLocalRebuildDelayHours(_client)*60*60*1000L < System.currentTimeMillis()) {
+                } else if (!_rebuilding && (sharedIndex.lastModified() + LocalArchiveManager.getLocalRebuildDelayHours(_client)*60*60*1000L < System.currentTimeMillis())) {
+                    _rebuilding = true;
                     _ui.debugMessage("shared index is too old, rebuilding it");
-                    LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy());
+                    JobRunner.instance().enqueue(new Runnable() { 
+                        public void run() { 
+                            File tmp = null;
+                            FileInputStream fis = null;
+                            FileOutputStream fos = null;
+                            try {
+                                tmp = File.createTempFile("index", "dat", _client.getTempDir());
+                                LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy(), tmp);
+                                fis = new FileInputStream(tmp);
+                                fos = new FileOutputStream(sharedIndex);
+                                byte buf[] = new byte[1024*16];
+                                int read = -1;
+                                while ( (read = fis.read(buf)) != -1)
+                                    fos.write(buf, 0, read);
+                                fos.close();
+                                fis.close();
+                                fis = null;
+                                fos = null;
+                                tmp.delete();
+                                tmp = null;
+                            } catch (Exception e) {
+                                _ui.errorMessage("Error rebuilding", e);
+                            } finally {
+                                if (fis != null) try { fis.close(); } catch (IOException ioe) {}
+                                if (fos != null) try { fos.close(); } catch (IOException ioe) {}
+                                if (tmp != null) tmp.delete();
+                            }
+                            _rebuilding = false;
+                        }
+                    });                    
                 }
                 
                 try {

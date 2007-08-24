@@ -107,12 +107,15 @@ public class LocalArchiveManager {
     public static final String SHARED_INDEX_FILE = "shared-index.dat";
     
     public static void buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy) {
+        buildIndex(client, ui, pullStrategy, new File(client.getArchiveDir(), SHARED_INDEX_FILE));
+    }
+    public static void buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy, File targetFile) {
         if (!client.isLoggedIn()) return;
         SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client, pullStrategy));
         SharedArchive archive = builder.buildSharedArchive();
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(new File(client.getArchiveDir(), SHARED_INDEX_FILE));
+            fos = new FileOutputStream(targetFile);
             archive.write(fos);
             fos.close();
             fos = null;

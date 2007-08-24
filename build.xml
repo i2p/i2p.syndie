@@ -900,6 +900,51 @@ exec java -XstartOnFirstThread \
     
     <!-- create binpackage/syndie-${syndie.version}/bin/syndie.exe -->
     <target name="-binSyndie.exe" unless="noSyndieExe">
+        <antcall target="-binSyndieTabs.exe" />
+        <antcall target="-binSyndieDesktop.exe" />
+    </target>
+    <target name="-binSyndieTabs.exe">
+        <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
+        <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
+                 classname="net.sf.launch4j.ant.Launch4jTask" />
+        
+        <jar jarfile="syndie-${syndie.version}.jar">
+          <manifest>
+            <attribute name="Main-Class" value="syndie.gui.SWTUI" />
+            <!-- relative to the exe/jar file -->
+            <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar ../lib/swt.jar" />
+          </manifest>
+        </jar>
+
+        <echo file="launchsyndie.xml"><![CDATA[
+<launch4jConfig>
+ <headerType>0</headerType>
+ <jar>syndie-${syndie.version}.jar</jar>
+ <outfile>binpackage/syndie-${syndie.version}/bin/syndie-tabs.exe</outfile>
+ <errTitle>Syndie</errTitle>
+ <chdir>..</chdir>
+ <icon>doc/web/favicon.ico</icon>
+ <jre>
+  <minVersion>1.4.0</minVersion>
+ </jre>
+ <versionInfo>
+  <fileVersion>0.0.0.0</fileVersion>
+  <productVersion>0.0.0.0</productVersion>
+  <txtFileVersion>${syndie.version}</txtFileVersion>
+  <txtProductVersion>${syndie.version}</txtProductVersion>
+  <fileDescription>Syndie ${syndie.version} tabbed interface</fileDescription>
+  <copyright>copyright is theft</copyright>
+  <productName>Syndie ${syndie.version}</productName>
+  <internalName>syndie</internalName>
+  <originalFilename>syndie-tabs.exe</originalFilename>
+ </versionInfo>
+</launch4jConfig>
+]]></echo>
+        <launch4j configFile="launchsyndie.xml" />
+        <delete file="launchsyndie.xml" />
+        <delete file="syndie-${syndie.version}.jar" />
+    </target>
+    <target name="-binSyndieDesktop.exe">
         <fail unless="launch4jdir">Specify the location of the Launch4J installation directory with -Dlaunch4jdir=/some/path where it contains launch4j.jar</fail>
         <taskdef name="launch4j" classpath="${launch4jdir}/launch4j.jar:${launch4jdir}/lib/xstream.jar"
                  classname="net.sf.launch4j.ant.Launch4jTask" />
@@ -928,7 +973,7 @@ exec java -XstartOnFirstThread \
   <productVersion>0.0.0.0</productVersion>
   <txtFileVersion>${syndie.version}</txtFileVersion>
   <txtProductVersion>${syndie.version}</txtProductVersion>
-  <fileDescription>Syndie ${syndie.version} graphical interface</fileDescription>
+  <fileDescription>Syndie ${syndie.version} desktop interface</fileDescription>
   <copyright>copyright is theft</copyright>
   <productName>Syndie ${syndie.version}</productName>
   <internalName>syndie</internalName>

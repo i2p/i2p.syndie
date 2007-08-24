@@ -62,7 +62,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Button _httpservOnStart;
     private Button _httpservOptions;
     
-    private Button _tabbedUI;
+    //private Button _tabbedUI;
     private Button _changePass;
     
     private Label _switchLabel;
@@ -243,6 +243,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _sql.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
         _sql.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.getNavControl().view(URIHelper.instance().createSQLURI()); } });
 
+        /*
         _tabbedUI = new Button(root, SWT.PUSH);
         _tabbedUI.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _tabbedUI.addSelectionListener(new FireSelectionListener() {
@@ -250,6 +251,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                 showTabbedUI();
             }
         });
+        */
                 
         _exit = new Button(root, SWT.PUSH);
         _exit.setLayoutData(new GridData(GridData.FILL, GridData.END, true, true));
@@ -601,7 +603,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _exit.setFont(theme.BUTTON_FONT);
         _sql.setFont(theme.BUTTON_FONT);
         _welcome.setFont(theme.BUTTON_FONT);
-        _tabbedUI.setFont(theme.BUTTON_FONT);
+        //_tabbedUI.setFont(theme.BUTTON_FONT);
         _changePass.setFont(theme.BUTTON_FONT);
         _httpservLabel.setFont(theme.DEFAULT_FONT);
         _httpservOnStart.setFont(theme.DEFAULT_FONT);
@@ -635,7 +637,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importBulk.setText(registry.getText(T_IMPORTBULK, "directory (recursively)"));
         _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
         _import.setText(registry.getText(T_IMPORT, "Import"));
-        _tabbedUI.setText(registry.getText(T_TABBEDUI, "Advanced: Display the tabbed UI"));
+        //_tabbedUI.setText(registry.getText(T_TABBEDUI, "Advanced: Display the tabbed UI"));
         _changePass.setText(registry.getText(T_CHANGEPASS, "Change Syndie instance passphrase"));
         _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
         _sql.setText(registry.getText(T_SQL, "Advanced: SQL interface"));
