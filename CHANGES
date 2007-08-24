@@ -1,5 +1,16 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2007-08-24  1.100a released
+    - package the new desktop GUI as well as an update to the old tabbed GUI
+    - improve syndication reliability and concurrency on both the client and
+      server side
+    - substantial message editor, message rendering, and thread display
+      performance improvements
+    - bugfixes for importing private messages
+    - add more per-archive syndication configuration options
+    - upgrade SWT to 3.4M1
+    - lots of small performance and gui tweaks
+
 * 2007-03-15  1.005a released
     - streamline the splash screen loading, status bar updating, and thread
       rendering.  also includes some minor refactorings to improve GUI
