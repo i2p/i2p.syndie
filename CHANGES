@@ -1,6 +1,6 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2007-08-24  1.100a released
+* 2007-08-25  1.100a released
     - package the new desktop GUI as well as an update to the old tabbed GUI
     - improve syndication reliability and concurrency on both the client and
       server side
