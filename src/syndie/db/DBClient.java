@@ -678,6 +678,19 @@ public class DBClient {
             if (stmt != null) stmt.close();
         }
     }
+    public int exec(String sql, long param1, long param2) throws SQLException {
+        //if (_log.shouldLog(Log.DEBUG))
+        //    _log.debug("Exec param [" + sql + "]");
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(sql);
+            stmt.setLong(1, param1);
+            stmt.setLong(2, param2);
+            return stmt.executeUpdate();
+        } finally { 
+            if (stmt != null) stmt.close();
+        }
+    }
     public void exec(String query, UI ui) {
         ui.debugMessage("Executing [" + query + "]");
         PreparedStatement stmt = null;
@@ -2993,7 +3006,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_INFO = "SELECT authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId, " +
-                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt, importDate " +
+                                                       "forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, readKeyMissing, replyKeyMissing, pbePrompt, importDate, deletionCause " +
                                                        "FROM channelMessage WHERE msgId = ?";
     private static final String SQL_GET_MESSAGE_HIERARCHY = "SELECT referencedChannelHash, referencedMessageId FROM messageHierarchy WHERE msgId = ? ORDER BY referencedCloseness ASC";
     private static final String SQL_GET_MESSAGE_TAG = "SELECT tag, isPublic FROM messageTag WHERE msgId = ?";
@@ -3014,7 +3027,7 @@ public class DBClient {
             if (rs.next()) {
                 // authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, overwriteMessageId,
                 // forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, 
-                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, importDate
+                // wasAuthenticated, isCancelled, expiration, scopeChannelId, wasPBE, importDate, deletionCause
                 long authorId = rs.getLong(1);
                 if (rs.wasNull()) authorId = -1;
                 //byte author[] = rs.getBytes(1);
@@ -3051,6 +3064,14 @@ public class DBClient {
                 if (rs.wasNull()) replyKeyMissing = false;
                 String pbePrompt = rs.getString(19);
                 Date importDate = rs.getDate(20);
+                int deletionCause = rs.getInt(21);
+                if (rs.wasNull()) deletionCause = -1;
+                
+                if (deletionCause > 0 ) {
+                    _ui.debugMessage("message " + internalMessageId + " was deleted: " + deletionCause);
+                    return null;
+                }
+                
                 info.setReadKeyUnknown(readKeyMissing);
                 info.setReplyKeyUnknown(replyKeyMissing);
                 info.setPassphrasePrompt(pbePrompt);
@@ -3088,6 +3109,7 @@ public class DBClient {
                 if (importDate != null)
                     info.setReceiveDate(importDate.getTime());
             } else {
+                _ui.debugMessage("no matches for " + internalMessageId);
                 return null;
             }
         } catch (SQLException se) {
@@ -3657,7 +3679,7 @@ public class DBClient {
         ensureLoggedIn();
         addBan(bannedChannel, ui);
         if (deleteMessages || deleteMeta)
-            executeDelete(bannedChannel, ui, deleteMessages || deleteMeta, deleteMeta);
+            executeDelete(bannedChannel, ui, deleteMessages || deleteMeta, deleteMeta, DELETION_CAUSE_BAN);
     }
     private static final String SQL_BAN = "INSERT INTO banned (channelHash) VALUES (?)";
     private void addBan(Hash bannedChannel, UI ui) {
@@ -3700,7 +3722,7 @@ public class DBClient {
         }
     }
     
-    private void executeDelete(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
+    private void executeDelete(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta, int cause) {
         // delete the banned channel itself from the archive
         // then list any messages posted by that author in other channels and
         // delete them too
@@ -3710,7 +3732,7 @@ public class DBClient {
         for (int i = 0; i < urisToDelete.size(); i++) {
             SyndieURI uri = (SyndieURI)urisToDelete.get(i);
             deleteFromArchive(uri, ui);
-            deleteFromDB(uri, ui);
+            deleteFromDB(uri, ui, cause);
         }
     }
     private void deleteFromArchive(SyndieURI uri, UI ui) {
@@ -3742,12 +3764,28 @@ public class DBClient {
         if (chanDir.listFiles().length <= 0)
             chanDir.delete();
     }
+    
+    private static final int DELETION_CAUSE_OTHER = -1;
+    private static final int DELETION_CAUSE_BAN = 0;
+    private static final int DELETION_CAUSE_EXPLICIT = 1;
+    private static final int DELETION_CAUSE_EXPIRE = 2;
+    private static final int DELETION_CAUSE_CANCELLED = 3;
+    
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
     private static final String SQL_DELETE_READ_KEYS = "DELETE FROM channelReadKey WHERE channelId = ?";
     private static final String SQL_DELETE_UNREAD_CHANNELS = "DELETE FROM nymUnreadChannel WHERE channelId = ?";
     private static final String SQL_DELETE_UNREAD_MESSAGE = "DELETE FROM nymUnreadMessage WHERE msgId = ?";
-    void deleteFromDB(SyndieURI uri, UI ui) {
+    private static final String SQL_UPDATE_MESSAGE_DELETION_CAUSE = "UPDATE channelMessage SET deletionCause = ? WHERE msgId = ?";
+    
+    public void deleteMessage(SyndieURI uri, UI ui, boolean deleteDB) {
+        deleteFromArchive(uri, ui);
+        if (deleteDB)
+            deleteFromDB(uri, ui, DELETION_CAUSE_EXPLICIT);
+    }
+    
+    void deleteFromDB(SyndieURI uri, UI ui) { deleteFromDB(uri, ui, DELETION_CAUSE_OTHER); }
+    void deleteFromDB(SyndieURI uri, UI ui, int deletionCause) {
         if (uri.getMessageId() == null) {
             // delete the whole channel, though all of the posts
             // will be deleted separately
@@ -3785,7 +3823,16 @@ public class DBClient {
                 exec(ImportPost.SQL_DELETE_MESSAGE_REF_URIS, internalId);
                 exec(ImportPost.SQL_DELETE_MESSAGE_REFS, internalId);
                 exec(SQL_DELETE_UNREAD_MESSAGE, internalId);
-                exec(SQL_DELETE_MESSAGE, internalId);
+                switch (deletionCause) {
+                    case DELETION_CAUSE_BAN:
+                        exec(SQL_DELETE_MESSAGE, internalId);
+                        break;
+                    case DELETION_CAUSE_CANCELLED:
+                    case DELETION_CAUSE_EXPIRE:
+                    case DELETION_CAUSE_EXPLICIT:
+                        exec(SQL_UPDATE_MESSAGE_DELETION_CAUSE, deletionCause, internalId);
+                        break;
+                }
                 ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database");
             } catch (SQLException se) {
                 ui.errorMessage("Error deleting the post " + uri, se);

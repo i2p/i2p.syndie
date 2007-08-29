@@ -133,6 +133,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private MenuItem _markUnread;
     private MenuItem _markThreadRead;
     private MenuItem _markAllRead;
+    private MenuItem _delete;
     
     private boolean _showAuthor;
     private boolean _showChannel;
@@ -1199,6 +1200,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _expandThread.setEnabled(enableMsg);
                 _collapseThread.setEnabled(enableMsg);
                 _markAllRead.setEnabled(enable);
+                _delete.setEnabled(enableMsg);
                 _markRead.setEnabled(enableMsg);
                 _markThreadRead.setEnabled(enableMsg);
                 _markUnread.setEnabled(enableMsg);
@@ -1291,6 +1293,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _markAllRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
+        });
+        
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _delete = new MenuItem(_menu, SWT.PUSH);
+        _delete.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { delete(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
         });
         
         if (!_hideFilter) {
@@ -2294,6 +2303,23 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
     }
 
+    private void delete() {
+        TreeItem selected[] = _tree.getSelection();
+        int deleted = 0;
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                if ( (uri != null) && (uri.getMessageId() != null) ) {
+                    _client.deleteMessage(uri, _ui, true);
+                    deleted++;
+                }
+            }
+            _dataCallback.readStatusUpdated();
+        }
+        if (deleted > 0)
+            applyFilter();
+    }
+
     private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
     private static final String T_AUTHOR = "syndie.gui.messagetree.author";
     private static final String T_FORUM = "syndie.gui.messagetree.forum";
@@ -2335,6 +2361,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private static final String T_BOOKMARKAUTHOR = "syndie.gui.messagetree.bookmarkauthor";
     private static final String T_EXPANDTHREAD = "syndie.gui.messagetree.expandthread";
     private static final String T_COLLAPSETHREAD = "syndie.gui.messagetree.collapsethread";
+    private static final String T_DELETE = "syndie.gui.messagetree.delete";
     
     private static final String T_PAGESIZE = "syndie.gui.messagetree.pagesize";
     
@@ -2365,6 +2392,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark the forum as read"));
+        _delete.setText(registry.getText(T_DELETE, "Delete the message locally"));
         
         _navPageSizeLabel.setText(registry.getText(T_PAGESIZE, "Page size:"));
     }

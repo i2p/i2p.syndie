@@ -381,7 +381,7 @@ class ReadMenu implements TextEngine.Menu {
     }
     
     // $index\t$date\t$subject\t$author
-    private static final String SQL_LIST_MESSAGES = "SELECT msgId, messageId, subject, authorChannelId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND isCancelled = FALSE";
+    private static final String SQL_LIST_MESSAGES = "SELECT msgId, messageId, subject, authorChannelId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND isCancelled = FALSE AND deletionCause IS NULL";
     /** messages [--channel ($index|$hash)] [--includeUnauthorized $boolean] [--includeUnauthenticated $boolean] */
     private void processMessages(DBClient client, UI ui, Opts opts) {
         boolean unauthorized = opts.getOptBoolean("includeUnauthorized", false);

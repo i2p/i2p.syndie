@@ -101,6 +101,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
     private MenuItem _bodyViewUnstyled;
     private MenuItem _bodyViewStyled;
     private MenuItem _bodySaveAll;
+    private MenuItem _bodyDelete;
     
     private MenuItem _imgView;
     private MenuItem _imgSave;
@@ -1461,6 +1462,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 saveAllImages();
             }
         });
+        
         _bodyDisable = new MenuItem(_bodyMenu, SWT.PUSH);
         _bodyDisable.setText("Disable images");
         _bodyDisable.addSelectionListener(new FireEventListener() {
@@ -1491,6 +1493,16 @@ public class PageRenderer extends BaseComponent implements Themeable {
             public void fireEvent() { toggleViewStyled(); }
         });
         _bodyViewStyled.setSelection(true);
+        
+        new MenuItem(_bodyMenu, SWT.SEPARATOR);
+        
+        _bodyDelete = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyDelete.setText("Delete this message locally");
+        _bodyDelete.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                deleteMessage();
+            }
+        });
         
         new MenuItem(_bodyMenu, SWT.SEPARATOR);
         _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
@@ -1620,6 +1632,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
         }
         if (_listener != null)
             _listener.saveAllImages(PageRenderer.this, images);
+    }
+    private void deleteMessage() {
+        if ( (_listener != null) && (_msg != null) )
+            _listener.deleteMessage(PageRenderer.this, _msg.getURI());
     }
     
     private String getSuggestedName(HTMLTag tag) {
@@ -1925,7 +1941,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
          * The user wants to save the given image
          */
         public void saveImage(PageRenderer renderer, String suggestedName, Image img);
-        
+        /** 
+         * the message should be deleted locally 
+         */
+        public void deleteMessage(PageRenderer renderer, SyndieURI msg);
         /**
          * The user wants to create a reply that is readable only by the target author
          */

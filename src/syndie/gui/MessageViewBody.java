@@ -468,6 +468,11 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if (_banControl.ban(scope))
                 _navControl.unview(_msg.getURI());
         }
+        public void deleteMessage(PageRenderer renderer, SyndieURI msg) {
+            if (msg != null)
+                _client.deleteMessage(msg, _ui, true);
+            _navControl.unview(_msg.getURI());
+        }
         public void viewImage(PageRenderer renderer, Image img) {}
         public void ignoreImageScope(PageRenderer renderer, Hash scope) {}
         public void importReadKey(PageRenderer renderer, Hash referencedBy, Hash keyScope, SessionKey key) {}

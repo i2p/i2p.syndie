@@ -110,4 +110,5 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
     public void saveImage(PageRenderer renderer, String suggestedName, Image img) {}
     public void nextPage() {}
     public void prevPage() {}
+    public void deleteMessage(PageRenderer renderer, SyndieURI msg) {}
 }

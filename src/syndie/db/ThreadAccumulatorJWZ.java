@@ -451,23 +451,23 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
-                "AND m.isCancelled = FALSE AND m.readKeyMissing = false " +
+                "AND m.isCancelled = FALSE AND m.deletionCause IS NULL AND m.readKeyMissing = false " +
                 "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
     private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE importDate > ? AND messageId > ? " +
-                "AND isCancelled = FALSE AND readKeyMissing = false " +
+                "AND isCancelled = FALSE AND deletionCause IS NULL AND readKeyMissing = false " +
                 "AND pbePrompt IS NULL AND replyKeyMissing = false";
     
     private static final String SQL_GET_BASE_MSGS_BY_TARGET_PBE = "SELECT msgId, cs.channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel c ON targetChannelId = c.channelId " +
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
-                "AND m.pbePrompt IS NOT NULL";
+                "AND m.pbePrompt IS NOT NULL AND m.deletionCause IS NULL";
     private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE m.importDate > ? AND messageId > ? " +
-                "AND m.pbePrompt IS NOT NULL";
+                "AND m.pbePrompt IS NOT NULL AND m.deletionCause IS NULL";
     private Set getMatchingThreadMsgIds() { return getMatchingThreadMsgIds(false); }
     private Set getMatchingThreadMsgIds(boolean pbePending) {
         long minImportDate = _earliestReceiveDate;

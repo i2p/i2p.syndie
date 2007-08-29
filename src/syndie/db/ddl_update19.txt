@@ -1,0 +1,32 @@
+-- update the database from schema version 19
+-- this version 20 adds expiration policies and tracks message deletion
+--
+
+UPDATE appVersion SET versionNum = 20, visibleVersion = 'Expiration and deletion';
+
+-- deletionCause values:
+--  1: explicit delete
+--  2: expire
+--  3: cancelled
+ALTER TABLE channelMessage ADD deletionCause INTEGER DEFAULT NULL;
+
+-- expiration policies:
+-- * dataFile/db default policy
+-- * dataFile/db watched policy
+-- * dataFile/db forum-specific policy
+CREATE CACHED TABLE expirationPolicy (
+        -- if true, this policy talks about when we delete the .syndie data files
+        isDataFilePolicy BOOLEAN DEFAULT true
+        -- policyScopeId is -1 for the default policy, -2 for the watched forum policy, 
+        -- or equal to the channelId for channel specific policies        
+        , policyScopeId BIGINT
+        -- if this number of messages is exceeded, older messages are deleted
+        , maxNumMessages BIGINT DEFAULT -1
+        -- if the total size of all messages in this scope is exceeded, older 
+        -- messages are deleted until the size is reached
+        , maxSizeKB BIGINT DEFAULT -1
+        -- if a message was received more than this many days ago, it is deleted
+        , maxAgeDays BIGINT DEFAULT -1
+        , PRIMARY KEY (isDataFilePolicy, policyScopeId)
+);
+

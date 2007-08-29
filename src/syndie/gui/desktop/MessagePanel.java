@@ -171,6 +171,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     private static final String T_UNAUTH = "syndie.gui.desktop.messagepanel.unauth";
 
     private void shown(final SyndieURI uri, long msgId, MessageInfo msg, Timer timer) {
+        if (msg == null) throw new RuntimeException("msg is null? " + msgId + " - " + uri);
         _msg = msg;        
         if (msg.getPassphrasePrompt() != null) {
             getRoot().setVisible(false);
