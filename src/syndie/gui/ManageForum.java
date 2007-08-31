@@ -83,6 +83,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private Text _description;
     private Label _expirationLabel;
     private Text _expiration;
+    private Button _expirationManager;
     private ArrayList _referenceNodeRoots;
     private Group _archiveGroup;
     private Button _archiveSelect;
@@ -215,14 +216,22 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _description.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, descWidth, 1));
         _description.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
         
-        _expirationLabel = new Label(_root, SWT.NONE);
+        Composite expiration = new Composite(_root, SWT.NONE);
+        expiration.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1));
+        expiration.setLayout(new GridLayout(3, false));
+        
+        _expirationLabel = new Label(expiration, SWT.NONE);
         _expirationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _expiration = new Text(_root, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
+        _expiration = new Text(expiration, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
-        gd.widthHint = 50;
+        gd.widthHint = 100;
         _expiration.setLayoutData(gd);
         _expiration.addModifyListener(new ModifyListener() { public void modifyText(ModifyEvent evt) { modified(); } });
+        
+        _expirationManager = new Button(expiration, SWT.PUSH);
+        _expirationManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(_scope)); } });
+        _expirationManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         Composite refRow = new Composite(_root, SWT.NONE);
         refRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
@@ -1074,6 +1083,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _description.setFont(theme.DEFAULT_FONT);
         _expirationLabel.setFont(theme.DEFAULT_FONT);
         _expiration.setFont(theme.DEFAULT_FONT);
+        _expirationManager.setFont(theme.BUTTON_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
         _archiveRemoveAll.setFont(theme.DEFAULT_FONT);
         _archiveSelect.setFont(theme.DEFAULT_FONT);
@@ -1106,6 +1116,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private static final String T_DESC = "syndie.gui.manageforum.desc";
     private static final String T_AUTH = "syndie.gui.manageforum.auth";
     private static final String T_EXPIRATION = "syndie.gui.manageforum.expiration";
+    private static final String T_EXPIRATIONMANAGER = "syndie.gui.manageforum.expirationmanager";
     private static final String T_USERS = "syndie.gui.manageforum.users";
     private static final String T_PUBARCHIVE = "syndie.gui.manageforum.pubarchive";
     private static final String T_PRIVARCHIVE = "syndie.gui.manageforum.privarchive";
@@ -1140,6 +1151,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
+        _expirationManager.setText(registry.getText(T_EXPIRATIONMANAGER, "Manage"));
         if (_showActions) {
             _save.setText(registry.getText(T_SAVE, "Save changes"));
             _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));

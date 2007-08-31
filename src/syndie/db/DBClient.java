@@ -22,6 +22,7 @@ import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.BugConfig;
 import syndie.data.ChannelInfo;
+import syndie.data.ExpirationPolicy;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.NymReferenceNode;
@@ -5377,6 +5378,150 @@ public class DBClient {
             return false;
         } finally {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+        }
+    }
+
+    private static final String SQL_GET_EXPIRATION_POLICIES = "SELECT isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays, mimicDefault FROM expirationPolicy";
+    public Set getExpirationPolicies() {
+        Set rv = new HashSet();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_EXPIRATION_POLICIES);
+            rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                // isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays, mimicDefault
+                boolean isDataFile = rs.getBoolean(1);
+                long scopeId = rs.getLong(2);
+                long msgs = rs.getLong(3);
+                long maxSizeKB = rs.getLong(4);
+                long maxAgeDays = rs.getLong(5);
+                boolean mimicDefault = rs.getBoolean(6);
+                if (rs.wasNull()) mimicDefault = false;
+                
+                ExpirationPolicy policy = new ExpirationPolicy();
+                if (isDataFile)
+                    policy.setIsDataFilePolicy(); 
+                else
+                    policy.setIsDBPolicy();
+                if (scopeId == -1)
+                    policy.setIsDefaultPolicy();
+                else if (scopeId == -2)
+                    policy.setIsWatchedPolicy();
+                else
+                    policy.setPolicyChannelId(scopeId);
+                policy.setMaxNumMessages(msgs);
+                policy.setMaxSizeKB((int)maxSizeKB);
+                policy.setMaxAgeDays((int)maxAgeDays);
+                policy.setMimicDefault(mimicDefault);
+                rv.add(policy);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting expiration policies", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        return rv;
+    }
+    
+    private static final String SQL_ADD_EXPIRATION_POLICY = "INSERT INTO expirationPolicy (isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays, mimicDefault) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SQL_UPDATE_EXPIRATION_POLICY = "UPDATE expirationPolicy SET maxNumMessages = ?, maxSizeKB = ?, maxAgeDays = ?, mimicDefault = ? WHERE isDataFilePolicy = ? AND policyScopeId = ?";
+    public void saveExpirationPolicy(ExpirationPolicy policy) {
+        boolean isDataFile = false;
+        long policyScopeId = 0;
+        long maxNumMessages = 0;
+        int maxSizeKB = 0;
+        int maxAgeDays = 0;
+        boolean mimicDefault = policy.getMimicDefault();
+
+        isDataFile = policy.isDataFilePolicy();
+        
+        if (mimicDefault) {
+            maxNumMessages = -1;
+            maxSizeKB = -1;
+            maxAgeDays = -1;
+        } else {
+            maxNumMessages = policy.getMaxNumMessages();
+            maxSizeKB = policy.getMaxSizeKB();
+            maxAgeDays = policy.getMaxAgeDays();
+        }
+
+        if (policy.isDefaultPolicy())
+            policyScopeId = -1;
+        else if (policy.isWatchedPolicy())
+            policyScopeId = -2;
+        else
+            policyScopeId = policy.getPolicyChannelId();
+
+        if (policy.getIsNew()) {
+            _ui.debugMessage("add new policy: " + isDataFile + "/" + policyScopeId + "/" + maxNumMessages + "/" + maxSizeKB + "/" + maxAgeDays);
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_ADD_EXPIRATION_POLICY);
+                //isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays
+                stmt.setBoolean(1, isDataFile);
+                stmt.setLong(2, policyScopeId);
+                stmt.setLong(3, maxNumMessages);
+                stmt.setInt(4, maxSizeKB);
+                stmt.setInt(5, maxAgeDays);
+                stmt.setBoolean(6, mimicDefault);
+                stmt.executeUpdate();
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error adding expiration policy", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        } else {
+            _ui.debugMessage("update policy: " + isDataFile + "/" + policyScopeId + "/" + maxNumMessages + "/" + maxSizeKB + "/" + maxAgeDays);
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_UPDATE_EXPIRATION_POLICY);
+                //maxNumMessages = ?, maxSizeKB = ?, maxAgeDays = ? WHERE isDataFilePolicy = ? AND policyScopeId = ?
+                stmt.setLong(1, maxNumMessages);
+                stmt.setInt(2, maxSizeKB);
+                stmt.setInt(3, maxAgeDays);
+                stmt.setBoolean(4, mimicDefault);
+                stmt.setBoolean(5, isDataFile);
+                stmt.setLong(6, policyScopeId);
+                stmt.executeUpdate();
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error updating expiration policy", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+    }
+
+    private static final String SQL_DELETE_EXPIRATION_POLICY = "DELETE FROM expirationPolicy WHERE isDataFilePolicy = ? AND policyScopeId = ?";
+    public void deleteExpirationPolicy(ExpirationPolicy policy) {
+        if (policy.getIsNew()) return; // noop
+        
+        long policyScopeId = 0;
+        if (policy.isDefaultPolicy())
+            policyScopeId = -1;
+        else if (policy.isWatchedPolicy())
+            policyScopeId = -2;
+        else
+            policyScopeId = policy.getPolicyChannelId();
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_DELETE_EXPIRATION_POLICY);
+            //isDataFilePolicy = ? AND policyScopeId = ?
+            stmt.setBoolean(1, policy.isDataFilePolicy());
+            stmt.setLong(2, policyScopeId);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error deleting expiration policy", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
     

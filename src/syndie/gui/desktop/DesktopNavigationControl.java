@@ -66,6 +66,8 @@ public class DesktopNavigationControl implements NavigationControl {
             return new ProfilePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         } else if (BrowserTab.TYPE_SQL.equals(uri.getType())) {
             return new SQLPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
+        } else if (BrowserTab.TYPE_EXPIRATION.equals(uri.getType())) {
+            return new ExpirationManagerPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         }
         _desktop.getUI().errorMessage("don't know how to view: " + uri + ", punting it to the tabs");
         //return _desktop.getTabPanel(true);

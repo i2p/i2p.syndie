@@ -48,6 +48,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     static final String TYPE_BUGREPORT = "bug";
     static final String TYPE_BACKUPSECRETS = "backupsecrets";
     public static final String TYPE_VIEWFORUM = "viewforum";
+    public static final String TYPE_EXPIRATION = "expiration";
     static final String TYPE_SYNC = "sync";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {
@@ -119,6 +120,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             return new ViewForumTab(browser, uri);
         } else if (TYPE_SYNC.equals(uri.getType())) {
             return new SyndicatorTab(browser, uri);
+        } else if (TYPE_EXPIRATION.equals(uri.getType())) {
+            return new ExpirationManagerTab(browser, uri);
         }
         
         return null;

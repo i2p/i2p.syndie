@@ -93,6 +93,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
     private Label _authorization;
     private Label _expirationLabel;
     private Text _expiration;
+    private Button _expirationManager;
     private Group _refGroup;
     private Tree _refTree;
     private ArrayList _refRoots;
@@ -197,13 +198,21 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _description = new Text(_root, SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY);
         _description.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, descWidth, 1));
         
-        _expirationLabel = new Label(_root, SWT.NONE);
+        Composite expiration = new Composite(_root, SWT.NONE);
+        expiration.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1));
+        expiration.setLayout(new GridLayout(3, false));
+        
+        _expirationLabel = new Label(expiration, SWT.NONE);
         _expirationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _expiration = new Text(_root, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
+        _expiration = new Text(expiration, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
-        gd.widthHint = 50;
+        gd.widthHint = 100;
         _expiration.setLayoutData(gd);
+        
+        _expirationManager = new Button(expiration, SWT.PUSH);
+        _expirationManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(_scope)); } });
+        _expirationManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
         _authorizationLabel = new Label(_root, SWT.NONE);
         _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -807,6 +816,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _description.setFont(theme.DEFAULT_FONT);
         _expirationLabel.setFont(theme.DEFAULT_FONT);
         _expiration.setFont(theme.DEFAULT_FONT);
+        _expirationManager.setFont(theme.BUTTON_FONT);
         _archiveGroup.setFont(theme.DEFAULT_FONT);
         _archives.setFont(theme.TABLE_FONT);
         
@@ -832,6 +842,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
     private static final String T_AVATAR_SELECT = "syndie.gui.viewforum.avatar.select";
     private static final String T_AUTH = "syndie.gui.viewforum.auth";
     private static final String T_EXPIRATION = "syndie.gui.viewforum.expiration";
+    private static final String T_EXPIRATIONMANAGER = "syndie.gui.viewforum.expirationmanager";
     private static final String T_USERS = "syndie.gui.viewforum.users";
     private static final String T_BANNED = "syndie.gui.viewforum.banned";
     private static final String T_REFS = "syndie.gui.viewforum.refs";
@@ -861,6 +872,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
         _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
         _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
+        _expirationManager.setText(registry.getText(T_EXPIRATIONMANAGER, "Manage"));
         _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertised archives:"));
         _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
         _banGroup.setText(registry.getText(T_BANNED, "Banned forums/authors:"));

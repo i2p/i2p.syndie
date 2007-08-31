@@ -32,15 +32,8 @@ import syndie.db.UI;
 public class ArchiveManager extends BaseComponent implements Translatable, Themeable {
     private Composite _parent;
     private Composite _root;
-    
-    private Label _maxMsgSizeLabel;
-    private Combo _maxMsgSizeCombo;
-    private Label _maxMsgAgeLabel;
-    private Combo _maxMsgAgeCombo;
-    private Label _maxForumSizeLabel;
-    private Combo _maxForumSizeCombo;
-    private Label _maxForumAgeLabel;
-    private Combo _maxForumAgeCombo;
+
+    private Button _expiration;
     
     private Label _advertisedLabel;
     private Label _advertised;
@@ -60,11 +53,14 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private List _uris;
     private List _bannedScopes;
     
-    public ArchiveManager(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent) {
+    private NavigationControl _navControl;
+    
+    public ArchiveManager(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl) {
         super(client, ui, themes, trans);
         _parent = parent;
         _uris = new ArrayList();
         _bannedScopes = new ArrayList();
+        _navControl = navControl;
         initComponents();
     }
     
@@ -72,26 +68,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(4, false));
     
-        _maxMsgSizeLabel = new Label(_root, SWT.NONE);
-        _maxMsgSizeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _maxMsgSizeCombo = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _maxMsgSizeCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _expiration = new Button(_root, SWT.PUSH);
+        _expiration.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        _expiration.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(null)); } });
         
-        _maxMsgAgeLabel = new Label(_root, SWT.NONE);
-        _maxMsgAgeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _maxMsgAgeCombo = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _maxMsgAgeCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-    
-        _maxForumSizeLabel = new Label(_root, SWT.NONE);
-        _maxForumSizeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _maxForumSizeCombo = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _maxForumSizeCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _maxForumAgeLabel = new Label(_root, SWT.NONE);
-        _maxForumAgeLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _maxForumAgeCombo = new Combo(_root, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _maxForumAgeCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-    
         Composite manageable = new Composite(_root, SWT.NONE);
         manageable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         manageable.setLayout(new GridLayout(3, false));
@@ -140,18 +120,6 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { loadConfig(); }
             public void widgetSelected(SelectionEvent selectionEvent) { loadConfig(); }
         });
-        
-        _maxMsgSizeLabel.setEnabled(false);
-        _maxMsgSizeCombo.setEnabled(false);
-        
-        _maxMsgAgeLabel.setEnabled(false);
-        _maxMsgAgeCombo.setEnabled(false);
-        
-        _maxForumSizeLabel.setEnabled(false);
-        _maxForumSizeCombo.setEnabled(false);
-        
-        _maxForumAgeLabel.setEnabled(false);
-        _maxForumAgeCombo.setEnabled(false);
         
         _deniable.setEnabled(false);
         _deniableLabel.setEnabled(false);
@@ -329,15 +297,8 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     }
     
     public void applyTheme(Theme theme) {
-        _maxMsgSizeLabel.setFont(theme.DEFAULT_FONT);
-        _maxMsgSizeCombo.setFont(theme.DEFAULT_FONT);
-        _maxMsgAgeLabel.setFont(theme.DEFAULT_FONT);
-        _maxMsgAgeCombo.setFont(theme.DEFAULT_FONT);
-        _maxForumSizeLabel.setFont(theme.DEFAULT_FONT);
-        _maxForumSizeCombo.setFont(theme.DEFAULT_FONT);
-        _maxForumAgeLabel.setFont(theme.DEFAULT_FONT);
-        _maxForumAgeCombo.setFont(theme.DEFAULT_FONT);
-
+        _expiration.setFont(theme.BUTTON_FONT);
+        
         _advertisedLabel.setFont(theme.DEFAULT_FONT);
         _advertised.setFont(theme.DEFAULT_FONT);
         _advertisedManage.setFont(theme.BUTTON_FONT);
@@ -355,10 +316,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _root.layout(true, true);
     }
     
-    private static final String T_MAXMSGSIZE = "syndie.gui.archivemanager.maxmsgsize";
-    private static final String T_MAXMSGAGE = "syndie.gui.archivemanager.maxmsgage";
-    private static final String T_MAXFORUMSIZE = "syndie.gui.archivemanager.maxforumsize";
-    private static final String T_MAXFORUMAGE = "syndie.gui.archivemanager.maxforumage";
+    private static final String T_EXPIRATION = "syndie.gui.archivemanager.expiration";
     private static final String T_ADVERTISED = "syndie.gui.archivemanager.advertised";
     private static final String T_ADVERTISEDMANAGE = "syndie.gui.archivemanager.advertisedmanage";
     private static final String T_DENIABLE = "syndie.gui.archivemanager.deniable";
@@ -369,10 +327,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private static final String T_CANCEL = "syndie.gui.archivemanager.cancel";
         
     public void translate(TranslationRegistry registry) {
-        _maxMsgSizeLabel.setText(registry.getText(T_MAXMSGSIZE, "Max message size:"));
-        _maxMsgAgeLabel.setText(registry.getText(T_MAXMSGAGE, "Max message age:"));
-        _maxForumSizeLabel.setText(registry.getText(T_MAXFORUMSIZE, "Max forum size:"));
-        _maxForumAgeLabel.setText(registry.getText(T_MAXFORUMAGE, "Max forum age:"));
+        _expiration.setText(registry.getText(T_EXPIRATION, "Manage expiration policies"));
     
         _advertisedLabel.setText(registry.getText(T_ADVERTISED, "Advertised archives:"));
         _advertisedManage.setText(registry.getText(T_ADVERTISEDMANAGE, "Manage..."));

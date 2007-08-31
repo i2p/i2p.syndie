@@ -27,6 +27,9 @@ CREATE CACHED TABLE expirationPolicy (
         , maxSizeKB BIGINT DEFAULT -1
         -- if a message was received more than this many days ago, it is deleted
         , maxAgeDays BIGINT DEFAULT -1
+        -- if true, the max* fields should be ignored and the defaults for
+        -- this type of policy should be used
+        , mimicDefault BOOLEAN DEFAULT false
         , PRIMARY KEY (isDataFilePolicy, policyScopeId)
 );
 
