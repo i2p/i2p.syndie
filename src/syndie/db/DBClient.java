@@ -47,7 +47,7 @@ public class DBClient {
      * should we defrag the hsqldb every 10 shutdowns?  it can take a while, so
      * its probably best to disable this when doing development 
      */
-    private static final boolean DEFRAG = false;
+    private static final boolean DEFRAG = true;
     
     private Connection _con;
     private SyndieURIDAO _uriDAO;
@@ -275,7 +275,7 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (DEFRAG && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+            if (DEFRAG)// && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             else
                 stmt = _con.prepareStatement("SHUTDOWN");
@@ -5107,6 +5107,33 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error determining if the message was decrypted", se);
+            return false;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }        
+    }
+    
+    private static final String SQL_GET_MESSAGE_DELETED = "SELECT true FROM channelMessage WHERE msgId = ? AND deletionCause IS NOT NULL";
+    public boolean getMessageDeleted(long msgId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_DELETED);
+            stmt.setLong(1, msgId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                boolean rv = rs.getBoolean(1);
+                if (rs.wasNull())
+                    rv = false;
+                return rv;
+            } else {
+                return false;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error determining if the message was deleted", se);
             return false;
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}

@@ -116,10 +116,12 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         _execute.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _execute.addSelectionListener(new FireSelectionListener() {
             public void fire() {
+                _execute.setEnabled(false);
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
                         Expirer expirer = new Expirer(_client, _ui);
                         expirer.expireMessages();
+                        _root.getDisplay().asyncExec(new Runnable() { public void run() { _execute.setEnabled(true); } });
                     }
                 });
             }

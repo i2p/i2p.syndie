@@ -322,6 +322,7 @@ public class Enclosure {
         Sha256Standalone hash = new Sha256Standalone();
         hash.reset();
         _enclosureType = DataHelper.readLine(raw, hash);
+        if (_enclosureType == null) throw new IOException("Corrupt enclosure, no type line");
         _rawSize += _enclosureType.length();
         
         // read the headers

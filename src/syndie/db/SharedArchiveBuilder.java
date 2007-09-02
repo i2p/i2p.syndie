@@ -32,6 +32,10 @@ public class SharedArchiveBuilder {
     private boolean _shareReceivedOnly;
     private SharedArchive.About _about;
     
+    /** if it arrived in the last 3 days, its "new" */
+    static final long PERIOD_NEW = 3*24*60*60*1000L;
+    private long _periodNew = PERIOD_NEW;
+    
     public SharedArchiveBuilder(DBClient client, UI ui, SharedArchive.About about) {
         _client = client;
         _ui = ui;
@@ -43,13 +47,13 @@ public class SharedArchiveBuilder {
         setShareReceivedOnly(false);
     }
     
-    /** if it arrived in the last 3 days, its "new" */
-    static final long PERIOD_NEW = 3*24*60*60*1000L;
-    
     public void setShareDelayHours(int numHours) { _shareDelayHours = numHours; }
     public void setShareBanned(boolean share) { _shareBanned = share; }
     public void setShareReceivedOnly(boolean receivedOnly) { _shareReceivedOnly = receivedOnly; }
     public void setHideLocalHours(int numHours) { _hideLocalHours = numHours; }
+    
+    /** how old messages can be and still be marked as new (set to <= 0 and that means all messages are) */
+    public void setPeriodNew(long ageMs) { _periodNew = ageMs; }
     
     public SharedArchive buildSharedArchive() {
         _ui.statusMessage("Building shared archive rooted out of " + _client.getArchiveDir().getPath());
@@ -219,9 +223,9 @@ public class SharedArchiveBuilder {
                         targetChannel = scopeChannel;
                     }
                     
-                    long when = _client.getMessageImportDate(scope, messageId);
+                    long when = msgFiles[j].lastModified(); // _client.getMessageImportDate(scope, messageId);
                     
-                    if (when + PERIOD_NEW >= System.currentTimeMillis())
+                    if ( (_periodNew <= 0) || (when + _periodNew >= System.currentTimeMillis()) )
                         isNew = true;
                     
                     if (isLocal(scope, messageId) && (when + _hideLocalHours*60*1000L >= System.currentTimeMillis())) {
@@ -252,6 +256,7 @@ public class SharedArchiveBuilder {
                     msg.setTarget(targetChannel);
                     msg.setSize(size);
                     msg.setIsNew(isNew);
+                    msg.setLocalMessageDate(when);
                     msg.setIsPBE(isPBE);
                     msg.setIsPrivate(isPrivate);
                     msg.setIsPublic(isPublic);
@@ -300,7 +305,7 @@ public class SharedArchiveBuilder {
         if (!metaFile.exists())
             return -1;
         
-        long version = _client.getChannelVersion(scope);
+        //long version = _client.getChannelVersion(scope);
         boolean isNew = false; // if it isn't in the list already, its not new
         boolean isPBE = false;
         boolean isPublic = false;
@@ -310,6 +315,7 @@ public class SharedArchiveBuilder {
             fin = new FileInputStream(metaFile);
             Enclosure enc = new Enclosure(fin);
 
+            Long version = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
             isPBE = (null != enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT));
             isPublic = (null != enc.getHeaderString(Constants.MSG_HEADER_BODYKEY));
 
@@ -318,7 +324,7 @@ public class SharedArchiveBuilder {
 
             SharedArchive.Channel chan = new SharedArchive.Channel();
             chan.setScope(scope);
-            chan.setVersion(version);
+            chan.setVersion(version != null ? version.longValue() : System.currentTimeMillis());
             chan.setIsNew(isNew);
             chan.setIsPBE(isPBE);
             chan.setIsPublic(isPublic);
@@ -328,7 +334,7 @@ public class SharedArchiveBuilder {
             channels.add(chan);
             return channels.size()-1;
         } catch (IOException ioe) {
-            _ui.errorMessage("Error getting the channel metadata from " + metaFile.getPath(), ioe);
+            _ui.errorMessage("Error getting the channel metadata from " + metaFile.getPath() + ": " + ioe.getMessage()); //, ioe);
             return -1;
         } finally {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
@@ -349,7 +355,6 @@ public class SharedArchiveBuilder {
             if (!metaFile.exists())
                 continue;
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
-            long version = _client.getChannelVersion(scope);
             boolean isNew = false;
             boolean isPBE = false;
             boolean isPublic = false;
@@ -359,11 +364,12 @@ public class SharedArchiveBuilder {
                 fin = new FileInputStream(metaFile);
                 Enclosure enc = new Enclosure(fin);
                 
+                Long version = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
                 isPBE = (null != enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT));
                 isPublic = (null != enc.getHeaderString(Constants.MSG_HEADER_BODYKEY));
                 
-                long when = _client.getChannelImportDate(scope);
-                if (when + PERIOD_NEW < System.currentTimeMillis())
+                long when = metaFile.lastModified(); //_client.getChannelImportDate(scope);
+                if ( (_periodNew > 0) && (when + _periodNew < System.currentTimeMillis()) )
                     isNew = false;
                 else
                     isNew = true;
@@ -380,7 +386,7 @@ public class SharedArchiveBuilder {
             
                 SharedArchive.Channel chan = new SharedArchive.Channel();
                 chan.setScope(scope);
-                chan.setVersion(version);
+                chan.setVersion(version != null ? version.longValue() : when);
                 chan.setIsNew(isNew);
                 chan.setIsPBE(isPBE);
                 chan.setIsPublic(isPublic);
@@ -389,7 +395,7 @@ public class SharedArchiveBuilder {
 
                 rv.add(chan);
             } catch (IOException ioe) {
-                _ui.errorMessage("Error checking " + metaFile.getPath(), ioe);
+                _ui.errorMessage("Error checking " + metaFile.getPath() +": " + ioe.getMessage()); //, ioe);
             } finally {
                 if (fin != null) try { fin.close(); } catch (IOException ioe) {}
             }

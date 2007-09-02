@@ -62,13 +62,29 @@ public class SharedArchive {
     Message[] getMessages() { return _messages; }
     public About getAbout() { return _about; }
     
+    public ArrayList getTargetMessages(Hash targetChan) {
+        ArrayList rv = new ArrayList();
+        int targetIndex = getTargetIndex(targetChan);
+        for (int i = 0; i < _messages.length; i++) {
+            if (_messages[i].getTargetIndex() == targetIndex)
+                rv.add(_messages[i]);
+        }
+        return rv;
+    }
+    
     /** very inefficient, O(N) search */
     Channel getChannel(Hash chan) {
+        int index = getTargetIndex(chan);
+        if (index >= 0)
+            return _channels[index];
+        return null;
+    }
+    private int getTargetIndex(Hash chan) {
         for (int i = 0; i < _channels.length; i++) {
             if (DataHelper.eq(_channels[i].getScope(), chan.getData()))
-                return _channels[i];
+                return i;
         }
-        return null;
+        return -1;
     }
     /** very inefficient, O(N) search */
     boolean isKnown(Hash chan, long messageId) {
@@ -179,6 +195,9 @@ public class SharedArchive {
         /** 1 byte */
         int _flags;
         
+        int _exactSizeKB;
+        long _messageDate;
+        
         public Message() {
             _messageId = -1;
             _scopeChannel = -1;
@@ -191,11 +210,17 @@ public class SharedArchive {
         public boolean isPublic() { return (_flags & FLAG_MESSAGE_PUBLIC) != 0; }
         public boolean isNew() { return (_flags & FLAG_MESSAGE_ISNEW) != 0; }
         public long getMaxSizeKB() { return 1 << (2+(_flags & FLAG_MESSAGE_SIZE_MASK)); }
+        /** not stored, only used for in-memory manipulations */
+        public int getExactSizeKB() { return _exactSizeKB; }
+        /** not stored, only used for in-memory manipulations */
+        public long getLocalMessageDate() { return _messageDate; }
+        public void setLocalMessageDate(long when) { _messageDate = when; }
         public int getScopeIndex() { return _scopeChannel; }
         public int getTargetIndex() { return _targetChannel; }
         public long getMessageId() { return _messageId; }
         public void setSize(long bytes) {
             long kb = (bytes + 1023)/1024;
+            _exactSizeKB = (int)kb;
             kb >>= 2;
             int count = 0;
             while (kb > 0) {

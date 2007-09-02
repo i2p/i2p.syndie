@@ -86,8 +86,8 @@ public class ImportPost {
         
         long msgId = _client.getMessageId(_uri.getScope(), _uri.getMessageId());
         if (msgId >= 0) {
-            if (_client.getMessageDecrypted(msgId)) {
-                _ui.debugMessage("post is already decrypted fully, no need to import it again");
+            if (_client.getMessageDecrypted(msgId) || _client.getMessageDeleted(msgId)) {
+                _ui.debugMessage("post is already decrypted fully or has been locally deleted, no need to import it again");
                 return true; // already decrypted
             }
         }
