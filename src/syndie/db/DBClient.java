@@ -3780,6 +3780,9 @@ public class DBClient {
     private static final String SQL_UPDATE_MESSAGE_DELETION_CAUSE = "UPDATE channelMessage SET deletionCause = ? WHERE msgId = ?";
     
     public void deleteMessage(SyndieURI uri, UI ui, boolean deleteDB) {
+        deleteMessage(uri, ui, deleteDB, true);
+    }
+    public void deleteMessage(SyndieURI uri, UI ui, boolean deleteDB, boolean deleteFromArchive) {
         deleteFromArchive(uri, ui);
         if (deleteDB)
             deleteFromDB(uri, ui, DELETION_CAUSE_EXPLICIT);
@@ -3812,32 +3815,41 @@ public class DBClient {
             // delete just the given message
             long scopeId = getChannelId(uri.getScope());
             long internalId = getMessageId(scopeId, uri.getMessageId().longValue());
-            try {
-                exec(ImportPost.SQL_DELETE_MESSAGE_HIERARCHY, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_TAGS, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENT_DATA, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENT_CONFIG, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENTS, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_PAGE_DATA, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_PAGE_CONFIG, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_PAGES, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_REF_URIS, internalId);
-                exec(ImportPost.SQL_DELETE_MESSAGE_REFS, internalId);
-                exec(SQL_DELETE_UNREAD_MESSAGE, internalId);
-                switch (deletionCause) {
-                    case DELETION_CAUSE_BAN:
-                        exec(SQL_DELETE_MESSAGE, internalId);
-                        break;
-                    case DELETION_CAUSE_CANCELLED:
-                    case DELETION_CAUSE_EXPIRE:
-                    case DELETION_CAUSE_EXPLICIT:
-                        exec(SQL_UPDATE_MESSAGE_DELETION_CAUSE, deletionCause, internalId);
-                        break;
-                }
+            Exception exception = deleteMessageFromDB(internalId, deletionCause);
+            if (exception == null)
                 ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database");
-            } catch (SQLException se) {
-                ui.errorMessage("Error deleting the post " + uri, se);
+            else
+                ui.errorMessage("Error deleting the post " + uri, exception);
+        }
+    }
+    
+    public Exception expireMessageFromDB(long msgId) { return deleteMessageFromDB(msgId, DELETION_CAUSE_EXPIRE); }
+    Exception deleteMessageFromDB(long msgId, int deletionCause) {
+        try {
+            exec(ImportPost.SQL_DELETE_MESSAGE_HIERARCHY, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_TAGS, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENT_DATA, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENT_CONFIG, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_ATTACHMENTS, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_PAGE_DATA, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_PAGE_CONFIG, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_PAGES, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_REF_URIS, msgId);
+            exec(ImportPost.SQL_DELETE_MESSAGE_REFS, msgId);
+            exec(SQL_DELETE_UNREAD_MESSAGE, msgId);
+            switch (deletionCause) {
+                case DELETION_CAUSE_BAN:
+                    exec(SQL_DELETE_MESSAGE, msgId);
+                    break;
+                case DELETION_CAUSE_CANCELLED:
+                case DELETION_CAUSE_EXPIRE:
+                case DELETION_CAUSE_EXPLICIT:
+                    exec(SQL_UPDATE_MESSAGE_DELETION_CAUSE, deletionCause, msgId);
+                    break;
             }
+            return null;
+        } catch (SQLException se) {
+            return se;
         }
     }
     

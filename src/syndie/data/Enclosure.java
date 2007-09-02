@@ -39,6 +39,7 @@ public class Enclosure {
     /** original signature data as stored in the enclosure, while the authenticationSig itself
      * may be adjusted as controlled by a private header value */
     private byte _authenticationSigOrig[];
+    private int _rawSize;
     
     public Enclosure(InputStream raw) throws IOException {
         _enclosureType = null;
@@ -50,6 +51,7 @@ public class Enclosure {
         _authenticationHash = null;
         _authenticationSig = null;
         _authenticationSigOrig = null;
+        _rawSize = 0;
         load(raw);
     }
     
@@ -293,6 +295,7 @@ public class Enclosure {
     }
     
     public int getDataSize() { return (_data != null ? _data.length : 0); }
+    public int getRawSize() { return _rawSize; }
     public InputStream getData() { return new ByteArrayInputStream(_data); }
     public void discardData() { _data = null; }
     
@@ -319,6 +322,7 @@ public class Enclosure {
         Sha256Standalone hash = new Sha256Standalone();
         hash.reset();
         _enclosureType = DataHelper.readLine(raw, hash);
+        _rawSize += _enclosureType.length();
         
         // read the headers
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -326,6 +330,7 @@ public class Enclosure {
         while (DataHelper.readLine(raw, buf, hash)) {
             int len = buf.length();
             if (len <= 0) break;
+            _rawSize += len;
             baos.write(DataHelper.getUTF8(buf.toString()+"\n"));
             int split = buf.indexOf("=");
             if (split <= 0) throw new IOException("Invalid header: " + buf.toString());
@@ -344,6 +349,7 @@ public class Enclosure {
         // now comes the size header
         String sz = DataHelper.readLine(raw, hash);
         if (sz == null) throw new IOException("Missing size header");
+        _rawSize += sz.length();
         int split = sz.indexOf('=');
         if ( (split <= 0) || (split + 1 >= sz.length()) ) throw new IOException("Invalid size header: " + sz);
         String key = sz.substring(0, split);
@@ -356,6 +362,7 @@ public class Enclosure {
             throw new IOException("Invalid size header: " + bytes);
         }
         if (bytes < 0) throw new IOException("Invalid size header: " + bytes);
+        _rawSize += bytes;
         
         // load the data into _data
         loadData(raw, bytes, hash);
@@ -366,6 +373,7 @@ public class Enclosure {
         _authenticationHash = new Hash(hash.digest());
         _authenticationSig = readSig(raw, hash);
         _authenticationSigOrig = _authenticationSig.getData();
+        _rawSize += Signature.SIGNATURE_BYTES*2;
     }
     
     public void store(String filename) throws IOException {

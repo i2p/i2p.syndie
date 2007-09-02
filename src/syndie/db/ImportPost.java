@@ -486,13 +486,18 @@ public class ImportPost {
         return false;
     }
     
+    private int calcSize() {
+        int bytes = _enc.getRawSize();
+        return (bytes+1023)/1024;
+    }
+    
     private static final String SQL_INSERT_CHANNEL = "INSERT INTO channelMessage (" +
             "msgId, authorChannelId, messageId, targetChannelId, subject, overwriteScopeHash, " +
             "overwriteMessageId, forceNewThread, refuseReplies, wasEncrypted, wasPrivate, wasAuthorized, " +
             "wasAuthenticated, isCancelled, expiration, importDate, scopeChannelId, wasPBE, " +
-            "readKeyMissing, replyKeyMissing, pbePrompt" +
+            "readKeyMissing, replyKeyMissing, pbePrompt, totalMessageSizeKB" +
             ") VALUES (" +
-            "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?" +
+            "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?" +
             ")";
     /**
      * returns true if the message was inserted into the channel properly, false 
@@ -603,6 +608,8 @@ public class ImportPost {
         if (author != null)
             authorChannelId = _client.getChannelId(author);
         
+        int sizeKB = calcSize();
+        
         PreparedStatement stmt = null;
         try {
             stmt = _client.con().prepareStatement(SQL_INSERT_CHANNEL);
@@ -686,6 +693,7 @@ public class ImportPost {
             else
                 stmt.setNull(20, Types.VARCHAR);
             
+            stmt.setInt(21, sizeKB);
             
             int rows = stmt.executeUpdate();
             if (rows != 1) {

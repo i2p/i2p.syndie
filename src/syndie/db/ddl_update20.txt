@@ -1,0 +1,8 @@
+-- update the database from schema version 20
+-- this version 21 caches message size data for more efficient expiration
+--
+
+UPDATE appVersion SET versionNum = 21, visibleVersion = 'Message size cache';
+
+ALTER TABLE channelMessage ADD totalMessageSizeKB INTEGER DEFAULT NULL;
+

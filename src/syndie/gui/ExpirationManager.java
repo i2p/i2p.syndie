@@ -26,12 +26,15 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import syndie.data.ExpirationPolicy;
 import syndie.db.DBClient;
+import syndie.db.Expirer;
+import syndie.db.JobRunner;
 import syndie.db.UI;
 
 public class ExpirationManager extends BaseComponent implements Themeable, Translatable {
     private Composite _parent;
     private Composite _root;
     private CTabFolder _tabs;
+    private Button _execute;
     
     private ExpirationPolicy _defaultDB;
     private ExpirationPolicy _defaultDataFile;
@@ -108,6 +111,19 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         _root.setLayout(gl);
         _tabs = new CTabFolder(_root, SWT.MULTI | SWT.TOP);
         _tabs.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        
+        _execute = new Button(_root, SWT.PUSH);
+        _execute.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        _execute.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                JobRunner.instance().enqueue(new Runnable() {
+                    public void run() {
+                        Expirer expirer = new Expirer(_client, _ui);
+                        expirer.expireMessages();
+                    }
+                });
+            }
+        });
         
         loadPolicies();
         _ui.debugMessage("policies loaded");
@@ -265,8 +281,11 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
     
     public void applyTheme(Theme theme) {
         _tabs.setFont(theme.TAB_FONT);
+        _execute.setFont(theme.BUTTON_FONT);
     }
     public void translate(TranslationRegistry registry) {
+        _execute.setText(registry.getText(T_EXECUTE, "Execute expiration policies"));
+        
         CTabItem items[] = _tabs.getItems();
         for (int i = 0; i < items.length; i++) {
             switch (i) {
@@ -704,6 +723,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
     private static final String T_SAVE = "syndie.gui.expirationmanager.save";
     private static final String T_REVERT = "syndie.gui.expirationmanager.revert";
     private static final String T_DELETE = "syndie.gui.expirationmanager.delete";
+    private static final String T_EXECUTE = "syndie.gui.expirationmanager.execute";
     private static final String T_MIMICDEFAULT = "syndie.gui.expirationmanager.mimicdefault";
     private static final String T_TYPEDB = "syndie.gui.expirationmanager.typedb";
     private static final String T_TYPEDATAFILE = "syndie.gui.expirationmanager.typedatafile";
