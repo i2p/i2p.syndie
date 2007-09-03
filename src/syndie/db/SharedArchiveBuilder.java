@@ -262,7 +262,7 @@ public class SharedArchiveBuilder {
                     msg.setIsPublic(isPublic);
                     rv.add(msg);
                 } catch (IOException ioe) {
-                    _ui.errorMessage("Error parsing message file " + msgFiles[j].getPath(), ioe);
+                    _ui.errorMessage("Error parsing message file " + msgFiles[j].getPath() + ": " + ioe.getMessage());
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
