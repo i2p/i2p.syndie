@@ -197,14 +197,17 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
     private void buildMenu(Menu menu, final TreeItem sel[]) {
         MenuItem view = new MenuItem(menu, SWT.PUSH);
         view.setText(_translationRegistry.getText(T_MENU_VIEW, "View"));
+        view.setImage(ImageUtil.ICON_VIEW);
         view.setEnabled(false);
         
         MenuItem edit = new MenuItem(menu, SWT.PUSH);
         edit.setText(_translationRegistry.getText(T_MENU_EDIT, "Edit"));
+        edit.setImage(ImageUtil.ICON_EDIT);
         edit.addSelectionListener(new FireSelectionListener() { public void fire() { edit(sel); } });
         
         MenuItem delete = new MenuItem(menu, SWT.PUSH);
         delete.setText(_translationRegistry.getText(T_MENU_DELETE, "Delete"));
+        delete.setImage(ImageUtil.ICON_DELETE);
         delete.addSelectionListener(new FireSelectionListener() { public void fire() { delete(sel); } });
     }
     

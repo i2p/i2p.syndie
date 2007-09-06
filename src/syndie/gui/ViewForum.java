@@ -320,6 +320,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         final Menu userMenu = new Menu(_users);
         _users.setMenu(userMenu);
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
+        viewForum.setImage(ImageUtil.ICON_VIEW);
         viewForum.setText(_translationRegistry.getText(T_USER_VIEWFORUM, "View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
@@ -333,6 +334,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
             }
         });
         MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
+        viewMeta.setImage(ImageUtil.ICON_HM_ABOUT);
         viewMeta.setText(_translationRegistry.getText(T_USER_VIEWFORUMMETA, "View forum profile"));
         viewMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
@@ -363,6 +365,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _archives.setMenu(archiveMenu);
 
         MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
+        view.setImage(ImageUtil.ICON_VIEW);
         view.setText(_translationRegistry.getText(T_ARCHIVE_VIEW, "View"));
         view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewArchive(); }

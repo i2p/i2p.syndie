@@ -65,6 +65,63 @@ public class ImageUtil {
     /** shown in place of a nonexistant image when rendering */
     public static Image ICON_IMAGE_UNKNOWN;
     
+    public static Image ICON_FM_EXIT;
+    public static Image ICON_FM_EXPORT;
+    public static Image ICON_FM_IMPORT;
+    
+    public static Image ICON_VM_BOOKMARK;
+    public static Image ICON_VM_LANGUAGE;
+    public static Image ICON_VM_STYLE;
+    
+    public static Image ICON_HM_ABOUT;
+    public static Image ICON_HM_BUG;
+    
+    public static Image ICON_PM_NEWPOST;
+    
+    public static Image ICON_T_EDIT;
+    public static Image ICON_T_MSG;
+    public static Image ICON_T_LOGS;
+    public static Image ICON_T_TEXT;
+    public static Image ICON_T_BUG;
+    
+    public static Image ICON_VIEW;
+    public static Image ICON_SETTINGS;
+    public static Image ICON_EDIT;
+    public static Image ICON_DELETE;
+    public static Image ICON_CANCEL;
+    public static Image ICON_CLEAR;
+    public static Image ICON_CONTROLSYNDICATION;
+    
+    public static Image ICON_FOLDER;
+    public static Image ICON_ADDFOLDER;
+    public static Image ICON_ADDBOOKMARK;
+    
+    public static Image ICON_VIEWFORUM;
+    public static Image ICON_CREATEFORUM;
+    public static Image ICON_WRITEABLEFORUM;
+    public static Image ICON_MANAGEABLEFORUM;
+    public static Image ICON_WATCHEDFORUM;
+    public static Image ICON_IMPORTEDRESOURCES;
+    
+    public static Image ICON_STARTARCHIVESERVER;
+    public static Image ICON_STOPARCHIVESERVER;
+    public static Image ICON_CONFIGUREARCHIVESERVER;
+    public static Image ICON_ADDARCHIVE;
+    public static Image ICON_DELETEARCHIVE;
+    public static Image ICON_MANAGEARCHIVE;
+    public static Image ICON_CANCELSYNDICATIONS;
+    
+    public static Image ICON_MSG;
+    public static Image ICON_SYNC;
+    public static Image ICON_VIEWMESSAGE;
+    public static Image ICON_REPLYMESSAGE;
+    
+    public static Image ICON_FORUMMESSAGES;
+    public static Image ICON_FORUMPROFILE;
+    public static Image ICON_EXPAND;
+    public static Image ICON_COLLAPSE;
+    public static Image ICON_UNREADMESSAGE;
+    
     public static Image ICON_SYNDICATE_TYPE_DIRECT;
     public static Image ICON_SYNDICATE_TYPE_INDIRECT;
     public static Image ICON_SYNDICATE_TYPE_FREENET;
@@ -192,6 +249,67 @@ public class ImageUtil {
         _indisposableImages.add(ICON_WORKING);
          */
         
+        /* File Menu*/ 
+        _indisposableImages.add(ICON_FM_EXIT);
+        _indisposableImages.add(ICON_FM_EXPORT);
+        _indisposableImages.add(ICON_FM_IMPORT);
+
+        /* View Menu*/ 
+        _indisposableImages.add(ICON_VM_BOOKMARK);
+        _indisposableImages.add(ICON_VM_LANGUAGE);
+        _indisposableImages.add(ICON_VM_STYLE);
+        
+        /* Post Menu */
+        _indisposableImages.add(ICON_PM_NEWPOST);
+        
+        /* Help Menu*/ 
+        _indisposableImages.add(ICON_HM_ABOUT);
+        _indisposableImages.add(ICON_HM_BUG);
+        
+        /* Tab Icons */
+        _indisposableImages.add(ICON_T_EDIT);
+        _indisposableImages.add(ICON_T_MSG);
+        _indisposableImages.add(ICON_T_LOGS);
+        _indisposableImages.add(ICON_T_TEXT);
+        _indisposableImages.add(ICON_T_BUG);
+        
+        /* Context Menu Icons */
+        _indisposableImages.add(ICON_VIEW);
+        _indisposableImages.add(ICON_EDIT);
+        _indisposableImages.add(ICON_DELETE);
+        _indisposableImages.add(ICON_CANCEL);
+        _indisposableImages.add(ICON_CLEAR);
+        
+        _indisposableImages.add(ICON_FOLDER);
+        _indisposableImages.add(ICON_ADDFOLDER);
+        _indisposableImages.add(ICON_ADDBOOKMARK);
+        
+        _indisposableImages.add(ICON_VIEWFORUM);
+        _indisposableImages.add(ICON_CREATEFORUM);
+        _indisposableImages.add(ICON_WRITEABLEFORUM);
+        _indisposableImages.add(ICON_MANAGEABLEFORUM);
+        _indisposableImages.add(ICON_SETTINGS);
+        _indisposableImages.add(ICON_SYNC);
+        _indisposableImages.add(ICON_CONTROLSYNDICATION);
+        
+        _indisposableImages.add(ICON_STARTARCHIVESERVER);
+        _indisposableImages.add(ICON_STOPARCHIVESERVER);
+        _indisposableImages.add(ICON_CONFIGUREARCHIVESERVER);
+        _indisposableImages.add(ICON_ADDARCHIVE);
+        _indisposableImages.add(ICON_DELETEARCHIVE);
+        _indisposableImages.add(ICON_MANAGEARCHIVE);
+        _indisposableImages.add(ICON_CANCELSYNDICATIONS);
+        
+        _indisposableImages.add(ICON_MSG);
+        _indisposableImages.add(ICON_VIEWMESSAGE);
+        _indisposableImages.add(ICON_REPLYMESSAGE);
+        _indisposableImages.add(ICON_UNREADMESSAGE);
+        
+        _indisposableImages.add(ICON_FORUMMESSAGES);
+        _indisposableImages.add(ICON_FORUMPROFILE);
+        _indisposableImages.add(ICON_EXPAND);
+        _indisposableImages.add(ICON_COLLAPSE);
+        
         _indisposableImages.add(ICON_SHELL);
         
         _indisposableImages.add(ICON_LINK_END);
@@ -315,6 +433,64 @@ public class ImageUtil {
         ICON_SHELL = createImageFromResource("iconShell.png");
         ICON_LINK_END = createImageFromResource("iconLink.png");
         ICON_IMAGE_UNKNOWN = createImageFromResource("iconUnknown.png");
+        
+        /* File Menu */
+        ICON_FM_EXIT = createImageFromResource("iconExit.png");
+        ICON_FM_EXPORT = createImageFromResource("iconExport.png");
+        ICON_FM_IMPORT = createImageFromResource("iconImport.png");
+        
+        /* View Menu */
+        ICON_VM_BOOKMARK = createImageFromResource("iconBookmark.png");
+        ICON_VM_LANGUAGE = createImageFromResource("iconLanguage.png");
+        ICON_VM_STYLE = createImageFromResource("iconStyle.png");
+        
+        /* Post Menu */
+        ICON_PM_NEWPOST = createImageFromResource("iconNewPost.png");
+                
+        /* About Menu */
+        ICON_HM_ABOUT = createImageFromResource("iconInfo.png");
+        ICON_HM_BUG = createImageFromResource("iconBug.png");
+        
+        /* Context menu icons */
+        ICON_VIEW = createImageFromResource("iconView.png");
+        ICON_EDIT = createImageFromResource("iconEdit.png");
+        ICON_DELETE = createImageFromResource("iconDelete.png");
+        ICON_CLEAR = createImageFromResource("iconClear.png");
+        ICON_CANCEL = createImageFromResource("iconCancel.png");
+        
+        ICON_FOLDER = createImageFromResource("iconFolder.png");
+        ICON_ADDBOOKMARK = createImageFromResource("iconAddBookmark.png");
+        ICON_ADDFOLDER = createImageFromResource("iconAddfolder.png");
+        
+        ICON_VIEWFORUM = createImageFromResource("iconViewForum.png");
+        ICON_CREATEFORUM = createImageFromResource("iconCreateForum.png");
+        ICON_SETTINGS = createImageFromResource("iconSettings.png");
+        ICON_SYNC = createImageFromResource("iconSync.png");
+        
+        ICON_VIEWMESSAGE = createImageFromResource("iconViewMessage.png");
+        ICON_REPLYMESSAGE = createImageFromResource("iconReplyMessage.png");
+        ICON_FORUMMESSAGES = createImageFromResource("iconForumMessages.png");
+        ICON_FORUMPROFILE = createImageFromResource("iconForumProfile.png");
+        ICON_EXPAND = createImageFromResource("iconExpand.png");
+        ICON_COLLAPSE = createImageFromResource("iconCollapse.png");
+        
+        ICON_WRITEABLEFORUM = createImageFromResource("iconWriteableForum.png");
+        ICON_MANAGEABLEFORUM = createImageFromResource("iconManageableForum.png");
+        ICON_WATCHEDFORUM = createImageFromResource("iconWatchedForum.png");
+        ICON_IMPORTEDRESOURCES = createImageFromResource("iconImportedResources.png");
+
+        ICON_STARTARCHIVESERVER = createImageFromResource("iconStartArchiveServer.png");
+        ICON_STOPARCHIVESERVER = createImageFromResource("iconStopArchiveServer.png");
+        ICON_CONFIGUREARCHIVESERVER = createImageFromResource("iconConfigureArchiveServer.png");
+        ICON_ADDARCHIVE = createImageFromResource("iconAddArchive.png");
+        ICON_DELETEARCHIVE = createImageFromResource("iconDeleteArchive.png");
+        ICON_MANAGEARCHIVE = createImageFromResource("iconManageArchive.png");
+        ICON_CANCELSYNDICATIONS = createImageFromResource("iconCancelSyndications.png");
+        
+        ICON_MSG = createImageFromResource("iconMessage.png");
+        ICON_UNREADMESSAGE = createImageFromResource("iconUnreadMessage.png");
+        ICON_CONTROLSYNDICATION = createImageFromResource("iconControlSyndiation.png");
+
     
         ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
         ICON_SYNDICATE_TYPE_INDIRECT = createImageFromResource("iconIndirect.png");
@@ -371,16 +547,17 @@ public class ImageUtil {
 
         _timer.addEvent("image init: bulk icons created");
         
-        ICON_TAB_EDIT = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        
+        ICON_TAB_EDIT = resize(ImageUtil.ICON_PM_NEWPOST, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_TEXTUI = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_LOGS = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_SYNDICATE = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_SQL = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_PAGE = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_MSG = resize(ImageUtil.ICON_REF_SYNDIE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_PAGE = resize(ImageUtil.ICON_PM_NEWPOST, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_HIGHLIGHTS = resize(ImageUtil.ICON_PM_NEWPOST, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_MSG = resize(ImageUtil.ICON_MSG, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
         ICON_TAB_ARCHIVE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
-        ICON_TAB_BROWSE = resize(ImageUtil.ICON_REF_ARCHIVE, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
+        ICON_TAB_BROWSE = resize(ImageUtil.ICON_FOLDER, TAB_ICON_SIZE, TAB_ICON_SIZE, false);
 
         _timer.addEvent("image init: tab icons resized");
         

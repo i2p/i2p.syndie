@@ -39,6 +39,7 @@ import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
 
+
 /**
  *
  */
@@ -340,6 +341,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private void buildMenuArchive(final SyncArchive archive) {
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_ARCHIVE_CFG, "Settings..."));
+        item.setImage(ImageUtil.ICON_SETTINGS);
         item.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -348,8 +350,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             }
         });
         
+
+        
         item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_SYNC_NOW, "Sync now (recurring)"));
+        item.setImage(ImageUtil.ICON_SYNC);
         item.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -362,6 +367,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         
         item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_SYNC_ONEOFF, "Sync now (one time)"));
+        item.setImage(ImageUtil.ICON_SYNC);
         item.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -375,6 +381,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (archive.getNextSyncTime() > 0) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_translationRegistry.getText(T_MENU_SYNC_CANCEL, "Cancel next sync"));
+            item.setImage(ImageUtil.ICON_CANCEL);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -407,6 +414,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (!syncRunning(archive) && archive.getIncomingActionCount() > 0) {
             MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
             clear.setText(_translationRegistry.getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
+            clear.setImage(ImageUtil.ICON_CLEAR);
             clear.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -421,6 +429,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (!syncRunning(archive) && archive.getOutgoingActionCount() > 0) {
             MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
             clear.setText(_translationRegistry.getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
+            clear.setImage(ImageUtil.ICON_CLEAR);
             clear.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -434,6 +443,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         final SyncArchive archive = (SyncArchive)_items.get(item.getParentItem());
         MenuItem clear = new MenuItem(_treeMenu, SWT.PUSH);
         clear.setText(_translationRegistry.getText(T_MENU_CLEAR_ACTION, "Clear"));
+        clear.setImage(ImageUtil.ICON_CLEAR);
         clear.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -450,6 +460,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             final SyndieURI uri = action.getURI();
             MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_translationRegistry.getText(T_MENU_VIEW, "View"));
+            item.setImage(ImageUtil.ICON_VIEW);
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _navControl.view(uri); }
             });
@@ -474,6 +485,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         } else {
             MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_translationRegistry.getText(T_MENU_CANCEL_FETCH, "Cancel"));
+            item.setImage(ImageUtil.ICON_DELETE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -489,6 +501,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         final SyndieURI uri = action.getURI();
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_VIEW, "View"));
+        item.setImage(ImageUtil.ICON_VIEW);
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { _navControl.view(uri); }
         });
@@ -506,6 +519,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         } else if (action.isScheduled()) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_translationRegistry.getText(T_MENU_CANCEL_FETCH, "Cancel"));
+            item.setImage(ImageUtil.ICON_DELETE);
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
@@ -980,14 +994,19 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     public void translate(TranslationRegistry registry) {
         _colName.setText(registry.getText(T_COLNAME, ""));
+        _colName.setImage(ImageUtil.ICON_REF_ARCHIVE);
         _colTime.setText(registry.getText(T_COLTIME, "Time"));
         _colStatus.setText(registry.getText(T_COLSTATUS, "Status"));
         _colSummary.setText(registry.getText(T_COLSUMMARY, "Summary"));
         
         if (_showActions) {
             _add.setText(registry.getText(T_ADD, "Add archive"));
+            _add.setImage(ImageUtil.ICON_ADDARCHIVE);
             _cancel.setText(registry.getText(T_CANCEL, "Cancel syndications"));
+            _cancel.setImage(ImageUtil.ICON_CANCELSYNDICATIONS);
             _delete.setText(registry.getText(T_DELETE, "Delete archive"));
+            _delete.setImage(ImageUtil.ICON_DELETEARCHIVE);
+
         }
     }
     

@@ -45,6 +45,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
+
 /**
  *
  */
@@ -694,7 +695,11 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _metaIconPostable.setText(registry.getText(T_POST, "Post"));
         
         _metaNameMenuView.setText(registry.getText(T_VIEW, "View the forum profile"));
+        _metaNameMenuView.setImage(ImageUtil.ICON_VIEW);
+
         _metaNameMenuBookmark.setText(registry.getText(T_BOOKMARK, "Bookmark this forum"));
+        _metaNameMenuBookmark.setImage(ImageUtil.ICON_ADDBOOKMARK);
+
         _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
         _metaNameMenuDeleteRead.setText(registry.getText(T_DELETEREAD, "Delete read messages"));
         _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));

@@ -64,6 +64,7 @@ import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 import syndie.db.UI;
 
+
 /**
  *
  */
@@ -924,7 +925,9 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         
         _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
         _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
+        _forumMenuBookmark.setImage(ImageUtil.ICON_ADDBOOKMARK);
         _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View forum profile"));
+        _forumMenuViewMeta.setImage(ImageUtil.ICON_VIEW);
         _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
         
         _headerGoToNextInThread.setText(registry.getText(T_NEXTINTHREAD, "Next"));

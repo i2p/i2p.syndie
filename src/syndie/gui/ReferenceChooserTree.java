@@ -934,10 +934,15 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     public void translate(TranslationRegistry registry) {
         _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));
+        _bookmarkRoot.setImage(ImageUtil.ICON_VM_BOOKMARK);
         _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
+        _postRoot.setImage(ImageUtil.ICON_WRITEABLEFORUM);
         _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
+        _manageRoot.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
         _watchedRoot.setText(registry.getText(T_WATCHED_ROOT, "Watched forums"));
+        _watchedRoot.setImage(ImageUtil.ICON_WATCHEDFORUM);
         _importedRoot.setText(registry.getText(T_IMPORTED_ROOT, "Imported resources"));
+        _importedRoot.setImage(ImageUtil.ICON_IMPORTEDRESOURCES);
         //_searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
         //refreshBookmarks();
         //redrawPostable();

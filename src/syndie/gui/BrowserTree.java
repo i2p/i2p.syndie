@@ -55,6 +55,7 @@ import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
+
 /**
  *
  */
@@ -361,12 +362,15 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 public void fire() { addBookmark(-1); }
             });
             item.setText(_translationRegistry.getText(T_BOOKMARK_ADD, "Add bookmark"));
+            item.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addFolder(-1); }
             });
             item.setText(_translationRegistry.getText(T_BOOKMARK_ADDFOLDER, "Add folder"));
+            item.setImage(ImageUtil.ICON_ADDFOLDER);
+
             return;
         }
 
@@ -377,6 +381,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 public void fire() { _navControl.view(bookmark.getURI(), bookmark.getName(), bookmark.getDescription()); }
             });
             item.setText(_translationRegistry.getText(T_BOOKMARK_VIEW, "View selected"));
+            item.setImage(ImageUtil.ICON_VIEW);
         } else if (bookmark.getChildCount() > 0) {
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
@@ -398,6 +403,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent evt) { editBookmark(selected); }
         });
         item.setText(_translationRegistry.getText(T_BOOKMARK_EDIT, "Edit"));
+        item.setImage(ImageUtil.ICON_EDIT);
         
         item = new MenuItem(_menu, SWT.PUSH);
         item.addSelectionListener(new SelectionListener() {
@@ -405,6 +411,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent evt) { deleteBookmark(selected); }
         });
         item.setText(_translationRegistry.getText(T_BOOKMARK_DELETE, "Delete"));
+        item.setImage(ImageUtil.ICON_DELETE);
         
         if (bookmark.getURI() == null) {
             item = new MenuItem(_menu, SWT.PUSH);
@@ -412,12 +419,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 public void fire() { addBookmark(bookmark.getGroupId()); }
             });
             item.setText(_translationRegistry.getText(T_BOOKMARK_ADD, "Add bookmark"));
+            item.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addFolder(bookmark.getGroupId()); }
             });
             item.setText(_translationRegistry.getText(T_BOOKMARK_ADDFOLDER, "Add folder"));
+            item.setImage(ImageUtil.ICON_ADDFOLDER);
         }
     }
 

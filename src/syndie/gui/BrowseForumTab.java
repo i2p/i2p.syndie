@@ -44,7 +44,7 @@ public class BrowseForumTab extends BrowserTab {
                 _icon = ImageUtil.ICON_TAB_BROWSE;
             }
         } else {
-            _name = "browse";
+            _name = "Forums";
             _description = "browse forums";
             _icon = ImageUtil.ICON_TAB_BROWSE;
         }

@@ -1225,27 +1225,32 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         });
         
         _view = new MenuItem(_menu, SWT.PUSH);
+        _view.setImage(ImageUtil.ICON_VIEWMESSAGE);
         _view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewSelected(); }
         });
         _reply = new MenuItem(_menu, SWT.PUSH);
+        _reply.setImage(ImageUtil.ICON_REPLYMESSAGE);
         _reply.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { replySelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { replySelected(); }
         });
         new MenuItem(_menu, SWT.SEPARATOR);
         _viewForum = new MenuItem(_menu, SWT.PUSH);
+        _viewForum.setImage(ImageUtil.ICON_FORUMMESSAGES);
         _viewForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
         });
         _viewForumMeta = new MenuItem(_menu, SWT.PUSH);
+        _viewForumMeta.setImage(ImageUtil.ICON_FORUMPROFILE);
         _viewForumMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
         });
         _bookmarkForum = new MenuItem(_menu, SWT.PUSH);
+        _bookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
         _bookmarkForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
@@ -1269,17 +1274,21 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         new MenuItem(_menu, SWT.SEPARATOR);
         
         _expandThread = new MenuItem(_menu, SWT.PUSH);
+        _expandThread.setImage(ImageUtil.ICON_EXPAND);
         _expandThread.addSelectionListener(new FireSelectionListener() { public void fire() { expandThread(); } });
         _collapseThread = new MenuItem(_menu, SWT.PUSH);
+        _collapseThread.setImage(ImageUtil.ICON_COLLAPSE);
         _collapseThread.addSelectionListener(new FireSelectionListener() { public void fire() { collapseThread(); } });
         
         new MenuItem(_menu, SWT.SEPARATOR);
         _markRead = new MenuItem(_menu, SWT.PUSH);
+        _markRead.setImage(ImageUtil.ICON_MSG);
         _markRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markRead(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markRead(); }
         });
         _markUnread = new MenuItem(_menu, SWT.PUSH);
+        _markUnread.setImage(ImageUtil.ICON_UNREADMESSAGE);
         _markUnread.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markUnread(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markUnread(); }

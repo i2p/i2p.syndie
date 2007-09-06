@@ -103,6 +103,7 @@ import syndie.db.Opts;
 import syndie.db.TextEngine;
 import syndie.db.UI;
 
+
 /**
  * main gui wrapper
  */
@@ -792,10 +793,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
         startServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_START, "Start HTTP archive server"));
+        startServer.setImage(ImageUtil.ICON_STARTARCHIVESERVER);
         MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
         stopServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_STOP, "Stop HTTP archive server"));
+        stopServer.setImage(ImageUtil.ICON_STOPARCHIVESERVER);
         MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
         configServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_CONFIG, "Configure HTTP archive server"));
+        configServer.setImage(ImageUtil.ICON_CONFIGUREARCHIVESERVER);
         
         stopServer.setEnabled(false);
         new ServerConfig(startServer, stopServer, configServer);
@@ -2598,7 +2602,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
     }
-    
     private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final String now() { synchronized (_tsFmt) { return _tsFmt.format(new Date(System.currentTimeMillis())); } }
     
@@ -2729,21 +2732,31 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _fileMenuImportBulk.setText(registry.getText(T_FILE_MENU_IMPORT_BULK, "Import &bulk"));
         _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
         _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
+        
+        _fileMenuExit.setImage(ImageUtil.ICON_FM_EXIT);
+        _fileMenuImport.setImage(ImageUtil.ICON_FM_IMPORT);
+        _fileMenuExport.setImage(ImageUtil.ICON_FM_EXPORT);
+
 
         _viewMenuRoot.setText(registry.getText(T_VIEW_MENU_TITLE, "&View"));
         _viewMenuShow.setText(registry.getText(T_VIEW_MENU_SHOW, "Show &bookmarks"));
+        _viewMenuShow.setImage(ImageUtil.ICON_VM_BOOKMARK);
+        
         
         _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
         _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Find forums"));
-        _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &bookmarked"));
+        _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &forums"));
         _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
         _forumMenuBrowseForums.setText(registry.getText(T_FORUM_MENU_BROWSEFORUMS, "Read &all by forum"));
         _forumMenuReadPrivate.setText(registry.getText(T_FORUM_MENU_READPRIVATE, "Read &private messages"));
         _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
+        _forumMenuCreate.setImage(ImageUtil.ICON_CREATEFORUM);
         _forumMenuManageRoot.setText(registry.getText(T_FORUM_MENU_MANAGE, "&Manage"));
         
+        _forumMenuSearch.setImage(ImageUtil.ICON_VIEWFORUM);
         _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
         _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
+        _postMenuNew.setImage(ImageUtil.ICON_PM_NEWPOST);
         _postMenuWebRip.setText(registry.getText(T_POST_MENU_WEBRIP, "Post &web rip"));
         _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume draft"));
 
@@ -2753,14 +2766,18 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
         _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
+        _syndicateMenuConfig.setImage(ImageUtil.ICON_CONTROLSYNDICATION);
         _syndicateMenuOnline.setText(registry.getText(T_SYNDICATE_MENU_ONLINE, "Toggle &online state"));
         _syndicateMenuArchive.setText(registry.getText(T_SYNDICATE_MENU_ARCHIVE, "Manage &archive"));
+        _syndicateMenuArchive.setImage(ImageUtil.ICON_MANAGEARCHIVE);
 
         _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
+        _languageMenuRoot.setImage(ImageUtil.ICON_VM_LANGUAGE);
         _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
         _languageMenuRefresh.setText(registry.getText(T_LANGUAGE_MENU_REFRESH, "&Refresh translations"));
 
         _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "&Style"));
+        _styleMenuRoot.setImage(ImageUtil.ICON_VM_STYLE);
         _styleMenuIncreaseFont.setText(registry.getText(T_STYLE_MENU_INCREASE, "&Increase font"));
         _styleMenuDecreaseFont.setText(registry.getText(T_STYLE_MENU_DECREASE, "&Decrease font"));
         _styleMenuReset.setText(registry.getText(T_STYLE_MENU_RESET, "&Reset style"));
@@ -2777,7 +2794,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "&Help"));
         _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "&About"));
+        _helpMenuAbout.setImage(ImageUtil.ICON_HM_ABOUT);
         _helpMenuBugReport.setText(registry.getText(T_HELP_MENU_BUG, "File a new &bug report"));
+        _helpMenuBugReport.setImage(ImageUtil.ICON_HM_BUG);
         _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "&FAQ"));
         _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "&GUI manual"));
         _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "&Text interface manual"));

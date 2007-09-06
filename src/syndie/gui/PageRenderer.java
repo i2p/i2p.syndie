@@ -1398,6 +1398,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         });
         new MenuItem(_bodyMenu, SWT.SEPARATOR);
         _bodyBookmarkForum = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyBookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
         _bodyBookmarkForum.setText("Bookmark forum");
         _bodyBookmarkForum.addSelectionListener(new FireEventListener() { 
             public void fireEvent() { 
