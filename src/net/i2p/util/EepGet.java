@@ -18,7 +18,6 @@ import java.util.Properties;
 
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
-import syndie.db.SocketTimeout;
 
 /**
  * EepGet [-p localhost:4444] 
@@ -34,7 +33,10 @@ public class EepGet {
     private String _proxyHost;
     private int _proxyPort;
     private int _numRetries;
+    private long _minSize; // minimum and maximum acceptable response size, -1 signifies unlimited,
+    private long _maxSize; // applied both against whole responses and chunks
     private String _outputFile;
+    private OutputStream _outputStream;
     /** url we were asked to fetch */
     private String _url;
     /** the URL we actually fetch from (may differ from the _url in case of redirect) */
@@ -81,19 +83,24 @@ public class EepGet {
         this(ctx, shouldProxy, proxyHost, proxyPort, numRetries, outputFile, url, true, null);
     }
     public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, String outputFile, String url, String postData) {
-        this(ctx, shouldProxy, proxyHost, proxyPort, numRetries, outputFile, url, true, null, postData);
+        this(ctx, shouldProxy, proxyHost, proxyPort, numRetries, -1, -1, outputFile, null, url, true, null, postData);
     }
     public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, String outputFile, String url, boolean allowCaching, String etag) {
-        this(ctx, shouldProxy, proxyHost, proxyPort, numRetries, outputFile, url, allowCaching, etag, null);
+        this(ctx, shouldProxy, proxyHost, proxyPort, numRetries, -1, -1, outputFile, null, url, allowCaching, etag, null);
     }
-    public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, String outputFile, String url, boolean allowCaching, String etag, String postData) {
+    public EepGet(I2PAppContext ctx, boolean shouldProxy, String proxyHost, int proxyPort, int numRetries, long minSize, long maxSize,
+                  String outputFile, OutputStream outputStream, String url, boolean allowCaching,
+                  String etag, String postData) {
         _context = ctx;
         _log = ctx.logManager().getLog(EepGet.class);
         _shouldProxy = (proxyHost != null) && (proxyHost.length() > 0) && (proxyPort > 0) && shouldProxy;
         _proxyHost = proxyHost;
         _proxyPort = proxyPort;
         _numRetries = numRetries;
-        _outputFile = outputFile;
+        _minSize = minSize;
+        _maxSize = maxSize;
+        _outputFile = outputFile;     // if outputFile is set, outputStream must be null
+        _outputStream = outputStream; // if both are set, outputStream overrides outputFile
         _url = url;
         _actualURL = url;
         _postData = postData;
@@ -460,7 +467,13 @@ public class EepGet {
             _log.debug("Headers read completely, reading " + _bytesRemaining);
         
         boolean strictSize = (_bytesRemaining >= 0);
-            
+
+        // If minimum or maximum size defined, ensure they aren't exceeded
+        if ((_minSize > -1) && (_bytesRemaining < _minSize))
+            throw new IOException("HTTP response size " + _bytesRemaining + " violates minimum of " + _minSize + " bytes");
+        if ((_maxSize > -1) && (_bytesRemaining > _maxSize))
+            throw new IOException("HTTP response size " + _bytesRemaining + " violates maximum of " + _maxSize + " bytes");
+
         int remaining = (int)_bytesRemaining;
         byte buf[] = new byte[1024];
         while (_keepFetching && ( (remaining > 0) || !strictSize ) && !_aborted) {
@@ -473,6 +486,11 @@ public class EepGet {
             timeout.resetTimer();
             _out.write(buf, 0, read);
             _bytesTransferred += read;
+            // This seems necessary to properly resume a partial download into a stream,
+            // as nothing else increments _alreadyTransferred, and there's no file length to check.
+            // Hopefully this won't break compatibility with existing status listeners
+            // (cause them to behave weird, or show weird numbers).
+            _alreadyTransferred += read;
             remaining -= read;
             if (remaining==0 && _encodingChunked) {
                 int char1 = _proxyIn.read();
@@ -550,12 +568,18 @@ public class EepGet {
         boolean rcOk = false;
         switch (responseCode) {
             case 200: // full
-                _out = new FileOutputStream(_outputFile, false);
+                if (_outputStream != null)
+                    _out = _outputStream;
+		else
+		    _out = new FileOutputStream(_outputFile, false);
                 _alreadyTransferred = 0;
                 rcOk = true;
                 break;
             case 206: // partial
-                _out = new FileOutputStream(_outputFile, true);
+                if (_outputStream != null)
+                    _out = _outputStream;
+		else
+		    _out = new FileOutputStream(_outputFile, true);
                 rcOk = true;
                 break;
             case 301: // various redirections
@@ -735,9 +759,16 @@ public class EepGet {
     private boolean isNL(byte b) { return (b == NL); }
 
     private void sendRequest(SocketTimeout timeout) throws IOException {
-        File outFile = new File(_outputFile);
-        if (outFile.exists())
-            _alreadyTransferred = outFile.length();
+        if (_outputStream != null) {
+            // We are reading into a stream supplied by a caller,
+            // for which we cannot easily determine how much we've written.
+            // Assume that _alreadyTransferred holds the right value
+            // (we should never be restarted to work on an old stream).
+	} else {
+            File outFile = new File(_outputFile);
+            if (outFile.exists())
+                _alreadyTransferred = outFile.length();
+        }
 
         String req = getRequest();
 

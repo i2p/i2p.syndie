@@ -207,7 +207,7 @@ class SyndicateMenu implements TextEngine.Menu {
         } else {
             try {
                 out = File.createTempFile("syndicate", ".index", client.getTempDir());
-                EepGet get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null, null);
+                EepGet get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null);
                 get.addStatusListener(new UIStatusListener(ui));
                 boolean fetched = get.fetch();
                 if (!fetched) {

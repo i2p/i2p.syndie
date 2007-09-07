@@ -1,11 +1,9 @@
-package syndie.db;
+package net.i2p.util;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import net.i2p.util.SimpleTimer;
-
 
 public class SocketTimeout implements SimpleTimer.TimedEvent {
     private Socket _targetSocket;
