@@ -134,6 +134,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private MenuItem _markThreadRead;
     private MenuItem _markAllRead;
     private MenuItem _delete;
+    private MenuItem _cancel;
     
     private boolean _showAuthor;
     private boolean _showChannel;
@@ -1194,6 +1195,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             public void menuShown(MenuEvent menuEvent) {
                 boolean enable = _tree.getSelectionCount() > 0;
                 boolean enableMsg = enable && (getMessageSelectedCount() > 0);
+                boolean cancellable = enableMsg && getCancellable();
                 _bookmarkAuthor.setEnabled(enableMsg);
                 _bookmarkForum.setEnabled(enable);
                 
@@ -1201,6 +1203,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _collapseThread.setEnabled(enableMsg);
                 _markAllRead.setEnabled(enable);
                 _delete.setEnabled(enableMsg);
+                _cancel.setEnabled(cancellable);
                 _markRead.setEnabled(enableMsg);
                 _markThreadRead.setEnabled(enableMsg);
                 _markUnread.setEnabled(enableMsg);
@@ -1311,6 +1314,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent selectionEvent) { delete(); }
         });
         
+        _cancel = new MenuItem(_menu, SWT.PUSH);
+        _cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
+        });
+        
         if (!_hideFilter) {
             Composite filterRow = new Composite(_root, SWT.BORDER);
             filterRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -1374,6 +1383,34 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     protected int getMessageSelectedCount() { return _tree.getSelectionCount(); }
+    /** 
+     * we can generate a cancel message if we created the message, own the channel 
+     * its in, manage the channel its in, or are explicitly allowed to post in the
+     * channel its in.  that doesn't mean people will /honor/ the cancel message, but
+     * if none of those conditions are true, they definitely won't.
+     */
+    protected boolean getCancellable() {
+        TreeItem selected[] = _tree.getSelection();
+        for (int i = 0; i < selected.length; i++) {
+            SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+            if ( (uri != null) && (uri.getMessageId() != null) ) {
+                long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                if (msgId < 0)
+                    return false;
+                long chanId = _client.getMessageTarget(msgId);
+                if (chanId < 0)
+                    return false;
+                DBClient.ChannelCollector chans = _client.getNymChannels();
+                Long ownerId = new Long(_client.getChannelId(uri.getScope()));
+                Long id = new Long(chanId);
+                return chans.getIdentityChannelIds().contains(ownerId) || // we wrote it
+                       chans.getIdentityChannelIds().contains(id) || // we own the forum
+                       chans.getManagedChannelIds().contains(id) || // we manage the forum
+                       chans.getPostChannelIds().contains(id); // we are trusted posters in the forum
+            }
+        }
+        return false;
+    }
     
     private void initDnD() {
         Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
@@ -2329,6 +2366,23 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             applyFilter();
     }
 
+    private void cancel() {
+        TreeItem selected[] = _tree.getSelection();
+        int cancelled = 0;
+        if (selected != null) {
+            for (int i = 0; i < selected.length; i++) {
+                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                if ( (uri != null) && (uri.getMessageId() != null) ) {
+                    _client.cancelMessage(uri, _ui);
+                    cancelled++;
+                }
+            }
+            _dataCallback.readStatusUpdated();
+        }
+        if (cancelled > 0)
+            applyFilter();
+    }
+
     private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
     private static final String T_AUTHOR = "syndie.gui.messagetree.author";
     private static final String T_FORUM = "syndie.gui.messagetree.forum";
@@ -2371,6 +2425,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private static final String T_EXPANDTHREAD = "syndie.gui.messagetree.expandthread";
     private static final String T_COLLAPSETHREAD = "syndie.gui.messagetree.collapsethread";
     private static final String T_DELETE = "syndie.gui.messagetree.delete";
+    private static final String T_CANCEL = "syndie.gui.messagetree.cancel";
     
     private static final String T_PAGESIZE = "syndie.gui.messagetree.pagesize";
     
@@ -2402,6 +2457,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
         _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark the forum as read"));
         _delete.setText(registry.getText(T_DELETE, "Delete the message locally"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel the message (tell others to delete it)"));
         
         _navPageSizeLabel.setText(registry.getText(T_PAGESIZE, "Page size:"));
     }

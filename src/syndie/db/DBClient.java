@@ -21,6 +21,7 @@ import net.i2p.data.*;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.BugConfig;
+import syndie.data.CancelPolicy;
 import syndie.data.ChannelInfo;
 import syndie.data.ExpirationPolicy;
 import syndie.data.MessageInfo;
@@ -3766,6 +3767,11 @@ public class DBClient {
             chanDir.delete();
     }
     
+    public void cancelMessage(SyndieURI uri, UI ui) {
+        deleteMessage(uri, ui, true, true);
+        _ui.errorMessage("Just deleting locally, not yet generating a cancel message");
+    }
+    
     private static final int DELETION_CAUSE_OTHER = -1;
     private static final int DELETION_CAUSE_BAN = 0;
     private static final int DELETION_CAUSE_EXPLICIT = 1;
@@ -5559,6 +5565,129 @@ public class DBClient {
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error deleting expiration policy", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_GET_CANCEL_POLICIES = "SELECT policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster FROM cancelPolicy";
+    public Set getCancelPolicies() {
+        Set rv = new HashSet();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CANCEL_POLICIES);
+            rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                // policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster
+                long scopeId = rs.getLong(1);
+                boolean honorAuthor = rs.getBoolean(2);
+                if (rs.wasNull()) honorAuthor = true;
+                boolean honorOwner = rs.getBoolean(3);
+                if (rs.wasNull()) honorOwner = true;
+                boolean honorManager = rs.getBoolean(4);
+                if (rs.wasNull()) honorManager = true;
+                boolean honorAuthPoster = rs.getBoolean(5);
+                if (rs.wasNull()) honorAuthPoster = true;
+                
+                CancelPolicy policy = null;
+                if (scopeId == -1)
+                    policy = new CancelPolicy(true);
+                else if (scopeId == -2)
+                    policy = new CancelPolicy(false);
+                else // channel specific policy
+                    policy = new CancelPolicy(scopeId);
+                
+                policy.setHonorFromAuthor(honorAuthor);
+                policy.setHonorFromForumOwner(honorOwner);
+                policy.setHonorFromForumManager(honorManager);
+                policy.setHonorFromForumAuthorizedPoster(honorAuthPoster);
+                
+                rv.add(policy);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting cancel policies", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        
+        return rv;
+    }
+    
+    private static final String SQL_ADD_CANCEL_POLICY = "INSERT INTO cancelPolicy (policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster) VALUES (?, ?, ?, ?, ?)";
+    private static final String SQL_UPDATE_CANCEL_POLICY = "UPDATE cancelPolicy SET honorFromAuthor = ?, honorFromForumOwner = ?, honorFromForumManager = ?, honorFromAuthPoster = ? WHERE policyScopeId = ?";
+    public void saveCancelPolicy(CancelPolicy policy) {
+        long policyScopeId = 0;
+        
+        if (policy.getScopeApplyToAll())
+            policyScopeId = -1;
+        else if (policy.getScopeApplyToLocallyManaged())
+            policyScopeId = -2;
+        else
+            policyScopeId = policy.getScopeApplyToChannelId();
+
+        if (policy.getIsNew()) {
+            _ui.debugMessage("add new policy: " + policy);
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_ADD_CANCEL_POLICY);
+                //policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster
+                stmt.setLong(1, policyScopeId);
+                stmt.setBoolean(2, policy.getHonorFromAuthor());
+                stmt.setBoolean(3, policy.getHonorFromForumOwner());
+                stmt.setBoolean(4, policy.getHonorFromForumManager());
+                stmt.setBoolean(5, policy.getHonorFromForumAuthorizedPoster());
+                stmt.executeUpdate();
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error adding cancel policy", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        } else {
+            _ui.debugMessage("update policy: " + policy);
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement(SQL_UPDATE_CANCEL_POLICY);
+                //honorFromAuthor = ?, honorFromForumOwner = ?, honorFromForumManager = ?, honorFromAuthPoster = ? WHERE policyScopeId = ?
+                stmt.setBoolean(1, policy.getHonorFromAuthor());
+                stmt.setBoolean(2, policy.getHonorFromForumOwner());
+                stmt.setBoolean(3, policy.getHonorFromForumManager());
+                stmt.setBoolean(4, policy.getHonorFromForumAuthorizedPoster());
+                stmt.setLong(5, policyScopeId);
+                stmt.executeUpdate();
+            } catch (SQLException se) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Error updating cancel policy", se);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+        }
+    }
+
+    private static final String SQL_DELETE_CANCEL_POLICY = "DELETE FROM cancelPolicy WHERE policyScopeId = ?";
+    public void deleteCancelPolicy(CancelPolicy policy) {
+        if (policy.getIsNew()) return; // noop
+        
+        long policyScopeId = 0;
+        if (policy.getScopeApplyToAll())
+            policyScopeId = -1;
+        else if (policy.getScopeApplyToLocallyManaged())
+            policyScopeId = -2;
+        else
+            policyScopeId = policy.getScopeApplyToChannelId();
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_DELETE_CANCEL_POLICY);
+            stmt.setLong(1, policyScopeId);
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error deleting cancel policy", se);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }

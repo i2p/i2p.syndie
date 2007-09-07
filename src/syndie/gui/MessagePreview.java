@@ -254,6 +254,7 @@ public class MessagePreview extends BaseComponent implements Themeable, Translat
             public void view(PageRenderer renderer, SyndieURI uri) { _navControl.view(SyndieURI.resolveRelative(_uri, uri)); }
             public void bookmark(PageRenderer renderer, SyndieURI uri) { _bookmarkControl.bookmark(uri); }
             public void banScope(PageRenderer renderer, Hash scope) {}
+            public void cancelMessage(PageRenderer renderer, SyndieURI msg) {}
             public void deleteMessage(PageRenderer renderer, SyndieURI msg) {}
             public void viewImage(PageRenderer renderer, Image img) {}
             public void ignoreImageScope(PageRenderer renderer, Hash scope) {}

@@ -71,6 +71,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Button _switchOpen;
     
     private Button _expiration;
+    private Button _cancel;
     private Button _welcome;
     private Button _sql;
 
@@ -240,6 +241,12 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _expiration.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
         _expiration.addSelectionListener(new FireSelectionListener() { public void fire() { 
             _desktop.getNavControl().view(URIHelper.instance().createExpirationURI(null)); 
+        } });
+        
+        _cancel = new Button(root, SWT.PUSH);
+        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        _cancel.addSelectionListener(new FireSelectionListener() { public void fire() { 
+            _desktop.getNavControl().view(URIHelper.instance().createCancelURI(null)); 
         } });
         
         _welcome = new Button(root, SWT.PUSH);
@@ -611,6 +618,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _sql.setFont(theme.BUTTON_FONT);
         _welcome.setFont(theme.BUTTON_FONT);
         _expiration.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
         //_tabbedUI.setFont(theme.BUTTON_FONT);
         _changePass.setFont(theme.BUTTON_FONT);
         _httpservLabel.setFont(theme.DEFAULT_FONT);
@@ -634,6 +642,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private static final String T_CHANGEPASS = "syndie.gui.desktop.controlmenupanel.changepass";
     private static final String T_WELCOME = "syndie.gui.desktop.controlmenupanel.welcome";
     private static final String T_EXPIRATION = "syndie.gui.desktop.controlmenupanel.expiration";
+    private static final String T_CANCEL = "syndie.gui.desktop.controlmenupanel.cancel";
     private static final String T_TABBEDUI = "syndie.gui.desktop.controlmenupanel.tabbedui";
     
     private static final String T_HTTPSERV_LABEL = "syndie.gui.desktop.controlmenupanel.httpserv.label";
@@ -656,6 +665,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _switchOpen.setText(registry.getText(T_SWITCH_OPEN, "Open selected"));
         _welcome.setText(registry.getText(T_WELCOME, "Reshow welcome screen"));
         _expiration.setText(registry.getText(T_EXPIRATION, "Expiration policy manager"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel policy manager"));
         _exit.setText(registry.getText(T_EXIT, "Exit"));
 
         _httpservLabel.setText(registry.getText(T_HTTPSERV_LABEL, "Integrated HTTP-accessible archive server:"));

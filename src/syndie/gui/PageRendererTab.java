@@ -111,4 +111,5 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
     public void nextPage() {}
     public void prevPage() {}
     public void deleteMessage(PageRenderer renderer, SyndieURI msg) {}
+    public void cancelMessage(PageRenderer renderer, SyndieURI msg) {}
 }

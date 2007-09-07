@@ -1,0 +1,16 @@
+-- update the database from schema version 21
+-- this version 22 stores cancel message policies
+--
+
+UPDATE appVersion SET versionNum = 22, visibleVersion = 'Cancel message policies';
+
+CREATE CACHED TABLE cancelPolicy (
+    -- policyScopeId is -1 for the default policy, -2 for the locally managed policy,
+    -- or equal to the channelId for channel specific policies
+    policyScopeId BIGINT PRIMARY KEY
+    , honorFromAuthor BOOLEAN
+    , honorFromForumOwner BOOLEAN
+    , honorFromForumManager BOOLEAN
+    , honorFromAuthPoster BOOLEAN
+);
+

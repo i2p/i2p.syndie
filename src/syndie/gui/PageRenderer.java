@@ -102,6 +102,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
     private MenuItem _bodyViewStyled;
     private MenuItem _bodySaveAll;
     private MenuItem _bodyDelete;
+    private MenuItem _bodyCancel;
     
     private MenuItem _imgView;
     private MenuItem _imgSave;
@@ -1505,6 +1506,14 @@ public class PageRenderer extends BaseComponent implements Themeable {
             }
         });
         
+        _bodyCancel = new MenuItem(_bodyMenu, SWT.PUSH);
+        _bodyCancel.setText("Cancel the message (tell others to delete it)");
+        _bodyCancel.addSelectionListener(new FireEventListener() {
+            public void fireEvent() {
+                cancelMessage();
+            }
+        });
+        
         new MenuItem(_bodyMenu, SWT.SEPARATOR);
         _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
         _bodyBanForum.setText("Ban forum");
@@ -1633,6 +1642,11 @@ public class PageRenderer extends BaseComponent implements Themeable {
         }
         if (_listener != null)
             _listener.saveAllImages(PageRenderer.this, images);
+    }
+    
+    private void cancelMessage() {
+        if ( (_listener != null) && (_msg != null) )
+            _listener.cancelMessage(PageRenderer.this, _msg.getURI());
     }
     private void deleteMessage() {
         if ( (_listener != null) && (_msg != null) )
@@ -1946,6 +1960,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
          * the message should be deleted locally 
          */
         public void deleteMessage(PageRenderer renderer, SyndieURI msg);
+        /** 
+         * the message should be cancelled
+         */
+        public void cancelMessage(PageRenderer renderer, SyndieURI msg);
         /**
          * The user wants to create a reply that is readable only by the target author
          */

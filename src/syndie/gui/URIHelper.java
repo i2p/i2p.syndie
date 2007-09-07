@@ -157,5 +157,11 @@ public class URIHelper implements URIControl {
             attr.put("scope", scope.toBase64());
         return new SyndieURI(BrowserTab.TYPE_EXPIRATION, attr);
     }
-            
+    
+    public SyndieURI createCancelURI(Hash scope) { 
+        HashMap attr = new HashMap();
+        if (scope != null)
+            attr.put("scope", scope.toBase64());
+        return new SyndieURI(BrowserTab.TYPE_CANCEL, attr);
+    }
 }

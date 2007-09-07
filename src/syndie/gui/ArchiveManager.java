@@ -34,6 +34,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private Composite _root;
 
     private Button _expiration;
+    private Button _cancelManager;
     
     private Label _advertisedLabel;
     private Label _advertised;
@@ -71,6 +72,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _expiration = new Button(_root, SWT.PUSH);
         _expiration.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         _expiration.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(null)); } });
+        
+        _cancelManager = new Button(_root, SWT.PUSH);
+        _cancelManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        _cancelManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createCancelURI(null)); } });
         
         Composite manageable = new Composite(_root, SWT.NONE);
         manageable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
@@ -298,6 +303,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     
     public void applyTheme(Theme theme) {
         _expiration.setFont(theme.BUTTON_FONT);
+        _cancelManager.setFont(theme.BUTTON_FONT);
         
         _advertisedLabel.setFont(theme.DEFAULT_FONT);
         _advertised.setFont(theme.DEFAULT_FONT);
@@ -317,6 +323,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     }
     
     private static final String T_EXPIRATION = "syndie.gui.archivemanager.expiration";
+    private static final String T_CANCELMANAGER = "syndie.gui.archivemanager.cancelmanager";
     private static final String T_ADVERTISED = "syndie.gui.archivemanager.advertised";
     private static final String T_ADVERTISEDMANAGE = "syndie.gui.archivemanager.advertisedmanage";
     private static final String T_DENIABLE = "syndie.gui.archivemanager.deniable";
@@ -328,6 +335,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         
     public void translate(TranslationRegistry registry) {
         _expiration.setText(registry.getText(T_EXPIRATION, "Manage expiration policies"));
+        _cancelManager.setText(registry.getText(T_CANCELMANAGER, "Manage cancel policies"));
     
         _advertisedLabel.setText(registry.getText(T_ADVERTISED, "Advertised archives:"));
         _advertisedManage.setText(registry.getText(T_ADVERTISEDMANAGE, "Manage..."));
