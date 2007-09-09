@@ -28,6 +28,11 @@ public class CancelPolicy {
         _isNew = false;
     }
     
+    public CancelPolicy(CancelPolicy src) {
+        this();
+        load(src);
+    }
+    
     /**
      * @param forAll if true, this cancel policy applies to all forums in general,
      *               otherwise it applies to forums manageable by the local user

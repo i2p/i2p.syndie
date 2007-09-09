@@ -275,7 +275,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _save = new Button(buttons, SWT.PUSH);
             _save.addSelectionListener(new FireSelectionListener() { public void fire() { saveChanges(); } });
             _revert = new Button(buttons, SWT.PUSH);
-            _save.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
+            _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
             
             _save.setText(_translationRegistry.getText(T_SAVE, "Save changes"));
             _revert.setText(_translationRegistry.getText(T_REVERT, "Revert changes"));
@@ -308,6 +308,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _revert.setEnabled(false);
         }
         private void revertChanges() {
+            _ui.debugMessage("reverting changes to the detail");
             _detail.revert();
             _save.setEnabled(false);
             _revert.setEnabled(false);
@@ -340,7 +341,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _group = group;
             _groupRoot = root;
             _policy = policy;
-            _policyOrig = policy;
+            _policyOrig = new CancelPolicy(policy);
             initDetailComponents();
         }
         
@@ -351,6 +352,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             render();
         }
         void revert() {
+            _ui.debugMessage("reverting policy: [" + _policy + "] to [" + _policyOrig + "]");
             _policy.load(_policyOrig);
             render();
         }
@@ -393,6 +395,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _honorFromForumManager = new Button(_detailRoot, SWT.CHECK);
             _honorFromForumManager.setText(_translationRegistry.getText(T_HONOR_MANAGER, "Honor cancel messages from any forum manager(s)"));
             _honorFromForumManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _honorFromForumManager.setEnabled(false);
             _honorFromForumManager.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     boolean enabled = _honorFromForumManager.getSelection();
@@ -404,6 +407,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _honorFromForumAuthorizedPoster = new Button(_detailRoot, SWT.CHECK);
             _honorFromForumAuthorizedPoster.setText(_translationRegistry.getText(T_HONOR_POSTER, "Honor cancel messages from any explicitly authorized forum posters"));
             _honorFromForumAuthorizedPoster.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _honorFromForumAuthorizedPoster.setEnabled(false);
             _honorFromForumAuthorizedPoster.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     boolean enabled = _honorFromForumAuthorizedPoster.getSelection();
@@ -423,6 +427,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
         }
         
         private void render() {
+            _ui.debugMessage("rendering policy: [" + _policy + "]");
             _honorFromAuthor.setSelection(_policy.getHonorFromAuthor());
             _honorFromForumOwner.setSelection(_policy.getHonorFromForumOwner());
             _honorFromForumManager.setSelection(_policy.getHonorFromForumManager());

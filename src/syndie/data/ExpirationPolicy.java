@@ -23,6 +23,11 @@ public class ExpirationPolicy {
         _isNew = false;
     }
     
+    public ExpirationPolicy(ExpirationPolicy src) {
+        this();
+        load(src);
+    }
+    
     public void load(ExpirationPolicy src) {
         _isDataFilePolicy = src.isDataFilePolicy();
         _isWatched = src.isWatchedPolicy();

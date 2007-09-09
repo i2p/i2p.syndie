@@ -415,7 +415,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             _group = group;
             _groupRoot = root;
             _policy = policy;
-            _policyOrig = policy;
+            _policyOrig = new ExpirationPolicy(policy);
             initDetailComponents();
         }
         
