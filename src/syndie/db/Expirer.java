@@ -134,6 +134,11 @@ public class Expirer {
                     _chanIdToDataFilePolicy.put(new Long(policy.getPolicyChannelId()), policy);
             }
         }
+        
+        if (_watchedDBPolicy == null)
+            _watchedDBPolicy = _defaultDBPolicy;
+        if (_watchedDataFilePolicy == null)
+            _watchedDataFilePolicy = _defaultDataFilePolicy;
     }
     
     private void loadDataFileSummaries() {

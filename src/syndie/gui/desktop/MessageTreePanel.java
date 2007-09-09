@@ -176,11 +176,12 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
 
     public void shown(Desktop desktop, SyndieURI uri, String name, String description) {
-        //System.out.println("tree panel shown: " + uri);
+        _ui.debugMessage("tree panel shown: " + uri);
         if (uri != null) {
             if (uri.isChannel())
                 uri = SyndieURI.createSearch(uri.getScope(), false, true, MessageTree.shouldUseImportDate(_client));            
             if (!uri.equals(_tree.getCurrentFilter())) {
+                _ui.debugMessage("uri changed for the tree panel, applying filter");
                 _tree.applyFilter(uri.toString());
             }
         }
@@ -456,7 +457,8 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         public void updateActions(final SyndieURI uri, final SyndieURI detailURI) {
             _ui.debugMessage("updateActions: " + uri);
             _detailURI = detailURI;
-            if (uri == null) return; // no change, panel was just reshown
+            if ( (uri == null) || (uri.equals(_tree.getCurrentFilter())) )
+                return; // no change, panel was just reshown
             Hash scope = null;
             if (uri.isChannel()) {
                 scope = uri.getScope();
@@ -600,7 +602,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _desktop.getNavControl().view(URIHelper.instance().createPostURI(_actionScope, null, true));
         }
     }
-    
+
     private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";
     private static final String T_PROFILE = "syndie.gui.messagetreepanel.profile";
     private static final String T_EXPAND = "syndie.gui.messagetreepanel.expand";
