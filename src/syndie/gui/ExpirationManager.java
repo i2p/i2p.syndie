@@ -341,7 +341,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             _save = new Button(buttons, SWT.PUSH);
             _save.addSelectionListener(new FireSelectionListener() { public void fire() { saveChanges(); } });
             _revert = new Button(buttons, SWT.PUSH);
-            _save.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
+            _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
             
             _save.setText(_translationRegistry.getText(T_SAVE, "Save changes"));
             _revert.setText(_translationRegistry.getText(T_REVERT, "Revert changes"));
