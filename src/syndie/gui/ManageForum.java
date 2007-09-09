@@ -16,6 +16,7 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.ModifyEvent;
@@ -54,6 +55,7 @@ import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.ManageForumExecutor;
 import syndie.db.UI;
 
 /**
@@ -447,7 +449,20 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                 }
             }
             
-            public Image getAvatar() { return _avatarImg; }
+            public byte[] getAvatarData() {
+                Image avatar = _avatarImg;
+                if (avatar != null) {
+                    try {
+                        return ImageUtil.serializeImage(avatar);
+                    } catch (SWTException se) {
+                        _ui.errorMessage("Internal error serializing image", se);
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+            }
+        
             public String getName() { return _name.getText(); }
             public String getDescription() { return _description.getText(); }
             public long getLastEdition() {
@@ -551,6 +566,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                     return null;
                 }
             }
+            public List getCancelledURIs() { return _client.getChannelCancelURIs(_scopeId); }
         });
         exec.execute();
         for (int i = 0; i < _listeners.size(); i++)

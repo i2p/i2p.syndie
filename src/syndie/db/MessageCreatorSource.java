@@ -37,6 +37,8 @@ public interface MessageCreatorSource {
     public String[] getPublicTags();
     public String[] getPrivateTags();
     public List getReferenceNodes();
+    /** list of SyndieURIs for messages that should be cancelled by this post */
+    public List getCancelURIs();
     public int getParentCount();
     public SyndieURI getParent(int depth);
     public String getExpiration();

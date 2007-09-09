@@ -594,6 +594,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public String getExpiration() { return null; }
         public boolean getForceNewThread() { return false; }
         public boolean getRefuseReplies() { return false; }
+        public List getCancelURIs() { return new ArrayList(); }
     }   
     
     public void postponeMessage() {

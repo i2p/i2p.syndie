@@ -266,9 +266,8 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             gl.marginHeight = 0;
             gl.marginWidth = 0;
             _detailRoot.setLayout(gl);
-            //_detailRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));foo
             _detail = new PolicyDetail(_detailRoot, policy, PolicyGroup.this);
-            _detail.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+            _detail.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
             
             Composite buttons = new Composite(_detailRoot, SWT.NONE);
             buttons.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
@@ -403,7 +402,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             });
             
             _honorFromForumAuthorizedPoster = new Button(_detailRoot, SWT.CHECK);
-            _honorFromForumAuthorizedPoster.setText(_translationRegistry.getText(T_HONOR_POSTER, "Honor cancel messages from any eplicitly authorized forum posters"));
+            _honorFromForumAuthorizedPoster.setText(_translationRegistry.getText(T_HONOR_POSTER, "Honor cancel messages from any explicitly authorized forum posters"));
             _honorFromForumAuthorizedPoster.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromForumAuthorizedPoster.addSelectionListener(new FireSelectionListener() {
                 public void fire() {

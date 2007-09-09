@@ -230,6 +230,17 @@ public class MessageCreatorDirect extends MessageCreator {
         if ( (tags != null) && (tags.length > 0) )
             headers.put(Constants.MSG_HEADER_TAGS, formatTags(tags));
         
+        List uris = _source.getCancelURIs();
+        if ( (uris != null) && (uris.size() > 0) ) {
+            StringBuffer uriList = new StringBuffer();
+            for (int i = 0; i < uris.size(); i++) {
+                SyndieURI uri = (SyndieURI)uris.get(i);
+                if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) )
+                    uriList.append(uri.toString()).append('\t');
+            }
+            headers.put(Constants.MSG_HEADER_CANCEL, uriList.toString());
+        }
+        
         if (_source.getPrivacyPBE()) {
             String prompt = CommandImpl.strip(_source.getPassphrasePrompt());
             headers.put(Constants.MSG_HEADER_PBE_PROMPT, prompt);

@@ -45,6 +45,7 @@ import syndie.data.ReferenceNode;
  *  --keyReplyOut $keyFile          // decrypt private key to read replies
  * [--keyEncryptPostOut $keyFile]   // key used to encrypt posts (may be hidden if --encryptContent, otherwise anyone can get it too)
  * [--keyEncryptMetaOut $keyFile]   // key used to encrypt metadata (if --encryptContent)
+ * [--cancelledURI $syndieURI]*     // uris to cancel
  */
 public class ChanGen extends CommandImpl {
     private I2PAppContext _ctx;
@@ -277,6 +278,15 @@ public class ChanGen extends CommandImpl {
             for (int i = 0; i < tags.size(); i++)
                 buf.append(strip((String)tags.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_TAGS, buf.toString());
+        }
+        
+        // cancelled URIs
+        List cancelledURIs = args.getOptValues("cancelledURI");
+        if ( (cancelledURIs != null) && (cancelledURIs.size() > 0) ) {
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < cancelledURIs.size(); i++)
+                buf.append(strip((String)cancelledURIs.get(i))).append('\t');
+            rv.put(Constants.MSG_META_HEADER_CANCEL, buf.toString());
         }
         
         // ident

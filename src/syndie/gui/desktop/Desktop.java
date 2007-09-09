@@ -358,16 +358,16 @@ class Desktop {
             _display.asyncExec(new Runnable() { 
                 public void run() {
                     final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-                    s.setText(_translationRegistry.getText(T_ALREADY_RUNNING_TITLE, "Already running"));
+                    s.setText(strans(T_ALREADY_RUNNING_TITLE, "Already running"));
                     s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                     s.setLayout(new GridLayout(1, true));
                     Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                     l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-                    l.setText(_translationRegistry.getText(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
+                    l.setText(strans(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
                     l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                     Button b = new Button(s, SWT.PUSH);
                     b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-                    b.setText(_translationRegistry.getText(T_ALREADY_RUNNING_EXIT, "Exit"));
+                    b.setText(strans(T_ALREADY_RUNNING_EXIT, "Exit"));
                     b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                     b.addSelectionListener(new FireSelectionListener() { 
                         public void fire() {
@@ -844,8 +844,8 @@ class Desktop {
                     toggleForumSelectionPanel();
                 } 
             });
+            JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
         }
-        JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }

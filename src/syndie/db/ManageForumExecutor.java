@@ -1,4 +1,4 @@
-package syndie.gui;
+package syndie.db;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,19 +12,9 @@ import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
-import org.eclipse.swt.SWTException;
-import org.eclipse.swt.graphics.Image;
 import syndie.data.ArchiveInfo;
 import syndie.data.Enclosure;
 import syndie.data.SyndieURI;
-import syndie.db.ChanGen;
-import syndie.db.CommandImpl;
-import syndie.db.DBClient;
-import syndie.db.Importer;
-import syndie.db.KeyImport;
-import syndie.db.NestedUI;
-import syndie.db.Opts;
-import syndie.db.UI;
 import syndie.Constants;
 
 /**
@@ -32,7 +22,7 @@ import syndie.Constants;
  * data from the ManageForum state and plug it into a ChanGen command,
  * as is done in the syndie.db.ManageMenu)
  */
-class ManageForumExecutor {
+public class ManageForumExecutor {
     private DBClient _client;
     private UI _ui;
     private ManageForumState _state;
@@ -50,7 +40,7 @@ class ManageForumExecutor {
     }
     
     public static interface ManageForumState {
-        public Image getAvatar();
+        public byte[] getAvatarData();
         public String getName();
         public String getDescription();
         public long getLastEdition();
@@ -63,6 +53,7 @@ class ManageForumExecutor {
         public String getReferences();
         public Set getPublicArchives();
         public Set getPrivateArchives();
+        public List getCancelledURIs();
         public boolean getEncryptContent();
         public long getChannelId();
         public boolean getPBE();
@@ -310,18 +301,7 @@ class ManageForumExecutor {
             return;
         }
         
-        Image avatar = _state.getAvatar();
-        byte avatarData[] = null;
-        if (avatar != null) {
-            try {
-                avatarData = ImageUtil.serializeImage(avatar);
-            } catch (SWTException se) {
-                _errors.append("Internal error serializing image: " + se.getMessage());
-                _ui.errorMessage(null, se);
-                avatarData = null;
-                return;
-            }
-        }
+        byte avatarData[] = _state.getAvatarData();
         
         Opts chanGenOpts = new Opts();
         chanGenOpts.setCommand("changen");
@@ -340,6 +320,11 @@ class ManageForumExecutor {
         if (tags != null) {
             for (Iterator iter = tags.iterator(); iter.hasNext(); )
                 chanGenOpts.addOptValue("privTag", iter.next().toString());
+        }
+        List cancelledURIs = _state.getCancelledURIs();
+        if (cancelledURIs != null) {
+            for (int i = 0; i < cancelledURIs.size(); i++)
+                chanGenOpts.addOptValue("cancelledURI", cancelledURIs.get(i).toString());
         }
         
         Set keys = _state.getAuthorizedPosters();

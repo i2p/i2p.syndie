@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -30,6 +31,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import syndie.Constants;
 import syndie.data.Timer;
+import syndie.db.ManageForumExecutor;
 
 /**
  *
@@ -89,7 +91,20 @@ public class WelcomeScreen implements Themeable, Translatable {
     
     private void save() {
         ManageForumExecutor exec = new ManageForumExecutor(_browser.getClient(), _browser.getUI(), new ManageForumExecutor.ManageForumState() {
-            public Image getAvatar() { return _avatarImage; }
+            public byte[] getAvatarData() {
+                Image avatar = _avatarImage;
+                if (avatar != null) {
+                    try {
+                        return ImageUtil.serializeImage(avatar);
+                    } catch (SWTException se) {
+                        _browser.getUI().errorMessage("Internal error serializing image", se);
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+            }
+        
             public String getName() { return _name.getText().trim(); }
             public String getDescription() { return ""; }
             /** 
@@ -116,6 +131,7 @@ public class WelcomeScreen implements Themeable, Translatable {
             public boolean getCreatePostIdentity() { return false; }
             public boolean getCreateManageIdentity() { return false; }
             public boolean getCreateReplyKey() { return false; }
+            public List getCancelledURIs() { return new ArrayList(); }
         });
         exec.execute();
         String errs = exec.getErrors();

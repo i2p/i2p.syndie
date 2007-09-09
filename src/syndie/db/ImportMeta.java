@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -167,6 +168,8 @@ class ImportMeta {
             setChannelMetaHeaders(client, channelId, enc, body);
             // insert into channelReferenceGroup
             setChannelReferences(client, ui, channelId, body);
+            // insert into channelCancel
+            setChannelCancel(client, ui, channelId, enc, body);
             // (plus lots of 'insert into uriAttribute' interspersed)
             setChannelAvatar(client, channelId, body);
             setUnread(client, channelId);
@@ -749,6 +752,33 @@ class ImportMeta {
         List imported = walker.getImportedNymKeys();
         if (imported.size() > 0)
             KeyImport.resolveWithNewKeys(ui, client, imported);
+    }
+    
+    private static void setChannelCancel(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
+        String cancel[] = body.getHeaderStrings(Constants.MSG_META_HEADER_CANCEL);
+        ArrayList cancelled = new ArrayList();
+        if (cancel != null) {
+            for (int i = 0; i < cancel.length; i++)
+                cancelled.add(cancel[i]);
+        }
+        cancel = enc.getHeaderStrings(Constants.MSG_META_HEADER_CANCEL);
+        if ( (cancel != null) && (cancel.length > 0) ) {
+            for (int i = 0; i < cancel.length; i++)
+                cancelled.add(cancel[i]);
+            // only update the cancel URIs if there are more ones to set
+            client.setChannelCancelURIs(channelId, cancelled);
+        
+            CancelEngine engine = new CancelEngine(client, ui);
+            ArrayList uris = new ArrayList(cancelled.size());
+            for (int i = 0; i < cancelled.size(); i++) {
+                String str = (String)cancelled.get(i);
+                try {
+                    SyndieURI uri = new SyndieURI(str);
+                    uris.add(uri);
+                } catch (URISyntaxException use) {}
+            }
+            engine.processCancelRequests(channelId, uris);
+        }
     }
     
     /*

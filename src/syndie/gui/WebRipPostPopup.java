@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import net.i2p.data.Hash;
@@ -221,6 +222,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
             public String getExpiration() { return null; }
             public boolean getForceNewThread() { return false; }
             public boolean getRefuseReplies() { return false; }
+            public List getCancelURIs() { return new ArrayList(); }
         });
         creator.execute();
     }

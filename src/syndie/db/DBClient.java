@@ -1,6 +1,7 @@
 package syndie.db;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,6 +145,10 @@ public class DBClient {
             log("Unable to connect with default db params: " + se);
             if (_con != null) _con.close();
             _con = null;
+            // checkHeartbeat is in the error message for when the db is already open
+            if ( (se.getMessage() != null) && (se.getMessage().indexOf("checkHeartbeat()") >= 0) ) {
+                throw se;
+            }
         }
          
         try {
@@ -3767,9 +3772,162 @@ public class DBClient {
             chanDir.delete();
     }
     
-    public void cancelMessage(SyndieURI uri, UI ui) {
-        deleteMessage(uri, ui, true, true);
-        _ui.errorMessage("Just deleting locally, not yet generating a cancel message");
+    public void cancelMessage(final SyndieURI cancelledURI, UI ui) {
+        _ui.errorMessage("cancelling " + cancelledURI);
+        
+        final long msgId = getMessageId(cancelledURI.getScope(), cancelledURI.getMessageId());
+        if (msgId < 0)
+            return;
+        final long scopeId = getChannelId(cancelledURI.getScope());
+        final long targetId = getMessageTarget(msgId);
+        final Hash targetChannel = getChannelHash(targetId);
+      
+        long metaChannelId = -1;
+        //
+        // if we have the identity key for the author, post as that.  otherwise, if we
+        // have the identity key for the message's forum, post as that.
+        //
+        DBClient.ChannelCollector chans = getNymChannels();
+        Hash sendAs = null;
+        if (chans.getIdentityChannelIds().contains(new Long(scopeId))) {
+            sendAs = getChannelHash(scopeId);
+            metaChannelId = scopeId;
+            _ui.debugMessage("sending cancel message as the original author: " + cancelledURI);
+        } else if (chans.getIdentityChannelIds().contains(new Long(targetId))) {
+            _ui.debugMessage("sending cancel message as the forum owner: " + cancelledURI);
+            metaChannelId = targetId;
+            sendAs = targetChannel;
+        } else {
+            _ui.errorMessage("cancel messages can only be sent by the message's author or the forum's owner at the moment");
+            return;
+        }
+
+        final Hash cancelMsgAuthor = sendAs;
+        final long cancelMetaId = metaChannelId;
+        
+        final MessageCreator creator = new MessageCreatorDirect(new MessageCreatorSource() {
+            public MessageCreator.ExecutionListener getListener() {
+                return new MessageCreator.ExecutionListener() {
+                    public void creationComplete(MessageCreator exec, SyndieURI uri, String errors, boolean successful, SessionKey replySessionKey, byte[] replyIV, File msg) {
+                        if (successful) {
+                            boolean ok = exec.importCreated(DBClient.this, _ui, uri, msg, replyIV, replySessionKey, null);
+                            if (ok) {
+                                if (cancelMetaId >= 0) {
+                                    buildCancelMeta(cancelMetaId, cancelledURI);
+                                } else {
+                                    _ui.debugMessage("not building a new metadata for the cancel message: " + cancelMsgAuthor + ": " + cancelledURI);
+                                }
+                            } else {
+                                _ui.errorMessage("Error importing the newly created cancel message of " + cancelledURI);
+                            }
+                        } else {
+                            _ui.errorMessage("Error generating the cancel message of " + cancelledURI);
+                        }
+                        exec.cleanup();
+                    }
+                    
+                };
+            }
+            public DBClient getClient() { return DBClient.this; }
+            public UI getUI() { return _ui; }
+            public Hash getAuthor() { return cancelMsgAuthor; }
+            public Hash getTarget() { return targetChannel; }
+            public Hash getSignAs() { return null; }
+            public boolean getAuthorHidden() { return false; }
+            public String getPageTitle(int page) { return "cancel: " + cancelledURI; }
+            public int getPageCount() { return 0; }
+            public String getPageContent(int page) { return ""; }
+            public String getPageType(int page) { return ""; }
+            public List getAttachmentNames() { return new ArrayList(); }
+            public List getAttachmentTypes() { return new ArrayList(); }
+            public byte[] getAttachmentData(int attachmentIndex) { return null; }
+            public String getSubject() { return ""; }
+            public boolean getPrivacyPBE() { return false; }
+            public String getPassphrase() { return null; }
+            public String getPassphrasePrompt() { return null; }
+            public boolean getPrivacyPublic() { return true; }
+            public String getAvatarUnmodifiedFilename() { return null; }
+            public byte[] getAvatarModifiedData() { return null; }
+            public boolean getPrivacyReply() { return false; }
+            public String[] getPublicTags() { return new String[0]; }
+            public String[] getPrivateTags() { return new String[0]; }
+            public List getReferenceNodes() { return new ArrayList(); }
+            public int getParentCount() { return 0; }
+            public SyndieURI getParent(int depth) { return null; }
+            public String getExpiration() { return null; }
+            public boolean getForceNewThread() { return true; }
+            public boolean getRefuseReplies() { return true; }
+            public List getCancelURIs() { 
+                ArrayList rv = new ArrayList();
+                rv.add(cancelledURI);
+                return rv;
+            }
+        });
+        creator.execute();
+        
+        // don't explicitly delete here - wait to honor the cancel message
+        // deleteMessage(cancelledURI, ui, true, true);
+    }
+    
+    private void buildCancelMeta(final long channelId, final SyndieURI cancelledURI) {
+        _ui.debugMessage("building cancel meta for " + channelId + "/" + getChannelHash(channelId) + " to include " + cancelledURI);
+        final ChannelInfo info = getChannel(channelId);
+        ManageForumExecutor exec = new ManageForumExecutor(this, _ui, new ManageForumExecutor.ManageForumState() {
+            public byte[] getAvatarData() { return getChannelAvatar(channelId); }
+            public String getName() { return info.getName(); }
+            public String getDescription() { return info.getDescription(); }
+            public long getLastEdition() { return info.getEdition(); }
+            public boolean getAllowPublicPosts() { return info.getAllowPublicPosts(); }
+            public boolean getAllowPublicReplies() { return info.getAllowPublicReplies(); }
+            public Set getPublicTags() { return info.getPublicTags(); }
+            public Set getPrivateTags() { return info.getPrivateTags(); }
+            public Set getAuthorizedPosters() { return info.getAuthorizedPosters(); }
+            public Set getAuthorizedManagers() { return info.getAuthorizedManagers(); }
+            public String getReferences() { 
+                List refs = info.getReferences();
+                if ( (refs != null) && (refs.size() > 0) )
+                    return ReferenceNode.walk(refs);
+                else
+                    return "";
+            }
+            public Set getPublicArchives() { return info.getPublicArchives(); }
+            public Set getPrivateArchives() { return info.getPrivateArchives(); }
+            public boolean getEncryptContent() { return info.getReadKeysArePublic(); }
+            public long getChannelId() { return channelId; }
+            public boolean getPBE() { return false; }
+            public String getPassphrase() { return null; }
+            public String getPassphrasePrompt() { return null; }
+            public List getCurrentReadKeys() { 
+                Set keys = info.getReadKeys();
+                if (keys != null)
+                    return new ArrayList(keys);
+                else
+                    return new ArrayList();
+            }
+            /** should we create a new read key? */
+            public boolean getCreateReadKey() { return false; }
+            /** should we create a new forum and include its hash in our authorized-posters set? */
+            public boolean getCreatePostIdentity() { return false; }
+            /** should we create a new forum and include its hash in our authorized-managers set? */
+            public boolean getCreateManageIdentity() { return false; }
+            /** should we create a new reply key? */
+            public boolean getCreateReplyKey() { return false; }
+            public List getCancelledURIs() {
+                List cancelled = getChannelCancelURIs(channelId);
+                if (cancelled == null)
+                    cancelled = new ArrayList();
+                cancelled.add(cancelledURI);
+                while (cancelled.size() > Constants.MAX_CANCELLED_PER_META)
+                    cancelled.remove(0);
+                return cancelled;
+            }
+        });
+        exec.execute();
+        String err = exec.getErrors();
+        if ( (err != null) && (err.length() > 0) )
+            _ui.errorMessage("error building cancel metadata for " + channelId + "/" + cancelledURI + ": " + err);
+        else
+            _ui.debugMessage("cancel metadata built for " + channelId + "/" + cancelledURI);
     }
     
     private static final int DELETION_CAUSE_OTHER = -1;
@@ -3777,6 +3935,8 @@ public class DBClient {
     private static final int DELETION_CAUSE_EXPLICIT = 1;
     private static final int DELETION_CAUSE_EXPIRE = 2;
     private static final int DELETION_CAUSE_CANCELLED = 3;
+    /** the message was only a stub message containing cancel requests */
+    private static final int DELETION_CAUSE_STUB = 4;
     
     private static final String SQL_DELETE_MESSAGE = "DELETE FROM channelMessage WHERE msgId = ?";
     private static final String SQL_DELETE_CHANNEL = "DELETE FROM channel WHERE channelId = ?";
@@ -5691,6 +5851,133 @@ public class DBClient {
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
+    }
+    
+    private static final String SQL_GET_CANCEL_URIS = "SELECT cancelledURI FROM channelCancel WHERE channelId = ? ORDER BY cancelOrder ASC";
+    public List getChannelCancelURIs(long channelId) {
+        ArrayList rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CANCEL_URIS);
+            stmt.setLong(1, channelId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                String uri = rs.getString(1);
+                if (uri != null) {
+                    try {
+                        SyndieURI parsed = new SyndieURI(uri);
+                        if (parsed.getScope() != null)
+                            rv.add(parsed);
+                    } catch (URISyntaxException use) {}
+                }
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error fetching the channel cancels", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
+    
+    private static final String SQL_ADD_CANCEL_URI = "INSERT INTO channelCancel (cancelledURI, channelId, cancelOrder) VALUES (?, ?, ?)";
+    private static final String SQL_DELETE_CANCEL_URIS = "DELETE FROM channelCancel WHERE channelId = ?";
+    public void setChannelCancelURIs(long channelId, List uris) {
+        try {
+            exec(SQL_DELETE_CANCEL_URIS, channelId);
+        } catch (SQLException se) {
+            _ui.errorMessage("error clearing the old cancel uris for " + channelId, se);
+        }
+        
+        if ( (uris == null) || (uris.size() <= 0) )
+            return;
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ADD_CANCEL_URI);
+            for (int i = 0; (i < uris.size()) && (i < Constants.MAX_CANCELLED_PER_META); i++) {
+                String uri = uris.get(i).toString();
+                stmt.setString(1, uri);
+                stmt.setLong(2, channelId);
+                stmt.setInt(3, i);
+                stmt.executeUpdate();
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error adding the channel cancels", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_ADD_CANCEL_REQUEST = "INSERT INTO cancelHistory (cancelRequestedBy, cancelledURI, cancelRequestedOn) VALUES (?, ?, NOW())";
+    private static final String SQL_DELETE_OLD_CANCEL_REQUESTS = "DELETE FROM cancelHistory WHERE cancelRequestedOn < ?";
+    public void recordCancelRequests(long requestedByChannelId, List urisToCancel) {
+        if ( (urisToCancel == null) || (urisToCancel.size() <= 0) )
+            return;
+        
+        PreparedStatement stmt = null;
+        try {
+            long when = System.currentTimeMillis() - Constants.MAX_CANCELLED_HISTORY_DAYS*24*60*60*1000l;
+            stmt = _con.prepareStatement(SQL_DELETE_OLD_CANCEL_REQUESTS);
+            stmt.setDate(1, new Date(when));
+            stmt.executeUpdate();
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error clearing the old channel cancels", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }   
+        
+        stmt = null;
+        try {
+            stmt = _con.prepareStatement(SQL_ADD_CANCEL_REQUEST);
+            for (int i = 0; i < urisToCancel.size(); i++) {
+                String uri = urisToCancel.get(i).toString();
+                stmt.setLong(1, requestedByChannelId);
+                stmt.setString(2, uri);
+                stmt.executeUpdate();
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error adding the channel cancels", se);
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_GET_CANCELLED_BY = "SELECT cancelRequestedBy FROM cancelHistory WHERE cancelledURI = ?";
+    public long getCancelledBy(SyndieURI uri) {
+        if (uri == null) return -1;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CANCELLED_BY);
+            stmt.setString(1, uri.toString());
+            rs = stmt.executeQuery();
+            if (rs.next())
+                return rs.getLong(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error determining if it was cancelled", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return -1;
+    }
+    
+    public void honorCancel(SyndieURI uri, long msgId) {
+        deleteFromArchive(uri, _ui);
+        deleteMessageFromDB(msgId, DELETION_CAUSE_CANCELLED);
+    }
+    
+    public void deleteStubMessage(SyndieURI uri) {
+        long msgId = getMessageId(uri.getScope(), uri.getMessageId());
+        if (msgId >= 0)
+            deleteMessageFromDB(msgId, DELETION_CAUSE_STUB);
     }
     
     /** run the given syndie script in the $scriptDir, such as "register", "login" or "startup" */

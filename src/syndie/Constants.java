@@ -42,6 +42,9 @@ public class Constants {
     public static final String MSG_META_HEADER_ARCHIVES = "Archives";
     public static final String MSG_META_HEADER_READKEYS = "ChannelReadKeys";
     
+    /** list of posts to be cancelled (if authorized) */
+    public static final String MSG_META_HEADER_CANCEL = "Cancel";
+    
     public static final String MSG_HEADER_BODYKEY = "BodyKey";
     /**
      * if specified, the answer to the given question is fed into the password-based-encryption
@@ -111,6 +114,11 @@ public class Constants {
     /** max height in pixels */
     public static final int MAX_AVATAR_HEIGHT = 64;
 
+    /** how many messages to cancel in each metadata (at most) */
+    public static final int MAX_CANCELLED_PER_META = 64;
+    /** how many days to keep cancel messages around (in case the message arrives after the cancel) */
+    public static final int MAX_CANCELLED_HISTORY_DAYS = 31;
+    
     public static final String FILENAME_SUFFIX = ".syndie";
 
     public static final String URI_ARCHIVE_PASSPHRASE = "passphrase";

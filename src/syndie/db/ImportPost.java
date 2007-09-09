@@ -3,6 +3,7 @@ package syndie.db;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -459,8 +460,10 @@ public class ImportPost {
             setMessagePages(msgId);
             setMessageReferences(msgId);
             setUnread(msgId);
-
-            processControlActivity();
+        
+            boolean ok = processControlActivity(msgId);
+            if (!ok)
+                return false;
             
             saveToArchive(_client, _ui, _channel, _enc);
             return true;
@@ -473,8 +476,69 @@ public class ImportPost {
     /**
      * Cancel messages, overwrite messages, import channel keys, etc
      */
-    private void processControlActivity() throws SQLException {
-        //
+    private boolean processControlActivity(long msgId) throws SQLException {
+        boolean cancelIncluded = false;
+        
+        Hash scope = _client.getMessageScope(msgId);
+        long authorId = _client.getChannelId(scope);
+        List cancelURIs = getCancelURIs();
+        
+        CancelEngine engine = new CancelEngine(_client, _ui);
+        if (cancelURIs.size() > 0) {
+            engine.processCancelRequests(authorId, cancelURIs);
+            cancelIncluded = true;
+        }
+        
+        // check to see if this new message was cancelled by an earlier received message
+        long cancelledBy = _client.getCancelledBy(_uri);
+        if (cancelledBy >= 0) {
+            // ok, this will check to see if the one who sent us the cancel request was
+            // authorized, and if it was, it'll delete the newly created message
+            if (engine.processCancelRequest(cancelledBy, _uri))
+                return false;
+            else
+                return true;
+        }
+        
+        // it wasn't already cancelled
+
+        if (cancelIncluded) {
+            MessageInfo msg = _client.getMessage(msgId);
+            if ( (msg.getPageCount() == 0) && 
+                 (msg.getAttachmentCount() == 0) && 
+                 (msg.getReferences().size() == 0) ) {
+                // the message is a noop - only cancel headers, so lets delete the bulk of it,
+                // keeping enough around so we don't reimport it and can still pass it to others,
+                // but not enough for us to want to display it to the user
+                _client.deleteStubMessage(_uri);
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private List getCancelURIs() { 
+        String cancel[] = _body.getHeaderStrings(Constants.MSG_HEADER_CANCEL);
+        ArrayList cancelled = new ArrayList();
+        if (cancel != null) {
+            for (int i = 0; i < cancel.length; i++)
+                cancelled.add(cancel[i]);
+        }
+        cancel = _enc.getHeaderStrings(Constants.MSG_HEADER_CANCEL);
+        if ( (cancel != null) && (cancel.length > 0) ) {
+            for (int i = 0; i < cancel.length; i++)
+                cancelled.add(cancel[i]);
+        }
+        
+        ArrayList uris = new ArrayList(cancelled.size());
+        for (int i = 0; i < cancelled.size(); i++) {
+            String str = (String)cancelled.get(i);
+            try {
+                SyndieURI uri = new SyndieURI(str);
+                uris.add(uri);
+            } catch (URISyntaxException use) {}
+        }
+        return uris;
     }
 
     private static boolean isAuth(Set authorizedKeys, Hash ident) {

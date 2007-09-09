@@ -1,0 +1,22 @@
+-- update the database from schema version 22
+-- this version 23 tracks the messages cancelled in metadata posts
+--
+
+UPDATE appVersion SET versionNum = 23, visibleVersion = 'Metadata cancel tracking';
+
+CREATE CACHED TABLE channelCancel (
+    channelId BIGINT
+    , cancelOrder INTEGER
+    , cancelledURI VARCHAR(100)
+    , PRIMARY KEY (channelId, cancelOrder)
+);
+
+-- records the last N days worth of cancels (limiting how many can come
+-- from each channelRequestedBy).  this way we can apply a cancel even if the
+-- cancel is received before the message being cancelled
+CREATE CACHED TABLE cancelHistory (
+    cancelRequestedBy BIGINT
+    , cancelRequestedOn DATE
+    , cancelledURI VARCHAR(100)
+    , PRIMARY KEY (cancelledURI)
+)

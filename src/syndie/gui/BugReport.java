@@ -415,6 +415,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             public String getExpiration() { return null; }
             public boolean getForceNewThread() { return false; }
             public boolean getRefuseReplies() { return false; }
+            public java.util.List getCancelURIs() { return new ArrayList(); }
         });
         creator.execute();
     }
