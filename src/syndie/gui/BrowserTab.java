@@ -44,7 +44,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     public static final String TYPE_SYNDICATE_STATUS = TYPE_SYNDICATE_ARCHIVES;
     public static final String TYPE_SQL = "sql";
     static final String TYPE_TRANSLATE = "translate";
-    static final String TYPE_ARCHIVEMGR = "archivemgr";
+    public static final String TYPE_ARCHIVEMGR = "archivemgr";
     static final String TYPE_BUGREPORT = "bug";
     static final String TYPE_BACKUPSECRETS = "backupsecrets";
     public static final String TYPE_VIEWFORUM = "viewforum";

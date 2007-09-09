@@ -65,6 +65,8 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         initComponents();
     }
     
+    public void setLayoutData(Object data) { _root.setLayoutData(data); }
+    
     private void initComponents() {
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(4, false));

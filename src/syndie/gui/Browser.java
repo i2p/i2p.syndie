@@ -785,8 +785,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         });
         _syndicateMenuArchive = new MenuItem(_syndicateMenu, SWT.PUSH);
         _syndicateMenuArchive.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap())); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createArchiveManagerURI()); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createArchiveManagerURI()); }
         });
                 
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);

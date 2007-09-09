@@ -164,4 +164,8 @@ public class URIHelper implements URIControl {
             attr.put("scope", scope.toBase64());
         return new SyndieURI(BrowserTab.TYPE_CANCEL, attr);
     }
+
+    public SyndieURI createArchiveManagerURI() {
+        return new SyndieURI(BrowserTab.TYPE_ARCHIVEMGR, new HashMap());
+    }
 }
