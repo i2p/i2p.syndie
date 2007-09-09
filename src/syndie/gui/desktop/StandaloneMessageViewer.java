@@ -17,6 +17,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.BanControl;
 import syndie.gui.BookmarkControl;
+import syndie.gui.DataCallback;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.MessageViewBody;
 import syndie.gui.NavigationControl;
@@ -38,12 +39,13 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
     private NavigationControl _nav;
     private BookmarkControl _bookmarkCtl;
     private BanControl _banCtl;
+    private DataCallback _dataCallback;
     private ThemeRegistry _themeRegistry;
     private TranslationRegistry _translationRegistry;
     
     private Shell _shell;
     
-    public StandaloneMessageViewer(DBClient client, UI ui, Shell parent, MessageInfo msg, int startPage, NavigationControl nav, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkCtl, BanControl banCtl) {
+    public StandaloneMessageViewer(DBClient client, UI ui, Shell parent, MessageInfo msg, int startPage, NavigationControl nav, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkCtl, BanControl banCtl, DataCallback dataCallback) {
         _client = client;
         _ui = ui;
         _parent = parent;
@@ -54,6 +56,7 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
         _translationRegistry = trans;
         _bookmarkCtl = bookmarkCtl;
         _banCtl = banCtl;
+        _dataCallback = dataCallback;
         initComponents();
     }
     
@@ -80,7 +83,7 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
         Composite body = new Composite(_shell, SWT.NONE);
         body.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         body.setLayout(new FillLayout());
-        _view = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _nav, URIHelper.instance(), _bookmarkCtl, _banCtl, body);
+        _view = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _nav, URIHelper.instance(), _bookmarkCtl, _banCtl, body, _dataCallback);
         _view.hideThreadTab();
         _view.hideAttachmentTabs();
         Timer timer = new Timer("standalone viewer", _ui);

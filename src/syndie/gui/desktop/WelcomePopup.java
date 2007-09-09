@@ -135,7 +135,7 @@ public class WelcomePopup implements Themeable, Translatable {
         long msgId = _desktop.getDBClient().getMessageId(Constants.TOUR_MSG.getScope(), Constants.TOUR_MSG.getMessageId());
         MessageInfo msg = _desktop.getDBClient().getMessage(msgId);
         int page = 0;
-        new StandaloneMessageViewer(_desktop.getDBClient(), _desktop.getUI(), _parent, msg, page, _desktop.getNavControl(), _themeRegistry, _translationRegistry, _desktop.getBookmarkControl(), _desktop.getBanControl());
+        new StandaloneMessageViewer(_desktop.getDBClient(), _desktop.getUI(), _parent, msg, page, _desktop.getNavControl(), _themeRegistry, _translationRegistry, _desktop.getBookmarkControl(), _desktop.getBanControl(), _desktop.getDataCallback());
         //_desktop.hide();
     } 
     private void configSharing() {

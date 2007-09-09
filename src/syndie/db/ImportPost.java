@@ -461,9 +461,7 @@ public class ImportPost {
             setMessageReferences(msgId);
             setUnread(msgId);
         
-            boolean ok = processControlActivity(msgId);
-            if (!ok)
-                return false;
+            processControlActivity(msgId);
             
             saveToArchive(_client, _ui, _channel, _enc);
             return true;
@@ -476,7 +474,7 @@ public class ImportPost {
     /**
      * Cancel messages, overwrite messages, import channel keys, etc
      */
-    private boolean processControlActivity(long msgId) throws SQLException {
+    private void processControlActivity(long msgId) throws SQLException {
         boolean cancelIncluded = false;
         
         Hash scope = _client.getMessageScope(msgId);
@@ -494,27 +492,24 @@ public class ImportPost {
         if (cancelledBy >= 0) {
             // ok, this will check to see if the one who sent us the cancel request was
             // authorized, and if it was, it'll delete the newly created message
-            if (engine.processCancelRequest(cancelledBy, _uri))
-                return false;
-            else
-                return true;
+            engine.processCancelRequest(cancelledBy, _uri);
         }
         
-        // it wasn't already cancelled
-
         if (cancelIncluded) {
             MessageInfo msg = _client.getMessage(msgId);
-            if ( (msg.getPageCount() == 0) && 
+            if ( (msg != null) &&
+                 (msg.getPageCount() == 0) && 
                  (msg.getAttachmentCount() == 0) && 
                  (msg.getReferences().size() == 0) ) {
                 // the message is a noop - only cancel headers, so lets delete the bulk of it,
                 // keeping enough around so we don't reimport it and can still pass it to others,
                 // but not enough for us to want to display it to the user
                 _client.deleteStubMessage(_uri);
-                return false;
+                //return false;
+            } else {
+                _ui.debugMessage("not deleting stub (?) message: " + msgId + "/" + msg);
             }
         }
-        return true;
     }
     
     private List getCancelURIs() { 

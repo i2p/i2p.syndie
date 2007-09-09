@@ -155,6 +155,10 @@ public class TreeMessageIterator implements MessageIterator {
                 if (msgId < 0)
                     return;
                 
+                boolean deleted = _client.getMessageDeleted(msgId);
+                if (deleted)
+                    return;
+                
                 _rv.add(node);
                 if (uri.equals(_target)) {
                     _currentIndex = _rv.size()-1;

@@ -37,7 +37,7 @@ public class DesktopNavigationControl implements NavigationControl {
         // this uri
         if ( (uri.isChannel() && uri.getMessageId() == null) || (uri.isSearch()) ) {
             //System.out.println("creating a new message tree panel for " + uri);
-            return new MessageTreePanel(_desktop, uri);
+            return new MessageTreePanel(_desktop, uri, _desktop.getBanControl());
         } else if (uri.isChannel() && (uri.getMessageId() != null)) {
             return new MessagePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), _desktop.getNavControl());
         } else if (BrowserTab.TYPE_RESUMEABLE.equals(uri.getType())) {
@@ -63,7 +63,7 @@ public class DesktopNavigationControl implements NavigationControl {
         } else if (BrowserTab.TYPE_SYNDICATE_STATUS.equals(uri.getType()) || uri.isArchive()) {
             return new SyndicatorPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         } else if (BrowserTab.TYPE_MANAGE.equals(uri.getType()) || BrowserTab.TYPE_META.equals(uri.getType()) || BrowserTab.TYPE_VIEWFORUM.equals(uri.getType())) {
-            return new ProfilePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
+            return new ProfilePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri, _desktop.getBanControl());
         } else if (BrowserTab.TYPE_SQL.equals(uri.getType())) {
             return new SQLPanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), uri);
         } else if (BrowserTab.TYPE_EXPIRATION.equals(uri.getType())) {

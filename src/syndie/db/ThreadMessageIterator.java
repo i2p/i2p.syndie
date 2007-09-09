@@ -10,6 +10,7 @@ import syndie.data.MessageIterator;
  * Iterate in a single thread
  */
 public class ThreadMessageIterator implements MessageIterator {
+    private DBClient _client;
     private ThreadReferenceNode _root;
     
     private SyndieURI _treeURI;
@@ -18,7 +19,8 @@ public class ThreadMessageIterator implements MessageIterator {
     private SyndieURI _nextInThread;
     private SyndieURI _prevInThread;
     
-    public ThreadMessageIterator(ThreadReferenceNode root, SyndieURI treeURI) {
+    public ThreadMessageIterator(DBClient client, ThreadReferenceNode root, SyndieURI treeURI) {
+        _client = client;
         _root = root;
         _treeURI = treeURI;
     }
@@ -91,8 +93,17 @@ public class ThreadMessageIterator implements MessageIterator {
         ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
             public void visit(ReferenceNode node, int depth, int siblingOrder) {
                 SyndieURI uri = node.getURI();
-                if (uri != null)
+                if (uri != null) {
+                    long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+                    if (msgId < 0)
+                        return;
+
+                    boolean deleted = _client.getMessageDeleted(msgId);
+                    if (deleted)
+                        return;
+
                     rv.add(node);
+                }
             }
         });
         return rv;

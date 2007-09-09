@@ -73,6 +73,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     private URIControl _uriControl;
     private BookmarkControl _bookmarkControl;
     private BanControl _banControl;
+    private DataCallback _dataCallback;
     private Composite _parent;
     private Composite _root;
     
@@ -125,13 +126,14 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     private boolean _enabled;
     private long _msgId;
     
-    public MessageView(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite parent, SyndieURI uri) {
+    public MessageView(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite parent, SyndieURI uri, DataCallback dataCallback) {
         super(client, ui, themes, trans);
         _enabled = false;
         _navControl = navControl;
         _uriControl = uriControl;
         _bookmarkControl = bookmarkControl;
         _banControl = ban;
+        _dataCallback = dataCallback;
         _parent = parent;
         _uri = uri;
         _msgId = -1;
@@ -706,7 +708,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _bodyContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
         _bodyContainer.setLayout(new FillLayout());
         
-        _messageViewBody = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, _bookmarkControl, _banControl, _bodyContainer);
+        _messageViewBody = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, _bookmarkControl, _banControl, _bodyContainer, _dataCallback);
         _messageViewBody.addThreadLoadedListener(new MessageViewBody.ThreadLoadedListener() {
             public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize) {
                 configGoTo(threadReferenceNodes, curMsg, threadSize);

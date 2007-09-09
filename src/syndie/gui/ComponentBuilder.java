@@ -34,15 +34,15 @@ public class ComponentBuilder {
     public void setTranslationRegistry(TranslationRegistry trans) { _trans = trans; }
     
     public MessageTree createMessageTree(Composite parent, MessageTree.MessageTreeListener lsnr) {
-        return new MessageTree(_client, _ui, _themes, _trans, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr);
+        return new MessageTree(_client, _ui, _themes, _trans, _banControl, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr);
     }
     
     public MessageTree createMessageTree(Composite parent, MessageTree.MessageTreeListener lsnr, boolean hideFilter) {
-        return new MessageTree(_client, _ui, _themes, _trans, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr, hideFilter);
+        return new MessageTree(_client, _ui, _themes, _trans, _banControl, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr, hideFilter);
     }
     
     public WatchedMessageTree createWatchedMessageTree(Composite parent, MessageTree.MessageTreeListener lsnr, boolean hideFilter) {
-        return new WatchedMessageTree(_client, _ui, _themes, _trans, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr, hideFilter);
+        return new WatchedMessageTree(_client, _ui, _themes, _trans, _banControl, _navControl, _uriControl, _bookmarkControl, _dataCallback, parent, lsnr, hideFilter);
     }
     
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr) {

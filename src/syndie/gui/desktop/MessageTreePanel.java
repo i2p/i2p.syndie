@@ -31,6 +31,7 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
+import syndie.gui.BanControl;
 import syndie.gui.BookmarkControl;
 import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ColorUtil;
@@ -53,9 +54,11 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     private Hash _actionScope;
     private long _actionScopeId;
     private SyndieURI _detailURI;
+    private BanControl _banControl;
     
-    public MessageTreePanel(Desktop desktop, SyndieURI origURI) {
+    public MessageTreePanel(Desktop desktop, SyndieURI origURI, BanControl ban) {
         super(desktop, desktop.getDBClient(), desktop.getThemeRegistry(), desktop.getTranslationRegistry(), desktop.getCenter(), desktop.getUI(), origURI);
+        _banControl = ban;
         // add this filter to the display only when this panel is current
         _keyListener = new Listener() {
             public void handleEvent(Event evt) {
@@ -103,7 +106,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     private void initComponents() {
         BookmarkControl bookmarkControl = _desktop.getBookmarkControl();
         DataCallback dataCallback = _desktop.getDataCallback();
-        _tree = new WatchedMessageTree(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), 
+        _tree = new WatchedMessageTree(_client, _ui, _themeRegistry, _translationRegistry, _banControl, _desktop.getNavControl(), URIHelper.instance(), 
                 bookmarkControl, dataCallback, getRoot(), new MessageTree.MessageTreeListener() {
             public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                 if (toView) {
@@ -533,10 +536,10 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                         if (_client.getBannedChannels().contains(_actionScope)) {
                             _client.unban(_actionScope);
                         } else {
-                            JobRunner.instance().enqueue(new Runnable() { public void run() {
-                                _client.ban(_actionScope, _ui, true);
-                                _ban.getDisplay().asyncExec(new Runnable() { public void run() { translateBan(); } });
-                            }});
+                            boolean banned = _banControl.ban(_actionScope);
+                            //_client.ban(_actionScope, _ui, true);
+                            if (banned) 
+                                translateBan();
                         }
                     }
                 } 

@@ -24,6 +24,7 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
+import syndie.gui.BanControl;
 import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
@@ -48,9 +49,11 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
     private Hash _scope;
     private long _scopeId;
     private boolean _editable;
+    private BanControl _banControl;
   
-    public ProfilePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI) {
+    public ProfilePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI, BanControl banControl) {
         super(desktop, client, themes, trans, parent, ui, origURI);
+        _banControl = banControl;
         initComponents();
     }
     
@@ -377,7 +380,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
                         if (_client.getBannedChannels().contains(_scope))
                             _client.unban(_scope);
                         else
-                            _client.ban(_scope, _ui, true);
+                            _banControl.ban(_scope); //_client.ban(_scope, _ui, true);
                     }
                 }
             });

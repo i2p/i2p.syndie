@@ -88,4 +88,7 @@ public class DummyBrowserControl implements BrowserControl, NavigationControl {
     public void messageCreated(SyndieURI postedURI) {}
     public void messagePostponed(long postponementId) {}
     public void messageCancelled() {}
+
+    public boolean cancelMessage(SyndieURI uri) { return false; }
+    public boolean deleteMessage(SyndieURI uri) { return false; }
 }

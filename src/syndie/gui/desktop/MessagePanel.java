@@ -38,7 +38,6 @@ import syndie.gui.ImageCanvas;
 import syndie.gui.ImageUtil;
 import syndie.gui.MessageFlagBar;
 import syndie.gui.MessageTree;
-import syndie.gui.MessageView;
 import syndie.gui.MessageViewBody;
 import syndie.gui.NavigationControl;
 import syndie.gui.PassphrasePrompt;
@@ -79,7 +78,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
 
     private void initComponents() {
         Composite root = getRoot();
-        _body = new MessageViewBody(_desktop.getDBClient(), _desktop.getUI(), _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getBookmarkControl(), _desktop.getBanControl(), root);
+        _body = new MessageViewBody(_desktop.getDBClient(), _desktop.getUI(), _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getBookmarkControl(), _desktop.getBanControl(), root, _desktop.getDataCallback());
         _client.addMessageStatusListener(this);
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -139,7 +138,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                 final long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                 timer.addEvent("getMsgId");
                 
-                if (msgId < 0) {
+                if ( (msgId < 0) || (_client.getMessageDeleted(msgId)) ) {
                     Display.getDefault().asyncExec(new Runnable() {
                         public void run() {
                             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
@@ -839,7 +838,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         tmi.messageId = msg.getMessageId();
         ThreadReferenceNode root = builder.buildThread(tmi);
         _messageThread = root;
-        ThreadMessageIterator iter = new ThreadMessageIterator(root, treeURI);
+        ThreadMessageIterator iter = new ThreadMessageIterator(_client, root, treeURI);
         iter.recenter(msgId);
         return iter;
     }

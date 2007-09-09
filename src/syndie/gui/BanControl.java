@@ -10,4 +10,8 @@ import syndie.db.UI;
 public interface BanControl {
     /** confirm before actually banning the scope */
     public boolean ban(Hash scope);
+    /** confirm before actually cancelling the message */
+    public boolean cancelMessage(SyndieURI uri);
+    /** confirm before actually banning the scope */
+    public boolean deleteMessage(SyndieURI uri);
 }

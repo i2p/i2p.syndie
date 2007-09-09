@@ -35,6 +35,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private URIControl _uriControl;
     private BookmarkControl _bookmarkControl;
     private BanControl _banControl;
+    private DataCallback _dataCallback;
     
     /** the tabFolder exists if there are multiple pages, refs, attachments, or threads */
     private CTabFolder _tabFolder;
@@ -68,8 +69,9 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize);
     }
     
-    public MessageViewBody(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite root) {
+    public MessageViewBody(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite root, DataCallback dataCallback) {
         super(client, ui, themes, trans);
+        _dataCallback = dataCallback;
         _navControl = navControl;
         _uriControl = uriControl;
         _bookmarkControl = bookmarkControl;
@@ -465,18 +467,26 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         }
         public void bookmark(PageRenderer renderer, SyndieURI uri) { _bookmarkControl.bookmark(uri); }
         public void banScope(PageRenderer renderer, Hash scope) {
-            if (_banControl.ban(scope))
+            if (_banControl.ban(scope)) {
                 _navControl.unview(_msg.getURI());
+                _dataCallback.readStatusUpdated();
+            }
         }
         public void cancelMessage(PageRenderer renderer, SyndieURI msg) {
-            if (msg != null)
-                _client.cancelMessage(msg, _ui);
-            _navControl.unview(_msg.getURI());
+            if (msg != null) {
+                if (_banControl.cancelMessage(msg)) { //_client.cancelMessage(msg, _ui);
+                    _navControl.unview(_msg.getURI());
+                    _dataCallback.readStatusUpdated();
+                }
+            }
         }
         public void deleteMessage(PageRenderer renderer, SyndieURI msg) {
-            if (msg != null)
-                _client.deleteMessage(msg, _ui, true);
-            _navControl.unview(_msg.getURI());
+            if (msg != null) {
+                if (_banControl.deleteMessage(msg)) { //_client.deleteMessage(msg, _ui, true);
+                    _navControl.unview(_msg.getURI());
+                    _dataCallback.readStatusUpdated();
+                }
+            }
         }
         public void viewImage(PageRenderer renderer, Image img) {}
         public void ignoreImageScope(PageRenderer renderer, Hash scope) {}

@@ -28,13 +28,13 @@ import syndie.db.UI;
 public class WatchedMessageTree extends MessageTree {
     private boolean _multiforum;
     
-    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
-    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, false); }
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, true, true, true, true, hideFilter);
     }
-    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
+    public WatchedMessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback dataCallback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter) {
         // don't show the forum column, don't show the flags column, don't expand anything by default
-        super(client, ui, themes, trans, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
+        super(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, dataCallback, parent, lsnr, showAuthor, false, showDate, showTags, hideFilter, false, false, false);
         _multiforum = true;
     }
 

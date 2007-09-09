@@ -564,7 +564,7 @@ class Desktop {
         MessageInfo msg = _client.getMessage(msgId);
         int page = getHelpPage();
         _ui.debugMessage("view help page " + page);
-        new StandaloneMessageViewer(_client, _ui, _shell, msg, page, _navControl, _themeRegistry, _translationRegistry, _bookmarkControl, _banControl);
+        new StandaloneMessageViewer(_client, _ui, _shell, msg, page, _navControl, _themeRegistry, _translationRegistry, _bookmarkControl, _banControl, _dataCallback);
     }
     private int getHelpPage() {
         // this will obviously need to be updated as the help text is.  fooey.
@@ -1063,6 +1063,15 @@ class Desktop {
     private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";
     private static final String T_CONFIRMBAN_NAME = "syndie.gui.desktop.desktop.confirmbanname";
     
+    private static final String T_CONFIRMCANCEL = "syndie.gui.desktop.confirmcancel";
+    private static final String T_CANCEL_TITLE = "syndie.gui.desktop.cancel.title";
+    private static final String T_CANCEL_MSG = "syndie.gui.desktop.cancel.msg";
+
+    private static final String T_CONFIRMDELETE = "syndie.gui.desktop.confirmdelete";
+    private static final String T_CONFIRMDELETE_NAME = "syndie.gui.desktop.confirmdelete.name";
+    private static final String T_DELETE_TITLE = "syndie.gui.desktop.delete.title";
+    private static final String T_DELETE_MSG = "syndie.gui.desktop.delete.msg";
+    
     private class DesktopBan implements BanControl {
         public boolean ban(final Hash scope) { 
             String scopeName = _client.getChannelName(scope);
@@ -1085,6 +1094,78 @@ class Desktop {
             } else {
                 return false;
             }
+        }
+            
+        public boolean cancelMessage(SyndieURI uri) {
+            if ( (uri == null) || (uri.getScope() == null) )
+                return false;
+            String scopeName = _client.getChannelName(uri.getScope());
+            if (scopeName == null)
+                scopeName = "";
+            scopeName = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+
+            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                String subject = _client.getMessageSubject(msgId);
+                if (subject != null)
+                    scopeName = scopeName + ": " + subject;
+            }
+
+            MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
+                    "Do you really want to tell everyone to ignore this message: " + scopeName));
+            box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm cancel"));
+            int rc = box.open();
+            if (rc == SWT.YES) {
+                doCancel(uri);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        private void doCancel(SyndieURI uri) {
+            _client.cancelMessage(uri, getUI());
+            //_client.ban(scope, getUI(), true, false); 
+            MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+            box.setText(getTranslationRegistry().getText(T_CANCEL_TITLE, "Cancelled"));
+            box.setMessage(getTranslationRegistry().getText(T_CANCEL_MSG, "Selected message cancelled"));
+            box.open();
+        }
+
+        public boolean deleteMessage(SyndieURI uri) {
+            if ( (uri == null) || (uri.getScope() == null) )
+                return false;
+            String scopeName = _client.getChannelName(uri.getScope());
+            if (scopeName == null)
+                scopeName = "";
+            scopeName = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+
+            long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+            if (msgId >= 0) {
+                String subject = _client.getMessageSubject(msgId);
+                if (subject != null)
+                    scopeName = scopeName + ": " + subject;
+            }
+
+            MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
+                    "Do you really want to locally delete this message: " + scopeName));
+            box.setText(getTranslationRegistry().getText(T_CONFIRMDELETE_NAME, "Confirm delete"));
+            int rc = box.open();
+            if (rc == SWT.YES) {
+                doDelete(uri);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        private void doDelete(SyndieURI uri) {
+            _client.deleteMessage(uri, getUI(), true);
+            //_client.ban(scope, getUI(), true, false); 
+            MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+            box.setText(getTranslationRegistry().getText(T_DELETE_TITLE, "Deleted"));
+            box.setMessage(getTranslationRegistry().getText(T_DELETE_MSG, "Selected message deleted"));
+            box.open();
         }
     }
     

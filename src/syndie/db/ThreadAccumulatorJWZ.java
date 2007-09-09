@@ -617,6 +617,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 ThreadMsgId id = (ThreadMsgId)iter.next();
                 ThreadReferenceNode node = new ThreadReferenceNode(id);
                 ThreadBuilder.populateNode(_client, node, id);
+                if ( (node.getMsgId() != null) && (node.getMsgId().msgId >= 0) ) {
+                    if (_client.getMessageDeleted(node.getMsgId().msgId))
+                        continue;
+                }
                 rv.add(node);
             }
             long after = System.currentTimeMillis();
@@ -630,7 +634,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             "FROM messageHierarchy mh " +
             "LEFT OUTER JOIN channel c ON channelHash = referencedChannelHash " +
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
-            "WHERE mh.msgId = ? " +
+            "WHERE mh.msgId = ? AND cm.deletionCause IS NULL " +
             "ORDER BY referencedCloseness ASC";
     public static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map existingAncestors) {
         PreparedStatement stmt = null;

@@ -3768,8 +3768,11 @@ public class DBClient {
             ui.debugMessage("Deleted message file " + msgFile.getPath());
             ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + " from the archive");
         }
-        if (chanDir.listFiles().length <= 0)
-            chanDir.delete();
+        if (chanDir != null) {
+            String files[] = chanDir.list();
+            if ( (files == null) || (files.length == 0) )
+                chanDir.delete();
+        }
     }
     
     public void cancelMessage(final SyndieURI cancelledURI, UI ui) {
@@ -4010,6 +4013,8 @@ public class DBClient {
                 case DELETION_CAUSE_CANCELLED:
                 case DELETION_CAUSE_EXPIRE:
                 case DELETION_CAUSE_EXPLICIT:
+                case DELETION_CAUSE_STUB:
+                default:
                     exec(SQL_UPDATE_MESSAGE_DELETION_CAUSE, deletionCause, msgId);
                     break;
             }
@@ -5976,6 +5981,7 @@ public class DBClient {
     
     public void deleteStubMessage(SyndieURI uri) {
         long msgId = getMessageId(uri.getScope(), uri.getMessageId());
+        _ui.debugMessage("Deleting stub message for " + uri + " / " + msgId);
         if (msgId >= 0)
             deleteMessageFromDB(msgId, DELETION_CAUSE_STUB);
     }

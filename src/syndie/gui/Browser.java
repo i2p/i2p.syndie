@@ -1782,6 +1782,85 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         box.setMessage(getTranslationRegistry().getText(T_BAN_MSG, "Selected forum/author banned"));
         box.open();
     }
+    
+    public boolean cancelMessage(SyndieURI uri) {
+        if ( (uri == null) || (uri.getScope() == null) )
+            return false;
+        String scopeName = _client.getChannelName(uri.getScope());
+        if (scopeName == null)
+            scopeName = "";
+        scopeName = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+        
+        long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+        if (msgId >= 0) {
+            String subject = _client.getMessageSubject(msgId);
+            if (subject != null)
+                scopeName = scopeName + ": " + subject;
+        }
+
+        MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+        box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
+                "Do you really want to tell everyone to ignore this message: " + scopeName));
+        box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm cancel"));
+        int rc = box.open();
+        if (rc == SWT.YES) {
+            doCancel(uri);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private void doCancel(SyndieURI uri) {
+        _client.cancelMessage(uri, getUI());
+        //_client.ban(scope, getUI(), true, false); 
+        MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+        box.setText(getTranslationRegistry().getText(T_CANCEL_TITLE, "Cancelled"));
+        box.setMessage(getTranslationRegistry().getText(T_CANCEL_MSG, "Selected message cancelled"));
+        box.open();
+    }
+    private static final String T_CONFIRMCANCEL = "syndie.gui.browser.confirmcancel";
+    private static final String T_CANCEL_TITLE = "syndie.gui.browser.cancel.title";
+    private static final String T_CANCEL_MSG = "syndie.gui.browser.cancel.msg";
+
+    public boolean deleteMessage(SyndieURI uri) {
+        if ( (uri == null) || (uri.getScope() == null) )
+            return false;
+        String scopeName = _client.getChannelName(uri.getScope());
+        if (scopeName == null)
+            scopeName = "";
+        scopeName = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+        
+        long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
+        if (msgId >= 0) {
+            String subject = _client.getMessageSubject(msgId);
+            if (subject != null)
+                scopeName = scopeName + ": " + subject;
+        }
+
+        MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+        box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
+                "Do you really want to locally delete this message: " + scopeName));
+        box.setText(getTranslationRegistry().getText(T_CONFIRMDELETE_NAME, "Confirm delete"));
+        int rc = box.open();
+        if (rc == SWT.YES) {
+            doDelete(uri);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private void doDelete(SyndieURI uri) {
+        _client.deleteMessage(uri, getUI(), true);
+        //_client.ban(scope, getUI(), true, false); 
+        MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
+        box.setText(getTranslationRegistry().getText(T_DELETE_TITLE, "Deleted"));
+        box.setMessage(getTranslationRegistry().getText(T_DELETE_MSG, "Selected message deleted"));
+        box.open();
+    }
+    private static final String T_CONFIRMDELETE = "syndie.gui.browser.confirmdelete";
+    private static final String T_CONFIRMDELETE_NAME = "syndie.gui.browser.confirmdelete.name";
+    private static final String T_DELETE_TITLE = "syndie.gui.browser.delete.title";
+    private static final String T_DELETE_MSG = "syndie.gui.browser.delete.msg";
 
     private void postNew() { view(URIHelper.instance().createPostURI(null, null)); }
     private void showTextUI() { view(URIHelper.instance().createTextUIURI()); }

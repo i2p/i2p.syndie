@@ -182,12 +182,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     private MessageTreePreview _preview;
     
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(client, ui, themes, trans, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
+    private BanControl _banControl;
+    
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
     }
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
         super(client, ui, themes, trans);
+        _banControl = ban;
         _navControl = navControl;
         _bookmarkControl = bookmarkControl;
         _dataCallback = callback;
@@ -2356,8 +2359,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if ( (uri != null) && (uri.getMessageId() != null) ) {
-                    _client.deleteMessage(uri, _ui, true);
-                    deleted++;
+                    if (_banControl.deleteMessage(uri)) // _client.deleteMessage(uri, _ui, true);
+                        deleted++;
                 }
             }
             _dataCallback.readStatusUpdated();
@@ -2373,8 +2376,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             for (int i = 0; i < selected.length; i++) {
                 SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
                 if ( (uri != null) && (uri.getMessageId() != null) ) {
-                    _client.cancelMessage(uri, _ui);
-                    cancelled++;
+                    if (_banControl.cancelMessage(uri)) // _client.cancelMessage(uri, _ui);
+                        cancelled++;
                 }
             }
             _dataCallback.readStatusUpdated();
