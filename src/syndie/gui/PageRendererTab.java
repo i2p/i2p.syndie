@@ -44,7 +44,7 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
         msgInfo.setMessageId(DUMMY_URI.getMessageId().longValue());
         msgInfo.setPageCount(1);
         
-        _renderer.renderPage(new PageRendererSourceMem(getBrowser().getClient(), getBrowser().getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder), DUMMY_URI);
+        _renderer.renderPage(new PageRendererSourceMem(getBrowser().getClient(), getBrowser().getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder, null), DUMMY_URI);
     }
     
     protected void initComponents() {

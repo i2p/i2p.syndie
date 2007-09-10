@@ -100,14 +100,22 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Composite _headers;
     private Button _hideHeaderButton;
     private Label _authorLabel;
-    private Combo _authorCombo;
+    ////private Combo _authorCombo;
+    private Label _authorCurrentLabel;
+    private Button _authorChangeButton;
     // sometimes _signAs is not _authorCombo
     private Label _signAsLabel;
-    private Combo _signAs;
-    private List _signAsHashes;
+    //private Combo _signAs;
+    private Composite _signAsGroup;
+    private Label _signAsCurrentLabel;
+    private Button _signAsChangeButton;
+    //private List _signAsHashes;
+    private Hash _signAsChannel;
     private Button _authorHidden;
     private Label _toLabel;
-    private Combo _to;
+    //private Combo _to;
+    private Label _toCurrentLabel;
+    private Button _toChangeButton;
     private Label _subjectLabel;
     private Text _subject;
     private Label _tagLabel;
@@ -185,12 +193,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Menu _titleMenu;
     private List _pageTitles;
     
-    private Map _forumToChannelId;
-    private Map _forumToManaged;
-    private Map _forumToSummary;
-    private Map _authorToChannelId;
-    private Map _authorToSummary;
-
     private MessageEditorFind _finder;
     private MessageEditorSpell _spellchecker;
     //private MessageEditorStyler _styler;
@@ -216,13 +218,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _attachmentData = new ArrayList();
         _attachmentSummary = new ArrayList();
         _parents = new ArrayList();
-        _signAsHashes = new ArrayList();
+        //_signAsHashes = new ArrayList();
         _editorStatusListeners = new ArrayList();
-        _forumToChannelId = new HashMap();
-        _forumToManaged = new HashMap();
-        _forumToSummary = new HashMap();
-        _authorToChannelId = new HashMap();
-        _authorToSummary = new HashMap();
         _modifiedSinceOpen = false;
         _modifiedSinceSave = false;
         _buildToolbar = buildToolbar;
@@ -533,17 +530,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public DBClient getClient() { return _client; }
         public UI getUI() { return _ui; }
         public Hash getAuthor() { return _author; }
-        public Hash getSignAs() {
-            if (_signAsHashes.size() > 0) {
-                int idx = _signAs.getSelectionIndex();
-                if ( (idx >= 0) && (idx < _signAsHashes.size()) ) {
-                    return (Hash)_signAsHashes.get(idx);
-                }
-            }
-            return null;
-        }
+        public Hash getSignAs() { return _signAsChannel; }
         public boolean getAuthorHidden() {
-            return (_signAsHashes.size() > 0) && (_authorHidden.getSelection());
+            return (_signAsChannel != null) && (_authorHidden.getSelection()); // _signAsHashes.size() > 0) && (_authorHidden.getSelection());
         }
         public Hash getTarget() { return _forum; }
         public int getPageCount() { return _pageEditors.size(); }
@@ -1835,29 +1824,78 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorLabel = new Label(header, SWT.NONE);
         _authorLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _authorCombo = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _authorCombo.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 4, 1));
-        _authorCombo.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickFrom(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickFrom(); }
-            private void pickFrom() {
-                int idx = _authorCombo.getSelectionIndex();
-                if ( (idx >= 0) && (idx < _authorHashes.size()) )
-                    pickAuthor((Hash)_authorHashes.get(idx));
+        Composite authorGroup = new Composite(header, SWT.NONE);
+        gl = new GridLayout(2, false);
+        gl.verticalSpacing = 0;
+        gl.horizontalSpacing = 0;
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        authorGroup.setLayout(gl);
+        authorGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        
+        _authorCurrentLabel = new Label(authorGroup, SWT.NONE);
+        _authorCurrentLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, false));
+        
+        _authorChangeButton = new Button(authorGroup, SWT.PUSH);
+        _authorChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _authorChangeButton.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+                    public void referenceAccepted(SyndieURI uri) {
+                        popup.dispose();
+                        if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
+                            pickAuthor(uri.getScope());
+                    }
+                    public void referenceChoiceAborted() { popup.dispose(); }
+    
+                });
+                popup.open();
+            }
+        });
+
+        _signAsLabel = new Label(header, SWT.NONE);
+        _signAsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        
+        _signAsGroup = new Composite(header, SWT.NONE);
+        _signAsGroup.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        gl = new GridLayout(2, false);
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        gl.horizontalSpacing = 0;
+        _signAsGroup.setLayout(gl);
+        
+        _signAsCurrentLabel = new Label(_signAsGroup, SWT.NONE);
+        _signAsCurrentLabel.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        _signAsChangeButton = new Button(_signAsGroup, SWT.PUSH);
+        _signAsChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _signAsChangeButton.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+                    public void referenceAccepted(SyndieURI uri) {
+                        popup.dispose();
+                        if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) ) {
+                            _signAsChannel = uri.getScope();
+                            long chanId = _client.getChannelId(_signAsChannel);
+                            _signAsCurrentLabel.setText(getSummary(chanId));
+                        }
+                    }
+                    public void referenceChoiceAborted() { popup.dispose(); }
+    
+                });
+                popup.open();
             }
         });
         
-        _signAsLabel = new Label(header, SWT.NONE);
-        _signAsLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _signAs = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _signAs.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
         _authorHidden = new Button(header, SWT.CHECK);
         _authorHidden.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _signAsLabel.setVisible(false);
         ((GridData)_signAsLabel.getLayoutData()).exclude = true;
-        _signAs.setVisible(false);
-        ((GridData)_signAs.getLayoutData()).exclude = true;
+        _signAsGroup.setVisible(false);
+        ((GridData)_signAsGroup.getLayoutData()).exclude = true;
         _authorHidden.setVisible(false);
         ((GridData)_authorHidden.getLayoutData()).exclude = true;
         
@@ -1869,17 +1907,32 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toLabel = new Label(header, SWT.NONE);
         _toLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
-        _to = new Combo(header, SWT.DROP_DOWN | SWT.READ_ONLY);
-        _to.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
-        _to.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickTo(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { pickTo(); }
-            private void pickTo() {
-                int idx = _to.getSelectionIndex();
-                if (idx >= _forumHashes.size())
-                    pickOtherForum();
-                else if (idx >= 0)
-                    pickForum((Hash)_forumHashes.get(idx));
+        Composite toGroup = new Composite(header, SWT.NONE);
+        toGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        gl = new GridLayout(2, false);
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        gl.verticalSpacing = 0;
+        gl.horizontalSpacing = 0;
+        toGroup.setLayout(gl);
+        
+        _toCurrentLabel = new Label(toGroup, SWT.NONE);
+        _toCurrentLabel.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
+        _toChangeButton = new Button(toGroup, SWT.PUSH);
+        _toChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _toChangeButton.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+                    public void referenceAccepted(SyndieURI uri) {
+                        popup.dispose();
+                        if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
+                            pickForum(uri.getScope());
+                    }
+                    public void referenceChoiceAborted() { popup.dispose(); }
+    
+                });
+                popup.open();
             }
         });
         
@@ -1911,7 +1964,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorLabel.setText("Author:");
         _signAsLabel.setText("Signed by:");
         _authorHidden.setText("Hidden?");
-        _to.setText("Forum:");
         _privacyLabel.setText("Privacy:");
     }
     
@@ -1997,308 +2049,56 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         addStatusListener(_bar);
     }
     
-    private List _forumHashes = new ArrayList();
+    private boolean isManaged(long chanId) {
+        DBClient.ChannelCollector chans = _client.getNymChannels();
+        return chans.getIdentityChannelIds().contains(new Long(chanId)) ||
+               chans.getManagedChannelIds().contains(new Long(chanId));
+    }
+    
+    private String getSummary(long chanId) {
+        StringBuffer buf = new StringBuffer();
+        String name = _client.getChannelName(chanId);
+        String desc = _client.getChannelDescription(chanId);
+        Hash chan = _client.getChannelHash(chanId);
+        
+        if ( (name != null) && (name.length() > 0) )
+            buf.append(name);
+        if (buf.length() > 0)
+            buf.append(": ");
+        if ( (desc != null) && (desc.length() > 0) ) {
+            buf.append(desc);
+            if (buf.length() > 0)
+                buf.append(": ");
+        }
+        buf.append(chan.toBase64().substring(0,6));
+        return buf.toString();
+    }
     
     private void updateForum() {
         if (_bar != null) _bar.clearForumMenu();
-        _forumToChannelId.clear();
-        _forumToManaged.clear();
-        _forumToSummary.clear();
-        
-        _forumHashes.clear();
-        _to.removeAll();
-        
-        boolean targetFound = false;
         
         long forumId = -1;
-        String forumSummary = "";
-        boolean managed = false;
-        _ui.debugMessage("updateForum: " + _forum);
+        DBClient.ChannelCollector chans = _client.getNymChannels();
         
-        boolean itemsSinceSep = false;
+        if (_forum != null)
+            forumId = _client.getChannelId(_forum);
+        else
+            forumId = ((Long)chans.getIdentityChannelIds().get(0)).longValue();
         
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getIdentityChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getIdentityChannel(i);
-            
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            //_ui.debugMessage("summary: " + summary);
-            
-            if (_forum == null) {
-                _forum = info.getChannelHash();
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            } else if (_forum.equals(info.getChannelHash())) {
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            }
-            
-            _forumHashes.add(info.getChannelHash());
-            _to.add(summary);
-            
-            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
-            _forumToSummary.put(info.getChannelHash(), summary);
-            
-            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);
-            if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
-                targetFound = true;
-        }
-        if (itemsSinceSep) {
-            if (_bar != null) _bar.addForumMenuItem();
-            itemsSinceSep = false;
-        }
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getManagedChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getManagedChannel(i);
-
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
-
-            if (_forum == null) {
-                _forum = info.getChannelHash();
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            } else if (_forum.equals(info.getChannelHash())) {
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            }
-
-            _forumHashes.add(info.getChannelHash());
-            _to.add(summary);
-            
-            
-            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
-            _forumToSummary.put(info.getChannelHash(), summary);
-            
-            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);            
-            if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
-                targetFound = true;            
-        }
-        if (itemsSinceSep) {
-            if (_bar != null) _bar.addForumMenuItem();
-            itemsSinceSep = false;
-        }
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getPostChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getPostChannel(i);
-            
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
-            
-            if (_forum == null) {
-                _forum = info.getChannelHash();
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            } else if (_forum.equals(info.getChannelHash())) {
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = true;
-            }
-            
-            _forumHashes.add(info.getChannelHash());
-            _to.add(summary);
-            
-            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _forumToManaged.put(info.getChannelHash(), Boolean.TRUE);
-            _forumToSummary.put(info.getChannelHash(), summary);
-            
-            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), true, summary);
-            if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
-                targetFound = true;
-        }
-        if (itemsSinceSep) {
-            if (_bar != null) _bar.addForumMenuItem();
-            itemsSinceSep = false;
-        }
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getPublicPostChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getPublicPostChannel(i);
-            
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
-            
-            if (_forum == null) {
-                _forum = info.getChannelHash();
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = false;
-            } else if (_forum.equals(info.getChannelHash())) {
-                forumId = info.getChannelId();
-                forumSummary = summary;
-                managed = false;
-            }
-            
-            _forumHashes.add(info.getChannelHash());
-            _to.add(summary);
-            
-            _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _forumToManaged.put(info.getChannelHash(), Boolean.FALSE);
-            _forumToSummary.put(info.getChannelHash(), summary);
-            
-            if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), false, summary);
-            if ( (_forum != null) && (_forum.equals(info.getChannelHash())))
-                targetFound = true;
-        }
-        
-        if ((_nymChannels != null) && !targetFound && (_forum != null)) {
-            // other forum chosen
-            long id = _client.getChannelId(_forum);
-            if (id >= 0) {
-                if (itemsSinceSep)
-                    if (_bar != null) _bar.addForumMenuItem();
-                final ChannelInfo info = _client.getChannel(id);
-
-                StringBuffer buf = new StringBuffer();
-                if ( (info.getName() != null) && (info.getName().length() > 0) )
-                    buf.append(info.getName());
-                if (buf.length() > 0)
-                    buf.append(": ");
-                if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                    buf.append(info.getDescription());
-                if (buf.length() > 0)
-                    buf.append(": ");
-                buf.append(info.getChannelHash().toBase64().substring(0,6));
-
-                final String summary = buf.toString();
-                _ui.debugMessage("summary: " + summary);
-
-                forumId = info.getChannelId();
-                forumSummary = summary;
-            
-                _forumHashes.add(info.getChannelHash());
-                _to.add(summary);
-
-                _forumToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-                _forumToManaged.put(info.getChannelHash(), Boolean.FALSE);
-                _forumToSummary.put(info.getChannelHash(), summary);
-            
-                if (_bar != null) _bar.addForumMenuItem(info.getChannelHash(), info.getChannelId(), false, summary);
-                redrawForumAvatar(_forum, info.getChannelId(), summary, false);
-            }
-        } else if (!targetFound) {
-            if (itemsSinceSep)
-                if (_bar != null) _bar.addForumMenuItem();
-            
-            _to.add("other...");
-            
-            if (_bar != null) _bar.addForumMenuItemOther();
-        } else {
-            if (itemsSinceSep)
-                if (_bar != null) _bar.addForumMenuItem();
-            
-            _to.add("other...");
-            
-            if (_bar != null) _bar.addForumMenuItemOther();
-            redrawForumAvatar(_forum, forumId, forumSummary, managed);
-        }
+        redrawForumAvatar(_forum, forumId, getSummary(forumId), isManaged(forumId));
     }
     
-    private static final String T_PICK_FORUM_KEY = "syndie.gui.messageeditor.pickotherforum";
-    public void pickOtherForum() {
-        if (_refChooser == null) {
-            String transKey = T_PICK_FORUM_KEY;
-            String transDefaultVal = "Forum chooser";
-            _refChooser = ComponentBuilder.instance().createReferenceChooserPopup(_root.getShell(), new ReferenceChooserTree.AcceptanceListener() {
-                public void referenceAccepted(SyndieURI uri) {
-                    if (uri.isSearch()) {
-                        Hash scopes[] = uri.getSearchScopes();
-                        if ( (scopes != null) && (scopes.length > 0) )
-                            _forum = scopes[0];
-                    } else if (uri.isChannel()) {
-                        _forum = uri.getScope();
-                    }
-                    _ui.debugMessage("other forum picked: " + uri);
-                    updateForum();
-                    refreshAuthors();
-                    if (!validateAuthorForum())
-                        showUnauthorizedWarning();
-                }
-
-                public void referenceChoiceAborted() {
-                    _ui.debugMessage("other forum selection aborted");
-                }
-            }, transKey, transDefaultVal);
-        }
-        _ui.debugMessage("picking other forum...");
-        _refChooser.show();
-    }
-
     private void pickForum(Hash forum) {
         modified();
         _forum = forum;
         
-        Long channelId = (Long)_forumToChannelId.get(forum);
-        Boolean managed = (Boolean)_forumToManaged.get(forum);
-        String summary = (String)_forumToSummary.get(forum);
+        long channelId = _client.getChannelId(forum);
+        String summary = getSummary(channelId);
+        boolean managed = isManaged(channelId);
         
-        if ( (channelId != null) && (summary != null) ) {
-            if (managed == null) managed = Boolean.FALSE;
-            redrawForumAvatar(forum, channelId.longValue(), summary, managed.booleanValue());
+        if (channelId >= 0) {
+            redrawForumAvatar(forum, channelId, summary, managed);
         }
-        /*
-        MenuItem items[] = _forumMenu.getItems();
-        for (int i = 0; i < items.length; i++) {
-            Hash cur = (Hash)items[i].getData("channel.hash");
-            Boolean managed = (Boolean)items[i].getData("channel.managed");
-            if (managed == null) 
-                managed = Boolean.FALSE;
-            if ( (cur != null) && (cur.equals(forum)) ) {
-                redrawForumAvatar(cur, _client.getChannelId(cur), items[i].getText(), managed.booleanValue());
-                break;
-            }
-        }
-        */
         refreshAuthors();
         if (!validateAuthorForum())
             showUnauthorizedWarning();
@@ -2312,14 +2112,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             showUnauthorizedWarning();
     }
     private void redrawForumAvatar(Hash forum, long channelId, String summary, boolean isManaged) {
-        for (int i = 0; i < _forumHashes.size(); i++) {
-            Hash h = (Hash)_forumHashes.get(i);
-            if (h.equals(forum)) {
-                _to.select(i);
-                break;
-            }
-        }
-        
+        if (summary != null)
+            _toCurrentLabel.setText(summary);
+        else
+            _toCurrentLabel.setText("");
+        _headers.layout(true, true);
         for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).forumSelected(forum, channelId, summary, isManaged);
     }
@@ -2350,8 +2147,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         _ui.debugMessage("refreshing authors: forum=" + _forum + " signAs keys: " + signAsKeys);
         
-        GridData authorGD = (GridData)_authorCombo.getLayoutData();
-        GridData signAsGD = (GridData)_signAs.getLayoutData();
+        GridData authorGD = (GridData)_authorCurrentLabel.getParent().getLayoutData();
+        GridData signAsGD = (GridData)_signAsGroup.getLayoutData();
         GridData signAsLabelGD = (GridData)_signAsLabel.getLayoutData();
         GridData authorHiddenGD = (GridData)_authorHidden.getLayoutData();
         if ( (signAsKeys != null) && ( (signAsKeys.size() > 1) || explicitKey) ) {
@@ -2359,13 +2156,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             signAsGD.exclude = false;
             signAsLabelGD.exclude = false;
             authorHiddenGD.exclude = false;
-            _signAs.setVisible(true);
+            _signAsGroup.setVisible(true);
             _signAsLabel.setVisible(true);
             _authorHidden.setVisible(true);
             authorGD.horizontalSpan = 1;
             
-            _signAs.removeAll();
-            _signAsHashes.clear();
             boolean selected = false;
             for (int i = 0; i < signAsKeys.size(); i++) {
                 NymKey key = (NymKey)signAsKeys.get(i);
@@ -2373,132 +2168,46 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 Hash pubHash = priv.toPublic().calculateHash();
                 String name = _client.getChannelName(pubHash);
                 if (name != null)
-                    _signAs.add(name + " (" + pubHash.toBase64().substring(0,6) + ")");
+                    name = name + " (" + pubHash.toBase64().substring(0,6) + ")";
                 else
-                    _signAs.add("(" + pubHash.toBase64().substring(0,6) + ")");
-                _signAsHashes.add(pubHash);
+                    name = "(" + pubHash.toBase64().substring(0,6) + ")";
                 if (pubHash.equals(_forum)) {
-                    _signAs.select(i);
+                    _signAsChannel = pubHash;
+                    _signAsCurrentLabel.setText(name);
                     selected = true;
                 }
             }
             if (!selected)
-                _signAs.select(0);
+                _signAsCurrentLabel.setText("");
         } else {
             // only one (or zero) possible authors, so hide the _from* fields and make sure
             // _signBy contains all of the known authors
             signAsGD.exclude = true;
             signAsLabelGD.exclude = true;
             authorHiddenGD.exclude = true;
-            _signAs.setVisible(false);
+            _signAsGroup.setVisible(false);
             _signAsLabel.setVisible(false);
             _authorHidden.setVisible(false);
             authorGD.horizontalSpan = 4;
         }
         // relayout the header
-        _signAs.getParent().layout(true, true);
+        _signAsLabel.getParent().layout(true, true);
     }
     
-    private List _authorHashes = new ArrayList();
     private void updateAuthor() {
         if (_bar != null) _bar.clearAuthorMenu();
-        _authorToChannelId.clear();
-        _authorToSummary.clear();
-        
-        _authorHashes.clear();
-        _authorCombo.removeAll();
         boolean authorFound = false;
         
         long authorId = -1;
-        String authorSummary = "";
-        _ui.debugMessage("updateAuthor: " + _author + " nymChannels: " + _nymChannels + " ident: " + _nymChannels.getIdentityChannelCount() + " managed: " + _nymChannels.getManagedChannelCount());
-        
-        boolean itemsSinceSep = false;
-        
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getIdentityChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getIdentityChannel(i);
-            
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
-            
-            if (_author == null) {
-                _author = info.getChannelHash();
-                authorId = info.getChannelId();
-                authorSummary = summary;
-            } else if (_author.equals(info.getChannelHash())) {
-                authorId = info.getChannelId();
-                authorSummary = summary;
-            }
-            
-            _authorHashes.add(info.getChannelHash());
-            _authorCombo.add(summary);
-            
-            _authorToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _authorToSummary.put(info.getChannelHash(), summary);
-            if (_bar != null) _bar.addAuthorMenuItem(info.getChannelHash(), info.getChannelId(), summary);
-            if ( (_author != null) && (_author.equals(info.getChannelHash())))
-                authorFound = true;
+        if (_author == null) {
+            authorId = ((Long)_client.getNymChannels().getIdentityChannelIds().get(0)).longValue();
+            _author = _client.getChannelHash(authorId);
+        } else {
+            authorId = _client.getChannelId(_author);
         }
-        if (itemsSinceSep) {
-            if (_bar != null) _bar.addAuthorMenuItem();
-            itemsSinceSep = false;
-        }
-        for (int i = 0; (_nymChannels != null) && i < _nymChannels.getManagedChannelCount(); i++) {
-            itemsSinceSep = true;
-            final ChannelInfo info = _nymChannels.getManagedChannel(i);
+        _ui.debugMessage("updateAuthor: " + _author);
 
-            StringBuffer buf = new StringBuffer();
-            if ( (info.getName() != null) && (info.getName().length() > 0) )
-                buf.append(info.getName());
-            if (buf.length() > 0)
-                buf.append(": ");
-            if ( (info.getDescription() != null) && (info.getDescription().length() > 0) )
-                buf.append(info.getDescription());
-            if (buf.length() > 0)
-                buf.append(": ");
-            buf.append(info.getChannelHash().toBase64().substring(0,6));
-            
-            final String summary = buf.toString();
-            _ui.debugMessage("summary: " + summary);
-
-            if (_author == null) {
-                _author = info.getChannelHash();
-                authorId = info.getChannelId();
-                authorSummary = summary;
-            } else if (_author.equals(info.getChannelHash())) {
-                authorId = info.getChannelId();
-                authorSummary = summary;
-            }
-
-            _authorHashes.add(info.getChannelHash());
-            _authorCombo.add(summary);
-            
-            _authorToChannelId.put(info.getChannelHash(), new Long(info.getChannelId()));
-            _authorToSummary.put(info.getChannelHash(), summary);
-            if (_bar != null) _bar.addAuthorMenuItem(info.getChannelHash(), info.getChannelId(), summary);
-            if ( (_author != null) && (_author.equals(info.getChannelHash())))
-                authorFound = true;            
-        }
-        
-        if (_author != null) {
-            Properties prefs = _client.getNymPrefs();
-            prefs.setProperty("editor.defaultAuthor", _author.toBase64());
-            _client.setNymPrefs(prefs);
-        }
-        
-        redrawAuthorAvatar(_author, authorId, authorSummary);
+        redrawAuthorAvatar(_author, authorId, getSummary(authorId));
     }
     
     private void pickAuthor(Hash author) {
@@ -2509,11 +2218,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             prefs.setProperty("editor.defaultAuthor", _author.toBase64());
             _client.setNymPrefs(prefs);
         }
-        String summary = (String)_authorToSummary.get(author);
-        Long authorId = (Long)_authorToChannelId.get(author);
-        
-        if ( (summary != null) && (authorId != null) )
-            redrawAuthorAvatar(author, authorId.longValue(), summary);
+        if (author != null) {
+            long authorId = _client.getChannelId(author);
+            String summary = getSummary(authorId);
+
+            if ( (summary != null) && (authorId >= 0) )
+                redrawAuthorAvatar(author, authorId, summary);
+        }
         if (!validateAuthorForum())
             showUnauthorizedWarning();
     }
@@ -2530,13 +2241,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             showUnauthorizedWarning();
     }
     private void redrawAuthorAvatar(Hash author, long channelId, String summary) {
-        for (int i = 0; i < _authorHashes.size(); i++) {
-            Hash h = (Hash)_authorHashes.get(i);
-            if (h.equals(author)) {
-                _authorCombo.select(i);
-                break;
-            }
-        }
+        if (summary != null)
+            _authorCurrentLabel.setText(summary);
+        else
+            _authorCurrentLabel.setText("");
+        _headers.layout(true, true);
+        
         for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).authorSelected(author, channelId, summary);
     }    
@@ -2609,29 +2319,26 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             }
         }
         
-        if (!ok && (forum != null) && (_signAsHashes.size() > 0)) {
-            int idx = _signAs.getSelectionIndex();
-            if ( (idx >= 0) && (idx < _signAsHashes.size()) ) {
-                Hash signAs = (Hash)_signAsHashes.get(idx);
-            
-                // the author may not be allowed, but the nym has an explicitly authorized private key
-                // for posting or managing the forum.  note that the *nym* may have the key, but where they got
-                // the key may only be possible for one or more of the nym's channels, and using another channel
-                // as the author would link the channel that was authorized to receive the private key and the
-                // channel that posted with the key.  the safe way to behave would be to run different unlinkable
-                // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
-                List nymKeys = _client.getNymKeys(forum.getChannelHash(), null);
-                for (int i = 0; i < nymKeys.size(); i++) {
-                    NymKey key = (NymKey)nymKeys.get(i);
-                    if (!key.getAuthenticated()) continue;
-                    if (key.getIsExpired()) continue;
-                    if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
-                        SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                        if (priv.toPublic().calculateHash().equals(signAs)) {
-                            _ui.debugMessage("Explicitly authorized 'sign as' key selected: " + signAs);
-                            ok = true;
-                            break;
-                        }
+        if (!ok && (forum != null) && (_signAsChannel != null)) { //_signAsHashes.size() > 0)) {
+                Hash signAs = _signAsChannel;
+
+            // the author may not be allowed, but the nym has an explicitly authorized private key
+            // for posting or managing the forum.  note that the *nym* may have the key, but where they got
+            // the key may only be possible for one or more of the nym's channels, and using another channel
+            // as the author would link the channel that was authorized to receive the private key and the
+            // channel that posted with the key.  the safe way to behave would be to run different unlinkable
+            // nyms in their own Syndie instance, syncing between the instances without sharing any secrets
+            List nymKeys = _client.getNymKeys(forum.getChannelHash(), null);
+            for (int i = 0; i < nymKeys.size(); i++) {
+                NymKey key = (NymKey)nymKeys.get(i);
+                if (!key.getAuthenticated()) continue;
+                if (key.getIsExpired()) continue;
+                if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
+                    SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                    if (priv.toPublic().calculateHash().equals(signAs)) {
+                        _ui.debugMessage("Explicitly authorized 'sign as' key selected: " + signAs);
+                        ok = true;
+                        break;
                     }
                 }
             }
@@ -2651,12 +2358,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     public void applyTheme(Theme theme) {
         _authorLabel.setFont(theme.DEFAULT_FONT);
-        _authorCombo.setFont(theme.DEFAULT_FONT);
-        _signAs.setFont(theme.DEFAULT_FONT);
+        _authorChangeButton.setFont(theme.BUTTON_FONT);
+        _authorCurrentLabel.setFont(theme.DEFAULT_FONT);
+        _signAsChangeButton.setFont(theme.BUTTON_FONT);
+        _signAsCurrentLabel.setFont(theme.DEFAULT_FONT);
         _authorHidden.setFont(theme.DEFAULT_FONT);
         _signAsLabel.setFont(theme.DEFAULT_FONT);
         _toLabel.setFont(theme.DEFAULT_FONT);
-        _to.setFont(theme.DEFAULT_FONT);
+        _toCurrentLabel.setFont(theme.DEFAULT_FONT);
+        _toChangeButton.setFont(theme.BUTTON_FONT);
         _subjectLabel.setFont(theme.DEFAULT_FONT);
         _subject.setFont(theme.DEFAULT_FONT);
         _tagLabel.setFont(theme.DEFAULT_FONT);
@@ -2683,10 +2393,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private static final String T_FROM_LINE = "syndie.gui.messageeditor.fromline";
     private static final String T_TO_LINE = "syndie.gui.messageeditor.toline";
+    private static final String T_FROM_CHANGE = "syndie.gui.messageeditor.fromchange";
+    private static final String T_TO_CHANGE = "syndie.gui.messageeditor.tochange";
+    private static final String T_SIGNAS_CHANGE = "syndie.gui.messageeditor.signaschange";
     
     public void translate(TranslationRegistry registry) {
         _authorLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
         _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
+        _authorChangeButton.setText(registry.getText(T_FROM_CHANGE, "Change author"));
+        _toChangeButton.setText(registry.getText(T_TO_CHANGE, "Change forum"));
+        _signAsChangeButton.setText(registry.getText(T_SIGNAS_CHANGE, "Change signed by"));
         
         _refEditorTab.setText(_translationRegistry.getText(T_REFTAB, "References"));
         _threadTab.setText(_translationRegistry.getText(T_THREADTAB, "Thread"));

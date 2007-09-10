@@ -294,6 +294,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         new MenuItem(_forumMenu, SWT.SEPARATOR);
     }
     
+    /*
     public void addForumMenuItemOther() {
         MenuItem item = new MenuItem(_forumMenu, SWT.PUSH);
         item.setText("other...");
@@ -301,6 +302,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.pickOtherForum(); }
         });
     }
+     */
 
     public void initForumControl(Composite toolbar) {
         _forumGroup = new Group(toolbar, SWT.SHADOW_ETCHED_IN);

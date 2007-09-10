@@ -14,8 +14,14 @@ import syndie.db.DBClient;
 public class PageRendererSource {
     private DBClient _client;
     private ThemeRegistry _themes;
+    private RenderListener _renderListener;
+    
     private PageRendererSource() {}
     public PageRendererSource(DBClient client, ThemeRegistry themes) { 
+        this(client, themes, null);
+    }
+    public PageRendererSource(DBClient client, ThemeRegistry themes, RenderListener listener) { 
+        _renderListener = listener;
         _client = client;
         _themes = themes;
     }
@@ -40,6 +46,15 @@ public class PageRendererSource {
     public byte[] getMessageAttachmentData(long internalMsgId, int attachmentId) {
         return _client.getMessageAttachmentData(internalMsgId, attachmentId-1);
     }
+        
+    public void renderComplete() {
+        if (_renderListener != null)
+            _renderListener.renderComplete();
+    }
 
     public Theme getTheme() { return _themes.getTheme(); }
+    
+    public static interface RenderListener { 
+        public void renderComplete();
+    }
 }

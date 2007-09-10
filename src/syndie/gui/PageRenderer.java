@@ -415,6 +415,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
     void forceFocus() { _text.forceFocus(); }
     
     private void showNoPage() {
+        _ui.debugMessage("show no page");
         _text.setVisible(false);
         _text.setText("");
         _text.setStyleRanges(null, null);
@@ -426,16 +427,19 @@ public class PageRenderer extends BaseComponent implements Themeable {
         Hash chan = uri.getScope();
         if (chan == null) {
             showNoPage();
+            src.renderComplete();
             return;
         }
         long chanId = src.getChannelId(chan);
         if (chanId < 0) {
             showNoPage();
+            src.renderComplete();
             return;
         }
         MessageInfo msg = src.getMessage(chanId, uri.getMessageId());
         if (msg == null) {
             showNoPage();
+            src.renderComplete();
             return;
         }
         //if (msg.getPassphrasePrompt() != null) {
@@ -468,13 +472,16 @@ public class PageRenderer extends BaseComponent implements Themeable {
         long before = System.currentTimeMillis();
         if (_msg == null) {
             renderText(null);
+            _source.renderComplete();
             return;
         }
         String cfg = _source.getMessagePageConfig(_msg.getInternalId(), _page);
         String body = _source.getMessagePageData(_msg.getInternalId(), _page);
+        _ui.debugMessage("threaded render: body=[" + body + "] cfg=[" + cfg + "]");
         if ( (cfg == null) || (body == null) ) {
             //System.out.println("threaded render had no body or config: " + _msg.getInternalId() + ", page " + _page + ", body? " + (body != null) + " cfg? " + (cfg != null));
             renderText(null);
+            _source.renderComplete();
             return;
         }
         Properties props = new Properties();
@@ -487,6 +494,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         }
         long after = System.currentTimeMillis();
         _ui.debugMessage("threaded page render took " + (after-before));
+        _source.renderComplete();
     }
     private void renderText(final String body) {
         if (_text.isDisposed()) {
@@ -2031,7 +2039,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         msgInfo.setMessageId(PageRendererTab.DUMMY_URI.getMessageId().longValue());
         msgInfo.setPageCount(1);
         
-        renderer.renderPage(new PageRendererSourceMem(control.getClient(), control.getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder), PageRendererTab.DUMMY_URI);
+        renderer.renderPage(new PageRendererSourceMem(control.getClient(), control.getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder, null), PageRendererTab.DUMMY_URI);
         shell.setMaximized(true);
         shell.open();
         shell.addShellListener(new ShellListener() {

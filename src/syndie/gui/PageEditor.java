@@ -177,7 +177,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             attachmentOrder.add(name);
             attachments.add(data);
         }
-        PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder);
+        PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder, null);
         _preview.setRender(true);
         _sash.setMaximizedControl(null);
         long before = System.currentTimeMillis();
@@ -198,11 +198,38 @@ public class PageEditor extends BaseComponent implements Themeable {
         return previewControl == _sash.getMaximizedControl();
     }
     
+    private Object _previewLock = new Object();
+    private Runnable _afterPreviewJob;
+    public void toggleFullPreview(Runnable job) { 
+        synchronized (_previewLock) {
+            _afterPreviewJob = job;
+        }
+        toggleFullPreview();
+    }
+    private void previewComplete() {
+        Runnable job = null;
+        synchronized (_previewLock) {
+            job = _afterPreviewJob;
+            _afterPreviewJob = null;
+        }
+        _ui.debugMessage("preview complete: " + job, new Exception("completed by"));
+        if (job != null)
+            job.run();
+    }
     public void toggleFullPreview() {
-        if (_root.isDisposed()) return; // called after a delay, so may have been disposed in the meantime
-        if (_editor != null) _editor.saveState();
+        if (_root.isDisposed()) {
+            previewComplete();
+            return; // called after a delay, so may have been disposed in the meantime
+        }
+        if (_editor != null) {
+            _editor.modified();
+            _editor.saveState();
+        }
+        _ui.debugMessage("toggle full preview: editor? " + _editor + " text: [" + _text.getText() + "] isHTML? " + _isHTML);
+        
         if (!_isHTML) {
             _sash.setMaximizedControl(_text);
+            previewComplete();
             return;
         }
         Composite previewControl = _preview.getComposite();
@@ -214,6 +241,7 @@ public class PageEditor extends BaseComponent implements Themeable {
                 _text.forceFocus();
                 _sash.setMaximizedControl(_text);
             }
+            previewComplete();
             return;
         }
         MessageInfo msgInfo = new MessageInfo();
@@ -236,7 +264,11 @@ public class PageEditor extends BaseComponent implements Themeable {
             attachmentOrder.add(name);
             attachments.add(data);
         }
-        PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder);
+        PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder, new PageRendererSource.RenderListener() {
+            public void renderComplete() {
+                previewComplete();
+            }
+        });
         _preview.setRender(true);
         _sash.setMaximizedControl(_preview.getComposite());
         long before = System.currentTimeMillis();
@@ -916,7 +948,7 @@ public class PageEditor extends BaseComponent implements Themeable {
                 attachmentOrder.add(name);
                 attachments.add(data);
             }
-            PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder);
+            PageRendererSourceMem src = new PageRendererSourceMem(_client, _themeRegistry, msgInfo, pageData, attachments, attachmentOrder, null);
             _maxRenderer.renderPage(src, _dummyURI);
             
             unmax.addSelectionListener(new SelectionListener() {

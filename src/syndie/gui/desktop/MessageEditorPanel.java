@@ -159,21 +159,30 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
     private static final String T_POSTPREVIEW = "syndie.gui.desktop.messageeditorpanel.postpreview";
     
     private void post() {
-        PageEditor page = _editor.getPageEditor();
+        final PageEditor page = _editor.getPageEditor();
         if (page != null) {
             if (MessageEditor.TYPE_HTML.equals(page.getContentType())) {
                 if (page.isPreviewShowing()) {
                     _editor.postMessage();
                 } else {
-                    page.toggleFullPreview();
-                    MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
-                    box.setText(_translationRegistry.getText(T_POSTPREVIEW_TITLE, "Preview post"));
-                    box.setMessage(_translationRegistry.getText(T_POSTPREVIEW, "Is this preview what you want to post?"));
-                    int rc = box.open();
-                    if (rc == SWT.YES)
-                        _editor.postMessage();
-                    else
-                        page.toggleFullPreview();
+                    page.toggleFullPreview(new Runnable() {
+                        public void run() {
+                            getRoot().getDisplay().asyncExec(new Runnable() {
+                                public void run() {
+                                    MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
+                                    box.setText(_translationRegistry.getText(T_POSTPREVIEW_TITLE, "Preview post"));
+                                    box.setMessage(_translationRegistry.getText(T_POSTPREVIEW, "Is this preview what you want to post?"));
+                                    _ui.debugMessage("before previewPost confirm prompt");
+                                    int rc = box.open();
+                                    _ui.debugMessage("after previewPost confirm prompt");
+                                    if (rc == SWT.YES)
+                                        _editor.postMessage();
+                                    else
+                                        page.toggleFullPreview();
+                                }
+                            });
+                        }
+                    });
                 }
             } else {
                 _editor.postMessage();
