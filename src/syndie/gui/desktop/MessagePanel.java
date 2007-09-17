@@ -31,7 +31,6 @@ import syndie.db.ThreadMsgId;
 import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 import syndie.gui.BookmarkDnDHelper;
-import syndie.gui.ChannelSelectorPanel;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageCanvas;
@@ -57,10 +56,12 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     private MessageInfo _msg;
     private ThreadReferenceNode _messageThread;
     private MessageIterator _messageIterator;
+    private SyndieURI _baseURI;
     
-    public MessagePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
-        super(desktop, client, themes, trans, parent, ui, null);
+    public MessagePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl, SyndieURI baseURI) {
+        super(desktop, client, themes, trans, parent, ui, baseURI);
         _navControl = navControl;
+        _baseURI = baseURI;
         initComponents();
     }
     
@@ -144,7 +145,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
                             box.setText(_translationRegistry.getText(T_NOMSG_TITLE, "Message unknown"));
                             box.setMessage(_translationRegistry.getText(T_NOMSG, "The selected message is not known locally"));
-                            _navControl.unview(uri);
+                            _navControl.unview(_baseURI);
                             box.open();
                             return;
                         }

@@ -5428,7 +5428,64 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
+    private static final String SQL_COUNT_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage WHERE targetChannelId = ? AND isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL";
+    public int countMessages(long chanId) { return countMessages(_nymId, chanId); }
+    public int countMessages(long nymId, long chanId) { 
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_COUNT_MESSAGES);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (rs.wasNull())
+                    return 0;
+                else
+                    return count;
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting message count", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+
+    private static final String SQL_GET_LASTPOST_DATE = "SELECT MAX(importDate) FROM channelMessage WHERE targetChannelId = ? AND isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL";
+    public long getChannelLastPost(long chanId) {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_LASTPOST_DATE);
+            stmt.setLong(1, chanId);
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                Date when = rs.getDate(1);
+                if (when == null)
+                    return 0;
+                else
+                    return when.getTime();
+            } else {
+                return 0;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error getting last post date", se);
+            return 0;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+    }
+    
+    private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
     public int countUnreadMessages(long nymId, Hash scope) { return countUnreadMessages(nymId, getChannelId(scope)); }
     public int countUnreadMessages(long channelId) { return countUnreadMessages(_nymId, channelId); }
@@ -5461,8 +5518,8 @@ public class DBClient {
     }
 
     
-    private static final String SQL_COUNT_UNREAD_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
-    private static final String SQL_COUNT_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage cm WHERE cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL";
+    private static final String SQL_COUNT_UNREAD_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
+    private static final String SQL_COUNT_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage cm WHERE cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
     public int countPrivateMessages(long chan, boolean unreadOnly) { return countPrivateMessages(_nymId, chan, unreadOnly); }
     public int countPrivateMessages(long nymId, long chan, boolean unreadOnly) {
         PreparedStatement stmt = null;

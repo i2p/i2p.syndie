@@ -16,11 +16,15 @@ class ReferenceEditorPopup extends BaseComponent implements Translatable, Themea
     private Shell _parent;
     private Shell _shell;
     private ReferenceEditor _editor;
+    private NavigationControl _navControl;
+    private BanControl _banControl;
     private BookmarkControl _bookmarkControl;
     
-    public ReferenceEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, Shell parent) {
+    public ReferenceEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, Shell parent) {
         super(client, ui, themes, trans);
         _parent = parent;
+        _navControl = navControl;
+        _banControl = banControl;
         _bookmarkControl = bookmarkControl;
         initComponents();
     }
@@ -28,7 +32,7 @@ class ReferenceEditorPopup extends BaseComponent implements Translatable, Themea
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.APPLICATION_MODAL);
         _shell.setLayout(new FillLayout());
-        _editor = new ReferenceEditor(_client, _ui, _themeRegistry, _translationRegistry, _shell, _bookmarkControl, this);
+        _editor = new ReferenceEditor(_client, _ui, _themeRegistry, _translationRegistry, _shell, _navControl, _banControl, _bookmarkControl, this);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {

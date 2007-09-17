@@ -16,18 +16,22 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class MessageChooserPopup implements MessageTree.MessageTreeListener {
+public class MessageChooserPopup implements MessageTree.MessageTreeListener, Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
+    private ThemeRegistry _themeRegistry;
+    private TranslationRegistry _translationRegistry;
     private MessageTree _tree;
     private MessageTree.MessageTreeListener _listener;
     private Button _ok;
     private Button _cancel;
     
     /** Creates a new instance of MessageChooserPopup */
-    public MessageChooserPopup(Shell parentShell, MessageTree.MessageTreeListener lsnr) {
+    public MessageChooserPopup(Shell parentShell, MessageTree.MessageTreeListener lsnr, ThemeRegistry themes, TranslationRegistry trans) {
         _parentShell = parentShell;
         _listener = lsnr;
+        _themeRegistry = themes;
+        _translationRegistry = trans;
         initComponents();
     }
     
@@ -79,6 +83,9 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         
+        _themeRegistry.register(this);
+        _translationRegistry.register(this);
+        
         _shell.pack();
         Point sz = _tree.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT);
         sz.x += 50;
@@ -94,6 +101,8 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     public void show() { _shell.open(); }
     public void hide() { _shell.setVisible(false); }
     public void dispose() {
+        _themeRegistry.unregister(this);
+        _translationRegistry.unregister(this);
         if (!_shell.isDisposed()) _shell.dispose();
         _tree.dispose();
     }
@@ -108,5 +117,18 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener {
     public void filterApplied(MessageTree tree, SyndieURI searchURI) {
         if (_listener != null)
             _listener.filterApplied(tree, searchURI);
+    }
+    
+    public void translate(TranslationRegistry registry) {
+        _ok.setText(registry.getText(T_OK, "OK"));
+        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+    }
+    
+    private static final String T_OK = "syndie.gui.messagechooserpopup.ok";
+    private static final String T_CANCEL = "syndie.gui.messagechooserpopup.cancel";
+    
+    public void applyTheme(Theme theme) {
+        _ok.setFont(theme.BUTTON_FONT);
+        _cancel.setFont(theme.BUTTON_FONT);
     }
 }

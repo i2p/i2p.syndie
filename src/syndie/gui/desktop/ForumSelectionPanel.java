@@ -28,7 +28,9 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
-import syndie.gui.ChannelSelectorPanel;
+import syndie.gui.BanControl;
+import syndie.gui.BookmarkControl;
+import syndie.gui.NymChannelTree;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
 import syndie.gui.ImageUtil;
@@ -45,16 +47,20 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class ForumSelectionPanel extends DesktopPanel implements ChannelSelectorPanel.ChannelSelectorListener, ChannelSelectorPanel.MenuBuilder {
-    private ChannelSelectorPanel _channels;
+public class ForumSelectionPanel extends DesktopPanel {
+    private NymChannelTree _channels;
+    private BanControl _banControl;
     private NavigationControl _navControl;
+    private BookmarkControl _bookmarkControl;
     private boolean _preferRefs;
     /** last time we picked a forum, were we looking at the manageable forums only? */
     private boolean _prevWasManageable;
     
-    public ForumSelectionPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl) {
+    public ForumSelectionPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl) {
         super(desktop, client, themes, trans, parent, ui, null);
         _navControl = navControl;
+        _banControl = banControl;
+        _bookmarkControl = bookmarkControl;
         _preferRefs = false;
         initComponents();
     }
@@ -64,155 +70,53 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
 
     protected void dispose() {
         // noop.  do not call super.dispose, because we don't want to actually go away
-        _channels.resetPanel();
+        //_channels.resetPanel();
         ((NorthEdge)_edgeNorth).updateInfo(null, -1, null, null, null);
     }
     
     private void initComponents() {
         Composite root = getRoot();
-        _channels = new ChannelSelectorPanel(_client, _ui, _themeRegistry, _translationRegistry, root, this, this);
+        _channels = new NymChannelTree(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, root, new NymChannelTree.NymChannelTreeListener() {
+            public void channelSelected(SyndieURI uri) { 
+                _navControl.view(uri);
+                _desktop.panelDisposed(ForumSelectionPanel.this, false);
+            }
+            public void channelProfileSelected(SyndieURI uri) {
+                _navControl.view(uri);
+                _desktop.panelDisposed(ForumSelectionPanel.this, false);
+            }
+            public void channelManageSelected(SyndieURI manageURI) {
+                _navControl.view(manageURI);
+                _desktop.panelDisposed(ForumSelectionPanel.this, false);
+            }
+            public void channelPostSelected(SyndieURI postURI) {
+                _navControl.view(postURI);
+                _desktop.panelDisposed(ForumSelectionPanel.this, false);
+            }
+            public void channelPreviewed(Hash scope, long chanId, String name, String desc, Image avatar) {
+                if (scope != null)
+                    ((NorthEdge)_edgeNorth).updateInfo(scope, chanId, name, desc, avatar);
+                else
+                    ((NorthEdge)_edgeNorth).updateInfo(null, -1, null, null, null);
+            }
+        }, false);
+        _channels.showNymChannels();
     }
     public void preferRefs(boolean preferRefs) { _preferRefs = preferRefs; }
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
-        if ( (_channels.getRecordCount() == 0) || (_prevWasManageable) ) {
-            if (_preferRefs)
-                _channels.showReferences(null);
-            else
-                _channels.showWatched(false, null);
-        }
         _prevWasManageable = false;
         super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
     public void hidden(Desktop desktop) {}
-    public void showManageable(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
-        _prevWasManageable = true;
-        _desktop = desktop;
-        _channels.showManageable(null);
-        super.shown(desktop, uri, suggestedName, suggestedDescription);
-    }
-
-    public void channelReviewed(SyndieURI uri, long channelId, String name, String description, Image avatar) {
-        //_ui.debugMessage("channel reviewed: " + scope + ": " + name);
-        Hash scope = null;
-        if (uri != null) {
-            if (uri.isChannel()) {
-                scope = uri.getScope();
-            } else if (uri.isSearch()) {
-                Hash scopes[] = uri.getSearchScopes();
-                if ( (scopes != null) && (scopes.length == 1) )
-                    scope = scopes[0];
-            }
-        }
-                
-        ((NorthEdge)_edgeNorth).updateInfo(scope, channelId, name, description, avatar);
-    }
-
-    public void channelSelected(SyndieURI uri, int matchedIndex) {
-        _ui.debugMessage("channel selected: " + uri);
-        if (uri == null) {
-            List nodes = _channels.getMatchingNodes();
-            if ( (nodes != null) && (matchedIndex < nodes.size()) ) {
-                final ReferenceNode node = (ReferenceNode)nodes.get(matchedIndex);
-                if (node.getChildCount() > 0) {
-                    _channels.setChannelIdSource(new ChannelSelectorPanel.ChannelIdSource() {
-                        public List listChannelIds() { return null; }
-                        public List getReferenceNodes() {
-                            List rv = new ArrayList();
-                            for (int i = 0; i < node.getChildCount(); i++)
-                                rv.add(node.getChild(i));
-                            return rv;
-                        }
-                    }, _channels.getSourceType());
-                    _channels.recalcChannels();
-                } else {
-                    // view an empty folder.  noop
-                }
-            }
-        } else {
-            _navControl.view(uri);
-            _desktop.panelDisposed(this, false);
-        }
-    }
     
-    public void channelProfileSelected(SyndieURI uri, int matchedIndex) {
-        if ( (uri != null) && (uri.getScope() != null) ) {
-            _navControl.view(URIHelper.instance().createManageURI(uri.getScope()));
-            _desktop.panelDisposed(this, false);
-        }
-    }
-    
-    public void viewMatches() {
-        List scopes = _channels.getMatches(true);
-        boolean unread = _channels.isUnreadOnly();
-        boolean threaded = true;
-        boolean useImportDate = MessageTree.shouldUseImportDate(_client);
-        _ui.debugMessage("all matching channels selected: " + scopes);
-        _navControl.view(SyndieURI.createSearch(scopes, unread, threaded, useImportDate));
-        _desktop.panelDisposed(this, false);
-    }
-
     public void forumSelectorCancelled() {
         _ui.debugMessage("channel selector cancelled");
         // don't actually dispose the panel, because the desktop keeps one of these around, but
         // tell the desktop to remove it from the active list
         _desktop.panelDisposed(this, true);
     }
-
-    /** 
-     * add a menu or menu items to the button related to the reference node,
-     * returning true if more menu items can be added, false if no more should be
-     * added
-     */
-    public void addMenu(final Button itemButton, final ReferenceNode node, final SyndieURI uri) {
-        _ui.debugMessage("add menu w/ source type: " + _channels.getSourceType());
-        Menu menu = itemButton.getMenu();
-        switch (_channels.getSourceType()) {
-            case ChannelSelectorPanel.SOURCE_IDENT:
-            case ChannelSelectorPanel.SOURCE_MANAGEABLE:
-            case ChannelSelectorPanel.SOURCE_POSTABLE:
-            case ChannelSelectorPanel.SOURCE_OTHER:
-                return;
-            case ChannelSelectorPanel.SOURCE_WATCHED:
-                final Hash scope = uri.getScope();
-                if (scope != null) {
-                    if (menu == null) menu = new Menu(itemButton);
-                    itemButton.setMenu(menu);
-
-                    MenuItem unwatch = new MenuItem(menu, SWT.PUSH);
-                    unwatch.addSelectionListener(new FireSelectionListener() {
-                        public void fire() {
-                            _ui.debugMessage("unwatching " + scope + " [" + uri + "]");
-                            _client.unwatchChannel(scope);
-                            _channels.recalcChannels();
-                        }
-                    });
-                    unwatch.setText(_translationRegistry.getText(T_MENU_UNWATCH, "Unwatch forum"));
-                }
-                return;
-            case ChannelSelectorPanel.SOURCE_REFERENCES:
-                if (menu == null) menu = new Menu(itemButton);
-                itemButton.setMenu(menu);
-                
-                MenuItem remove = new MenuItem(menu, SWT.PUSH);
-                remove.addSelectionListener(new FireSelectionListener() {
-                    public void fire() { 
-                        _client.deleteNymReference(_client.getLoggedInNymId(), node.getUniqueId());
-                        // when traversing the tree of refs, the id source is overwritten with various
-                        // ad-hoc id lists which do not query the db, so instead of recalcChannels
-                        // (which would just view the unmodified list), jump up to the top of the refs
-                        //    _channels.recalcChannels();
-                        _channels.showReferences(null);
-                    }
-                });
-                remove.setText(_translationRegistry.getText(T_MENU_REMOVE_REFERENCE, "Drop reference"));
-                return;
-        }
-    }
-    
-    private static final String T_MENU_REMOVE_REFERENCE = "syndie.gui.desktop.forumselectionpanel.menu.removereference";
-    private static final String T_MENU_UNWATCH = "syndie.gui.desktop.forumselectionpanel.menu.unwatch";
     
     protected void buildSouth(Composite edge) { 
         if (_edgeSouth == null) _edgeSouth = new SouthEdge(edge, _ui); 
@@ -244,7 +148,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             root.setLayout(new FillLayout(SWT.HORIZONTAL));
             _viewMatches = new Button(root, SWT.PUSH);
             _viewMatches.addSelectionListener(new FireSelectionListener() {
-                public void fire() { viewMatches(); }
+                public void fire() { _channels.viewMatching(); }
             });
             _addNym = new Button(root, SWT.PUSH);
             _addNym.addSelectionListener(new FireSelectionListener() {
@@ -269,7 +173,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _viewMatches.setText(trans.getText(T_VIEWMATCHES, "View combined"));
             _addNym.setText(trans.getText(T_ADDNYM, "Create nym"));
             _addForum.setText(trans.getText(T_ADDFORUM, "Create forum"));
-            _addReference.setText(trans.getText(T_ADDREF, "Create reference"));
+            _addReference.setText(trans.getText(T_ADDREF, "Create bookmark"));
             _cancel.setText(trans.getText(T_CANCEL, "Cancel"));
         }
         public void applyTheme(Theme theme) { 
@@ -282,7 +186,7 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         
         private void addReference() {
             AddReferenceSource src = new AddReferenceSource(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
-            LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), src);
+            LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, getRoot().getShell(), src);
             src.setPopup(popup);
             popup.showPopup();
         }
@@ -324,8 +228,8 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             StringBuffer buf = new StringBuffer();
             if ( (name != null) && (name.length() > 0) )
                 buf.append(name).append(" ");
-            if (scope != null)
-                buf.append("[").append(scope.toBase64().substring(0,6)).append("] ");
+            //if (scope != null)
+            //    buf.append("[").append(scope.toBase64().substring(0,6)).append("] ");
             if (description != null)
                 buf.append(description);
             _info.setText(buf.toString());
@@ -336,25 +240,14 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             getEdgeRoot().layout(true, true);
         }
     }
-    
-    private static final String T_WATCHED_TT = "syndie.gui.forumselectionpanel.watched.tt";
-    private static final String T_REFS_TT = "syndie.gui.forumselectionpanel.refs.tt";
-    private static final String T_IDENT_TT = "syndie.gui.forumselectionpanel.ident.tt";
-    private static final String T_MANAGEABLE_TT = "syndie.gui.forumselectionpanel.manageable.tt";
-    private static final String T_POSTABLE_TT = "syndie.gui.forumselectionpanel.postable.tt";
 
-    private static final String T_WATCHED = "syndie.gui.forumselectionpanel.watched";
+    private static final String T_SPECIALCHANNELS = "syndie.gui.forumselectionpanel.specialchannels";
     private static final String T_REFS = "syndie.gui.forumselectionpanel.refs";
-    private static final String T_IDENT = "syndie.gui.forumselectionpanel.ident";
-    private static final String T_MANAGEABLE = "syndie.gui.forumselectionpanel.manageable";
-    private static final String T_POSTABLE = "syndie.gui.forumselectionpanel.postable";
     
     class EastEdge extends DesktopEdge implements Themeable, Translatable {
-        private Button _watched;
-        private Button _refs;
-        private Button _ident;
-        private Button _manageable;
-        private Button _postable;
+        private Button _specialChannels;
+        private Button _bookmarks;
+        
         public EastEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
@@ -362,56 +255,27 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
         private void initComponents() {
             Composite root = getEdgeRoot();
             root.setLayout(new FillLayout(SWT.VERTICAL));
-            
-            _watched = new Button(root, SWT.PUSH);
-            _watched.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showWatched(null); } 
+        
+            _specialChannels = new Button(root, SWT.PUSH);
+            _specialChannels.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { _channels.showNymChannels(); } 
             });
-            _watched.addPaintListener(new PaintListener() {
+            _specialChannels.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _watched, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_WATCHED, "Watched"));
-                }
-            });
-            
-            _refs = new Button(root, SWT.PUSH);
-            _refs.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showReferences(null); } 
-            });
-            _refs.addPaintListener(new PaintListener() {
-                public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _refs, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_REFS, "References"));
-                }
-            });
-            _ident = new Button(root, SWT.PUSH);
-            _ident.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showIdent(null); } 
-            });
-            _ident.addPaintListener(new PaintListener() {
-                public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _ident, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_IDENT, "Identities"));
-                }
-            });
-            _manageable = new Button(root, SWT.PUSH);
-            _manageable.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showManageable(null); } 
-            });
-            _manageable.addPaintListener(new PaintListener() {
-                public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _manageable, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_MANAGEABLE, "Manageable"));
+                    ImageUtil.drawDescending(evt.gc, _specialChannels, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_SPECIALCHANNELS, "Special forums"));
                 }
             });
 
-            _postable = new Button(root, SWT.PUSH);
-            _postable.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showPostable(null); } 
-            });            
-            _postable.addPaintListener(new PaintListener() {
+            _bookmarks = new Button(root, SWT.PUSH);
+            _bookmarks.addSelectionListener(new FireSelectionListener() {
+                public void fire() { _channels.showBookmarks(); } 
+            });
+            _bookmarks.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _postable, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_POSTABLE, "Postable"));
+                    ImageUtil.drawDescending(evt.gc, _bookmarks, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_REFS, "Bookmarks"));
                 }
             });
 
-            
             //Color color = ColorUtil.getColor("yellow");
             //_watched.setBackground(color);
             //_refs.setBackground(color);
@@ -423,25 +287,13 @@ public class ForumSelectionPanel extends DesktopPanel implements ChannelSelector
             _themeRegistry.register(EastEdge.this);
         }
         public void translate(TranslationRegistry trans) {
-            _watched.setToolTipText(trans.getText(T_WATCHED_TT, "Show watched forums"));
-            _refs.setToolTipText(trans.getText(T_REFS_TT, "Show references"));
-            _ident.setToolTipText(trans.getText(T_IDENT_TT, "Show nyms"));
-            _manageable.setToolTipText(trans.getText(T_MANAGEABLE_TT, "Show manageable forums"));
-            _postable.setToolTipText(trans.getText(T_POSTABLE_TT, "Show postable forums"));
-
-            _watched.redraw();
-            _refs.redraw();
-            _ident.redraw();
-            _manageable.redraw();
-            _postable.redraw();
+            _specialChannels.redraw();
+            _bookmarks.redraw();
         }
         
         public void applyTheme(Theme theme) { 
-            _watched.redraw();
-            _refs.redraw();
-            _ident.redraw();
-            _manageable.redraw();
-            _postable.redraw();
+            _specialChannels.redraw();
+            _bookmarks.redraw();
         }
     }
 }

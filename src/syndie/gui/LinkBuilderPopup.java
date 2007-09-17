@@ -51,6 +51,9 @@ import syndie.db.UI;
 public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener, Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
+    private NavigationControl _navControl;
+    private BanControl _banControl;
+    private BookmarkControl _bookmarkControl;
     private LinkBuilderSource _target;
     
     private Label _textLabel;
@@ -148,8 +151,11 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
     private boolean _fieldsLimited;
     private boolean _showText;
     
-    public LinkBuilderPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, LinkBuilderSource src) {
+    public LinkBuilderPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, Shell parent, LinkBuilderSource src) {
         super(client, ui, themes, trans);
+        _navControl = navControl;
+        _banControl = banControl;
+        _bookmarkControl = bookmarkControl;
         _parentShell = parent;
         _target = src;
         _archives = new ArrayList();
@@ -617,7 +623,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
     private void pickForum() { 
         //_refChooser.show(); 
         if (_forumChooser == null)
-            _forumChooser = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _shell, this);
+            _forumChooser = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _shell, this);
         _forumChooser.open();
     }
     private void pickMessage() {
@@ -626,7 +632,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
             searchURI = SyndieURI.createSearch(_forum);
         if (_messageChooser != null)
             _messageChooser.dispose();
-        _messageChooser = new MessageChooserPopup(_shell, this);
+        _messageChooser = new MessageChooserPopup(_shell, this, _themeRegistry, _translationRegistry);
         _messageChooser.setFilter(searchURI);
         _messageChooser.show();
     }
@@ -1171,7 +1177,9 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 chan = _client.getChannel(_forumId);
             if (chan != null) {
                 _forum = chan.getChannelHash();
-                _syndieForum.setText(chan.getName());
+                String name = chan.getName();
+                if (name == null) name = "";
+                _syndieForum.setText(name);
                 _syndieMessageBrowse.setEnabled(true);
                 
                 _syndiePostKey.setEnabled(false);

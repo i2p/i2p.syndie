@@ -89,7 +89,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
         }
         
         if (_editable)
-            _manage = new ManageForum(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), URIHelper.instance(), _desktop.getDataCallback(), getRoot(), uri, true);
+            _manage = new ManageForum(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), _desktop.getBanControl(), _desktop.getBookmarkControl(), URIHelper.instance(), _desktop.getDataCallback(), getRoot(), uri, true);
         else
             _view = new ViewForum(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getBanControl(), _desktop.getNavControl(), URIHelper.instance(), getRoot(), uri);
         

@@ -54,6 +54,9 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 class ManageForumReferences extends BaseComponent implements Themeable, Translatable {
+    private NavigationControl _navControl;
+    private BanControl _banControl;
+    private BookmarkControl _bookmarkControl;
     private ManageForum _manage;
     private Shell _shell;
     private SashForm _sash;
@@ -70,8 +73,11 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     private Button _ok;
     private Button _cancel;
     
-    public ManageForumReferences(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, ManageForum manage) {
+    public ManageForumReferences(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, ManageForum manage) {
         super(client, ui, themes, trans);
+        _navControl = navControl;
+        _banControl = banControl;
+        _bookmarkControl = bookmarkControl;
         _manage = manage;
         initComponents();
     }
@@ -160,7 +166,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     }
     
     private void addRef() {
-        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _shell, new LinkBuilderPopup.LinkBuilderSource() {
             public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 if (uri == null) return;

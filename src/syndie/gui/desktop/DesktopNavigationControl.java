@@ -39,7 +39,7 @@ public class DesktopNavigationControl implements NavigationControl {
             //System.out.println("creating a new message tree panel for " + uri);
             return new MessageTreePanel(_desktop, uri, _desktop.getBanControl());
         } else if (uri.isChannel() && (uri.getMessageId() != null)) {
-            return new MessagePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), _desktop.getNavControl());
+            return new MessagePanel(_desktop, _desktop.getDBClient(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), _desktop.getUI(), _desktop.getNavControl(), uri);
         } else if (BrowserTab.TYPE_RESUMEABLE.equals(uri.getType())) {
             return new ResumeablePanel(_desktop, _desktop.getDBClient(), _desktop.getUI(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), uri);
         } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {

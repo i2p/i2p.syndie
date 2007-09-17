@@ -48,6 +48,7 @@ import syndie.db.UI;
 public class ManageReferenceChooser extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
+    private BanControl _banControl;
     private Composite _parent;
     private Tree _tree;
     private TreeColumn _colName;
@@ -72,9 +73,10 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
     
     private boolean _editable;
     
-    public ManageReferenceChooser(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BookmarkControl bookmarkControl, boolean editable) {
+    public ManageReferenceChooser(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, boolean editable) {
         super(client, ui, themes, trans);
         _navControl = navControl;
+        _banControl = banControl;
         _bookmarkControl = bookmarkControl;
         _parent = parent;
         _editable = editable;
@@ -225,14 +227,14 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
     }
     private void add() {
         if (_editPopup == null)
-            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
+            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl);
         _editPopup.setParent(null);
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
     }
     private void addChild() {
         if (_editPopup == null)
-            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
+            _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl);
         _editPopup.setParent(getSelectedNode());
         _editPopup.setCurrentNode(null);
         _editPopup.showPopup();
@@ -241,7 +243,7 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
         ReferenceNode node = getSelectedNode();
         if (node != null) {
             if (_editPopup == null)
-                _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry);
+                _editPopup = new EditPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl);
             _editPopup.setCurrentNode(node);
             _editPopup.showPopup(node.getURI());
         }
@@ -637,7 +639,9 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
     private class EditPopup extends LinkBuilderPopup {
         private ReferenceNode _parentNode;
         private ReferenceNode _currentNode;
-        public EditPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans) { super(client, ui, themes, trans, _parent.getShell(), null); }//_editor); }
+        public EditPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl) { 
+            super(client, ui, themes, trans, navControl, banControl, bookmarkControl, _parent.getShell(), null); //_editor); }
+        }
         public void uriBuildingCancelled() {}
         protected void uriBuilt(SyndieURI uri) {
             if (_currentNode == null) {

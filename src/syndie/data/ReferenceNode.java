@@ -26,6 +26,7 @@ public class ReferenceNode {
     protected String _treeIndex;
     /** sequential index in the walk (unique within the tree, but not a descriptive location) */
     private int _treeIndexNum;
+    private long _uniqueId;
     
     public ReferenceNode(String name, SyndieURI uri, String description, String type) {
         _name = name;
@@ -36,6 +37,7 @@ public class ReferenceNode {
         _parent = null;
         _treeIndex = "1";
         _treeIndexNum = -1;
+        _uniqueId = -1;
     }
     
     public String getName() { return _name; }
@@ -47,13 +49,31 @@ public class ReferenceNode {
     public ReferenceNode getParent() { return _parent; }
     public String getTreeIndex() { return _treeIndex; }
     public int getTreeIndexNum() { return _treeIndexNum; }
-    public long getUniqueId() { return hashCode(); }
+    public long getUniqueId() { return _uniqueId >= 0 ? _uniqueId : hashCode(); }
     
     public void setName(String name) { _name = name; }
     public void setURI(SyndieURI uri) { _uri = uri; }
     public void setDescription(String desc) { _description = desc; }
     public void setReferenceType(String type) { _refType = type; }
     public void setTreeIndexNum(int num) { _treeIndexNum = num; }
+    public void setUniqueId(long id) { _uniqueId = id; }
+    
+    public int hashCode() {
+        return (int)(_uniqueId + (_uri != null ? _uri.hashCode() : 0) +
+                     (_name != null ? _name.hashCode() : 0));
+    }
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        ReferenceNode node = (ReferenceNode)obj;
+        if (node.getUniqueId() != getUniqueId())
+            return false;
+        if (node.getURI() != getURI())
+            return false;
+        if (node.getTreeIndexNum() != getTreeIndexNum())
+            return false;
+        return ( ( (getName() != null) && (getName().equals(node.getName())) ) || 
+                 ( (getName() == null) && (getName() == null) ) );
+    }
     
     public ReferenceNode addChild(String name, SyndieURI uri, String description, String type) {
         ReferenceNode rv = new ReferenceNode(name, uri, description, type);

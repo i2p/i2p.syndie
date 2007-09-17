@@ -92,6 +92,7 @@ import syndie.db.UI;
 public class MessageEditor extends BaseComponent implements Themeable, Translatable, ImageBuilderPopup.ImageBuilderSource {
     private DataCallback _dataCallback;
     private NavigationControl _navControl;
+    private BanControl _banControl;
     private BookmarkControl _bookmarkControl;
     private URIControl _uriControl;
     private Composite _parent;
@@ -202,10 +203,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private LinkBuilderPopup _refAddPopup;
     
     /** Creates a new instance of MessageEditorNew */
-    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr, boolean buildToolbar, boolean allowPreview, boolean showActions) {
+    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, BanControl banControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr, boolean buildToolbar, boolean allowPreview, boolean showActions) {
         super(client, ui, themes, trans);
         _dataCallback = callback;
         _navControl = navControl;
+        _banControl = banControl;
         _bookmarkControl = bookmarkControl;
         _uriControl = uriControl;
         _parent = parent;
@@ -1661,7 +1663,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     private void buildLinkPopup() {
         if (_linkPopup == null)
-            _linkPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
+            _linkPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _parent.getShell(), new LinkBuilderPopup.LinkBuilderSource () {
                 public void uriBuildingCancelled() {}
                 public void uriBuilt(SyndieURI uri, String text) {
                     insertAtCaret("<a href=\"" + uri.toString() + "\">" + text + "</a>");
@@ -1840,7 +1842,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _authorChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();
@@ -1872,7 +1874,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _signAsChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _signAsChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();
@@ -1922,7 +1924,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _toChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();

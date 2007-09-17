@@ -75,7 +75,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     private Button _archiveMgr;
     private Button _welcome;
     private Button _sql;
-
+    
     private Button _exit;
     
     public ControlMenuPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui) {

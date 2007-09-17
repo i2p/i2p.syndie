@@ -36,6 +36,8 @@ import syndie.db.UI;
  */
 public class ReferenceEditor extends BaseComponent implements Themeable, Translatable {
     private BookmarkControl _bookmarkControl;
+    private NavigationControl _navControl;
+    private BanControl _banControl;
     private Composite _parent;
     private Composite _root;
     private Label _locationLabel;
@@ -70,9 +72,11 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         public void saved(ReferenceEditor editor);
     }
     
-    public ReferenceEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, BookmarkControl bookmarkControl, ReferenceEditor.ReferenceEditorListener lsnr) {
+    public ReferenceEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, ReferenceEditor.ReferenceEditorListener lsnr) {
         super(client, ui, themes, trans);
         _parent = parent;
+        _navControl = navControl;
+        _banControl = banControl;
         _bookmarkControl = bookmarkControl;
         _lsnr = lsnr;
         initComponents();
@@ -627,7 +631,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
     }
     
     private void selectURI() {
-        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root.getShell(), new LinkBuilderPopup.LinkBuilderSource() {
             public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 _ui.debugMessage("uri built: " + uri);

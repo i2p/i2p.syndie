@@ -60,6 +60,8 @@ import syndie.db.UI;
  */
 class MessageReferencesEditor extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
+    private BanControl _banControl;
+    private BookmarkControl _bookmarkControl;
     private Composite _parent;
     private Tree _targetTree;
     private TreeColumn _colName;
@@ -74,9 +76,11 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
     private Map _targetItemToNode;
     private LinkBuilderPopup _editPopup;
     
-    public MessageReferencesEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl) {
+    public MessageReferencesEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl) {
         super(client, ui, themes, trans);
         _parent = parent;
+        _banControl = banControl;
+        _bookmarkControl = bookmarkControl;
         _navControl = navControl;
         initComponents();
     }
@@ -191,7 +195,7 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
     
     private void add() {
         if (_editPopup == null)
-            _editPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _parent.getShell(), new EditListener());
+            _editPopup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _parent.getShell(), new EditListener());
         _parentNode = null;
         _currentNode = null;
         _editPopup.showPopup();

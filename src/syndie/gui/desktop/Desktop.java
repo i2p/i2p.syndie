@@ -701,6 +701,8 @@ class Desktop {
         panel.shown(this, uri, name, desc);
         if (notifyPrev) {
             if (_curPanelIndex >= 0) {
+                if (_curPanelIndex >= _loadedPanels.size())
+                    _curPanelIndex = _loadedPanels.size() - 1;
                 DesktopPanel prev = (DesktopPanel)_loadedPanels.get(_curPanelIndex);
                 if (prev != panel) {
                     prev.hidden();
@@ -725,7 +727,7 @@ class Desktop {
     }
     
     void uriUnhandled(SyndieURI uri) {
-        if (uri.isURL()) {
+        if ( (uri != null) && (uri.isURL()) ) {
             final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
             GridLayout gl = new GridLayout(1, true);
             shell.setLayout(gl);
@@ -761,7 +763,7 @@ class Desktop {
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(_translationRegistry.getText(T_BADURI_TITLE, "Invalid URI"));
-            box.setMessage(_translationRegistry.getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri.toString());
+            box.setMessage(_translationRegistry.getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri);
             box.open();
         }
     }
@@ -773,7 +775,12 @@ class Desktop {
     private static final String T_BADURI_MSG = "syndie.gui.desktop.desktop.baduri.msg";
     
     
-    DesktopPanel getCurrentPanel() { return _curPanelIndex >= 0 ? (DesktopPanel)_loadedPanels.get(_curPanelIndex) : null; }
+    DesktopPanel getCurrentPanel() { 
+        if ( (_curPanelIndex >= 0) && (_curPanelIndex < _loadedPanels.size()) )
+            return (DesktopPanel)_loadedPanels.get(_curPanelIndex);
+        else
+            return null;
+    }
     List getPanels() { return new ArrayList(_loadedPanels); }
     NavigationControl getNavControl() { return _navControl; }
     void setNavControl(NavigationControl ctl) { _navControl = ctl; }
@@ -821,6 +828,7 @@ class Desktop {
             } else if (_curPanelIndex > idx)
                 _curPanelIndex--;
         }
+        _ui.debugMessage("panel disposed: " + panel.getClass().getName() + ": idx=" + idx + " curIndex=" + _curPanelIndex + " loaded=" + _loadedPanels.size());
     }
     
     private void setEdge(Composite edge, StackLayout stack, DesktopEdge specificEdge, DesktopEdge defEdge) {
@@ -1037,7 +1045,7 @@ class Desktop {
     public void toggleForumSelectionPanel(boolean startWithRefs) { toggleForumSelectionPanel(startWithRefs, false); }
     private void toggleForumSelectionPanel(boolean startWithRefs, boolean alwaysShow) { 
         if (_forumSelectionPanel == null)
-            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
+            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl, _banControl, _bookmarkControl);
         if (getCurrentPanel() == _forumSelectionPanel) {
             if (alwaysShow) {
                 // noop - already showing
@@ -1052,8 +1060,8 @@ class Desktop {
     }
     public void showForumManagementSelectionPanel() {
         if (_forumSelectionPanel == null)
-            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl);
-        _forumSelectionPanel.showManageable(this, null, null, null);
+            _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl, _banControl, _bookmarkControl);
+        //_forumSelectionPanel.showManageable(this, null, null, null);
         if (getCurrentPanel() != _forumSelectionPanel)
             show(_forumSelectionPanel, null, null, null);
     }

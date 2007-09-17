@@ -62,6 +62,7 @@ import syndie.db.UI;
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
     private Browser _browserInstance;
     private BookmarkControl _bookmarkControl;
+    private BanControl _banControl;
     private Menu _menu;
     
     private Button _searchAdvanced;
@@ -74,10 +75,11 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private List _nymRefs;
     
-    public BrowserTree(Browser browser, DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, BookmarkControl bookmarkControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
+    public BrowserTree(Browser browser, DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, BanControl banControl, BookmarkControl bookmarkControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
         super(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, false, timer);
         _browserInstance = browser;
         _bookmarkControl = bookmarkControl;
+        _banControl = banControl;
         long t1 = System.currentTimeMillis();
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
         long t2 = System.currentTimeMillis();
@@ -484,7 +486,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 field.setFocus();
                 ed.setEditor(field, item);
             } else {
-                ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _bookmarkControl, getControl().getShell());
+                ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, getControl().getShell());
                 editor.setReference(node);
                 editor.open();
             }
@@ -494,7 +496,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private void addBookmark(long parentGroupId) {
         _ui.debugMessage("addBookmark underneath " + parentGroupId);
         
-        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _bookmarkControl, getControl().getShell());
+        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, getControl().getShell());
         editor.setReference(new NymReferenceNode("", null, "", -1, -1, parentGroupId, -1, false, false, false));
         editor.open();
     }

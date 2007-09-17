@@ -1709,7 +1709,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         NymReferenceNode node = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, siblingOrder, ignored, banned, loadOnStart);
     
-        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, getUI(), _themes, _translation, this, _shell);
+        ReferenceEditorPopup editor = new ReferenceEditorPopup(_client, getUI(), _themes, _translation, _navControl, this, this, _shell);
         //BookmarkEditorPopup editor = getBookmarkEditor();
         editor.setReference(node);
         //editor.pickParent(pickParent);
@@ -2273,7 +2273,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private void exportMessage() {
-        LinkBuilderPopup popup = new LinkBuilderPopup(_client, this, _themes, _translation, _shell, new LinkBuilderPopup.LinkBuilderSource() {
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, this, _themes, _translation, _navControl, this, this, _shell, new LinkBuilderPopup.LinkBuilderSource() {
             public void uriBuildingCancelled() {}
             public void uriBuilt(SyndieURI uri, String text) {
                 exportMessage(uri);

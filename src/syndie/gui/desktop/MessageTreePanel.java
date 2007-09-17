@@ -798,7 +798,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
     }
     private void createRef() {
         AddReferenceSource src = new AddReferenceSource(_client, _ui, _themeRegistry, _translationRegistry, getRoot());
-        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, getRoot().getShell(), src);
+        LinkBuilderPopup popup = new LinkBuilderPopup(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), _desktop.getBanControl(), _desktop.getBookmarkControl(), getRoot().getShell(), src);
         src.setPopup(popup);
         popup.showPopup(_detailURI);
     }

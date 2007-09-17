@@ -47,23 +47,23 @@ public class ComponentBuilder {
     
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr);
-        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, lsnr);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, lsnr);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr, titleKey, titleVal);
-        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, lsnr);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, lsnr);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, String titleKey, String titleVal) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, titleKey, titleVal);
-        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, null);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, null);
     }
     public ReferenceChooserPopup createReferenceChooserPopup(Shell parent) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl);
-        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, parent, null);
+        return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, null);
     }
     
     public BrowserTree createBrowserTree(Browser browser, Timer timer, Composite parent, ReferenceChooserTree.ChoiceListener choiceListener, ReferenceChooserTree.AcceptanceListener acceptListener) {
-        return new BrowserTree(browser, _client, _ui, _themes, _trans, _navControl, _uriControl, _bookmarkControl, parent, choiceListener, acceptListener, timer);
+        return new BrowserTree(browser, _client, _ui, _themes, _trans, _navControl, _uriControl, _banControl, _bookmarkControl, parent, choiceListener, acceptListener, timer);
     }
     
     public StatusBar createStatusBar(Browser browser, Composite parent, Timer timer) {
@@ -91,10 +91,10 @@ public class ComponentBuilder {
     }
     
     public MessageReferencesEditor createMessageReferencesEditor(Composite parent) {
-        return new MessageReferencesEditor(_client, _ui, _themes, _trans, parent, _navControl);
+        return new MessageReferencesEditor(_client, _ui, _themes, _trans, parent, _navControl, _banControl, _bookmarkControl);
     }
     
     public ManageReferenceChooser createManageReferenceChooser(Composite parent, boolean editable) {
-        return new ManageReferenceChooser(_client, _ui, _themes, _trans, parent, _navControl, _bookmarkControl, editable);
+        return new ManageReferenceChooser(_client, _ui, _themes, _trans, parent, _navControl, _banControl, _bookmarkControl, editable);
     }
 }

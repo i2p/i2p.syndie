@@ -63,6 +63,8 @@ import syndie.db.UI;
  */
 public class ManageForum extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
+    private BanControl _banControl;
+    private BookmarkControl _bookmarkControl;
     private URIControl _uriControl;
     private DataCallback _dataCallback;
     private Composite _parent;
@@ -129,9 +131,11 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         public void settingsModified(boolean canSave);
     }
     
-    public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri, boolean showActions) {
+    public ManageForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, Composite parent, SyndieURI uri, boolean showActions) {
         super(client, ui, themes, trans);
         _navControl = navControl;
+        _banControl = banControl;
+        _bookmarkControl = bookmarkControl;
         _uriControl = uriControl;
         _dataCallback = callback;
         _parent = parent;
@@ -260,7 +264,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         
         _refSelect = new Button(_refGroup, SWT.PUSH);
         _refSelect.addSelectionListener(new FireSelectionListener() {
-            public void fire() { new ManageForumReferences(_client, _ui, _themeRegistry, _translationRegistry, ManageForum.this); }
+            public void fire() { new ManageForumReferences(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, ManageForum.this); }
         });
         _refRemoveAll = new Button(_refGroup, SWT.PUSH);
         _refRemoveAll.addSelectionListener(new FireSelectionListener() {
