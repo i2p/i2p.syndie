@@ -83,6 +83,7 @@ abstract class DesktopPanel {
     void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         getRoot().setVisible(true);
         getRoot().setEnabled(true);
+        forceFocus();
     }
     void hidden() {
         getRoot().setVisible(false);

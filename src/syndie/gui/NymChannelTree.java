@@ -128,6 +128,8 @@ public class NymChannelTree implements Themeable, Translatable {
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
+
+    public void forceFocus() { _tree.forceFocus(); }
     
     public void dispose() {
         _themeRegistry.unregister(this);

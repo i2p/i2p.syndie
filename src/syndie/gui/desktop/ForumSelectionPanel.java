@@ -101,8 +101,11 @@ public class ForumSelectionPanel extends DesktopPanel {
             }
         }, false);
         _channels.showNymChannels();
+        forceFocus();
     }
     public void preferRefs(boolean preferRefs) { _preferRefs = preferRefs; }
+    
+    public void forceFocus() { _channels.forceFocus(); }
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
