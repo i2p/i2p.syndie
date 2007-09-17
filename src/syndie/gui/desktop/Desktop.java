@@ -844,7 +844,7 @@ class Desktop {
             _display.asyncExec(new Runnable() { 
                 public void run() { 
                     _taskTree = new TaskTreeShell(Desktop.this);
-                    ((HideDesktopCorner)_cornerNorthEast).startupComplete();
+                    ((CloseDesktopCorner)_cornerNorthEast).startupComplete();
                     ((SyndicateDesktopCorner)_cornerSouthWest).startupComplete();
                     ((ControlDesktopCorner)_cornerNorthWest).startupComplete();
                     ((HelpDesktopCorner)_cornerSouthEast).startupComplete();
@@ -1006,7 +1006,7 @@ class Desktop {
         setSize(_edgeWest, BORDER_SIZE, -1);
         
         _cornerNorthWest = new ControlDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthWest, _ui);
-        _cornerNorthEast = new HideDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
+        _cornerNorthEast = new CloseDesktopCorner(this, SWT.COLOR_BLUE, _edgeNorthEast, _ui);
         _cornerSouthEast = new HelpDesktopCorner(this, SWT.COLOR_MAGENTA, _edgeSouthEast, _ui);
         _cornerSouthWest = new SyndicateDesktopCorner(this, SWT.COLOR_BLUE, _edgeSouthWest, _ui);
         
@@ -1207,21 +1207,27 @@ class Desktop {
     }
 }
 
-class HideDesktopCorner extends DesktopCorner {
+class CloseDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
-    public HideDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
+    public CloseDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
         super(parent, ui);
         _desktop = desktop;
         initComponents(color);
     }
     public void startupComplete() {
-        _button.setImage(ImageUtil.ICON_HIDE);
+        _button.setImage(ImageUtil.ICON_CLOSE);
     }
     private void initComponents(int color) {
         _button = new Button(getRoot(), SWT.PUSH);
         //_button.setBackground(_button.getDisplay().getSystemColor(color));
-        _button.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.hide(); } });
+        _button.addSelectionListener(new FireSelectionListener() { 
+            public void fire() { 
+                DesktopPanel panel = _desktop.getCurrentPanel();
+                if (panel != null)
+                    panel.close();
+            } 
+        });
         getRoot().layout(true, true);
     }
 }
@@ -1308,7 +1314,6 @@ class CommandBar implements Themeable, Translatable {
     private Button _syndicate;
     private Button _read;
     private Button _post;
-    private Button _manageForum;
     private Button _closePanel;
     private Button _switchPanel;
     private TranslationRegistry _translationRegistry;
@@ -1360,17 +1365,7 @@ class CommandBar implements Themeable, Translatable {
                     _desktop.showDesktopTabs();
             } 
         });
-
-        _manageForum = new Button(bar, SWT.PUSH);
-        _manageForum.setText("manage");
-        _manageForum.addSelectionListener(new FireSelectionListener() { 
-            public void fire() { 
-                _desktop.showForumManagementSelectionPanel(); 
-                if (_desktop.getTabPanel(false) != null)
-                    _desktop.showDesktopTabs();
-            } 
-        }); 
-        
+    
         _switchPanel = new Button(bar, SWT.PUSH);
         _switchPanel.setText("switch");
         _switchPanel.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showTaskTree(); } });
@@ -1414,7 +1409,6 @@ class CommandBar implements Themeable, Translatable {
         _syndicate.setFont(theme.BUTTON_FONT);
         _read.setFont(theme.BUTTON_FONT);
         _post.setFont(theme.BUTTON_FONT);
-        _manageForum.setFont(theme.BUTTON_FONT);
         _switchPanel.setFont(theme.BUTTON_FONT);
     }
 
@@ -1422,13 +1416,11 @@ class CommandBar implements Themeable, Translatable {
         _syndicate.setText(registry.getText(T_SYNDICATE, "Share"));
         _read.setText(registry.getText(T_READ, "Read"));
         _post.setText(registry.getText(T_POST, "Write"));
-        _manageForum.setText(registry.getText(T_MANAGE, "Manage"));
         _switchPanel.setText(registry.getText(T_SWITCH, "Switch task"));
     }
     
     private static final String T_SYNDICATE = "syndie.gui.desktop.CommandBar.syndicate";
     private static final String T_READ = "syndie.gui.desktop.CommandBar.read";
     private static final String T_POST = "syndie.gui.desktop.CommandBar.post";
-    private static final String T_MANAGE = "syndie.gui.desktop.CommandBar.manage";
     private static final String T_SWITCH = "syndie.gui.desktop.CommandBar.switch";
 }

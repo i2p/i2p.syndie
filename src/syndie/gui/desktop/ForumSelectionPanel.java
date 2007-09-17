@@ -128,7 +128,6 @@ public class ForumSelectionPanel extends DesktopPanel {
         if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
     }
 
-    private static final String T_CANCEL = "syndie.gui.desktop.forumselectionpanel.cancel";
     private static final String T_VIEWMATCHES = "syndie.gui.desktop.forumselectionpanel.viewmatches";
     private static final String T_ADDNYM = "syndie.gui.desktop.forumselectionpanel.addnym";
     private static final String T_ADDFORUM = "syndie.gui.desktop.forumselectionpanel.addforum";
@@ -138,7 +137,6 @@ public class ForumSelectionPanel extends DesktopPanel {
         private Button _addNym;
         private Button _addForum;
         private Button _addReference;
-        private Button _cancel;
         public SouthEdge(Composite edge, UI ui) {
             super(edge, ui);
             initComponents();
@@ -162,10 +160,6 @@ public class ForumSelectionPanel extends DesktopPanel {
             _addReference.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addReference(); }
             });
-            _cancel = new Button(root, SWT.PUSH);
-            _cancel.addSelectionListener(new FireSelectionListener() {
-                public void fire() { forumSelectorCancelled(); }
-            });
             _translationRegistry.register(SouthEdge.this);
             _themeRegistry.register(SouthEdge.this);
         }
@@ -174,14 +168,12 @@ public class ForumSelectionPanel extends DesktopPanel {
             _addNym.setText(trans.getText(T_ADDNYM, "Create nym"));
             _addForum.setText(trans.getText(T_ADDFORUM, "Create forum"));
             _addReference.setText(trans.getText(T_ADDREF, "Create bookmark"));
-            _cancel.setText(trans.getText(T_CANCEL, "Cancel"));
         }
         public void applyTheme(Theme theme) { 
             _viewMatches.setFont(theme.BUTTON_FONT);
             _addNym.setFont(theme.BUTTON_FONT);
             _addForum.setFont(theme.BUTTON_FONT);
             _addReference.setFont(theme.BUTTON_FONT);
-            _cancel.setFont(theme.BUTTON_FONT);
         }
         
         private void addReference() {

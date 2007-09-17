@@ -239,6 +239,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _expirationManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(_scope)); } });
         _expirationManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
+        if ( (_scope == null) || (_scopeId < 0) )
+            _expirationManager.setEnabled(false);
+        
         Composite refRow = new Composite(_root, SWT.NONE);
         refRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 7, 1));
         refRow.setLayout(new FillLayout(SWT.HORIZONTAL));

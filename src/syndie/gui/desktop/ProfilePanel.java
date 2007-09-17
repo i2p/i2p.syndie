@@ -54,6 +54,8 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
     public ProfilePanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI, BanControl banControl) {
         super(desktop, client, themes, trans, parent, ui, origURI);
         _banControl = banControl;
+        _scopeId = -1;
+        _scope = null;
         initComponents();
     }
     
@@ -384,6 +386,9 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
                     }
                 }
             });
+            boolean valid = (_scope != null) && (_scopeId >= 0);
+            _watch.setEnabled(valid);
+            _ban.setEnabled(valid);
         }
         
         public void settingsModified(boolean saveable) {
@@ -420,7 +425,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _cancelChanges.setText(registry.getText(T_CANCEL, "Cancel changes"));
         }
         private void translateWatch() {
-            if (_client.isWatched(_scopeId))
+            if ( (_scopeId >= 0) && (_client.isWatched(_scopeId)) )
                 _watch.setText(_translationRegistry.getText(T_UNWATCH, "Unwatch the forum"));
             else
                 _watch.setText(_translationRegistry.getText(T_WATCH, "Watch the forum"));
