@@ -1842,7 +1842,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _authorChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new IdentityChannelSource());
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();
@@ -1874,7 +1874,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _signAsChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _signAsChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new IdentityChannelSource());
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();
@@ -1924,7 +1924,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _toChangeButton.addSelectionListener(new FireSelectionListener() {
             public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null);
+                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new ForumChannelSource());
                 popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
                     public void referenceAccepted(SyndieURI uri) {
                         popup.dispose();
@@ -2680,5 +2680,43 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         return rv;
     }
-    
+
+    private class IdentityChannelSource implements NymChannelTree.ChannelSource {
+        private List _nodes;
+        public List getReferenceNodes() { return _nodes; }
+        public boolean isManageable(long chanId) { return false; }
+        public boolean isPostable(long chanId) { return false; }
+        public boolean isWatched(long chanId) { return false; }
+        public boolean isDeletable(long chanId) { return false; }
+        public void loadSource() {
+            if (_nodes != null)
+                return;
+            
+            _nodes = new ArrayList();
+            
+            DBClient.ChannelCollector chans = _client.getNymChannels();
+            List ids = chans.getIdentityChannelIds();
+            for (int i = 0; i < ids.size(); i++) {
+                Long id = (Long)ids.get(i);
+                if (id.longValue() < 0)
+                    continue;
+                String name = _client.getChannelName(id.longValue());
+                if (name == null) name = "";
+                Hash scope = _client.getChannelHash(id.longValue());
+                name = name + " [" + scope.toBase64().substring(0,6) + "]";
+                SyndieURI uri = SyndieURI.createScope(scope);
+                String desc = _client.getChannelDescription(id.longValue());
+                if (desc == null) desc = "";
+                ReferenceNode node = new ReferenceNode(name, uri, desc, "");
+                node.setUniqueId(id.longValue());
+                _nodes.add(node);
+            }
+        }
+    }
+
+    private class ForumChannelSource extends NymChannelSource {
+        public ForumChannelSource() {
+            super(MessageEditor.this._client, MessageEditor.this._translationRegistry, false, true, true, true, true);
+        }
+    }
 }

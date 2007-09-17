@@ -29,6 +29,7 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
     private Shell _shell;
     private NymChannelTree _channels;
     private boolean _preferRefs;
+    private NymChannelTree.ChannelSource _channelSource;
     private ReferenceChooserTree.AcceptanceListener _acceptListener;
     
     private Button _cancel;
@@ -38,6 +39,9 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
     private BookmarkControl _bookmarkControl;
     
     public ForumReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, Composite parent, ReferenceChooserTree.AcceptanceListener acceptLsnr) {
+        this(client, ui, themes, trans, navControl, banControl, bookmarkControl, parent, acceptLsnr, null);
+    }
+    public ForumReferenceChooserPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, Composite parent, ReferenceChooserTree.AcceptanceListener acceptLsnr, NymChannelTree.ChannelSource channelSource) {
         super(client, ui, themes, trans);
         _parent = parent;
         _preferRefs = false;
@@ -45,6 +49,7 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
         _navControl = navControl;
         _banControl = banControl;
         _bookmarkControl = bookmarkControl;
+        _channelSource = channelSource;
         initComponents();
     }
     
@@ -56,7 +61,7 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
     }
     
     private void initComponents() {
-        _shell = new Shell(_parent.getShell(), SWT.SHELL_TRIM);
+        _shell = new Shell(_parent.getShell(), SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(5, true);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
@@ -118,10 +123,14 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
         if ( (_shell == null) || (_shell.isDisposed()) )
             initComponents(); // reopened
 
-        if (_preferRefs)
+        if (_channelSource != null) {
+            _channels.setChannelSource(_channelSource);
+            _channels.loadData();
+        } else if (_preferRefs) {
             _channels.showBookmarks();
-        else
+        } else {
             _channels.showNymChannels();
+        }
         
         _shell.pack(true);
         _shell.setSize(_shell.computeSize(SWT.DEFAULT, 500));

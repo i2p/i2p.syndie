@@ -18,9 +18,23 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
     private Set _postable;
     private List _watchedIds;
     
+    private boolean _includeWatched;
+    private boolean _includeIdent;
+    private boolean _includeManage;
+    private boolean _includePost;
+    private boolean _includePubPost;
+    
     public NymChannelSource(DBClient client, TranslationRegistry trans) {
+        this(client, trans, true, true, true, true, true);
+    }
+    public NymChannelSource(DBClient client, TranslationRegistry trans, boolean includeWatched, boolean includeIdent, boolean includeManage, boolean includePost, boolean includePubPost) {
         _client = client;
         _translationRegistry = trans;
+        _includeWatched = includeWatched;
+        _includeIdent = includeIdent;
+        _includeManage = includeManage;
+        _includePost = includePost;
+        _includePubPost = includePubPost;
         _refNodes = new ArrayList();
         _manageable = new HashSet();
         _postable = new HashSet();
@@ -46,17 +60,27 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
         ReferenceNode authpost = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_AUTHPOST, "Explicitly postable forums"), null, "", "");
         ReferenceNode pubpost = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_PUBLICPOST, "Publicly postable forums"), null, "", "");
 
-        root.addChild(watched);
-        root.addChild(owned);
-        root.addChild(managed);
-        root.addChild(authpost);
-        root.addChild(pubpost);
+        if (_includeWatched)
+            root.addChild(watched);
+        if (_includeIdent)
+            root.addChild(owned);
+        if (_includeManage)
+            root.addChild(managed);
+        if (_includePost)
+            root.addChild(authpost);
+        if (_includePubPost)
+            root.addChild(pubpost);
 
-        loadSource(watched, watchedIds, false, false);
-        loadSource(owned, chans.getIdentityChannelIds(), true, true);
-        loadSource(managed, chans.getManagedChannelIds(), true, true);
-        loadSource(authpost, chans.getPostChannelIds(), false, true);
-        loadSource(pubpost, chans.getPublicPostChannelIds(), false, true);
+        if (_includeWatched)
+            loadSource(watched, watchedIds, false, false);
+        if (_includeIdent)
+            loadSource(owned, chans.getIdentityChannelIds(), true, true);
+        if (_includeManage)
+            loadSource(managed, chans.getManagedChannelIds(), true, true);
+        if (_includePost)
+            loadSource(authpost, chans.getPostChannelIds(), false, true);
+        if (_includePubPost)
+            loadSource(pubpost, chans.getPublicPostChannelIds(), false, true);
 
         _refNodes.add(root);
     }

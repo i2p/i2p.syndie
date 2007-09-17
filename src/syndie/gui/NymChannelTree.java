@@ -654,6 +654,9 @@ public class NymChannelTree implements Themeable, Translatable {
     private static final String SQL_GET_RECORD_UNREADPRIV_BEGIN = "SELECT COUNT(msgId), targetChannelId FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE cm.wasPrivate = true AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL AND targetChannelId IN (";
     private static final String SQL_GET_RECORD_TOTALMSGS_BEGIN = "SELECT COUNT(msgId) FROM channelMessage WHERE isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL AND targetChannelId IN (";
     private boolean populateForumRecords(Set nodes, Map chanIdToRecord, ChannelSource src) {
+        if (nodes.size() == 0)
+            return true;
+        
         StringBuffer idsBuf = new StringBuffer();
         for (Iterator iter = nodes.iterator(); iter.hasNext(); ) {
             ReferenceNode node = (ReferenceNode)iter.next();
