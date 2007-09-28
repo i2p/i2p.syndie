@@ -182,6 +182,7 @@ public class Opts {
     
     public static void main(String args[]) {
         System.out.println("Starting tests");
+        System.out.println(splitLine("justOneToken").toString());
         System.out.println(splitLine(" hi how are you?").toString());
         System.out.println(splitLine("I am fine, thanks! ").toString());
         System.out.println(splitLine("What you \"up to\" g?").toString());
@@ -259,6 +260,9 @@ public class Opts {
             token.append(l[cur]);
             ++cur;
         }
+        
+        if (token.length() > 0)
+            rv.add(token.toString());
 
         return rv;
     }
