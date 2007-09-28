@@ -2,8 +2,11 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import net.i2p.data.Hash;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -31,16 +34,22 @@ public class SearchChannelSource implements NymChannelTree.ChannelSource {
             return;
         
         List ids = _client.getChannelIds(_term);
+        Map nameToNode = new TreeMap();
         for (int i = 0; i < ids.size(); i++) {
             Long chanId = (Long)ids.get(i);
             if ( (chanId == null) || (chanId.longValue() < 0) )
                 continue;
             Hash scope = _client.getChannelHash(chanId.longValue());
             SyndieURI uri = SyndieURI.createScope(scope);
-            ReferenceNode node = new ReferenceNode("", uri, "", "");
+            String name = _client.getChannelName(chanId.longValue());
+            if (name == null) name = "";
+            name = name + ": " + scope.toBase64();
+            ReferenceNode node = new ReferenceNode(name, uri, "", "");
             node.setUniqueId(chanId.longValue());
-            _refNodes.add(node);
+            nameToNode.put(name, node);
         }
+        for (Iterator iter = nameToNode.values().iterator(); iter.hasNext(); )
+            _refNodes.add(iter.next());
     }
 
     public boolean isWatched(long chanId) { return false; }
