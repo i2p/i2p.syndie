@@ -45,6 +45,13 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
     public boolean isManageable(long chanId) { return _manageable.contains(new Long(chanId)); }
     public boolean isPostable(long chanId) { return _postable.contains(new Long(chanId)); }
     
+    public void clearSource() {
+        _refNodes.clear();
+        _manageable.clear();
+        _postable.clear();
+        _watchedIds.clear();
+    }
+    
     public void loadSource() {
         if (_refNodes.size() > 0)
             return;

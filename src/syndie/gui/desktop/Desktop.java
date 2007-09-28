@@ -359,16 +359,19 @@ class Desktop {
                 public void run() {
                     final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
                     s.setText(strans(T_ALREADY_RUNNING_TITLE, "Already running"));
-                    s.setFont(_themeRegistry.getTheme().SHELL_FONT);
+                    if (_themeRegistry != null)
+                        s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                     s.setLayout(new GridLayout(1, true));
                     Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                     l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
                     l.setText(strans(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
-                    l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                    if (_themeRegistry != null)
+                        l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                     Button b = new Button(s, SWT.PUSH);
                     b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
                     b.setText(strans(T_ALREADY_RUNNING_EXIT, "Exit"));
-                    b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                    if (_themeRegistry != null)
+                        b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                     b.addSelectionListener(new FireSelectionListener() { 
                         public void fire() {
                             s.dispose();
@@ -796,7 +799,10 @@ class Desktop {
     
     boolean isShowing(DesktopPanel panel) { return getCurrentPanel() == panel; }
     
-    void showTaskTree() { _taskTree.show(); }
+    void showTaskTree() { 
+        if (_taskTree != null)
+            _taskTree.show(); 
+    }
     void showPreviousPanel() { showPreviousPanel(true); }
     void showPreviousPanel(boolean notifyPrev) {
         if (_loadedPanels.size() > 0) {
@@ -953,6 +959,15 @@ class Desktop {
             } 
         }).start();
     }
+
+    void bookmarksUpdated() {
+        if (_forumSelectionPanel != null)
+            _forumSelectionPanel.bookmarksUpdated();
+    }
+    void nymChannelsUpdated() {
+        if (_forumSelectionPanel != null)
+            _forumSelectionPanel.nymChannelsUpdated();
+    }
     
     private void prepareGrid() {
         GridLayout gl = new GridLayout(3, false);
@@ -1043,12 +1058,14 @@ class Desktop {
     public void showForumSelectionPanel() { toggleForumSelectionPanel(false, true); }
     public void toggleForumSelectionPanel() { toggleForumSelectionPanel(false, false); }
     public void toggleForumSelectionPanel(boolean startWithRefs) { toggleForumSelectionPanel(startWithRefs, false); }
-    private void toggleForumSelectionPanel(boolean startWithRefs, boolean alwaysShow) { 
+    public void toggleForumSelectionPanel(boolean startWithRefs, boolean alwaysShow) { 
         if (_forumSelectionPanel == null)
             _forumSelectionPanel = new ForumSelectionPanel(this, _client, _themeRegistry, _translationRegistry, _center, _ui, _navControl, _banControl, _bookmarkControl);
         if (getCurrentPanel() == _forumSelectionPanel) {
             if (alwaysShow) {
                 // noop - already showing
+                _forumSelectionPanel.preferRefs(startWithRefs);
+                show(_forumSelectionPanel, null, null, null);
             } else {
                 _forumSelectionPanel.forumSelectorCancelled();
                 //showPreviousPanel();
@@ -1179,14 +1196,28 @@ class Desktop {
     
     private class DesktopBookmark implements BookmarkControl {
         /** show a popup to bookmark the given uri in the user's set of bookmarked references */
-        public void bookmark(SyndieURI uri) {}
+        public void bookmark(SyndieURI uri) { bookmark(uri, -1); }
         /** show a popup to bookmark the given uri in the user's set of bookmarked references */
-        public void bookmark(SyndieURI uri, long parentGroupId) {}
+        public void bookmark(SyndieURI uri, long parentGroupId) {
+            NymReferenceNode node = new NymReferenceNode("bookmark", uri, "", -1, -1, parentGroupId, -1, false, false, false);
+            bookmark(node, true);
+        }
         /** just add the given bookmark.  the node's groupId, siblingOrder, and uriId will be populated */
-        public void bookmark(NymReferenceNode node, boolean doneBookmarking) {}
-        public void deleteBookmark(long bookmarkGroupId) {}
-        public void deleteBookmarks(List bookmarkGroupIds) {}
-        public void updateBookmark(NymReferenceNode bookmark) {}
+        public void bookmark(NymReferenceNode node, boolean doneBookmarking) {
+            _client.addNymReference(_client.getLoggedInNymId(), node, true);
+        }
+        public void deleteBookmark(long bookmarkGroupId) {
+            _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
+        }
+        public void deleteBookmarks(List bookmarkGroupIds) {
+            for (int i = 0; i < bookmarkGroupIds.size(); i++) {
+                Long groupId = (Long)bookmarkGroupIds.get(i);
+                _client.deleteNymReference(_client.getLoggedInNymId(), groupId.longValue());
+            }
+        }
+        public void updateBookmark(NymReferenceNode bookmark) {
+            _client.updateNymReference(_client.getLoggedInNymId(), bookmark);
+        }
         public void bookmarkCurrentTab() {}
         /** get the bookmarks (NymReferenceNode) currently loaded */
         public List getBookmarks() { return null; }
@@ -1312,7 +1343,7 @@ class CommandBar implements Themeable, Translatable {
     private Composite _root;
     private Desktop _desktop;
     private Button _syndicate;
-    private Button _read;
+    //private Button _read;
     private Button _post;
     private Button _closePanel;
     private Button _switchPanel;
@@ -1335,9 +1366,9 @@ class CommandBar implements Themeable, Translatable {
         FillLayout fl = new FillLayout(SWT.HORIZONTAL);
         bar.setLayout(fl);
                 
-        _read = new Button(bar, SWT.PUSH);
-        _read.setText("read");
-        _read.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
+        //_read = new Button(bar, SWT.PUSH);
+        //_read.setText("read");
+        //_read.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(); } }); 
         
         _post = new Button(bar, SWT.PUSH);
         _post.setText("write");
@@ -1407,20 +1438,20 @@ class CommandBar implements Themeable, Translatable {
 
     public void applyTheme(Theme theme) {
         _syndicate.setFont(theme.BUTTON_FONT);
-        _read.setFont(theme.BUTTON_FONT);
+        //_read.setFont(theme.BUTTON_FONT);
         _post.setFont(theme.BUTTON_FONT);
         _switchPanel.setFont(theme.BUTTON_FONT);
     }
 
     public void translate(TranslationRegistry registry) {
         _syndicate.setText(registry.getText(T_SYNDICATE, "Share"));
-        _read.setText(registry.getText(T_READ, "Read"));
+        //_read.setText(registry.getText(T_READ, "Read"));
         _post.setText(registry.getText(T_POST, "Write"));
         _switchPanel.setText(registry.getText(T_SWITCH, "Switch task"));
     }
     
     private static final String T_SYNDICATE = "syndie.gui.desktop.CommandBar.syndicate";
-    private static final String T_READ = "syndie.gui.desktop.CommandBar.read";
+    //private static final String T_READ = "syndie.gui.desktop.CommandBar.read";
     private static final String T_POST = "syndie.gui.desktop.CommandBar.post";
     private static final String T_SWITCH = "syndie.gui.desktop.CommandBar.switch";
 }

@@ -129,6 +129,8 @@ public class NymChannelTree implements Themeable, Translatable {
         _themeRegistry.register(this);
     }
 
+    public boolean isShowingRefs() { return _bookmarksSource == _currentSource; }
+    
     public void forceFocus() { _tree.forceFocus(); }
     
     public void dispose() {
@@ -327,15 +329,28 @@ public class NymChannelTree implements Themeable, Translatable {
     public void showNymChannels() {
         if (_nymChannelsSource == null)
             _nymChannelsSource = new NymChannelSource(_client, _translationRegistry);
-        setChannelSource(_nymChannelsSource);
-        recalcTree(_unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+        if (_currentSource != _nymChannelsSource) {
+            setChannelSource(_nymChannelsSource);
+            recalcTree(_unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+        }
     }
     
     public void showBookmarks() {
         if (_bookmarksSource == null)
             _bookmarksSource = new BookmarksChannelSource(_client, _translationRegistry);
-        setChannelSource(_bookmarksSource);
-        recalcTree(_unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+        if (_currentSource != _bookmarksSource) {
+            setChannelSource(_bookmarksSource);
+            recalcTree(_unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+        }
+    }
+    
+    public void bookmarksUpdated() { 
+        if (_bookmarksSource != null)
+            ((BookmarksChannelSource)_bookmarksSource).clearSource();
+    }
+    public void nymChannelsUpdated() { 
+        if (_nymChannelsSource != null)
+            ((NymChannelSource)_nymChannelsSource).clearSource();
     }
     
     private void initBottom() {

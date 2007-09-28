@@ -30,6 +30,8 @@ public class BookmarksChannelSource implements NymChannelTree.ChannelSource {
 
         _refNodes.addAll(_client.getNymReferences(_client.getLoggedInNymId()));
     }
+    
+    public void clearSource() { _refNodes.clear(); }
 
     public boolean isWatched(long chanId) { return false; }
     public boolean isDeletable(long chanId) { return true; }

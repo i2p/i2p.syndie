@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.data.WatchedChannel;
@@ -39,51 +40,62 @@ import syndie.gui.Translatable;
 import syndie.gui.TranslationRegistry;
 
 /**
- * desktop edge containing the watched forums, bookmarked references, and the
- * active panel list
+ * left edge serving as a drag and drop target to bookmark/watch forums/resources as
+ * well as to access the forum selection panel
  */
 public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
     private Desktop _desktop;
-    private Button _favorites;
+    private Button _specialChannels;
+    private Button _bookmarks;
     
     public LinkEdge(Composite parent, UI ui, Desktop desktop) {
         super(parent, ui);
         _desktop = desktop;
         initComponents();
     }
-    
+
     private void initComponents() {
         Composite root = getEdgeRoot();
         root.setLayout(new FillLayout(SWT.VERTICAL));
-        _favorites = new Button(root, SWT.PUSH);
-        _favorites.addPaintListener(new PaintListener() {
+        _specialChannels = new Button(root, SWT.PUSH);
+        _specialChannels.addPaintListener(new PaintListener() {
             public void paintControl(PaintEvent evt) {
                 if ( (_desktop.getThemeRegistry() == null) || (_desktop.getTranslationRegistry() == null) )
                     return;
-                ImageUtil.drawAscending(evt.gc, _favorites, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_FAVORITES, "Favorites"));
+                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_SPECIALCHANNELS, "Special forums"));
             }
         });
             
-        //_favorites.setBackground(ColorUtil.getColor("yellow"));
-        _favorites.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(); } }); 
-        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _favorites, new BookmarkDnDHelper.WatchTarget() { 
+        _specialChannels.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(false, true); } }); 
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _specialChannels, new BookmarkDnDHelper.WatchTarget() { 
             public void dropped(SyndieURI uri, String name, String desc) {
                 _desktop.getDBClient().watchChannel(uri.getScope(), true, true, false, false, false);
+                _desktop.nymChannelsUpdated();
             }
         });
-        
-        /*
-        _refs = new Button(root, SWT.PUSH);
-        _refs.setText(" ");
-        _refs.setBackground(ColorUtil.getColor("yellow"));
-        _refs.setForeground(ColorUtil.getColor("yellow"));
-        _refs.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.showForumSelectionPanel(true); } }); 
-        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _refs, new BookmarkDnDHelper.WatchTarget() { 
+
+        _bookmarks = new Button(root, SWT.PUSH);
+        _bookmarks.addPaintListener(new PaintListener() {
+            public void paintControl(PaintEvent evt) {
+                if ( (_desktop.getThemeRegistry() == null) || (_desktop.getTranslationRegistry() == null) )
+                    return;
+                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_REFS, "Bookmarks"));
+            }
+        });
+            
+        _bookmarks.addSelectionListener(new FireSelectionListener() { public void fire() { _desktop.toggleForumSelectionPanel(true, true); } }); 
+        BookmarkDnDHelper.initBookmarkDnDTarget(_ui, _bookmarks, new BookmarkDnDHelper.WatchTarget() { 
             public void dropped(SyndieURI uri, String name, String desc) {
-                _desktop.getBookmarkControl().bookmark(uri);
+                if (uri == null) 
+                    return;
+                if (name == null) name = uri.toString();
+                if (desc == null) desc = "";
+                NymReferenceNode node = new NymReferenceNode(name, uri, desc, -1, -1, -1, 0, false, false, false);
+                _ui.debugMessage("bookmarking the node: " + node);
+                _desktop.getBookmarkControl().bookmark(node, true);
+                _desktop.bookmarksUpdated();
             }
         });
-         */
     }
     
     public void startupComplete() {
@@ -92,10 +104,14 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
     }
     
     public void applyTheme(Theme theme) {
-        _favorites.redraw();
+        _specialChannels.redraw();
+        _bookmarks.redraw();
     }
     public void translate(TranslationRegistry registry) {
-        _favorites.redraw();
+        _specialChannels.redraw();
+        _bookmarks.redraw();
     }
-    private static final String T_FAVORITES = "syndie.gui.desktop.linkedge.favorites";
+    
+    private static final String T_SPECIALCHANNELS = "syndie.gui.linkedge.specialchannels";
+    private static final String T_REFS = "syndie.gui.linkedge.refs";
 }

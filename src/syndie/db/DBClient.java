@@ -19,6 +19,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
+import net.i2p.util.SimpleTimer;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.BugConfig;
@@ -38,8 +39,8 @@ import syndie.data.WatchedChannel;
 public class DBClient {
     private static final Class[] _gcjKludge = new Class[] { 
         org.hsqldb.jdbcDriver.class
-        , org.hsqldb.GCJKludge.class
-        , org.hsqldb.persist.GCJKludge.class
+        //, org.hsqldb.GCJKludge.class
+        //, org.hsqldb.persist.GCJKludge.class
     };
     private I2PAppContext _context;
     private UI _ui;
@@ -69,6 +70,8 @@ public class DBClient {
     private String _freenetPublicKey;
     
     private int _numNymKeysWithoutPass;
+    
+    private ExpireEvent _expireEvent;
         
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
@@ -188,8 +191,26 @@ public class DBClient {
         if (!ok) {
             log("db connection successfull, but we can't access the nym keys, so discon");
             disconnect();
+        } else {
+            if (_expireEvent == null) {
+                long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
+                _expireEvent = new ExpireEvent();
+                SimpleTimer.getInstance().addEvent(_expireEvent, delay);
+            }
         }
     }
+    
+    private class ExpireEvent implements SimpleTimer.TimedEvent {
+        public void timeReached() {
+            _ui.debugMessage("running periodic expiration");
+            Expirer expirer = new Expirer(DBClient.this, _ui);
+            expirer.expireMessages();
+            _ui.debugMessage("periodic expiration complete");
+            long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
+            SimpleTimer.getInstance().reschedule(ExpireEvent.this, delay);
+        }
+    }
+    
     public long connect(String url, String login, String passphrase) throws SQLException {
         _login = login;
         _pass = passphrase;
@@ -221,6 +242,7 @@ public class DBClient {
         }
     }
     public void disconnect() {
+        clearNymChannelCache();
         try {
             if ( (_con != null) && (!_con.isClosed()) ) {
                 _con.close();
@@ -230,6 +252,8 @@ public class DBClient {
             log("Error disconnecting", se);
             _con = null;
         }
+        if (_expireEvent != null)
+            SimpleTimer.getInstance().removeEvent(_expireEvent);
     }
     I2PAppContext ctx() { return _context; }
     public Connection con() { return _con; }

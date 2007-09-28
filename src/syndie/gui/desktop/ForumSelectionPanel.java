@@ -104,12 +104,22 @@ public class ForumSelectionPanel extends DesktopPanel {
         forceFocus();
     }
     public void preferRefs(boolean preferRefs) { _preferRefs = preferRefs; }
+    public boolean isShowingRefs() { return _channels.isShowingRefs(); }
+    
+    void bookmarksUpdated() { _channels.bookmarksUpdated(); }
+    void nymChannelsUpdated() { _channels.nymChannelsUpdated(); }
     
     public void forceFocus() { _channels.forceFocus(); }
     
     public void shown(Desktop desktop, SyndieURI uri, String suggestedName, String suggestedDescription) {
         _desktop = desktop;
         _prevWasManageable = false;
+        
+        if (_preferRefs)
+            _channels.showBookmarks();
+        else
+            _channels.showNymChannels();
+        
         super.shown(desktop, uri, suggestedName, suggestedDescription);
     }
     public void hidden(Desktop desktop) {}
@@ -127,9 +137,9 @@ public class ForumSelectionPanel extends DesktopPanel {
     protected void buildNorth(Composite edge) { 
         if (_edgeNorth == null) _edgeNorth = new NorthEdge(edge, _ui); 
     }
-    protected void buildEast(Composite edge) { 
-        if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
-    }
+    //protected void buildEast(Composite edge) { 
+    //    if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
+    //}
 
     private static final String T_VIEWMATCHES = "syndie.gui.desktop.forumselectionpanel.viewmatches";
     private static final String T_ADDNYM = "syndie.gui.desktop.forumselectionpanel.addnym";
@@ -233,62 +243,6 @@ public class ForumSelectionPanel extends DesktopPanel {
         public void applyTheme(Theme theme) {
             _info.setFont(theme.SHELL_FONT);
             getEdgeRoot().layout(true, true);
-        }
-    }
-
-    private static final String T_SPECIALCHANNELS = "syndie.gui.forumselectionpanel.specialchannels";
-    private static final String T_REFS = "syndie.gui.forumselectionpanel.refs";
-    
-    class EastEdge extends DesktopEdge implements Themeable, Translatable {
-        private Button _specialChannels;
-        private Button _bookmarks;
-        
-        public EastEdge(Composite edge, UI ui) {
-            super(edge, ui);
-            initComponents();
-        }
-        private void initComponents() {
-            Composite root = getEdgeRoot();
-            root.setLayout(new FillLayout(SWT.VERTICAL));
-        
-            _specialChannels = new Button(root, SWT.PUSH);
-            _specialChannels.addSelectionListener(new FireSelectionListener() { 
-                public void fire() { _channels.showNymChannels(); } 
-            });
-            _specialChannels.addPaintListener(new PaintListener() {
-                public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _specialChannels, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_SPECIALCHANNELS, "Special forums"));
-                }
-            });
-
-            _bookmarks = new Button(root, SWT.PUSH);
-            _bookmarks.addSelectionListener(new FireSelectionListener() {
-                public void fire() { _channels.showBookmarks(); } 
-            });
-            _bookmarks.addPaintListener(new PaintListener() {
-                public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _bookmarks, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_REFS, "Bookmarks"));
-                }
-            });
-
-            //Color color = ColorUtil.getColor("yellow");
-            //_watched.setBackground(color);
-            //_refs.setBackground(color);
-            //_ident.setBackground(color);
-            //_manageable.setBackground(color);
-            //_postable.setBackground(color);
-            
-            _translationRegistry.register(EastEdge.this);
-            _themeRegistry.register(EastEdge.this);
-        }
-        public void translate(TranslationRegistry trans) {
-            _specialChannels.redraw();
-            _bookmarks.redraw();
-        }
-        
-        public void applyTheme(Theme theme) { 
-            _specialChannels.redraw();
-            _bookmarks.redraw();
         }
     }
 }

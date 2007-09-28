@@ -61,7 +61,7 @@ public class BookmarkDnDHelper {
                     BookmarkDnD bookmark = new BookmarkDnD();
                     bookmark.fromString(evt.data.toString());
                     if (bookmark.uri != null) { // parsed fine
-                        ui.debugMessage("dnd target drop: ok!");
+                        ui.debugMessage("dnd target drop: ok!  uri is " + bookmark.uri + " / " + bookmark.name + " / " + bookmark.desc);
                         onDrop.dropped(bookmark.uri, bookmark.name, bookmark.desc);
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
