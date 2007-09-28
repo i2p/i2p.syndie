@@ -181,67 +181,88 @@ public class Opts {
     }
     
     public static void main(String args[]) {
+        System.out.println("Starting tests");
         System.out.println(splitLine(" hi how are you?").toString());
         System.out.println(splitLine("I am fine, thanks! ").toString());
         System.out.println(splitLine("What you \"up to\" g?").toString());
         System.out.println(splitLine("\"y\'all had best answer\" me").toString());
         System.out.println(splitLine("a \"\" val \"\""));
-        // note: fails to parse this correctly (includes '\"you' and '\"best answer\"' as tokens, rather than stripping the '\')
         System.out.println(splitLine("\\\"you 'all had' \\\"best answer\\\" me").toString());
     }
     /**
      * split up the line into tokens, removing intertoken whitespace, grouping
-     * quoted tokens, etc.  does not currently honor \ before a quote properly (it
-     * leaves the \ before a " or ' in)
-     */
+     * quoted tokens, etc. 
+     *
+     * Works as an iterating state machine
+     * */
     private static List splitLine(String line) {
         List rv = new ArrayList();
         if (line == null) return rv;
         char l[] = line.toCharArray();
-        int tokenStart = 0;
-        int cur = tokenStart;
-        int curQuote = -1;
+
+        StringBuffer token = new StringBuffer();
+        char quoteChar = 'Q';
+        int cur = 0;
+
+    	//0 = eat blank, 1 = parse word, 2 = parse quote
+        int state = 0;
+
         while (cur < l.length) {
-            while ( (curQuote == -1) && (cur < l.length) && (isBlank(l[cur])) ) {
-                if (tokenStart != -1) {
-                    if (cur - tokenStart > 0)
-                        rv.add(new String(l, tokenStart, cur-tokenStart));
-                    else if (cur - tokenStart == 0)
-                        rv.add("");
-                }
-                curQuote = -1;
-                tokenStart = -1;
-                cur++;
+            if (l[cur]=='\\') {
+                ++cur;
+                // need goto
+                token.append(l[cur]);
+                ++cur;
+                continue;
             }
-            if (cur >= l.length)
-                break;
-            if (tokenStart == -1)
-                tokenStart = cur;
-            if (isQuote(l[cur]) && ( (cur == 0) || (l[cur-1] != '\\') ) ) {
-                if (curQuote == l[cur]) { // end of the quoted token
-                    if (cur - tokenStart > 0)
-                        rv.add(new String(l, tokenStart, cur-tokenStart));
-                    else if (cur - tokenStart == 0)
-                        rv.add("");
-                    curQuote = -1;
-                    tokenStart = -1;
-                    cur++;
-                } else if (curQuote != -1) { // different quote within the token (eg "hi y'all")
-                    cur++;
-                } else { // quoted token begin
-                    curQuote = l[cur];
-                    tokenStart++;
-                    cur++;
-                }
-            } else {
-                cur++;
+
+       	    switch(state) {
+	            case 0:
+                    if (!isBlank(l[cur])) {
+                        if (isQuote(l[cur])) {
+                            quoteChar = l[cur];
+                            state = 2;
+                            //Do not include the quote character:
+                            ++cur;
+                            continue;
+                        } else {
+                            state = 1;
+                            //Do include the non-blank word character:
+                            break;
+                        }
+                   }
+                   ++cur;
+                   continue;
+                case 1:
+                    if (isBlank(l[cur])) {
+                        state = 0;
+                        rv.add(token.toString());
+                        token = new StringBuffer();
+                        //Can ignore the trailing blank
+                        ++cur;
+                        continue;
+                    }
+                    break;
+                case 2:
+                    if (quoteChar == l[cur]) {
+                        /* See the closing quote character hasn't been
+                         * added either yet */
+                        state = 0;
+                        rv.add(token.toString());
+                        token = new StringBuffer();
+                        ++cur;
+                        continue;
+                    }
+                    break;
             }
+            
+            token.append(l[cur]);
+            ++cur;
         }
-        if (tokenStart != -1)
-            rv.add(new String(l, tokenStart, cur-tokenStart));
-        
+
         return rv;
     }
+
     private static boolean isBlank(char c) {
         switch (c) {
             case ' ':
