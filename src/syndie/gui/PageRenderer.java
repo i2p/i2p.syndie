@@ -1162,13 +1162,14 @@ public class PageRenderer extends BaseComponent implements Themeable {
             
             long targetId = _msg.getTargetChannelId();
             long authorId = _msg.getAuthorChannelId();
+            boolean isPM = _msg.getWasPrivate();
             if ( (targetId == authorId) || (authorId < 0) ) {
                 // author == target, so no need for a separate set of author commands
                 _bodyBanAuthor.setEnabled(false);
                 _bodyBookmarkAuthor.setEnabled(false);
                 _bodyViewAuthorForum.setEnabled(false);
                 _bodyViewAuthorMetadata.setEnabled(false);
-                _bodyReplyToForum.setEnabled(true);
+                _bodyReplyToForum.setEnabled(!isPM);
                 _bodyReplyToAuthor.setEnabled(true);
                 _bodyBanForum.setEnabled(true);
                 _bodyBookmarkForum.setEnabled(true);
@@ -1180,7 +1181,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 _bodyBookmarkAuthor.setEnabled(true);
                 _bodyViewAuthorForum.setEnabled(true);
                 _bodyViewAuthorMetadata.setEnabled(true);
-                _bodyReplyToForum.setEnabled(true);
+                _bodyReplyToForum.setEnabled(!isPM);
                 _bodyReplyToAuthor.setEnabled(true);
                 _bodyBanForum.setEnabled(true);
                 _bodyBookmarkForum.setEnabled(true);
@@ -1365,7 +1366,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
             public void menuShown(MenuEvent menuEvent) {
                 // if the user isn't authorized to post a reply to the forum, don't offer to let them
                 long msgId = _msg != null ? _msg.getInternalId() : -1;
-                if (MessagePreview.allowedToReply(_client, msgId))
+                if (_bodyReplyToForum.getEnabled() && MessagePreview.allowedToReply(_client, msgId))
                     _bodyReplyToForum.setEnabled(true);
                 else
                     _bodyReplyToForum.setEnabled(false);

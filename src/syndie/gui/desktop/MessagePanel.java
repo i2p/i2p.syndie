@@ -279,6 +279,33 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     private static final String T_REPLYTOADMINS = "syndie.gui.desktop.messagepanel.replytoadmins";
     private static final String T_MARK_READ = "syndie.gui.desktop.messagepanel.toggleread.markread";
     private static final String T_MARK_UNREAD = "syndie.gui.desktop.messagepanel.toggleread.markunread";
+
+    private void replyToForum() {
+        boolean isPM = _msg.getWasPrivate();
+        if (isPM)
+            replyPM();
+        else
+            _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), false));
+    }
+    private void replyToAuthor() {
+        boolean isPM = _msg.getWasPrivate();
+        if (isPM) {
+            replyPM();
+        } else {
+            Hash author = _client.getChannelHash(_msg.getAuthorChannelId());
+            _navControl.view(URIHelper.instance().createPostURI(author, _msg.getURI(), true));
+        }
+    }
+    private void replyToAdmins() {
+        boolean isPM = _msg.getWasPrivate();
+        if (isPM)
+            replyPM();
+        else
+            _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), true));
+    }
+    private void replyPM() {
+        _navControl.view(URIHelper.instance().createPostURI(_client.getChannelHash(_msg.getAuthorChannelId()), _msg.getURI(), true));
+    }
     
     class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _replyToForum;
@@ -296,24 +323,11 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             root.setLayout(new FillLayout(SWT.HORIZONTAL));
             
             _replyToForum = new Button(root, SWT.PUSH);
-            _replyToForum.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), false));
-                }
-            });
+            _replyToForum.addSelectionListener(new FireSelectionListener() { public void fire() { replyToForum(); } } );
             _replyToAuthor = new Button(root, SWT.PUSH);
-            _replyToAuthor.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    Hash author = _client.getChannelHash(_msg.getAuthorChannelId());
-                    _navControl.view(URIHelper.instance().createPostURI(author, _msg.getURI(), true));
-                }
-            });
+            _replyToAuthor.addSelectionListener(new FireSelectionListener() { public void fire() { replyToAuthor(); } } );
             _replyToAdmins = new Button(root, SWT.PUSH);
-            _replyToAuthor.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    _navControl.view(URIHelper.instance().createPostURI(_msg.getTargetChannel(), _msg.getURI(), true));
-                }
-            });
+            _replyToAuthor.addSelectionListener(new FireSelectionListener() { public void fire() { replyToAdmins(); } } );
             _toggleRead = new Button(root, SWT.PUSH);
             _toggleRead.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
@@ -336,8 +350,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         public void updateActions(SyndieURI uri, final long msgId, MessageInfo msg) {
             final long forumId = msg.getTargetChannelId();
             final long authorId = msg.getAuthorChannelId();
+            final boolean isPM = msg.getWasPrivate();
             _replyToForum.setEnabled(false);
-            _replyToAdmins.setEnabled(authorId != forumId);
+            _replyToAdmins.setEnabled(true); //authorId != forumId);
             JobRunner.instance().enqueue(new Runnable() { 
                 public void run() {              
                     DBClient.ChannelCollector chans = _client.getNymChannels();
@@ -359,6 +374,10 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                                     break;
                             }
                             _replyToForum.setEnabled(postable || pubReply);
+                            if (isPM) {
+                                _replyToAdmins.setEnabled(false);
+                                _replyToForum.setEnabled(false);
+                            }
                             
                             getEdgeRoot().layout(true, true);
                         }
