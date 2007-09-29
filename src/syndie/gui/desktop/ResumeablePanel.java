@@ -51,7 +51,7 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
     private void initComponents() {
         getRoot().setLayout(new FillLayout());
         
-        _existingTree = new Tree(getRoot(), SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
+        _existingTree = new Tree(getRoot(), SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.FULL_SELECTION);
         _existingTree.setHeaderVisible(true);
         _existingTree.setLinesVisible(true);
         

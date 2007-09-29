@@ -96,7 +96,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
             }
         });
         
-        _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+        _tree = new Tree(_root, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL | SWT.FULL_SELECTION);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _tree.setHeaderVisible(false);
         _tree.setLinesVisible(false);

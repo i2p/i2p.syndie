@@ -76,7 +76,7 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 3, 1));
 
-        final Tree tree = new Tree(shell, SWT.BORDER | SWT.SINGLE);
+        final Tree tree = new Tree(shell, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
         tree.setFont(_themeRegistry.getTheme().TREE_FONT);
         tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1));
         tree.setLinesVisible(true);
