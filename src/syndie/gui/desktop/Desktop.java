@@ -1196,17 +1196,23 @@ class Desktop {
     
     private class DesktopBookmark implements BookmarkControl {
         /** show a popup to bookmark the given uri in the user's set of bookmarked references */
-        public void bookmark(SyndieURI uri) { bookmark(uri, -1); }
+        public void bookmark(SyndieURI uri) { 
+            _ui.debugMessage("desktop.bookmark uri");
+            bookmark(uri, -1); 
+        }
         /** show a popup to bookmark the given uri in the user's set of bookmarked references */
         public void bookmark(SyndieURI uri, long parentGroupId) {
+            _ui.debugMessage("desktop.bookmark node");
             NymReferenceNode node = new NymReferenceNode("bookmark", uri, "", -1, -1, parentGroupId, -1, false, false, false);
             bookmark(node, true);
         }
         /** just add the given bookmark.  the node's groupId, siblingOrder, and uriId will be populated */
         public void bookmark(NymReferenceNode node, boolean doneBookmarking) {
+            _ui.debugMessage("desktop.bookmark node/" + doneBookmarking);
             _client.addNymReference(_client.getLoggedInNymId(), node, true);
         }
         public void deleteBookmark(long bookmarkGroupId) {
+            _ui.debugMessage("desktop.deleteBookmark...");
             _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
         }
         public void deleteBookmarks(List bookmarkGroupIds) {

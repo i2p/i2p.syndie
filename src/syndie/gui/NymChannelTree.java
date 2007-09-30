@@ -84,6 +84,8 @@ public class NymChannelTree implements Themeable, Translatable {
     private BookmarkControl _bookmarkControl;
     
     private NymChannelTreeListener _listener;
+    
+    private NymChannelTreeDnD _dnd;
 
     public interface ChannelSource {
         public List getReferenceNodes();
@@ -125,6 +127,8 @@ public class NymChannelTree implements Themeable, Translatable {
 
         initComponents();
         
+        _dnd = new NymChannelTreeDnD(_client, _ui, _bookmarkControl, this);
+        
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
@@ -134,6 +138,7 @@ public class NymChannelTree implements Themeable, Translatable {
     public void forceFocus() { _tree.forceFocus(); }
     
     public void dispose() {
+        _dnd.disable();
         _themeRegistry.unregister(this);
         _translationRegistry.unregister(this);
         disposeItems();
@@ -240,6 +245,10 @@ public class NymChannelTree implements Themeable, Translatable {
                         Hash chan = _client.getChannelHash(chanId.longValue());
                         _listener.channelSelected(SyndieURI.createScope(chan));
                         //_navControl.view(SyndieURI.createScope(chan));
+                    } else {
+                        ReferenceNode node = (ReferenceNode)sel[0].getData("node");
+                        if ( (node != null) && (node.getURI() != null) )
+                            _listener.channelSelected(node.getURI());
                     }
                 }
             }
@@ -253,18 +262,18 @@ public class NymChannelTree implements Themeable, Translatable {
         _bottom.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         initBottom();
         
-        resizeCols();
+        resizeCols(true);
     }
     
-    private void resizeCols() {
+    private void resizeCols(boolean showChanCols) {
         //_colAvatar.setWidth(Constants.MAX_AVATAR_WIDTH + (_tree.getGridLineWidth()*2));
         int lineWidth = _tree.getGridLineWidth();
         int sz = _parent.getClientArea().width - 25;
         _ui.debugMessage("client width: " + sz + " line width: " + lineWidth);
         int avatarWidth = Constants.MAX_AVATAR_WIDTH + lineWidth*2;
-        int msgsWidth = 75 + lineWidth*2;
-        int lastPostWidth = 100 + lineWidth*2;
-        int attribWidth = 100 + lineWidth*2;
+        int msgsWidth = (showChanCols ? 75 + lineWidth*2 : 0);
+        int lastPostWidth = (showChanCols ? 100 + lineWidth*2 : 0);
+        int attribWidth = (showChanCols ? 100 + lineWidth*2 : 0);
         int nameWidth = (int)(.6 * (sz - (avatarWidth + msgsWidth + lastPostWidth + attribWidth + lineWidth*2)));
         int descWidth = sz - (avatarWidth + msgsWidth + lastPostWidth + attribWidth + nameWidth + lineWidth*2);
         _colAvatar.setWidth(avatarWidth);
@@ -345,10 +354,12 @@ public class NymChannelTree implements Themeable, Translatable {
     }
     
     public void bookmarksUpdated() { 
+        _sourceChanged = true;
         if (_bookmarksSource != null)
             ((BookmarksChannelSource)_bookmarksSource).clearSource();
     }
     public void nymChannelsUpdated() { 
+        _sourceChanged = true;
         if (_nymChannelsSource != null)
             ((NymChannelSource)_nymChannelsSource).clearSource();
     }
@@ -545,10 +556,27 @@ public class NymChannelTree implements Themeable, Translatable {
         if (src instanceof NymChannelSource)
             _nymChannelsSource = src;
         _sourceChanged = (src != _currentSource);
+        if (_sourceChanged && (src instanceof BookmarksChannelSource))
+            enableDnD();
+        else
+            disableDnD();
         _currentSource = src;
     }
     private ChannelSource getChannelSource() { return _currentSource; }
     
+    private void enableDnD() { _dnd.enable(); }
+    private void disableDnD() { _dnd.disable(); }
+    Tree getTree() { return _tree; }
+    ReferenceNode getNode(TreeItem item) { 
+        if (item != null) 
+            return (ReferenceNode)item.getData("node");
+        else
+            return null;
+    }
+    
+    void recalcTree() {
+        recalcTree(_unreadOnlySel.getSelection(), _privateOnlySel.getSelection()); 
+    }
     public void recalcTree(boolean unreadOnly, boolean privateOnly) {
         if (_sourceChanged || (unreadOnly != _unreadOnly) || (privateOnly != _privateOnly) ) {
             _unreadOnly = unreadOnly;
@@ -593,7 +621,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 t.addEvent("nodes fetched");
                 final Map chanIdToRecord = fetchRecords(src, nodes);
                 t.addEvent("records fetched");
-                _ui.debugMessage("loading data: source found " + nodes.size() + " nodes: " + src);
+                _ui.debugMessage("loading data: source found " + nodes.size() + "/" + chanIdToRecord.size() + " nodes: " + src);
                 
                 _root.getDisplay().asyncExec(new Runnable() {
                     public void run() {
@@ -602,7 +630,8 @@ public class NymChannelTree implements Themeable, Translatable {
                         for (int i = 0; i < nodes.size(); i++)
                             loadData(t, src, (ReferenceNode)nodes.get(i), chanIdToRecord, null);
                         t.addEvent("nodes loaded (" + nodes.size() + ")");
-                        resizeCols();
+                        boolean showChannelCols = (!(src instanceof BookmarksChannelSource));
+                        resizeCols(showChannelCols);
                         loading(false);
                         t.complete();
                     }
@@ -674,13 +703,36 @@ public class NymChannelTree implements Themeable, Translatable {
         if (nodes.size() == 0)
             return true;
         
+        if (src instanceof BookmarksChannelSource) {
+            for (Iterator iter = nodes.iterator(); iter.hasNext(); ) {
+                ReferenceNode node = (ReferenceNode)iter.next();
+                Record r = new Record();
+                // these two are overridden if there is a match
+                r.name = node.getName();
+                r.desc = node.getDescription();
+                r.deletable = node.getChildCount() <= 0;
+            }
+            return true;
+        }   
+        
         StringBuffer idsBuf = new StringBuffer();
         for (Iterator iter = nodes.iterator(); iter.hasNext(); ) {
             ReferenceNode node = (ReferenceNode)iter.next();
             Long id = new Long(node.getUniqueId());
-            if (chanIdToRecord.containsKey(id))
+            if (chanIdToRecord.containsKey(id)) {
+                _ui.debugMessage("chanIdToRecord already exists: " + id + ": " + node);
                 continue;
-            chanIdToRecord.put(id, new Record());
+            } else {
+                _ui.debugMessage("chanIdToRecord: building " + id);
+            }
+            
+            Record r = new Record();
+            // these two are overridden if there is a match
+            r.name = node.getName();
+            r.desc = node.getDescription();
+            
+            chanIdToRecord.put(id, r);
+            
             if (idsBuf.length() > 0)
                 idsBuf.append(", ");
             idsBuf.append(node.getUniqueId());
@@ -880,6 +932,7 @@ public class NymChannelTree implements Themeable, Translatable {
     }
     
     private TreeItem populateGroupItem(Timer t, ChannelSource src, ReferenceNode node, Map chanIdToRecord, TreeItem parent) {
+        _ui.debugMessage("populate group item: " + node.getUniqueId() + "/" + node.getURI() + ": " + node);
         TreeItem item = null;
         if (parent == null) {
             item = new TreeItem(_tree, SWT.NONE);
@@ -905,16 +958,48 @@ public class NymChannelTree implements Themeable, Translatable {
         SyndieURI uri = node.getURI();
         if (uri != null)
             item.setData("syndieURI", uri);
+        item.setData("node", node);
         
         item.setText(0, name);
-        item.setText(2, desc);
+        
+        item.setImage(1, getImage(uri));
+        
+        if ( (desc != null) && (desc.trim().length() > 0) )
+            item.setText(2, desc);
+        else if (uri != null)
+            item.setText(2, uri.toString());
         
         //t.addEvent("group loaded: " + name);
         return item;
     }
     
+    private Image getImage(SyndieURI uri) {
+        if (uri == null)
+            return null;
+        if ( (uri.isChannel() || uri.isSearch()) && (uri.getMessageId() == null) ) {
+            Hash scope = uri.getScope();
+            if (scope == null) {
+                Hash scopes[] = uri.getSearchScopes();
+                if ( (scopes != null) && (scopes.length == 1) )
+                    scope = scopes[0];
+            }
+            long scopeId = -1;
+            if (scope != null)
+                scopeId = _client.getChannelId(scope);
+            if (scopeId >= 0) {
+                byte img[] = _client.getChannelAvatar(scopeId);
+                if (img != null)
+                    return ImageUtil.createImage(img);
+            }
+            // fall through for unknown channels/etc
+        }
+        
+        return ImageUtil.getTypeIcon(uri);
+    }
+    
     private TreeItem populateForumItem(Timer t, ChannelSource src, ReferenceNode node, Map chanIdToRecord, TreeItem parent) {
         Record r = (Record)chanIdToRecord.get(new Long(node.getUniqueId()));
+        _ui.debugMessage("populate forum item: " + node.getUniqueId() + "/" + node.getURI() + ": " + node);
         long chanId = r.channelId;
         boolean manageable = r.manageable;
         boolean postable = r.postable;
@@ -952,6 +1037,8 @@ public class NymChannelTree implements Themeable, Translatable {
         if (uri != null)
             item.setData("syndieURI", uri);
         
+        item.setData("node", node);
+        
         item.setText(0, r.name);
         
         byte avatar[] = r.avatarData;
@@ -959,9 +1046,16 @@ public class NymChannelTree implements Themeable, Translatable {
             Image img = ImageUtil.createImage(avatar);
             if (img != null)
                 item.setImage(1, img);
+            else
+                item.setImage(1, ImageUtil.getTypeIcon(uri));
+        } else {
+            item.setImage(1, ImageUtil.getTypeIcon(uri));
         }
         
-        item.setText(2, r.desc);
+        if ( (r.desc != null) && (r.desc.trim().length() > 0) )
+            item.setText(2, r.desc);
+        else if (uri != null)
+            item.setText(2, uri.toString());
         
         int total = r.totalMessages;
         

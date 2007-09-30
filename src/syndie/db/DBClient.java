@@ -4205,6 +4205,7 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, false, false, false);
+                _ui.debugMessage("fetch ref: " + groupId + "/" + parentGroupId + ": " + name + "/" + desc + ": " + uri);
                 groupIdToNode.put(new Long(groupId), ref);
             }
         } catch (SQLException se) {
@@ -4249,6 +4250,7 @@ public class DBClient {
         for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
             roots.add(iter.next());
         
+        _ui.debugMessage("fetched nym refs: " + roots);
         return roots;
     }
     
@@ -4384,8 +4386,14 @@ public class DBClient {
     public void addNymReference(long nymId, NymReferenceNode newValue) { addNymReference(nymId, newValue, true); }
     public void addNymReference(long nymId, NymReferenceNode newValue, boolean recurse) {
         ensureLoggedIn();
-        if (newValue == null) return;
-        if (!isNewNymReference(nymId, newValue)) return;
+        if (newValue == null) {
+            _ui.debugMessage("add nym ref: abort because it is null");
+            return;
+        }
+        if (!isNewNymReference(nymId, newValue)) {
+            _ui.debugMessage("add nym ref: abort because it isn't new: " + newValue);
+            return;
+        }
         addNymReferenceDetail(nymId, newValue);
         if (recurse) {
             for (int i = 0; i < newValue.getChildCount(); i++) {
@@ -4401,6 +4409,8 @@ public class DBClient {
     private static final String SQL_GET_MAX_SIBLING = "SELECT MAX(siblingOrder) FROM resourceGroup WHERE nymId = ? AND parentGroupId = ?";
     private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
         //createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
+        
+        _ui.debugMessage("add nym ref: adding detail... (id: " + newValue.getGroupId() + ")");
         
         long groupId = newValue.getGroupId();
         if (groupId < 0) {
