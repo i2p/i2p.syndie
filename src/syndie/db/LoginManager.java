@@ -102,6 +102,14 @@ public class LoginManager extends CommandImpl {
                     String val = aliases.getProperty(name);
                     client.addAlias(newId, name, val);
                 }
+                // Store the default author into nym preferences early on,
+                // preventing an NPE later (specifically: when we post our first message
+                // with default settings to our own forum).
+                long authorId = ((Long)client.getNymChannels().getIdentityChannelIds().get(0)).longValue();
+                Hash author = client.getChannelHash(authorId);
+                Properties prefs = client.getNymPrefs();
+                prefs.setProperty("editor.defaultAuthor", author.toBase64());
+                client.setNymPrefs(prefs);
             }
             client.getNymId(login, pass); // relogin to the orig login/pass (not the newly registered one)
             if (!ok)
