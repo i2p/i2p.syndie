@@ -746,7 +746,9 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         } else {
             _archive.setWhitelistGroupId(-1);
         }
-        
+
+        _archive.setNextSyncDelay(SYNC_DELAY[_nextSyncDelay.getSelectionIndex()]);
+
         if (store)
             _archive.store(true);
         return true;

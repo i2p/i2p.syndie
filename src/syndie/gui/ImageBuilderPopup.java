@@ -148,7 +148,7 @@ public class ImageBuilderPopup {
         });
         
         _choiceFileDialog = new FileDialog(_shell, SWT.OPEN | SWT.SINGLE);
-        _choiceFileDialog.setFilterExtensions(new String[] { "*.png; *.jpeg; *.jpg; *.gif; *.ico", "*.*" });
+        _choiceFileDialog.setFilterExtensions(new String[] { "*.png;*.jpeg;*.jpg;*.gif;*.ico", "*.*" });
         _choiceFileDialog.setFilterNames(new String[] { "Images", "All files" });
         
         new Label(_shell, SWT.SEPARATOR | SWT.HORIZONTAL).setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
