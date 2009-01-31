@@ -402,8 +402,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private MenuItem _advancedMarkReadOnPreview;
         private MenuItem _advancedPassphraseRequired;
         private ReferenceChooserPopup _forumChooser;
-        /** if > 0, the custom date being filtered */
-        private long _customDate;
+        private int _age; /* max age, in days, to display */
         private Hash _forumScopeOther[];
         private PreviewControlListener _listener;
         
@@ -413,30 +412,48 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _barURIControl = uriControl;
             _msgTree = msgTree;
             _filterRow = bar;
-            _customDate = -1;
+            _age = 7;
             _listener = lsnr;
             initBar();
         }
         private void initBar() {
             _filterLabel = new Label(_filterRow, SWT.NONE);
             _filterLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-
-            _filterAge = new Combo(_filterRow, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+            
+            _filterAge = new Combo(_filterRow, SWT.DROP_DOWN | SWT.BORDER);
             _filterAge.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-            _filterAge.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    int sel = _filterAge.getSelectionIndex();
-                    _ui.debugMessage("filter age selected: " + sel + " custom date: " + Constants.getDate(_customDate));
+            _filterAge.addSelectionListener(new SelectionListener() {
+                public void widgetSelected (SelectionEvent e) {
+                    switch (_filterAge.getSelectionIndex()) {
+                        case AGE_LASTMONTH: _age = 60; break;
+                        case AGE_THISMONTH: _age = 30; break;
+                        case AGE_LASTWEEK: _age = 14; break;
+                        case AGE_THISWEEK: _age = 7; break;
+                        case AGE_YESTERDAY: _age = 2; break;
+                        case AGE_TODAY: 
+                        default:
+                            _age = 1; 
+                            break;
+                    }
                     
-                    if (sel < AGE_CUSTOM)
-                        _msgTree.applyFilter();
-                    else if ( (_filterAge.getItemCount() == AGE_CUSTOM+1) || sel > AGE_CUSTOM)
-                        pickDate();
-                    else
-                        _msgTree.applyFilter(); // the (already chosen) custom date was selected
+                    _ui.debugMessage("filter age selected: " + _age + " custom date: " + Constants.getDate(System.currentTimeMillis()-(_age-1)*24l*60l*60l*1000l));
+                    
+                    _msgTree.applyFilter();
+                }
+                
+                public void widgetDefaultSelected (SelectionEvent e) {
+                    datePicked(_filterAge);
                 }
             });
-
+            _filterAge.addTraverseListener(new TraverseListener() {
+                public void keyTraversed(TraverseEvent e) {
+                    if (e.detail == SWT.TRAVERSE_RETURN) {
+                        e.doit = false;
+                        e.detail = SWT.TRAVERSE_NONE;
+                    }
+                }
+            });
+            populateAgeCombo();
             
             _filterKeywordLabel = new Label(_filterRow, SWT.NONE);
             _filterKeywordLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -615,84 +632,23 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final String T_CUSTOMDATE_ERR_TITLE = "syndie.gui.messagetree.customdate.err.title";
         private static final String T_CUSTOMDATE_ERR_PREFIX = "syndie.gui.messagetree.customdate.err.prefix";
         
-        public void pickDate() {
-            final Shell shell = new Shell(_filterRow.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-            shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
-            shell.setText(_translationRegistry.getText(T_CUSTOMDATE_SHELL, "Custom date"));
-            GridLayout gl = new GridLayout(4, false);
-            gl.horizontalSpacing = 0;
-            gl.marginHeight = 0;
-            gl.marginWidth = 0;
-            gl.verticalSpacing = 0;
-            shell.setLayout(gl);
-            
-            Label l = new Label(shell, SWT.NONE);
-            l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-            l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-            l.setText(_translationRegistry.getText(T_CUSTOMDATE_LABEL, "Only match posts on or after: "));
-            
-            final Text date = new Text(shell, SWT.SINGLE | SWT.BORDER);
-            date.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-            date.setTextLimit("YYYY/MM/DD".length()); // a bit verbose, 'eh?
-            date.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-            String preVal = null;
-            if (_customDate > 0)
-                preVal = Constants.getDate(_customDate);
-            else
-                preVal = Constants.getDate(System.currentTimeMillis() - 7*24*60*60*1000l);
-            date.setText(preVal);
-            date.addTraverseListener(new TraverseListener() {
-                public void keyTraversed(TraverseEvent evt) {
-                    if (evt.detail == SWT.TRAVERSE_RETURN)
-                        datePicked(shell, date);
-                }
-            });
-            
-            Button ok = new Button(shell, SWT.PUSH);
-            ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            ok.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-            ok.setText(_translationRegistry.getText(T_CUSTOMDATE_OK, "OK"));
-            ok.addSelectionListener(new FireSelectionListener() {
-                public void fire() { datePicked(shell, date); }
-            });
-            
-            Button cancel = new Button(shell, SWT.PUSH);
-            cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            cancel.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-            cancel.setText(_translationRegistry.getText(T_CUSTOMDATE_CANCEL, "Cancel"));
-            cancel.addSelectionListener(new FireSelectionListener() {
-                public void fire() {
-                    shell.dispose();
-                }
-            });
-            
-            shell.pack();
-            shell.open();
-            
-            /*
-            _customDate = 1; // erm, do a popup
-            String when = Constants.getDate(_customDate) + "...";
-            _filterAge.setItem(AGE_CUSTOM, when);
-            _filterAge.setText(when);
-            _filterAge.select(AGE_CUSTOM);
-            _msgTree.applyFilter();
-             */
-        }
-        
-        private void datePicked(final Shell shell, final Text date) {
+        private void datePicked(final Combo date) {
             String when = date.getText();
             try {
                 synchronized (_fmt) {
                     Date val = _fmt.parse(when);
-                    _customDate = val.getTime();
-                    String reparsed = Constants.getDate(_customDate);
-                    shell.dispose();
-                    populateAgeCombo();
+                    long customDate = val.getTime();
+                    
+                    // calculate age in days from customDate
+                    long diff = System.currentTimeMillis() - customDate;
+                    _age = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
+                    
+                    String reparsed = Constants.getDate(customDate);
                     _msgTree.applyFilter();
-                    String afterApply = Constants.getDate(_customDate);
+                    String afterApply = Constants.getDate(customDate);
                 }
             } catch (ParseException pe) {
-                MessageBox box = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
+                MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
                 box.setText(_translationRegistry.getText(T_CUSTOMDATE_ERR_TITLE, "Bad date"));
                 box.setMessage(_translationRegistry.getText(T_CUSTOMDATE_ERR_PREFIX, "There was an error with your date (please format as yyyy/mm/dd): ") + pe.getMessage());
                 box.open();
@@ -709,20 +665,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 if (days == null)
                     days = uri.getLong("agelocal");
             }
-            if (days != null) {
-                switch (days.intValue()) {
-                    case 60: _filterAge.select(AGE_LASTMONTH); break;
-                    case 30: _filterAge.select(AGE_THISMONTH); break;
-                    case 14: _filterAge.select(AGE_LASTWEEK); break;
-                    case 7: _filterAge.select(AGE_THISWEEK); break;
-                    case 2: _filterAge.select(AGE_YESTERDAY); break;
-                    case 1: _filterAge.select(AGE_TODAY); break;
-                    default: 
-                        _filterAge.setItem(AGE_CUSTOM, Constants.getDate(System.currentTimeMillis()-(days.longValue()-1)*24l*60l*60l*1000l));
-                        _filterAge.select(AGE_CUSTOM);
-                        break;
-                }
-            }
+            if (days != null)
+                _filterAge.setText(Constants.getDate(System.currentTimeMillis()-(days.longValue()-1)*24l*60l*60l*1000l));
             String tags[] = null;
             if (uri != null)
                 tags = uri.getStringArray("tagrequire");
@@ -763,7 +707,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final int AGE_THISMONTH = 4;
         private static final int AGE_LASTMONTH = 5;
         private static final int AGE_CUSTOM = 6;
-        private static final int AGE_DEFAULT = AGE_THISWEEK;
 
         private static final String T_AGE_TODAY = "syndie.gui.messagetree.age.today";
         private static final String T_AGE_YESTERDAY = "syndie.gui.messagetree.age.yesterday";
@@ -772,30 +715,20 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final String T_AGE_THISMONTH = "syndie.gui.messagetree.age.thismonth";
         private static final String T_AGE_LASTMONTH = "syndie.gui.messagetree.age.lastmonth";
         private static final String T_AGE_CUSTOM = "syndie.gui.messagetree.age.custom";
-
+        
         private void populateAgeCombo() {
-            int selected = AGE_DEFAULT;
-            if (_filterAge.getItemCount() > 0)
-                selected = _filterAge.getSelectionIndex();
-            _filterAge.setRedraw(false);
-            _filterAge.removeAll();
-            _filterAge.add(_translationRegistry.getText(T_AGE_TODAY, "Today"));
-            _filterAge.add(_translationRegistry.getText(T_AGE_YESTERDAY, "Since yesterday"));
-            _filterAge.add(_translationRegistry.getText(T_AGE_THISWEEK, "This week"));
-            _filterAge.add(_translationRegistry.getText(T_AGE_LASTWEEK, "Since last week"));
-            _filterAge.add(_translationRegistry.getText(T_AGE_THISMONTH, "This month"));
-            _filterAge.add(_translationRegistry.getText(T_AGE_LASTMONTH, "Since last month"));
-            if (_customDate > 0) {
-                String str = Constants.getDate(_customDate);
-                _ui.debugMessage("adding filter age for custom date: " + str);
-                _filterAge.add(str);
-            }
-            //else
-            _filterAge.add(_translationRegistry.getText(T_AGE_CUSTOM, "Custom date..."));
-            _filterAge.select(selected);
-            _filterAge.setRedraw(true);
+            String [] items = {
+                _translationRegistry.getText(T_AGE_TODAY, "Today"),
+                _translationRegistry.getText(T_AGE_YESTERDAY, "Since yesterday"),
+                _translationRegistry.getText(T_AGE_THISWEEK, "This week"),
+                _translationRegistry.getText(T_AGE_LASTWEEK, "Since last week"),
+                _translationRegistry.getText(T_AGE_THISMONTH, "This month"),
+                _translationRegistry.getText(T_AGE_LASTMONTH, "Since last month")
+            };
+            
+            _filterAge.setItems(items);
         }
-
+        
         private static final String T_TAG_ALL = "syndie.gui.messagetree.tag.all";
 
         private void populateTagCombo() {
@@ -842,31 +775,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             
             //_ui.debugMessage("build filter w/ base attributes: " + attributes);
             
-            int days = 1;
-            switch (_filterAge.getSelectionIndex()) {
-                case AGE_CUSTOM+1:
-                case AGE_CUSTOM:
-                    if (_customDate > 0) {
-                        long diff = System.currentTimeMillis() - _customDate;
-                        days = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
-                    }
-                    break;
-                case AGE_LASTMONTH: days = 60; break;
-                case AGE_THISMONTH: days = 30; break;
-                case AGE_LASTWEEK: days = 14; break;
-                case AGE_THISWEEK: days = 7; break;
-                case AGE_YESTERDAY: days = 2; break;
-                case AGE_TODAY: 
-                default:
-                    days = 1; 
-                    break;
-            }
             if (!uri.getBoolean("keepdate", false)) {
                 if (_advancedDateImport.getSelection()) {
-                    attributes.put("agelocal", new Integer(days));
+                    attributes.put("agelocal", new Integer(_age));
                     attributes.remove("age");
                 } else {
-                    attributes.put("age", new Integer(days));
+                    attributes.put("age", new Integer(_age));
                     attributes.remove("agelocal");
                 }
             }
@@ -1242,43 +1156,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { replySelected(); }
             public void widgetSelected(SelectionEvent selectionEvent) { replySelected(); }
         });
-        new MenuItem(_menu, SWT.SEPARATOR);
-        _viewForum = new MenuItem(_menu, SWT.PUSH);
-        _viewForum.setImage(ImageUtil.ICON_FORUMMESSAGES);
-        _viewForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
-        });
-        _viewForumMeta = new MenuItem(_menu, SWT.PUSH);
-        _viewForumMeta.setImage(ImageUtil.ICON_FORUMPROFILE);
-        _viewForumMeta.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
-        });
-        _bookmarkForum = new MenuItem(_menu, SWT.PUSH);
-        _bookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
-        _bookmarkForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
-        });
-        new MenuItem(_menu, SWT.SEPARATOR);
-        _viewAuthor = new MenuItem(_menu, SWT.PUSH);
-        _viewAuthor.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
-        });
-        _viewAuthorMeta = new MenuItem(_menu, SWT.PUSH);
-        _viewAuthorMeta.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
-        });
-        _bookmarkAuthor = new MenuItem(_menu, SWT.PUSH);
-        _bookmarkAuthor.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
-        });
-        new MenuItem(_menu, SWT.SEPARATOR);
         
+        new MenuItem(_menu, SWT.SEPARATOR);
         _expandThread = new MenuItem(_menu, SWT.PUSH);
         _expandThread.setImage(ImageUtil.ICON_EXPAND);
         _expandThread.addSelectionListener(new FireSelectionListener() { public void fire() { expandThread(); } });
@@ -1308,6 +1187,43 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _markAllRead.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
             public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
+        });
+        
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _viewForum = new MenuItem(_menu, SWT.PUSH);
+        _viewForum.setImage(ImageUtil.ICON_FORUMMESSAGES);
+        _viewForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForum(); }
+        });
+        _viewForumMeta = new MenuItem(_menu, SWT.PUSH);
+        _viewForumMeta.setImage(ImageUtil.ICON_FORUMPROFILE);
+        _viewForumMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedForumMeta(); }
+        });
+        _bookmarkForum = new MenuItem(_menu, SWT.PUSH);
+        _bookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
+        _bookmarkForum.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedForum(); }
+        });
+        
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _viewAuthor = new MenuItem(_menu, SWT.PUSH);
+        _viewAuthor.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthor(); }
+        });
+        _viewAuthorMeta = new MenuItem(_menu, SWT.PUSH);
+        _viewAuthorMeta.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { viewSelectedAuthorMeta(); }
+        });
+        _bookmarkAuthor = new MenuItem(_menu, SWT.PUSH);
+        _bookmarkAuthor.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { bookmarkSelectedAuthor(); }
         });
         
         new MenuItem(_menu, SWT.SEPARATOR);

@@ -567,6 +567,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private void initMenu(Timer timer) {
+        Properties prefs = _client.getNymPrefs();
+        boolean showBookmarks = Boolean.valueOf(prefs.getProperty("browser.showBookmarks", "false")).booleanValue();
+        
         _mainMenu = new Menu(_shell, SWT.BAR);
         timer.addEvent("main menu constructed");
         
@@ -613,7 +616,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _viewMenu = new Menu(_viewMenuRoot);
         _viewMenuRoot.setMenu(_viewMenu);
         _viewMenuShow = new MenuItem(_viewMenu, SWT.CHECK);
-        _viewMenuShow.setSelection(false);
+        _viewMenuShow.setSelection(showBookmarks);
         _viewMenuShow.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _sash.setMaximizedControl(_viewMenuShow.getSelection() ? null : _tabs);

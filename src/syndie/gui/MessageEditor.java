@@ -49,6 +49,7 @@ import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -65,6 +66,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
@@ -260,7 +262,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors);
         public void forumSelected(Hash forum, long channelId, String summary, boolean isManaged);
         public void authorSelected(Hash author, long channelId, String summary);
-        public void attachmentsRebuilt(List attachmentData, List attachmentSummary);
     }
     
     public void dispose() {
@@ -490,6 +491,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private static final String T_POSTED_MESSAGE = "syndie.gui.messageeditor.post.message";
     private static final String T_POSTED_TITLE = "syndie.gui.messageeditor.post.title";
+    private static final String T_POSTED_OK = "syndie.gui.messageeditor.post.ok";
     private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
     private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
     
@@ -508,12 +510,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     if (successful) {
                         boolean ok = exec.importCreated(_client, _ui, uri, msg, replyIV, replySessionKey, getPassphrase());
                         if (ok) {
-                            dropSavedState();                    
+                            dropSavedState();
                             _dataCallback.messageImported();
-                            MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                            box.setMessage(_translationRegistry.getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
-                            box.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
-                            box.open();
+                            messageCreatedBox();
                             for (Iterator iter = _listeners.iterator(); iter.hasNext(); ) 
                                 ((LocalMessageCallback)iter.next()).messageCreated(uri);
                         } else {
@@ -530,7 +529,58 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     }
                     exec.cleanup();
                 }
-
+                
+                void messageCreatedBox() {
+                    Properties prefs = _client.getNymPrefs();
+                    if (prefs.getProperty("editor.showMessageCreatedBox") != "false") {
+                        final Shell shell = new Shell(_root.getShell(), SWT.PRIMARY_MODAL | SWT.DIALOG_TRIM);
+                        shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
+                        shell.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
+                        
+                        GridLayout gl = new GridLayout(2, false);
+                        shell.setLayout(gl);
+                        
+                        Label message = new Label(shell, SWT.WRAP);
+                        GridData messageLayoutData = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
+                        messageLayoutData.horizontalSpan = 2;
+                        messageLayoutData.heightHint = 75;
+                        message.setLayoutData(messageLayoutData);
+                        message.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+                        message.setText(_translationRegistry.getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+                        
+                        final Button checkbox = new Button(shell, SWT.CHECK);
+                        checkbox.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
+                        checkbox.setText("Display this message next time");
+                        checkbox.setSelection(true);
+                        
+                        Button ok = new Button(shell, SWT.PUSH);
+                        ok.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+                        ok.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+                        ok.setText(_translationRegistry.getText(T_POSTED_OK, "OK"));
+                        ok.addSelectionListener(new FireSelectionListener() {
+                            public void fire() {
+                                if (!checkbox.getSelection()) {
+                                    Properties prefs = _client.getNymPrefs();
+                                    prefs.setProperty("editor.showMessageCreatedBox", "false");
+                                    _client.setNymPrefs(prefs);
+                                }
+                                shell.dispose();
+                            }
+                        });
+                        
+                        
+                        shell.pack();
+                        
+                        Monitor monitor = _root.getDisplay().getPrimaryMonitor();
+                        Rectangle bounds = monitor.getBounds();
+                        Rectangle rect = shell.getBounds();
+                        int x = bounds.x + (bounds.width - rect.width) / 2;
+                        int y = bounds.y + (bounds.height - rect.height) / 2;
+                        shell.setLocation(x, y);
+                        
+                        shell.open();
+                    }
+                }
             };
         }
         
@@ -1849,19 +1899,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _authorChangeButton = new Button(authorGroup, SWT.PUSH);
         _authorChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _authorChangeButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new IdentityChannelSource());
-                popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
-                    public void referenceAccepted(SyndieURI uri) {
-                        popup.dispose();
-                        if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
-                            pickAuthor(uri.getScope());
-                    }
-                    public void referenceChoiceAborted() { popup.dispose(); }
-    
-                });
-                popup.open();
-            }
+            public void fire() { pickAuthor(); }
         });
 
         _signAsLabel = new Label(header, SWT.NONE);
@@ -1931,19 +1969,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toChangeButton = new Button(toGroup, SWT.PUSH);
         _toChangeButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _toChangeButton.addSelectionListener(new FireSelectionListener() {
-            public void fire() {
-                final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new ForumChannelSource());
-                popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
-                    public void referenceAccepted(SyndieURI uri) {
-                        popup.dispose();
-                        if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
-                            pickForum(uri.getScope());
-                    }
-                    public void referenceChoiceAborted() { popup.dispose(); }
-    
-                });
-                popup.open();
-            }
+            public void fire() { pickForum(); }
         });
         
         _subjectLabel = new Label(header, SWT.NONE);
@@ -2034,28 +2060,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void initToolbar() {
         if (!_buildToolbar) return;
-        _toolbar = new Composite(_root, SWT.NONE);
-        RowLayout rl = new RowLayout(SWT.HORIZONTAL);
-        rl.wrap = false;
-        rl.fill = true;
-        _toolbar.setLayout(rl);
-        _toolbar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        
-        _bar = new MessageEditorToolbar(this, _client, _bookmarkControl, _translationRegistry);
-        _bar.initForumControl(_toolbar);
-        _bar.initAuthorControl(_toolbar);
-        _bar.initPrivacyControl(_toolbar);
-        _bar.initPageAddControl(_toolbar);
-        _bar.initPageRemoveControl(_toolbar);
-        _bar.initWebRipControl(_toolbar);
-        _bar.initAttachImageControl(_toolbar);
-        _bar.initAttachControl(_toolbar);
-        _bar.initAttachRemoveControl(_toolbar);
-        _bar.initLinkControl(_toolbar);
-        _bar.initStyleControl(_toolbar);
-        _bar.initSpellControl(_toolbar);
-        _bar.initSearchControl(_toolbar);
-        _bar.initQuoteControl(_toolbar);
+        _bar = new MessageEditorToolbar(_root, this, _client, _bookmarkControl, _translationRegistry);
+        _bar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         addStatusListener(_bar);
     }
     
@@ -2085,8 +2091,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private void updateForum() {
-        if (_bar != null) _bar.clearForumMenu();
-        
         long forumId = -1;
         DBClient.ChannelCollector chans = _client.getNymChannels();
         
@@ -2096,6 +2100,19 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             forumId = ((Long)chans.getIdentityChannelIds().get(0)).longValue();
         
         redrawForumAvatar(_forum, forumId, getSummary(forumId), isManaged(forumId));
+    }
+    
+    public void pickForum() {
+        final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new ForumChannelSource());
+        popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+            public void referenceAccepted(SyndieURI uri) {
+                popup.dispose();
+                if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
+                    pickForum(uri.getScope());
+            }
+            public void referenceChoiceAborted() { popup.dispose(); }
+        });
+        popup.open();
     }
     
     private void pickForum(Hash forum) {
@@ -2205,7 +2222,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private void updateAuthor() {
-        if (_bar != null) _bar.clearAuthorMenu();
         boolean authorFound = false;
         
         long authorId = -1;
@@ -2218,6 +2234,20 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _ui.debugMessage("updateAuthor: " + _author);
 
         redrawAuthorAvatar(_author, authorId, getSummary(authorId));
+    }
+    
+    public void pickAuthor() {
+        final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new IdentityChannelSource());
+        popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
+            public void referenceAccepted(SyndieURI uri) {
+                popup.dispose();
+                if ( (uri != null) && (uri.isChannel()) && (uri.getScope() != null) )
+                    pickAuthor(uri.getScope());
+            }
+            public void referenceChoiceAborted() { popup.dispose(); }
+
+        });
+        popup.open();
     }
     
     private void pickAuthor(Hash author) {
@@ -2661,8 +2691,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _attachmentSummary.add(_translationRegistry.getText(T_ATTACHMENTS_NONE, "none"));
         }
         
-        for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).attachmentsRebuilt(_attachmentData, _attachmentSummary);
+/*        for (int i = 0; i < _editorStatusListeners.size(); i++)
+            ((EditorStatusListener)_editorStatusListeners.get(i)).attachmentsRebuilt(_attachmentData, _attachmentSummary);*/
     }
     
     private static final String T_ATTACHMENT_PREFIX = "syndie.gui.messageeditor.attachment.prefix";
