@@ -533,7 +533,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 void messageCreatedBox() {
                     Properties prefs = _client.getNymPrefs();
                     if (prefs.getProperty("editor.showMessageCreatedBox") != "false") {
-                        final Shell shell = new Shell(_root.getShell(), SWT.PRIMARY_MODAL | SWT.DIALOG_TRIM);
+                        final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
                         shell.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
                         
@@ -564,10 +564,19 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                                     prefs.setProperty("editor.showMessageCreatedBox", "false");
                                     _client.setNymPrefs(prefs);
                                 }
-                                shell.dispose();
+                                shell.close();
                             }
                         });
                         
+                        shell.addShellListener(new ShellListener() {
+                            public void shellActivated(ShellEvent e) {}
+                            public void shellClosed(ShellEvent e) {
+                                shell.dispose();
+                            }
+                            public void shellDeactivated(ShellEvent e) {}
+                            public void shellDeiconified(ShellEvent e) {}
+                            public void shellIconified(ShellEvent e) {}
+                        });
                         
                         shell.pack();
                         
