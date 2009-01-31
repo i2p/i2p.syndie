@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.i2p.I2PAppContext;
+import java.util.StringTokenizer;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.util.SimpleTimer;
@@ -421,6 +421,31 @@ public class SyncOutboundPusher {
         }
     }
     
+    /**
+     * Copied from net.i2p.util.EepGet.handleStatus
+     *
+     * parse the first status line and grab the response code.
+     * e.g. "HTTP/1.1 206 OK" vs "HTTP/1.1 200 OK" vs 
+     * "HTTP/1.1 404 NOT FOUND", etc.  
+     *
+     * @return HTTP response code (200, 206, other)
+     */
+    private int getHTTPResponseCode(String initialLine) {
+        if (initialLine == null) return -1;
+        StringTokenizer tok = new StringTokenizer(initialLine, " ");
+        if (!tok.hasMoreTokens())
+            return -1;
+        String protocol = tok.nextToken(); // ignored
+        if (!tok.hasMoreTokens())
+            return -1;
+        String rc = tok.nextToken();
+        try {
+            return Integer.parseInt(rc);
+        } catch (NumberFormatException nfe) {
+            return -1;
+        }
+    }
+    
     private String pushHTTP(SyncArchive archive, List uris) {
         String error = null;
         long len = 0;
@@ -512,8 +537,16 @@ public class SyncOutboundPusher {
             
             String line = DataHelper.readLine(s.getInputStream());
             _manager.getUI().debugMessage("result from http post: " + line);
-            if (line == null)
-                error = "post failed";
+            switch (getHTTPResponseCode(line)) {
+                case 200: // OK
+                    break;
+                case 403: // Not authorized
+                    error = "access denied (archive may not be accepting pushes)";
+                    break;
+                default: // invalid initial response line (code -1) or unrecognized code
+                    error = "post failed";
+                    break;
+            }
             out.close();
             s.close();
 

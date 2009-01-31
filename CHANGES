@@ -1,5 +1,22 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2008-02-04  1.101a-mf6 released (mosfet)
+    - added all known archives to default archive list and commented out all archives not known to be accessible
+    - ask for confirmation before posting an empty message
+    - added 'Schedule sync' to Syndicator context menu
+    - display last sync time of 'Fetch index' in Syndicator rather than scheduled time
+    - added support for serving arbitrary files from the HTTP server. If the directory 'dist'
+      exists in the instance root directory ($HOME/.syndie), any files within this directory
+      will be served from the path '/dist/$fileName'. The HTTP server scans this directory
+      for files to serve when it is started.
+    - browser: added configuration wizard to set up a new instance's default identity and syndicates
+    - browser: added Preview button to message editor
+    - browser: added 'Mark Read', 'Mark Thread Read', Refresh, 'Expand Thread' and 'Collapse Thread' buttons to MessageTree tab
+    - browser: added 'Sync Now' and 'Sync Now (one time only)' buttons to Syndicator tab
+    - browser: added 'Run on startup' option to 'Configure HTTP archive server' dialog
+    - browser: show Manage and Post buttons in MessageTree tab when you posses the private keys of the forum
+    - browser: revert 1.101a-an3 MessageTree message context menu reorder
+
 * 2008-01-21  1.101a-an5 released (Anonymous)
     - set version number appropriately in VERSION file
     - switch to browser as default UI

@@ -48,18 +48,21 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private Composite _parent;
     
     private Composite _root;
-    private Composite _actions;
+    private Composite _top;
     private Tree _tree;
     private TreeColumn _colName;
     private TreeColumn _colTime;
     private TreeColumn _colStatus;
     private TreeColumn _colSummary;
     private Menu _treeMenu;
+    private Composite _bottom;
     private Disposable _detail;
     
     private Button _add;
     private Button _cancel;
     private Button _delete;
+    private Button _syncRecurring;
+    private Button _syncOnce;
     
     private Map _archiveNameToRootItem;
     private Map _archiveNameToIndexItem;
@@ -124,14 +127,14 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         _root.setLayout(gl);
         
         if (_showActions) {
-            _actions = new Composite(_root, SWT.NONE);
-            _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-            _actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            _top = new Composite(_root, SWT.NONE);
+            _top.setLayout(new FillLayout(SWT.HORIZONTAL));
+            _top.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
             // actual action buttons...
-            _add = new Button(_actions, SWT.PUSH);
-            _cancel = new Button(_actions, SWT.PUSH);
-            _delete = new Button(_actions, SWT.PUSH);
+            _add = new Button(_top, SWT.PUSH);
+            _cancel = new Button(_top, SWT.PUSH);
+            _delete = new Button(_top, SWT.PUSH);
 
             _add.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { add(); }
@@ -185,6 +188,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent evt) { buildMenu(); }
         });
+        
+        if (_showActions) {
+            _bottom = new Composite(_root, SWT.NONE);
+            _bottom.setLayout(new FillLayout(SWT.HORIZONTAL));
+            _bottom.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+
+            _syncRecurring = new Button(_bottom, SWT.PUSH);
+            _syncRecurring.addSelectionListener(new FireSelectionListener() { public void fire(SelectionEvent selectionEvent) { syncNowRecurring(); } });
+            _syncOnce = new Button(_bottom, SWT.PUSH);
+            _syncOnce.addSelectionListener(new FireSelectionListener() { public void fire(SelectionEvent selectionEvent) { syncNowOneTime(); } });
+        }
         
         _translationRegistry.register(this);
         _themeRegistry.register(this);
@@ -312,92 +326,80 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         }
     }
     
+    private void setNextSyncTime(SyncArchive archive) {
+        archive.setNextSyncTime();
+        archive.store(true);
+    }
+    private void setNextSyncTime(SyncArchive archive, long when) {
+        archive.setNextSyncTime(when);
+        archive.store(true);
+    }
+    
     public void syncNowRecurring() {
         if (_tree.getSelectionCount() != 1) return;
         TreeItem item = _tree.getSelection()[0];
         Object val = _items.get(item);
-        if (val == null) return;
-        if (val instanceof SyncArchive) {
-            SyncArchive archive = (SyncArchive)val;
-            archive.setNextSyncOneOff(false);
-            archive.setNextSyncTime(System.currentTimeMillis());
-            archive.store(true);
-        }
+        if (val instanceof SyncArchive)
+            syncNowRecurring((SyncArchive) val);
+    }
+    private void syncNowRecurring(SyncArchive archive) {
+        archive.setNextSyncOneOff(false);
+        setNextSyncTime(archive, System.currentTimeMillis());
     }
     
     public void syncNowOneTime() {
         if (_tree.getSelectionCount() != 1) return;
         TreeItem item = _tree.getSelection()[0];
         Object val = _items.get(item);
-        if (val == null) return;
-        if (val instanceof SyncArchive) {
-            SyncArchive archive = (SyncArchive)val;
-            archive.setNextSyncOneOff(true);
-            archive.setNextSyncTime(System.currentTimeMillis());
-            archive.store(true);
-        }
+        if (val instanceof SyncArchive)
+            syncNowOneTime((SyncArchive) val);
+    }
+    private void syncNowOneTime(SyncArchive archive) {
+        archive.setNextSyncOneOff(true);
+        setNextSyncTime(archive, System.currentTimeMillis());
     }
     
     private void buildMenuArchive(final SyncArchive archive) {
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_ARCHIVE_CFG, "Settings..."));
         item.setImage(ImageUtil.ICON_SETTINGS);
-        item.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
+        item.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 viewDetailArchive(archive, true);
             }
         });
         
-
-        
         item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_SYNC_NOW, "Sync now (recurring)"));
         item.setImage(ImageUtil.ICON_SYNC);
-        item.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
-                archive.setNextSyncOneOff(false);
-                archive.setNextSyncTime(System.currentTimeMillis());
-                archive.store(true);
-            }
-        });
+        item.addSelectionListener(new FireSelectionListener() { public void fire() { syncNowRecurring(archive); } });
         
         item = new MenuItem(_treeMenu, SWT.PUSH);
         item.setText(_translationRegistry.getText(T_MENU_SYNC_ONEOFF, "Sync now (one time)"));
         item.setImage(ImageUtil.ICON_SYNC);
-        item.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
-                archive.setNextSyncOneOff(true);
-                archive.setNextSyncTime(System.currentTimeMillis());
-                archive.store(true);
-            }
-        });
+        item.addSelectionListener(new FireSelectionListener() { public void fire() { syncNowOneTime(archive); } });
         
-        if (archive.getNextSyncTime() > 0) {
-            item = new MenuItem(_treeMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText(T_MENU_SYNC_CANCEL, "Cancel next sync"));
+        item = new MenuItem(_treeMenu, SWT.PUSH);
+        if (syncRunning(archive)) {
+            item.setText(_translationRegistry.getText(T_MENU_SYNC_CANCEL, "Cancel sync"));
             item.setImage(ImageUtil.ICON_CANCEL);
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
-                    archive.stop(_translationRegistry.getText(T_CANCELLED, "Cancelled"));
-                }
-            });
+            item.addSelectionListener(new FireSelectionListener() { public void fire() { archive.stop(_translationRegistry.getText(T_CANCELLED, "Cancelled")); } });
+        } else if (archive.getNextSyncTime() > 0) {
+            item.setText(_translationRegistry.getText(T_MENU_SYNC_CANCEL_NEXT, "Cancel next sync"));
+            item.setImage(ImageUtil.ICON_CANCEL);
+            item.addSelectionListener(new FireSelectionListener() { public void fire() { setNextSyncTime(archive, -1); archiveUpdated(archive); } });
+        } else {
+            item.setText(_translationRegistry.getText(T_MENU_SYNC_SCHEDULE, "Schedule sync"));
+            item.setImage(ImageUtil.ICON_SYNC);
+            item.addSelectionListener(new FireSelectionListener() { public void fire() { setNextSyncTime(archive); archiveUpdated(archive); } });
         }
+        
         // only allow clear when there isn't a sync in progress
         if ( !syncRunning(archive) && ( (archive.getIncomingActionCount() > 0) || (archive.getOutgoingActionCount() > 0) ) ) {
             item = new MenuItem(_treeMenu, SWT.PUSH);
             item.setText(_translationRegistry.getText(T_MENU_CLEAR_ACTIONS, "Clear complete actions"));
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
+            item.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     archive.clearCompletedActions(true, true);
                 }
             });
@@ -407,6 +409,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private static final String T_MENU_SYNC_NOW = "syndie.gui.syndicator.menu.sync.now";
     private static final String T_MENU_SYNC_ONEOFF = "syndie.gui.syndicator.menu.sync.oneoff";
     private static final String T_MENU_SYNC_CANCEL = "syndie.gui.syndicator.menu.sync.cancel";
+    private static final String T_MENU_SYNC_CANCEL_NEXT = "syndie.gui.syndicator.menu.sync.cancelnext";
+    private static final String T_MENU_SYNC_SCHEDULE = "syndie.gui.syndicator.menu.sync.schedule";
     private static final String T_MENU_CLEAR_ACTIONS = "syndie.gui.syndicator.menu.clearactions";
     
     private void buildMenuIncoming(TreeItem item) {
@@ -611,11 +615,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         mgr.loadArchives();
         mgr.addListener(this);
-    
+        
         int cnt = mgr.getArchiveCount();
         _ui.debugMessage("archives loaded: " + cnt);
         if (cnt == 0) {
-            showArchiveDefaults();
+            //showArchiveDefaults();
         } else {
             for (int i = 0; i < cnt; i++) {
                 SyncArchive archive = mgr.getArchive(i);
@@ -657,21 +661,16 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             rootItem.setText(3, _translationRegistry.getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
-        } else if (nextTime < System.currentTimeMillis()) {
-            if (archive.getIndexFetchInProgress()) {
-                rootItem.setText(1, _translationRegistry.getText(T_WHEN_INDEXFETCHINPROGRESS, "Now"));
-                rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_INDEXFETCH, "Index fetch in progress"));
-            } else {
-                rootItem.setText(1, _translationRegistry.getText(T_WHEN_INDEXFETCHCOMPLETE, "Now"));
-                rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_EXECUTEPOLICY, "Syndicating"));
-            }
+        } else if (archive.getSyncInProgress()) {
+            rootItem.setText(1, _translationRegistry.getText(T_WHEN_INDEXFETCHCOMPLETE, "Now"));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+            rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_EXECUTEPOLICY, "Syndicating"));
         } else {
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_SCHEDULED, "Syndication scheduled"));
         }
-    
+        
         resizeCols(rootItem);
         
         loadDataIndex(archive, rootItem);
@@ -708,21 +707,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (archive.getIndexFetchInProgress()) {
             indexItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
             indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-            indexItem.setText(3, _translationRegistry.getText(T_SUMMARY_INDEXFETCH, "Index fetch in progress"));
-        } else {
-            if (nextTime > 0) // otherwise, keep the previous value
-                indexItem.setText(1, Constants.getDateTime(nextTime));
-
+            indexItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "In progress..."));
+        } else if (archive.getLastSyncTime() > 0) {
+            indexItem.setText(1, Constants.getDateTime(archive.getLastSyncTime()));
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 indexItem.setText(3, _translationRegistry.getText(T_INDEX_ERROR, "Fetch error: ") + archive.getLastIndexFetchErrorMsg());
-            } else if (!SyncManager.getInstance(_client, _ui).isOnline()) {
-                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
-                indexItem.setText(3, _translationRegistry.getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
-            } else if ( (nextTime > 0) /* && (nextTime <= System.currentTimeMillis()) */ && (!archive.getIndexFetchComplete()) && (!archive.getIndexFetchInProgress()) ) {
-                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
-                indexItem.setText(3, _translationRegistry.getText(T_INDEX_SCHEDULED, "Scheduled"));
-            } else { //( /*(nextTime > 0) && */ (nextTime <= System.currentTimeMillis()) && (archive.getIndexFetchComplete()) ) {
+            } else {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 indexItem.setText(3, _translationRegistry.getText(T_INDEX_COMPLETE, "Fetch complete"));
             }
@@ -834,8 +825,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             } else if (action.isExecuting()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "In progress..."));
             } else { // complete
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 actionItem.setText(3, _translationRegistry.getText(T_FETCH_OK, "Imported"));
             }
@@ -922,6 +914,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             } else if (action.isExecuting()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "In progress..."));
             } else if (action.getErrorMsg() != null) {
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
@@ -955,9 +948,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private static final String T_WHEN_INDEXFETCHINPROGRESS = "syndie.gui.syndicator.when.indexfetchinprogress";
     private static final String T_WHEN_INDEXFETCHCOMPLETE = "syndie.gui.syndicator.when.indexfetchcomplete";
     private static final String T_SUMMARY_NEVER = "syndie.gui.syndicator.summary.never";
-    private static final String T_SUMMARY_INDEXFETCH = "syndie.gui.syndicator.summary.indexfetch";
     private static final String T_SUMMARY_EXECUTEPOLICY = "syndie.gui.syndicator.summary.executepolicy";
     private static final String T_SUMMARY_SCHEDULED = "syndie.gui.syndicator.summary.scheduled";
+    private static final String T_SUMMARY_INPROGRESS = "syndie.gui.syndicator.summary.inprogress";
     
     private static final String T_FETCH_READKEYUNKNOWN = "syndie.gui.syndicator.fetch.readkeyunknown";
     private static final String T_FETCH_REPLYKEYUNKNOWN = "syndie.gui.syndicator.fetch.replykeyunknown";
@@ -989,6 +982,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private static final String T_ADD = "syndie.gui.syndicator.add";
     private static final String T_CANCEL = "syndie.gui.syndicator.cancel";
     private static final String T_DELETE = "syndie.gui.syndicator.delete";
+    private static final String T_SYNCRECURRING = "syndie.gui.syndicator.syncrecurring";
+    private static final String T_SYNCONCE = "syndie.gui.syndicator.synconce";
     
     private static final String T_DETAIL_HTTPARCHIVE = "syndie.gui.syndicator.detail.httparchive";
     
@@ -1006,7 +1001,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _cancel.setImage(ImageUtil.ICON_CANCELSYNDICATIONS);
             _delete.setText(registry.getText(T_DELETE, "Delete archive"));
             _delete.setImage(ImageUtil.ICON_DELETEARCHIVE);
-
+            
+            _syncRecurring.setText(registry.getText(T_SYNCRECURRING, "Sync Now"));
+            _syncRecurring.setImage(ImageUtil.ICON_SYNC);
+            _syncOnce.setText(registry.getText(T_SYNCONCE, "Sync Now (one time only)"));
+            _syncOnce.setImage(ImageUtil.ICON_SYNC);
         }
     }
     
@@ -1022,6 +1021,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _add.setFont(theme.BUTTON_FONT);
             _cancel.setFont(theme.BUTTON_FONT);
             _delete.setFont(theme.BUTTON_FONT);
+            _syncRecurring.setFont(theme.BUTTON_FONT);
+            _syncOnce.setFont(theme.BUTTON_FONT);
         }
     }
 

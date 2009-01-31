@@ -1,7 +1,5 @@
 package syndie.db;
 
-import gnu.crypto.hash.Sha256Standalone;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,10 +9,10 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import net.i2p.data.Base64;
@@ -22,7 +20,6 @@ import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
-import net.i2p.util.SimpleTimer;
 import net.i2p.util.SocketTimeout;
 import syndie.Constants;
 
@@ -46,6 +43,7 @@ public class HTTPServ implements CLI.Command {
     private int _curListeners;
     private static final int MAX_LISTENERS = 50;
     private static boolean _rebuilding;
+    private HashMap _sharedFiles;
     
     public HTTPServ() {
         if (isAlive()) return;
@@ -157,7 +155,30 @@ public class HTTPServ implements CLI.Command {
         return client;
     }
     
+    private void addSharedFile(String uri, File file) {
+        _ui.statusMessage("Serving file \"" + file.toString() + "\" from uri \"" + uri + "\" via HTTP");
+        _sharedFiles.put(uri, file);
+    }
+    private void buildSharedFiles() {
+        _sharedFiles = new HashMap();
+        
+        File archiveDir = _client.getArchiveDir();
+        File distDir = new File(_client.getRootDir(), "dist");
+        String sharedIndex = LocalArchiveManager.SHARED_INDEX_FILE;
+        
+        addSharedFile("/index.html", new File(archiveDir, "index.html"));
+        addSharedFile("/" + sharedIndex, new File(archiveDir, sharedIndex));
+        
+        if (distDir.isDirectory()) {
+            String [] dist = distDir.list();
+            for (int c = 0; c < dist.length; c++)
+                addSharedFile("/dist/" + dist[c], new File(distDir, dist[c]));
+        }
+    }
+    
     private boolean startup(int port) {
+        buildSharedFiles();
+        
         try {
             _ssocket = new ServerSocket(port);
             _alive = true;
@@ -312,21 +333,37 @@ public class HTTPServ implements CLI.Command {
     
     private void handle(Socket socket) throws IOException {
         _ui.debugMessage("handling a client");
+        String methodLine = null;
+
         SocketTimeout timeout = new SocketTimeout(socket, 60*1000);
         InputStream in = socket.getInputStream();
         OutputStream out = socket.getOutputStream();
-        String line = null;
-        line = DataHelper.readLine(in);
-        if (line == null) {
+        HashMap headers = new HashMap();
+        
+        methodLine = DataHelper.readLine(in);
+        if (methodLine == null) {
             fail(socket, in, out, timeout);
             return;
         }
         
+        // recv headers
+        for (int c = 0; c < 50; c++) { // sanity check, don't keep recving headers forever
+            String line = DataHelper.readLine(in);
+            if (line == null) {
+                fail(socket, in, out, timeout);
+                return;
+            } else if (line.trim().equals("")) // all headers recved
+                break;
+            
+            String [] header = line.split(":", 2);
+            headers.put(header[0].trim(), header[1].trim());
+        }
+        
         try {
-            if (line.startsWith("GET "))
-                handleGet(socket, in, out, getPath(line), timeout);
-            else if (line.startsWith("POST "))
-                handlePost(socket, in, out, timeout);
+            if (methodLine.startsWith("GET "))
+                handleGet(socket, in, out, timeout, getPath(methodLine), headers);
+            else if (methodLine.startsWith("POST "))
+                handlePost(socket, in, out, timeout, getPath(methodLine), headers);
             else
                 fail(socket, in, out, timeout);
         } catch (RuntimeException re) {
@@ -371,23 +408,18 @@ public class HTTPServ implements CLI.Command {
         if ( (idx < 0) || (idx + 1 >= path.length()) ) return null;
         return path.substring(idx+1);
     }
-    private void handleGet(Socket socket, InputStream in, OutputStream out, String path, SocketTimeout timeout) throws IOException {
-        if (path == null) path = "/index.html";
+    private void handleGet(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
+        if (path == null || path.equals("/"))
+            path = "/index.html";
         _ui.debugMessage("GET " + path);
-        String chan = getChannel(path);
-        if (chan == null) chan = "";
-        String sub = getChannelSub(path);
-        _ui.debugMessage("GET of [" + chan + "]  [" + sub + "]");
-        if ( (chan.length() <= 0) && (sub == null) )
-            sub = "index.html";
         
-        if ( (chan.length() <= 0) && (LocalArchiveManager.SHARED_INDEX_FILE.equals(sub)) ) {
-            send(socket, in, out, new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE), timeout);
-            return;
-        } else if ("index.html".equals(sub)) {
-            send(socket, in, out, new File(_client.getArchiveDir(), "index.html"), timeout);
-            return;
-        } else {
+        File file = (File) _sharedFiles.get(path);
+        if (file != null)
+            send(socket, in, out, file, timeout);
+        else {
+            String chan = getChannel(path);
+            String sub = getChannelSub(path);
+            _ui.debugMessage("GET of [" + chan + "]  [" + sub + "]");
             sendIfAllowed(chan, sub, socket, in, out, timeout);
         }
     }
@@ -513,62 +545,26 @@ public class HTTPServ implements CLI.Command {
     }
     
     private static void close(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
-        try {
-            long dieAfter = System.currentTimeMillis() + 30*1000;
-            if (!socket.isClosed()) {
-                if (timeout == null)
-                    socket.setSoTimeout(10*1000);
-                try {
-                    // we dont care what they send. just give them time to spew at us and then kill 'em
-                    while ( (in.read() != -1) && (System.currentTimeMillis() < dieAfter) ) {
-                        if (timeout != null)
-                            timeout.resetTimer();
-                    }
-                } catch (IOException ioe) {
-                    //_ui.debugMessage("closing socket, error on the read (good)");
-                }
-                in.close();
-                in = null;
-                out.close();
-                out = null;
-                socket.close();
-                socket = null;
-            }
-        } finally {
-            if (in != null) try { in.close(); } catch (IOException ioe) {}
-            if (out != null) try { in.close(); } catch (IOException ioe) {}
-            if (out != null) try { out.close(); } catch (IOException ioe) {}
-            if (socket != null) try { socket.close(); } catch (IOException ioe) {}
-            if (timeout != null) timeout.cancel();
-        }
+        if (in != null) try { in.close(); in = null; } catch (IOException ioe) {}
+        if (out != null) try { out.close(); out = null; } catch (IOException ioe) {}
+        if (socket != null) try { socket.close(); socket = null; } catch (IOException ioe) {}
+        if (timeout != null) { timeout.cancel(); timeout = null;}
     }
     
-    private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
+    private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
         if (!_allowPost) {
             fail403(socket, in, out, timeout);
             return;
         }
         _ui.debugMessage("handlePost");
-        StringBuffer buf = new StringBuffer();
-        long contentLength = -1;
-        long remaining = 0;
-        while (DataHelper.readLine(in, buf)) {
-            String str = buf.toString().trim();
-            buf.setLength(0);
-            _ui.debugMessage("handle post line: " + str);
-            if (str.length() == 0)
-                break; // end of the headers
-            if (str.startsWith("Content-length:")) {
-                try {
-                    contentLength = Long.parseLong(str.substring("content-length:".length()).trim());
-                } catch (NumberFormatException nfe) {
-                    fail(socket, in, out, timeout);
-                    return;
-                }
-            }
-        }
         
-        remaining = contentLength;
+        long remaining, contentLength;
+        try {
+            remaining = contentLength = Long.parseLong((String) headers.get("Content-length"));
+        } catch (NumberFormatException nfe) {
+            fail(socket, in, out, timeout);
+            return;
+        }
         
         File importDir = new File(_client.getTempDir(), System.currentTimeMillis() + "." + Thread.currentThread().hashCode() + ".imp");
         importDir.mkdirs();
@@ -681,9 +677,9 @@ public class HTTPServ implements CLI.Command {
         close(socket, in, out, timeout);
     }
     
-    private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n");
-    private static final byte[] ERR_404 = DataHelper.getUTF8("HTTP/1.0 404 File not found\r\nConnection: close\r\n");
-    private static final byte[] ERR_403 = DataHelper.getUTF8("HTTP/1.0 403 Not authorized\r\nConnection: close\r\n");
+    private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n\r\n<html><head><title>401 TOO BUSY</title></head><body><h1>401 TOO BUSY</h1></body></html>");
+    private static final byte[] ERR_404 = DataHelper.getUTF8("HTTP/1.0 404 File not found\r\nConnection: close\r\n\r\n<html><head><title>404 File not found</title></head><body><h1>404 File not found</h1></body></html>");
+    private static final byte[] ERR_403 = DataHelper.getUTF8("HTTP/1.0 403 Not authorized\r\nConnection: close\r\n\r\n<html><head><title>403 Not authorized</title></head><body><h1>403 Not authorized</h1></body></html>");
     
     private static final void tooBusy(Socket socket) throws IOException {
         SocketTimeout timeout = new SocketTimeout(socket, 20*1000);
@@ -691,5 +687,4 @@ public class HTTPServ implements CLI.Command {
         out.write(TOO_BUSY);
         close(socket, socket.getInputStream(), out, timeout);
     }
-
 }

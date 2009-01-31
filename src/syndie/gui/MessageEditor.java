@@ -132,6 +132,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private Text _abbrSubject;
     
     private CTabFolder _pageTabs;
+    private Button _preview;
     private Button _post;
     private Button _postpone;
     private Button _cancel;
@@ -491,11 +492,22 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private static final String T_POSTED_MESSAGE = "syndie.gui.messageeditor.post.message";
     private static final String T_POSTED_TITLE = "syndie.gui.messageeditor.post.title";
+    private static final String T_POSTED_CHECKBOX = "syndie.gui.messageeditor.post.checkbox";
     private static final String T_POSTED_OK = "syndie.gui.messageeditor.post.ok";
     private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
     private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
+    private static final String T_CONFIRM_EMPTY_TITLE = "syndie.gui.messageeditor.post.confirmempty.title";
+    private static final String T_CONFIRM_EMPTY_MESSAGE = "syndie.gui.messageeditor.post.confirmempty.message";
     
     public void postMessage() {
+        if (!isModifiedSinceOpen()) {
+            MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            confirm.setText(_translationRegistry.getText(T_CONFIRM_EMPTY_TITLE, "Post empty message?"));
+            confirm.setMessage(_translationRegistry.getText(T_CONFIRM_EMPTY_MESSAGE, "Do you really want to post this empty message?"));
+            
+            if (confirm.open() == SWT.NO)
+                return;
+        }
         if (!validateAuthorForum()) {
             showUnauthorizedWarning();
             return;
@@ -532,7 +544,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 
                 void messageCreatedBox() {
                     Properties prefs = _client.getNymPrefs();
-                    if (prefs.getProperty("editor.showMessageCreatedBox") != "false") {
+                    if (Boolean.valueOf(prefs.getProperty("editor.showMessageCreatedBox")).booleanValue()) {
                         final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
                         shell.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
@@ -550,7 +562,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                         
                         final Button checkbox = new Button(shell, SWT.CHECK);
                         checkbox.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                        checkbox.setText("Display this message next time");
+                        checkbox.setText(_translationRegistry.getText(T_POSTED_CHECKBOX, "Display this message next time"));
                         checkbox.setSelection(true);
                         
                         Button ok = new Button(shell, SWT.PUSH);
@@ -561,7 +573,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                             public void fire() {
                                 if (!checkbox.getSelection()) {
                                     Properties prefs = _client.getNymPrefs();
-                                    prefs.setProperty("editor.showMessageCreatedBox", "false");
+                                    prefs.setProperty("editor.showMessageCreatedBox", Boolean.FALSE.toString());
                                     _client.setNymPrefs(prefs);
                                 }
                                 shell.close();
@@ -570,9 +582,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                         
                         shell.addShellListener(new ShellListener() {
                             public void shellActivated(ShellEvent e) {}
-                            public void shellClosed(ShellEvent e) {
-                                shell.dispose();
-                            }
+                            public void shellClosed(ShellEvent e) { shell.dispose(); }
                             public void shellDeactivated(ShellEvent e) {}
                             public void shellDeiconified(ShellEvent e) {}
                             public void shellIconified(ShellEvent e) {}
@@ -1458,31 +1468,42 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
     }
     
+    private static final String T_PREVIEW = "syndie.gui.messageeditor.preview";
+    private static final String T_EDIT = "syndie.gui.messageeditor.edit";
+    private static final String T_POST = "syndie.gui.messageeditor.post";
+    private static final String T_POSTPONE = "syndie.gui.messageeditor.postpone";
+    private static final String T_CANCEL = "syndie.gui.messageeditor.cancel";
+    
     private void initFooter() {
         if (!_showActions) return;
         Composite c = new Composite(_root, SWT.NONE);
         c.setLayout(new FillLayout(SWT.HORIZONTAL));
         c.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
+        _preview = new Button(c, SWT.PUSH);
+        _preview.setEnabled(TYPE_HTML.equals(getDefaultPageType()));
+        _preview.addSelectionListener(new FireSelectionListener() {
+            public void fire(SelectionEvent selectionEvent) {
+                getPageEditor().toggleFullPreview();
+                updateToolbar();
+            }
+        });
         _post = new Button(c, SWT.PUSH);
-        _post.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { postMessage(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { postMessage(); }
+        _post.addSelectionListener(new FireSelectionListener() {
+            public void fire(SelectionEvent selectionEvent) { postMessage(); }
         });
         _postpone = new Button(c, SWT.PUSH);
-        _postpone.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { postponeMessage(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { postponeMessage(); }
+        _postpone.addSelectionListener(new FireSelectionListener() {
+            public void fire(SelectionEvent selectionEvent) { postponeMessage(); }
         });
         _cancel = new Button(c, SWT.PUSH);
-        _cancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelMessage(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { cancelMessage(); }
+        _cancel.addSelectionListener(new FireSelectionListener() {
+            public void fire(SelectionEvent selectionEvent) { cancelMessage(); }
         });
         
-        _post.setText("Post the message");
-        _postpone.setText("Save the message for later");
-        _cancel.setText("Cancel the message");
+        _post.setText(_translationRegistry.getText(T_POST, "Post the message"));
+        _postpone.setText(_translationRegistry.getText(T_POSTPONE, "Save the message for later"));
+        _cancel.setText(_translationRegistry.getText(T_CANCEL, "Cancel the message"));
     }
     
     public static final String TYPE_HTML = "text/html";
@@ -1493,18 +1514,18 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _client.setNymPrefs(prefs);
     }
     
-    public PageEditor addPage() {
+    private String getDefaultPageType() {
         Properties prefs = _client.getNymPrefs();
-        boolean html = true;
-        String pref = prefs.getProperty("editor.defaultFormat", TYPE_TEXT);
-        if (TYPE_HTML.equals(pref))
-            html = true;
+        String type = prefs.getProperty("editor.defaultFormat");
+        
+        if (TYPE_HTML.equals(type))
+            return TYPE_HTML;
         else
-            html = false;
-        if (html)
-            return addPage(TYPE_HTML);
-        else
-            return addPage(TYPE_TEXT);
+            return TYPE_TEXT;
+    }
+    
+    public PageEditor addPage() {
+        return addPage(getDefaultPageType());
     }
     private PageEditor addPage(String type) {
         saveState();
@@ -1552,18 +1573,20 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public void togglePageType() {
         int page = getCurrentPage();
         if (page >= 0) {
+            PageEditor ed = getPageEditor(page);
+            if (ed.isPreviewShowing()) ed.toggleFullPreview();
             String type = getPageType(page);
             if (TYPE_HTML.equals(type))
                 type = TYPE_TEXT;
             else
                 type = TYPE_HTML;
-            PageEditor ed = getPageEditor(page);
             ed.setContentType(type);
             _pageTypes.set(page, type);
             for (int i = 0; i < _editorStatusListeners.size(); i++)
                 ((EditorStatusListener)_editorStatusListeners.get(i)).pickPageTypeHTML(type.equals(TYPE_HTML));
             setDefaultPageType(type);
             updateToolbar();
+            modified();
         }
     }
     
@@ -1698,6 +1721,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
        
         for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
+        
+        _preview.setEnabled(isHTML);
+        if (isHTML && getPageEditor(page).isPreviewShowing())
+            _preview.setText(_translationRegistry.getText(T_EDIT, "Edit the message"));
+        else
+            _preview.setText(_translationRegistry.getText(T_PREVIEW, "Preview the message"));
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -1711,7 +1740,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _selectedPageBGColor = name;
         setBodyTags(_selectedPageBGImage);
     }
-    public void showImagePopup(boolean forBodyBackground) { 
+    public void showImagePopup(boolean forBodyBackground) {
         if (_imagePopup == null) {
             Properties prefs = _client.getNymPrefs();
             _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
@@ -1851,7 +1880,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             // ugly, yet it lets us delay long enough to show the tab (assuming an unauthorized reply)
             _root.getDisplay().timerExec(500, new Runnable() { public void run() { showUnauthorizedWarning(); } });
         }
-        _modifiedSinceOpen = false;
+        _modifiedSinceSave = false;
+        _modifiedSinceOpen = uri.getLong("postponeid") != null;
     }
     
     private void initPage() {
@@ -2460,6 +2490,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     // image popup stuff
     public void addAttachment() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
+        Properties prefs = _client.getNymPrefs();
+        dialog.setFilterPath(prefs.getProperty("editor.defaultAttachmentPath"));
         dialog.setText(_translationRegistry.getText(T_ADDATTACH, "Attach file"));
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
@@ -2474,6 +2506,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 addAttachment(cur);
             }
         }
+        prefs.setProperty("editor.defaultAttachmentPath", base);
+        _client.setNymPrefs(prefs);
     }
     private static final String T_ADDATTACH = "syndie.gui.messageeditor.addattach";
 
@@ -2714,7 +2748,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (editor != null)
             editor.insertAtCaret(html);
     }
-
+    
     public boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
     public SyndieURI getURI() {
         long prevVersion = _postponeVersion;

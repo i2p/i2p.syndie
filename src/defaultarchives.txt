@@ -12,24 +12,56 @@
 #  [archive.1.pushpolcy=SendNothing]
 #  archive.1.syncbydefault=true
 ##########################################
-archive.1.name=Standard archive (direct)
-archive.1.url=http://syndie.i2p.net:8080/
+#archive.1.name=Standard archive (direct)
+#archive.1.url=http://syndie.i2p.net:8080/
 ##########################################
-archive.2.name=Standard archive (direct) - pull only
-archive.2.url=http://syndie.i2p.net:8080/
-archive.2.pullpolicy=RecentMessagesOnly IncludePBE IncludePrivate AllChannels DiscoverArchives
-archive.2.pushpolcy=SendNothing
-archive.2.syncbydefault=true
+#archive.2.name=Standard archive (direct) - pull only
+#archive.2.url=http://syndie.i2p.net:8080/
+#archive.2.pullpolicy=RecentMessagesOnly IncludePBE IncludePrivate AllChannels DiscoverArchives
+#archive.2.pushpolcy=SendNothing
+#archive.2.syncbydefault=true
 ##########################################
-archive.3.name=Standard archive (over I2P)
-archive.3.url=http://archive.syndie.i2p/?i2paddresshelper=iXX0DadZTJQpPr1to0OmQ4xokHgx1HYd5ec7~zIjQ80W~p4kRCYJmEzibH2Kn59Gi04SAXeA2O9i3bNqfGCQjsbz7UcjPGrW6-UrckXVXW67Moxp7QWY6i-aKuVYM3bqYxUL2mWvcDzJ8D0ecMpvasxhxwXpdFn2J6CGboMxeGV8R3hwwlNYbYoKgHr74qEJaIZpm1FrRWvNHV5cMv363iWnPy72XspQefk79-VOjPsxfummosU7gqlxl5teyiGKNzMs3G6iJyfVHO8IlKtdn~P~ET9p7zWlTPgV8NTyCVB-Wn5S3JMkMGOFZR7wSlxSwGFpTFQKc7mxVTtLZ5nWcV2OhvOIxRZ31RvGJZyVs562RC5aMfyqcM5IHQiZVlmkhzJKIy9VDw8tKayQtRM-xeN5k6Qr7iMmYIRORwuAODkYApoMD9a0eJ6ZYOSgBMOCSvYcwfT8axRY~GabiHm0QC82mo-nDgrUypGKtOPMI9MIqMTsb8Yl-UGWn6twBAIzAAAA
-archive.3.proxy=localhost:4444
+#archive.3.name=Standard archive (I2P)
+#archive.3.url=http://archive.syndie.i2p/?i2paddresshelper=iXX0DadZTJQpPr1to0OmQ4xokHgx1HYd5ec7~zIjQ80W~p4kRCYJmEzibH2Kn59Gi04SAXeA2O9i3bNqfGCQjsbz7UcjPGrW6-UrckXVXW67Moxp7QWY6i-aKuVYM3bqYxUL2mWvcDzJ8D0ecMpvasxhxwXpdFn2J6CGboMxeGV8R3hwwlNYbYoKgHr74qEJaIZpm1FrRWvNHV5cMv363iWnPy72XspQefk79-VOjPsxfummosU7gqlxl5teyiGKNzMs3G6iJyfVHO8IlKtdn~P~ET9p7zWlTPgV8NTyCVB-Wn5S3JMkMGOFZR7wSlxSwGFpTFQKc7mxVTtLZ5nWcV2OhvOIxRZ31RvGJZyVs562RC5aMfyqcM5IHQiZVlmkhzJKIy9VDw8tKayQtRM-xeN5k6Qr7iMmYIRORwuAODkYApoMD9a0eJ6ZYOSgBMOCSvYcwfT8axRY~GabiHm0QC82mo-nDgrUypGKtOPMI9MIqMTsb8Yl-UGWn6twBAIzAAAA
+#archive.3.proxy=localhost:4444
 ##########################################
-archive.4.name=Standard archive (over Tor)
-archive.4.url=http://syndie.i2p.net:8080/
-archive.4.proxy=localhost:8118
+#archive.4.name=Standard archive (Tor)
+#archive.4.url=http://syndie.i2p.net:8080/
+#archive.4.proxy=localhost:8118
 ##########################################
-archive.5.name=synar.i2p
-archive.5.url=http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHfLgQbFOtO-KWt~14IQr36jtXaUKThYU8eISCfnRQ0295GGUGeer1zUldON9Kcvf0I31so70397sGHJHG7TPGlV-mCKdht7TZBW6qK037omn4QBa8wuiA80fDtcpAdG3xKAnhEBO3fH2UEH-4ZFXSP7dRVW5c88zdTq93TMRqgNanC8cWzgoPDaE1lzIydbseeP9449RCDj9XUr16PiBQtuveUJvsZhdajzYrjgRsBPQXBa9k4hvFeVB8VRLnfPaHugd~6ct6iMdxOybJMaBF6NH~NVOwUaOn8uDKgQOzsWaqwUWahizKlmZbC0NtimQdAIa4~pgdq4S8Wz5YWTB3lceUlF-ZAo-F5QSbw4Pjg8iJ0rvapxuGec9i2cwW~qwOjKwbv1z4kZ0niKvUNH9T4WoRUDO2ttu5d4CAAAA
-archive.5.proxy=localhost:4444
+#archive.5.name=archive.xtc.i2p (I2P)
+#archive.5.url=http://archive.xtc.i2p/?i2paddresshelper=rG25wpwItDvCoFPVhmETCwvuYCFhhEmzpjUO-pooAWjkzlk3zDxTjOnxYCANgT8LmUVPArLlwBu73DAB6QBaOKmgU439YNGpc-fxhZ4rUvqovhk10PIqZRxuze~2Hp3~BFKCgAbtRP5lPg4l56RW4WZ7LgSvHzgE8vjgrEGMhiKv~0f2VrF4VZu0G67XTjHVknMsw4vZMuut2pDmQwYn8VwUAjF56-FVTb0zUk6lfqhJa-XjG5iqPBFPVET1GPqur1l1DcaD7W3BJHcAW-MNporw-Fx2OO5gHk8siFUml-rADBBwTi6oqWs5FXHg1nzE52v5Hlq7Ykppm0LALesKqm0oimToyoGa6-hHyXHMp0WdnFYhhNrFRN7QtRHDCmJ71Vrz5X2Qu8v0vwxDGtEVHkMAnEuML2OeCtz-guL6n8XHnsMPCTCb44dKL26P1hxnmK4rngrmJaavCMbcJUJUlyD8OAXvn-R3NRFfkTKnjduaLrRiV4H~nm30WLpBm4XWAAAA
+#archive.5.proxy=localhost:4444
+##########################################
+#archive.6.name=arx.i2p (I2P)
+#archive.6.url=http://arx.i2p/?i2paddresshelper=pwr8FhDXMNgZb~jfQMSRxezzlvix7~N~EqZGS3lIRLjVx1vDOcyOuTzluGM5u~SPsgpX29H4V2oxPxYoaPR4WuDEeXvs2ePTXiORbpac2P6cGUSi8inpHa3xIi7Cdau0bSimghPOQX0FT97ZVCD9w9zMTKMKSmR4NLLujj20XlYfvdtEzH2WhNpzYrlW0-bpHo6bLefPF4zAEAnKkJIjwOVx0QM~7FPtBad3R8fIdvTnt5C1O57W10Rz1X9QLfR8NBL2-k3xr3sgh-GN99PtMiz9snAxlsghFyMUbj~TmYSSCA9kXI~9GNS0~Wyua1p~0QyLxpm8W4n5MR1~gLYY7mBxn-X-qmFe09opnejPjMGQemvkpws1gjM3yZJplu7w1VKl0AaukMvCsDvghIDGR7NcfbQyvloR4Pr3C4pJkErbgilsJ-V18WOT2LKQckQ5MJq~iJ4-pASyOnEZZ3RAZmmhU8ox3aGIR0ogLfgrfnbLH2Usf~C9xVbN3TX09YXqAAAA
+#archive.6.proxy=localhost:4444
+##########################################
+#archive.7.name=museion.i2p (I2P)
+#archive.7.url=http://museion.i2p/?i2paddresshelper=0ToRX4MW4q-SVK2hpeKnPsSmjs9Mc5SY9kHyL9CAsChwITTXjevk8SLzeQc5S3gNw9WMZYldXWXiT2XeTSvdUAUTOy6hOKEHoi9WAvN3fm2m1HmvhHLH-VZpJdqg2M58RY8Ym6PuTky58jVRaAa0OHEVx16tYBIcLWEB-Nj1EtB7YhImoWIpCR0-eiqtIii5E1~73uUR-0L6wq4ntFkcsVv9djcB9HPwqzniLfVvgDCTIEn3tOvgizcgKHFdUdXU456sPcK8ea5VAfnbmp4mTIlBy3WM1Fjzo4PHsEvRE2cjlRdULwETHi2yFvqbkQKmns8aNEcqiji-QTYR4j4WPUQ04jKK1aX7cBilbedHVKoX9zo-OCTy5sVCc2oZcTee-LACGtsdSvWxtncLRS6VqTlyIf0a0v-JHY2CjRLddSb7ELehYBCeuaUbiGAEZShFvE7eeB9gdWJ~CRiPH2lN8EjD~~o9qiE-98ktBAgtJ-WRvXOdJE7CoQ7hWpE-93QtAAAA
+#archive.7.proxy=localhost:4444
+##########################################
+#archive.8.name=polecat.i2p (I2P)
+#archive.8.url=http://polecat.i2p/?i2paddresshelper=AW~EYNqv7sL84HyOxuHCqUV9krot2edBqPzG-99H3OUMNDopdaYz9RROxzn0PH~RaifzZbsneyOId9v7bqmopdgbHKomKKC2CSIQhHECZy~C9K4XZof-nAeVhxcUzkjOug-cktEnzuuGz8hp6DpwDVWsRAdDSuqG25~iFcCDeV4-J6IzkDlrcjPCGpAADvQwjvDix4n2ArCJpjvGRTlelsfD6lqHyr2bqgDMC6Bhb9GACauoLa1Jdi8WKVt4F1owzP7Sj6HuWFWwCH9K4SX9WPTy3Yxrav1BH3drSA3Bz6IlyD98RhfL9KNLZAs5BLHMc6wJ42gr-Yo7AyliQNEFD07SC2Pq8RSLDMkbthyczr8YvLzxFrwOFR6KmOXx9J7mp5Ot1BAUMa5IlOowUV8x9Oui8b7-6kFLNlg-3pMVCUWlfwN83KhggehXVQenenhICM5ohQNb3pZnG72M6rYJ79yYSkrimi9ZeeH6VQY1IQZipre2PSRH7KLX3iGqu1ExAAAA
+#archive.8.proxy=localhost:4444
+##########################################
+#archive.9.name=roarchive1.syndie.i2p (I2P)
+#archive.9.url=http://roarchive1.syndie.i2p/?i2paddresshelper=mVcnTieCEGsMiz-BlnmTlOirf7SdFhDuJ3jhZtO7RXEjGAq66GdySmDKGabRQIcDTUaS1KFsAc6Y328yBiAanIrV5m9lyijo5X~9Ghgm3VExsEFegi78qISEJIKt438SyrutuNHLqzr5wy9xyDm8JjNwS~~ZunYyiKs~dYwqmkwmDbs8aSxDh1AHZEYMRPuTuWirpRZM-pToVtmqvx02idl6pMFKSYbgyCnYkBjt-NJDAcA-FuLgRaU2NGe4RKddKeNT8BoWNmKLzyDcLm9Im67QOPIpp7mhjW0~Nv3dzREzLEd-ZZT0QRZjiahP3bT-bMW2FFb3LcN2rRRubfa4H3FcSqL8p9I8xOyLz2mjbXp74c5LhlGc8qd2JIF-dqlaYuRtq2Bf~u-Kegg6sndBVdz020kk~J06RW~z9RVDo5IMk6AvzdFwyl94ORXdHyRh9pKf3aFbimKG~QPeyLroCqo6GNhyrtmiBkGRPhO40D1il3dnGJ-fhB~OP1PjTASsAAAA
+#archive.9.proxy=localhost:4444 (I2P)
+##########################################
+#archive.10.name=roarchive1.syndie.i2p (I2P)
+#archive.10.url=http://roarchive1.syndie.i2p/?i2paddresshelper=mVcnTieCEGsMiz-BlnmTlOirf7SdFhDuJ3jhZtO7RXEjGAq66GdySmDKGabRQIcDTUaS1KFsAc6Y328yBiAanIrV5m9lyijo5X~9Ghgm3VExsEFegi78qISEJIKt438SyrutuNHLqzr5wy9xyDm8JjNwS~~ZunYyiKs~dYwqmkwmDbs8aSxDh1AHZEYMRPuTuWirpRZM-pToVtmqvx02idl6pMFKSYbgyCnYkBjt-NJDAcA-FuLgRaU2NGe4RKddKeNT8BoWNmKLzyDcLm9Im67QOPIpp7mhjW0~Nv3dzREzLEd-ZZT0QRZjiahP3bT-bMW2FFb3LcN2rRRubfa4H3FcSqL8p9I8xOyLz2mjbXp74c5LhlGc8qd2JIF-dqlaYuRtq2Bf~u-Kegg6sndBVdz020kk~J06RW~z9RVDo5IMk6AvzdFwyl94ORXdHyRh9pKf3aFbimKG~QPeyLroCqo6GNhyrtmiBkGRPhO40D1il3dnGJ-fhB~OP1PjTASsAAAA
+#archive.10.proxy=localhost:4444
+##########################################
+archive.1.name=synar.i2p (I2P)
+archive.1.url=http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHfLgQbFOtO-KWt~14IQr36jtXaUKThYU8eISCfnRQ0295GGUGeer1zUldON9Kcvf0I31so70397sGHJHG7TPGlV-mCKdht7TZBW6qK037omn4QBa8wuiA80fDtcpAdG3xKAnhEBO3fH2UEH-4ZFXSP7dRVW5c88zdTq93TMRqgNanC8cWzgoPDaE1lzIydbseeP9449RCDj9XUr16PiBQtuveUJvsZhdajzYrjgRsBPQXBa9k4hvFeVB8VRLnfPaHugd~6ct6iMdxOybJMaBF6NH~NVOwUaOn8uDKgQOzsWaqwUWahizKlmZbC0NtimQdAIa4~pgdq4S8Wz5YWTB3lceUlF-ZAo-F5QSbw4Pjg8iJ0rvapxuGec9i2cwW~qwOjKwbv1z4kZ0niKvUNH9T4WoRUDO2ttu5d4CAAAA
+archive.1.proxy=localhost:4444
+##########################################
+archive.2.name=syndie.ps.i2p (I2P)
+archive.2.url=http://syndie.ps.i2p/?i2paddresshelper=Wubai8cZlbxXGZOVz8EnBa0yHBD9TVCGAsTErf6O62wlFK46DvWL9ug4kOUIFPOIaRs62DKG-k-pKY9lgyf1JwLrAi0tNreo7Rc4xfalWGTU-svP~eRwGqxkwi-it2iYRHLhaSRlGk5Ta~TL09mzQgz-GnLtIOX7A1sedAGm8sV40U4UoRg~Zl9EqT41HHeqAzn0IQcFKFpChgu5rpFIdwDFd3gIuvJzKi3I058EqKf8mm3NUyMvLF4vZ6u~C6X~yWmV4HFmNe6kExuCigcSPlniEb5sjWcHkeHNOlccpP8U0qjZi4mmy9ufTF4qZdhy11ajaVGpFxi37KONh6CWZYUkjYi8AIKkyGKrk~WJ2WvhMNOw7QjhlQVXhC8Yxskn1pUSGo2hDb5IW5No4IDYJSoF7CgDKiSgt5mtZ9iKN~A74igX8V15XtYsMd4yiJ0oDvH1WgjLZF~up2RPq70j-8xNI579h1U~gqY5-BeW7WT80KWJ-LoauyfLj2-iiWw1AAAA
+archive.2.proxy=localhost:4444
+##########################################
+archive.3.name=xflemvwlo7dld6dk.onion (Tor)
+archive.3.url=http://xflemvwlo7dld6dk.onion/
+archive.3.proxy=localhost:8118
 ##########################################

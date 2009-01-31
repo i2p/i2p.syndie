@@ -586,20 +586,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     private boolean shouldScheduleNow() {
         Properties prefs = _client.getNymPrefs();
-        String val = prefs.getProperty("browser.promptScheduleNow");
-        if (val == null) {
-            prefs.setProperty("browser.promptScheduleNow", Boolean.FALSE.toString());
-            _client.setNymPrefs(prefs);
-            return true;
-        } else {
-            if (Boolean.valueOf(val).booleanValue()) {
-                prefs.setProperty("browser.promptScheduleNow", Boolean.FALSE.toString());
-                _client.setNymPrefs(prefs);
-                return true;
-            } else {
-                return false;
-            }
-        }
+        return Boolean.valueOf(prefs.getProperty("browser.promptScheduleNow")).booleanValue();
     }
     
     static void savePrevTabs(DBClient client, ArrayList uris) {
@@ -657,7 +644,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         SyndieURI prevTabs[] = getPrevTabs();
         timer.addEvent("startup items: previous tabs identified");
         if (prevTabs == null) {
-            _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
+            _navControl.view(_uriControl.createSyndicationArchiveURI());
         } else {
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {

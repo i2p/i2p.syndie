@@ -566,10 +566,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
     }
     
+    private boolean getShowBookmarksPref() {
+        return Boolean.valueOf(_client.getNymPrefs().getProperty("browser.showBookmarks", "true")).booleanValue();
+    }
+    
     private void initMenu(Timer timer) {
-        Properties prefs = _client.getNymPrefs();
-        boolean showBookmarks = Boolean.valueOf(prefs.getProperty("browser.showBookmarks", "false")).booleanValue();
-        
         _mainMenu = new Menu(_shell, SWT.BAR);
         timer.addEvent("main menu constructed");
         
@@ -616,7 +617,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _viewMenu = new Menu(_viewMenuRoot);
         _viewMenuRoot.setMenu(_viewMenu);
         _viewMenuShow = new MenuItem(_viewMenu, SWT.CHECK);
-        _viewMenuShow.setSelection(showBookmarks);
+        _viewMenuShow.setSelection(getShowBookmarksPref());
         _viewMenuShow.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _sash.setMaximizedControl(_viewMenuShow.getSelection() ? null : _tabs);
@@ -916,6 +917,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private static final String T_SYNDICATE_HTTPSERV_CONFIG = "syndie.gui.browser.syndicate.httpserv.config";
     
     private static final String T_HTTPSERV_WRITABLE = "syndie.gui.browser.httpserv.writable";
+    private static final String T_HTTPSERV_RUNONSTARTUP = "syndie.gui.browser.httpserv.runonstartup";
     private static final String T_HTTPSERV_PORT = "syndie.gui.browser.httpserv.port";
     private static final String T_HTTPSERV_OK = "syndie.gui.browser.httpserv.ok";
 
@@ -962,6 +964,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _cfg = cfg;
             
             configListeners();
+            
+            if (getRunOnStartup())
+                runAfterStartup(new Runnable() { public void run() { start(); } });
         }
         
         private void configListeners() {
@@ -993,7 +998,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _start.setEnabled(false);
             _stop.setEnabled(true);
             _cfg.setEnabled(false);
-
+            
             int port = getPort();
             boolean writable = getWritable();
             
@@ -1018,6 +1023,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 writable = Boolean.valueOf(writableStr).booleanValue();
             return writable;
         }
+        private boolean getRunOnStartup() {
+            return Boolean.valueOf(_client.getNymPrefs().getProperty("httpserv.runOnStartup", "false")).booleanValue();
+        }
         
         private void stop() {
             _start.setEnabled(true);
@@ -1037,20 +1045,24 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             
             final Button writable = new Button(s, SWT.CHECK);
             writable.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+            final Button runOnStartup = new Button(s, SWT.CHECK);
+            runOnStartup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
             
             Button ok = new Button(s, SWT.PUSH);
             ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
             
             port.setText(getPort() + "");
             writable.setSelection(getWritable());
+            runOnStartup.setSelection(getRunOnStartup());
             
             ok.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection()); s.dispose(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection()); s.dispose(); }
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection(), runOnStartup.getSelection()); s.dispose(); }
+                public void widgetSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection(), runOnStartup.getSelection()); s.dispose(); }
             });
             
             portLabel.setText(getTranslationRegistry().getText(T_HTTPSERV_PORT, "HTTP listen port:"));
             writable.setText(getTranslationRegistry().getText(T_HTTPSERV_WRITABLE, "Others can post new messages to this server"));
+            runOnStartup.setText(getTranslationRegistry().getText(T_HTTPSERV_RUNONSTARTUP, "Run on startup"));
             ok.setText(getTranslationRegistry().getText(T_HTTPSERV_OK, "OK"));
             
             portLabel.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
@@ -1061,13 +1073,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             s.pack();
             s.open();
         }
-        private void saveConfig(String portStr, boolean writable) {
+        private void saveConfig(String portStr, boolean writable, boolean runOnStartup) {
             int port = 8080;
             try {
                 port = Integer.parseInt(portStr);
             } catch (NumberFormatException nfe) {}
             Properties prefs = _client.getNymPrefs();
             prefs.setProperty("httpserv.writable", "" + writable);
+            prefs.setProperty("httpserv.runOnStartup", "" + runOnStartup);
             prefs.setProperty("httpserv.port", "" + port);
             _client.setNymPrefs(prefs);
         }
@@ -1210,8 +1223,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         boolean max = Boolean.valueOf(prefs.getProperty("browser.maximize", "true")).booleanValue();
         _shell.setMaximized(max);
         
-        boolean showBookmarks = Boolean.valueOf(prefs.getProperty("browser.showBookmarks", "false")).booleanValue();
-        _sash.setMaximizedControl(showBookmarks ? null : _tabs);
+        _sash.setMaximizedControl(getShowBookmarksPref() ? null : _tabs);
         
         Rectangle rect = getRect(prefs, "browser.bounds.");
         if (rect != null)

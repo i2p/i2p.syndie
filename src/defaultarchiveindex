@@ -109,9 +109,9 @@ what is being said, assuming you've got the keys to do so.</p>
 
 <p>The operator of this archive has no control over what is said, and
 can neither monitor nor modify that content.  The operator disclaims any
-responsability for what is included herein.  If you are aware of content
+responsibility for what is included herein.  If you are aware of content
 in this archive that violates the law in the jurisdiction that the archive
-is in, please send a signed affadavit to the archive operator declaring
+is in, please send a signed affidavit to the archive operator declaring
 such, providing both the full URL to the Syndie post in question, as well
 as any decryption keys necessary to confirm the legitimacy of such a
 claim.</p>
@@ -122,8 +122,71 @@ who has the content and get them to remove it as well, using whatever
 lawful methods are available in their jurisdiction.  There is no list
 of who has what content, or what archives are used for various forums,
 and there is nothing preventing content from being wrapped up in other
-uncensored posts, or reencrypted with different keys.  Feel free to
+uncensored posts, or re-encrypted with different keys.  Feel free to
 put your finger in the dyke, if it makes you feel better.</p>
+
+<!-- Uncomment this section if you have placed the relevant files in $HOME/.syndie/dist
+<h3>Download Syndie</h3>
+
+<h4>Standalone installers: <font size="-3">grab <i>one</i></font></h3>
+<ul>
+<li><b><a href="dist/syndie-1.101a-mf6.bin.win32.exe">Windows - syndie-1.101a-mf6.bin.win32.exe</a></b>
+   (<a href="dist/syndie-1.101a-mf6.bin.win32.exe.sig">GPG signature</a>) - 7.3MB<br />
+   Download and run the installer.  Launch Syndie with the desktop or start
+   menu icons, or with <code>syndie.exe</code></li>
+<li><b><a href="dist/syndie-1.101a-mf6.bin.linux32.exe">Linux - syndie-1.101a-mf6.bin.linux32.exe</a></b>
+   (<a href="dist/syndie-1.101a-mf6.bin.linux32.exe.sig">GPG signature</a>) - 6.5MB<br />
+   Download and run the installer via
+   "<code>java -jar syndie-1.101a-mf6.bin.linux32.exe</code>" (yes, really).
+   Launch Syndie with the desktop or KDE menu icons, or with
+   "<code>java -jar bin/syndie.exe</code>".</li>
+<li><b><a href="dist/syndie-1.101a-mf6.bin.osx.exe">OSX - syndie-1.101a-mf6.bin.osx.exe</a></b>
+   (<a href="dist/syndie-1.101a-mf6.bin.osx.exe.sig">GPG signature</a>) - 7.2MB<br />
+    Download and run the installer via
+   "<code>java -jar syndie-1.101a-mf6.bin.osx.exe</code>".</li>
+<li>Prerequisites:
+   <a href="http://java.sun.com/javase/downloads/index.jsp">jre1.4+</a>,
+   <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
+   <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
+   (other JVMs may suffice)</li>
+</ul>
+
+<h4>Source:</h4>
+<ul>
+<li><a href="dist/syndie-1.101a-mf6.src.nodeps.tar.bz2">syndie-1.101a-mf6.src.nodeps.tar.bz2</a>
+   (<a href="dist/syndie-1.101a-mf6.src.nodeps.tar.bz2.sig">GPG signature</a>) - 2.4MB</li>
+<li> You will need to provide the hsqldb.jar and swt.jar for your platform (place them
+   in the lib/ directory).  <b>Be sure to read the INSTALL</b> for instructions.</li>
+<li>Prerequisites:
+   <a href="http://ant.apache.org/">ant 1.6.5</a>, 
+   <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>/
+   <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>/ or
+   <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
+   (other JDKs may suffice),
+   <a href="http://www.eclipse.org/swt/">SWT 3.2+</a> (3.3M4 or newer includes
+   useful features),
+   <a href="http://www.hsqldb.org/">HSQLDB 1.8.0.7+</a> (older releases may
+   work)</li>
+</ul>
+
+<p>The GPG public key used to sign the distributed files is <code>395C4CED</code> (fingerprint <code>278A 514C EFDA AE9D B864  C44B 67A4 8338 395C 4CED</code>)</p>
+
+<p><b>To upgrade or reinstall</b>, simply install Syndie again on top of itself.
+Upgrading or reinstalling does not affect your content or keys, just the
+software.  To completely wipe any old data, identities, or keys, delete the
+<code>$HOME/.syndie</code> directory.</p>
+
+<p><b>To uninstall</b>, if you used the installer and created desktop icons or
+start menu shortcuts, simply launch the included uninstaller.  Otherwise, just
+remove the directory you installed Syndie into (e.g. <code>$HOME/syndie</code> or
+<code>C:\Documents and Settings\User\syndie</code>).</p>
+
+<p>The Syndie content is stored in <code>$HOME/.syndie</code> or
+<code>%HOME%\.syndie</code> by default, so you should delete that directory as
+well if you want to remove the content (and private keys!).  To use another
+location (or to run multiple instances at once), simply pass another root
+directory on the command line (e.g. <code>syndie.exe C:\nym1</code>)</p>
+-->
 </div>
 </body>
 </html>

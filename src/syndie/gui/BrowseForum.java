@@ -471,17 +471,19 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             for (int i = 0; i < nymKeys.size(); i++) {
                 NymKey key = (NymKey)nymKeys.get(i);
                 if (info.getChannelHash().equals(key.getChannel())) {
-                    if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
-                        SigningPrivateKey priv = new SigningPrivateKey(key.getData());
-                        Hash pub = priv.toPublic().calculateHash();
-                        if (info.getAuthorizedManagerHashes().contains(pub)) {
-                            manage = true;
-                            post = true;
-                            break;
-                        } else if (info.getAuthorizedPosterHashes().contains(pub)) {
-                            post = true;
-                            break;
-                        }
+                    manage = true;
+                    post = true;
+                    break;
+                } else if (Constants.KEY_TYPE_DSA.equals(key.getType())) {
+                    SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                    Hash pub = priv.toPublic().calculateHash();
+                    if (info.getAuthorizedManagerHashes().contains(pub)) {
+                        manage = true;
+                        post = true;
+                        break;
+                    } else if (info.getAuthorizedPosterHashes().contains(pub)) {
+                        post = true;
+                        break;
                     }
                 }
             }

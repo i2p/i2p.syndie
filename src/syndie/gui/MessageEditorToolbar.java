@@ -5,20 +5,25 @@ import net.i2p.data.Hash;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.CoolBar;
+import org.eclipse.swt.widgets.CoolItem;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
-import syndie.gui.ToolbarGroup;
 
 public class MessageEditorToolbar implements MessageEditor.EditorStatusListener {
     private Composite _parent;
@@ -107,7 +112,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _bookmarkControl = bookmark;
         _translationRegistry = trans;
         
-        _toolbar = new CoolBar(parent, SWT.FLAT | SWT.BORDER);
+        _toolbar = new CoolBar(parent, SWT.NONE);
         
         ToolbarGroup forumGroup = new ToolbarGroup(_toolbar);
         initForumControl(forumGroup);
@@ -260,8 +265,8 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _authorButton.setToolTipText(summary);
     }
     
-    private Button addFlatButton(ToolbarGroup toolbar, String tooltip, Image image, SelectionListener listener) {
-        final Button button = new Button(toolbar.getToolbarComposite(), SWT.FLAT);
+    private Button addButton(ToolbarGroup tg, int style, String tooltip, Image image, SelectionListener listener) {
+        Button button = tg.newButton(style);
         
         button.setToolTipText(tooltip);
         button.setImage(ImageUtil.resize(image, buttonWidth, buttonHeight, false));
@@ -270,38 +275,36 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         return button;
     }
     
-    private Button addToggleButton(ToolbarGroup toolbar, String tooltip, Image image, SelectionListener listener) {
-        final Button button = new Button(toolbar.getToolbarComposite(), SWT.TOGGLE);
-        
-        button.setToolTipText(tooltip);
-        button.setImage(ImageUtil.resize(image, buttonWidth, buttonHeight, false));
-        button.addSelectionListener(listener);
-        
-        return button;
+    private Button addFlatButton(ToolbarGroup tg, String tooltip, Image image, SelectionListener listener) {
+        return addButton(tg, SWT.FLAT, tooltip, image, listener);
     }
     
-    public void initForumControl(ToolbarGroup toolbar) {
+    private Button addToggleButton(ToolbarGroup tg, String tooltip, Image image, SelectionListener listener) {
+        return addButton(tg, SWT.TOGGLE, tooltip, image, listener);
+    }
+    
+    public void initForumControl(ToolbarGroup tg) {
         _forumMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.pickForum(); }
         };
-        _forumButton = addFlatButton(toolbar, "Select the forum to post in", ImageUtil.ICON_EDITOR_NOT_BOOKMARKED, listener);
+        _forumButton = addFlatButton(tg, "Select the forum to post in", ImageUtil.ICON_EDITOR_NOT_BOOKMARKED, listener);
     }
     
-    public void initAuthorControl(ToolbarGroup toolbar) {
+    public void initAuthorControl(ToolbarGroup tg) {
         _authorMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.pickAuthor(); }
         };
-        _authorButton = addFlatButton(toolbar, "Who do you want to sign the post as?", ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR, listener);
+        _authorButton = addFlatButton(tg, "Who do you want to sign the post as?", ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR, listener);
     }
     
-    public void initPrivacyControl(ToolbarGroup toolbar) {        
+    public void initPrivacyControl(ToolbarGroup tg) {        
         _privMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _privMenu.setVisible(true); }
         };
-        _privButton = addFlatButton(toolbar,"Who is allowed to read the post?", ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED, listener);
+        _privButton = addFlatButton(tg,"Who is allowed to read the post?", ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED, listener);
         
         _privPublic = new MenuItem(_privMenu, SWT.PUSH);
         _privAuthorized = new MenuItem(_privMenu, SWT.PUSH);
@@ -335,67 +338,67 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _privAuthorized.setSelection(true);
     }
     
-    public void initPageTypeControl(ToolbarGroup toolbar) {
+    public void initPageTypeControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.togglePageType(); }
         };
         
-        _pageTypeButton = addToggleButton(toolbar, "Toggle the type of the current page", ImageUtil.ICON_EDITOR_TOGGLETYPE, listener);
+        _pageTypeButton = addToggleButton(tg, "Toggle the type of the current page", ImageUtil.ICON_EDITOR_TOGGLETYPE, listener);
     }
     
-    public void initPageAddControl(ToolbarGroup toolbar) {
+    public void initPageAddControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.addPage(); }
         };
         
-        _pageAddButton = addFlatButton(toolbar, "Add a new blank page", ImageUtil.ICON_EDITOR_ADDPAGE, listener);
+        _pageAddButton = addFlatButton(tg, "Add a new blank page", ImageUtil.ICON_EDITOR_ADDPAGE, listener);
     }
     
-    public void initPageRemoveControl(ToolbarGroup toolbar) {        
+    public void initPageRemoveControl(ToolbarGroup tg) {        
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.removePage(); }
         };
         
-        _pageRemoveButton = addFlatButton(toolbar, "Remove the current page", ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
+        _pageRemoveButton = addFlatButton(tg, "Remove the current page", ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
     }
     
-    public void initWebRipControl(ToolbarGroup toolbar) {
+    public void initWebRipControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.addWebRip(); }
         };
         
-        _webRipButton = addFlatButton(toolbar, "Rip a web page and add it as a new page in the message", ImageUtil.ICON_EDITOR_WEBRIP, listener);
+        _webRipButton = addFlatButton(tg, "Rip a web page and add it as a new page in the message", ImageUtil.ICON_EDITOR_WEBRIP, listener);
     }
     
-    public void initAddImageAttachmentControl(ToolbarGroup toolbar) {
+    public void initAddImageAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.showImagePopup(false); }
         };
         
-        _addImageAttachmentButton = addFlatButton(toolbar, "Insert a new image into the current page", ImageUtil.ICON_EDITOR_ADDIMAGE, listener);
+        _addImageAttachmentButton = addFlatButton(tg, "Insert a new image into the current page", ImageUtil.ICON_EDITOR_ADDIMAGE, listener);
     }
     
-    public void initAddAttachmentControl(ToolbarGroup toolbar) {
+    public void initAddAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.addAttachment(); }
         };
-        _addAttachmentButton = addFlatButton(toolbar, "Manage attachments to this post", ImageUtil.ICON_EDITOR_ADDFILE, listener);
+        _addAttachmentButton = addFlatButton(tg, "Manage attachments to this post", ImageUtil.ICON_EDITOR_ADDFILE, listener);
     }
     
-    public void initRemoveAttachmentControl(ToolbarGroup toolbar) {
+    public void initRemoveAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.removeAttachment(); }
         };
-        _removeAttachmentButton = addFlatButton(toolbar, "Remove the selected attachment", ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
+        _removeAttachmentButton = addFlatButton(tg, "Remove the selected attachment", ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
     }
     
-    public void initLinkControl(ToolbarGroup toolbar) {
+    public void initLinkControl(ToolbarGroup tg) {
         _linkMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _linkMenu.setVisible(true); }
         };
         
-        _linkButton = addFlatButton(toolbar, "Add a new link", ImageUtil.ICON_EDITOR_LINK, listener);
+        _linkButton = addFlatButton(tg, "Add a new link", ImageUtil.ICON_EDITOR_LINK, listener);
         
         _linkWeb = new MenuItem(_linkMenu, SWT.PUSH);
         new MenuItem(_linkMenu, SWT.SEPARATOR);
@@ -468,13 +471,13 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _linkOther.setText("Link to another Syndie URI");
     }
     
-    public void initStyleControl(ToolbarGroup toolbar) {
+    public void initStyleControl(ToolbarGroup tg) {
         _styleMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _styleMenu.setVisible(true); }
         };
         
-        _styleButton = addFlatButton(toolbar, "Insert style elements", ImageUtil.ICON_EDITOR_STYLE, listener);
+        _styleButton = addFlatButton(tg, "Insert style elements", ImageUtil.ICON_EDITOR_STYLE, listener);
         
         _styleText = new MenuItem(_styleMenu, SWT.PUSH);
         _styleText.addSelectionListener(new FireSelectionListener() {
@@ -567,28 +570,28 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         }
     }
     
-    public void initSpellControl(ToolbarGroup toolbar) {
+    public void initSpellControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.spellNext(); }
         };
         
-        //_spellButton = addFlatButton(toolbar, "Check the spelling in the current page", ImageUtil.ICON_EDITOR_SPELL, listener);
+        //_spellButton = addFlatButton(tg, "Check the spelling in the current page", ImageUtil.ICON_EDITOR_SPELL, listener);
     }
     
-    public void initSearchControl(ToolbarGroup toolbar) {
+    public void initSearchControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.search(); }
         };
         
-        _searchButton = addFlatButton(toolbar, "Find or replace text in the current page", ImageUtil.ICON_EDITOR_SEARCH, listener);
+        _searchButton = addFlatButton(tg, "Find or replace text in the current page", ImageUtil.ICON_EDITOR_SEARCH, listener);
     }
     
-    public void initQuoteControl(ToolbarGroup toolbar) {
+    public void initQuoteControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.quote(); }
         };
         
-        _quoteButton = addFlatButton(toolbar, "Quote a section of the previous message", ImageUtil.ICON_EDITOR_QUOTE, listener);
+        _quoteButton = addFlatButton(tg, "Quote a section of the previous message", ImageUtil.ICON_EDITOR_QUOTE, listener);
     }
     
     public void applyTheme(Theme theme) {

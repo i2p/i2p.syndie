@@ -190,6 +190,10 @@ public class SWTUI {
             }
             timer.addEvent("login complete");
             if (engine.newNymCreated()) {
+                ThemeRegistry themes = browser.getThemeRegistry();
+                if (!themes.themeLoaded())
+                    themes.loadTheme();
+                
                 WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
                     public void complete() {
                         browser.startup(timer);

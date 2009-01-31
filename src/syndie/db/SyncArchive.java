@@ -46,6 +46,9 @@ public class SyncArchive {
     private String _indexFetchErrorMsg;
     private Exception _indexFetchError;
     
+    private int _incomingActionsInProgress;
+    private int _outgoingActionsInProgress;
+    
     public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
     public SyncArchive(SyncManager mgr, DBClient client, String name) {
         _manager = mgr;
@@ -59,6 +62,8 @@ public class SyncArchive {
         _nextSyncOneOff = false;
         _consecutiveFailures = 0;
         _whitelistGroupId = -1;
+        _incomingActionsInProgress = 0;
+        _outgoingActionsInProgress = 0;
         _incomingActions = new ArrayList();
         _outgoingActions = new ArrayList();
         _listeners = new ArrayList();
@@ -224,21 +229,18 @@ public class SyncArchive {
         public boolean isCorrupt() { return _corrupt; }
         public int getFetchAttempts() { return _attempts; }
         public int getSize() { return _size; }
-        
         void setSize(int bytes) { _size = bytes; }
         
         void importFailed(String msg, Exception cause) {
             _completionTime = System.currentTimeMillis();
             _fetchError = cause;
             _fetchErrorMsg = (msg != null ? msg : cause + "");
-            _executing = false;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         void importCorrupt() {
             _completionTime = System.currentTimeMillis();
             _corrupt = true;
-            _executing = false;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         void importMissingReplyKey() {
             _completionTime = System.currentTimeMillis();
@@ -248,39 +250,40 @@ public class SyncArchive {
         void importMissingReadKey() {
             _completionTime = System.currentTimeMillis();
             _noReadKey = true;
-            _executing = false;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         void importPBE(String prompt) {
             _completionTime = System.currentTimeMillis();
             _pbePrompt = prompt;
-            _executing = false;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         void importSuccessful() {
             if (_completionTime <= 0) {
                 _completionTime = System.currentTimeMillis();
                 _importOK = true;
-                _executing = false;
-            }
-            notifyUpdate(this);
+                setIsExecuting(false);
+            } else
+                notifyUpdate(this); // we didn't call to setIsExecuting(), so notify manually
         }
         
         void fetchFailed(String msg, Exception err) {
             _completionTime = System.currentTimeMillis();
             _fetchError = err;
             _fetchErrorMsg = msg;
-            _executing = false;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         
-        boolean setIsExecuting(boolean executing) { 
+        boolean setIsExecuting(boolean executing) {
+            boolean changed;
             synchronized (IncomingAction.this) {
-                if (executing && _executing) return false;
-                _executing = executing;
+                changed = _executing != executing;
+                if (changed) {
+                    _executing = executing;
+                    _incomingActionsInProgress += executing ? 1 : -1;
+                }
             }
-            if (executing) notifyUpdate(this);
-            return true;
+            if (changed) notifyUpdate(this);
+            return changed;
         }
         
         public void cancel(String reason) { if (!isComplete()) fetchFailed(reason, null); }
@@ -340,23 +343,26 @@ public class SyncArchive {
             _err = err;
             _completionTime = System.currentTimeMillis();
             setIsExecuting(false);
-            notifyUpdate(this);
         }
         
         void pushOK() {
             _completionTime = System.currentTimeMillis();
             setIsExecuting(false);
-            notifyUpdate(this);
         }
         
         boolean setIsExecuting(boolean executing) { 
+            boolean changed;
             synchronized (OutgoingAction.this) {
-                if (executing && _executing) return false;
-                _executing = executing;
+                changed = _executing != executing;
+                if (changed) {
+                    _executing = executing;
+                    _outgoingActionsInProgress += executing ? 1 : -1;
+                }
             }
-            if (executing) notifyUpdate(this);
-            return true;
+            if (changed) notifyUpdate(this);
+            return changed;
         }
+        
         public void cancel(String reason) { if (!isComplete()) pushFailed(reason, null); }
         
         public void clearError() {
@@ -705,10 +711,13 @@ public class SyncArchive {
     public void setConsecutiveFailures(int num) { _consecutiveFailures = num; }
     public long getNextSyncTime() { return _nextSyncTime; }
     public long getLastSyncTime() { return _lastSyncTime; }
+    public void setNextSyncTime() { setNextSyncTime(true); }
+    private void setNextSyncTime(boolean success) { setNextSyncTime(System.currentTimeMillis() + getDelay(success)); }
     public void setNextSyncTime(long when) { _nextSyncTime = when; }
     public void setLastSyncTime(long when) { _lastSyncTime = when; }
     public boolean getNextSyncOneOff() { return _nextSyncOneOff; }
     public void setNextSyncOneOff(boolean oneOff) { _nextSyncOneOff = oneOff; }
+    public boolean getSyncInProgress() { return getIndexFetchInProgress() || _incomingActionsInProgress > 0 || _outgoingActionsInProgress > 0; }
     public SharedArchiveEngine.PullStrategy getPullStrategy() { return _pullStrategy; }
     public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _pullStrategy = strategy; }
     public SharedArchiveEngine.PushStrategy getPushStrategy() { return _pushStrategy; }
@@ -838,7 +847,7 @@ public class SyncArchive {
         fireUpdated();
     }
     
-    private void updateSchedule(boolean success) {
+    private long getDelay(boolean success) {
         long delay = 0;
         int hours = 1;
         if (!success)
@@ -851,12 +860,14 @@ public class SyncArchive {
         if (hours < _nextSyncDelayHours)
             hours = _nextSyncDelayHours;
         
-        delay = hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
-        
+        return hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
+    }
+    
+    private void updateSchedule(boolean success) {
         if (getNextSyncOneOff())
             setNextSyncTime(-1);
         else
-            setNextSyncTime(System.currentTimeMillis() + delay);
+            setNextSyncTime(success);
         
         if (success)
             setLastSyncTime(System.currentTimeMillis());
