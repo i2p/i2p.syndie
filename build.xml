@@ -576,7 +576,7 @@ public class Version {
                  classname="net.sf.launch4j.ant.Launch4jTask" />
         <jar jarfile="syndie-${syndie.version}.jar">
           <manifest>
-            <attribute name="Main-Class" value="syndie.gui.desktop.DesktopMain" />
+            <attribute name="Main-Class" value="syndie.gui.SWTUI" />
             <!-- relative to the exe/jar file -->
             <attribute name="Class-Path" value="../lib/syndie.jar ../lib/hsqldb.jar ../lib/servlet.jar ../lib/swt.jar" />
           </manifest>

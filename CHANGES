@@ -1,5 +1,33 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2008-01-21  1.101a-an5 released (Anonymous)
+    - set version number appropriately in VERSION file
+    - switch to browser as default UI
+
+* 2008-01-11  1.101a-an4 released (Anonymous)
+    - browser: fix NPE introduced in 1.101a-an3 when opening an editor tab
+
+* 2008-01-10  1.101a-an3 released (Anonymous)
+    - replaced 'Custom date' pop-up window by an editable combobox
+    - make Message Created Successfully messagebox optional
+    - browser: message editor toolbar revamped, buttons resized to 32x32 and can be reordered by dragging
+    - browser: set View->Show Bookmarks check appropriately at launch
+    - browser: reorder forum browser message context menu
+
+* 2007-12-15  1.101a-an2 released (Anonymous)
+    - retry failed fetches and pushes on next sync 
+    - start Attach Image FileDialog from the same directory as was used last time 
+
+* 2007-12-07  mtn-2007-12-07-complication released (Complication)
+    - initialize "editor.defaultAuthor" nym preference when a nym is created
+
+* 2007-12-03  1.101a-an1 released (Anonymous)
+    - accept a wider range of file extentions as images in the Attach Image FileDialog
+    - honor the user's Min Sync Delay selection
+
+* 2007-09-28  1.101a released
+    - add message expiration, deletion, and cancellation
+
 * 2007-08-25  1.100a released
     - package the new desktop GUI as well as an update to the old tabbed GUI
     - improve syndication reliability and concurrency on both the client and
