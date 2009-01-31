@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import net.i2p.data.DataHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -522,7 +523,7 @@ public class ImageBuilderPopup {
             _choiceUpdated = true;
             showConfig(true);
         } else {
-            System.out.println("browse picked nothing");
+            //System.out.println("browse picked nothing");
         }
     }
     
@@ -618,5 +619,13 @@ public class ImageBuilderPopup {
             _configResizeWidth.setText(width+"");
             _configResizeHeight.setText(height+"");
         }
+    }
+    
+    public String getFilterPath() {
+        return _choiceFileDialog.getFilterPath();
+    }
+    
+    public void setFilterPath(String path) {
+        _choiceFileDialog.setFilterPath(path);
     }
 }

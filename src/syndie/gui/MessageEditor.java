@@ -267,7 +267,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (_refAddPopup != null) _refAddPopup.dispose();
         if (_linkPopup != null) _linkPopup.dispose();
         if (_refChooser != null) _refChooser.dispose();
-        if (_imagePopup != null) _imagePopup.dispose();
+        if (_imagePopup != null) {
+            Properties prefs = _client.getNymPrefs();
+            prefs.setProperty("editor.defaultImagePath", _imagePopup.getFilterPath());
+            _client.setNymPrefs(prefs);
+            _imagePopup.dispose();
+        }
         if (_refEditor != null) _refEditor.dispose();
         //if (_styler != null) _styler.dispose();
         if (_spellchecker != null) _spellchecker.dispose();
@@ -1648,8 +1653,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         setBodyTags(_selectedPageBGImage);
     }
     public void showImagePopup(boolean forBodyBackground) { 
-        if (_imagePopup == null)
+        if (_imagePopup == null) {
+            Properties prefs = _client.getNymPrefs();
             _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
+            _imagePopup.setFilterPath(prefs.getProperty("editor.defaultImagePath"));
+        }
         _imagePopup.showPopup(forBodyBackground); 
     }
     public void showLinkPopup() {

@@ -285,6 +285,15 @@ public class SyncArchive {
         
         public void cancel(String reason) { if (!isComplete()) fetchFailed(reason, null); }
         
+        public void clearFetchError() {
+            if (isComplete() && _fetchErrorMsg != null) {
+                _completionTime = -1;
+                _fetchError = null;
+                _fetchErrorMsg = null;
+                notifyUpdate(this);
+            }
+        }
+        
         public void dispose() {
             _disposed = true;
             _incomingActions.remove(IncomingAction.this);
@@ -349,6 +358,16 @@ public class SyncArchive {
             return true;
         }
         public void cancel(String reason) { if (!isComplete()) pushFailed(reason, null); }
+        
+        public void clearError() {
+            if (isComplete() && _errMsg != null) {
+                _completionTime = -1;
+                _errMsg = null;
+                _err = null;
+                notifyUpdate(this);
+            }
+        }
+        
         public void dispose() {
             _disposed = true;
             _outgoingActions.remove(OutgoingAction.this);
@@ -732,8 +751,12 @@ public class SyncArchive {
         for (int i = 0; i < _incomingActions.size(); i++) {
             IncomingAction cur = (IncomingAction)_incomingActions.get(i);
             // hmm, what if it was already complete?  etc
-            if (cur.getURI().equals(uri))
+            if (cur.getURI().equals(uri)) {
+                if (cur.getFetchErrorMsg() != null)
+                    cur.clearFetchError();
+                
                 return cur;
+            }
         }
         IncomingAction action = new IncomingAction(uri); 
         _incomingActions.add(action);
@@ -756,8 +779,12 @@ public class SyncArchive {
         for (int i = 0; i < _outgoingActions.size(); i++) {
             OutgoingAction cur = (OutgoingAction)_outgoingActions.get(i);
             // hmm, what if it was already complete?  etc
-            if (cur.getURI().equals(uri))
+            if (cur.getURI().equals(uri)) {
+                if (cur.getErrorMsg() != null)
+                    cur.clearError();
+
                 return cur;
+            }
         }
         OutgoingAction action = new OutgoingAction(uri); 
         _outgoingActions.add(action);
