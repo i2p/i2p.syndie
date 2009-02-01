@@ -653,7 +653,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _items.put(rootItem, archive);
         }
         rootItem.setText(0, archive.getName());
-        if (nextTime <= 0) {
+        if (archive.getSyncInProgress()) {
+            rootItem.setText(1, _translationRegistry.getText(T_WHEN_INDEXFETCHCOMPLETE, "Now"));
+            rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+            rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_EXECUTEPOLICY, "Syndicating"));
+        } else if (nextTime <= 0) {
             rootItem.setText(1, _translationRegistry.getText(T_WHEN_NEVER, "Never"));
             rootItem.setImage(2, null);
             rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_NEVER, "No syndication scheduled"));
@@ -661,10 +665,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             rootItem.setText(3, _translationRegistry.getText(T_INDEX_OFFLINE, "Offline - set as online to start"));
-        } else if (archive.getSyncInProgress()) {
-            rootItem.setText(1, _translationRegistry.getText(T_WHEN_INDEXFETCHCOMPLETE, "Now"));
-            rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-            rootItem.setText(3, _translationRegistry.getText(T_SUMMARY_EXECUTEPOLICY, "Syndicating"));
         } else {
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
