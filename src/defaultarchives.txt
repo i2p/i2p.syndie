@@ -65,3 +65,10 @@ archive.3.name=xflemvwlo7dld6dk.onion (Tor)
 archive.3.url=http://xflemvwlo7dld6dk.onion/
 archive.3.proxy=localhost:8118
 ##########################################
+archive.4.name=syndie.welterde.i2p (I2P)
+archive.4.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.4.proxy=localhost:4444
+##########################################
+archive.5.name=syndie.welterde.de (direct)
+archive.5.url=http://syndie.welterde.de/
+##########################################
