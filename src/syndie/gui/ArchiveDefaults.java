@@ -140,7 +140,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
 
     /**
      * archive.1.name=Standard archive (direct)
-     * archive.1.url=http://syndie.i2p.net:8080/
+     * archive.1.url=http://syndie.i2p2.de:8080/
      * [archive.1.proxy=localhost:8118]
      * [archive.1.pullpolicy=RecentMessagesOnly IncludePBE IncludePrivate AllChannels DiscoverArchives]
      * [archive.1.pushpolcy=SendNothing]

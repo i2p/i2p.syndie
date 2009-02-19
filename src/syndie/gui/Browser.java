@@ -1097,12 +1097,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         l.setLayoutData(new GridData(GridData.CENTER, GridData.FILL, true, false, 2, 1));
         
         Link link = new Link(s, SWT.NONE);
-        link.setText("<a>http://syndie.i2p.net/</a>");
+        link.setText("<a>http://syndie.i2p2.de/</a>");
         link.setFont(getThemeRegistry().getTheme().LINK_FONT);
         link.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         link.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p.net/")); }
-            public void widgetSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p.net/")); }
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p2.de/")); }
+            public void widgetSelected(SelectionEvent selectionEvent) { view(SyndieURI.createURL("http://syndie.i2p2.de/")); }
         });
         
         l = new Label(s, SWT.NONE);

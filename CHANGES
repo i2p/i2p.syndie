@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2009-02-19 1.101a-mf6 fix (duh)
+    - got rid of the syndie.i2p.net references in here, so syndie will stop leading people to them.
+
 * 2008-02-04  1.101a-mf6 released (mosfet)
     - added all known archives to default archive list and commented out all archives not known to be accessible
     - ask for confirmation before posting an empty message

@@ -6,17 +6,17 @@
 #
 # the format is as follows:
 #  archive.1.name=Standard archive (direct)
-#  archive.1.url=http://syndie.i2p.net:8080/
+#  archive.1.url=http://syndie.i2p2.de:8080/
 #  [archive.1.proxy=localhost:8118]
 #  [archive.1.pullpolicy=RecentMessagesOnly IncludePBE AllChannels]
 #  [archive.1.pushpolcy=SendNothing]
 #  archive.1.syncbydefault=true
 ##########################################
 #archive.1.name=Standard archive (direct)
-#archive.1.url=http://syndie.i2p.net:8080/
+#archive.1.url=http://syndie.i2p2.de:8080/
 ##########################################
 #archive.2.name=Standard archive (direct) - pull only
-#archive.2.url=http://syndie.i2p.net:8080/
+#archive.2.url=http://syndie.i2p2.de:8080/
 #archive.2.pullpolicy=RecentMessagesOnly IncludePBE IncludePrivate AllChannels DiscoverArchives
 #archive.2.pushpolcy=SendNothing
 #archive.2.syncbydefault=true
@@ -26,7 +26,7 @@
 #archive.3.proxy=localhost:4444
 ##########################################
 #archive.4.name=Standard archive (Tor)
-#archive.4.url=http://syndie.i2p.net:8080/
+#archive.4.url=http://syndie.i2p2.de:8080/
 #archive.4.proxy=localhost:8118
 ##########################################
 #archive.5.name=archive.xtc.i2p (I2P)

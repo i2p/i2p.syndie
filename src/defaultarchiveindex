@@ -98,11 +98,11 @@ body>#Menu {width:150px;}
 <body>
 <div style="display: none"><a href="#Content" title="Skip navigation" accesskey="2">Skip navigation</a></div>
 <div id="Header">
- <a href="http://syndie.i2p.net/index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
+ <a href="http://syndie.i2p2.de/index.html" title="Syndie">Syndie</a><i> - distributed forums</i>
 </div>
 <div id="Content">
 <h1>This is a Syndie archive</h1>
-<p>You are viewing a <a href="http://syndie.i2p.net/">Syndie</a> archive,
+<p>You are viewing a <a href="http://syndie.i2p2.de/">Syndie</a> archive,
 containing encrypted and often pseudonymously authored messages.  If you
 install Syndie and tell it to pull this archive's content, you can read
 what is being said, assuming you've got the keys to do so.</p>

@@ -1,6 +1,6 @@
 login
 menu syndicate
-getindex --archive http://syndie.i2p.net/archive/ --scope new
+getindex --archive http://syndie.i2p2.de/archive/ --scope new
 fetch --style diff
 buildindex
 exit

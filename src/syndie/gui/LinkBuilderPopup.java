@@ -200,7 +200,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkDetail.setLayout(_linkDetailStack);
         
         _linkTypeWebText = new Text(_linkDetail, SWT.SINGLE | SWT.BORDER);
-        _linkTypeWebText.setToolTipText("URL to the site, such as 'http://syndie.i2p.net/manual.html'");
+        _linkTypeWebText.setToolTipText("URL to the site, such as 'http://syndie.i2p2.de/manual.html'");
         _linkTypePageCombo = new Combo(_linkDetail, SWT.DROP_DOWN | SWT.READ_ONLY);        
         _linkTypeAttachmentCombo = new Combo(_linkDetail, SWT.DROP_DOWN | SWT.READ_ONLY);
         

@@ -444,7 +444,7 @@ public class TextEngine {
                 processPrefs(opts);
             return true;
         } else if ("version".equalsIgnoreCase(cmd)) {
-            _ui.statusMessage("Syndie version: " + Version.VERSION + " (http://syndie.i2p.net/)");
+            _ui.statusMessage("Syndie version: " + Version.VERSION + " (http://syndie.i2p2.de/)");
             _ui.commandComplete(0, null);
             return true;
         } else {
