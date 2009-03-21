@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -335,8 +336,9 @@ public class MessageCreator {
         }
         if (avatarFilename != null)
             genOpts.setOptValue("avatar", avatarFilename);
-        
-        SessionKey replySessionKey = new SessionKey(true);
+        byte[] rskData = new byte[SessionKey.KEYSIZE_BYTES];
+		I2PAppContext.getGlobalContext().random().nextBytes(rskData);
+        SessionKey replySessionKey = new SessionKey(rskData);
         if (_source.getPrivacyReply()) {
             genOpts.setOptValue("postAsReply", "true"); // if true, the post should be encrypted to the channel's reply key
             genOpts.setOptValue("replySessionKey", replySessionKey.toBase64());

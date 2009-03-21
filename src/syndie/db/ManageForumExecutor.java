@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
@@ -396,7 +397,9 @@ public class ManageForumExecutor {
         if (_state.getCreateReplyKey())
             chanGenOpts.addOptValue("createReplyKey", Boolean.TRUE.toString());
         if (_state.getCreateReadKey()) {
-            SessionKey rk = new SessionKey(true);
+			byte[] rkData = new byte[SessionKey.KEYSIZE_BYTES];
+			I2PAppContext.getGlobalContext().random().nextBytes(rkData);
+            SessionKey rk = new SessionKey(rkData);
             _createdReadKey = rk;
             chanGenOpts.addOptValue("deliverReadKeys", rk.toBase64());
             chanGenOpts.addOptValue("explicitBodyKey", rk.toBase64());

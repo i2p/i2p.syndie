@@ -78,7 +78,9 @@ public class DBClient {
         // we are probably safe with the small exponent size, but asym 
         // encryption and decryption is rare enough in syndie that its reasonable
         // to go up to the full 2048bits
-        KeyGenerator.PUBKEY_EXPONENT_SIZE = KeyGenerator.PUBKEY_EXPONENT_SIZE_FULL;
+		// NOTE: we use the *short* exponent size here now!
+        // KeyGenerator.PUBKEY_EXPONENT_SIZE = KeyGenerator.PUBKEY_EXPONENT_SIZE_FULL;
+		
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
