@@ -42,6 +42,12 @@ public class DBClient {
         //, org.hsqldb.GCJKludge.class
         //, org.hsqldb.persist.GCJKludge.class
     };
+    static {
+        try {
+            Class.forName("org.hsqldb.jdbcDriver");
+        } catch(Exception exc) {
+        }
+    }
     private I2PAppContext _context;
     private UI _ui;
     private Log _log;

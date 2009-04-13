@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="syndie" default="run" basedir=".">
+  <description>Builds, tests and runs the project syndie.</description>
+  
+  <!-- Set some global properties up -->
+  <property name="src.dir" value="src" />
+  <property name="build.dir" value="build" />
+  <property name="dist.dir" value="dist" />
+  <property name="lib.dir" value="lib" />
+  <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
+  
+  <!-- Set some classpaths up -->
+  <path id="classpath.build">
+    <fileset dir="${lib.dir}">
+      <include name="hsqldb.jar" />
+      <include name="i2p.jar" />
+      <include name="swt.jar" />
+    </fileset>
+  </path>
+  <path id="classpath.run">
+    <pathelement location="${dist.lib.jar}" />
+    <path refid="classpath.build" />
+  </path>
+  
+  <!-- Set up a fileset for the resources -->
+  <path id="resources.path">
+    <fileset dir="${src.dir}">
+      <exclude name="**/*.java" />
+      <exclude name="MANIFEST.MF" />
+    </fileset>
+  </path>
+  
+  
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.dir}" />
+  </target>
+  
+  <target name="compile" depends="init" description="compile the source">
+    <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5">
+      <classpath>
+        <path refid="classpath.build" />
+      </classpath>
+    </javac>
+    <copy todir="${build.dir}">
+      <path refid="resources.path" />
+    </copy>
+  </target>
+  
+  <target name="jar" depends="compile" description="generate the jar file">
+    <jar jarfile="${dist.lib.jar}" basedir="${build.dir}" />
+  </target>
+  
+  <target name="run" depends="jar" description="run syndie">
+    <condition property="run.args" value="">
+      <not>
+	<isset property="run.args" />
+      </not>
+    </condition>
+    <java classname="syndie.gui.SWTUI" fork="true" failonerror="false">
+      <arg line="${run.args}" />
+      <classpath>
+	<path refid="classpath.run" />
+      </classpath>
+    </java>
+  </target>
+  
+  
+  
+  <target name="clean" description="clean up">
+    <delete dir="${build.dir}" />
+    <delete dir="${dist.dir}" />
+  </target>
+</project>
