@@ -37,40 +37,11 @@ Windows binaries:<ul>
 </ul>
 -->
 
-<h4>Standalone installers: <font size="-3">grab <i>one</i></font></h3>
-<ul>
-<li><b><a href="dist/syndie-1.101a.bin.win32.exe">Windows - syndie-1.101a.bin.win32.exe</a></b>
-   (<a href="dist/syndie-1.101a.bin.win32.exe.sig">GPG signature</a>) - 7MB<br />
-   Download and run the installer.  Launch Syndie with the desktop or start
-   menu icons, or with <code>syndie.exe</code></li>
-<li><b><a href="dist/syndie-1.101a.bin.linux32.jar">Linux - syndie-1.101a.bin.linux32.jar</a></b>
-   (<a href="dist/syndie-1.101a.bin.linux32.jar.sig">GPG signature</a>) - 7MB<br />
-   Download and run the installer via
-   "<code>java -jar syndie-1.101a.bin.linux32.jar</code>".
-   Launch Syndie with the desktop or KDE menu icons, or with
-   "<code>java -jar bin/syndie.exe</code>".</li>
-<li><b><a href="dist/syndie-1.101a.bin.linux32.tar.bz2">Linux - syndie-1.101a.bin.linux32.tar.bz2</a></b>
-   (<a href="dist/syndie-1.101a.bin.linux32.tar.bz2.sig">GPG signature</a>) - 6MB<br />
-   Linux package without an installer (no desktop shortcuts, etc).  Extracts to
-   <code>./syndie-1.101a/</code>, and runnable with
-   "<code>java -cp lib/syndie.jar:lib/hsqldb.jar:lib/swt.jar syndie.gui.SWTUI</code>"</li>
-<li><b><a href="dist/syndie-1.101a.bin.osx.tar.bz2">OSX - syndie-1.101a.bin.osx.tar.bz2</a></b>
-   (<a href="dist/syndie-1.101a.bin.osx.tar.bz2.sig">GPG signature</a>) - 6MB<br />
-   Extracts to <code>./syndie-1.101a/</code> and contains <code>Syndie.app</code>.</li>
-<li><a href="dist/syndie-1.101a.bin.jar">Any platform (upgrade) - syndie-1.101a.bin.jar</a>
-   (<a href="dist/syndie-1.101a.bin.jar.sig">GPG signature</a>) - 5MB<br />
-   Save as <code>./lib/syndie.jar</code> and restart.  <b>Only for use as an upgrade</b></li>
-<li>Prerequisites:
-    <a href="http://java.sun.com/javase/downloads/index.jsp">jre1.4+</a>,
-    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>, or
-    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
-    (other JVMs may suffice)</li>
-</ul>
-
+<h4>Standalone installers: <!-- <font size="-3">grab <i>one</i></font>--></h4>
+<p>The standalone installers are currently in a broken state, while the build process is being renovated.</p>
 <h4>Source:</h4>
 <ul>
-<li><a href="dist/syndie-1.101a.src.nodeps.tar.bz2">syndie-1.101a.src.nodeps.tar.bz2</a>
-  (<a href="dist/syndie-1.101a.src.nodeps.tar.bz2.sig">GPG signature</a>) - 3MB</li>
+<li>Only <a href="monotone_howto.html">monotone</a> is working for now.</li>
 <li> You will need to provide the hsqldb.jar and swt.jar for your platform (place them
   in the lib/ directory).  <b>Be sure to read the INSTALL</b> for instructions.</li>
 <li>Prerequisites:
@@ -95,9 +66,7 @@ Debian:<ul>
 <li><code>apt-get syndie</code></li>
 -->
 
-<p>The GPG public key used to sign the distributed files is <code>393F2DF9</code> (fingerprint <code>AE89 D080 0E85 72F0 B777  B2ED C2FA 68C0 393F 2DF9</code>)</p>
-
-<h4>Unreleased development source:</h4>
+<h4>Development source:</h4>
 <ul>
 <li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
     syndie code is available on the netsync server <code>mtn.i2p.net</code>
@@ -117,16 +86,16 @@ Upgrading or reinstalling does not affect your content or keys, just the
 software.  To completely wipe any old data, identities, or keys, delete the
 <code>$HOME/.syndie</code> directory.</p>
 
-<p><b>To uninstall</b>, if you used the installer and created desktop icons or
-start menu shortcuts, simply launch the included uninstaller.  Otherwise, just
-remove the directory you installed Syndie into (e.g. <code>$HOME/syndie</code> or
+<p><b>To uninstall</b><!--, if you used the installer and created desktop icons or
+start menu shortcuts, simply launch the included uninstaller.  Otherwise, --> just
+remove the directory you installed Syndie into (e.g. <code>$HOME/syndie-build</code> or
 <code>C:\Documents and Settings\User\syndie</code>).</p>
 
 <p>The Syndie content is stored in <code>$HOME/.syndie</code> or
 <code>%HOME%\.syndie</code> by default, so you should delete that directory as
 well if you want to remove the content (and private keys!).  To use another
 location (or to run multiple instances at once), simply pass another root
-directory on the command line (e.g. <code>syndie.exe C:\nym1</code>)</p>
+directory on the command line (e.g. <code>java -jar syndie.jar %HOME%\nym1</code>)</p>
 </div>
 </body>
 </html>
