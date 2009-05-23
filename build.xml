@@ -51,6 +51,16 @@
   <target name="jar" depends="compile" description="generate the jar file">
     <jar jarfile="${dist.lib.jar}" basedir="${build.dir}" />
   </target>
+
+  <target name="jarjar" depends="jar" description="Combine all jars">
+    <jar jarfile="syndie.jar" index="true">
+        <manifest>
+            <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
+        </manifest>
+        <zipfileset src="${dist.lib.jar}" includes="**" />
+        <zipgroupfileset dir="lib" includes="*.jar"/>
+    </jar>
+  </target>
   
   <target name="run" depends="jar" description="run syndie">
     <condition property="run.args" value="">
