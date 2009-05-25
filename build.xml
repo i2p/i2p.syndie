@@ -48,7 +48,7 @@
     </copy>
   </target>
   
-  <!-- words words words -->
+  <!-- words words words WORDS WORDS WORDS -->
   <target name="jar" depends="compile" description="generate the jar file">
     <jar jarfile="${dist.lib.jar}" basedir="${build.dir}" />
   </target>
