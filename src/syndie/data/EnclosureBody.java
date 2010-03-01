@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import net.i2p.I2PAppContext;
-import net.i2p.crypto.AESInputStream;
 import net.i2p.data.*;
 import net.i2p.util.Log;
 import syndie.db.CommandImpl;
