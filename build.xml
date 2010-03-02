@@ -76,10 +76,70 @@
         </java>
     </target>
   
+    <target name="plugin" depends="jar"> 
+        <mkdir dir="plugin/lib" />
+
+        <exec executable="grep" outputproperty="versionLine" failonerror="true" >
+            <arg value="public static final String VERSION" />
+	    <arg value="src/syndie/Version.java" />
+        </exec>
+        <exec executable="cut" inputstring="${versionLine}" outputproperty="release.number" failonerror="true" >
+            <arg value="-f2" />
+	    <arg value="-d&quot;" />
+        </exec>
+        <buildnumber file="scripts/build.number" />
+
+        <!-- make the update xpi2p -->
+        <copy file="LICENSE" todir="plugin" />
+        <copy file="logger.config" todir="plugin" />
+        <copy file="scripts/plugin.config" todir="plugin" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${release.number}-b${build.number}" />
+        </exec>
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="update-only=true" />
+        </exec>
+        <exec executable="pack200" failifexecutionfails="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/syndie.jar.pack" />
+            <arg value="${dist.dir}/syndie.jar" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-update.xpi2p" />
+
+        <!-- make the install xpi2p -->
+        <copy file="lib/hsqldb_lic.txt" todir="plugin" />
+        <copy file="scripts/plugin.config" todir="plugin" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${release.number}-b${build.number}" />
+        </exec>
+        <exec executable="pack200" failifexecutionfails="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/hsqldb.jar.pack" />
+            <arg value="${lib.dir}/hsqldb.jar" />
+        </exec>
+        <exec executable="pack200" failifexecutionfails="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${lib.dir}/swt.jar" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" >
+            <arg value="plugin" />
+        </exec>
+    </target>
   
   
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
         <delete dir="${dist.dir}" />
+        <delete dir="plugin/lib" />
+        <delete file="plugin/logger.config" />
+        <delete file="plugin/plugin.config" />
+        <delete file="plugin/LICENSE" />
+        <delete file="plugin/hsqldb_lic.txt" />
+        <delete file="syndie.xpi2p" />
+        <delete file="syndie-update.xpi2p" />
     </target>
 </project>
