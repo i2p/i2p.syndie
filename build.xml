@@ -90,9 +90,12 @@
         <buildnumber file="scripts/build.number" />
 
         <!-- make the update xpi2p -->
+        <delete file="plugin/lib/hsqldb.jar.pack" />
+        <delete file="plugin/lib/swt.jar.pack" />
         <copy file="LICENSE" todir="plugin" />
         <copy file="logger.config" todir="plugin" />
-        <copy file="scripts/plugin.config" todir="plugin" overwrite="true" />
+        <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
             <arg value="version=${release.number}-b${build.number}" />
         </exec>
@@ -107,11 +110,26 @@
         <exec executable="scripts/makeplugin.sh" >
             <arg value="plugin" />
         </exec>
-        <move file="syndie.xpi2p" tofile="syndie-update.xpi2p" />
+        <move file="syndie.xpi2p" tofile="syndie-linux-i386-update.xpi2p" />
+
+        <!-- make the windows update xpi2p -->
+        <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${release.number}-b${build.number}" />
+        </exec>
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="update-only=true" />
+        </exec>
+        <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
+        <exec executable="scripts/makeplugin.sh" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-win32-update.xpi2p" />
 
         <!-- make the install xpi2p -->
         <copy file="lib/hsqldb_lic.txt" todir="plugin" />
-        <copy file="scripts/plugin.config" todir="plugin" overwrite="true" />
+        <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
             <arg value="version=${release.number}-b${build.number}" />
         </exec>
@@ -128,6 +146,24 @@
         <exec executable="scripts/makeplugin.sh" >
             <arg value="plugin" />
         </exec>
+        <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
+
+        <!-- make the windows install xpi2p -->
+        <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${release.number}-b${build.number}" />
+        </exec>
+        <exec executable="pack200" failifexecutionfails="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${lib.dir}/swt-win32.jar" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-win32.xpi2p" />
+
     </target>
   
   
@@ -135,6 +171,7 @@
         <delete dir="${build.dir}" />
         <delete dir="${dist.dir}" />
         <delete dir="plugin/lib" />
+        <delete file="plugin/clients.config" />
         <delete file="plugin/logger.config" />
         <delete file="plugin/plugin.config" />
         <delete file="plugin/LICENSE" />
