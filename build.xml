@@ -128,6 +128,7 @@
 
         <!-- make the install xpi2p -->
         <copy file="lib/hsqldb_lic.txt" todir="plugin" />
+        <copy file="scripts/LICENSE-swt.txt" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failifexecutionfails="true" output="plugin/plugin.config" append="true">
@@ -170,12 +171,7 @@
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
         <delete dir="${dist.dir}" />
-        <delete dir="plugin/lib" />
-        <delete file="plugin/clients.config" />
-        <delete file="plugin/logger.config" />
-        <delete file="plugin/plugin.config" />
-        <delete file="plugin/LICENSE" />
-        <delete file="plugin/hsqldb_lic.txt" />
+        <delete dir="plugin" />
         <delete file="syndie.xpi2p" />
         <delete file="syndie-update.xpi2p" />
     </target>
