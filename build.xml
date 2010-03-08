@@ -149,6 +149,17 @@
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
 
+        <!-- make the 64 bit linux install xpi2p -->
+        <exec executable="pack200" failifexecutionfails="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${lib.dir}/swt-linux-x86-64.jar" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-linux-x86-64.xpi2p" />
+
         <!-- make the windows install xpi2p -->
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
