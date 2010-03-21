@@ -21,8 +21,8 @@ PCT=${PC}.tmp
 if [ ! -f $PRIVKEYFILE ]
 then
 	mkdir -p $PUBKEYDIR
-	java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate keygen $PUBKEYFILE $PRIVKEYFILE
-	java -cp $I2P/lib/i2p.jar net.i2p.data.Base64 encode $PUBKEYFILE $B64KEYFILE
+	java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate keygen $PUBKEYFILE $PRIVKEYFILE || exit 1
+	java -cp $I2P/lib/i2p.jar net.i2p.data.Base64 encode $PUBKEYFILE $B64KEYFILE || exit 1
 	rm -rf logs/
 	chmod 444 $PUBKEYFILE $B64KEYFILE
 	chmod 400 $PRIVKEYFILE
@@ -78,11 +78,11 @@ mv $PCT $PC
 # add our Base64 key
 grep -v '^key=' $PC > $PCT
 B64KEY=`cat $B64KEYFILE`
-echo "key=$B64KEY" >> $PCT
+echo "key=$B64KEY" >> $PCT || exit 1
 mv $PCT $PC
 
 # zip it
-zip -r $OPWD/plugin.zip *
+zip -r $OPWD/plugin.zip * || exit 1
 
 # get the version and use it for the sud header
 VERSION=`grep '^version=' $PC | cut -f 2 -d '='`
@@ -92,13 +92,13 @@ XPI2P=${NAME}.xpi2p
 cd $OPWD
 
 # sign it
-java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate sign plugin.zip $XPI2P $PRIVKEYFILE $VERSION
+java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate sign plugin.zip $XPI2P $PRIVKEYFILE $VERSION || exit 1
 rm -f plugin.zip
 
 # verify
 echo 'Verifying. ...'
-java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate showversion $XPI2P
-java -cp $I2P/lib/i2p.jar -Drouter.trustedUpdateKeys=$B64KEY net.i2p.crypto.TrustedUpdate verifysig $XPI2P
+java -cp $I2P/lib/i2p.jar net.i2p.crypto.TrustedUpdate showversion $XPI2P || exit 1
+java -cp $I2P/lib/i2p.jar -Drouter.trustedUpdateKeys=$B64KEY net.i2p.crypto.TrustedUpdate verifysig $XPI2P || exit 1
 rm -rf logs/
 
 echo -n 'Plugin created: '
