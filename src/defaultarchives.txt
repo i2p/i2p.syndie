@@ -53,22 +53,28 @@
 #archive.10.url=http://roarchive1.syndie.i2p/?i2paddresshelper=mVcnTieCEGsMiz-BlnmTlOirf7SdFhDuJ3jhZtO7RXEjGAq66GdySmDKGabRQIcDTUaS1KFsAc6Y328yBiAanIrV5m9lyijo5X~9Ghgm3VExsEFegi78qISEJIKt438SyrutuNHLqzr5wy9xyDm8JjNwS~~ZunYyiKs~dYwqmkwmDbs8aSxDh1AHZEYMRPuTuWirpRZM-pToVtmqvx02idl6pMFKSYbgyCnYkBjt-NJDAcA-FuLgRaU2NGe4RKddKeNT8BoWNmKLzyDcLm9Im67QOPIpp7mhjW0~Nv3dzREzLEd-ZZT0QRZjiahP3bT-bMW2FFb3LcN2rRRubfa4H3FcSqL8p9I8xOyLz2mjbXp74c5LhlGc8qd2JIF-dqlaYuRtq2Bf~u-Kegg6sndBVdz020kk~J06RW~z9RVDo5IMk6AvzdFwyl94ORXdHyRh9pKf3aFbimKG~QPeyLroCqo6GNhyrtmiBkGRPhO40D1il3dnGJ-fhB~OP1PjTASsAAAA
 #archive.10.proxy=localhost:4444
 ##########################################
-archive.1.name=synar.i2p (I2P)
-archive.1.url=http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHfLgQbFOtO-KWt~14IQr36jtXaUKThYU8eISCfnRQ0295GGUGeer1zUldON9Kcvf0I31so70397sGHJHG7TPGlV-mCKdht7TZBW6qK037omn4QBa8wuiA80fDtcpAdG3xKAnhEBO3fH2UEH-4ZFXSP7dRVW5c88zdTq93TMRqgNanC8cWzgoPDaE1lzIydbseeP9449RCDj9XUr16PiBQtuveUJvsZhdajzYrjgRsBPQXBa9k4hvFeVB8VRLnfPaHugd~6ct6iMdxOybJMaBF6NH~NVOwUaOn8uDKgQOzsWaqwUWahizKlmZbC0NtimQdAIa4~pgdq4S8Wz5YWTB3lceUlF-ZAo-F5QSbw4Pjg8iJ0rvapxuGec9i2cwW~qwOjKwbv1z4kZ0niKvUNH9T4WoRUDO2ttu5d4CAAAA
+#archive.1.name=synar.i2p (I2P)
+#archive.1.url=http://synar.i2p/?i2paddresshelper=jr1VPk~imcIMtGS1ZTgsuqka-RN~sr6cJhNJdY4d4f4JGtrPg65pJkFrk7bOPISUefX5qNM-6fGo-Ue32cMtQhAjKJhmHf
+archive.1.name=sync.i2p (I2P)
+archive.1.url=http://sync.i2p/?i2paddresshelper=vpjr6HkcEPSx094vnu9IaEbj0FoF6LbfQXra8iwyCjBbI-atJPQhNcHV5IySuiygOZM68--ZdvuaVCVfuR~OJQME27fxToERhwLFd9vGIb7IjOPuwrjKn8FmWuNLoz526EzOcZHyJEjRGlpwJ3OECeIcOsZVdjKQBW1kvObJ~H08IwCAv2AQBnQatmtUBDxrDOlFQ4xVEK8R4hgVdgPNbFA4VYl6c4OGm1tkv1EwOsghUejWXPRyvyM-AEsTS0zPXGWgUtw~cwjEZXPDAtlw7gFF~gAiQz~5eulo0R2-~HnSsCvThmSmerzRzMKQ~Mp975Ro2To2cMhmK4nQT6FAhYyRCAYKvIoQXS~fqZ~0Dpx8BEgW~Y4xKtnua06-uTNxPPdlGJIJFLQfevq6U-tzQ~mJN5UWVsTUeN~fVbPKUdJTbMSJhHmqB42OHixauMW3PZkvn61DAilXzzTRl7elk3DeJPuwaFidWmOBbp2kBk6~edBeR~f~6jntbHI2NvJmAAAA
 archive.1.proxy=localhost:4444
 ##########################################
-archive.2.name=syndie.ps.i2p (I2P)
-archive.2.url=http://syndie.ps.i2p/?i2paddresshelper=Wubai8cZlbxXGZOVz8EnBa0yHBD9TVCGAsTErf6O62wlFK46DvWL9ug4kOUIFPOIaRs62DKG-k-pKY9lgyf1JwLrAi0tNreo7Rc4xfalWGTU-svP~eRwGqxkwi-it2iYRHLhaSRlGk5Ta~TL09mzQgz-GnLtIOX7A1sedAGm8sV40U4UoRg~Zl9EqT41HHeqAzn0IQcFKFpChgu5rpFIdwDFd3gIuvJzKi3I058EqKf8mm3NUyMvLF4vZ6u~C6X~yWmV4HFmNe6kExuCigcSPlniEb5sjWcHkeHNOlccpP8U0qjZi4mmy9ufTF4qZdhy11ajaVGpFxi37KONh6CWZYUkjYi8AIKkyGKrk~WJ2WvhMNOw7QjhlQVXhC8Yxskn1pUSGo2hDb5IW5No4IDYJSoF7CgDKiSgt5mtZ9iKN~A74igX8V15XtYsMd4yiJ0oDvH1WgjLZF~up2RPq70j-8xNI579h1U~gqY5-BeW7WT80KWJ-LoauyfLj2-iiWw1AAAA
+#archive.2.name=syndie.ps.i2p (I2P)
+#archive.2.url=http://syndie.ps.i2p/?i2paddresshelper=Wubai8cZlbxXGZOVz8EnBa0yHBD9TVCGAsTErf6O62wlFK46DvWL9ug4kOUIFPOIaRs62DKG-k-pKY9lgyf1JwLrAi
+archive.2.name=mosfet.i2p (I2P)
+archive.2.url=http://mosfet.i2p/archive/?i2paddresshelper=zADgixl~iNqxQyKEWAVWUHoWcyDx7Mwk-gLgvr64W3Bl6tPiwDySSKt10gXIElar2eh1XEJCMy-j7j-NFXl-WxRE7lQy8DrTIBVMetFhYmPVmhYQcBubxqT5L1e8Luon-jvgCTLArElMilauG6HP6h9L5lTjAZZRBkGLfiplfHEYWvLsRiI2R9DfquF4EfpNaJyN1CDclQ7Apola9cYmW5s6Tzdyl2FeVd2vo5ne1VdatgPoEwpvNjf9CJuQwqgiVI34wIV3dY92OpiZDhIHKGl1FLs3Ke5vvzdZqceyBR3EkoLifrD5p5TK8JXYzM9C8xV0vD-aaWI1genoWoyhJ2ioMKbVZAQMMqKHyUcP5Q4AHqj0c8DXzVWCSsJN1LOg30WLdMLmLnshiogIO70D~hXvCsSzE3T5krpQOzhreotZlxyhFC8seYDF3nsJuEpHEXm4aZvUsuBmr7PHemlelfP9Qg-Aaj2s~lHb97OAXA5DW5uPc1pkDnSHnPPlDorTAAAA
 archive.2.proxy=localhost:4444
 ##########################################
-archive.3.name=xflemvwlo7dld6dk.onion (Tor)
-archive.3.url=http://xflemvwlo7dld6dk.onion/
-archive.3.proxy=localhost:8118
+#archive.3.name=xflemvwlo7dld6dk.onion (Tor)
+#archive.3.url=http://xflemvwlo7dld6dk.onion/
+#archive.3.proxy=localhost:8118
 ##########################################
-archive.4.name=syndie.welterde.i2p (I2P)
-archive.4.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
-archive.4.proxy=localhost:4444
+archive.3.name=syndie.welterde.i2p (I2P)
+archive.3.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.3.proxy=localhost:4444
+archive.3.pushpolicy=SendNothing
 ##########################################
-archive.5.name=syndie.welterde.de (direct)
-archive.5.url=http://syndie.welterde.de/
+archive.4.name=syndie.welterde.de (direct)
+archive.4.url=http://syndie.welterde.de/
+archive.4.pushpolicy=SendNothing
 ##########################################
