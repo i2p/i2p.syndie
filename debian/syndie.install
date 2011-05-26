@@ -1,0 +1,4 @@
+syndie.jar usr/share/syndie
+lib/servlet.jar usr/share/syndie
+debian/syndie.xpm usr/share/pixmaps
+debian/syndie.desktop usr/share/applications

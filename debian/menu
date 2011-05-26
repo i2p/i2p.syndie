@@ -1,0 +1,3 @@
+?package(syndie):needs="X11" section="Applications/Network/Communication"\
+  title="syndie" command="/usr/bin/syndie" \
+  longtitle="Syndie Distributed Forums" icon="/usr/share/pixmaps/syndie.xpm"

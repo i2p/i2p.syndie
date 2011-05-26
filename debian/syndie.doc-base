@@ -1,0 +1,10 @@
+Document: syndie
+Title: Debian Syndie Manual
+Author: jrandom
+Abstract: This manual describes the distributed forum
+ software Syndie.
+Section: Network/Communication
+
+Format: HTML
+Index: /usr/share/doc/syndie/html/index.html
+Files: /usr/share/doc/syndie/html/*.html

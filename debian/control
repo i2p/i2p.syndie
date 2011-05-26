@@ -1,0 +1,29 @@
+Source: syndie
+Section: java
+Priority: extra
+Maintainer: Kill Your TV <killyourtv@i2pmail.org>
+Build-Depends: debhelper (>= 7.0.50~), ant, default-jdk, default-jdk-builddep,
+ libswt-gtk-3.5-java | libswt-gtk-3.6-java, libhsqldb-java, i2p
+Standards-Version: 3.9.1
+Homepage: http://syndie.i2p2.de
+#Vcs-Git: git://git.debian.org/collab-maint/syndie.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/syndie.git;a=summary
+
+Package: syndie
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${java:Depends}, default-jre | java5-runtime | java6-runtime, libhsqldb-java,
+ libswt-gtk-3.5-java | libswt-gtk-3.6-java, libhsqldb-java, i2p
+Suggests: tor, freenet
+Enhances: i2p, tor
+Description: open source system for operating distributed forums
+ Syndie is java-based open source system for operating secure distributed
+ forums.
+ .
+ Some of the features include:
+  - Decentralized forums
+  - Private forums
+  - Offline browsing
+  - Secure reader
+ .
+ At its core, Syndie is a content layer with a defined file format and
+ cryptographic algorithms.

@@ -1,0 +1,21 @@
+syndie (1.101~b7-3) UNRELEASED; urgency=low
+
+  * Remove patches from debian/
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Thu, 26 May 2011 00:03:55 +0000
+
+syndie (1.101~b7-2) unstable; urgency=low
+
+  * Explicitly set Djava.library.path in startup script (thanks for your help
+    A.D.)
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Fri, 29 Apr 2011 09:21:49 +0000
+
+syndie (1.101~b7-1) unstable; urgency=low
+
+  * Initial packaging
+  * Removing defunct Syndie archives from Welcome screen
+  * Set classpath in syndie start-up script with the contents of the message at
+    urn:syndie:channel:d7:channel44:mRUEvztbna1ed978nlQh-A44rK8XwXs~dNj8YPFn6Fc=9:messageIdi1172093191594ee
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Mon, 25 Apr 2011 23:41:26 +0000

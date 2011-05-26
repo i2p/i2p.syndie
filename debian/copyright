@@ -1,0 +1,53 @@
+This work was packaged for Debian by:
+
+    Kill Your TV <killyourtv@i2pmail.org> on Fri, 22 Apr 2011 06:27:33 +0000
+
+It was downloaded from:
+
+    The i2p.syndie branch from I2P's montone repository
+
+Upstream Author(s):
+
+    jrandom
+    I2P Developers
+
+Copyright:
+
+    (c) 2007 jrandom
+
+License:
+
+    Unless marked otherwise, all code and content making up this package
+    is released into the public domain.  Code included in this package
+    must be under BSD or MIT compatible licenses.
+
+    HSQLDB (hsqldb.jar and servlet.jar) are licensed according to
+    lib/hsqldb_lic.txt (BSD-like)
+
+    The GNU-Crypto Fortuna PRNG and SHA-256 code is included with
+    modifications as documented (removing other GNU-Crypto dependencies
+    and renaming to avoid conflicts with standard GNU-Crypto code).  These
+    files are located under src/gnu/crypto/ and are licensed according to
+    the GPL with the "linking exception".  Since Syndie is not derived
+    from the referenced PRNG or hash functions, Syndie is not tainted.
+
+    The BouncyCastle HMAC and MD5 code is included with modifications
+    as documented (removing other BouncyCastle dependencies).  These
+    files are located under src/org/bouncycastle/ and are licensed
+    according to the BouncyCastle license (an MIT-style license).
+
+    The jazzy 0.5.2 spellchecking engine (under src/com/swabunga) is
+    LGPL licensed.
+
+    SWT is used for the GUI, and is either bundled with various installers
+    or is linked by the end user.  The bundled releases are distributed
+    under SWT's terms (the Eclipse Public License) - see the EPL for more
+    details at http://www.eclipse.org/legal/epl-v10.html.  Most icons
+    included in Syndie's GUI come from Eclipse and are licensed under the
+    EPL as well.
+
+The Debian packaging is:
+
+    Copyright (C) 2011 Kill Your TV <killyourtv@i2pmail.org>
+
+and is licensed under the WTFPL.
