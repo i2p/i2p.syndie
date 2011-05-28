@@ -3,26 +3,46 @@ Key:
  X recently completed
    (longer term tasks are included in doc/web/roadmap.html)
  ? questionable task
+
 ===
-- dictionary selection GUI
+
 - scheduled web rips (and maybe even scheduled cli scripts?  expose webrip cli for both?)
-- monotone migration
- - on mtn rev push @ mtn.i2p.net, post to syndie-commit
- - publish the mtn web interface, or get syndie up on the mtnview site?
 - remove duplicate nymKeys (eg "Read key 5/89 attempt failed, continuing...")
 - clean up the highlight view (less text-oriented, more graphical)
 - simplify pbe resolution (special link to search:pbePending=true?)
 - revamp bookmark management and editing (DnD, in place editing, etc)
 - manage freenet keypairs (create/specify) on the syndication screen
-- edit theme (fonts/colors/icons, not just font size)
-- edit/create translations
-- login screen when necessary
- - passphrase changes (reencrypt keys with the new passphrase)
- - lock syndie (keep it running to sync but no UI interaction sans login/pass)
 ? custom read/browse view for web rips
-- write help pages
 - use the systray to display the highlights and for notification
 - auto-import keys and archives on Import/view
 ? spellcheck all pages, not just one
-- internationalize the text UI
-- update mtn-committers
+
+Database:
+  - Very slow, lots of issues
+
+Documentation:
+  - Include all doc/web/* files in the jar; install all in archive/ via TextEngine.buildInstallDir(),
+    or make available via the GUI, or both
+  - write help pages
+
+GUI:
+  - Make a decision on which GUI to use, kill the other one
+  - dictionary selection GUI
+  - edit theme (fonts/colors/icons, not just font size)
+  - login screen when necessary
+    - passphrase changes (reencrypt keys with the new passphrase)
+    - lock syndie (keep it running to sync but no UI interaction sans login/pass)
+
+Plugin:
+  - Full server support in the plugin (start I2PTunnelHTTPServer with plugin/syndie/eepPriv.dat file)
+  - Remove all System.exit() calls for safe plugin operation in same JVM as router
+  - Migrate plugin to in-JVM operation
+
+Sync:
+  - Allow much more frequent syncing
+
+Translation:
+  - Compare TranslationRegistry.java to I2P's Translate.java, decide whether to switch to I2P's
+    translation class, and set up translation files
+  - edit/create translations
+  - internationalize the text UI
