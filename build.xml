@@ -89,7 +89,7 @@
         </exec>
         <buildnumber file="scripts/build.number" />
 
-        <!-- make the update xpi2p -->
+        <!-- make the update linux xpi2p, this is for both 32 and 64 bit -->
         <delete file="plugin/lib/hsqldb.jar.pack" />
         <delete file="plugin/lib/swt.jar.pack" />
         <copy file="LICENSE" todir="plugin" />
@@ -187,6 +187,8 @@
         <delete file="syndie-update.xpi2p" />
         <delete file="syndie-win32.xpi2p" />
         <delete file="syndie-win32-update.xpi2p" />
+        <delete file="syndie-linux-i386.xpi2p" />
+        <delete file="syndie-linux-i386-update.xpi2p" />
         <delete file="syndie-linux-x86-64.xpi2p" />
     </target>
 </project>

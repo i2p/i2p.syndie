@@ -362,10 +362,12 @@ public class HTTPServ implements CLI.Command {
         try {
             if (methodLine.startsWith("GET "))
                 handleGet(socket, in, out, timeout, getPath(methodLine), headers);
+            else if (methodLine.startsWith("HEAD "))
+                handleHead(socket, in, out, timeout, getPath(methodLine), headers);
             else if (methodLine.startsWith("POST "))
                 handlePost(socket, in, out, timeout, getPath(methodLine), headers);
             else
-                fail(socket, in, out, timeout);
+                fail405(socket, in, out, timeout);
         } catch (RuntimeException re) {
             _ui.errorMessage("Error handling", re);
             fail(socket, in, out, timeout);
@@ -408,6 +410,7 @@ public class HTTPServ implements CLI.Command {
         if ( (idx < 0) || (idx + 1 >= path.length()) ) return null;
         return path.substring(idx+1);
     }
+
     private void handleGet(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
         if (path == null || path.equals("/"))
             path = "/index.html";
@@ -421,6 +424,24 @@ public class HTTPServ implements CLI.Command {
             String sub = getChannelSub(path);
             _ui.debugMessage("GET of [" + chan + "]  [" + sub + "]");
             sendIfAllowed(chan, sub, socket, in, out, timeout);
+        }
+    }
+    
+    /**
+     *  Only handles the shared files, otherwise sends a 405
+     *  @since 1.101b-8
+     */
+    private void handleHead(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
+        if (path == null || path.equals("/"))
+            path = "/index.html";
+        _ui.debugMessage("HEAD " + path);
+        
+        File file = (File) _sharedFiles.get(path);
+        if (file != null) {
+            sendHeaders(socket, in, out, file, timeout);
+            close(socket, in, out, timeout);
+        } else {
+            fail405(socket, in, out, timeout);
         }
     }
     
@@ -498,6 +519,15 @@ public class HTTPServ implements CLI.Command {
     }
     
     private void send(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
+        sendHeaders(socket, in, out, file, timeout);
+        sendBody(socket, in, out, file, timeout);
+    }
+
+    /**
+     *  Send the HTTP headers
+     *  @since 1.101b-8
+     */
+    private void sendHeaders(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
         String type = "application/octet-stream";
         String name = file.getName();
         if (name.endsWith(".html"))
@@ -515,7 +545,13 @@ public class HTTPServ implements CLI.Command {
         out.write(DataHelper.getUTF8(buf.toString()));
         
         timeout.resetTimer();
-        
+    }
+
+    /**
+     *  Send the HTTP body
+     *  @since 1.101b-8
+     */
+    private void sendBody(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
         int len = 0;
         //Sha256Standalone hash = new Sha256Standalone();
         FileInputStream fin = null;
@@ -677,9 +713,17 @@ public class HTTPServ implements CLI.Command {
         close(socket, in, out, timeout);
     }
     
+    /** @since 1.101b-8 */
+    private void fail405(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
+        out.write(ERR_405);
+        fail(socket, in, out, timeout);
+    }
+
     private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n\r\n<html><head><title>401 TOO BUSY</title></head><body><h1>401 TOO BUSY</h1></body></html>");
     private static final byte[] ERR_404 = DataHelper.getUTF8("HTTP/1.0 404 File not found\r\nConnection: close\r\n\r\n<html><head><title>404 File not found</title></head><body><h1>404 File not found</h1></body></html>");
     private static final byte[] ERR_403 = DataHelper.getUTF8("HTTP/1.0 403 Not authorized\r\nConnection: close\r\n\r\n<html><head><title>403 Not authorized</title></head><body><h1>403 Not authorized</h1></body></html>");
+    /** @since 1.101b-8 */
+    private static final byte[] ERR_405 = DataHelper.getUTF8("HTTP/1.0 405 Method not allowed\r\nConnection: close\r\n\r\n");
     
     private static final void tooBusy(Socket socket) throws IOException {
         SocketTimeout timeout = new SocketTimeout(socket, 20*1000);
