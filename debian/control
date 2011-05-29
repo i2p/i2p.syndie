@@ -6,8 +6,6 @@ Build-Depends: debhelper (>= 7.0.50~)
 Build-Depends-Indep: ant, default-jdk, libswt-gtk-3.5-java | libswt-gtk-3.6-java, libhsqldb-java, i2p-router | i2p
 Standards-Version: 3.9.2.0
 Homepage: http://syndie.i2p2.de
-#Vcs-Git: git://git.debian.org/collab-maint/syndie.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/syndie.git;a=summary
 
 Package: syndie
 Architecture: all

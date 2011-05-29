@@ -1,3 +1,10 @@
+syndie (1.101~b8-1) unstable; urgency=low
+
+  * New upstream beta
+    - add web server support for HEAD, for shared files only
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Sat, 28 May 2011 23:43:41 +0000
+
 syndie (1.101~b7-3) unstable; urgency=low
 
   * Change dependencies to i2p-router | i2p
