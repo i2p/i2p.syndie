@@ -17,6 +17,12 @@ Key:
 - auto-import keys and archives on Import/view
 ? spellcheck all pages, not just one
 
+Big Picture:
+  - Reasses the project. Where is it now, what should be the focus going forward.
+    Useful links for reviewing the original goals:
+    http://www.i2p2.i2p/status-2006-09-12.html
+    http://www.i2p2.i2p/status-2006-10-03.html
+
 Database:
   - Very slow, lots of issues
 
@@ -24,6 +30,8 @@ Documentation:
   - Include all doc/web/* files in the jar; install all in archive/ via TextEngine.buildInstallDir(),
     or make available via the GUI, or both
   - write help pages
+  - Much more javadocs
+  - Add javadoc build target
 
 GUI:
   - Make a decision on which GUI to use, kill the other one
@@ -38,11 +46,16 @@ Plugin:
   - Remove all System.exit() calls for safe plugin operation in same JVM as router
   - Migrate plugin to in-JVM operation
 
+Refactoring:
+  - Use Java 5 generics
+  - Use Java 5 concurrent
+
 Sync:
   - Allow much more frequent syncing
 
 Translation:
   - Compare TranslationRegistry.java to I2P's Translate.java, decide whether to switch to I2P's
-    translation class, and set up translation files
+    Translate class (yes), and set up translation .po files
   - edit/create translations
+  - Sync to I2P transifex
   - internationalize the text UI

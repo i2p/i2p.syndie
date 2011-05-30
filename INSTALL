@@ -5,7 +5,14 @@ should work.  You will needs SWT as well - grab the latest version for
 your OS and architecture from http://www.eclipse.org/swt/ (or from
 your favorite package manager).
 
-First, you need to tell ant where to find SWT - add a line to the
+I2P and SWT are required to compile Syndie.
+
+For I2P, the easiest is to add a symbolic link "i2p.jar" in lib/
+that points to your $I2P/lib/i2p.jar file.
+
+Also, you need to tell ant where to find SWT.
+Add a symbolic link "swt.jar" in lib/ that points to your swt.jar.
+Alternatively, add a line to the
 file nbproject/private/private.properties (creating a new directory or
 file if necessary):
   swt.dir=../swt-I20061214-1445-gtk-linux-x86

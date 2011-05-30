@@ -26,6 +26,7 @@
     <path id="resources.path">
         <fileset dir="${src.dir}">
             <exclude name="**/*.java" />
+            <exclude name="com/*.txt" />
             <exclude name="MANIFEST.MF" />
         </fileset>
     </path>
@@ -38,7 +39,7 @@
     </target>
   
     <target name="compile" depends="init" description="compile the source">
-        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5">
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5" includeAntRuntime="false" >
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
@@ -93,6 +94,8 @@
         <delete file="plugin/lib/hsqldb.jar.pack" />
         <delete file="plugin/lib/swt.jar.pack" />
         <copy file="LICENSE" todir="plugin" />
+        <copy file="src/com/LICENSE.txt" tofile="plugin/LICENSE-jazzy.txt" />
+        <copy file="LICENSE-EPL-v1.0.html" tofile="plugin/LICENSE-icons.html" />
         <copy file="logger.config" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
