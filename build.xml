@@ -39,7 +39,8 @@
     </target>
   
     <target name="compile" depends="init" description="compile the source">
-        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5" includeAntRuntime="false" >
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5"
+               deprecation="on" includeAntRuntime="false" >
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
