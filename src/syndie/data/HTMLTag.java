@@ -126,13 +126,13 @@ public class HTMLTag {
     public void consume() { consumed = true; }
     
     public String toString() {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         rv.append(toHTML());
         rv.append("[" + this.startIndex + (endIndex >= 0 ? ":" + endIndex : ":?") + ":" + this.srcLine + "]");
         return rv.toString();
     }
     public String toHTML() {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         rv.append('<');
         rv.append(this.name);
         rv.append(' ');

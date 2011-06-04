@@ -483,7 +483,7 @@ public class MessageGen extends CommandImpl {
         // tags
         List tags = args.getOptValues("pubTag");
         if ( (tags != null) && (tags.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < tags.size(); i++) {
                 String stripped = strip((String)tags.get(i));
                 if (stripped.length() > 0)
@@ -522,7 +522,7 @@ public class MessageGen extends CommandImpl {
         // tags
         List tags = args.getOptValues("privTag");
         if ( (tags != null) && (tags.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < tags.size(); i++) {
                 String stripped = strip((String)tags.get(i));
                 if (stripped.length() > 0)
@@ -533,7 +533,7 @@ public class MessageGen extends CommandImpl {
         
         String referenceStrings = args.getOptValue("references");
         if (referenceStrings != null) {
-            StringBuffer refs = new StringBuffer();
+            StringBuilder refs = new StringBuilder();
             String refList[] = Constants.split(',', referenceStrings);
             for (int i = 0; i < refList.length; i++) {
                 try {
@@ -566,7 +566,7 @@ public class MessageGen extends CommandImpl {
         
         List cancel = args.getOptValues("cancel");
         if (cancel != null) {
-            StringBuffer refs = new StringBuffer();
+            StringBuilder refs = new StringBuilder();
             for (int i = 0; i < cancel.size(); i++) {
                 String ref = (String)cancel.get(i);
                 try {

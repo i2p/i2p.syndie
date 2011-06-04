@@ -278,7 +278,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
             }
             public void dragSetData(DragSourceEvent evt) {
                 int indexes[] = _localBans.getSelectionIndices();
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 for (int i = 0; i < indexes.length; i++) {
                     Hash scope = (Hash)_localBanHashes.get(indexes[i]);
                     buf.append(scope.toBase64()).append("\n");

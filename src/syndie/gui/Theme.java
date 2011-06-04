@@ -105,7 +105,7 @@ public class Theme {
     public String validate() { 
         if (true) return null;
         
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         if (TAB_FONT == null)
             rv.append("tabFont is null ");
         else if (TAB_FONT.isDisposed())

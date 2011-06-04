@@ -536,7 +536,7 @@ public class HTTPServ implements CLI.Command {
             type = "application/x-syndie";
         else if (name.endsWith(".dat"))
             type = "application/x-syndie-index";
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("HTTP/1.0 200 OK\r\n");
         buf.append("Content-type: ").append(type).append("\r\n");
         buf.append("Content-length: ").append(file.length()).append("\r\n");

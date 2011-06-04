@@ -882,7 +882,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             
             _name.setText(str(info.getName()));
             
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (Iterator iter = info.getPublicTags().iterator(); iter.hasNext(); )
                 buf.append((String)iter.next()).append(" ");
             for (Iterator iter = info.getPrivateTags().iterator(); iter.hasNext(); )

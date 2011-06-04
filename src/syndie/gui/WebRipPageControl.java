@@ -332,7 +332,7 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
             default:
                 key = T_STATUS_ERROR;
                 def = DEFAULT_STATUS_ERROR;
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 _errorMessages = runner.getErrorMessages();
                 for (int i = 0; i < _errorMessages.size(); i++) {
                     String msg = (String)_errorMessages.get(i);

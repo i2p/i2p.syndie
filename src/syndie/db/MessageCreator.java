@@ -32,7 +32,7 @@ public class MessageCreator {
     //private MessageEditor _editor;
     protected MessageCreatorSource _source;
     private SyndieURI _createdURI;
-    private StringBuffer _errorBuf;
+    private StringBuilder _errorBuf;
     protected UI _ui;
     
     private List _tempFiles;
@@ -45,7 +45,7 @@ public class MessageCreator {
     public MessageCreator(MessageCreatorSource source) {
         _source = source;
         _ui = source.getUI();
-        _errorBuf = new StringBuffer();
+        _errorBuf = new StringBuilder();
     }
     
     /**
@@ -388,7 +388,7 @@ public class MessageCreator {
         //if ( (_currentMessage.getOverwriteChannel() != null) && (_currentMessage.getOverwriteMessage() >= 0) )
         //    genOpts.setOptValue("overwrite", SyndieURI.createMessage(_currentMessage.getOverwriteChannel(), _currentMessage.getOverwriteMessage()).toString());
 
-        StringBuffer parentBuf = new StringBuffer();
+        StringBuilder parentBuf = new StringBuilder();
         for (int i = 0; i < _source.getParentCount(); i++) {
             SyndieURI uri = _source.getParent(i);
             parentBuf.append(uri.toString());

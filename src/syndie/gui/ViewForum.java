@@ -549,7 +549,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
             
             loadReferences(info);
             
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (Iterator iter = info.getPublicTags().iterator(); iter.hasNext(); )
                 buf.append((String)iter.next()).append(" ");
             for (Iterator iter = info.getPrivateTags().iterator(); iter.hasNext(); )
@@ -666,7 +666,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
                 String name = node.getName();
                 String desc = node.getDescription();
                 SyndieURI uri = node.getURI();
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 if (parentString != null) 
                     buf.append(parentString).append(" > ");
                 if (name != null)

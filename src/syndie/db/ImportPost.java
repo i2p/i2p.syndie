@@ -1044,7 +1044,7 @@ public class ImportPost {
     }
   
     private String formatConfig(Properties props) {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         for (Iterator iter = props.keySet().iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();
             String val = props.getProperty(key);

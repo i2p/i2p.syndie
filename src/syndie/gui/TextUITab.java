@@ -212,7 +212,7 @@ class TextUITab extends BrowserTab implements UI {
     public void commandComplete(final int status, final List location) {
         append(STATUS, "* Command execution complete. ");
         append(STATUS, "* Status: " + status);
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (location != null) {
             for (int i = 0; i < location.size(); i++) {
                 buf.append(location.get(i).toString()).append("> ");

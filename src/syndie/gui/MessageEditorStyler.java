@@ -272,7 +272,7 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         else if (_txtAlignRight.getSelection())
             align = " align=\"right\"";
         
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (bold) {
             buf.append("<b");
             if (align != null)

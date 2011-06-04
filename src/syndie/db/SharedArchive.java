@@ -165,7 +165,7 @@ public class SharedArchive {
         }
 
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append(Base64.encode(_scope) + " / " + _version + " flags: ");
             if (isPBE()) buf.append("PBE ");
             if (isPublic()) buf.append("Public ");
@@ -263,7 +263,7 @@ public class SharedArchive {
         }
         
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("* msg: " + _messageId + " scope: " + _scopeChannel + " target: " + _targetChannel + " flags: ");
             if (isPBE()) buf.append("PBE ");
             if (isPrivate()) buf.append("Private ");
@@ -420,7 +420,7 @@ public class SharedArchive {
         }
         
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("* Archive about:\n");
             buf.append("= flags: ");
             if (wantKnownChannelsOnly()) buf.append("KnownOnly ");
@@ -487,7 +487,7 @@ public class SharedArchive {
     }
     
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append(_about.toString());
         buf.append("channels: ").append(_channels.length).append("\n");
         for (int i = 0; i < _channels.length; i++)

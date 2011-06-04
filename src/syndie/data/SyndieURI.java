@@ -182,7 +182,7 @@ public class SyndieURI {
     }
     
     public static SyndieURI createURL(String url) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:url:d");
         if (url != null)
             buf.append("3:url").append(url.length()).append(":").append(url);
@@ -196,7 +196,7 @@ public class SyndieURI {
         }
     }
     public static SyndieURI createArchive(String url, String pass) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:archive:d");
         if (url != null)
             buf.append("3:url").append(url.length()).append(':').append(url);
@@ -215,7 +215,7 @@ public class SyndieURI {
         }
     }
     public static SyndieURI createArchive(String url, String name, String description) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:archive:d");
         if (url != null)
             buf.append("3:url").append(url.length()).append(':').append(url);
@@ -246,7 +246,7 @@ public class SyndieURI {
         return new SyndieURI(type, attributes);
     }
     public static SyndieURI createAttachment(Hash scope, long msgId, int attachmentNum) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:channel:d");
         // don't require scope to include message or attachment, as the link could be relative
         if (scope != null) {
@@ -273,7 +273,7 @@ public class SyndieURI {
      * Create a URI that includes the given read key for the specified channel
      */
     public static SyndieURI createKey(Hash scope, SessionKey sessionKey) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:channel:d");
         if (scope != null) {
             buf.append("7:channel");
@@ -297,7 +297,7 @@ public class SyndieURI {
      * Create a URI that includes the given post or manage key for the specified channel
      */    
     public static SyndieURI createKey(Hash scope, String function, SigningPrivateKey priv) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:channel:d");
         if (scope != null) {
             buf.append("7:channel");
@@ -324,7 +324,7 @@ public class SyndieURI {
      * Create a URI that includes the private key to decrypt replies for the channel
      */
     public static SyndieURI createKey(Hash scope, PrivateKey priv) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:channel:d");
         if (scope != null) {
             buf.append("7:channel");
@@ -684,7 +684,7 @@ public class SyndieURI {
     /////
     
     private static final String bencode(TreeMap attributes) {
-        StringBuffer buf = new StringBuffer(64);
+        StringBuilder buf = new StringBuilder(64);
         buf.append('d');
         for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
@@ -700,7 +700,7 @@ public class SyndieURI {
         if ( (val instanceof Integer) || (val instanceof Long) ) {
             return "i" + val.toString() + "e";
         } else if (val.getClass().isArray()) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("l");
             Object vals[] = (Object[])val;
             for (int i = 0; i < vals.length; i++)
@@ -713,7 +713,7 @@ public class SyndieURI {
         }
     }
     
-    private static final boolean bdecodeNext(StringBuffer remaining, TreeMap target) throws URISyntaxException {
+    private static final boolean bdecodeNext(StringBuilder remaining, TreeMap target) throws URISyntaxException {
         String key = null;
         while (true) {
             if (remaining.length() <= 0) return true;
@@ -780,13 +780,13 @@ public class SyndieURI {
             }
         }
     }
-    private static final boolean bdecodeNext(StringBuffer remaining, List target) {
+    private static final boolean bdecodeNext(StringBuilder remaining, List target) {
         String str = bdecodeNext(remaining);
         if (str == null) return false;
         target.add(str);
         return true;
     }
-    private static final String bdecodeNext(StringBuffer remaining) {
+    private static final String bdecodeNext(StringBuilder remaining) {
         int br = remaining.indexOf(":");
         if (br <= 0)
             return null;
@@ -815,7 +815,7 @@ public class SyndieURI {
         //    throw new URISyntaxException(bencoded, "Not bencoded properly");
         if (bencoded.charAt(0) != 'd')
             throw new URISyntaxException(bencoded, "Not bencoded properly");
-        StringBuffer buf = new StringBuffer(bencoded);
+        StringBuilder buf = new StringBuilder(bencoded);
         buf.deleteCharAt(0);
         buf.deleteCharAt(buf.length()-1);
         TreeMap rv = new TreeMap();

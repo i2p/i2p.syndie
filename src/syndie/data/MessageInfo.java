@@ -160,7 +160,7 @@ public class MessageInfo {
     public boolean equals(Object o) { return (o instanceof MessageInfo) ? ((MessageInfo)o)._internalId == _internalId : false; }
     public int hashCode() { return (int)_internalId; }
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("Message ").append(_internalId).append(":\n");
         buf.append("Posted on ");
         if (_targetChannel != null)

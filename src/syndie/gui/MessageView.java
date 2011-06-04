@@ -304,7 +304,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             
             Set tags = new TreeSet(msg.getPublicTags());
             tags.addAll(msg.getPrivateTags());
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 String str = (String)iter.next();
                 str = str.trim();

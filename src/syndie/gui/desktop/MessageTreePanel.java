@@ -290,7 +290,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             ImageUtil.dispose(_avatar.getImage());
             _avatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
             if ( (_name != null) && (_description != null) ) {
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 if (_name != null)
                     buf.append(_name);
                 if (_description != null)
@@ -331,7 +331,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             }
             _avatar.setImage(img);
             
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             if (name != null)
                 buf.append(name).append(" ");
             if (scope != null)
@@ -347,7 +347,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                     public void visit(ReferenceNode node, int depth, int siblingOrder) {
                         if (node.getURI() != null) {
                             _refNodes.add(node);
-                            StringBuffer ref = new StringBuffer();
+                            StringBuilder ref = new StringBuilder();
                             if ( (node.getName() != null) && (node.getName().length() > 0) )
                                 ref.append(node.getName());
                             if ( (node.getDescription() != null) && (node.getDescription().length() > 0) )

@@ -1959,7 +1959,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 }
             }
             debugMessage("**DUMP: " + dumpedObj.size() + " total resources, " + added.size() + " new, " + lost.size() + " removed");
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("**DUMP: added: ");
             for (int i = 0; i < added.size(); i++)
                 buf.append(added.get(i)).append("/").append(System.identityHashCode(added.get(i))).append(" ");

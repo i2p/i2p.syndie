@@ -150,7 +150,7 @@ public class ChannelInfo {
     public boolean equals(Object obj) { return (obj instanceof ChannelInfo) ? ((ChannelInfo)obj)._channelId == _channelId : false; }
     public int hashCode() { return (int)_channelId; }
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (_channelHash == null)
             buf.append("Channel not yet defined (edition " + _edition + ")\n");
         else

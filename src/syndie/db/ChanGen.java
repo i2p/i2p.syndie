@@ -274,7 +274,7 @@ public class ChanGen extends CommandImpl {
         // tags
         List tags = args.getOptValues("pubTag");
         if ( (tags != null) && (tags.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < tags.size(); i++)
                 buf.append(strip((String)tags.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_TAGS, buf.toString());
@@ -283,7 +283,7 @@ public class ChanGen extends CommandImpl {
         // cancelled URIs
         List cancelledURIs = args.getOptValues("cancelledURI");
         if ( (cancelledURIs != null) && (cancelledURIs.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < cancelledURIs.size(); i++)
                 buf.append(strip((String)cancelledURIs.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_CANCEL, buf.toString());
@@ -319,7 +319,7 @@ public class ChanGen extends CommandImpl {
         // what keys can authorize posts (in addition to the channel ident key, of course)
         List auth = args.getOptValues("postKey");
         if ( (auth != null) && (auth.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < auth.size(); i++)
                 buf.append(strip((String)auth.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_POST_KEYS, buf.toString());
@@ -327,7 +327,7 @@ public class ChanGen extends CommandImpl {
         // what keys can create new metadata messages (in addition to the channel ident key, of course)
         List manage = args.getOptValues("manageKey");
         if ( (manage != null) && (manage.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < manage.size(); i++)
                 buf.append(strip((String)manage.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_MANAGER_KEYS, buf.toString());
@@ -335,7 +335,7 @@ public class ChanGen extends CommandImpl {
         // publicly visible archives of this channel
         List archives = args.getOptValues("pubArchive");
         if ( (archives != null) && (archives.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < archives.size(); i++)
                 buf.append(strip((String)archives.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_ARCHIVES, buf.toString());
@@ -347,7 +347,7 @@ public class ChanGen extends CommandImpl {
     private Map generatePrivateHeaders(UI ui, Opts args, PublicKey replyPublic, SigningPublicKey identPublic, SessionKey bodyKey, List readKeys) {
         Map rv = new HashMap();
 
-        StringBuffer rkbuf = new StringBuffer();
+        StringBuilder rkbuf = new StringBuilder();
         for (int i = 0; i < readKeys.size(); i++) {
             SessionKey cur = (SessionKey)readKeys.get(i);
             rkbuf.append(cur.toBase64());
@@ -359,7 +359,7 @@ public class ChanGen extends CommandImpl {
         // tags
         List tags = args.getOptValues("privTag");
         if ( (tags != null) && (tags.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < tags.size(); i++)
                 buf.append(strip((String)tags.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_TAGS, buf.toString());
@@ -377,7 +377,7 @@ public class ChanGen extends CommandImpl {
         // private archives of this channel
         List archives = args.getOptValues("privArchive");
         if ( (archives != null) && (archives.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < archives.size(); i++)
                 buf.append(strip((String)archives.get(i))).append('\t');
             rv.put(Constants.MSG_META_HEADER_ARCHIVES, buf.toString());

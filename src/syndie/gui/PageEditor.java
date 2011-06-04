@@ -417,7 +417,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             _text.setSelection(sel.x); // 0-length selection
             _text.insert(text);
             _text.setSelection(sel.x + text.length(), sel.y + text.length());
-            //StringBuffer buf = new StringBuffer(_text.getText());
+            //StringBuilder buf = new StringBuilder(_text.getText());
             //buf.insert(off, text);
             //_text.setText(buf.toString());
             //_text.setSelection(off+text.length());
@@ -579,7 +579,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         _text.setSelection(_spellWordStart, _spellWordStart+len+1);
         _text.insert(newText);
         /*
-        StringBuffer buf = new StringBuffer(_text.getText());
+        StringBuilder buf = new StringBuilder(_text.getText());
         String oldFound = buf.substring(_spellWordStart, _spellWordStart+len);
         //String oldFound = _text.getText(_spellWordStart, _spellWordStart+len); //_text.getTextRange(_spellWordStart, len);
         _ui.debugMessage("replacing [" + old + "]/[" + oldFound + "] with [" + newText + "]");
@@ -753,7 +753,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             if (body == -1) {
                 // ok, this assumes that if they don't have a <body> tag, they don't have an <html>
                 // tag either
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 buf.append("<html>\n<body ");
                 if (bodyColor != null)
                     buf.append("bgcolor=\"").append(bodyColor).append("\" ");
@@ -1042,7 +1042,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             plainQuote = getSourceToQuoteFromText(src);
         }
         StringReader in = new StringReader(plainQuote);
-        StringBuffer buf = new StringBuffer(plainQuote.length() + 64);
+        StringBuilder buf = new StringBuilder(plainQuote.length() + 64);
         String quoteAuthor = "";
         if (authorName != null)
             quoteAuthor = authorName;
@@ -1095,7 +1095,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         return formatted;
     }
     private String injectTags(String asText, List tags, boolean quoteAsHTML) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         char str[] = asText.toCharArray();
         int textIndent = 0;
         //if (!quoteAsHTML) buf.append("> ");
@@ -1134,7 +1134,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         String rv = buf.toString();
         return rv;
     }
-    private void injectTagStart(StringBuffer buf, HTMLTag tag, boolean closedTag) {
+    private void injectTagStart(StringBuilder buf, HTMLTag tag, boolean closedTag) {
         if (tag.name.equals("img")) return;
 
         buf.append("<").append(tag.name);

@@ -67,7 +67,7 @@ public class Timer {
    
     private void log(int event) {
         long timeSinceStart = _times[event] - _created;
-        StringBuffer buf = new StringBuffer(128);
+        StringBuilder buf = new StringBuilder(128);
         buf.append(_taskName).append(": ");
         if (timeSinceStart < 10*1000)
             buf.append(timeSinceStart).append("ms ");

@@ -1258,7 +1258,7 @@ class PostMenu implements TextEngine.Menu {
         private int _nodes;
         public ListWalker(UI ui) { _ui = ui; _nodes = 0; }
         public void visit(ReferenceNode node, int indent, int siblingOrder) {
-            StringBuffer walked = new StringBuffer();
+            StringBuilder walked = new StringBuilder();
             walked.append(_nodes).append(": ");
             for (int i = 0; i < indent; i++)
                 walked.append('\t');
@@ -1606,7 +1606,7 @@ class PostMenu implements TextEngine.Menu {
             genOpts.setOptValue("overwrite", SyndieURI.createMessage(_currentMessage.getOverwriteChannel(), _currentMessage.getOverwriteMessage()).toString());
 
         if ( (_parents != null) && (_parents.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < _parents.size(); i++) {
                 SyndieURI uri = (SyndieURI)_parents.get(i);
                 buf.append(uri.toString());

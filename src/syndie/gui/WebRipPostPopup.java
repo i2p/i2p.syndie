@@ -89,7 +89,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
         } else {
             if (runner != null) {
                 List msgs = runner.getErrorMessages();
-                final StringBuffer err = new StringBuffer();
+                final StringBuilder err = new StringBuilder();
                 for (int i = 0; i < msgs.size(); i++)
                     err.append((String)msgs.get(i)).append("\n");
 

@@ -118,7 +118,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
     private void append(final List records) {
         if (records.size() <= 0) return;
         try {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             while (records.size() > 0) {
                 Record r = (Record)records.remove(0);
                 if (r.msg != null)

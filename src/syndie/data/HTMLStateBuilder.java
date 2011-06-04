@@ -85,8 +85,8 @@ public class HTMLStateBuilder {
         boolean tagStarted = false;
         _prevWasWhitespace = false;
         _isInComment = false;
-        StringBuffer tagContent = new StringBuffer();
-        StringBuffer body = new StringBuffer();
+        StringBuilder tagContent = new StringBuilder();
+        StringBuilder body = new StringBuilder();
         for (int i = 0; i < len; i++) {
             char c = _html.charAt(i);
             if (c == '\n')
@@ -111,7 +111,7 @@ public class HTMLStateBuilder {
                     } else {
                         // lookahead to see if this is an html character code
                         // (how can we tell?)
-                        StringBuffer escapeCode = new StringBuffer();
+                        StringBuilder escapeCode = new StringBuilder();
                         boolean escapeFound = false;
                         for (int j = i+1; j < len; j++) {
                             char ce = _html.charAt(j);
@@ -207,10 +207,10 @@ public class HTMLStateBuilder {
      * add the char to the body buffer, inserting an extra newline if the resulting
      * line would be too long
      */
-    private void appendBody(StringBuffer body, char c) { appendBody(body, Character.toString(c)); }
-    private void appendBody(StringBuffer body, char c, boolean isWhitespace) { appendBody(body, Character.toString(c), isWhitespace); }
-    private void appendBody(StringBuffer body, String str) { appendBody(body, str, false); }
-    private void appendBody(StringBuffer body, String str, boolean isWhitespace) {
+    private void appendBody(StringBuilder body, char c) { appendBody(body, Character.toString(c)); }
+    private void appendBody(StringBuilder body, char c, boolean isWhitespace) { appendBody(body, Character.toString(c), isWhitespace); }
+    private void appendBody(StringBuilder body, String str) { appendBody(body, str, false); }
+    private void appendBody(StringBuilder body, String str, boolean isWhitespace) {
         if ( (_charsPerLine > 0) && (str.indexOf('\n') == -1) && (isWhitespace) ) {
             int lineLen = 0;
             for (int i = body.length()-1; i >= 0; i--) {
@@ -236,7 +236,7 @@ public class HTMLStateBuilder {
         return false;
     }
     
-    private void receiveTagBegin(StringBuffer content, int bodyIndex, StringBuffer body) {
+    private void receiveTagBegin(StringBuilder content, int bodyIndex, StringBuilder body) {
         if ( (content == null) || (content.length() <= 0) ) {
             _ui.debugMessage("tagBegin is empty @ index=" + bodyIndex + ": body=" + body, new Exception("source"));
             return;
@@ -364,8 +364,8 @@ public class HTMLStateBuilder {
             receiveTagEnd(content, body.length(), body);
     }
     
-    private boolean isStartOfLine(StringBuffer body, int bodyIndex) { return isStartOfLine(body, bodyIndex, 0); }
-    private boolean isStartOfLine(StringBuffer body, int bodyIndex, int numPrecedingBlankLines) {
+    private boolean isStartOfLine(StringBuilder body, int bodyIndex) { return isStartOfLine(body, bodyIndex, 0); }
+    private boolean isStartOfLine(StringBuilder body, int bodyIndex, int numPrecedingBlankLines) {
         int blank = 0;
         for (int i = bodyIndex - 1; i >= 0; i--) {
             char c = body.charAt(i);
@@ -389,10 +389,10 @@ public class HTMLStateBuilder {
     /** the following character is inserted into the document before any list items */
     public static final char PLACEHOLDER_LISTITEM = '\u0003';
     
-    private void receiveTagEnd(StringBuffer content, int bodyIndex, StringBuffer body) {
+    private void receiveTagEnd(StringBuilder content, int bodyIndex, StringBuilder body) {
         receiveTagEnd(content.toString(), bodyIndex, body);
     }
-    private void receiveTagEnd(String content, int bodyIndex, StringBuffer body) {
+    private void receiveTagEnd(String content, int bodyIndex, StringBuilder body) {
         if ( (content == null) || (content.length() <= 0) ) {
             _ui.debugMessage("tag is empty @ index=" + bodyIndex + ": body=" + body, new Exception("source"));
             return;

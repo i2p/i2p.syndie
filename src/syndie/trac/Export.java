@@ -261,7 +261,7 @@ public class Export {
             swt = "";
             description = "";
         } else {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             
             for (int i = 0; i < msg.getPageCount(); i++) {
                 String page = _client.getMessagePageData(msg.getInternalId(), i);
@@ -282,7 +282,7 @@ public class Export {
                     buf.append("\n\n======================================\n\n");
             }
             
-            StringBuffer desc = new StringBuffer();
+            StringBuilder desc = new StringBuilder();
             //desc.append("{{{\n");
             try {
                 BufferedReader in = new BufferedReader(new StringReader(buf.toString()));
@@ -480,7 +480,7 @@ public class Export {
         return "1.003a"; 
     }
     private String getTicketKeywords(Set tags) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
             String val = (String)iter.next();
             if (val.startsWith("syndie.") || val.startsWith("component.") || val.startsWith("bugreport") || val.startsWith("type.") || val.startsWith("severity")) {
@@ -659,7 +659,7 @@ public class Export {
     }
     
     private String getReplyContent(MessageInfo msg) {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         rv.append("Syndie URI: ").append(msg.getURI().toString()).append("\n");
         
         //rv.append("{{{\n");

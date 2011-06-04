@@ -307,7 +307,7 @@ class SyndicateMenu implements TextEngine.Menu {
         if ( (_diff == null) || (maxSize != _diff.maxSizeUsed) ) {
             _diff = _currentIndex.diff(client, ui, opts);
         }
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (_diff != null) {
             if (_diff.fetchNewUnauthorizedBytes > 0) {
                 buf.append("Unauthorized posts the remote archive has that we do not:\n");

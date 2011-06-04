@@ -522,7 +522,7 @@ public class SyncOutboundPusher {
             
             len += 2; // header size=0
             
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("POST " + url + " HTTP/1.0\r\nConnection: close\r\nContent-length: ");
             buf.append(len).append("\r\n\r\n");
             OutputStream out = s.getOutputStream();

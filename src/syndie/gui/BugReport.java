@@ -340,7 +340,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             public int getPageCount() { return 1; }
 
             public String getPageContent(int page) { 
-                StringBuffer rv = new StringBuffer();
+                StringBuilder rv = new StringBuilder();
                 rv.append("OS: " + os + "\n");
                 rv.append("JVM: " + jvm + "\n");
                 rv.append("SWT: " + swt + "\n");

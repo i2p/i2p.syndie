@@ -296,7 +296,7 @@ public class EnclosureBody {
     public byte[] getAttachment(int attachment) { return (byte[])_entries.get(ENTRY_ATTACHMENT_PREFIX + attachment + ENTRY_ATTACHMENT_DATA_SUFFIX); }
 
     public String toString() {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         rv.append("EnclosureBody with ").append(_pages).append(" pages, ").append(_attachments).append(" attachments, and private headers of {");
         for (Iterator iter = _headers.keySet().iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();

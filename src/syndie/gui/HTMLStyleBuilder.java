@@ -367,7 +367,7 @@ class HTMLStyleBuilder {
     
     private StyleRange buildStyle(List tags, int start, int length) {
         /*
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("building style for [" + start + " through " + (start+length) + "]: ");
         for (int i = 0; i < tags.size(); i++)
             buf.append(((HTMLTag)tags.get(i)).name + " ");
@@ -801,7 +801,7 @@ class HTMLStyleBuilder {
     public static void main(String args[]) {
         /*
         try {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             BufferedReader in = new BufferedReader(new FileReader("/home/jrandom/guardian.html"));
             String line = null;
             while ( (line = in.readLine()) != null) buf.append(line).append('\n');

@@ -506,7 +506,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                     pushPolicy = pushPolicy + " SendNothing";
             } else {
                 if (pushPolicy != null) {
-                    StringBuffer buf = new StringBuffer(pushPolicy);
+                    StringBuilder buf = new StringBuilder(pushPolicy);
                     int idx = buf.indexOf("SendNothing");
                     if (idx >= 0) {
                         buf = buf.delete(idx, idx + "SendNothing".length());

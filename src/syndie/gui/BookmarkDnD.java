@@ -18,7 +18,7 @@ public class BookmarkDnD {
     public String desc;    
     
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (uri != null)
             buf.append(uri.toString()).append('\n');
         else

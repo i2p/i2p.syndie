@@ -139,7 +139,7 @@ public class WebRipPostControl extends WebRipPageControl {
             Hash h = info.getChannelHash();
             _targetList.add(h);
             _authorList.add(h);
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("! "); // identity row
             if (info.getName() != null)
                 buf.append(info.getName()).append(" ");
@@ -150,7 +150,7 @@ public class WebRipPostControl extends WebRipPageControl {
         for (int i = 0; i < channels.getManagedChannelCount(); i++) {
             ChannelInfo info = channels.getManagedChannel(i);
             _targetList.add(info.getChannelHash());
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("* "); // managed row
             if (info.getName() != null)
                 buf.append(info.getName()).append(" ");
@@ -160,7 +160,7 @@ public class WebRipPostControl extends WebRipPageControl {
         for (int i = 0; i < channels.getPostChannelCount(); i++) {
             ChannelInfo info = channels.getPostChannel(i);
             _targetList.add(info.getChannelHash());
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("= "); // postable row
             if (info.getName() != null)
                 buf.append(info.getName()).append(" ");
@@ -170,7 +170,7 @@ public class WebRipPostControl extends WebRipPageControl {
         for (int i = 0; i < channels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = channels.getPublicPostChannel(i);
             _targetList.add(info.getChannelHash());
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("- "); // publicly postable row
             if (info.getName() != null)
                 buf.append(info.getName()).append(" ");

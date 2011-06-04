@@ -155,7 +155,7 @@ public class SyndieURIDAO {
         else
             stmt.setNull(4, Types.BOOLEAN);
         if (valStrings != null) {
-            StringBuffer buf = new StringBuffer(64);
+            StringBuilder buf = new StringBuilder(64);
             for (int i = 0; i < valStrings.length; i++)
                 buf.append(valStrings[i]).append('\n');
             stmt.setString(5, buf.toString());

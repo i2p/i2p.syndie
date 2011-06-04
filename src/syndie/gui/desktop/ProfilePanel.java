@@ -201,7 +201,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             }
             _avatar.setImage(img);
             
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             if (name != null)
                 buf.append(name).append(" ");
             if (scope != null)
@@ -218,7 +218,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
                     public void visit(ReferenceNode node, int depth, int siblingOrder) {
                         if (node.getURI() != null) {
                             _refNodes.add(node);
-                            StringBuffer ref = new StringBuffer();
+                            StringBuilder ref = new StringBuilder();
                             if ( (node.getName() != null) && (node.getName().length() > 0) )
                                 ref.append(node.getName());
                             if ( (node.getDescription() != null) && (node.getDescription().length() > 0) )

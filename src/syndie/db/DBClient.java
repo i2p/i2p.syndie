@@ -624,7 +624,7 @@ public class DBClient {
             InputStream in = DBClient.class.getResourceAsStream("ddl.txt");
             if (in != null) {
                 r = new BufferedReader(new InputStreamReader(in));
-                StringBuffer cmdBuf = new StringBuffer();
+                StringBuilder cmdBuf = new StringBuilder();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
                     line = line.trim();
@@ -669,7 +669,7 @@ public class DBClient {
             InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
             if (in != null) {
                 r = new BufferedReader(new InputStreamReader(in));
-                StringBuffer cmdBuf = new StringBuffer();
+                StringBuilder cmdBuf = new StringBuilder();
                 String line = null;
                 while ( (line = r.readLine()) != null) {
                     line = line.trim();
@@ -3321,7 +3321,7 @@ public class DBClient {
             // i hate writing dynamic SQL - its ugly and bad for databases.  but,
             // putting this all in as a single sql statement has substantial performance benefits,
             // so...
-            StringBuffer query = new StringBuffer("SELECT DISTINCT tag, isPublic FROM messageTag WHERE msgId IN (");
+            StringBuilder query = new StringBuilder("SELECT DISTINCT tag, isPublic FROM messageTag WHERE msgId IN (");
             for (Iterator iter = msgIds.iterator(); iter.hasNext(); ) {
                 Long id = (Long)iter.next();
                 query.append(id.longValue());
@@ -5256,7 +5256,7 @@ public class DBClient {
     public List getUnread(long nymId, long msgIds[]) {
         long begin = System.currentTimeMillis();
         List rv = new ArrayList();
-        StringBuffer buf = new StringBuffer(SQL_GET_MSG_READ);
+        StringBuilder buf = new StringBuilder(SQL_GET_MSG_READ);
         for (int i = 0; i < msgIds.length; i++) {
             buf.append(msgIds[i]);
             if (i+1 < msgIds.length)

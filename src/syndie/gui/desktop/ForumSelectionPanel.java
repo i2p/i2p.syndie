@@ -230,7 +230,7 @@ public class ForumSelectionPanel extends DesktopPanel {
         }
         public void updateInfo(Hash scope, long channelId, String name, String description, Image avatar) {
             _avatar.setImage(avatar);
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             if ( (name != null) && (name.length() > 0) )
                 buf.append(name).append(" ");
             //if (scope != null)

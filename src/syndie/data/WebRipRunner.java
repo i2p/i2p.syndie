@@ -602,7 +602,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         try {
             in = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
             String line = null;
-            StringBuffer buf = new StringBuffer((int)f.length());
+            StringBuilder buf = new StringBuilder((int)f.length());
             while ( (line = in.readLine()) != null)
                 buf.append(line).append('\n');
             in.close();

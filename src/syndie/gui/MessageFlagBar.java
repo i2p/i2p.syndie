@@ -58,7 +58,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     public String getTooltip() {
         if (!_realized) realizeComponents();
         Control ctl[] = _root.getChildren();
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         for (int i = 0; i < ctl.length; i++) {
             String tt = ((Label)ctl[i]).getToolTipText();
             rv.append(tt);

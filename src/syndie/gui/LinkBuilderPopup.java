@@ -690,7 +690,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 _selectedURI = SyndieURI.createURL(_linkTypeFreenetText.getText().trim());
                 break;
             case TYPE_EEPSITE:
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 String name = _linkTypeEepsiteName.getText();
                 if (!name.startsWith("http://"))
                     name = "http://" + name;

@@ -64,7 +64,7 @@ public class TranslationRegistry {
     private static final String postprocess(String val) {
         if (val.indexOf('\n') == -1)
             return val;
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         int len = val.length();
         for (int i = 0; i < len; i++) {
             char c = val.charAt(i);

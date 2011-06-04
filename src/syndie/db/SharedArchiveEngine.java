@@ -143,7 +143,7 @@ public class SharedArchiveEngine {
         public boolean pullWhitelistOnly;
         
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             if (includeDupForPIR) {
                 buf.append("PIR ");
             } else if (pullNothing) {
@@ -257,7 +257,7 @@ public class SharedArchiveEngine {
         public int sendMaxAge;
         
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             if (sendNothing) {
                 buf.append("SendNothing ");
             } else {

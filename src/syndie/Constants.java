@@ -218,7 +218,7 @@ public class Constants {
     public static final String replace(String orig, String oldval, String newval, int howManyReplacements) {
         if ( (orig == null) || (oldval == null) || (oldval.length() <= 0) ) return orig;
         
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         char origChars[] = orig.toCharArray();
         char search[] = oldval.toCharArray();
         int numReplaced = 0;

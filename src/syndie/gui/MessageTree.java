@@ -1624,7 +1624,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
         if (sz <= 0) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
             buf.append(1);
             buf.append("/");
@@ -1653,7 +1653,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navPrev.setEnabled(!atBeginning);
         _navStart.setEnabled(!atBeginning);
         
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
         buf.append(_currentPage+1);
         buf.append("/");
@@ -1882,7 +1882,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                      auth = chan;
                 }
                 Set msgTags = node.getTags(); //_client.getMessageTags(msgId, true, true);
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 if (msgTags != null) {
                     for (Iterator iter = msgTags.iterator(); iter.hasNext(); ) {
                         String tag = (String)iter.next();

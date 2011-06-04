@@ -236,7 +236,7 @@ class ReadMenu implements TextEngine.Menu {
                 
                 // ok, matches criteria
                 _channelKeys.add(new Long(id));
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 
                 ChannelInfo chan = client.getChannel(id);
                 if (chan.getReadKeyUnknown()) {
@@ -455,7 +455,7 @@ class ReadMenu implements TextEngine.Menu {
             Long msgId = (Long)privMsgIds.get(i);
             _messageKeys.add(msgId);
             MessageInfo msg = client.getMessage(msgId.longValue());
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             String date = null;
             synchronized (_dayFmt) {
                 date = _dayFmt.format(new Date(msg.getMessageId()));
@@ -515,7 +515,7 @@ class ReadMenu implements TextEngine.Menu {
                 
                 // ok, matches criteria
                 _messageKeys.add(new Long(id));
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 String date = null;
                 if (messageId != null) {
                     synchronized (_dayFmt) {
@@ -660,7 +660,7 @@ class ReadMenu implements TextEngine.Menu {
                 ChannelInfo rootAuthor = client.getChannel(rootAuthorId);
                 ChannelInfo mostRecentAuthor = client.getChannel(mostRecentAuthorId);
 
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 if (compact) {
                     // 10: [2006/10/09 2 msgs] $subject (tag, tag, tag, tag)
                     buf.append(_threadText.size()).append(": [");
@@ -848,7 +848,7 @@ class ReadMenu implements TextEngine.Menu {
                 } else {
                     ChannelInfo info = client.getChannel(authorId);
                     if (info != null) {
-                        StringBuffer buf = new StringBuffer();
+                        StringBuilder buf = new StringBuilder();
                         buf.append("Author: ").append(CommandImpl.strip(info.getName()));
                         buf.append(" (").append(info.getChannelHash().toBase64().substring(0,6)).append(")");
                         ui.statusMessage(buf.toString());
@@ -865,7 +865,7 @@ class ReadMenu implements TextEngine.Menu {
         long chanId = message.getTargetChannelId();
         ChannelInfo targetChannel = client.getChannel(chanId);
         if (targetChannel != null) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("Channel: ").append(CommandImpl.strip(targetChannel.getName()));
             buf.append(" (").append(targetChannel.getChannelHash().toBase64().substring(0,6)).append(") ");
             if (message.getWasAuthorized())
@@ -878,7 +878,7 @@ class ReadMenu implements TextEngine.Menu {
                 buf.append("[post was NOT authenticated] ");
             ui.statusMessage(buf.toString());
         } else if (chan != null) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("Channel: ");
             buf.append(" (").append(chan.toBase64().substring(0,6)).append(") ");
             if (message.getWasAuthorized())
@@ -908,7 +908,7 @@ class ReadMenu implements TextEngine.Menu {
         if (message.getPrivateTags() != null)
             tags.addAll(message.getPrivateTags());
         if ( (tags != null) && (tags.size() > 0) ) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("Tags: ");
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 buf.append(CommandImpl.strip(iter.next().toString())).append(" ");
@@ -940,7 +940,7 @@ class ReadMenu implements TextEngine.Menu {
         public RefWalker(UI ui) { _ui = ui; _nodes = 0; }
         public void visit(ReferenceNode node, int indent, int siblingOrder) {
             SyndieURI uri = node.getURI();
-            StringBuffer walked = new StringBuffer();
+            StringBuilder walked = new StringBuilder();
             
             walked.append(node.getTreeIndex()).append(": ");
             
@@ -1178,7 +1178,7 @@ class ReadMenu implements TextEngine.Menu {
             //    _ui.debugMessage("parent: " + node.getParent().getURI());
             //_ui.debugMessage("Child count: " + node.getChildCount());
             
-            StringBuffer walked = new StringBuffer();
+            StringBuilder walked = new StringBuilder();
             
             if ( (_currentMessage != null) && (_currentMessage.getScopeChannel().equals(channel)) && (msgId.longValue() == _currentMessage.getMessageId()) )
                 walked.append("* ");

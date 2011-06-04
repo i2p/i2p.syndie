@@ -161,7 +161,7 @@ public class ThreadBuilder {
     
     private void dumpTable() {
         if (true) return;
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("================ Begin thread build dump\n");
         for (Iterator iter = _idTable.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
@@ -430,7 +430,7 @@ public class ThreadBuilder {
         Container nextSibling;
         public String toString() { return toString(0); }
         String toString(int indent) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < indent; i++)
                 buf.append('\t');
             if (msg != null)

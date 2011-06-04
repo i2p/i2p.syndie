@@ -827,7 +827,7 @@ AND
     }
     
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append(" threaded? ").append(_showThreaded);
         buf.append(" owners? ").append(_includeOwners);
         buf.append(" managers? ").append(_includeManagers);

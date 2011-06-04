@@ -171,7 +171,7 @@ public class Opts {
     }
     
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (Iterator iter = _opts.keySet().iterator(); iter.hasNext(); ) {
             String name = (String)iter.next();
             String val = getOptValue(name);
@@ -201,7 +201,7 @@ public class Opts {
         if (line == null) return rv;
         char l[] = line.toCharArray();
 
-        StringBuffer token = new StringBuffer();
+        StringBuilder token = new StringBuilder();
         char quoteChar = 'Q';
         int cur = 0;
 
@@ -238,7 +238,7 @@ public class Opts {
                     if (isBlank(l[cur])) {
                         state = 0;
                         rv.add(token.toString());
-                        token = new StringBuffer();
+                        token = new StringBuilder();
                         //Can ignore the trailing blank
                         ++cur;
                         continue;
@@ -250,7 +250,7 @@ public class Opts {
                          * added either yet */
                         state = 0;
                         rv.add(token.toString());
-                        token = new StringBuffer();
+                        token = new StringBuilder();
                         ++cur;
                         continue;
                     }

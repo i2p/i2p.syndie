@@ -42,7 +42,7 @@ import syndie.data.SyndieURI;
  */
 class LogTab extends BrowserTab implements UI, Themeable, Translatable {
     private Text _out;
-    private StringBuffer _outBuf;
+    private StringBuilder _outBuf;
     private MenuItem _menuClear;
     private Group _levels;
     private Button _levelError;
@@ -126,7 +126,7 @@ class LogTab extends BrowserTab implements UI, Themeable, Translatable {
         _pendingMessages = new ArrayList();
         getRoot().setLayout(new GridLayout(1, true));
         
-        _outBuf = new StringBuffer();
+        _outBuf = new StringBuilder();
         _out = new Text(getRoot(), SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
         _out.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         

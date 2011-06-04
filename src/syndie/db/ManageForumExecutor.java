@@ -27,7 +27,7 @@ public class ManageForumExecutor {
     private DBClient _client;
     private UI _ui;
     private ManageForumState _state;
-    private StringBuffer _errors;
+    private StringBuilder _errors;
     private SyndieURI _forum;
     private Hash _createdManageIdent;
     private Hash _createdPostIdent;
@@ -37,7 +37,7 @@ public class ManageForumExecutor {
         _client = client;
         _ui = ui;
         _state = state;
-        _errors = new StringBuffer();
+        _errors = new StringBuilder();
     }
     
     public static interface ManageForumState {

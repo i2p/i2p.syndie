@@ -232,7 +232,7 @@ public class MessageCreatorDirect extends MessageCreator {
         
         List uris = _source.getCancelURIs();
         if ( (uris != null) && (uris.size() > 0) ) {
-            StringBuffer uriList = new StringBuffer();
+            StringBuilder uriList = new StringBuilder();
             for (int i = 0; i < uris.size(); i++) {
                 SyndieURI uri = (SyndieURI)uris.get(i);
                 if ( (uri != null) && (uri.getScope() != null) && (uri.getMessageId() != null) )
@@ -264,7 +264,7 @@ public class MessageCreatorDirect extends MessageCreator {
         if ( (tags != null) && (tags.length > 0) )
             headers.put(Constants.MSG_HEADER_TAGS, formatTags(tags));
         
-        StringBuffer parentBuf = new StringBuffer();
+        StringBuilder parentBuf = new StringBuilder();
         for (int i = 0; i < _source.getParentCount(); i++) {
             SyndieURI uri = _source.getParent(i);
             if (!uri.isChannel())
@@ -320,7 +320,7 @@ public class MessageCreatorDirect extends MessageCreator {
     }
     
     private static final String formatTags(String tags[]) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < tags.length; i++) {
             String stripped = CommandImpl.strip(tags[i]);
             if (stripped.length() > 0)
@@ -416,7 +416,7 @@ public class MessageCreatorDirect extends MessageCreator {
                     zos.write(data);
                     zos.closeEntry();
 
-                    StringBuffer buf = new StringBuffer();
+                    StringBuilder buf = new StringBuilder();
                     if (name != null)
                         buf.append(Constants.MSG_ATTACH_NAME).append('=').append(CommandImpl.strip(name)).append('\n');
                     if (type != null)
@@ -527,9 +527,9 @@ public class MessageCreatorDirect extends MessageCreator {
     }
     
     private void notifyCompletion() {
-        StringBuffer err = null;
+        StringBuilder err = null;
         if (_errors.size() > 0) {
-            err = new StringBuffer();
+            err = new StringBuilder();
             for (int i = 0; i < _errors.size(); i++)
                 err.append((String)_errors.get(i)).append("\n");
         }

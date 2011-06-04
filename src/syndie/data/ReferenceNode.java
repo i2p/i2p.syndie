@@ -136,7 +136,7 @@ public class ReferenceNode {
         List rv = new ArrayList();
         ReferenceNode prevNode = null;
         try {
-            StringBuffer buf = new StringBuffer(256);
+            StringBuilder buf = new StringBuilder(256);
             while (DataHelper.readLine(treeData, buf)) {
                 int indentation = 0;
                 int nameEnd = -1;
@@ -218,14 +218,14 @@ public class ReferenceNode {
     }
     
     public String toString() {
-        StringBuffer buf = new StringBuffer(); 
+        StringBuilder buf = new StringBuilder(); 
         append(buf, this, 0); 
         return buf.toString();
     }
     
     /** stringify a forest of nodes into a format that can be parsed with buildTree() */
     public static String walk(List roots) {
-        StringBuffer walked = new StringBuffer();
+        StringBuilder walked = new StringBuilder();
         for (int i = 0; i < roots.size(); i++) {
             ReferenceNode node = (ReferenceNode)roots.get(i);
             append(walked, node, 0);
@@ -277,7 +277,7 @@ public class ReferenceNode {
     
     private static void test(String treeContent) {
         List tree = ReferenceNode.buildTree(new ByteArrayInputStream(DataHelper.getUTF8(treeContent)));
-        StringBuffer walked = new StringBuffer(treeContent.length());
+        StringBuilder walked = new StringBuilder(treeContent.length());
         for (int i = 0; i < tree.size(); i++) {
             ReferenceNode node = (ReferenceNode)tree.get(i);
             append(walked, node, 0);
@@ -288,7 +288,7 @@ public class ReferenceNode {
             System.out.println("Trees do not match: tree content = \n" + treeContent + "\n\nwalked = \n" + walked.toString());
     }
     
-    private static void append(StringBuffer walked, ReferenceNode node, int indent) {
+    private static void append(StringBuilder walked, ReferenceNode node, int indent) {
         for (int i = 0; i < indent; i++)
             walked.append('\t');
         if (node.getName() != null)

@@ -406,7 +406,7 @@ public class TextEngine {
         }
     }
     private static String padBlank(String name, int paddedSize) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         int pad = paddedSize - name.length();
         for (int i = 0; i < pad; i++)
             buf.append(' ');
@@ -625,7 +625,7 @@ public class TextEngine {
             displayAliases();
         } else {
             String name = (String)args.get(0);
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 1; i < args.size(); i++) {
                 String str = (String)args.get(i);
                 buf.append(str).append(" ");
@@ -685,7 +685,7 @@ public class TextEngine {
     }
     
     private void processSQL(Opts opts) {
-        StringBuffer query = new StringBuffer();
+        StringBuilder query = new StringBuilder();
         List args = opts.getArgs();
         for (int i = 0; i < args.size(); i++)
             query.append(args.get(i).toString()).append(' ');

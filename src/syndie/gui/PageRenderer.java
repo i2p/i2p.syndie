@@ -1245,7 +1245,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         //System.out.println("Hover over link @ " + offset + ": " + tag);
         String href = tag.getAttribValue("href");
         String title = tag.getAttribValue("title");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (title != null) {
             buf.append(CommandImpl.strip(title));
             if (href != null)
@@ -1270,7 +1270,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         //System.out.println("Hover over image @ " + offset + ": " + tag);
         String alt = tag.getAttribValue("alt");
         String src = tag.getAttribValue("src");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (alt != null) {
             buf.append(CommandImpl.strip(alt));
             if (src != null)
@@ -1281,7 +1281,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         setTooltip(_text, buf.toString());
     }
     private void hoverImageLink(StyleRange imgRange, HTMLTag imgTag, StyleRange linkRange, HTMLTag linkTag, int off) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String alt = imgTag.getAttribValue("alt");
         String src = imgTag.getAttribValue("src");
         String href = linkTag.getAttribValue("href");
@@ -2002,7 +2002,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         /*
         try {
             FileInputStream fis = new FileInputStream("/tmp/syndie-log-1.txt");
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             String line = null;
             BufferedReader in = new BufferedReader(new InputStreamReader(fis));
             while ( (line = in.readLine()) != null)

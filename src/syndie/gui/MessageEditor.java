@@ -1648,7 +1648,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (msgs.size() > 0) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setText(_translationRegistry.getText(T_WEBRIP_FAIL, "Rip failed"));
-            StringBuffer err = new StringBuffer();
+            StringBuilder err = new StringBuilder();
             for (int i = 0; i < msgs.size(); i++)
                 err.append((String)msgs.get(i)).append('\n');
             box.setMessage(err.toString());
@@ -2111,7 +2111,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private String getSummary(long chanId) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String name = _client.getChannelName(chanId);
         String desc = _client.getChannelDescription(chanId);
         Hash chan = _client.getChannelHash(chanId);
@@ -2715,7 +2715,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             for (int i = 0; i < _attachmentData.size(); i++) {
                 byte data[] = (byte[])_attachmentData.get(i);
                 Properties cfg = (Properties)_attachmentConfig.get(i);
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 buf.append((i+1) + ": ");
                 String name = cfg.getProperty(Constants.MSG_ATTACH_NAME);
                 if (name != null)

@@ -305,7 +305,7 @@ public class Enclosure {
     public Signature getAuthenticationSig() { return _authenticationSig; }
     
     public String toString() {
-        StringBuffer rv = new StringBuffer();
+        StringBuilder rv = new StringBuilder();
         rv.append("Enclosure ").append(_enclosureType).append(" with headers {");
         for (Iterator iter = _publicHeaders.keySet().iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();
@@ -327,7 +327,7 @@ public class Enclosure {
         
         // read the headers
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        StringBuffer buf = new StringBuffer(512);
+        StringBuilder buf = new StringBuilder(512);
         while (DataHelper.readLine(raw, buf, hash)) {
             int len = buf.length();
             if (len <= 0) break;

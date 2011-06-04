@@ -715,7 +715,7 @@ public class NymChannelTree implements Themeable, Translatable {
             return true;
         }   
         
-        StringBuffer idsBuf = new StringBuffer();
+        StringBuilder idsBuf = new StringBuilder();
         for (Iterator iter = nodes.iterator(); iter.hasNext(); ) {
             ReferenceNode node = (ReferenceNode)iter.next();
             Long id = new Long(node.getUniqueId());

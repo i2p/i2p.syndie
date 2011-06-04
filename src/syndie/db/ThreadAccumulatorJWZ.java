@@ -736,7 +736,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         
-        StringBuffer buf = new StringBuffer(SQL_BUILD_CHILDREN);
+        StringBuilder buf = new StringBuilder(SQL_BUILD_CHILDREN);
         int ids = 0;
         for (Iterator iter = existingMsgIds.iterator(); iter.hasNext(); ) {
             ThreadMsgId id = (ThreadMsgId)iter.next();
@@ -1303,7 +1303,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
 
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append(" threaded? ").append(_showThreaded);
         buf.append(" unreadOnly? ").append(_unreadOnly);
         buf.append(" owners? ").append(_includeOwners);

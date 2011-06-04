@@ -150,7 +150,7 @@ public class TextUI implements UI {
     public void commandComplete(int status, List location) {
         display("* Command execution complete. ");
         display("* Status: " + status);
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (location != null) {
             for (int i = 0; i < location.size(); i++) {
                 buf.append(location.get(i).toString()).append("> ");
@@ -195,7 +195,7 @@ public class TextUI implements UI {
     }
     
     public String readStdIn() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         statusMessage("Reading standard input until a line containing a single \".\" is reached");
         String line = null;
         while (true) {
