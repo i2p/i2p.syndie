@@ -1,3 +1,16 @@
+syndie (1.101~b8-3) unstable; urgency=low
+
+  * Don't include swt.jar in syndie.jar.
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Wed, 30 May 2012 16:04:40 +0000
+
+syndie (1.101~b8-2) unstable; urgency=low
+
+  * Add libswt-gtk-3-java as a valid swt alternate
+  * Bump standards version (no source changes needed)
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Wed, 23 May 2012 13:37:25 +0000
+
 syndie (1.101~b8-1) unstable; urgency=low
 
   * New upstream beta
