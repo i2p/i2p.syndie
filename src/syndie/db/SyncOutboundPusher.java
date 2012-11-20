@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
-import net.i2p.util.SimpleTimer;
+import net.i2p.util.SimpleTimer2;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -491,7 +491,7 @@ public class SyncOutboundPusher {
         else
             _manager.getUI().statusMessage("Pushing to [" + url + "]");
         Socket s = null;
-        SimpleTimer.TimedEvent timeout = null;
+        TimeoutEvent timeout = null;
         try {
             if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) && (archive.getHTTPProxyPort() > 0) ) {
                 s = new Socket(archive.getHTTPProxyHost(), archive.getHTTPProxyPort());
@@ -508,17 +508,8 @@ public class SyncOutboundPusher {
             
             final Socket toClose = s;
             final String sentURL = url;
-            timeout = new SimpleTimer.TimedEvent() {
-                public void timeReached() {
-                    try {
-                        if (!toClose.isClosed()) {
-                            _manager.getUI().debugMessage("Push to " + sentURL + " timed out");
-                            toClose.close();
-                        }
-                    } catch (IOException ioe) {}
-                }
-            };
-            SimpleTimer.getInstance().addEvent(timeout, 5*60*1000); // if it can't send the post in 5 minutes, its not going anywhere
+            timeout = new TimeoutEvent(toClose,sentURL);
+            timeout.schedule(5*60*1000); // if it can't send the post in 5 minutes, its not going anywhere
             
             len += 2; // header size=0
             
@@ -550,22 +541,40 @@ public class SyncOutboundPusher {
             out.close();
             s.close();
 
-            SimpleTimer.getInstance().removeEvent(timeout);
+            timeout.cancel();
             
             _manager.getUI().statusMessage("Files posted");
             _manager.getUI().commandComplete(0, null);
         } catch (DataFormatException dfe) {
-            SimpleTimer.getInstance().removeEvent(timeout);
+        	timeout.cancel();
             error = "Internal error: " + dfe.getMessage();
             _manager.getUI().debugMessage("Error posting", dfe);
             _manager.getUI().commandComplete(-1, null);
         } catch (IOException ioe) {
-            SimpleTimer.getInstance().removeEvent(timeout);
+        	timeout.cancel();
             error = ioe.getMessage();
             _manager.getUI().debugMessage("Error posting", ioe);
             _manager.getUI().commandComplete(-1, null);
         }
         return error;
+    }
+    
+    private class TimeoutEvent extends SimpleTimer2.TimedEvent {
+    	private final Socket toClose;
+    	private final String sentURL;
+    	TimeoutEvent(Socket toClose, String sentURL) {
+    		super(SimpleTimer2.getInstance());
+    		this.toClose = toClose;
+    		this.sentURL = sentURL;
+    	}
+    	public void timeReached() {
+            try {
+                if (!toClose.isClosed()) {
+                    _manager.getUI().debugMessage("Push to " + sentURL + " timed out");
+                    toClose.close();
+                }
+            } catch (IOException ioe) {}
+        }
     }
     
     private void send(int idx, OutputStream out, File file, int flag) throws IOException, DataFormatException {

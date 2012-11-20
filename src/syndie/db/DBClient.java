@@ -19,7 +19,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.*;
-import net.i2p.util.SimpleTimer;
+import net.i2p.util.SimpleTimer2;
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.BugConfig;
@@ -203,19 +203,22 @@ public class DBClient {
             if (_expireEvent == null) {
                 long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
                 _expireEvent = new ExpireEvent();
-                SimpleTimer.getInstance().addEvent(_expireEvent, delay);
+                _expireEvent.schedule(delay);
             }
         }
     }
     
-    private class ExpireEvent implements SimpleTimer.TimedEvent {
+    private class ExpireEvent extends SimpleTimer2.TimedEvent {
+    	ExpireEvent() {
+    		super(SimpleTimer2.getInstance());
+    	}
         public void timeReached() {
             _ui.debugMessage("running periodic expiration");
             Expirer expirer = new Expirer(DBClient.this, _ui);
             expirer.expireMessages();
             _ui.debugMessage("periodic expiration complete");
             long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
-            SimpleTimer.getInstance().reschedule(ExpireEvent.this, delay);
+            reschedule(delay);
         }
     }
     
@@ -261,7 +264,7 @@ public class DBClient {
             _con = null;
         }
         if (_expireEvent != null)
-            SimpleTimer.getInstance().removeEvent(_expireEvent);
+            _expireEvent.cancel();
     }
     I2PAppContext ctx() { return _context; }
     public Connection con() { return _con; }

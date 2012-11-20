@@ -7,7 +7,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import net.i2p.util.SimpleTimer;
+import net.i2p.util.SimpleTimer2;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
@@ -317,12 +317,16 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                     getRoot().getDisplay().asyncExec(new Runnable() {
                         public void run() { updateHttpservStatus(); }
                     });
-                    SimpleTimer.getInstance().addEvent(new UpdateStatusOnStart(), 100);
+                    UpdateStatusOnStart usos = new UpdateStatusOnStart();
+                    usos.schedule(100);
                 }
             });
         }
     }
-    private class UpdateStatusOnStart implements SimpleTimer.TimedEvent {
+    private class UpdateStatusOnStart extends SimpleTimer2.TimedEvent {
+    	UpdateStatusOnStart() {
+    		super(SimpleTimer2.getInstance());
+    	}
         public void timeReached() {
             getRoot().getDisplay().asyncExec(new Runnable() {
                 public void run() { updateHttpservStatus(); }
@@ -331,7 +335,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
             if (HTTPServ.isAlive() || HTTPServ.startFailed())
                 return;
             else
-                SimpleTimer.getInstance().addEvent(UpdateStatusOnStart.this, 100, false);
+            	schedule(100);
         }
     }
     private void httpservOnStartChanged() {

@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import net.i2p.util.SimpleTimer;
+import net.i2p.util.SimpleTimer2;
 import syndie.db.JobRunner;
 
 /**
@@ -29,13 +29,19 @@ public class SpellUtil {
      * for spellchecking)
      */
     public static void init() {
-        SimpleTimer.getInstance().addEvent(new SimpleTimer.TimedEvent() {
-            public void timeReached() {
-                JobRunner.instance().enqueue(new Runnable() {
-                    public void run() { getDictionary(); }
-                });
-            }
-        }, 10*1000);
+    	InitEvent evt = new InitEvent();
+    	evt.schedule(10 *1000);
+    }
+    
+    private static class InitEvent extends SimpleTimer2.TimedEvent {
+    	InitEvent(){
+    		super(SimpleTimer2.getInstance());
+    	}
+    	public void timeReached() {
+    		JobRunner.instance().enqueue(new Runnable() {
+    			public void run() { getDictionary(); }
+    		});
+    	}
     }
     private static void buildDictionary() {
         try {
