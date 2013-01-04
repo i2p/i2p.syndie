@@ -191,6 +191,7 @@
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
         <delete dir="${dist.dir}" />
+        <delete file="syndie.jar" />
         <delete dir="plugin" />
         <delete file="syndie.xpi2p" />
         <delete file="syndie-update.xpi2p" />
