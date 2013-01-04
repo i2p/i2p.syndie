@@ -2,7 +2,6 @@ package syndie.db;
 
 import java.io.*;
 import net.i2p.I2PAppContext;
-import net.i2p.data.*;
 import syndie.data.EnclosureBody;
 
 /**

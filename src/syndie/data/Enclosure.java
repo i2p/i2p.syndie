@@ -5,9 +5,17 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import net.i2p.data.*;
+
 import gnu.crypto.hash.Sha256Standalone;
 import syndie.Constants;
+
+import net.i2p.data.Base64;
+import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
+import net.i2p.data.PublicKey;
+import net.i2p.data.SessionKey;
+import net.i2p.data.Signature;
+import net.i2p.data.SigningPublicKey;
 
 /**
  * Handle the parsing of a raw message

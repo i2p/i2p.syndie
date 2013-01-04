@@ -3,7 +3,15 @@ package syndie.data;
 import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.util.*;
-import net.i2p.data.*;
+import net.i2p.data.Base64;
+import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
+import net.i2p.data.PrivateKey;
+import net.i2p.data.PublicKey;
+import net.i2p.data.SessionKey;
+import net.i2p.data.Signature;
+import net.i2p.data.SigningPublicKey;
+import net.i2p.data.SigningPrivateKey;
 import syndie.Constants;
 
 /**

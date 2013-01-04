@@ -6,7 +6,16 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import net.i2p.I2PAppContext;
-import net.i2p.data.*;
+import net.i2p.data.Base64;
+import net.i2p.data.DataFormatException;
+import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
+import net.i2p.data.PrivateKey;
+import net.i2p.data.PublicKey;
+import net.i2p.data.SessionKey;
+import net.i2p.data.Signature;
+import net.i2p.data.SigningPrivateKey;
+import net.i2p.data.SigningPublicKey;
 import net.i2p.util.Log;
 import syndie.db.CommandImpl;
 

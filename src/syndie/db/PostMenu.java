@@ -10,7 +10,15 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.*;
 import net.i2p.crypto.KeyGenerator;
-import net.i2p.data.*;
+import net.i2p.data.Base64;
+import net.i2p.data.DataHelper;
+import net.i2p.data.SessionKey;
+import net.i2p.data.PrivateKey;
+import net.i2p.data.PublicKey;
+import net.i2p.data.SigningPrivateKey;
+import net.i2p.data.SigningPublicKey;
+import net.i2p.data.Signature;
+import net.i2p.data.Hash;
 import syndie.Constants;
 import syndie.data.*;
 
