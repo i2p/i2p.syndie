@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="syndie" default="run" basedir=".">
     <description>Builds, tests and runs the project syndie.</description>
+    <!--
+        Include property files so that values can be easily overridden.
+         Users should create an override.properties file to make changes.
+     -->
+    <property file="override.properties"/>
+    <property file="build.properties"/>
+
 
   <!-- Set some global properties up -->
     <property name="src.dir" value="src" />
@@ -9,13 +16,16 @@
     <property name="lib.dir" value="lib" />
     <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
 
+    <!-- allow lib locations to be overridden -->
+    <property name="hsqldb.jar" value="${lib.dir}/hsqldb.jar" />
+    <property name="i2p.jar" value="${lib.dir}/i2p.jar" />
+    <property name="swt.jar" value="${lib.dir}/swt.jar" />
+
   <!-- Set some classpaths up -->
     <path id="classpath.build">
-        <fileset dir="${lib.dir}">
-            <include name="hsqldb.jar" />
-            <include name="i2p.jar" />
-            <include name="swt.jar" />
-        </fileset>
+        <pathelement location="${hsqldb.jar}" />
+        <pathelement location="${i2p.jar}" />
+        <pathelement location="${swt.jar}" />
     </path>
     <path id="classpath.run">
         <pathelement location="${dist.lib.jar}" />
@@ -32,8 +42,10 @@
     </path>
 
 
-    <target name="init">
-        <tstamp />
+    <target name="init" depends="buildProperties">
+        <tstamp>
+            <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
+        </tstamp>
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.dir}" />
     </target>
@@ -78,17 +90,8 @@
         </java>
     </target>
 
-    <target name="plugin" depends="jar">
+    <target name="plugin" depends="getReleaseNumber, jar">
         <mkdir dir="plugin/lib" />
-
-        <exec executable="grep" outputproperty="versionLine" failonerror="true" >
-            <arg value="public static final String VERSION" />
-        <arg value="src/syndie/Version.java" />
-        </exec>
-        <exec executable="cut" inputstring="${versionLine}" outputproperty="release.number" failonerror="true" >
-            <arg value="-f2" />
-        <arg value="-d&quot;" />
-        </exec>
         <buildnumber file="scripts/build.number" />
 
         <!-- make the update linux xpi2p, this is for both 32 and 64 bit -->
@@ -194,6 +197,43 @@
         <delete file="syndie-linux-i386.xpi2p" />
         <delete file="syndie-linux-i386-update.xpi2p" />
         <delete file="syndie-linux-x86-64.xpi2p" />
+    </target>
+
+    <target name="checkForMtn" >
+        <available property="mtn.available" file="_MTN" type="dir" />
+    </target>
+
+    <target name="getMtnRev" depends="checkForMtn" if="mtn.available" >
+        <exec executable="mtn" outputproperty="workspace.version" errorproperty="mtn.error1" failifexecutionfails="false" >
+            <arg value="automate" />
+            <arg value="get_base_revision_id" />
+        </exec>
+    </target>
+
+    <target name="buildProperties" depends="getMtnRev, getReleaseNumber" >
+        <!-- default if not set above -->
+        <property name="workspace.version" value="unknown" />
+        <property name="full.version" value="${release.number}" />
+        <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
+    </target>
+
+
+    <target name="getReleaseNumber">
+        <loadfile srcfile="src/syndie/Version.java" property="release.number">
+            <filterchain>
+                <linecontains>
+                    <contains value="public static final String VERSION"/>
+                </linecontains>
+                <tokenfilter>
+                    <replaceregex pattern=".*&quot;([^&quot;]+)&quot;;" replace="\1" flags="gi" />
+                </tokenfilter>
+                <striplinebreaks/>
+                <trim/>
+                <ignoreblank/>
+            </filterchain>
+        </loadfile>
+        <property name="release.number" value="unknown" />
+        <echo message="Release number is ${release.number}" />
     </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
