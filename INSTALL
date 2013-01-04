@@ -5,22 +5,20 @@ should work.  You will needs SWT as well - grab the latest version for
 your OS and architecture from http://www.eclipse.org/swt/ (or from
 your favorite package manager).
 
-I2P and SWT are required to compile Syndie.
+I2P and SWT are required to compile Syndie. You could either
+  - symlink i2p.jar and swt.jar to ./lib
+  - (recommended) set properties to tell the build process where to find
+    the necessary jar files. See 'build.properties' for more information.
 
-For I2P, the easiest is to add a symbolic link "i2p.jar" in lib/
-that points to your $I2P/lib/i2p.jar file.
-
-Also, you need to tell ant where to find SWT.
-Add a symbolic link "swt.jar" in lib/ that points to your swt.jar.
-Alternatively, add a line to the
-file nbproject/private/private.properties (creating a new directory or
-file if necessary):
+Alternatively, add a line to the file nbproject/private/private.properties
+(creating a new directory or file if necessary):
   swt.dir=../swt-I20061214-1445-gtk-linux-x86
 (or whatever the path to the directory containing swt.jar is)
 
-To build a normal java instance, run "ant"
+To build a normal java instance, run "ant jar". To build a self-contained
+syndie.jar that includes the dependencies, run "ant dist".
 
-To run it without any installation, run "ant run"
+To run it from within the source directory, use "ant run".
 
 To deploy your modifications into an existing Syndie install, copy
 the new ./lib/syndie.jar to the Syndie install's lib/ directory
