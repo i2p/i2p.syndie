@@ -1,5 +1,5 @@
-Syndie can be built from source with a modern (1.4+) java development
-kit, or with a new GCJ (4.0+).  You must have ant (1.6.5+), and the
+Syndie can be built from source with a modern (1.5+) java development
+kit, or with a new GCJ (4.0+).  You must have ant (1.7+), and the
 source release includes HSQLDB (1.8.0.7), though newer revisions
 should work.  You will needs SWT as well - grab the latest version for
 your OS and architecture from http://www.eclipse.org/swt/ (or from
