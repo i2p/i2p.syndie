@@ -67,6 +67,8 @@
     </target>
 
     <target name="dist" depends="jar" description="Combine all jars">
+        <copy file="${swt.jar}" todir="lib" />
+        <copy file="${i2p.jar}" todir="lib" />
         <jar jarfile="syndie.jar" index="true">
             <manifest>
                 <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
