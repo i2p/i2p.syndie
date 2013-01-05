@@ -22,10 +22,13 @@ public class Splash {
     private static Shell _shell;
     private static Image _img;
     private static final boolean DISABLED = false;
+
     public static void show(Display display, File tmpDir) {
         if (DISABLED) return;
-        _shell = new Shell(display, SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
         _img = getImage(tmpDir);
+        if (_img == null)
+            return;
+        _shell = new Shell(display, SWT.NO_TRIM | SWT.APPLICATION_MODAL | SWT.ON_TOP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
         _shell.setLayout(new FillLayout());
         Label l = new Label(_shell,  SWT.NO_BACKGROUND);
         l.setImage(_img);
@@ -37,6 +40,7 @@ public class Splash {
         _shell.setBounds(x, y, imgSize.width, imgSize.height);
         _shell.open();
     }
+
     public static void dispose() {
         if (DISABLED) return;
         if (_shell == null) return;
@@ -57,8 +61,11 @@ public class Splash {
         }
     }
     
+    /** @return null on error */
     private static Image getImage(File tmpDir) { 
         int splashCount = getSplashCount();
+        if (splashCount <= 0)
+            return null;
         // many clocks have only 10ms granularity
         long which = (System.currentTimeMillis()/10) % splashCount;
         return createImageFromResource("splash" + which + ".png", tmpDir);
