@@ -894,17 +894,19 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pullPrivateLocalOnly.setEnabled(false);
         _pullPBE.setSelection(pull.includePBEMessages);
         
-        if (pull.newAgeDays <= 0)
+        if (pull.newAgeDays <= 0) {
             _pullNewAge.select(0);
-        else if (pull.newAgeDays <= 7)
-            _pullNewAge.select(1);
-        else if (pull.newAgeDays <= 14)
-            _pullNewAge.select(2);
-        else if (pull.newAgeDays <= 32)
-            _pullNewAge.select(3);
-        else
-            _pullNewAge.select(4);
-        
+        } else if (pull.newAgeDays > NEWAGEDAYS[NEWAGEDAYS.length - 1]) {
+            _pullNewAge.select(NEWAGEDAYS.length - 1);
+        } else {
+            for (int i = 1; i < NEWAGEDAYS.length; i++) {
+                if (NEWAGEDAYS[i] >= pull.newAgeDays) {
+                    _pullNewAge.select(i);
+                    break;
+                }
+            }
+        }
+
         if (push.sendMaxAge <= 0)
             _pushAge.select(6);
         else if (push.sendMaxAge <= 7)
@@ -1162,11 +1164,15 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
     private static final String T_NEWAGE_DEFAULT = "syndie.gui.syndicatordetailhttparchive.newage.default";
     private static final String T_NEWAGE_1W = "syndie.gui.syndicatordetailhttparchive.newage.1w";
-    private static final String T_NEWAGE_2W = "syndie.gui.syndicatordetailhttparchive.newage.2w";
     private static final String T_NEWAGE_1M = "syndie.gui.syndicatordetailhttparchive.newage.1m";
+    private static final String T_NEWAGE_3M = "syndie.gui.syndicatordetailhttparchive.newage.3m";
     private static final String T_NEWAGE_6M = "syndie.gui.syndicatordetailhttparchive.newage.6m";
-    private static final int NEWAGE_DEFAULT_INDEX = 0;
-    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 14, 31, 183 };
+    private static final String T_NEWAGE_1Y = "syndie.gui.syndicatordetailhttparchive.newage.1y";
+    private static final String T_NEWAGE_3Y = "syndie.gui.syndicatordetailhttparchive.newage.3y";
+    private static final String T_NEWAGE_5Y = "syndie.gui.syndicatordetailhttparchive.newage.5y";
+    private static final String T_NEWAGE_10Y = "syndie.gui.syndicatordetailhttparchive.newage.10y";
+    private static final int NEWAGE_DEFAULT_INDEX = 4;
+    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 91, 183, 365, 1095, 1826, 3653 };
     
     private static final String T_SENDAGE_1W = "syndie.gui.syndicatordetailhttparchive.sendage.1w";
     private static final String T_SENDAGE_2W = "syndie.gui.syndicatordetailhttparchive.sendage.2w";
@@ -1215,10 +1221,15 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         cnt = _pullNewAge.getItemCount();
         sel = (cnt > 0 ? _pullNewAge.getSelectionIndex() : NEWAGE_DEFAULT_INDEX);
         _pullNewAge.removeAll();
-        _pullNewAge.add(registry.getText(T_NEWAGE_DEFAULT, "Whatever the archive advertises as new (default)"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_DEFAULT, "Whatever the archive advertises as new"));
         _pullNewAge.add(registry.getText(T_NEWAGE_1W, "1 week"));
         _pullNewAge.add(registry.getText(T_NEWAGE_1M, "1 month"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_3M, "3 months"));
         _pullNewAge.add(registry.getText(T_NEWAGE_6M, "6 months"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_1Y, "1 year"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_3Y, "3 year"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_5Y, "5 year"));
+        _pullNewAge.add(registry.getText(T_NEWAGE_10Y, "10 years"));
         _pullNewAge.select(sel);
 
         cnt = _pushAge.getItemCount();

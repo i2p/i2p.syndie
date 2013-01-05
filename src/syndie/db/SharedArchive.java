@@ -31,6 +31,8 @@ public class SharedArchive {
     private long _loadedOn = System.currentTimeMillis();
 
     public static final int DEFAULT_MAX_SIZE_KB = 512;
+    public static final int DEFAULT_NEWAGE_DAYS = 183;
+    public static final boolean DEFAULT_RECENT_ONLY = false;
     
     void setChannels(List channels) { _channels = (Channel[])channels.toArray(new Channel[0]); }
     void setMessages(List messages) { _messages = (Message[])messages.toArray(new Message[0]); }

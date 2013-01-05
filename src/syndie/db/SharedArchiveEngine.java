@@ -30,11 +30,11 @@ public class SharedArchiveEngine {
             knownChannelsOnly = false;
             includePrivateMessages = true;
             includePBEMessages = true;
-            includeRecentMessagesOnly = true;
+            includeRecentMessagesOnly = SharedArchive.DEFAULT_RECENT_ONLY;
             includeDupForPIR = false;
             pullNothing = false;
             discoverArchives = true;
-            newAgeDays = -1;
+            newAgeDays = SharedArchive.DEFAULT_NEWAGE_DAYS;
             pullWhitelistOnly = false;
         }
         public PullStrategy(String serialized) {
