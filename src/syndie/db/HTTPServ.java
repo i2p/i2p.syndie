@@ -584,7 +584,15 @@ public class HTTPServ implements CLI.Command {
         if (in != null) try { in.close(); in = null; } catch (IOException ioe) {}
         if (out != null) try { out.close(); out = null; } catch (IOException ioe) {}
         if (socket != null) try { socket.close(); socket = null; } catch (IOException ioe) {}
-        if (timeout != null) { timeout.cancel(); timeout = null;}
+        if (timeout != null) {
+            // No such method error here, caused by change in cancel() return type
+            // from void to boolean in I2P 0.9.3. Recompile syndie to fix.
+            // Catch the error here in case it's running with an old i2p.jar
+            try {
+                timeout.cancel();
+            } catch (NoSuchMethodError e) {}
+            timeout = null;         
+        }
     }
     
     private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
