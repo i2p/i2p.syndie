@@ -135,6 +135,23 @@ public class Expirer {
             }
         }
         
+        if (_defaultDBPolicy == null) {
+            _ui.debugMessage("Warning - no default DB policy");
+            ExpirationPolicy ep = new ExpirationPolicy();
+            ep.setIsDefaultPolicy();
+            ep.setMimicDefault(true);
+            ep.setIsDBPolicy();
+           _defaultDBPolicy = ep;
+        }
+        if (_defaultDataFilePolicy == null) {
+            _ui.debugMessage("Warning - no default data file policy");
+            ExpirationPolicy ep = new ExpirationPolicy();
+            ep.setIsDefaultPolicy();
+            ep.setMimicDefault(true);
+            ep.setIsDataFilePolicy();
+           _defaultDataFilePolicy = ep;
+        }
+
         if (_watchedDBPolicy == null)
             _watchedDBPolicy = _defaultDBPolicy;
         if (_watchedDataFilePolicy == null)
@@ -221,7 +238,14 @@ public class Expirer {
         return data;
     }
     
+    /** @param policy non-null */
     private void executeDBPolicy(String policyType, long chanId, Hash chan, ExpirationPolicy policy) {
+        if (policy == null) {
+            // policies set in loadPolicies() with fallbacks if DB doesn't return them,
+            // shouldn't happen any more
+            _ui.errorMessage("Null policy", new Exception("I did it"));
+            return;
+        }
         ChannelData data = getChannelData(chanId, chan+"");
         Map idsToExpire = selectToExpire(data, policy);
         if (idsToExpire.size() > 0) {
@@ -229,7 +253,15 @@ public class Expirer {
             deleteDBMessages(chanId, chan, new TreeSet(idsToExpire.keySet()));
         }
     }
+
+    /** @param policy non-null */
     private void executeDataFilePolicy(String policyType, Hash chan, long chanId, ExpirationPolicy policy) {
+        if (policy == null) {
+            // policies set in loadPolicies() with fallbacks if DB doesn't return them,
+            // shouldn't happen any more
+            _ui.errorMessage("Null policy", new Exception("I did it"));
+            return;
+        }
         ChannelData data = getChannelData(chan, chanId + "");
         Map idsToExpire = selectToExpire(data, policy);
         if (idsToExpire.size() > 0) {
@@ -238,6 +270,7 @@ public class Expirer {
         }
     }
     
+    /** @param policy non-null */
     private Map selectToExpire(ChannelData data, ExpirationPolicy policy) {
         int maxDays = policy.getMaxAgeDays();
         long maxMsgs = policy.getMaxNumMessages();

@@ -209,7 +209,7 @@ public class DBClient {
             disconnect();
         } else {
             if (_expireEvent == null) {
-                long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
+                long delay = _context.random().nextLong(60*60*1000l) + 24*60*60*1000l;
                 _expireEvent = new ExpireEvent();
                 _expireEvent.schedule(delay);
             }
@@ -225,7 +225,7 @@ public class DBClient {
             Expirer expirer = new Expirer(DBClient.this, _ui);
             expirer.expireMessages();
             _ui.debugMessage("periodic expiration complete");
-            long delay = _context.random().nextLong(24*60*60*1000l) + 6*60*60*1000l;
+            long delay = _context.random().nextLong(60*60*1000l) + 24*60*60*1000l;
             reschedule(delay);
         }
     }
@@ -5714,6 +5714,10 @@ public class DBClient {
     }
 
     private static final String SQL_GET_EXPIRATION_POLICIES = "SELECT isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays, mimicDefault FROM expirationPolicy";
+
+    /**
+     *  @return Should contain default policies, but may not, see fix in Expirer.loadPolicies()
+     */
     public Set getExpirationPolicies() {
         Set rv = new HashSet();
         PreparedStatement stmt = null;
