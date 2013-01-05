@@ -11,6 +11,7 @@
 
   <!-- Set some global properties up -->
     <property name="src.dir" value="src" />
+    <property name="data.dir" value="data" />
     <property name="build.dir" value="build" />
     <property name="dist.dir" value="dist" />
     <property name="lib.dir" value="lib" />
@@ -34,11 +35,7 @@
 
   <!-- Set up a fileset for the resources -->
     <path id="resources.path">
-        <fileset dir="${src.dir}">
-            <exclude name="**/*.java" />
-            <exclude name="com/*.txt" />
-            <exclude name="MANIFEST.MF" />
-        </fileset>
+        <fileset dir="${data.dir}" />
     </path>
 
 
