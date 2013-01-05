@@ -49,7 +49,12 @@ public class SyncArchive {
     private int _incomingActionsInProgress;
     private int _outgoingActionsInProgress;
     
-    private static final int DEFAULT_DELAY_HOURS = 5;
+    /**
+     *  This is the default master loop time.
+     *  The individual archive default min is in
+     *  SyndicatorDetailHTTPArchive.SYNC_DELAY_DEFAULT_INDEX
+     */
+    private static final int DEFAULT_DELAY_HOURS = 4;
 
     public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
     public SyncArchive(SyncManager mgr, DBClient client, String name) {

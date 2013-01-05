@@ -1158,7 +1158,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final int SIZE_DEFAULT_INDEX = 7; // 512KB
     
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
-    private static final int SYNC_DELAY_DEFAULT_INDEX = 6;
+    private static final int SYNC_DELAY_DEFAULT_INDEX = 2;
     
     private static final String T_NEWAGE_DEFAULT = "syndie.gui.syndicatordetailhttparchive.newage.default";
     private static final String T_NEWAGE_1W = "syndie.gui.syndicatordetailhttparchive.newage.1w";
