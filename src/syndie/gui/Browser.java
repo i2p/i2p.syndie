@@ -1220,7 +1220,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     private void loadPosition() {
         Properties prefs = _client.getNymPrefs();
-        boolean max = Boolean.valueOf(prefs.getProperty("browser.maximize", "true")).booleanValue();
+        boolean max = Boolean.parseBoolean(prefs.getProperty("browser.maximize"));
         _shell.setMaximized(max);
         
         _sash.setMaximizedControl(getShowBookmarksPref() ? null : _tabs);
