@@ -195,7 +195,6 @@ public class EnclosureBody {
         //Hash ivCalc = ctx.sha().calculateHash(decrypted, 0, 16);
         //byte bodyKeyData[] = new byte[SessionKey.KEYSIZE_BYTES];
         //System.arraycopy(decrypted, 16, bodyKeyData, 0, bodyKeyData.length);
-        Hash ivCalc = new Hash(explicitIV);
         SessionKey bodyKey = explicitSessionKey; //new SessionKey(bodyKeyData);
         
         if (_log.shouldLog(Log.DEBUG))
@@ -210,7 +209,7 @@ public class EnclosureBody {
         byte dec[] = new byte[enc.length];
         if ((enc.length % 16) != 0)
             throw new DataFormatException("Undecryptable, size=" + size + " asym.length=" + asym.length + " enc.length=" + enc.length);
-        ctx.aes().decrypt(enc, 0, dec, 0, bodyKey, ivCalc.getData(), 0, enc.length);
+        ctx.aes().decrypt(enc, 0, dec, 0, bodyKey, explicitIV, 0, enc.length);
         
         int start = 0;
         while ((start < dec.length + 9) && dec[start] != 0x0)
@@ -227,7 +226,7 @@ public class EnclosureBody {
         // check the hmac
         byte hmacPreKey[] = new byte[SessionKey.KEYSIZE_BYTES+16];
         System.arraycopy(bodyKey.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
-        System.arraycopy(ivCalc.getData(), 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, 16);
+        System.arraycopy(explicitIV, 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, 16);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
         boolean hmacOK = ctx.hmac256().verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
         if (!hmacOK) {
