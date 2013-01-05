@@ -337,8 +337,11 @@ public class WelcomeScreen extends Wizard {
         
         _welcomeMessage.setText(registry.getText(T_WELCOME, reflow(new String [] {
                 "Welcome to Syndie!\n\n",
-                "This wizard will help you set up your new Syndie installation. First we'll set up your identity, and then we'll",
-                "configure some archives for you to syndicate with."})));
+                "This wizard will help you set up your new Syndie installation. First we'll set up your identity,",
+                "and then we'll configure some archives for you to syndicate with.\n\n",
+                "It is strongly recommended that you have I2P running before you start Syndie.",
+                "If I2P is not running, please start it and wait 5 minutes before proceeding."
+        })));
         
         _description.setText(registry.getText(T_DESC, reflow(new String [] {
                 "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
