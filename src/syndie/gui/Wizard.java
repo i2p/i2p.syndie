@@ -38,13 +38,15 @@ abstract public class Wizard implements Themeable, Translatable {
     private int currentPage = 0;
     
     private static final int _buttonWidth = 100;
+    private static final int MAX_WIDTH = 900;
+    private static final int MAX_HEIGHT = 450;
     
     public Wizard(Display display) {
         final int numColumns = 4;
 
         _display = display;
         
-        _shell = new Shell(_display, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+        _shell = new Shell(_display, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.SHELL_TRIM);
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent evt) { evt.doit = false; close(); }
@@ -54,9 +56,9 @@ abstract public class Wizard implements Themeable, Translatable {
         });
         _shell.setLayout(new GridLayout(numColumns, false));
         _shell.setImage(ImageUtil.ICON_SHELL);
-        
+
         _stack = new Composite(_shell, SWT.NONE);
-        _stack.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, numColumns, 1));
+        _stack.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, numColumns, 1));
         _stackLayout = new StackLayout();
         _stack.setLayout(_stackLayout);
         
@@ -93,11 +95,12 @@ abstract public class Wizard implements Themeable, Translatable {
     void open() {
         _shell.pack();
         
-        Rectangle shellBounds = _shell.getBounds();
         Rectangle screenBounds = _display.getPrimaryMonitor().getBounds();
-        int x = screenBounds.x + (screenBounds.width - shellBounds.width) / 2;
-        int y = screenBounds.y + (screenBounds.height - shellBounds.height) / 2;
-        _shell.setLocation(x, y);
+        int width = Math.min(screenBounds.width, MAX_WIDTH);
+        int height = Math.min(screenBounds.height, MAX_HEIGHT);
+        int x = screenBounds.x + (screenBounds.width - width) / 2;
+        int y = screenBounds.y + (screenBounds.height - height) / 2;
+        _shell.setBounds(x, y, width, height);
         
         _shell.open();
     }

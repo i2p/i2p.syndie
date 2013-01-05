@@ -49,6 +49,8 @@ public class SyncArchive {
     private int _incomingActionsInProgress;
     private int _outgoingActionsInProgress;
     
+    private static final int DEFAULT_DELAY_HOURS = 5;
+
     public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
     public SyncArchive(SyncManager mgr, DBClient client, String name) {
         _manager = mgr;
@@ -58,7 +60,7 @@ public class SyncArchive {
         _uriId = -1;
         _lastSyncTime = -1;
         _nextSyncTime = -1;
-        _nextSyncDelayHours = 24;
+        _nextSyncDelayHours = DEFAULT_DELAY_HOURS;
         _nextSyncOneOff = false;
         _consecutiveFailures = 0;
         _whitelistGroupId = -1;
@@ -860,7 +862,7 @@ public class SyncArchive {
         if (hours < _nextSyncDelayHours)
             hours = _nextSyncDelayHours;
         
-        return hours*60*60*1000L + _client.ctx().random().nextInt(hours*60*60*1000);
+        return hours*60*60*1000L + _client.ctx().random().nextInt(60*60*1000);
     }
     
     private void updateSchedule(boolean success) {
