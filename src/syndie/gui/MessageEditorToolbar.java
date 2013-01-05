@@ -99,7 +99,9 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
     private MenuItem _styleHeading5;
     private MenuItem _stylePre;
     // spellcheck control
-    //private Button _spellButton; // disabled pending revamp (line breaking, plurals, caps)
+    // needs revamp (line breaking, plurals, caps)
+    // May be null if spellcheck disabled
+    private Button _spellButton;
     // search control
     private Button _searchButton;
     // quote control
@@ -141,7 +143,8 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         ToolbarGroup textGroup = new ToolbarGroup(_toolbar);
         initQuoteControl(textGroup);
         initSearchControl(textGroup);
-        //initSpellControl(textGroup);
+        if (SpellUtil.isEnabled())
+            initSpellControl(textGroup);
         textGroup.pack();
     }
 
@@ -219,7 +222,8 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             _pageTypeButton.setEnabled(false);
         }
         
-        //_spellButton.setEnabled(pageLoaded);
+        if (_spellButton != null)
+            _spellButton.setEnabled(pageLoaded);
         
         _searchButton.setEnabled(pageLoaded);
         _quoteButton.setEnabled(hasAncestors);
@@ -575,7 +579,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.spellNext(); }
         };
         
-        //_spellButton = addFlatButton(tg, "Check the spelling in the current page", ImageUtil.ICON_EDITOR_SPELL, listener);
+        _spellButton = addFlatButton(tg, "Check the spelling in the current page", ImageUtil.ICON_EDITOR_SPELL, listener);
     }
     
     public void initSearchControl(ToolbarGroup tg) {
@@ -607,7 +611,8 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _removeAttachmentButton.setFont(theme.DEFAULT_FONT);
         _linkButton.setFont(theme.DEFAULT_FONT);
         _styleButton.setFont(theme.DEFAULT_FONT);
-        //_spellButton.setFont(theme.DEFAULT_FONT);
+        if (_spellButton != null)
+            _spellButton.setFont(theme.DEFAULT_FONT);
         _searchButton.setFont(theme.DEFAULT_FONT);
         _quoteButton.setFont(theme.DEFAULT_FONT);
     }
