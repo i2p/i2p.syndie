@@ -680,9 +680,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             }
             if (days != null)
                 _filterAge.setText(Constants.getDate(System.currentTimeMillis()-(days.longValue()-1)*24l*60l*60l*1000l));
-else
-  _ui.debugMessage("***************DAYS IS NULL");
-_ui.debugMessage("*************FILTER AGE TEXT IS: " + _filterAge.getText());
             String tags[] = null;
             if (uri != null)
                 tags = uri.getStringArray("tagrequire");
