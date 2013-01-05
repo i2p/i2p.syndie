@@ -211,15 +211,35 @@ public class HTTPServ implements CLI.Command {
             boolean loggedIn = false;
             while (_alive && _ssocket != null) {
                 if (!_client.isLoggedIn()) {
-                    if (loggedIn) break; // if we logged in but then logged out, stop
+                    if (loggedIn) {
+                        _ui.debugMessage("Stopping - logged out of database");
+                        break; // if we logged in but then logged out, stop
+                    }
+                    _ui.debugMessage("Waiting for database login...");
                     try { Thread.sleep(1000); } catch (InterruptedException ie) {}
                     continue;
                 }
-                if (!loggedIn)
+
+                final SyncManager mgr;
+                try {
+                    // we can get past the above check and yet still throw an ISE here...
+                    // loop around again if we did
+                    mgr = SyncManager.getInstance(_client, _ui);
+                } catch (IllegalStateException ise) {
+                    // "Not logged in"
+                    if (!loggedIn) {
+                        _ui.debugMessage("Waiting for database login (ISE)...");
+                        try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+                    }
+                    continue;
+                }
+                if (!loggedIn) {
                     _ui.debugMessage("Starting acceptance runner");
-                loggedIn = true;
+                    loggedIn = true;
+                }
+
                 final File sharedIndex = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
-                final SyncManager mgr = SyncManager.getInstance(_client, _ui);
+
                 //SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
                 //manager.loadArchives();
                 if (!sharedIndex.exists()) {
