@@ -2125,7 +2125,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if (buf.length() > 0)
                 buf.append(": ");
         }
-        buf.append(chan.toBase64().substring(0,6));
+        if (chan != null)
+            buf.append(chan.toBase64().substring(0,6));
+        else
+            buf.append("no channel hash ??????");
         return buf.toString();
     }
     
