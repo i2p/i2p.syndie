@@ -23,6 +23,7 @@ public class SyndieURI {
     private TreeMap _attributes;
     private String _type;
     private transient String _stringified;
+    private static final int DEFAULT_SEARCH_DAYS = 183;
     
     public SyndieURI(String encoded) throws URISyntaxException {
         fromString(encoded);
@@ -85,7 +86,7 @@ public class SyndieURI {
         String scopes[] = null;
         if (channel != null)
             scopes = new String[] { channel.toBase64() };
-        return createSearch(scopes, "authorized", null, new Long(7), null, null, null, false, 
+        return createSearch(scopes, "authorized", null, Long.valueOf(DEFAULT_SEARCH_DAYS), null, null, null, false, 
                             null, null, null, null, null, null, null, null, false, true, false, true, false);
     }
     public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded, boolean useImportDate) {
@@ -114,9 +115,9 @@ public class SyndieURI {
         Long postDays = null;
         Long importDays = null;
         if (useImportDate)
-            importDays = new Long(7);
+            importDays = Long.valueOf(DEFAULT_SEARCH_DAYS);
         else
-            postDays = new Long(7);
+            postDays = Long.valueOf(DEFAULT_SEARCH_DAYS);
         return createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
                             null, null, null, null, null, null, null, null, false, true, privateOnly, threaded, unreadOnly);
     }
@@ -128,9 +129,9 @@ public class SyndieURI {
         Long postDays = null;
         Long importDays = null;
         if (useImportDate)
-            importDays = new Long(7);
+            importDays = Long.valueOf(DEFAULT_SEARCH_DAYS);
         else
-            postDays = new Long(7);
+            postDays = Long.valueOf(DEFAULT_SEARCH_DAYS);
         boolean pbe = true;
         SyndieURI uri = createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
                                      null, null, null, null, null, null, null, null, false, pbe, false, threaded, unreadOnly);

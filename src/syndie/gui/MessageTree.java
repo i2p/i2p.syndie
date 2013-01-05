@@ -412,13 +412,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private Hash _forumScopeOther[];
         private PreviewControlListener _listener;
         
+        private static final int DEFAULT_AGE_DAYS = 183;
+
         public FilterBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
             super(client, ui, themes, trans);
             _barNavControl = navControl;
             _barURIControl = uriControl;
             _msgTree = msgTree;
             _filterRow = bar;
-            _age = 7;
+            _age = DEFAULT_AGE_DAYS;
             _listener = lsnr;
             initBar();
         }
@@ -431,14 +433,19 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterAge.addSelectionListener(new SelectionListener() {
                 public void widgetSelected (SelectionEvent e) {
                     switch (_filterAge.getSelectionIndex()) {
+                        case AGE_10YEAR: _age = 3653; break;
+                        case AGE_5YEAR: _age = 1826; break;
+                        case AGE_3YEAR: _age = 1095; break;
+                        case AGE_YEAR: _age = 365; break;
+                        case AGE_6MONTH: _age = 183; break;
                         case AGE_LASTMONTH: _age = 60; break;
                         case AGE_THISMONTH: _age = 30; break;
                         case AGE_LASTWEEK: _age = 14; break;
                         case AGE_THISWEEK: _age = 7; break;
                         case AGE_YESTERDAY: _age = 2; break;
-                        case AGE_TODAY: 
+                        case AGE_TODAY: _age = 1; break;
                         default:
-                            _age = 1; 
+                            _age = 183;
                             break;
                     }
                     
@@ -673,6 +680,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             }
             if (days != null)
                 _filterAge.setText(Constants.getDate(System.currentTimeMillis()-(days.longValue()-1)*24l*60l*60l*1000l));
+else
+  _ui.debugMessage("***************DAYS IS NULL");
+_ui.debugMessage("*************FILTER AGE TEXT IS: " + _filterAge.getText());
             String tags[] = null;
             if (uri != null)
                 tags = uri.getStringArray("tagrequire");
@@ -712,7 +722,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final int AGE_LASTWEEK = 3;
         private static final int AGE_THISMONTH = 4;
         private static final int AGE_LASTMONTH = 5;
-        private static final int AGE_CUSTOM = 6;
+        private static final int AGE_6MONTH = 6;
+        private static final int AGE_YEAR = 7;
+        private static final int AGE_3YEAR = 8;
+        private static final int AGE_5YEAR = 9;
+        private static final int AGE_10YEAR = 10;
+        private static final int AGE_CUSTOM = 11;
 
         private static final String T_AGE_TODAY = "syndie.gui.messagetree.age.today";
         private static final String T_AGE_YESTERDAY = "syndie.gui.messagetree.age.yesterday";
@@ -720,6 +735,11 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final String T_AGE_LASTWEEK = "syndie.gui.messagetree.age.lastweek";
         private static final String T_AGE_THISMONTH = "syndie.gui.messagetree.age.thismonth";
         private static final String T_AGE_LASTMONTH = "syndie.gui.messagetree.age.lastmonth";
+        private static final String T_AGE_6MONTH = "syndie.gui.messagetree.age.6month";
+        private static final String T_AGE_YEAR = "syndie.gui.messagetree.age.year";
+        private static final String T_AGE_3YEAR = "syndie.gui.messagetree.age.3year";
+        private static final String T_AGE_5YEAR = "syndie.gui.messagetree.age.5year";
+        private static final String T_AGE_10YEAR = "syndie.gui.messagetree.age.10year";
         private static final String T_AGE_CUSTOM = "syndie.gui.messagetree.age.custom";
         
         private void populateAgeCombo() {
@@ -729,7 +749,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _translationRegistry.getText(T_AGE_THISWEEK, "This week"),
                 _translationRegistry.getText(T_AGE_LASTWEEK, "Since last week"),
                 _translationRegistry.getText(T_AGE_THISMONTH, "This month"),
-                _translationRegistry.getText(T_AGE_LASTMONTH, "Since last month")
+                _translationRegistry.getText(T_AGE_LASTMONTH, "Since last month"),
+                _translationRegistry.getText(T_AGE_6MONTH, "Last 6 months"),
+                _translationRegistry.getText(T_AGE_YEAR, "Last year"),
+                _translationRegistry.getText(T_AGE_3YEAR, "Last 3 years"),
+                _translationRegistry.getText(T_AGE_5YEAR, "Last 5 years"),
+                _translationRegistry.getText(T_AGE_10YEAR, "Last 10 years")
             };
             
             _filterAge.setItems(items);
