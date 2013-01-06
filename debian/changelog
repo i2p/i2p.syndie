@@ -1,3 +1,37 @@
+syndie (1.102b-1-1) unstable; urgency=low
+
+  * New beta version from the Syndie Hackfest!!!!!!
+  * Upstream changelog:
+    *  Default changes for better new experience:
+      - Change default master sync time from 24 + 0-24 hours to 5 + 0-1
+      - Change default archive sync time from 24 hours to 4 hours
+      - Change default pull policy from server's time to 6 months
+      - Change default search and display filters from 1 week to 6 months
+      - Add more filter age options
+      - Update default archives
+      - Set default i2p archives to auto-sync
+   * GUI improvements:
+      - Improve wizard text
+      - Re-enable spellcheck (still doesn't work though)
+      - Limit number of fetches or pushes shown, to not slow down the UI too much
+      - Detailed interactive status in fetches and pushes section
+   * Fixes:
+      - Fix wizard screen width (ticket #461)
+      - Fix NPE when viewing a draft on a banned forum
+      - Fix HTTP Server error (SocketTimeout incompatibility with older i2p.jar)
+      - Fix error posting private messages
+      - Fix occasional failure of httpserv at startup
+      - Fix "Data already set" internal error when importing posts with
+        hidden authors and an authentication mask
+   * Sync improvements:
+      - Randomize order of archives when syncing
+   * Build:
+      - Move all bundled resources from src/ to data/
+   * Other:
+     - Clean up some expensive debug logging
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Sun, 06 Jan 2013 18:21:47 +0000
+
 syndie (1.101~b8-3) unstable; urgency=low
 
   * Don't include swt.jar in syndie.jar.

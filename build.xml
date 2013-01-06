@@ -253,5 +253,72 @@
         <echo message="sloccount report saved to the file sloccount.sc" />
     </target>
 
+    <target name="getExtendedVersion" depends="buildProperties, trimMtnRev">
+        <property name="MtnShortHash" value="unknown" />
+        <condition property="Extended.Version" value="${full.version}-${MtnShortHash}">
+            <not>
+                <or>
+                    <equals arg1="${MtnShortHash}" arg2="" />
+                    <equals arg1="${MtnShortHash}" arg2="unknown" />
+                </or>
+            </not>
+        </condition>
+        <!-- if not set above we'll set it here -->
+        <property name="Extended.Version" value="${full.version}" />
+    </target>
+
+    <target name="trimMtnRev" depends="getMtnRev" unless="withoutRev">
+        <script language="javascript">
+            <![CDATA[
+            var MtnRev = project.getProperty("workspace.version");
+            if (MtnRev != 'unknown' && MtnRev != null) {
+                echo = project.createTask("echo");
+                var MtnShortHash = MtnRev.substring(0,8);
+                project.setProperty("MtnShortHash", MtnShortHash);
+                echo.setMessage("Trimmed hash: " + MtnShortHash);
+                echo.perform();
+            } else {
+                project.setProperty("MtnShortHash", 'unknown');
+            }
+            ]]>
+        </script>
+    </target>
+
+    <target name="source-tarball" depends="getExtendedVersion">
+        <!-- will this use the monotonerc file in the current workspace? -->
+        <fail message="This target cannot be used without Monotone!">
+            <condition>
+                <not>
+                    <isset property="mtn.available" />
+                </not>
+            </condition>
+        </fail>
+        <property name="tarball.name" value="${ant.project.name}_${Extended.Version}.orig.tar.bz2" />
+        <echo message="Checking out fresh copy into ../${ant.project.name}-${Extended.Version} for tarballing:" />
+        <delete dir="../${ant.project.name}-${Extended.Version}" />
+        <exec executable="mtn" failonerror="true">
+            <arg value="co" />
+            <arg value="-b" />
+            <arg value="i2p.${ant.project.name}" />
+            <!-- w: is the revision of the current workspace -->
+            <arg value="-r" />
+            <arg value="w:" />
+            <arg value="../${ant.project.name}-${Extended.Version}" />
+        </exec>
+        <delete includeemptydirs="true" quiet="false">
+            <fileset dir="../${ant.project.name}-${Extended.Version}/_MTN" />
+        </delete>
+        <tar longfile="gnu" destfile="../${tarball.name}" compression="bzip2">
+            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="/${ant.project.name}-${Extended.Version}">
+                <include name="**/**" />
+                <exclude name="debian/**"/>
+                <exclude name="**/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="/${ant.project.name}-${Extended.Version}" filemode="755">
+                <exclude name="debian/**" />
+                <include name="**/*.sh" />
+            </tarfileset>
+        </tar>
+    </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
