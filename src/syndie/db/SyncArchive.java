@@ -93,14 +93,14 @@ public class SyncArchive {
             pullStrategy = SyncManager.getInstance(_client, ui).getDefaultPullStrategy();
         ui.debugMessage("index fetched, pull strategy: " + pullStrategy);
         List pullURIs = new SharedArchiveEngine().selectURIsToPull(_client, ui, archive, pullStrategy, _whitelistGroupId);
-        ui.debugMessage("index fetched, uris to push: " + pullURIs);
+        ui.debugMessage("index fetched, uris to pull: " + pullURIs.size());
         
         SharedArchiveEngine.PushStrategy pushStrategy = getPushStrategy();
         if (pushStrategy == null)
             pushStrategy = SyncManager.getInstance(_client, ui).getDefaultPushStrategy();
         ui.debugMessage("index fetched, push strategy: " + pushStrategy);
         List pushURIs = new SharedArchiveEngine().selectURIsToPush(_client, ui, archive, pushStrategy);
-        ui.debugMessage("index fetched, uris to push: " + pushURIs);
+        ui.debugMessage("index fetched, uris to push: " + pushURIs.size());
         
         SharedArchive.Message msgs[] = archive.getMessages();
         SharedArchive.Channel scopes[] = archive.getChannels();

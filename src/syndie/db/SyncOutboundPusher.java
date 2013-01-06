@@ -11,13 +11,16 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.util.SimpleTimer2;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -75,9 +78,14 @@ public class SyncOutboundPusher {
     
     private SyncArchive getNextToPush(Runner runner) {
         int count = _manager.getArchiveCount();
-        long now = System.currentTimeMillis();
+        // shuffle the archives so we aren't always syncing with the first on the list
+        List<SyncArchive> archives = new ArrayList(count);
         for (int i = 0; i < count; i++) {
-            SyncArchive archive = _manager.getArchive(i);
+            archives.add(_manager.getArchive(i));
+        }
+        Collections.shuffle(archives);
+        long now = System.currentTimeMillis();
+        for (SyncArchive archive : archives) {
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
                 if (archive.getIncompleteOutgoingActionCount() > 0) {

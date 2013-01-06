@@ -4,8 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -63,9 +67,14 @@ class IndexFetcher {
     
     private SyncArchive getNextToFetch() {
         int count = _manager.getArchiveCount();
-        long now = System.currentTimeMillis();
+        // shuffle the archives so we aren't always syncing with the first on the list
+        List<SyncArchive> archives = new ArrayList(count);
         for (int i = 0; i < count; i++) {
-            SyncArchive archive = _manager.getArchive(i);
+            archives.add(_manager.getArchive(i));
+        }
+        Collections.shuffle(archives);
+        long now = System.currentTimeMillis();
+        for (SyncArchive archive : archives) {
             //_manager.getUI().debugMessage("indexFetch.getNextToFetch: " + archive + " nextSyncTime: " + archive.getNextSyncTime());
             if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {
                 if (archive.getIndexFetchInProgress() || archive.getIndexFetchComplete()) {

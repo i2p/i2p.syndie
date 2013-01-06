@@ -5,12 +5,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -68,9 +71,14 @@ class SyncInboundFetcher {
     
     private SyncArchive getNextToFetch(Runner runner) {
         int count = _manager.getArchiveCount();
-        long now = System.currentTimeMillis();
+        // shuffle the archives so we aren't always syncing with the first on the list
+        List<SyncArchive> archives = new ArrayList(count);
         for (int i = 0; i < count; i++) {
-            SyncArchive archive = _manager.getArchive(i);
+            archives.add(_manager.getArchive(i));
+        }
+        Collections.shuffle(archives);
+        long now = System.currentTimeMillis();
+        for (SyncArchive archive : archives) {
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
                 if ( (archive.getNextSyncTime() > 0) && (archive.getNextSyncTime() <= now) ) {

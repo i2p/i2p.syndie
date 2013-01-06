@@ -7,15 +7,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -386,7 +389,8 @@ public class SharedArchiveEngine {
                 uris.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
             }
         }
-        ui.debugMessage("Pull: strategy=" + strategy + " Total allocated KB: " + totalAllocatedKB + " URIs: " + uris);
+        ui.debugMessage("Pull: strategy=" + strategy + " Total allocated KB: " + totalAllocatedKB + " URIs: " + uris.size());
+        Collections.shuffle(uris);
         return uris;
     }
     
@@ -403,7 +407,8 @@ public class SharedArchiveEngine {
             scheduleNew(client, ui, archive, rv, dependencies, client.getArchiveDir(), strategy);
         resolveDependencies(client, ui, archive, rv, dependencies);
         
-        ui.debugMessage("Push: strategy=" + strategy + " URIs: " + rv);
+        ui.debugMessage("Push: strategy=" + strategy + " URIs: " + rv.size());
+        Collections.shuffle(rv);
         return rv;
     }
     
