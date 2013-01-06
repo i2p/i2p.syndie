@@ -1,11 +1,11 @@
 package syndie.db;
 
-import gnu.crypto.hash.Sha256Standalone;
 import java.io.*;
+import java.security.MessageDigest;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
-import net.i2p.util.Log;
-import syndie.Constants;
+import net.i2p.crypto.SHA256Generator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -15,6 +15,9 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.Log;
+
+import syndie.Constants;
 import syndie.data.ReferenceNode;
 
 public abstract class CommandImpl implements CLI.Command {
@@ -164,7 +167,7 @@ public abstract class CommandImpl implements CLI.Command {
         
         if (true) {
             Log log = ctx.logManager().getLog(cls);
-            Sha256Standalone dbg = new Sha256Standalone();
+            MessageDigest dbg = SHA256Generator.getDigestInstance();
             dbg.update(rv);
             byte h[] = dbg.digest();
             log.debug("Encrypted body hashes to " + Base64.encode(h));

@@ -1,11 +1,13 @@
 package syndie.data;
 
-import gnu.crypto.hash.Sha256Standalone;
 import java.io.*;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.SHA256Generator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
@@ -17,6 +19,7 @@ import net.i2p.data.Signature;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.util.Log;
+
 import syndie.db.CommandImpl;
 
 /**
@@ -88,7 +91,7 @@ public class EnclosureBody {
         off += 4;
         if (totalSize != (size-16)) {
             if (_log.shouldLog(Log.DEBUG)) {
-                Sha256Standalone dbg = new Sha256Standalone();
+                MessageDigest dbg = SHA256Generator.getDigestInstance();
                 dbg.update(enc);
                 byte h[] = dbg.digest();
                 _log.debug("borked: off=" + off);
