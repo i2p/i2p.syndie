@@ -190,6 +190,7 @@
         <delete file="sloccount.sc" />
         <delete file="syndie.jar" />
         <delete dir="plugin" />
+        <delete file="${ant.project.name}.fba" />
         <delete file="syndie.xpi2p" />
         <delete file="syndie-update.xpi2p" />
         <delete file="syndie-win32.xpi2p" />
@@ -319,6 +320,28 @@
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
+    </target>
+
+    <target name="findbugs" depends="jar">
+        <echo message="Starting findbugs, this will take a while..." />
+        <exec executable="nice" failonerror="true">
+            <arg value="findbugs"/>
+            <arg value="-textui"/>
+            <arg value="-projectName"/>
+            <arg value="${ant.project.name}"/>
+            <arg value="-sortByClass"/>
+            <arg value="-xml"/>
+            <arg value="-output"/>
+            <arg value="${ant.project.name}.fba"/>
+            <arg value="-auxclasspath"/>
+            <arg value="${swt.jar}:${hsqldb.jar}:${i2p.jar}" />
+            <arg value="-sourcepath"/>
+            <arg value="src" />
+            <!-- start of the files to be analyzed -->
+            <arg value="dist/syndie.jar"/>
+        </exec>
+        <echo message="Findbugs output stored in ${ant.project.name}.fba" />
+        <echo message="Now run: findbugs ${ant.project.name}.fba" />
     </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
