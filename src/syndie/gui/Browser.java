@@ -1297,6 +1297,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
     }
     
+    /**
+     *  It would be nice if we could call this to update the menus while syncing but it doesn't work.
+     *  We need something besides 'populate' that udates them on the fly instead of
+     *  deleting and readding.
+     */
     public void forumCreated() {
         populatePostMenus();
         _bookmarks.localForumCreated();

@@ -46,6 +46,7 @@ import syndie.db.UI;
 public class Syndicator extends BaseComponent implements Translatable, Themeable, SyncManager.SyncListener, SyncArchive.SyncArchiveListener {
     private NavigationControl _navControl;
     private Composite _parent;
+    private final DataCallback _dataCallback;
     
     private Composite _root;
     private Composite _top;
@@ -89,13 +90,26 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private boolean _showActions;
     
-    public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, Composite parent) {
-        this(client, ui, themes, trans, navControl, parent, true);
+    /**
+     *  Limit how many fetches or pushes are shown for a single archive,
+     *  as it really slows down the UI when there are 10K shown
+     */
+    private static final int MAX_SHOW_RECORDS = 50;
+
+
+    /** @param callback may be null */
+    public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl,
+                      DataCallback callback, Composite parent) {
+        this(client, ui, themes, trans, navControl, callback, parent, true);
     }
-    public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, Composite parent, boolean showActions) {
+
+    /** @param callback may be null */
+    public Syndicator(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl,
+                      DataCallback callback, Composite parent, boolean showActions) {
         super(client, ui, themes, trans);
         _navControl = navControl;
         _parent = parent;
+        _dataCallback = callback;
         _showActions = showActions;
         
         _archiveNameToRootItem = new HashMap();
@@ -724,6 +738,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private void loadDataFetches(SyncArchive archive, TreeItem rootItem) {
         int count = archive.getIncomingActionCount();
         if (count > 0) {
+            if (count > MAX_SHOW_RECORDS)
+                count = MAX_SHOW_RECORDS;
             for (int i = 0; i < count; i++) {
                 SyncArchive.IncomingAction action = archive.getIncomingAction(i);
                 loadDataFetch(action);
@@ -772,6 +788,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 if (actionItem != null) {
                     actionItem.dispose();
                     _items.remove(actionItem);
+                    //_ui.debugMessage("Disposed and removed sz = " + incomingItem.getItemCount());
                 }
                 
                 if (action.getArchive().getIncomingActionCount() == 0) {
@@ -781,13 +798,30 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     _items.remove(incomingItem);
                 }
                 
+                //_ui.debugMessage("Disposed " + action);
                 return;
             }
             
             if (actionItem == null) {
+                if(incomingItem.getItemCount() >= MAX_SHOW_RECORDS) {
+                    // make room if possible
+                    TreeItem firstItem = incomingItem.getItem(0);
+                    SyncArchive.IncomingAction firstAction = (SyncArchive.IncomingAction) _items.get(firstItem);
+                    if (firstAction != null && firstAction.isComplete()) {
+                        firstItem.dispose();
+                        _items.remove(firstItem);
+                        //_ui.debugMessage("Full, removed firstItem");
+                    } else {
+                        // no room
+                        //if (firstAction != null)
+                        //    _ui.debugMessage("Full but firstItem not complete, firstItem = " + firstItem);
+                        return;
+                    }
+                }
                 actionItem = new TreeItem(incomingItem, SWT.NONE);
                 incomingURIToItem.put(uri, actionItem);
                 _items.put(actionItem, action);
+                //_ui.debugMessage("Added " + action);
             }
 
             String forum = _client.getChannelName(scope);
@@ -831,6 +865,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 actionItem.setText(3, _translationRegistry.getText(T_FETCH_OK, "Imported"));
             }
+
+            //_ui.debugMessage("Updated " + actionItem);
             resizeCols(actionItem);
         }
     }
@@ -838,6 +874,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private void loadDataPushes(SyncArchive archive) {
         int count = archive.getOutgoingActionCount();
         if (count > 0) {
+            if (count > MAX_SHOW_RECORDS)
+                count = MAX_SHOW_RECORDS;
             for (int i = 0; i < count; i++) {
                 SyncArchive.OutgoingAction action = archive.getOutgoingAction(i);
                 loadDataPush(action);
@@ -897,6 +935,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             }
             
             if (actionItem == null) {
+                if (outgoingItem.getItemCount() >= MAX_SHOW_RECORDS) {
+                    // make room if possible
+                    TreeItem firstItem = outgoingItem.getItem(0);
+                    SyncArchive.OutgoingAction firstAction = (SyncArchive.OutgoingAction) _items.get(firstItem);
+                    if (firstAction != null && firstAction.isComplete()) {
+                        firstItem.dispose();
+                        _items.remove(firstItem);
+                    } else {
+                        return;
+                    }
+                }
                 actionItem = new TreeItem(outgoingItem, SWT.NONE);
                 outgoingURIToItem.put(uri, actionItem);
                 _items.put(actionItem, action);
@@ -1067,6 +1116,10 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     public void incomingUpdated(final SyncArchive.IncomingAction action) {
         if (_disposed) return;
         _ui.debugMessage("incoming action updated: " + action);
+        // Update ReferenceChooserTree
+        // This doesn't work, see Browser.forumCreated()
+        //if (_dataCallback != null)
+        //    _dataCallback.forumCreated();
         Display.getDefault().syncExec(new Runnable() { public void run() { loadDataFetch(action); } });
     }
 

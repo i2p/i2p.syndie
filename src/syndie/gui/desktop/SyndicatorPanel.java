@@ -43,7 +43,8 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
     private void initComponents() {
         Composite root = getRoot();
         root.setLayout(new FillLayout());
-        _syndicator = new Syndicator(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(), root, false);
+        _syndicator = new Syndicator(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getNavControl(),
+                                     null, root, false);
         _translationRegistry.register(this);
         _themeRegistry.register(this);
     }
