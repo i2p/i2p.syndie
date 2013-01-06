@@ -330,7 +330,14 @@ class IndexFetcher {
             _manager.getUI().debugMessage("Fetch totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
             _archive.indexFetchFail("Unable to fetch", _err, true);
         }
-        public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
+
+        public void bytesTransferred(long alreadyTransferred, int currentWrite,
+                                     long bytesTransferred, long bytesRemaining, String url) {
+            long rcvd = alreadyTransferred + currentWrite;
+            long total = bytesRemaining >= 0 ? rcvd + bytesRemaining : -1;
+            _archive.setIndexFetchProgress(rcvd, total);
+        }
+
         public void headerReceived(String url, int currentAttempt, String key, String val) {}
         public void attempting(String url) {
             _manager.getUI().debugMessage("Fetch attempting [" + url + "]...");

@@ -45,6 +45,8 @@ public class SyncArchive {
     private boolean _indexFetchComplete;
     private String _indexFetchErrorMsg;
     private Exception _indexFetchError;
+    private long _indexFetchRcvd;
+    private long _indexFetchSize = -1;
     
     private int _incomingActionsInProgress;
     private int _outgoingActionsInProgress;
@@ -103,19 +105,19 @@ public class SyncArchive {
         for (int i = 0; i < pullURIs.size(); i++) {
             SyndieURI uri = (SyndieURI)pullURIs.get(i);
             IncomingAction action = createIncomingAction(uri);
-            int size = 0;
+            //long size = 0;
             if (uri.getMessageId() != null) {
                 for (int j = 0; j < msgs.length; j++) {
                     if (msgs[j].getMessageId() == uri.getMessageId().longValue()) {
                         if (DataHelper.eq(uri.getScope().getData(), scopes[msgs[j].getScopeIndex()].getScope())) {
-                            size = (int)msgs[j].getMaxSizeKB()*1024;
+                            //size = (int)msgs[j].getMaxSizeKB()*1024;
                             break;
                         }
                     }
                 }
             }
             // metadata sizes aren't counted atm
-            action.setSize(size);
+            //action.setSize(size);
         }
         
         for (int i = 0; i < pushURIs.size(); i++) {
@@ -126,7 +128,7 @@ public class SyncArchive {
                 src = new File(new File(_client.getArchiveDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             else
                 src = new File(new File(_client.getArchiveDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-            action.setSize((int)src.length());
+            action.setSize(src.length());
         }
         
         ui.debugMessage("actions created, notify " + _listeners);
@@ -197,12 +199,13 @@ public class SyncArchive {
         private Exception _fetchError;
         private boolean _corrupt;
         private int _attempts;
-        private int _size;
+        private long _size, _rcvd;
         private boolean _disposed;
         
         public IncomingAction(SyndieURI uri) {
             _uri = uri;
             _completionTime = -1;
+            _size = -1;
         }
         
         public SyndieURI getURI() { return _uri; }
@@ -222,9 +225,18 @@ public class SyncArchive {
         public String getFetchErrorMsg() { return _fetchErrorMsg; }
         public Exception getFetchError() { return _fetchError; }
         public boolean isCorrupt() { return _corrupt; }
+        /** @deprecated unused */
         public int getFetchAttempts() { return _attempts; }
-        public int getSize() { return _size; }
-        void setSize(int bytes) { _size = bytes; }
+        /** @return -1 if unknown */
+        public long getSize() { return _size; }
+        public long getReceived() { return _rcvd; }
+
+        /** @param total -1 if unknown */
+        void setSize(long rcvd, long total) {
+            _size = total;
+            _rcvd = rcvd;
+            notifyUpdate(this);
+        }
         
         void setFetchingMeta() { 
             _fetchingMeta = true;
@@ -324,7 +336,7 @@ public class SyncArchive {
         private boolean _executing;
         private boolean _pushingMeta;
         private boolean _pushingBody;
-        private int _size;
+        private long _size;
         private String _errMsg;
         private Exception _err;
         private boolean _disposed;
@@ -345,11 +357,11 @@ public class SyncArchive {
         public boolean isComplete() { return _completionTime > 0; }
         public boolean isDisposed() { return _disposed; }
         public long getCompletionTime() { return _completionTime; }
-        public int getSize() { return _size; }
+        public long getSize() { return _size; }
         public String getErrorMsg() { return _errMsg; }
         public Exception getError() { return _err; }
         
-        void setSize(int bytes) { _size = bytes; }
+        void setSize(long bytes) { _size = bytes; }
         
         void setPushingMeta() {
             _pushingMeta = true;
@@ -757,6 +769,7 @@ public class SyncArchive {
     public void setWhitelistGroupId(long id) { _whitelistGroupId = id; }
 
     public boolean getIndexFetchInProgress() { return _indexFetching; }
+
     public void setIndexFetchInProgress(boolean now) {
         _indexFetching = now;
         if (!now) {
@@ -768,6 +781,19 @@ public class SyncArchive {
         
         fireUpdated();
     }
+
+    /** @param total -1 if unknown */
+    public void setIndexFetchProgress(long rcvd, long total) {
+        _indexFetchRcvd = rcvd;
+        _indexFetchSize = total;
+        fireUpdated();
+    }
+
+    public long getIndexFetchRcvdBytes() { return _indexFetchRcvd; }
+
+    /** @return -1 if unknown */
+    public long getIndexFetchSize() { return _indexFetchSize; }
+
     public boolean getIndexFetchComplete() { return _indexFetchComplete; }
     
     public String getLastIndexFetchErrorMsg() { 

@@ -380,11 +380,12 @@ class SyncInboundFetcher {
     }
     
     private class GetListener implements EepGet.StatusListener {
-        private SyncArchive.IncomingAction _incomingAction;
-        private DataImporter _importer;
-        private File _dataFile;
+        private final SyncArchive.IncomingAction _incomingAction;
+        private final DataImporter _importer;
+        private final File _dataFile;
         private Exception _err;
-        private Set _whitelistScopes;
+        private final Set _whitelistScopes;
+
         public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer, Set whitelistScopes) {
             _importer = importer;
             _incomingAction = action;
@@ -408,7 +409,14 @@ class SyncInboundFetcher {
             _manager.getUI().debugMessage("Fetch data totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
             _incomingAction.fetchFailed("Unable to fetch", _err);
         }
-        public void bytesTransferred(long alreadyTransferred, int currentWrite, long bytesTransferred, long bytesRemaining, String url) {}
+
+        public void bytesTransferred(long alreadyTransferred, int currentWrite,
+                                     long bytesTransferred, long bytesRemaining, String url) {
+            long rcvd = alreadyTransferred + currentWrite;
+            long total = bytesRemaining >= 0 ? rcvd + bytesRemaining : -1;
+            _incomingAction.setSize(rcvd, total);
+        }
+
         public void headerReceived(String url, int currentAttempt, String key, String val) {}
         public void attempting(String url) {
             //_manager.getUI().debugMessage("Fetch data attempting [" + url + "]...");

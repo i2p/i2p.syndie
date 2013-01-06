@@ -1645,20 +1645,17 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         if (_root.isDisposed()) return referenceNodes;
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
-        if (sz <= 0) {
-            StringBuilder buf = new StringBuilder();
-            buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
-            buf.append(1);
-            buf.append("/");
-            buf.append(1);
-            _navState.setText(buf.toString());
-            
+        if (sz <= 0 || referenceNodes.isEmpty()) {
+            String msg = _translationRegistry.getText(T_NAV_PAGE_EMPTY, "No items to display");
+            _navState.setText(msg);
             _navNext.setEnabled(false);
             _navEnd.setEnabled(false);
             _navPrev.setEnabled(false);
             _navStart.setEnabled(false);
+            _navPageSize.setEnabled(false);
             return referenceNodes;
         }
+        _navPageSize.setEnabled(true);
         
         int start = _currentPage * sz;
         int end = (_currentPage+1) * sz;
@@ -1678,7 +1675,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         StringBuilder buf = new StringBuilder();
         buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
         buf.append(_currentPage+1);
-        buf.append("/");
+        buf.append(" / ");
         buf.append(pages);
         _navState.setText(buf.toString());
         
@@ -1687,7 +1684,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         if (start > end) start = end;
         return referenceNodes.subList(start, end);
     }
+
     private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
+    private static final String T_NAV_PAGE_EMPTY = "syndie.gui.messagetree.nav.page.empty";
     
     public MessageIterator getIterator(SyndieURI uri) {
         ReferenceNode node = getNode(uri);
@@ -1743,6 +1742,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         //_tree.setItemCount(referenceNodes != null ? referenceNodes.size() : 0);
         // done on-demand via the virtual tree
         
+        if (referenceNodes.isEmpty()) {
+
+        }
+
         for (int i = 0; i < referenceNodes.size(); i++) {
             ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             totalDBTime += add(node, null);
@@ -1978,10 +1981,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             rethemeAncestorsOfUnread(item);
         }
         
-        setMinWidth(_colSubject, subj, 0, 100);
-        setMinWidth(_colAuthor, auth, 0, 50);
-        setMinWidth(_colChannel, chan, 0, 50);
-        setMinWidth(_colDate, date, 20, 50);
+        setMinWidth(_colSubject, subj, 0, 200);
+        setMinWidth(_colAuthor, auth, 0, 150);
+        setMinWidth(_colChannel, chan, 0, 150);
+        setMinWidth(_colDate, date, 20, 110);
         setMinWidth(_colTags, tags, 0, 50);
         if (!_showChannel) _colChannel.setWidth(1);
         //_browser.getUI().debugMessage("message status: " + status);
