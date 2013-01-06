@@ -1,5 +1,34 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-06 1.102b-1 (zzz)
+  Default changes for better new experience:
+   - Change default master sync time from 24 + 0-24 hours to 5 + 0-1
+   - Change default archive sync time from 24 hours to 4 hours
+   - Change default pull policy from server's time to 6 months
+   - Change default search and display filters from 1 week to 6 months
+   - Add more filter age options
+   - Update default archives
+   - Set default i2p archives to auto-sync
+  GUI improvements:
+   - Improve wizard text
+   - Re-enable spellcheck (still doesn't work though)
+   - Limit number of fetches or pushes shown, to not slow down the UI too much
+   - Detailed interactive status in fetches and pushes section
+  Fixes:
+   - Fix wizard screen width (ticket #461)
+   - Fix NPE when viewing a draft on a banned forum
+   - Fix HTTP Server error (SocketTimeout incompatibility with older i2p.jar)
+   - Fix error posting private messages
+   - Fix occasional failure of httpserv at startup
+   - Fix "Data already set" internal error when importing posts with
+     hidden authors and an authentication mask
+  Sync improvements:
+   - Randomize order of archives when syncing
+  Build:
+   - Move all bundled resources from src/ to data/
+  Other:
+   - Clean up some expensive debug logging
+
 * 2009-02-19 1.101a-mf6 fix (duh)
     - got rid of the syndie.i2p.net references in here, so syndie will stop leading people to them.
 

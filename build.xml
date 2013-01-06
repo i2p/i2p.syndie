@@ -99,7 +99,6 @@
         <copy file="LICENSE" todir="plugin" />
         <copy file="src/com/LICENSE.txt" tofile="plugin/LICENSE-jazzy.txt" />
         <copy file="LICENSE-EPL-v1.0.html" tofile="plugin/LICENSE-icons.html" />
-        <copy file="logger.config" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
