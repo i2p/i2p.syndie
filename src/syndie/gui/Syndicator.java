@@ -11,6 +11,7 @@ import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.MenuEvent;
@@ -778,8 +779,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
 
     /** create (or update) a fetch record (may create or update parents) */
     private void loadDataFetch(SyncArchive.IncomingAction action) {
-        synchronized (_pullLock) {
-            locked_loadDataFetch(action);
+        try {
+            synchronized (_pullLock) {
+                locked_loadDataFetch(action);
+            }
+        } catch (SWTException swt) {
+            // widget is disposed... fixme...
+            _ui.debugMessage("loadDataFetch", swt);
         }
     }
 
@@ -954,8 +960,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
 
     /** create (or update) a push record (may create or update parents) */
     private void loadDataPush(SyncArchive.OutgoingAction action) {
-        synchronized (_pushLock) {
-            locked_loadDataPush(action);
+        try {
+            synchronized (_pushLock) {
+                locked_loadDataPush(action);
+            }
+        } catch (SWTException swt) {
+            // widget is disposed... fixme...
+            _ui.debugMessage("loadDataPush", swt);
         }
     }
 
