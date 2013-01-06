@@ -66,11 +66,7 @@ public class SyncArchive {
         _lastSyncTime = -1;
         _nextSyncTime = -1;
         _nextSyncDelayHours = DEFAULT_DELAY_HOURS;
-        _nextSyncOneOff = false;
-        _consecutiveFailures = 0;
         _whitelistGroupId = -1;
-        _incomingActionsInProgress = 0;
-        _outgoingActionsInProgress = 0;
         _incomingActions = new ArrayList();
         _outgoingActions = new ArrayList();
         _listeners = new ArrayList();
@@ -186,10 +182,12 @@ public class SyncArchive {
     
     /** represents the pull of an archive element - either a message or metadata */
     public class IncomingAction {
-        private SyndieURI _uri;
+        private final SyndieURI _uri;
         private long _completionTime;
         private boolean _paused;
         private boolean _executing;
+        private boolean _fetchingMeta;
+        private boolean _fetchingBody;
         private boolean _fetchOK;
         private boolean _importOK;
         private String _pbePrompt;
@@ -205,25 +203,15 @@ public class SyncArchive {
         public IncomingAction(SyndieURI uri) {
             _uri = uri;
             _completionTime = -1;
-            _paused = false;
-            _executing = false;
-            _fetchOK = false;
-            _importOK = false;
-            _pbePrompt = null;
-            _noReplyKey = false;
-            _noReadKey = false;
-            _fetchErrorMsg = null;
-            _fetchError = null;
-            _corrupt = false;
-            _attempts = 0;
-            _size = 0;
-            _disposed = false;
         }
         
         public SyndieURI getURI() { return _uri; }
         public SyncArchive getArchive() { return SyncArchive.this; }
         public boolean isScheduled() { return _completionTime == -1 && !_paused && !_executing; }
+        /** this really just means queued */
         public boolean isExecuting() { return _executing; }
+        public boolean isFetchingMeta() { return _fetchingMeta; }
+        public boolean isFetchingBody() { return _fetchingBody; }
         public boolean isComplete() { return _completionTime > 0; }
         public boolean isPaused() { return _paused; }
         public boolean isDisposed() { return _disposed; }
@@ -238,6 +226,17 @@ public class SyncArchive {
         public int getSize() { return _size; }
         void setSize(int bytes) { _size = bytes; }
         
+        void setFetchingMeta() { 
+            _fetchingMeta = true;
+            notifyUpdate(this);
+        }
+
+        void setFetchingBody() { 
+            _fetchingMeta = false;
+            _fetchingBody = true;
+            notifyUpdate(this);
+        }
+
         void importFailed(String msg, Exception cause) {
             _completionTime = System.currentTimeMillis();
             _fetchError = cause;
@@ -283,6 +282,10 @@ public class SyncArchive {
         }
         
         boolean setIsExecuting(boolean executing) {
+            if (!executing) {
+                _fetchingMeta = false;
+                _fetchingBody = false;
+            }
             boolean changed;
             synchronized (IncomingAction.this) {
                 changed = _executing != executing;
@@ -315,10 +318,12 @@ public class SyncArchive {
 
     /** represents a push element, either scheduled, in process, or complete */
     public class OutgoingAction {
-        private SyndieURI _uri;
+        private final SyndieURI _uri;
         private long _completionTime;
         private boolean _paused;
         private boolean _executing;
+        private boolean _pushingMeta;
+        private boolean _pushingBody;
         private int _size;
         private String _errMsg;
         private Exception _err;
@@ -327,16 +332,15 @@ public class SyncArchive {
         public OutgoingAction(SyndieURI uri) {
             _uri = uri;
             _completionTime = -1;
-            _paused = false;
-            _executing = false;
-            _size = 0;
-            _disposed = false;
         }
         
         public SyndieURI getURI() { return _uri; }
         public SyncArchive getArchive() { return SyncArchive.this; }
         public boolean isScheduled() { return _completionTime == -1 && !_paused && !_executing; }
+        /** this really just means queued */
         public boolean isExecuting() { return _executing; }
+        public boolean isPushingMeta() { return _pushingMeta; }
+        public boolean isPushingBody() { return _pushingBody; }
         public boolean isPaused() { return _paused; }
         public boolean isComplete() { return _completionTime > 0; }
         public boolean isDisposed() { return _disposed; }
@@ -347,6 +351,17 @@ public class SyncArchive {
         
         void setSize(int bytes) { _size = bytes; }
         
+        void setPushingMeta() {
+            _pushingMeta = true;
+            notifyUpdate(this);
+        }
+
+        void setPushingBody() {
+            _pushingMeta = false;
+            _pushingBody = true;
+            notifyUpdate(this);
+        }
+
         void pushFailed(String msg, Exception err) {
             _errMsg = msg;
             _err = err;
@@ -361,6 +376,10 @@ public class SyncArchive {
         }
         
         boolean setIsExecuting(boolean executing) { 
+            if (!executing) {
+                _pushingMeta = false;
+                _pushingBody = false;
+            }
             boolean changed;
             synchronized (OutgoingAction.this) {
                 changed = _executing != executing;

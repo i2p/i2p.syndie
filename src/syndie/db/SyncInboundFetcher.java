@@ -205,8 +205,8 @@ class SyncInboundFetcher {
     }
     
     private void fetchHTTP(SyncArchive archive) {
-        List pendingMeta = new ArrayList();
-        List pendingMsg = new ArrayList();
+        List<SyncArchive.IncomingAction> pendingMeta = new ArrayList();
+        List<SyncArchive.IncomingAction> pendingMsg = new ArrayList();
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
@@ -273,41 +273,44 @@ class SyncInboundFetcher {
     
     private static final int CONCURRENT_FETCHES = 3;
     
-    private void fetchHTTPMeta(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
-        List fetchers = new ArrayList(CONCURRENT_FETCHES);
+    private void fetchHTTPMeta(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
+                               String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+        List<Thread> fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
             Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MetaFetcher " + i);
             t.start();
             fetchers.add(t);
         }
         while (fetchers.size() > 0) {
-            Thread t = (Thread)fetchers.remove(0);
+            Thread t = fetchers.remove(0);
             try { t.join(); } catch (InterruptedException ie) {}
         }
     }
     
-    private void fetchHTTPMsgs(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
-        List fetchers = new ArrayList(CONCURRENT_FETCHES);
+    private void fetchHTTPMsgs(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
+                               String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+        List<Thread> fetchers = new ArrayList(CONCURRENT_FETCHES);
         for (int i = 0; i < CONCURRENT_FETCHES; i++) {
             Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MsgFetcher " + i);
             t.start();
             fetchers.add(t);
         }
         while (fetchers.size() > 0) {
-            Thread t = (Thread)fetchers.remove(0);
+            Thread t = fetchers.remove(0);
             try { t.join(); } catch (InterruptedException ie) {}
         }
     }
     
     private class Fetch implements Runnable {
         private SyncArchive _archive;
-        private List _actions;
+        private List<SyncArchive.IncomingAction> _actions;
         private String _archiveURL;
         private String _query;
         private DataImporter _importer;
         private Set _whitelistScopes;
         
-        public Fetch(SyncArchive archive, List actions, String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+        public Fetch(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
+                     String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
             _archive = archive;
             _actions = actions;
             _archiveURL = archiveURL;
@@ -323,7 +326,7 @@ class SyncInboundFetcher {
                 SyncArchive.IncomingAction action = null;
                 synchronized (_actions) {
                     if (_actions.size() <= 0) return;
-                    action = (SyncArchive.IncomingAction)_actions.remove(0);
+                    action = _actions.remove(0);
                 }
                 
                 if (action.getCompletionTime() > 0) continue; // already complete
@@ -335,6 +338,11 @@ class SyncInboundFetcher {
                     action.importSuccessful();
                     continue;
                 }
+
+                if (uri.getMessageId() == null)
+                    action.setFetchingMeta();
+                else
+                    action.setFetchingBody();
 
                 String url = _archiveURL;
                 url = url + uri.getScope().toBase64() + '/';

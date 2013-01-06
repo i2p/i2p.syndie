@@ -391,8 +391,7 @@ public class SyncOutboundPusher {
             int actions = archive.getOutgoingActionCount();
             if (actions <= 0) return;
             
-            List uris = new ArrayList();
-            List actionsPushed = new ArrayList();
+            List<SyncArchive.OutgoingAction> actionsPushed = new ArrayList();
             int len = 0;
             for (int i = 0; i < actions; i++) {
                 SyncArchive.OutgoingAction action = archive.getOutgoingAction(i);
@@ -402,16 +401,14 @@ public class SyncOutboundPusher {
                 
                 len += action.getSize();
 
-                SyndieURI uri = action.getURI();
-                uris.add(uri);
                 actionsPushed.add(action);
                 
                 if (len > HTTP_SEND_BATCH_SIZE)
                     break;
             }
             String err = null;
-            if (uris.size() > 0)
-                err = pushHTTP(archive, uris);
+            if (!actionsPushed.isEmpty())
+                err = pushHTTP(archive, actionsPushed);
             else
                 break; // all paused/complete/in flight/etc
 
@@ -454,13 +451,13 @@ public class SyncOutboundPusher {
         }
     }
     
-    private String pushHTTP(SyncArchive archive, List uris) {
+    private String pushHTTP(SyncArchive archive, List<SyncArchive.OutgoingAction> actions) {
         String error = null;
         long len = 0;
-        List metaFiles = new ArrayList();
-        List msgFiles = new ArrayList();
-        for (int i = 0; i < uris.size(); i++) {
-            SyndieURI uri = (SyndieURI)uris.get(i);
+        List<File> metaFiles = new ArrayList();
+        List<File> msgFiles = new ArrayList();
+        for (SyncArchive.OutgoingAction action: actions) {
+            SyndieURI uri = action.getURI();
             File chanDir = new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64());
             File f = null;
             if (uri.getMessageId() == null) {
@@ -528,10 +525,14 @@ public class SyncOutboundPusher {
             out.write(DataHelper.getUTF8(buf.toString()));
             DataHelper.writeLong(out, 2, 0);
             int idx = 0;
-            for (int i = 0; i < metaFiles.size(); i++)
-                send(++idx, out, (File)metaFiles.get(i), 0x1);
-            for (int i = 0; i < msgFiles.size(); i++)
-                send(++idx, out, (File)msgFiles.get(i), 0x0);
+            for (int i = 0; i < metaFiles.size(); i++) {
+                actions.get(i).setPushingMeta();
+                send(++idx, out, metaFiles.get(i), 0x1);
+            }
+            for (int i = 0; i < msgFiles.size(); i++) {
+                actions.get(i).setPushingBody();
+                send(++idx, out, msgFiles.get(i), 0x0);
+            }
             out.flush();
             
             String line = DataHelper.readLine(s.getInputStream());

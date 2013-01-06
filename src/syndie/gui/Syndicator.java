@@ -90,6 +90,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private boolean _showActions;
     
+    private final Object _pullLock = new Object();
+    private final Object _pushLock = new Object();
+
     /**
      *  Limit how many fetches or pushes are shown for a single archive,
      *  as it really slows down the UI when there are 10K shown
@@ -756,6 +759,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
 
     /** create (or update) a fetch record (may create or update parents) */
     private void loadDataFetch(SyncArchive.IncomingAction action) {
+        synchronized (_pullLock) {
+            locked_loadDataFetch(action);
+        }
+    }
+
+    /** synch to avoid disposed errors */
+    private void locked_loadDataFetch(SyncArchive.IncomingAction action) {
         if (action != null) {
             SyndieURI uri = action.getURI();
             if (uri == null) return;
@@ -856,10 +866,18 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     msg = msg + " - " + action.getFetchError().getMessage();
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, _translationRegistry.getText(T_FETCH_FAILED, "Fetch failed: ") + msg);
-            } else if (action.isExecuting()) {
+            } else if (action.isFetchingMeta()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "In progress..."));
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_META, "Fetching message header..."));
+            } else if (action.isFetchingBody()) {
+                actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_BODY, "Fetching message body..."));
+            } else if (action.isExecuting()) {
+                actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "Queued..."));
             } else { // complete
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
@@ -892,6 +910,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
 
     /** create (or update) a push record (may create or update parents) */
     private void loadDataPush(SyncArchive.OutgoingAction action) {
+        synchronized (_pushLock) {
+            locked_loadDataPush(action);
+        }
+    }
+
+    /** synch to avoid disposed errors */
+    private void locked_loadDataPush(SyncArchive.OutgoingAction action) {
         if (action != null) {
             SyndieURI uri = action.getURI();
             if (uri == null) return;
@@ -960,10 +985,18 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             if (action.isScheduled()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_ASAP, "ASAP"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
-            } else if (action.isExecuting()) {
+            } else if (action.isPushingMeta()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
-                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "In progress..."));
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_PMETA, "Pushing message header..."));
+            } else if (action.isPushingBody()) {
+                actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_PBODY, "Pushing message body..."));
+            } else if (action.isExecuting()) {
+                actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+                actionItem.setText(3, _translationRegistry.getText(T_SUMMARY_INPROGRESS, "Queued..."));
             } else if (action.getErrorMsg() != null) {
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
@@ -1000,6 +1033,10 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private static final String T_SUMMARY_EXECUTEPOLICY = "syndie.gui.syndicator.summary.executepolicy";
     private static final String T_SUMMARY_SCHEDULED = "syndie.gui.syndicator.summary.scheduled";
     private static final String T_SUMMARY_INPROGRESS = "syndie.gui.syndicator.summary.inprogress";
+    private static final String T_SUMMARY_META = "syndie.gui.syndicator.summary.meta";
+    private static final String T_SUMMARY_BODY = "syndie.gui.syndicator.summary.body";
+    private static final String T_SUMMARY_PMETA = "syndie.gui.syndicator.summary.pmeta";
+    private static final String T_SUMMARY_PBODY = "syndie.gui.syndicator.summary.pbody";
     
     private static final String T_FETCH_READKEYUNKNOWN = "syndie.gui.syndicator.fetch.readkeyunknown";
     private static final String T_FETCH_REPLYKEYUNKNOWN = "syndie.gui.syndicator.fetch.replykeyunknown";
