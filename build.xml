@@ -188,6 +188,7 @@
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
         <delete dir="${dist.dir}" />
+        <delete file="sloccount.sc" />
         <delete file="syndie.jar" />
         <delete dir="plugin" />
         <delete file="syndie.xpi2p" />
@@ -235,5 +236,23 @@
         <property name="release.number" value="unknown" />
         <echo message="Release number is ${release.number}" />
     </target>
+
+    <target name="sloccount.report">
+        <echo message="Generating sloccount report (this will take awhile)" />
+        <exec executable="sloccount" failonerror="true">
+            <arg value="--details"/>
+            <arg value="--wide"/>
+            <arg value="${basedir}"/>
+            <redirector output="sloccount.sc">
+                <outputfilterchain>
+                    <linecontainsregexp negate="true">
+                        <regexp pattern="(WARNING|Warning:|sloccount\.sc)" />
+                    </linecontainsregexp>
+                </outputfilterchain>
+            </redirector>
+        </exec>
+        <echo message="sloccount report saved to the file sloccount.sc" />
+    </target>
+
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
