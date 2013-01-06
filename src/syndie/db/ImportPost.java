@@ -305,8 +305,11 @@ public class ImportPost {
             byte mask[] = _body.getHeaderBytes(Constants.MSG_HEADER_AUTHENTICATION_MASK);
             if ( (mask != null) && (mask.length == Signature.SIGNATURE_BYTES) ) {
                 _ui.debugMessage("Permuting the authentication signature");
-                byte realSig[] = DataHelper.xor(authenticationSig.getData(), mask);
-                authenticationSig.setData(realSig);
+                // Signature data ref is immutable, so XOR in place
+                byte[] sig = authenticationSig.getData();
+                for (int i = 0; i < Signature.SIGNATURE_BYTES; i++) {
+                    sig[i] ^= mask[i];
+                }
             } else {
                 _ui.debugMessage("Not permuting the authentication signature (no mask)");
             }

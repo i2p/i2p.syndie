@@ -243,6 +243,7 @@ public class SyncArchive {
             _fetchError = cause;
             _fetchErrorMsg = (msg != null ? msg : cause + "");
             setIsExecuting(false);
+            _manager.getUI().debugMessage(msg, cause);
         }
         void importCorrupt() {
             _completionTime = System.currentTimeMillis();
@@ -278,6 +279,7 @@ public class SyncArchive {
             _fetchError = err;
             _fetchErrorMsg = msg;
             setIsExecuting(false);
+            _manager.getUI().debugMessage(msg, err);
         }
         
         boolean setIsExecuting(boolean executing) {
@@ -350,6 +352,7 @@ public class SyncArchive {
             _err = err;
             _completionTime = System.currentTimeMillis();
             setIsExecuting(false);
+            _manager.getUI().debugMessage(msg, err);
         }
         
         void pushOK() {

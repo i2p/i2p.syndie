@@ -530,7 +530,7 @@ class SyncInboundFetcher {
             action.importFailed("Internal error importing", e);
         } catch (Throwable t) {
             t.printStackTrace();
-            action.importFailed("Internal error importing: " + t.getMessage(), null);
+            action.importFailed("Internal error importing: " + t.getMessage(), new Exception(t));
         } finally {
             if (delete)
                 datafile.delete();

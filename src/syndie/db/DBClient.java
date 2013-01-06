@@ -6429,8 +6429,15 @@ public class DBClient {
         if (_log.shouldLog(Log.INFO)) 
             _log.info(msg); 
     }
+
+    /** 
+     *  Logs at WARN level if cause != null, otherwise DEBUG
+     */
     public void logDebug(String msg, Exception cause) { 
-        if (_log.shouldLog(Log.DEBUG)) 
+        // make it easier to find the real problems
+        if (cause != null && _log.shouldLog(Log.WARN)) 
+            _log.warn(msg, cause); 
+        else if (_log.shouldLog(Log.DEBUG)) 
             _log.debug(msg, cause); 
     }
     
