@@ -561,13 +561,13 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         _colImport.setText(registry.getText(T_COLIMPORT, "Archive"));
         _colLocation.setText(registry.getText(T_COLLOCATION, "URL"));
         _colProxy.setText(registry.getText(T_COLPROXY, "Proxy"));
-        _colPullOnly.setText(registry.getText(T_COLPULLONLY, "r/o?"));
-        _colAutomatic.setText(registry.getText(T_COLAUTOMATIC, "auto?"));
+        _colPullOnly.setText(registry.getText(T_COLPULLONLY, "Read Only"));
+        _colAutomatic.setText(registry.getText(T_COLAUTOMATIC, "Auto Sync"));
         
         _colImport.setToolTipText(registry.getText(T_COLIMPORT_TT, "Archive"));
         _colLocation.setToolTipText(registry.getText(T_COLLOCATION_TT, "Archive location"));
-        _colProxy.setToolTipText(registry.getText(T_COLPROXY_TT, "Proxy to access it"));
-        _colPullOnly.setToolTipText(registry.getText(T_COLPULLONLY_TT, "Read only archive?"));
+        _colProxy.setToolTipText(registry.getText(T_COLPROXY_TT, "HTTP Proxy to access it"));
+        _colPullOnly.setToolTipText(registry.getText(T_COLPULLONLY_TT, "Read only archive (pull only, do not push)?"));
         _colAutomatic.setToolTipText(registry.getText(T_COLAUTOMATIC_TT, "Schedule sharing immediately"));
         
 
