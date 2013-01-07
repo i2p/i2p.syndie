@@ -17,6 +17,8 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -27,7 +29,9 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.Log;
 import net.i2p.util.SimpleTimer2;
+
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.BugConfig;
@@ -38,12 +42,13 @@ import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
-
 import syndie.data.SyndieURI;
-import net.i2p.I2PAppContext;
-import net.i2p.util.Log;
 import syndie.data.WatchedChannel;
 
+
+/**
+ *  The interface to the database itself
+ */
 public class DBClient {
     private static final Class[] _gcjKludge = new Class[] { 
         org.hsqldb.jdbcDriver.class
@@ -56,15 +61,20 @@ public class DBClient {
         } catch(Exception exc) {
         }
     }
-    private I2PAppContext _context;
+
+    private final I2PAppContext _context;
     private UI _ui;
-    private Log _log;
+    private final Log _log;
     
     /**
      * should we defrag the hsqldb every 10 shutdowns?  it can take a while, so
      * its probably best to disable this when doing development 
+     *
+     * Actually, it needs to be disabled for release, until we can
+     * make it much smarter or faster. Don't run defrag unless
+     * we imported a lot of stuff, for example.
      */
-    private static final boolean DEFRAG = true;
+    private static final boolean DEFRAG = false;
     
     private Connection _con;
     private SyndieURIDAO _uriDAO;
@@ -329,13 +339,17 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (DEFRAG)// && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+            if (DEFRAG) { // && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+                _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this will take a while");
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
-            else
+            } else {
+                _log.logAlways(Log.WARN, "Starting database shutdown");
                 stmt = _con.prepareStatement("SHUTDOWN");
+            }
             stmt.execute();
+            _log.logAlways(Log.WARN, "Database shutdown complete");
             if (_log.shouldLog(Log.INFO))
-                _log.info("Database shutdown", new Exception("shutdown by"));
+                _log.info("Database shutdown complete", new Exception("shutdown by"));
             stmt.close();
             stmt = null;
             _con.close();
