@@ -59,6 +59,7 @@ public class SWTUI {
         boolean trackResources = trackResources(args);
    
         Display d = null;
+        Display.setAppName("Syndie");
         if (trackResources) {
             DeviceData data = new DeviceData();
             data.tracking = trackResources;
