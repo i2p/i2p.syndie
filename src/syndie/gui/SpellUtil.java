@@ -2,6 +2,8 @@ package syndie.gui;
 
 import com.swabunga.spell.engine.SpellDictionary;
 import com.swabunga.spell.engine.SpellDictionaryHashMap;
+
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -70,7 +72,9 @@ public class SpellUtil {
         // read from the db/etc
         String dictLocation = System.getProperty("syndie.dict", "/usr/share/dict/words");
         try {
-            Reader rv = new InputStreamReader(new FileInputStream(dictLocation), "UTF-8");
+            Reader rv = new InputStreamReader(
+                    new BufferedInputStream(new FileInputStream(dictLocation)),
+                    "UTF-8");
             _isEnabled = true;
             return rv;
 

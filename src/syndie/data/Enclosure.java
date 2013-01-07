@@ -60,6 +60,8 @@ public class Enclosure {
         _authenticationSig = null;
         _authenticationSigOrig = null;
         _rawSize = 0;
+        if (raw instanceof FileInputStream)
+            raw = new BufferedInputStream(raw);
         load(raw);
     }
     
@@ -388,7 +390,8 @@ public class Enclosure {
     public void store(String filename) throws IOException {
         File out = new File(filename);
         //if (out.exists()) throw new IOException("File already exists");
-        OutputStream raw = new FileOutputStream(out);
+        OutputStream raw = new BufferedOutputStream(new FileOutputStream(out));
+        boolean good = false;
         try {
             raw.write(DataHelper.getUTF8(_enclosureType+"\n"));
             raw.write(_publicHeaderData);
@@ -397,13 +400,13 @@ public class Enclosure {
             raw.write(_data);
             raw.write(DataHelper.getUTF8("AuthorizationSig=" + Base64.encode(_authorizationSig.getData())+"\n"));
             raw.write(DataHelper.getUTF8("AuthenticationSig=" + Base64.encode(_authenticationSigOrig)+"\n"));
-        } catch (IOException ioe) {
-            try { raw.close(); } catch (IOException ioe2) {}
-            raw = null;
-            out.delete();
-            throw ioe;
+            raw.flush();
+            good = true;
         } finally {
-            if (raw != null) raw.close();
+            if (!good)
+                out.delete();
+            if (raw != null) 
+                try {raw.close();} catch (IOException ignore){}
         }
     }
     
