@@ -54,7 +54,7 @@
         <depend
             cache="builddep"
             srcdir="src"
-            destdir="build" >
+            destdir="build">
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
@@ -63,7 +63,7 @@
 
     <target name="compile" depends="init, depend" description="compile the source">
         <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5"
-               deprecation="on" includeAntRuntime="false" >
+               deprecation="on" includeAntRuntime="false">
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
@@ -103,7 +103,7 @@
         </java>
     </target>
 
-    <target name="plugin" depends="getReleaseNumber, jar">
+    <target name="plugin" depends="buildProperties, jar">
         <mkdir dir="plugin/lib" />
         <buildnumber file="scripts/build.number" />
 
@@ -116,7 +116,7 @@
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
-            <arg value="version=${release.number}-b${build.number}" />
+            <arg value="version=${full.version}-b${build.number}" />
         </exec>
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="update-only=true" />
@@ -215,21 +215,21 @@
         <delete file="syndie-linux-x86-64.xpi2p" />
     </target>
 
-    <target name="checkForMtn" >
+    <target name="checkForMtn">
         <available property="mtn.available" file="_MTN" type="dir" />
     </target>
 
-    <target name="getMtnRev" depends="checkForMtn" if="mtn.available" >
-        <exec executable="mtn" outputproperty="workspace.version" errorproperty="mtn.error1" failifexecutionfails="false" >
+    <target name="getMtnRev" depends="checkForMtn" if="mtn.available">
+        <exec executable="mtn" outputproperty="workspace.version" errorproperty="mtn.error1" failifexecutionfails="false">
             <arg value="automate" />
             <arg value="get_base_revision_id" />
         </exec>
     </target>
 
-    <target name="buildProperties" depends="getMtnRev, getReleaseNumber" >
+    <target name="buildProperties" depends="getMtnRev, getReleaseNumber, getBuildNumber">
         <!-- default if not set above -->
         <property name="workspace.version" value="unknown" />
-        <property name="full.version" value="${release.number}" />
+        <property name="full.version" value="${release.number}-${syndie.build.number}" />
         <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
     </target>
 
@@ -241,7 +241,7 @@
                     <contains value="public static final String VERSION"/>
                 </linecontains>
                 <tokenfilter>
-                    <replaceregex pattern=".*&quot;([^&quot;]+)&quot;;" replace="\1" flags="gi" />
+                    <replaceregex pattern='.*"([^"]+)-[0-9]+";' replace="\1" flags="gi" />
                 </tokenfilter>
                 <striplinebreaks/>
                 <trim/>
@@ -250,6 +250,24 @@
         </loadfile>
         <property name="release.number" value="unknown" />
         <echo message="Release number is ${release.number}" />
+    </target>
+
+    <target name="getBuildNumber">
+        <loadfile srcfile="src/syndie/Version.java" property="syndie.build.number">
+            <filterchain>
+                <linecontains>
+                    <contains value="public static final String VERSION"/>
+                </linecontains>
+                <tokenfilter>
+                    <replaceregex pattern='.*"[^"]+b-([0-9]+)";' replace="\1" flags="gi" />
+                </tokenfilter>
+                <striplinebreaks/>
+                <trim/>
+                <ignoreblank/>
+            </filterchain>
+        </loadfile>
+        <property name="syndie.build.number" value="unknown" />
+        <echo message="Build number is ${syndie.build.number}" />
     </target>
 
     <target name="sloccount.report">
@@ -357,6 +375,34 @@
         </exec>
         <echo message="Findbugs output stored in ${ant.project.name}.fba" />
         <echo message="Now run: findbugs ${ant.project.name}.fba" />
+    </target>
+
+    <target name="javadoc" depends="buildProperties" description="Generate Javadocs">
+        <!-- only set the locale if not set elsewhere -->
+        <property name="javadoc.locale" value="en_US" />
+        <mkdir dir="./build" />
+        <mkdir dir="./build/javadoc" />
+        <javadoc access="package"
+            destdir="./build/javadoc"
+            packagenames="*"
+            use="true"
+            splitindex="true"
+            author="true"
+            version="true"
+            locale="${javadoc.locale}"
+            doctitle="Syndie Javadocs for Release ${release.number} Build ${syndie.build.number}"
+            windowtitle="Syndie Distributed Forums - Java Documentation - Version ${full.version}">
+            <group title="Core SDK (syndie.jar)" packages="syndie*, com.*" />
+            <sourcepath>
+                <pathelement location="src" />
+            </sourcepath>
+            <classpath>
+                <pathelement location="${swt.jar}" />
+                <pathelement location="${i2p.jar}" />
+                <pathelement location="${hsqldb.jar}" />
+            </classpath>
+        </javadoc>
+        <echo message="Warning, javadoc embeds timestamps in the output, run with 'TZ=UTC ant javadoc' if you plan to distribute" />
     </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
