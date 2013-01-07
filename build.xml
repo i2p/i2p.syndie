@@ -71,8 +71,8 @@
     </target>
 
     <target name="jar" depends="compile" description="generate the jar file">
-        <jar jarfile="${dist.lib.jar}" >
-            <fileset dir="${build.dir}" />
+        <jar jarfile="${dist.lib.jar}">
+            <fileset dir="${build.dir}" excludes="javadoc/**" />
             <path refid="resources.path" />
         </jar>
     </target>
