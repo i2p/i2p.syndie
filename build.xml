@@ -95,6 +95,7 @@
                 <isset property="run.args" />
             </not>
         </condition>
+	 <echo message="Running Syndie with args ${run.args}" />
         <java classname="syndie.gui.SWTUI" fork="true" failonerror="false">
             <arg line="${run.args}" />
             <classpath>
