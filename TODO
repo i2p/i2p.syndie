@@ -31,7 +31,6 @@ Documentation:
     or make available via the GUI, or both
   - write help pages
   - Much more javadocs
-  - Add javadoc build target
 
 GUI:
   - Make a decision on which GUI to use, kill the other one
