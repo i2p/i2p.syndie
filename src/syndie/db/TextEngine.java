@@ -272,6 +272,7 @@ public class TextEngine {
     }
     
     public String getDBFile() { return _dbDir.getPath() + File.separator + "syndie"; }
+    // TODO: move this to a proper place on Windows & OSX --zab
     public static String getRootPath() { return System.getProperty("user.home") + File.separator + ".syndie"; }
     public DBClient getClient() { return _client; }
     

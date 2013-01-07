@@ -68,7 +68,7 @@ public class SWTUI {
         }
         
         String root = TextEngine.getRootPath();
-        if (args.length > 0)
+        if (args.length > 0 && args[0] != null && !args[0].startsWith("-")) 
             root = args[0];
         
         File rootFile = new File(root);
