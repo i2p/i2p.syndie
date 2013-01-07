@@ -1,5 +1,27 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-07 1.102b-2 (zzz)
+  Default changes for better new experience:
+   - Change default display filter from 6 months to 10 years
+  GUI improvements:
+   - Better feedback in SyndicatorTab by adding
+     progress and total size in bytes for message and index fetches.
+     Total size only listed for pushes (for now).
+   - Change page header if no items to display in MessageTree,
+     so you don't think maybe it's loading.
+   - Add message counts and other info to ReferenceChooserTree;
+     change font based on message count
+   - Add message counts to StatusBar new messages popup
+   - Try to display channels consistently in the bottom status bar popups
+     and the ReferenceChooserTree
+   - Mark a message as read when you read it (change default to true)
+  Fixes:
+   - Catch 'widget is disposed' exceptions,
+     possibly preventing pushes from working
+  Build:
+   - Add depend task for better dependency checking
+   - Don't copy data files to build dir
+
 * 2013-01-06 1.102b-1 (zzz)
   Default changes for better new experience:
    - Change default master sync time from 24 + 0-24 hours to 5 + 0-1

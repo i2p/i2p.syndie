@@ -38,7 +38,6 @@
         <fileset dir="${data.dir}" />
     </path>
 
-
     <target name="init" depends="buildProperties">
         <tstamp>
             <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
@@ -47,20 +46,35 @@
         <mkdir dir="${build.dir}" />
     </target>
 
-    <target name="compile" depends="init" description="compile the source">
+    <condition property="depend.available">
+        <typefound name="depend" />
+    </condition>
+
+    <target name="depend" if="depend.available">
+        <depend
+            cache="builddep"
+            srcdir="src" 
+            destdir="build" >
+            <classpath>
+                <path refid="classpath.build" />
+            </classpath>
+        </depend>
+    </target>
+
+    <target name="compile" depends="init, depend" description="compile the source">
         <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5"
                deprecation="on" includeAntRuntime="false" >
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
         </javac>
-        <copy todir="${build.dir}">
-            <path refid="resources.path" />
-        </copy>
     </target>
 
     <target name="jar" depends="compile" description="generate the jar file">
-        <jar jarfile="${dist.lib.jar}" basedir="${build.dir}" />
+        <jar jarfile="${dist.lib.jar}" >
+            <fileset dir="${build.dir}" />
+            <path refid="resources.path" />
+        </jar>
     </target>
 
     <target name="dist" depends="jar" description="Combine all jars">
@@ -186,6 +200,7 @@
 
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
+        <delete dir="builddep" />
         <delete dir="${dist.dir}" />
         <delete file="sloccount.sc" />
         <delete file="syndie.jar" />
