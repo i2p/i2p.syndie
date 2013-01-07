@@ -53,7 +53,7 @@
     <target name="depend" if="depend.available">
         <depend
             cache="builddep"
-            srcdir="src" 
+            srcdir="src"
             destdir="build" >
             <classpath>
                 <path refid="classpath.build" />

@@ -6,7 +6,6 @@
 # dh-make output file, you may use that output file without restriction.
 # This special exception was added by Craig Small in version 0.37 of dh-make.
 
-export CLASSPATH=/usr/share/i2p/lib/i2p.jar:/usr/share/java/swt.jar:/usr/share/java/hsqldb.jar:lib/servlet.jar
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -14,12 +13,12 @@ export CLASSPATH=/usr/share/i2p/lib/i2p.jar:/usr/share/java/swt.jar:/usr/share/j
 	dh $@
 
 override_dh_auto_build:
-	ant dist
+	ant jar -Dlib.dir=/usr/share/java -Di2p.jar=/usr/share/i2p/lib/i2p.jar
 
 override_dh_auto_clean:
 	dh_clean
 	ant clean
-	rm -f $(CURDIR)/syndie.jar 
+	rm -f $(CURDIR)/syndie.jar
 
 override_dh_install:
 	dh_install

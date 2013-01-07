@@ -1,3 +1,30 @@
+syndie (1.102b-2-1) UNRELEASED; urgency=low
+
+  * New beta build from the Syndie Hackfest.
+  * Update changes
+    * Default changes for better new experience:
+      - Change default display filter from 6 months to 10 years
+    * GUI improvements:
+      - Better feedback in SyndicatorTab by adding
+        progress and total size in bytes for message and index fetches.
+        Total size only listed for pushes (for now).
+      - Change page header if no items to display in MessageTree,
+        so you don't think maybe it's loading.
+      - Add message counts and other info to ReferenceChooserTree;
+        change font based on message count
+      - Add message counts to StatusBar new messages popup
+      - Try to display channels consistently in the bottom status bar popups
+        and the ReferenceChooserTree
+      - Mark a message as read when you read it (change default to true)
+   * Fixes:
+      - Catch 'widget is disposed' exceptions,
+        possibly preventing pushes from working
+   * Build:
+      - Add depend task for better dependency checking
+      - Don't copy data files to build dir
+
+ -- Kill Your TV <killyourtv@i2pmail.org>  Mon, 07 Jan 2013 14:36:04 +0000
+
 syndie (1.102b-1-1) unstable; urgency=low
 
   * New beta version from the Syndie Hackfest!!!!!!
