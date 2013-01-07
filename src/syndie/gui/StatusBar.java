@@ -445,8 +445,12 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                 Map.Entry entry = (Map.Entry)iter.next();
                 String name = (String)entry.getKey();
                 final Hash forum = (Hash)entry.getValue();
+                int msgs = _client.countUnreadMessages(forum);
+                StringBuilder buf = new StringBuilder();
+                buf.append(name)
+                   .append(" (").append(msgs).append(')');
                 item = new MenuItem(_unreadMenu, SWT.PUSH);
-                item.setText(name);
+                item.setText(buf.toString());
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -479,6 +483,11 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     private static final String T_UNREAD_ALL = "syndie.gui.statusbar.unread.all";
     private static final String T_UNREAD_BOOKMARKED = "syndie.gui.statusbar.unread.bookmarked";
+
+    /**
+     *  TODO the keys must include the hash prefix or they aren't unique;
+     *  find a better way
+     */
     private Map sortForums(Set forums) {
         Map rv = new TreeMap();
         for (Iterator iter = forums.iterator(); iter.hasNext(); ) {
@@ -490,6 +499,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         return rv;
     }
+
     private boolean calcUnread(ReferenceNode node, Set forums) {
         boolean unread = false;
         if (node != null) {
@@ -585,8 +595,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         else
             return unread + ""; //+ "/" + read;
     }
+
     private static final String T_PRIV_MARKALLREAD = "syndie.gui.statusbar.priv.markallread";
     private static final String T_PRIV_READ = "syndie.gui.statusbar.priv.read";
+
     private int refreshPBE() {
         MenuItem items[] = _pbeMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -595,30 +607,26 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         List uris = _client.getPBERequired(true, true);
         for (int i = 0; i < uris.size(); i++) {
             final SyndieURI uri = (SyndieURI)uris.get(i);
+            StringBuilder buf = new StringBuilder();
+            String name = _client.getChannelName(uri.getScope());
+            if (name != null) {
+                buf.append(name);
+            } else {
+                buf.append('[').append(uri.getScope().toBase64().substring(0, 6)).append(']');
+            }
             if (uri.getMessageId() == null) {
                 if (uri.getScope() == null)
                     continue;
-                String name = _client.getChannelName(uri.getScope());
-                if (name == null)
-                    name = uri.getScope().toBase64();
-                else
-                    name = name + " - " + uri.getScope().toBase64();
                 MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
-                item.setText(name);
+                item.setText(buf.toString());
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
                     public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
                 });
             } else {
-                String name = _client.getChannelName(uri.getScope());
-                if (name == null)
-                    name = uri.getScope().toBase64();
-                else
-                    name = name + " - " + uri.getScope().toBase64();
-                name = Constants.getDate(uri.getMessageId().longValue()) + ": " + name;
                 MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
-                item.setText(name);
+                item.setText(buf.toString());
                 item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
@@ -628,6 +636,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         return uris.size();
     }
+
     private int refreshPostponed() {
         MenuItem items[] = _postponeMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -679,14 +688,15 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);
             
+            StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(channelId.longValue()); //info.getName();
-            if (name == null)
-                name = channelHash.toBase64().substring(0,6);
-            else
-                name = name + " - " + channelHash.toBase64().substring(0,6);
-            
-            name = name + " (" + msgs + ")";
-            item.setText(name);
+            if (name != null) {
+                buf.append(name);
+            } else {
+                buf.append('[').append(channelHash.toBase64().substring(0, 6)).append(']');
+            }
+            buf.append(" (").append(msgs).append(')');
+            item.setText(buf.toString());
             item.setImage(ImageUtil.ICON_MSG_TYPE_META);
             final Hash scope = channelHash;
             item.addSelectionListener(new SelectionListener() {

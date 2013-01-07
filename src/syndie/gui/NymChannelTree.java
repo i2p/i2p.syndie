@@ -947,11 +947,12 @@ public class NymChannelTree implements Themeable, Translatable {
             name = "";
 
         String desc = node.getDescription();
-        if ( (desc == null) || (desc.trim().length() <= 0) ) {
-            SyndieURI uri = node.getURI();
-            if ( (uri != null) && (uri.isURL()) )
-                desc = uri.getURL();
-        }
+        // don't pollute description column with ugly URI
+        //if ( (desc == null) || (desc.trim().length() <= 0) ) {
+        //    SyndieURI uri = node.getURI();
+        //    if ( (uri != null) && (uri.isURL()) )
+        //        desc = uri.getURL();
+        //}
         if (desc == null)
             desc = "";
 
@@ -964,10 +965,10 @@ public class NymChannelTree implements Themeable, Translatable {
         
         item.setImage(1, getImage(uri));
         
-        if ( (desc != null) && (desc.trim().length() > 0) )
+        //if ( (desc != null) && (desc.trim().length() > 0) )
             item.setText(2, desc);
-        else if (uri != null)
-            item.setText(2, uri.toString());
+        //else if (uri != null)
+        //    item.setText(2, uri.toString());
         
         //t.addEvent("group loaded: " + name);
         return item;
@@ -1054,12 +1055,18 @@ public class NymChannelTree implements Themeable, Translatable {
         
         if ( (r.desc != null) && (r.desc.trim().length() > 0) )
             item.setText(2, r.desc);
-        else if (uri != null)
-            item.setText(2, uri.toString());
+        // don't pollute description column with ugly URI
+        //else if (uri != null)
+        //   item.setText(2, uri.toString());
+        else
+           item.setText(2, "");
         
         int total = r.totalMessages;
         
-        item.setText(3, unread + "/" + privMsgs + "/" + total);
+        if (total > 0)
+            item.setText(3, unread + "/" + privMsgs + "/" + total);
+        else
+            item.setText(3, "");
         
         long when = r.lastPostDate;
         if (when > 0)
@@ -1067,8 +1074,9 @@ public class NymChannelTree implements Themeable, Translatable {
         else
             item.setText(4, "");
         
+        // TODO what is this? TODO translate
         if (r.referencesIncluded)
-            item.setText(5, ""+ true);
+            item.setText(5, "with references");
         else
             item.setText(5, "");
         

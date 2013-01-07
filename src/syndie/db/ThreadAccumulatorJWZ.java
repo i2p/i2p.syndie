@@ -303,7 +303,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         
         // filter by date and scope only
         Set matchingThreadMsgIds = getMatchingThreadMsgIds();
-        _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds);
+        _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds.size());
         long beforeFilterStatus = System.currentTimeMillis();
         
         if (_unreadOnly && matchingThreadMsgIds.size() > 0) {
@@ -575,7 +575,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private void gatherPBEPendingDecryption() {
         Set matchingThreadMsgIds = getMatchingThreadMsgIds(true);
-        if (VERBOSE_DEBUG) _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds);
+        if (VERBOSE_DEBUG) _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds.size());
         
         // the messages are still encrypted, so we dont know too much.  fake
         // what we do know though
@@ -603,7 +603,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
         List rv = null;
-        if (VERBOSE_DEBUG) _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds);
+        if (VERBOSE_DEBUG) _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds.size());
         if (_showThreaded) {
             ThreadBuilder b = new ThreadBuilder(_client, _ui);
             long before = System.currentTimeMillis();

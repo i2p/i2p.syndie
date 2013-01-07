@@ -23,7 +23,13 @@ public class SyndieURI {
     private TreeMap _attributes;
     private String _type;
     private transient String _stringified;
-    private static final int DEFAULT_SEARCH_DAYS = 183;
+
+    /**
+     *  This appears to be only for the display filter, and is not used for
+     *  push/pull strategies. So make it a long time.
+     *  It also should be one of the options in SyndicatorDetailHTTPArchive.
+     */
+    private static final int DEFAULT_SEARCH_DAYS = 3653;
     
     public SyndieURI(String encoded) throws URISyntaxException {
         fromString(encoded);
@@ -81,7 +87,12 @@ public class SyndieURI {
 
     public SyndieURI createSearch() { return createSearch(getScope()); }
     
+    /**
+     *  This appears to be only for the display filter, and is not used for
+     *  push/pull strategies. So make it a long time.
+     */
     public static final SyndieURI DEFAULT_SEARCH_URI = SyndieURI.createSearch((Hash)null);
+
     public static SyndieURI createSearch(Hash channel) {
         String scopes[] = null;
         if (channel != null)

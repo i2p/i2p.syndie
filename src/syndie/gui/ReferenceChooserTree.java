@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -19,6 +21,7 @@ import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -30,6 +33,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
@@ -680,6 +684,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     private void refetchNymChannels() {
         _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
     }
+
     private void redrawManageable() {
         _manageRoot.removeAll();
         _manageChannels.clear();
@@ -688,10 +693,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _manageChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -699,13 +701,11 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _manageChannels.put(item, info);
         }
     }
+
     private void redrawPostable() {
         _postRoot.removeAll();
         _postChannels.clear();
@@ -714,10 +714,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
@@ -725,10 +722,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
@@ -736,10 +730,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _postChannels.put(item, info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
@@ -747,13 +738,50 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
-            if ( (info.getPassphrasePrompt() != null) || (info.getReadKeyUnknown()) )
-                item.setText("?");
-            else
-                item.setText(info.getName());
+            setChannelText(item, info);
             _postChannels.put(item, info);
         }
     }
+
+    /**
+     *  Make a nice name for the channel
+     */
+    private void setChannelText(TreeItem item, ChannelInfo info) {
+        long id = info.getChannelId();
+        StringBuilder buf = new StringBuilder();
+        Font f;
+        if (info.getPassphrasePrompt() != null) {
+            buf.append(info.getName())
+               .append(" (")
+               .append(_translationRegistry.getText(T_PW, "Requires password"))
+               .append(')');
+            f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
+        } else if (info.getReadKeyUnknown()) {
+            Hash hash = info.getChannelHash();
+            buf.append('[')
+               .append(hash.toBase64().substring(0, 6))
+               .append("] (")
+               .append(_translationRegistry.getText(T_RKEY, "Read key unknown"))
+               .append(')');
+            f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
+        } else {
+            buf.append(info.getName());
+            int un = _client.countUnreadMessages(id);
+            int msgs = _client.countMessages(id);
+            if (un > 0) {
+                buf.append(" (").append(un).append('/').append(msgs).append(')');
+                f = _themeRegistry.getTheme().MSG_NEW_UNREAD_FONT;
+            } else if (msgs > 0) {
+                buf.append(" (").append(msgs).append(')');
+                f = _themeRegistry.getTheme().MSG_OLD_FONT;
+            } else {
+                f = _themeRegistry.getTheme().MSG_OLD_FONT;
+            }
+        }
+        item.setText(buf.toString());
+        item.setFont(f);
+    }
+
     private void redrawBookmarks() {
         boolean rootWasOpen = _bookmarkRoot.getExpanded();
         long selectedGroupId = -1;
@@ -918,6 +946,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     private static final String T_WATCHED_ROOT = "syndie.gui.refchoosertree.watched.root";
     private static final String T_IMPORTED_ROOT = "syndie.gui.refchoosertree.imported.root";
+    private static final String T_PW = "syndie.gui.refchoosertree.pw";
+    private static final String T_RKEY = "syndie.gui.refchoosertree.rkey";
     
     public void translate(TranslationRegistry registry) {
         _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));

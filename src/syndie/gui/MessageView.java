@@ -168,7 +168,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     public String getTitle() { 
         String rv = _headerSubject.getText();
-        return _translationRegistry.getText(T_TITLE_PREFIX, "msg: ") + rv;
+        //return _translationRegistry.getText(T_TITLE_PREFIX, "msg: ") + rv;
+        return rv;
     }
     
     public void viewPage(int page) {

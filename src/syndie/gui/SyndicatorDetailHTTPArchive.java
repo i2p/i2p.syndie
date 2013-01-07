@@ -1171,8 +1171,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final String T_NEWAGE_3Y = "syndie.gui.syndicatordetailhttparchive.newage.3y";
     private static final String T_NEWAGE_5Y = "syndie.gui.syndicatordetailhttparchive.newage.5y";
     private static final String T_NEWAGE_10Y = "syndie.gui.syndicatordetailhttparchive.newage.10y";
-    private static final int NEWAGE_DEFAULT_INDEX = 4;
     private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 91, 183, 365, 1095, 1826, 3653 };
+    private static final int NEWAGE_DEFAULT_INDEX = NEWAGEDAYS.length - 1;
     
     private static final String T_SENDAGE_1W = "syndie.gui.syndicatordetailhttparchive.sendage.1w";
     private static final String T_SENDAGE_2W = "syndie.gui.syndicatordetailhttparchive.sendage.2w";

@@ -467,6 +467,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _ui.debugMessage("Enqueue html render");
         PageRendererThread.enqueue(this);
     }
+
     /** called from the PageRendererThread - note that this thread cannot update SWT components! */
     void threadedRender() {
         long before = System.currentTimeMillis();
@@ -477,7 +478,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         }
         String cfg = _source.getMessagePageConfig(_msg.getInternalId(), _page);
         String body = _source.getMessagePageData(_msg.getInternalId(), _page);
-        _ui.debugMessage("threaded render: body=[" + body + "] cfg=[" + cfg + "]");
+        //_ui.debugMessage("threaded render: body=[" + body + "] cfg=[" + cfg + "]");
         if ( (cfg == null) || (body == null) ) {
             //System.out.println("threaded render had no body or config: " + _msg.getInternalId() + ", page " + _page + ", body? " + (body != null) + " cfg? " + (cfg != null));
             renderText(null);
@@ -496,6 +497,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _ui.debugMessage("threaded page render took " + (after-before));
         _source.renderComplete();
     }
+
     private void renderText(final String body) {
         if (_text.isDisposed()) {
             _ui.errorMessage("render after dispose?", new Exception("source"));
