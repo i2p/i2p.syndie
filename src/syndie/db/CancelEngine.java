@@ -26,7 +26,7 @@ public class CancelEngine {
     }
     
     /**
-     * @param channelId metadata channel that sent in the cancel requests
+     * @param requestByChannelId metadata channel that sent in the cancel requests
      * @param cancelledURIs uris to cancel
      */
     public void processCancelRequests(long requestByChannelId, List cancelledURIs) {

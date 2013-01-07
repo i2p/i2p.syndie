@@ -236,7 +236,7 @@ AND
 )
      */
     private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR  msgId NOT IN ( SELECT DISTINCT mh.msgId FROM messageHierarchy mh JOIN channelMessage cm ON mh.referencedMessageId = cm.messageId JOIN channel c ON c.channelHash = mh.referencedChannelHash AND c.channelId = cm.scopeChannelId ) )";
-    /**
+    /* OUTDATED JAVADOC
      * @param channelHashes set of Hash for each channel to pull threads out of (null means all channels!)
      * @param tagsRequired threads must have all of the tags in this set
      * @param tagsWanted threads must have at least one of the tags in this set

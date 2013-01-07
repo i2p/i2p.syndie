@@ -1825,13 +1825,18 @@ public class DBClient {
         public Set getRequire() { return _tagsRequire; }
     }
     
-    /**
+    /* --- OLD JDOC entry
      * search through the channels for those matching the given criteria
      * @param name channel name must start with this
      * @param tagsInclude channel tags should include one or more of these
      * @param tagsRequire channel tags must include all of these
      * @param tagsExclude channel tags must not include any of these
      * @param hashPrefix channel hash must start with this base64 value
+     * @return list of matching channels (ChannelInfo)
+     */
+
+    /**
+     * search through the channels for those matching the given criteria
      * @return list of matching channels (ChannelInfo)
      */
     public List getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
