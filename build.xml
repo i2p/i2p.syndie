@@ -393,7 +393,8 @@
             locale="${javadoc.locale}"
             doctitle="Syndie Javadocs for Release ${release.number} Build ${syndie.build.number}"
             windowtitle="Syndie Distributed Forums - Java Documentation - Version ${full.version}">
-            <group title="Core SDK (syndie.jar)" packages="syndie*, com.*" />
+            <group title="Syndie" packages="syndie*" />
+            <group title="Spell Checker" packages="com.swabunga.*" />
             <sourcepath>
                 <pathelement location="src" />
             </sourcepath>
