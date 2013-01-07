@@ -42,8 +42,10 @@ public final class JobRunner {
                     }
                 } catch (InterruptedException ie) {}
                 if (cur != null) {
+                    //_ui.debugMessage("Job queue: Start running " + cur);
                     try { cur.run(); } catch (Exception e) { 
                         _ui.errorMessage("internal error with the job: " + cur + ": " + e, e); }
+                    //_ui.debugMessage("Job queue: Finish running " + cur);
                 }
                 cur = null;
             }

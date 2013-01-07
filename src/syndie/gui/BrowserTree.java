@@ -57,7 +57,7 @@ import syndie.db.UI;
 
 
 /**
- *
+ *  This is the left-side panel
  */
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
     private Browser _browserInstance;
@@ -192,8 +192,16 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         if (_searchDetail != null)
             _searchDetailPopup.setVisible(false);
     }
+
     protected void viewStartupItem(final SyndieURI uri) { 
-        _browserInstance.runAfterStartup(new Runnable() { public void run() { _navControl.view(uri); } });
+        //_ui.debugMessage("Enqueue async BrowserTree viewStartupItem " + uri, new Exception());
+        _browserInstance.runAfterStartup(new Runnable() {
+                public void run() {
+                    //_ui.debugMessage("start async BrowserTree viewStartupItem " + uri);
+                    _navControl.view(uri);
+                    //_ui.debugMessage("end async BrowserTree viewStartupItem " + uri);
+                }
+            });
     }
     
     private void createSearchDetailPopup() {

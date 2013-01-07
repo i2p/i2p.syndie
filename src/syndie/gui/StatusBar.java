@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import net.i2p.data.DataHelper;
-import net.i2p.data.Hash;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -30,6 +30,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+
+import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
+
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.ChannelInfo;
@@ -45,7 +49,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.UI;
 
 /**
- *
+ *  The bottom strip
  */
 public class StatusBar extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
     private BookmarkControl _bookmarkControl;
@@ -72,6 +76,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     private Label _version;
     private boolean _enableRefresh;
     private boolean _syncNow;
+    private final AtomicBoolean _newForumCountLock = new AtomicBoolean();
     
     public StatusBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BookmarkControl bookmarkControl, NavigationControl navControl, URIControl uriControl, Browser browser, DataCallback callback, Composite parent, Timer timer) {
         super(client, ui, themes, trans);
@@ -218,7 +223,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         //    public void run() { doRefreshDisplay(true); }
         //});
         doRefreshDisplay(true); // only the online state (no queries)
-        timer.addEvent("status bar: doRefreshDisplay");
+        timer.addEvent("status bar: queued init dorefreshDisplay");
         
         _client.addWatchEventListener(this);
         _translationRegistry.register(this);
@@ -269,16 +274,22 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     private static final String T_OFFLINE = "syndie.gui.statusbar.offline";
 
     public void refreshDisplay() { refreshDisplay(false); }
+
     public void refreshDisplay(final boolean onlineStateOnly) {
         if (!_enableRefresh) return;
+        //_ui.debugMessage("statusbar async queue dorefreshdisplay", new Exception());
         _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(onlineStateOnly); } });
     }
+
     public void setEnableRefresh(boolean enable) {
         _enableRefresh = enable;
         if (enable) refreshDisplay();
     }
+
     private void doRefreshDisplay() { doRefreshDisplay(false); }
+
     private void doRefreshDisplay(boolean onlineStateOnly) {
+        //_ui.debugMessage("SB DRD begin OSO=" + onlineStateOnly + " SN=" + _syncNow + " ER=" + _enableRefresh);
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         displayOnlineState(mgr.isOnline());
         
@@ -286,20 +297,12 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         if (_syncNow) return; // don't update the status details during a refresh
        
         if (!_enableRefresh) return;
-        int newForums = refreshNewForums();
+        refreshNewForums();
         calcUnread();
         int pbe = refreshPBE();
         String priv = refreshPrivateMessages();
         int postpone = refreshPostponed();
-        
-        if (newForums > 0) {
-            _newForum.setText(_translationRegistry.getText(T_NEWFORUM, "New forums: ") + newForums);
-            ((GridData)_newForum.getLayoutData()).exclude = false;
-            _newForum.setVisible(true);
-        } else {
-            ((GridData)_newForum.getLayoutData()).exclude = true;
-            _newForum.setVisible(false);
-        }
+        _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
         
         if (pbe > 0) {
             _pbe.setText(_translationRegistry.getText(T_PBE, "Pass. req: ") + pbe);
@@ -332,7 +335,8 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         boolean unreadExcluded = ((GridData) _unread.getLayoutData()).exclude;
             
         int cells = 1;
-        if (newForums == 0) cells++;
+        // don't have new forums count here anymore, is this ok?
+        //if (newForums == 0) cells++;
         //if (unread == null) cells++;
         if (unreadExcluded) cells++;
         if (pbe == 0) cells++;
@@ -368,7 +372,9 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     }
     
     private boolean _unreadCalcInProgress = false;
+
     private void calcUnread() {
+        _ui.debugMessage("statusbar calcUnread sync wait");
         synchronized (StatusBar.this) {
             if (_unreadCalcInProgress) {
                 //_browser.getUI().debugMessage("skipping calcUnread");
@@ -376,7 +382,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             }
             _unreadCalcInProgress = true;
         }
-        _ui.debugMessage("calcUnread begin");
+        _ui.debugMessage("statusbar calcUnread begin");
         final SyndieURI uri = _uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client));
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
@@ -392,7 +398,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                 }
                 final int unreadThreads = threads;
                 final Map sortedForums = sortForums(forums);
-                _ui.debugMessage("calcUnread end: " + forums.size() + " / " + threads);
+                _ui.debugMessage("statusbar calcUnread end: " + forums.size() + " / " + threads);
                 
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {
@@ -663,40 +669,60 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         return msgs.size();
     }
+
     private static final String T_POSTPONE_PREFIX = "syndie.gui.statusbar.postponeprefix";
     
-    private int refreshNewForums() {
+    /**
+     *  Queues on the Job queue
+     */
+    private void refreshNewForums() {
+        JobRunner.instance().enqueue(new NewForumCounter());
+    }
+
+    /**
+     *  Generates the counts (very slow),
+     *  then queues async task to display them (fast).
+     *  If a count is already in progress, this does nothing.
+     */
+    private class NewForumCounter implements Runnable {
+        public void run() {
+            if (_newForumCountLock.getAndSet(true))
+                return;
+            try {
+                final Map<String, Long> forums = generateMessageCounts();
+                Display.getDefault().asyncExec(new Runnable() {
+                    public void run() {
+                        refreshNewForums(forums);
+                    }
+                });
+            } finally {
+                _newForumCountLock.set(false);
+            }
+        }
+    }
+
+    /**
+     *  Fast - Call from UI thread
+     *
+     *  @param forums sorted Map of formatted channel name, including message count, to channel ID
+     */
+    private void refreshNewForums(Map<String, Long> forums) {
         MenuItem items[] = _newForumMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
 
-        int active = 0;
-        
-        List channelIds = _client.getNewChannelIds();
-        for (int i = 0; i < channelIds.size(); i++) {
-            Long channelId = (Long)channelIds.get(i);
+        for (Map.Entry<String, Long> e : forums.entrySet()) {
+            String name = e.getKey();
+            Long channelId = e.getValue();
             //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
             Hash channelHash = _client.getChannelHash(channelId.longValue());
             if (channelHash == null) {
                 _ui.debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
                 continue;
             }
-            int msgs = _client.countUnreadMessages(channelHash);
-            if (msgs <= 0)
-                continue; // only list new forums with content
-            active++;
             
             MenuItem item = new MenuItem(_newForumMenu, SWT.PUSH);
-            
-            StringBuilder buf = new StringBuilder();
-            String name = _client.getChannelName(channelId.longValue()); //info.getName();
-            if (name != null) {
-                buf.append(name);
-            } else {
-                buf.append('[').append(channelHash.toBase64().substring(0, 6)).append(']');
-            }
-            buf.append(" (").append(msgs).append(')');
-            item.setText(buf.toString());
+            item.setText(name);
             item.setImage(ImageUtil.ICON_MSG_TYPE_META);
             final Hash scope = channelHash;
             item.addSelectionListener(new SelectionListener() {
@@ -709,7 +735,57 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             });
         }
         
-        return active;
+        if (!forums.isEmpty()) {
+            _newForum.setText(_translationRegistry.getText(T_NEWFORUM, "New forums: ") + forums.size());
+            ((GridData)_newForum.getLayoutData()).exclude = false;
+            _newForum.setVisible(true);
+        } else {
+            ((GridData)_newForum.getLayoutData()).exclude = true;
+            _newForum.setVisible(false);
+        }
+    }
+    
+    /**
+     *  Warning, this is extremely slow, 10 seconds or more
+     *  (30 ms per channel * 440 channels on eeepc)
+     *  Call from job queue
+     *
+     *  @return new forums, sorted Map of formatted channel name, including message count, to channel ID
+     */
+    private Map<String, Long> generateMessageCounts() {
+        _ui.debugMessage("statusbar refreshnewforums start");
+        Map<String, Long> rv = new TreeMap();
+        List channelIds = _client.getNewChannelIds();
+        // 30 ms per loop
+        for (int i = 0; i < channelIds.size(); i++) {
+            //_ui.debugMessage(i + " statusbar channelid loop");
+            Long channelId = (Long)channelIds.get(i);
+            //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
+            Hash channelHash = _client.getChannelHash(channelId.longValue());
+            if (channelHash == null) {
+                _ui.debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
+                continue;
+            }
+            //_ui.debugMessage(i + " start countunread");
+            // This is SLOW, 30 ms
+            int msgs = _client.countUnreadMessages(channelHash);
+            //_ui.debugMessage(i + " end countunread");
+            if (msgs <= 0)
+                continue; // only list new forums with content
+            
+            StringBuilder buf = new StringBuilder();
+            String name = _client.getChannelName(channelId.longValue()); //info.getName();
+            if (name != null) {
+                buf.append(name);
+            } else {
+                buf.append('[').append(channelHash.toBase64().substring(0, 6)).append(']');
+            }
+            buf.append(" (").append(msgs).append(')');
+            rv.put(buf.toString(), channelId);
+        }
+        
+        _ui.debugMessage("statusbar refreshnewforums end");
+        return rv;
     }
     
     private void displayOnlineState(boolean online) {

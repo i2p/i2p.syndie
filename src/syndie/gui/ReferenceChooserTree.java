@@ -102,6 +102,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     private boolean _chooseAllStartupItems;
     private boolean _showSearchList;
     
+    /** don't open a zillion tabs at startup */
+    private static final int MAX_PREV_TABS = 4;
+
     public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, true, null);
     }
@@ -646,20 +649,27 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         }
         
         SyndieURI prevTabs[] = getPrevTabs();
-        timer.addEvent("startup items: previous tabs identified");
-        if (prevTabs == null) {
+        // always give them something
+        if (prevTabs == null || prevTabs.length == 0) {
+            timer.addEvent("startup items: viewing default tab");
             _navControl.view(_uriControl.createSyndicationArchiveURI());
         } else {
+            int count = 0;
+            timer.addEvent("startup items: previous tabs identified");
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {
                     viewStartupItem(prevTabs[i]);
                     timer.addEvent("startup items: previous tab opened: " + i + " " + prevTabs[i].toString());
+                    if (++count >= MAX_PREV_TABS)
+                        break;
                 }
             }
+            timer.addEvent("startup items: all previous tabs loaded");
         }       
-        timer.addEvent("startup items: all previous tabs loaded");
     }
+
     protected void viewStartupItem(SyndieURI uri) { _navControl.view(uri); }
+
     // depth first traversal, so its the same each time, rather than using super._bookmarkNodes
     private int viewStartupItems(TreeItem item) {
         if (true) return 0; // dont use these, use the "last viewed" tabs

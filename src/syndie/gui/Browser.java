@@ -25,7 +25,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.zip.ZipInputStream;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Listener;
@@ -82,6 +84,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.NymKey;
@@ -105,7 +108,9 @@ import syndie.db.UI;
 
 
 /**
- * main gui wrapper
+ * Main gui wrapper, holding three items -
+ * the bookmarks on the left, the tabs on the right, and the status bar on the bottom.
+ * Configures all the top-strip menus.
  */
 public class Browser implements UI, BrowserControl, NavigationControl, Translatable, Themeable {
     private DBClient _client;
@@ -286,24 +291,28 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _shell.setLayout(new GridLayout(1, true));
             _shell.setImage(ImageUtil.ICON_SHELL);
             _root = _shell;
+            showWaitCursor(true);
         }
         
-        timer.addEvent("main shell construction");
+        timer.addEvent("main shell constructed");
         
         initMenu(timer);
-        timer.addEvent("main menu construction");
+        timer.addEvent("main menu constructed");
         initSystray();
-        timer.addEvent("systray construction");
+        timer.addEvent("systray constructed");
         
+        // Top 90%, holding the bookmarks and tabs
         _sash = new SashForm(_root, SWT.HORIZONTAL);
         _sash.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         
-        timer.addEvent("sash construction");
+        timer.addEvent("sash constructed");
         //_linkBar = new LinkBar(_client, getUI(), getThemeRegistry(), getTranslationRegistry(), _navControl, this, URIHelper.instance(), _sash);
         
+        // The left 20% area
         _bookmarks = ComponentBuilder.instance().createBrowserTree(this, timer, _sash, new BookmarkChoiceListener(), new BookmarkAcceptListener());
-        timer.addEvent("browser tree construction");
+        timer.addEvent("browser tree constructed");
         
+        // The right 80% area
         _tabs = new CTabFolder(_sash, SWT.MULTI | SWT.TOP | SWT.CLOSE | SWT.BORDER);
         _tabs.setSimple(true);
         _tabs.setMinimizeVisible(false);
@@ -315,6 +324,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         _tabMenu = new Menu(_tabs);
         _tabs.setMenu(_tabMenu);
+        Image bgImage = Splash.getImage(1, _client.getTempDir());
+        if (bgImage != null)
+            _tabs.setBackgroundImage(bgImage);
         
         _tabs.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -349,12 +361,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkTab(); }
         });
         
-        timer.addEvent("folder construction");
+        timer.addEvent("folder constructed");
         
+        // The bottom strip
         _statusBar = ComponentBuilder.instance().createStatusBar(this, _root, timer);
         _statusBar.getControl().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        timer.addEvent("status bar construction");
+        timer.addEvent("status bar constructed");
         
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -370,9 +383,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         timer.addEvent("gui construction loaded");
         _translation.register(this);
-        timer.addEvent("main browser translation");
+        timer.addEvent("main browser translation registered");
         _themes.register(this);
-        timer.addEvent("main browser theming");
+        timer.addEvent("main browser theming registered");
         
         //_sash.setWeights(new int[] { 5, 15, 80 });
         _sash.setWeights(new int[] { 20, 80 });
@@ -493,6 +506,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         long afterStart = System.currentTimeMillis();
         timer.addEvent("browser startup: " + (afterInit-beforeInit) + " for init, " + (afterStart-afterInit) + " for start");
     }
+
     private void doStartup(final Timer timer) {
         timer.addEvent("doStartup beginning");
         debugMessage("doStartup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized + " nymId? " + _client.getLoggedInNymId());
@@ -517,6 +531,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 _shell.forceFocus();
             }
             timer.addEvent("doStartup shell displayed");
+            int cnt =  _runAfterStartup.size();
+            timer.addEvent("enqueueing " + cnt + " run-after-startup jobs");
             JobRunner.instance().enqueue(new Runnable() { 
                 public void run() {
                     while (_runAfterStartup.size() > 0) {
@@ -526,10 +542,17 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     }
                 }
             });
+            timer.addEvent("enqueued " + cnt + " run-after-startup jobs");
         }
     }
     
-    void runAfterStartup(Runnable job) { _runAfterStartup.add(job); }
+    /**
+     *  These will run in the Display thread, NOT on the job queue
+     */
+    void runAfterStartup(Runnable job) {
+        debugMessage("Adding run-after-startup job " + job);
+        _runAfterStartup.add(job);
+    }
     
     private void enableKeyFilters() {
         Display d = _shell.getDisplay();
@@ -1506,7 +1529,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     public NavigationControl getNavControl() { return _navControl; }
+
     public void view(SyndieURI uri) { view(uri, null, null); }
+
     public void view(SyndieURI uri, String suggestedName, String suggestedDescription) {
         showWaitCursor(true);
         try {
@@ -1520,6 +1545,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
         showWaitCursor(false);
     }
+
     private void doView(SyndieURI uri, String suggestedName, String suggestedDescription) {
         debugMessage("Viewing [" + uri + "]");
         if (uri == null) return;
@@ -1561,6 +1587,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
         if (tab != null) {
+            if (_tabs.getBackgroundImage() != null) {
+                _tabs.setRedraw(false);
+                _tabs.setBackgroundImage(null);
+                _tabs.setRedraw(true);
+            }
             tab.show(uri);
             debugMessage("showing tab");
             _tabs.showItem(tab.getTabItem());
@@ -1573,6 +1604,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             uriUnhandled(uri);
         }
     }
+
     private void uriUnhandled(SyndieURI uri) {
         if (uri.isURL()) {
             final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);

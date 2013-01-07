@@ -68,6 +68,11 @@ public class Splash {
             return null;
         // many clocks have only 10ms granularity
         long which = (System.currentTimeMillis()/10) % splashCount;
+        return getImage(which, tmpDir);
+    }
+    
+    /** @return null on error */
+    public static Image getImage(long which, File tmpDir) { 
         return createImageFromResource("splash" + which + ".png", tmpDir);
     }
     
