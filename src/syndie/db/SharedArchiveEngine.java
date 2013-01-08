@@ -26,20 +26,18 @@ import syndie.data.SyndieURI;
  * coordinate the pull and push from a particular shared archive
  */
 public class SharedArchiveEngine {
+
     public static class PullStrategy {
         public PullStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
             maxKBTotal = -1;
-            knownChannelsOnly = false;
             includePrivateMessages = true;
             includePBEMessages = true;
             includeRecentMessagesOnly = SharedArchive.DEFAULT_RECENT_ONLY;
-            includeDupForPIR = false;
-            pullNothing = false;
             discoverArchives = true;
             newAgeDays = SharedArchive.DEFAULT_NEWAGE_DAYS;
-            pullWhitelistOnly = false;
         }
+
         public PullStrategy(String serialized) {
             this();
             if (serialized != null) {
@@ -187,12 +185,9 @@ public class SharedArchiveEngine {
         public PushStrategy() {
             maxKBPerMessage = SharedArchive.DEFAULT_MAX_SIZE_KB;
             maxKBTotal = -1;
-            sendHashcashForLocal = false;
-            sendHashcashForAll = false;
-            sendLocalNewOnly = false;
-            sendNothing = false;
             sendMaxAge = 7;
         }
+
         public PushStrategy(String serialized) {
             this();
             if (serialized != null) {
@@ -290,9 +285,9 @@ public class SharedArchiveEngine {
      * for parallel execution, all metadata URIs should be run prior to the messages.
      *
      */
-    public List selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy, long whitelistGroupId) {
+    public List<SyndieURI> selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy, long whitelistGroupId) {
         int totalAllocatedKB = 0;
-        List uris = new ArrayList();
+        List<SyndieURI> uris = new ArrayList();
         if (strategy.pullNothing)
             return uris;
         
@@ -394,10 +389,10 @@ public class SharedArchiveEngine {
         return uris;
     }
     
-    public List selectURIsToPush(DBClient client, UI ui, SharedArchive archive, PushStrategy strategy) {
+    public List<SyndieURI> selectURIsToPush(DBClient client, UI ui, SharedArchive archive, PushStrategy strategy) {
         /** SyndieURI of a message to the SyndieURI of a scope it depends on */
         Map dependencies = new HashMap();
-        List rv = new ArrayList();
+        List<SyndieURI> rv = new ArrayList();
         if (strategy.sendNothing)
             return rv;
         
@@ -412,7 +407,8 @@ public class SharedArchiveEngine {
         return rv;
     }
     
-    private void resolveDependencies(DBClient client, UI ui, SharedArchive archive, List rv, Map dependencies) {
+    private void resolveDependencies(DBClient client, UI ui, SharedArchive archive,
+                                     List<SyndieURI> rv, Map<SyndieURI, SyndieURI> dependencies) {
         for (Iterator iter = dependencies.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             SyndieURI msgURI = (SyndieURI)entry.getKey();
@@ -442,7 +438,11 @@ public class SharedArchiveEngine {
         }
     }
     
-    private void scheduleNew(DBClient client, UI ui, SharedArchive archive, List rv, Map dependencies, File dir, PushStrategy strategy) {
+    /**
+     *  What to push?
+     */
+    private void scheduleNew(DBClient client, UI ui, SharedArchive archive,
+                             List<SyndieURI> rv, Map<SyndieURI, SyndieURI> dependencies, File dir, PushStrategy strategy) {
         long totalKB = 0;
         File dirs[] = dir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
@@ -526,16 +526,22 @@ public class SharedArchiveEngine {
                     continue;
                 }
 
-                long importDate = client.getMessageImportDate(msgId);
+                // No, let's not use the importDate, or a new user spends forever pushing
+                // stuff he just imported. Let's not use our upstream bandwidth pushing ancient stuff.
+                // If the other side wants it, they can pull it from some other archive.
+                // But use the min in case they spoofed it to the future.
+                // TODO maybe add an option?
+                //long importDate = client.getMessageImportDate(msgId);
+                long msgDate = Math.min(msgId, client.getMessageImportDate(msgId));
                 if (archive.getAbout().wantRecentOnly()) {
-                    if (importDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
+                    if (msgDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
                         ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
                         continue;
                     }
                 }
                 
                 if (strategy.sendMaxAge > 0) {
-                    if (importDate + 7*24*60*60*1000L*strategy.sendMaxAge < System.currentTimeMillis()) {
+                    if (msgDate + 24*60*60*1000L*strategy.sendMaxAge < System.currentTimeMillis()) {
                         ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
                         continue;
                     }
@@ -553,7 +559,7 @@ public class SharedArchiveEngine {
                 totalKB += lenKB;
                 SyndieURI msgURI = SyndieURI.createMessage(scope, messageId);
                 rv.add(msgURI);
-                ui.debugMessage("scheduling " + msgURI + ": size=" + lenKB + " privacy=" + privacy + " age=" + DataHelper.formatDuration(System.currentTimeMillis()-importDate));
+                ui.debugMessage("scheduling " + msgURI + ": size=" + lenKB + " privacy=" + privacy + " age=" + DataHelper.formatDuration(System.currentTimeMillis()-msgDate));
 
                 if ( (targetId >= 0) && (scopeId != targetId) ) {
                     Hash target = client.getChannelHash(targetId);
