@@ -3,7 +3,7 @@
     <description>Builds, tests and runs the project syndie.</description>
     <!--
         Include property files so that values can be easily overridden.
-         Users should create an override.properties file to make changes.
+        Users should create an override.properties file to make changes.
      -->
     <property file="override.properties"/>
     <property file="build.properties"/>
@@ -71,9 +71,15 @@
     </target>
 
     <target name="jar" depends="compile" description="generate the jar file">
+        <property name="build.built-by" value="unknown" />
         <jar jarfile="${dist.lib.jar}">
             <fileset dir="${build.dir}" excludes="javadoc/**" />
             <path refid="resources.path" />
+            <manifest>
+                <attribute name="Built-By" value="${build.built-by}" />
+                <attribute name="Build-Date" value="${build.timestamp}" />
+                <attribute name="Base-revision" value="${workspace.version}" />
+            </manifest>
         </jar>
     </target>
 
@@ -83,6 +89,9 @@
         <jar jarfile="syndie.jar" index="true">
             <manifest>
                 <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
+                <attribute name="Built-By" value="${build.built-by}" />
+                <attribute name="Build-Date" value="${build.timestamp}" />
+                <attribute name="Base-revision" value="${workspace.version}" />
             </manifest>
             <zipfileset src="${dist.lib.jar}" includes="**" />
             <zipgroupfileset dir="lib" includes="*.jar"/>
@@ -95,7 +104,7 @@
                 <isset property="run.args" />
             </not>
         </condition>
-	 <echo message="Running Syndie with args ${run.args}" />
+        <echo message="Running Syndie with args ${run.args}" />
         <java classname="syndie.gui.SWTUI" fork="true" failonerror="false">
             <arg line="${run.args}" />
             <classpath>
