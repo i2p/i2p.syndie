@@ -16,7 +16,7 @@ public class ReferenceNode {
     protected SyndieURI _uri;
     protected String _description;
     protected String _refType;
-    protected List _children;
+    protected List<ReferenceNode> _children;
     protected ReferenceNode _parent;
     /**
      * contains the node's index in a tree of nodes.  For instance, "1.3.2.15"
@@ -131,7 +131,7 @@ public class ReferenceNode {
      *
      * etc
      */
-    public static List buildTree(InputStream treeData) {
+    public static List<ReferenceNode> buildTree(InputStream treeData) {
         int index = 0;
         List rv = new ArrayList();
         ReferenceNode prevNode = null;
@@ -248,7 +248,7 @@ public class ReferenceNode {
         }
     }
     
-    public static ArrayList deepCopy(List orig) {
+    public static ArrayList<ReferenceNode> deepCopy(List<ReferenceNode> orig) {
         if (orig == null) return new ArrayList();;
         ArrayList rv = new ArrayList(orig.size());
         for (int i = 0; i < orig.size(); i++) {

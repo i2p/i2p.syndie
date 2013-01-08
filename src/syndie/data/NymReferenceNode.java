@@ -25,6 +25,7 @@ public class NymReferenceNode extends ReferenceNode {
         _isBanned = isBanned;
         _loadOnStart = loadOnStart;
     }
+
     public long getURIId() { return _uriId; }
     public long getGroupId() { return _groupId; }
     public long getParentGroupId() { return _parentGroupId; }
@@ -119,6 +120,7 @@ public class NymReferenceNode extends ReferenceNode {
             copy.addChild(NymReferenceNode.deepCopyNym(node.getChild(i)));
         return copy;
     }
+
     public static NymReferenceNode deepCopyNym(ReferenceNode node) {
         long parentId = -1;
         if (node.getParent() != null)

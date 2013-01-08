@@ -3,6 +3,7 @@ package syndie.db;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.sql.*;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -50,11 +51,13 @@ import syndie.data.WatchedChannel;
  *  The interface to the database itself
  */
 public class DBClient {
+
     private static final Class[] _gcjKludge = new Class[] { 
         org.hsqldb.jdbcDriver.class
         //, org.hsqldb.GCJKludge.class
         //, org.hsqldb.persist.GCJKludge.class
     };
+
     static {
         try {
             Class.forName("org.hsqldb.jdbcDriver");
@@ -253,6 +256,7 @@ public class DBClient {
         }
         return getNymId(login, passphrase);
     }
+
     public boolean reconnect(String passphrase) {
         log("reconnecting to url=[" + _url + "] login=[" + _login + "] pass=[" + passphrase + "]");
         try {
@@ -270,6 +274,7 @@ public class DBClient {
             return false;
         }
     }
+
     public void disconnect() {
         clearNymChannelCache();
         try {
@@ -284,6 +289,7 @@ public class DBClient {
         if (_expireEvent != null)
             _expireEvent.cancel();
     }
+
     I2PAppContext ctx() { return _context; }
     public Connection con() { return _con; }
     public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
@@ -392,6 +398,7 @@ public class DBClient {
     public static final long NYM_ID_LOGIN_ALREADY_EXISTS = -3;
     
     private static final String SQL_GET_NYM_ID = "SELECT nymId, passSalt, passHash FROM nym WHERE login = ?";
+
     /**
      * if the passphrase is blank, simply get the nymId for the login, otherwise
      * authenticate the passphrase, returning -1 if the login doesn't exist, -2
@@ -442,9 +449,10 @@ public class DBClient {
     }
     
     private static final String SQL_GET_NYMIDS = "SELECT nymId FROM nym";
-    public List getNymIds() {
+
+    public List<Long> getNymIds() {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -466,6 +474,7 @@ public class DBClient {
     }
     
     private static final String SQL_INSERT_NYM = "INSERT INTO nym (nymId, login, publicName, passSalt, passHash, isDefaultUser) VALUES (?, ?, ?, ?, ?, ?)";
+
     public long register(String login, String passphrase, String publicName) {
         long nymId = nextId("nymIdSequence");
         byte salt[] = new byte[16];
@@ -526,6 +535,7 @@ public class DBClient {
     public SyndieURI getURI(long uriId) {
         return _uriDAO.fetch(uriId);
     }
+
     public long addURI(SyndieURI uri) {
         return _uriDAO.add(uri);
     }
@@ -625,6 +635,7 @@ public class DBClient {
             }
         }
     }
+
     private int checkDBVersion() {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -646,6 +657,7 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     private void buildDB() {
         if (_log.shouldLog(Log.INFO))
             _log.info("Building the database...");
@@ -679,6 +691,7 @@ public class DBClient {
             if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
+
     private int getDBUpdateCount() {
         int updates = 0;
         while (true) {
@@ -693,6 +706,7 @@ public class DBClient {
             }
         }
     }
+
     private void updateDB(int oldVersion) {
         BufferedReader r = null;
         try {
@@ -724,6 +738,7 @@ public class DBClient {
             if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
+
     private void exec(String cmd) throws SQLException {
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Exec [" + cmd + "]");
@@ -735,6 +750,7 @@ public class DBClient {
             if (stmt != null) stmt.close();
         }
     }
+
     public int exec(String sql, long param1) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
@@ -747,6 +763,7 @@ public class DBClient {
             if (stmt != null) stmt.close();
         }
     }
+
     public int exec(String sql, long param1, long param2) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
@@ -760,6 +777,7 @@ public class DBClient {
             if (stmt != null) stmt.close();
         }
     }
+
     public void exec(String query, UI ui) {
         ui.debugMessage("Executing [" + query + "]");
         PreparedStatement stmt = null;
@@ -841,17 +859,19 @@ public class DBClient {
                                                    "keyChannel = ? AND nymId = ? AND keyFunction = '" + Constants.KEY_FUNCTION_READ + "'";
     private static final String SQL_GET_CHANREADKEYS_RW = "SELECT DISTINCT keyData, keyStart FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL ORDER BY keyStart ASC";
     private static final String SQL_GET_CHANREADKEYS_RO = "SELECT DISTINCT keyData, keyStart FROM channelReadKey WHERE channelId = ? ORDER BY keyStart ASC";
+
     /** 
      * list of SessionKey instances that the nym specified can use to try and read/write 
      * posts to the given identHash channel
      * @param onlyIncludeForWriting if true, only list the read keys we can use for writing a post (meaning
      *        those that have not been deprecated)
      */
-    public List getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
+    public List<SessionKey> getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
         return getReadKeys(identHash, _nymId, _pass, onlyIncludeForWriting);
     }
-    public List getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
-        List rv = new ArrayList(1);
+
+    public List<SessionKey> getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
+        List<SessionKey> rv = new ArrayList(1);
         if (identHash == null) return null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -921,6 +941,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_KNOWN_EDITION = "SELECT MAX(edition) FROM channel WHERE channelHash = ?";
+
     /** highest channel meta edition, or -1 if unknown */
     public long getKnownEdition(Hash ident) {
         PreparedStatement stmt = null;
@@ -949,9 +970,10 @@ public class DBClient {
     }
 
     private static final String SQL_GET_CHANNEL_IDS = "SELECT channelId, channelHash FROM channel";
+
     /** retrieve a mapping of channelId (Long) to channel hash (Hash) */
-    public Map getChannelIds() {
-        Map rv = new HashMap();
+    public Map<Long, Hash> getChannelIds() {
+        Map<Long, Hash> rv = new HashMap();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -979,6 +1001,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_HASH = "SELECT channelHash FROM channel WHERE channelId = ?";
+
     public Hash getChannelHash(long channelId) {
         if (channelId < 0) return null;
         PreparedStatement stmt = null;
@@ -1006,6 +1029,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_ID = "SELECT channelId FROM channel WHERE channelHash = ?";
+
     public long getChannelId(Hash channel) {
         if (channel == null) return -1;
         PreparedStatement stmt = null;
@@ -1034,6 +1058,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_NAME = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelHash = ?";
+
     public String getChannelName(Hash channel) {
         if (channel == null) return null;
         PreparedStatement stmt = null;
@@ -1091,6 +1116,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_DESCRIPTION = "SELECT description, petdesc FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelId = ?";
+
     public String getChannelDescription(long chanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1128,8 +1154,8 @@ public class DBClient {
      * @param includeManagers if true, include the explicit forum managers
      * @param includePosters if true, include the explicit forum posters
      */
-    public Set getChannelAuthorizedPosters(long scopeId, boolean includeIdent, boolean includeManagers, boolean includePosters) {
-        Set rv = new HashSet();
+    public Set<Hash> getChannelAuthorizedPosters(long scopeId, boolean includeIdent, boolean includeManagers, boolean includePosters) {
+        Set<Hash> rv = new HashSet();
         if (scopeId < 0) return rv;
         
         if (includeIdent)
@@ -1166,11 +1192,12 @@ public class DBClient {
      * list of SigningPrivateKey instances that the nym specified can use to
      * try and authenticate/authorize posts to the given identHash channel
      */
-    public List getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _pass); }
-    public List getSignKeys(Hash identHash, long nymId, String nymPassphrase) {
+    public List<SigningPrivateKey> getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _pass); }
+
+    public List<SigningPrivateKey> getSignKeys(Hash identHash, long nymId, String nymPassphrase) {
         ensureLoggedIn();
         if (identHash == null) throw new IllegalArgumentException("you need an identHash (or you should use getNymKeys())");
-        List rv = new ArrayList(1);
+        List<SigningPrivateKey> rv = new ArrayList(1);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1215,6 +1242,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_REPLY_KEY = "SELECT encryptKey FROM channel WHERE channelId = ?";
+
     public PublicKey getReplyKey(long channelId) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -1242,17 +1270,19 @@ public class DBClient {
         }
     }
 
-    public List getNymKeys(Hash channel, String keyFunction) { return getNymKeys(getLoggedInNymId(), getPass(), channel, keyFunction); }
+    public List<NymKey> getNymKeys(Hash channel, String keyFunction) { return getNymKeys(getLoggedInNymId(), getPass(), channel, keyFunction); }
     
     private static final String SQL_GET_NYMKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel " +
                                                    "FROM nymKey WHERE nymId = ?";
+
     /** return a list of NymKey structures */
-    public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
+    public List<NymKey> getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
         return getNymKeys(nymId, pass, channel, keyFunction, false);
     }
-    public List getNymKeys(long nymId, String pass, Hash channel, String keyFunction, boolean verifyEncryption) {
+
+    public List<NymKey> getNymKeys(long nymId, String pass, Hash channel, String keyFunction, boolean verifyEncryption) {
         ensureLoggedIn(!verifyEncryption);
-        List rv = new ArrayList(1);
+        List<NymKey> rv = new ArrayList(1);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1325,35 +1355,39 @@ public class DBClient {
         return _numNymKeysWithoutPass == 0;
     }
     
-    public List getReplyKeys(Hash identHash, long nymId, String pass) {
+    public List<PrivateKey> getReplyKeys(Hash identHash, long nymId, String pass) {
         List keys = getNymKeys(nymId, pass, identHash, Constants.KEY_FUNCTION_REPLY);
-        List rv = new ArrayList();
+        List<PrivateKey> rv = new ArrayList();
         for (int i = 0; i < keys.size(); i++)
             rv.add(new PrivateKey(((NymKey)keys.get(i)).getData()));
         return rv;
     }
 
-    public List getAuthorizedPosters(Hash channel) {
+    public List<SigningPublicKey> getAuthorizedPosters(Hash channel) {
         return getAuthorizedPosters(getChannelId(channel), true, true, true);
     }
+
     private static final String SQL_GET_AUTHORIZED_OWNER = "SELECT identKey FROM channel WHERE channelId = ?";
     private static final String SQL_GET_AUTHORIZED_POSTER = "SELECT authPubKey FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_GET_AUTHORIZED_MANAGER = "SELECT authPubKey FROM channelManageKey WHERE channelId = ?";
+
     /**
      * @param owner include the owner's identity 
      * @param manager include the identity of anyone allowed to manage the channel
      * @param authorizedPoster include the identity of anyone explicitly allowed to post in the channel
      * @return list of SigningPublicKey instances
      */
-    public List getAuthorizedPosters(long channelId, boolean owner, boolean manager, boolean authorizedPoster) {
+    public List<SigningPublicKey> getAuthorizedPosters(long channelId, boolean owner, boolean manager, boolean authorizedPoster) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<SigningPublicKey> rv = new ArrayList();
         if (owner) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_OWNER);
         if (manager) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_MANAGER);
         if (authorizedPoster) getAuthorizedPosters(channelId, rv, SQL_GET_AUTHORIZED_POSTER);
         return rv;
     }
-    private void getAuthorizedPosters(long channelId, List rv, String query) {
+
+    /** @param rv out parameter */
+    private void getAuthorizedPosters(long channelId, List<SigningPublicKey> rv, String query) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1381,6 +1415,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_IDENT_KEY = "SELECT identKey FROM channel WHERE channelHash = ?";
+
     public SigningPublicKey getIdentKey(Hash hash) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -1409,9 +1444,10 @@ public class DBClient {
     }
 
     private static final String SQL_PRIVATE_CHANNEL_READ_KEYS = "SELECT DISTINCT channelHash, keyData, c.channelId, keyEnd FROM channelReadKey crk JOIN channel c ON crk.channelId = c.channelId WHERE wasPublic = false ORDER BY c.channelId";
-    public List getPrivateChannelReadKeys() {
+
+    public List<NymKey> getPrivateChannelReadKeys() {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<NymKey> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1437,6 +1473,7 @@ public class DBClient {
     }
     
     private static final String SQL_ALLOW_PUB_REPLIES = "SELECT allowPubPost, allowPubReply FROM channel WHERE channelId = ?";
+
     public boolean getChannelAllowPublicReplies(long targetChannelId) {        
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -1548,12 +1585,12 @@ public class DBClient {
         private ChannelInfo _postChannels[];
         private ChannelInfo _publicPostChannels[];
         
-        List _internalIds;
+        List<Long> _internalIds;
 
-        List _identityChannelIds;
-        List _managedChannelIds;
-        List _postChannelIds;
-        List _publicPostChannelIds;
+        List<Long> _identityChannelIds;
+        List<Long> _managedChannelIds;
+        List<Long> _postChannelIds;
+        List<Long> _publicPostChannelIds;
         
         public ChannelCollector() {
             _identityChannels = new ChannelInfo[0];
@@ -1613,21 +1650,23 @@ public class DBClient {
         }
         
         // only loaded if the above isn't loaded
-        public List getIdentityChannelIds() { return _identityChannelIds; }
-        public List getManagedChannelIds() { return _managedChannelIds; }
-        public List getPostChannelIds() { return _postChannelIds; }
-        public List getPublicPostChannelIds() { return _publicPostChannelIds; }
+        public List<Long> getIdentityChannelIds() { return _identityChannelIds; }
+        public List<Long> getManagedChannelIds() { return _managedChannelIds; }
+        public List<Long> getPostChannelIds() { return _postChannelIds; }
+        public List<Long> getPublicPostChannelIds() { return _publicPostChannelIds; }
         
-        public List getAllIds() { return _internalIds; }
+        public List<Long> getAllIds() { return _internalIds; }
     }
     
     private ChannelCollector _channelCache;
+
     /**
      * the channel cache should be cleared when:
      * - new channels are imported
      * - new keys are imported
      */
     void clearNymChannelCache() { _channelCache = null; }
+
     public ChannelCollector getNymChannels() {
         if (_channelCache == null) {
             _channelCache = getChannels(true, true, true, true, false);
@@ -1637,20 +1676,23 @@ public class DBClient {
     
     private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
     private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
+
     /** channels */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
         return getChannels(includeManage, includeIdent, includePost, includePublicPost, true);
     }
+
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost, boolean fetchInfo) {
         ChannelCollector rv = new ChannelCollector();
         
-        List identIds = new ArrayList();
-        List manageIds = new ArrayList();
-        List postIds = new ArrayList();
-        List pubPostIds = new ArrayList();
+        List<Long> identIds = new ArrayList();
+        List<Long> manageIds = new ArrayList();
+        List<Long> postIds = new ArrayList();
+        List<Long> pubPostIds = new ArrayList();
         
-        List pubKeys = new ArrayList();
-        List manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
+        List<SigningPublicKey> pubKeys = new ArrayList();
+        List<NymKey> manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
+
         // first, go through and find all the 'identity' channels - those that we have
         // the actual channel signing key for
         for (int i = 0; i < manageKeys.size(); i++) {
@@ -1740,7 +1782,7 @@ public class DBClient {
         }
             
         if (includePublicPost) {
-            List channelIds = getPublicPostingChannelIds();
+            List<Long> channelIds = getPublicPostingChannelIds();
             for (int i = 0; i < channelIds.size(); i++) {
                 Long id = (Long)channelIds.get(i);
                 if (!identIds.contains(id) && !manageIds.contains(id) && !postIds.contains(id) && !pubPostIds.contains(id)) {
@@ -1755,6 +1797,7 @@ public class DBClient {
         sortChannels(postIds);
         sortChannels(pubPostIds);
         
+        // unused
         int totalGetEvents = 0;
         long totalGetTime = 0;
         ArrayList getTimes = new ArrayList();
@@ -1783,25 +1826,29 @@ public class DBClient {
         _ui.debugMessage("getChannels: total time: " + totalGetTime + "ms\n" + getTimes);
         return rv;
     }
-    private void sortChannels(List chanIds) {
-        TreeMap nameToId = new TreeMap();
+
+    /**
+     *  Sorts by name in current locale
+     *  @param chanIds in: unsorted; out: sorted
+     */
+    private void sortChannels(List<Long> chanIds) {
+        TreeMap<String, Long> nameToId = new TreeMap(Collator.getInstance());
         for (int i = 0; i < chanIds.size(); i++) {
-            Long id = (Long)chanIds.get(i);
+            Long id = chanIds.get(i);
             String name = getChannelName(id.longValue());
             if (name == null) name = "";
-            name = Constants.lowercase(name) + " " + id.toString(); // guaranteed to be unique
+            name = name + ' ' + id.toString(); // guaranteed to be unique
             nameToId.put(name, id);
         }
         chanIds.clear();
-        for (Iterator iter = nameToId.values().iterator(); iter.hasNext(); )
-            chanIds.add(iter.next());
+        chanIds.addAll(nameToId.values());
     }
 
     public static class ChannelSearchCriteria {
         private String _name;
-        private Set _tagsInclude;
-        private Set _tagsRequire;
-        private Set _tagsExclude;
+        private Set<String> _tagsInclude;
+        private Set<String> _tagsRequire;
+        private Set<String> _tagsExclude;
         private String _hashPrefix;
         
         public ChannelSearchCriteria() {
@@ -1820,9 +1867,9 @@ public class DBClient {
         public void includeTag(String tag) { _tagsInclude.add(tag); }
         public void excludeTag(String tag) { _tagsExclude.add(tag); }
         
-        public Set getInclude() { return _tagsInclude; }
-        public Set getExclude() { return _tagsExclude; }
-        public Set getRequire() { return _tagsRequire; }
+        public Set<String> getInclude() { return _tagsInclude; }
+        public Set<String> getExclude() { return _tagsExclude; }
+        public Set<String> getRequire() { return _tagsRequire; }
     }
     
     /* --- OLD JDOC entry
@@ -1839,7 +1886,7 @@ public class DBClient {
      * search through the channels for those matching the given criteria
      * @return list of matching channels (ChannelInfo)
      */
-    public List getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
+    public List<ChannelInfo> getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
         String name = criteria.getName();
         String hashPrefix = criteria.getHashPrefix();
         Set tagsInclude = criteria.getInclude();
@@ -1854,8 +1901,8 @@ public class DBClient {
         
         // this could of course be optimized to do the work in the db, saving some memory churn
         // instead of all these getChannel calls.  but this'll do the trick for now
-        List rv = new ArrayList();
-        Map allIds = getChannelIds();
+        List<ChannelInfo> rv = new ArrayList();
+        Map<Long, Hash> allIds = getChannelIds();
         for (Iterator iter = allIds.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             Long chanId = (Long)entry.getKey();
@@ -1866,8 +1913,8 @@ public class DBClient {
             if (info == null) continue;
             if ( (name != null) && (info.getName() != null) && (!info.getName().toLowerCase().startsWith(name.toLowerCase())) )
                 continue;
-            Set pub = info.getPublicTags();
-            Set priv= info.getPrivateTags();
+            Set<String> pub = info.getPublicTags();
+            Set<String> priv= info.getPrivateTags();
             if (tagsExclude != null) {
                 boolean found = false;
                 for (Iterator titer = tagsExclude.iterator(); titer.hasNext(); ) {
@@ -1921,8 +1968,9 @@ public class DBClient {
     private static final String SQL_SEARCH_CHANNEL_IDS = "SELECT channelId FROM channel WHERE name LIKE ? OR description LIKE ? " +
             "UNION " +
             "SELECT channelId FROM channelTag WHERE tag LIKE ?";
-    public List getChannelIds(String term) {
-        List rv = new ArrayList();
+
+    public List<Long> getChannelIds(String term) {
+        List<Long> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1954,6 +2002,7 @@ public class DBClient {
     private static final String SQL_GET_CHANNEL_READ_KEYS = "SELECT keyData, wasPublic FROM channelReadKey WHERE channelId = ? AND keyEnd IS NULL";
     private static final String SQL_GET_CHANNEL_META_HEADERS = "SELECT headerName, headerValue, wasEncrypted FROM channelMetaHeader WHERE channelId = ?";
     private static final String SQL_GET_CHANNEL_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted FROM channelReferenceGroup WHERE channelId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
+
     public ChannelInfo getChannel(long channelId) {
         ensureLoggedIn();
         long start = System.currentTimeMillis();
@@ -1965,12 +2014,12 @@ public class DBClient {
         if (!getChannelTags(channelId, info))
             return null;
 
-        Set postKeys = getChannelPostKeys(channelId);
+        Set<SigningPublicKey> postKeys = getChannelPostKeys(channelId);
         if (postKeys == null)
             return null;
         info.setAuthorizedPosters(postKeys);
         
-        Set manageKeys = getChannelManageKeys(channelId);
+        Set<SigningPublicKey> manageKeys = getChannelManageKeys(channelId);
         if (manageKeys == null)
             return null;
         info.setAuthorizedManagers(manageKeys);
@@ -1984,7 +2033,7 @@ public class DBClient {
         if (!getChannelMetaHeaders(channelId, info))
             return null;
         
-        List roots = getChannelReferences(channelId);
+        List<ReferenceNode> roots = getChannelReferences(channelId);
         if (roots == null)
             return null;
         info.setReferences(roots);
@@ -2207,14 +2256,14 @@ public class DBClient {
         }
     }
     
-    public List getChannelReferences(long channelId) {
+    public List<ReferenceNode> getChannelReferences(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_REFERENCES);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            HashMap groupIdToNode = new HashMap();
+            HashMap<Long, DBReferenceNode> groupIdToNode = new HashMap();
             while (rs.next()) {
                 // groupId, parentGroupId, siblingOrder, name, description, 
                 // uriId, referenceType, wasEncrypted 
@@ -2240,7 +2289,7 @@ public class DBClient {
             }
             
             // now build the tree out of the nodes
-            List roots = new ArrayList();
+            List<ReferenceNode> roots = new ArrayList();
             for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
                 DBReferenceNode cur = (DBReferenceNode)iter.next();
                 long parentId = cur.getParentGroupId();
@@ -2260,7 +2309,7 @@ public class DBClient {
                 cur.sortChildren();
             }
             // sort the roots
-            TreeMap sorted = new TreeMap();
+            TreeMap<Integer, DBReferenceNode> sorted = new TreeMap();
             for (int i = 0; i < roots.size(); i++) {
                 DBReferenceNode cur = (DBReferenceNode)roots.get(i);
                 int off = 0;
@@ -2269,8 +2318,7 @@ public class DBClient {
                 sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
             }
             roots.clear();
-            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
-                roots.add(iter.next());
+            roots.addAll(sorted.values());
             return roots;
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2305,7 +2353,7 @@ public class DBClient {
         public long getUniqueId() { return _groupId; }
         
         public void sortChildren() {
-            TreeMap sorted = new TreeMap();
+            TreeMap<Long, DBReferenceNode> sorted = new TreeMap();
             for (int i = 0; i < _children.size(); i++) {
                 DBReferenceNode child = (DBReferenceNode)_children.get(i);
                 int off = 0;
@@ -2321,14 +2369,14 @@ public class DBClient {
         }
     }
     
-    public Set getChannelPostKeys(long channelId) {
+    public Set<SigningPublicKey> getChannelPostKeys(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_POST_KEYS);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            Set keys = new HashSet();
+            Set<SigningPublicKey> keys = new HashSet();
             while (rs.next()) {
                 // authPub
                 byte key[] = rs.getBytes(1);
@@ -2346,14 +2394,14 @@ public class DBClient {
         }
     }
     
-    public Set getChannelManageKeys(long channelId) {
+    public Set<SigningPublicKey> getChannelManageKeys(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_MANAGE_KEYS);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            Set keys = new HashSet();
+            Set<SigningPublicKey> keys = new HashSet();
             while (rs.next()) {
                 // authPub
                 byte key[] = rs.getBytes(1);
@@ -2372,6 +2420,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_NYM_CHANNEL_PETNAME_DEFINED = "SELECT COUNT(channelId) FROM nymChannelPetName WHERE channelId = ? AND petname IS NOT NULL";
+
     public boolean getNymChannelPetNameDefined(long channelId) { 
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -2395,7 +2444,9 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     private static final String SQL_GET_NYM_CHANNEL_PETDESC_DEFINED = "SELECT COUNT(channelId) FROM nymChannelPetName WHERE channelId = ? AND petdesc IS NOT NULL";
+
     public boolean getNymChannelPetDescriptionDefined(long channelId) { 
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -2422,6 +2473,7 @@ public class DBClient {
                 
     private static final String SQL_UNSET_PETNAME = "DELETE FROM nymChannelPetName WHERE channelId = ?";
     private static final String SQL_SET_PETNAME = "INSERT INTO nymChannelPetName (channelId, petname, petdesc) VALUES (?, ?, ?)";
+
     /**
      * override the channel's name and description locally
      */
@@ -2452,6 +2504,7 @@ public class DBClient {
     
     private static final String SQL_UNSET_CUSTOM_AVATAR = "DELETE FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
     private static final String SQL_SET_CUSTOM_AVATAR = "INSERT INTO nymCustomIcon (targetType, targetId, data) VALUES (0, ?, ?)";
+
     /**
      * user-specified avatar overriding the channel's published avatar
      */
@@ -2476,6 +2529,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CUSTOM_AVATAR = "SELECT data FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
+
     /**
      * user-specified avatar overriding the channel's published avatar
      */
@@ -2503,6 +2557,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_CUSTOM_AVATAR_DEFINED = "SELECT COUNT(targetId) FROM nymCustomIcon WHERE targetType = 0 AND targetId = ?";
+
     /**
      * returns true if a custom channel avatar has been defined
      */
@@ -2530,6 +2585,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_AVATAR = "SELECT avatarData FROM channelAvatar WHERE channelId = ?";
+
     public byte[] getChannelAvatar(long channelId) {
         ensureLoggedIn();
         byte rv[] = getNymChannelAvatar(channelId);
@@ -2558,6 +2614,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_ARCHIVE = "SELECT postAllowed, readAllowed, uriId FROM archive WHERE archiveId = ?";
+
     private ArchiveInfo getArchive(long archiveId) { 
         ensureLoggedIn();
         ArchiveInfo info = new ArchiveInfo();
@@ -2596,9 +2653,10 @@ public class DBClient {
     }
 
     private static final String SQL_GET_MESSAGES_PRIVATE = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = TRUE AND wasAuthenticated = TRUE ORDER BY messageId ASC";
-    public List getMessageIdsPrivate(Hash chan) {
+
+    public List<Long> getMessageIdsPrivate(Hash chan) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         long chanId = getChannelId(chan);
         if (chanId >= 0) {
             PreparedStatement stmt = null;
@@ -2629,10 +2687,12 @@ public class DBClient {
     // the local ident first (since channelId 0 is the one created on install), then
     // sorts newest first
     private static final String SQL_GET_PRIVATE_ALL = "SELECT msgId FROM channelMessage cm WHERE wasPrivate = TRUE AND wasAuthenticated = TRUE AND replyKeyMissing = FALSE AND readKeyMissing = FALSE AND pbePrompt IS NULL ORDER BY targetChannelId ASC, importDate DESC";
-    public List getPrivateMsgIds(boolean alreadyRead) { return getPrivateMsgIds(_nymId, alreadyRead); }
-    public List getPrivateMsgIds(long nymId, boolean alreadyRead) {
+
+    public List<Long> getPrivateMsgIds(boolean alreadyRead) { return getPrivateMsgIds(_nymId, alreadyRead); }
+
+    public List<Long> getPrivateMsgIds(long nymId, boolean alreadyRead) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -2675,17 +2735,20 @@ public class DBClient {
      * @param meta include forum metadata that still need a passphrase
      * @param msgs include forum messages that still need a passphrase
      */
-    public List getPBERequired(boolean meta, boolean msgs) {
+    public List<SyndieURI> getPBERequired(boolean meta, boolean msgs) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<SyndieURI> rv = new ArrayList();
         if (meta)
             getPBERequiredMeta(rv);
         if (msgs)
             getPBERequiredMsgs(rv);
         return rv;
     }
+
     private static final String SQL_GET_PBEREQUIRED_META = "SELECT channelHash FROM channel WHERE pbePrompt IS NOT NULL";
-    private void getPBERequiredMeta(List rv) {
+
+    /** @param rv out parameter */
+    private void getPBERequiredMeta(List<SyndieURI> rv) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -2704,8 +2767,11 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     private static final String SQL_GET_PBEREQUIRED_MSGS = "SELECT channelHash, messageId FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE pbePrompt IS NOT NULL";
-    private void getPBERequiredMsgs(List rv) {
+
+    /** @param rv out parameter */
+    private void getPBERequiredMsgs(List<SyndieURI> rv) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -2729,9 +2795,10 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGES_AUTHORIZED = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND wasAuthorized = TRUE ORDER BY messageId ASC";
-    public List getMessageIdsAuthorized(Hash chan) {
+
+    public List<Long> getMessageIdsAuthorized(Hash chan) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         long chanId = getChannelId(chan);
         if (chanId >= 0) {
             PreparedStatement stmt = null;
@@ -2757,10 +2824,12 @@ public class DBClient {
         }
         return rv;
     }
+
     private static final String SQL_GET_MESSAGES_AUTHENTICATED = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND wasAuthorized = FALSE AND wasAuthenticated = TRUE ORDER BY messageId ASC";
-    public List getMessageIdsAuthenticated(Hash chan) {
+
+    public List<Long> getMessageIdsAuthenticated(Hash chan) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         long chanId = getChannelId(chan);
         if (chanId >= 0) {
             PreparedStatement stmt = null;
@@ -2786,10 +2855,12 @@ public class DBClient {
         }
         return rv;
     }
+
     private static final String SQL_GET_MESSAGES_UNAUTHENTICATED = "SELECT msgId, messageId FROM channelMessage WHERE targetChannelId = ? AND wasPrivate = FALSE AND wasAuthorized = FALSE AND wasAuthenticated = FALSE ORDER BY messageId ASC";
-    public List getMessageIdsUnauthenticated(Hash chan) {
+
+    public List<Long> getMessageIdsUnauthenticated(Hash chan) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         long chanId = getChannelId(chan);
         if (chanId >= 0) {
             PreparedStatement stmt = null;
@@ -2818,11 +2889,13 @@ public class DBClient {
     
     
     private static final String SQL_GET_INTERNAL_MESSAGE_ID = "SELECT msgId FROM channelMessage WHERE scopeChannelId = ? AND messageId = ?";
+
     public MessageInfo getMessage(long scopeId, Long messageId) {
         ensureLoggedIn();
         if (messageId == null) return null;
         return getMessage(scopeId, messageId.longValue());
     }
+
     public MessageInfo getMessage(long scopeId, long messageId) {
         long msgId = getMessageId(scopeId, messageId);
         if (msgId >= 0)
@@ -2876,6 +2949,7 @@ public class DBClient {
             return -1;
     }
     private static final String SQL_GET_MESSAGE_IMPORT_DATE = "SELECT importDate FROM channelMessage WHERE msgId = ?";
+
     public long getMessageImportDate(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -2903,6 +2977,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_SCOPE = "SELECT channelHash FROM channel JOIN channelMessage ON scopeChannelId = channelId WHERE msgId = ?";
+
     public Hash getMessageScope(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -2930,6 +3005,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_ID = "SELECT messageId FROM channelMessage WHERE msgId = ?";
+
     public long getMessageId(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -2957,6 +3033,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_VERSION = "SELECT edition FROM channel WHERE channelId = ?";
+
     /** locally known edition of the given scope, or -1 if not known */
     public long getChannelVersion(Hash scope) {        
         if ( (scope == null) || (scope.getData() == null) ) return -1;
@@ -2964,6 +3041,7 @@ public class DBClient {
         if (channelId < 0) return -1;
         return getChannelVersion(channelId);
     }
+
     public long getChannelVersion(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -2990,6 +3068,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_IDENT_KEY = "SELECT identKey FROM channel WHERE channelHash = ?";
+
     public SigningPublicKey getChannelIdentKey(Hash scope) {
         if (scope == null) return null;
         PreparedStatement stmt = null;
@@ -3018,6 +3097,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_REPLY_KEY = "SELECT encryptKey FROM channel WHERE channelHash = ?";
+
     public PublicKey getChannelReplyKey(Hash scope) {
         if (scope == null) return null;
         PreparedStatement stmt = null;
@@ -3046,6 +3126,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CHANNEL_IMPORT_DATE = "SELECT importDate FROM channel WHERE channelId = ?";
+
     /** when we imported the scope, or -1 if never */
     public long getChannelImportDate(Hash scope) {        
         if ( (scope == null) || (scope.getData() == null) ) return -1;
@@ -3053,6 +3134,7 @@ public class DBClient {
         if (channelId < 0) return -1;
         return getChannelImportDate(channelId);
     }
+
     public long getChannelImportDate(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3086,6 +3168,7 @@ public class DBClient {
     private static final String SQL_GET_MESSAGE_TAG = "SELECT tag, isPublic FROM messageTag WHERE msgId = ?";
     private static final String SQL_GET_MESSAGE_PAGE_COUNT = "SELECT COUNT(*) FROM messagePage WHERE msgId = ?";
     private static final String SQL_GET_MESSAGE_ATTACHMENT_COUNT = "SELECT COUNT(*) FROM messageAttachment WHERE msgId = ?";
+
     public MessageInfo getMessage(long internalMessageId) {
         ensureLoggedIn();
         long start = System.currentTimeMillis();
@@ -3201,7 +3284,7 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_GET_MESSAGE_HIERARCHY);
             stmt.setLong(1, internalMessageId);
             rs = stmt.executeQuery();
-            List uris = new ArrayList();
+            List<SyndieURI> uris = new ArrayList();
             while (rs.next()) {
                 // referencedChannelHash, referencedMessageId
                 byte chan[] = rs.getBytes(1);
@@ -3308,13 +3391,13 @@ public class DBClient {
         return info;
     }
 
-    public Set getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {
+    public Set<String> getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {
         return getMessageTags(getMessageId(chanId, messageId), includePrivate, includePublic);
     }
         
-    public Set getMessageTags(long msgId, boolean includePrivate, boolean includePublic) {
+    public Set<String> getMessageTags(long msgId, boolean includePrivate, boolean includePublic) {
         ensureLoggedIn();
-        Set rv = new HashSet();
+        Set<String> rv = new HashSet();
         if (msgId < 0) 
             return null;
         
@@ -3345,9 +3428,10 @@ public class DBClient {
         }        
         return rv;
     }
-    public Set getMessageTags(Set msgIds, boolean includePublic, boolean includePrivate) {
+
+    public Set<String> getMessageTags(Set msgIds, boolean includePublic, boolean includePrivate) {
         ensureLoggedIn();
-        Set rv = new HashSet();
+        Set<String> rv = new HashSet();
         if ( (msgIds == null) || (msgIds.size() <= 0) ) return rv;
         
         Statement stmt = null;
@@ -3398,9 +3482,11 @@ public class DBClient {
             return null;
     }
     private static final String SQL_GET_MESSAGE_AUTHOR = "SELECT authorChannelId FROM channelMessage WHERE msgId = ?";
+
     public long getMessageAuthor(long chanId, long messageId) { 
         return getMessageAuthor(getMessageId(chanId, messageId));
     }
+
     public long getMessageAuthor(long msgId) {
         if (msgId < 0) return -1;
         
@@ -3430,6 +3516,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_SUBJECT = "SELECT subject FROM channelMessage WHERE msgId = ?";
+
     public String getMessageSubject(long msgId) {
         if (msgId < 0) return null;
         
@@ -3457,6 +3544,7 @@ public class DBClient {
     private static final String SQL_MATCH_MESSAGE_KEYWORD = "SELECT msgId FROM channelMessage WHERE msgId = ? AND subject LIKE ?" +
                                                             " UNION " +
                                                             "SELECT msgId FROM messagePageData WHERE msgId = ? AND dataString LIKE ?";
+
     public boolean messageKeywordMatch(long msgId, String keyword) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3485,7 +3573,9 @@ public class DBClient {
     public static final int PRIVACY_PRIVREPLY = 1;
     public static final int PRIVACY_AUTHORIZEDONLY = 2;
     public static final int PRIVACY_PUBLIC = 3;
+
     private static final String SQL_GET_MESSAGE_PRIVACY = "SELECT wasEncrypted, wasPBE, wasPrivate, wasAuthorized FROM channelMessage WHERE msgId = ? AND readKeyMissing = FALSE AND pbePrompt IS NULL AND replyKeyMissing = FALSE";
+
     public int getMessagePrivacy(long msgId) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3526,6 +3616,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_PASSPHRASE_PROMPT = "SELECT pbePrompt FROM channelMessage WHERE msgId = ?";
+
     /**
      * return the passphrase prompt required to decrypt the pbe encrypted message, 
      * or null if the message is already decrypted or does not require a passphrase
@@ -3555,6 +3646,7 @@ public class DBClient {
     
     /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
+
     public String getMessagePageData(long internalMessageId, int pageNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3579,6 +3671,7 @@ public class DBClient {
 
     /** page number starts at 0 */
     private static final String SQL_GET_MESSAGE_PAGE_CONFIG = "SELECT dataString FROM messagePageConfig WHERE msgId = ? AND pageNum = ?";
+
     public String getMessagePageConfig(long internalMessageId, int pageNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3603,6 +3696,7 @@ public class DBClient {
 
     /** attachment number starts at 0 */    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+
     public byte[] getMessageAttachmentData(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3627,6 +3721,7 @@ public class DBClient {
     
     /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+
     public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3663,6 +3758,7 @@ public class DBClient {
     
     /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
+
     public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3686,15 +3782,16 @@ public class DBClient {
     }
 
     private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name, petname FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE allowPubPost = TRUE ORDER BY petname, name ASC";
+
     /** list of channel ids (Long) that anyone is allowed to post to */
-    public List getPublicPostingChannelIds() {
+    public List<Long> getPublicPostingChannelIds() {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_PUBLIC_POSTING_CHANNELS);
             rs = stmt.executeQuery();
-            List rv = new ArrayList();
+            List<Long> rv = new ArrayList();
             while (rs.next()) {
                 long id = rs.getLong(1);
                 if (!rs.wasNull())
@@ -3712,16 +3809,18 @@ public class DBClient {
     }
     
     private static final String SQL_GET_BANNED = "SELECT channelHash, bannedOn FROM banned";
+
     /** list of channels (Hash) that this archive wants nothing to do with */
-    public ArrayList getBannedChannels() { return getBannedChannels(false); }
-    public ArrayList getBannedChannels(boolean newOnly) {
+    public ArrayList<Hash> getBannedChannels() { return getBannedChannels(false); }
+
+    public ArrayList<Hash> getBannedChannels(boolean newOnly) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(SQL_GET_BANNED);
             rs = stmt.executeQuery();
-            ArrayList rv = new ArrayList();
+            ArrayList<Hash> rv = new ArrayList();
             while (rs.next()) {
                 byte chan[] = rs.getBytes(1);
                 Date when = rs.getDate(2);
@@ -3749,13 +3848,16 @@ public class DBClient {
      * will be removed from the archive as well as the database
      */
     public void ban(Hash bannedChannel, UI ui, boolean deleteMessages) { ban(bannedChannel, ui, deleteMessages, deleteMessages); }
+
     public void ban(Hash bannedChannel, UI ui, boolean deleteMessages, boolean deleteMeta) {
         ensureLoggedIn();
         addBan(bannedChannel, ui);
         if (deleteMessages || deleteMeta)
             executeDelete(bannedChannel, ui, deleteMessages || deleteMeta, deleteMeta, DELETION_CAUSE_BAN);
     }
+
     private static final String SQL_BAN = "INSERT INTO banned (channelHash) VALUES (?)";
+
     private void addBan(Hash bannedChannel, UI ui) {
         if (getBannedChannels().contains(bannedChannel)) {
             ui.debugMessage("Channel already banned");
@@ -3780,6 +3882,7 @@ public class DBClient {
     }
     
     private static final String SQL_UNBAN = "DELETE FROM banned WHERE channelHash = ?";
+
     public void unban(Hash bannedChannel) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3801,7 +3904,7 @@ public class DBClient {
         // then list any messages posted by that author in other channels and
         // delete them too
         // (implicit index regen?)
-        List urisToDelete = getURIsToDelete(bannedChannel, deleteMessages, deleteMeta);
+        List<SyndieURI> urisToDelete = getURIsToDelete(bannedChannel, deleteMessages, deleteMeta);
         ui.debugMessage("Delete the following URIs: " + urisToDelete);
         for (int i = 0; i < urisToDelete.size(); i++) {
             SyndieURI uri = (SyndieURI)urisToDelete.get(i);
@@ -3809,6 +3912,7 @@ public class DBClient {
             deleteFromDB(uri, ui, cause);
         }
     }
+
     private void deleteFromArchive(SyndieURI uri, UI ui) {
         File archiveDir = getArchiveDir();
         File chanDir = new File(archiveDir, uri.getScope().toBase64());
@@ -3908,8 +4012,8 @@ public class DBClient {
             public int getPageCount() { return 0; }
             public String getPageContent(int page) { return ""; }
             public String getPageType(int page) { return ""; }
-            public List getAttachmentNames() { return new ArrayList(); }
-            public List getAttachmentTypes() { return new ArrayList(); }
+            public List<String> getAttachmentNames() { return new ArrayList(); }
+            public List<String> getAttachmentTypes() { return new ArrayList(); }
             public byte[] getAttachmentData(int attachmentIndex) { return null; }
             public String getSubject() { return ""; }
             public boolean getPrivacyPBE() { return false; }
@@ -3921,7 +4025,7 @@ public class DBClient {
             public boolean getPrivacyReply() { return false; }
             public String[] getPublicTags() { return new String[0]; }
             public String[] getPrivateTags() { return new String[0]; }
-            public List getReferenceNodes() { return new ArrayList(); }
+            public List<NymReferenceNode> getReferenceNodes() { return new ArrayList(); }
             public int getParentCount() { return 0; }
             public SyndieURI getParent(int depth) { return null; }
             public String getExpiration() { return null; }
@@ -3949,10 +4053,10 @@ public class DBClient {
             public long getLastEdition() { return info.getEdition(); }
             public boolean getAllowPublicPosts() { return info.getAllowPublicPosts(); }
             public boolean getAllowPublicReplies() { return info.getAllowPublicReplies(); }
-            public Set getPublicTags() { return info.getPublicTags(); }
-            public Set getPrivateTags() { return info.getPrivateTags(); }
-            public Set getAuthorizedPosters() { return info.getAuthorizedPosters(); }
-            public Set getAuthorizedManagers() { return info.getAuthorizedManagers(); }
+            public Set<String> getPublicTags() { return info.getPublicTags(); }
+            public Set<String> getPrivateTags() { return info.getPrivateTags(); }
+            public Set<SigningPublicKey> getAuthorizedPosters() { return info.getAuthorizedPosters(); }
+            public Set<SigningPublicKey> getAuthorizedManagers() { return info.getAuthorizedManagers(); }
             public String getReferences() { 
                 List refs = info.getReferences();
                 if ( (refs != null) && (refs.size() > 0) )
@@ -3982,8 +4086,8 @@ public class DBClient {
             public boolean getCreateManageIdentity() { return false; }
             /** should we create a new reply key? */
             public boolean getCreateReplyKey() { return false; }
-            public List getCancelledURIs() {
-                List cancelled = getChannelCancelURIs(channelId);
+            public List<SyndieURI> getCancelledURIs() {
+                List<SyndieURI> cancelled = getChannelCancelURIs(channelId);
                 if (cancelled == null)
                     cancelled = new ArrayList();
                 cancelled.add(cancelledURI);
@@ -4092,8 +4196,9 @@ public class DBClient {
     }
     
     private static final String SQL_GET_SCOPE_MESSAGES = "SELECT msgId, scopeChannelId, messageId FROM channelMessage WHERE scopeChannelId = ? OR authorChannelId = ? OR targetChannelId = ?";
-    private List getURIsToDelete(Hash bannedChannel, boolean deleteMessages, boolean deleteMeta) {
-        List urisToDelete = new ArrayList();
+
+    private List<SyndieURI> getURIsToDelete(Hash bannedChannel, boolean deleteMessages, boolean deleteMeta) {
+        List<SyndieURI> urisToDelete = new ArrayList();
         if (deleteMeta)
             urisToDelete.add(SyndieURI.createScope(bannedChannel));
         if (deleteMessages) {
@@ -4197,10 +4302,12 @@ public class DBClient {
     }
     
     private static final String SQL_GET_NYMARCHIVENAMES = "SELECT name FROM nymArchive where nymId = ? ORDER BY name ASC";
-    public List getNymArchiveNames() { return getNymArchiveNames(_nymId); }
-    public List getNymArchiveNames(long nymId) { 
+
+    public List<String> getNymArchiveNames() { return getNymArchiveNames(_nymId); }
+
+    public List<String> getNymArchiveNames(long nymId) { 
         ensureLoggedIn();
-        ArrayList rv = new ArrayList();
+        ArrayList<String> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -4222,11 +4329,13 @@ public class DBClient {
     }
 
     private static final String SQL_GET_NYM_REFERENCES = "SELECT groupId, parentGroupId, siblingOrder, name, description, uriId FROM resourceGroup WHERE nymId = ? ORDER BY parentGroupId ASC, siblingOrder ASC";
+
     /** return a list of NymReferenceNode instances for the nym's bookmarks / banned / ignored */
-    public List getNymReferences() { return getNymReferences(_nymId); }
-    public List getNymReferences(long nymId) {
+    public List<ReferenceNode> getNymReferences() { return getNymReferences(_nymId); }
+
+    public List<ReferenceNode> getNymReferences(long nymId) {
         ensureLoggedIn();
-        Map groupIdToNode = new TreeMap();
+        Map<Long, NymReferenceNode> groupIdToNode = new TreeMap();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -4261,7 +4370,7 @@ public class DBClient {
         }
         
         // now build the tree out of the nodes
-        List roots = new ArrayList();
+        List<ReferenceNode> roots = new ArrayList();
         for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
             NymReferenceNode cur = (NymReferenceNode)iter.next();
             long parentId = cur.getParentGroupId();
@@ -4281,7 +4390,7 @@ public class DBClient {
             cur.sortChildren();
         }
         // sort the roots
-        TreeMap sorted = new TreeMap();
+        TreeMap<Integer, NymReferenceNode> sorted = new TreeMap();
         for (int i = 0; i < roots.size(); i++) {
             NymReferenceNode cur = (NymReferenceNode)roots.get(i);
             int off = 0;
@@ -4290,25 +4399,26 @@ public class DBClient {
             sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
         }
         roots.clear();
-        for (Iterator iter = sorted.values().iterator(); iter.hasNext(); )
-            roots.add(iter.next());
+        roots.addAll(sorted.values());
         
         _ui.debugMessage("fetched nym refs: " + roots);
         return roots;
     }
     
-    public Set getReferencedScopes(long groupId) {
-        HashSet scopes = new HashSet();
+    public Set<Hash> getReferencedScopes(long groupId) {
+        HashSet<Hash> scopes = new HashSet();
         if (groupId < 0)
             return scopes;
-        List refs = getNymReferences();
+        List<ReferenceNode> refs = getNymReferences();
         for (int i = 0; i < refs.size(); i++) {
             NymReferenceNode ref = (NymReferenceNode)refs.get(i);
             getReferencedScopes(ref, scopes, groupId, false);
         }
         return scopes;
     }
-    private void getReferencedScopes(NymReferenceNode ref, Set scopes, long groupId, boolean groupFound) {
+
+    /** @param scopes out parameter*/
+    private void getReferencedScopes(NymReferenceNode ref, Set<Hash> scopes, long groupId, boolean groupFound) {
         if (ref == null) return;
         if (ref.getGroupId() == groupId)
             groupFound = true;
@@ -4450,6 +4560,7 @@ public class DBClient {
     
     private static final String SQL_GET_MAX_GROUPID = "SELECT MAX(groupId) FROM resourceGroup WHERE nymId = ?";
     private static final String SQL_GET_MAX_SIBLING = "SELECT MAX(siblingOrder) FROM resourceGroup WHERE nymId = ? AND parentGroupId = ?";
+
     private void addNymReferenceDetail(long nymId, NymReferenceNode newValue) {
         //createNymReferenceOrderHole(nymId, newValue.getParentGroupId(), newValue.getSiblingOrder());
         
@@ -4539,12 +4650,13 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     private boolean isNewNymReference(long nymId, NymReferenceNode node) {
         long parentId = node.getParentGroupId();
         if ( (parentId < 0) && (node.getParent() != null) )
             parentId = ((NymReferenceNode)node.getParent()).getGroupId();
         
-        List siblings = getNymSiblings(nymId, parentId);
+        List<ReferenceNode> siblings = getNymSiblings(nymId, parentId);
         if (node.getURI() == null) {
             String name = node.getName();
             if (name == null) name = "";
@@ -4563,29 +4675,31 @@ public class DBClient {
             return true;
         }
     }
-    private List getNymSiblings(long nymId, long parentGroupId) {
-        List refs = getNymReferences(nymId);
+
+    private List<ReferenceNode> getNymSiblings(long nymId, long parentGroupId) {
+        List<ReferenceNode> refs = getNymReferences(nymId);
         if (parentGroupId == -1) {
             return refs;
         } else {
             for (int i = 0; i < refs.size(); i++) {
                 NymReferenceNode node = (NymReferenceNode)refs.get(i);
-                List rv = getNymSiblings(parentGroupId, node);
+                List<ReferenceNode> rv = getNymSiblings(parentGroupId, node);
                 if (rv != null)
                     return rv;
             }
         }
         return new ArrayList();
     }
-    private List getNymSiblings(long parentGroupId, NymReferenceNode node) {
+
+    private List<ReferenceNode> getNymSiblings(long parentGroupId, NymReferenceNode node) {
         if (node.getGroupId() == parentGroupId) {
-            List rv = new ArrayList();
+            List<ReferenceNode> rv = new ArrayList();
             for (int i = 0; i < node.getChildCount(); i++)
                 rv.add(node.getChild(i));
             return rv;
         } else {
             for (int i = 0; i < node.getChildCount(); i++) {
-                List rv = getNymSiblings(parentGroupId, (NymReferenceNode)node.getChild(i));
+                List<ReferenceNode> rv = getNymSiblings(parentGroupId, (NymReferenceNode)node.getChild(i));
                 if (rv != null)
                     return rv;
             }
@@ -4595,11 +4709,12 @@ public class DBClient {
     
     private static final String SQL_DELETE_NYM_REFERENCE = "DELETE FROM resourceGroup WHERE groupId = ?";
     private static final String SQL_DELETE_NYM_REFERENCE_URI = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE groupId = ?)";
+
     /** recursively delete the reference, any children, and any URIs they refer to */
     public void deleteNymReference(long nymId, long groupId) {
         ensureLoggedIn();
         
-        ArrayList groupIdsToDelete = new ArrayList();
+        ArrayList<Long> groupIdsToDelete = new ArrayList();
         groupIdsToDelete.add(new Long(groupId));
         while (groupIdsToDelete.size() > 0) {
             Long id = (Long)groupIdsToDelete.remove(0);
@@ -4618,7 +4733,9 @@ public class DBClient {
     }
     
     private static final String SQL_GET_NYM_REFERENCE_CHILD_IDS = "SELECT groupId FROM resourceGroup WHERE parentGroupId = ?";
-    private void getNymReferenceChildIds(long parentGroupId, ArrayList addTo) {
+
+    /** @param addTo out parameter */
+    private void getNymReferenceChildIds(long parentGroupId, ArrayList<Long> addTo) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -4643,7 +4760,9 @@ public class DBClient {
     
     private static final String SQL_DELETE_NYM_REF_URIS = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE nymId = ? AND uriId > -1)";
     private static final String SQL_DELETE_NYM_REFS = "DELETE FROM resourceGroup WHERE nymId = ?";
+
     public void setNymReferences(List nymRefNodes) { setNymReferences(_nymId, nymRefNodes); }
+
     public void setNymReferences(long nymId, List nymRefNodes) {
         ensureLoggedIn();
         try { 
@@ -5167,9 +5286,10 @@ public class DBClient {
     }
 
     private static final String SQL_GET_ALIASES = "SELECT aliasName, aliasValue FROM nymCommandAlias WHERE nymId = ? ORDER BY aliasName ASC";
+
     /** map of command name (String) to command line (String) */
-    public Map getAliases(long nymId) {
-        TreeMap rv = new TreeMap();
+    public Map<String, String> getAliases(long nymId) {
+        TreeMap<String, String> rv = new TreeMap();
         if (!isLoggedIn()) return rv;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -5199,6 +5319,7 @@ public class DBClient {
 
     private static final String SQL_DELETE_ALIAS = "DELETE FROM nymCommandAlias WHERE nymId = ? AND aliasName = ?";
     private static final String SQL_ADD_ALIAS = "INSERT INTO nymCommandAlias (nymId, aliasName, aliasValue) VALUES (?, ?, ?)";
+
     public void addAlias(long nymId, String name, String value) {
         PreparedStatement stmt = null;
         try {
@@ -5293,11 +5414,13 @@ public class DBClient {
 
     private static final String SQL_GET_MSG_READ = 
             "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (";
+
     /** get a list of msgIds (Long) from the given set who have already been read */
-    public List getUnread(long msgIds[]) { return getUnread(_nymId, msgIds); }
-    public List getUnread(long nymId, long msgIds[]) {
+    public List<Long> getUnread(long msgIds[]) { return getUnread(_nymId, msgIds); }
+
+    public List<Long> getUnread(long nymId, long msgIds[]) {
         long begin = System.currentTimeMillis();
-        List rv = new ArrayList();
+        List<Long> rv = new ArrayList();
         StringBuilder buf = new StringBuilder(SQL_GET_MSG_READ);
         for (int i = 0; i < msgIds.length; i++) {
             buf.append(msgIds[i]);
@@ -5641,10 +5764,12 @@ public class DBClient {
     private static final String SQL_GET_NEW_CHANNEL_IDS = "SELECT channelId FROM nymUnreadChannel WHERE nymId = ?";
     /** channels may have been deleted (banned), so drop 'em */
     private static final String SQL_DELETE_REMOVED_CHANNELS = "DELETE FROM nymUnreadChannel WHERE nymId = ? AND channelId NOT IN (SELECT channelId FROM CHANNEL)";
+
     /** forums that haven't been marked as read */
-    public List getNewChannelIds() { return getNewChannelIds(_nymId); }
-    public List getNewChannelIds(long nymId) {
-        List rv = new ArrayList();
+    public List<Long> getNewChannelIds() { return getNewChannelIds(_nymId); }
+
+    public List<Long> getNewChannelIds(long nymId) {
+        List<Long> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -5669,12 +5794,13 @@ public class DBClient {
     }
 
     private static final String SQL_LIST_RESUMEABLE = "SELECT postponeId, MAX(postponeVersion) FROM nymMsgPostpone WHERE nymId = ? GROUP BY postponeId";
+
     /**
      * ordered map of postponeId (Long) to the most recent version (Integer),
      * with the most recent messages first 
      */
-    public TreeMap getResumeable() {
-        TreeMap postponeIdToVersion = new TreeMap(INVERSE_COMPARATOR);
+    public TreeMap<Long, Integer> getResumeable() {
+        TreeMap<Long, Integer> postponeIdToVersion = new TreeMap(INVERSE_COMPARATOR);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -5694,6 +5820,7 @@ public class DBClient {
         }
         return postponeIdToVersion;
     }
+
     private static final Comparator INVERSE_COMPARATOR = new Comparator() {
         public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }
         public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
@@ -6004,8 +6131,9 @@ public class DBClient {
     }
     
     private static final String SQL_GET_CANCEL_URIS = "SELECT cancelledURI FROM channelCancel WHERE channelId = ? ORDER BY cancelOrder ASC";
-    public List getChannelCancelURIs(long channelId) {
-        ArrayList rv = new ArrayList();
+
+    public List<SyndieURI> getChannelCancelURIs(long channelId) {
+        ArrayList<SyndieURI> rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6034,7 +6162,8 @@ public class DBClient {
     
     private static final String SQL_ADD_CANCEL_URI = "INSERT INTO channelCancel (cancelledURI, channelId, cancelOrder) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_CANCEL_URIS = "DELETE FROM channelCancel WHERE channelId = ?";
-    public void setChannelCancelURIs(long channelId, List uris) {
+
+    public void setChannelCancelURIs(long channelId, List<SyndieURI> uris) {
         try {
             exec(SQL_DELETE_CANCEL_URIS, channelId);
         } catch (SQLException se) {
@@ -6064,7 +6193,8 @@ public class DBClient {
     
     private static final String SQL_ADD_CANCEL_REQUEST = "INSERT INTO cancelHistory (cancelRequestedBy, cancelledURI, cancelRequestedOn) VALUES (?, ?, NOW())";
     private static final String SQL_DELETE_OLD_CANCEL_REQUESTS = "DELETE FROM cancelHistory WHERE cancelRequestedOn < ?";
-    public void recordCancelRequests(long requestedByChannelId, List urisToCancel) {
+
+    public void recordCancelRequests(long requestedByChannelId, List<SyndieURI> urisToCancel) {
         if ( (urisToCancel == null) || (urisToCancel.size() <= 0) )
             return;
         
@@ -6257,7 +6387,7 @@ public class DBClient {
                                                     "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private boolean reencryptKeys(String oldPass, String newPass) {
         ensureLoggedIn();
-        List rv = new ArrayList(1);
+        List<NymKeyData> rv = new ArrayList(1);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6348,9 +6478,10 @@ public class DBClient {
     private static final String SQL_GET_POSTPONED = "SELECT nymId, postponeId, postponeVersion, encryptedData FROM nymMsgPostpone WHERE nymId = ?";
     private static final String SQL_DROP_POSTPONED = "DELETE FROM nymMsgPostpone WHERE nymId = ?";
     private static final String SQL_INSERT_POSTPONED = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData) VALUES (?, ?, ?, ?)";
+
     private boolean reencryptPostponed(String oldPass, String newPass) {
         ensureLoggedIn();
-        List rv = new ArrayList(1);
+        List<PostponedData> rv = new ArrayList(1);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

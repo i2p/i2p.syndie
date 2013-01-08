@@ -27,28 +27,28 @@ public class ChannelInfo {
     private long _expiration;
     private long _receiveDate;
     /** set of Strings that anyone can know about the channel */
-    private Set _publicTags;
+    private Set<String> _publicTags;
     /** set of Strings only authorized people can see */
-    private Set _privateTags;
+    private Set<String> _privateTags;
     /** set of SigningPublicKeys that are allowed to sign posts to the channel */
-    private Set _authorizedPosters;
-    private Set _authorizedPosterHashes;
+    private Set<SigningPublicKey> _authorizedPosters;
+    private Set<Hash> _authorizedPosterHashes;
     /** set of SigningPublicKeys that are allowed to sign metadata posts for the channel */
-    private Set _authorizedManagers;
-    private Set _authorizedManagerHashes;
+    private Set<SigningPublicKey> _authorizedManagers;
+    private Set<Hash> _authorizedManagerHashes;
     /** set of ArchiveInfo instances that anyone can see to get more posts */
-    private Set _publicArchives;
+    private Set<ArchiveInfo> _publicArchives;
     /** set of ArchiveInfo instances that only authorized people can see to get more posts */
-    private Set _privateArchives;
+    private Set<ArchiveInfo> _privateArchives;
     /** set of SessionKey instances that posts can be encrypted with */
-    private Set _readKeys;
+    private Set<SessionKey> _readKeys;
     private boolean _readKeysArePublic;
     /** publicly visible headers delivered with the metadata */
     private Properties _publicHeaders;
     /** privately visible headers delivered with the metadata */
     private Properties _privateHeaders;
     /** list of ReferenceNode instances that the channel refers to */
-    private List _references;
+    private List<ReferenceNode> _references;
     private boolean _readKeyUnknown;
     private String _passphrasePrompt;
     
@@ -103,50 +103,62 @@ public class ChannelInfo {
     public void setAllowPublicReplies(boolean val) { _allowPublicReplies = val; }
     public long getExpiration() { return _expiration; }
     public void setExpiration(long when) { _expiration = when; }
+
     /** set of Strings that anyone can know about the channel */
-    public Set getPublicTags() { return _publicTags; }
-    public void setPublicTags(Set tags) { _publicTags = tags; }
+    public Set<String> getPublicTags() { return _publicTags; }
+    public void setPublicTags(Set<String> tags) { _publicTags = tags; }
+
     /** set of Strings only authorized people can see */
-    public Set getPrivateTags() { return _privateTags; }
-    public void setPrivateTags(Set tags) { _privateTags = tags; }
+    public Set<String> getPrivateTags() { return _privateTags; }
+    public void setPrivateTags(Set<String> tags) { _privateTags = tags; }
+
     /** set of SigningPublicKeys that are allowed to sign posts to the channel */
-    public Set getAuthorizedPosters() { return _authorizedPosters; }
-    public Set getAuthorizedPosterHashes() { return _authorizedPosterHashes; }
-    public void setAuthorizedPosters(Set who) { _authorizedPosters = who; _authorizedPosterHashes = hash(who); }
+    public Set<SigningPublicKey> getAuthorizedPosters() { return _authorizedPosters; }
+    public Set<Hash> getAuthorizedPosterHashes() { return _authorizedPosterHashes; }
+    public void setAuthorizedPosters(Set<SigningPublicKey> who) { _authorizedPosters = who; _authorizedPosterHashes = hash(who); }
+
     /** set of SigningPublicKeys that are allowed to sign metadata posts for the channel */
-    public Set getAuthorizedManagers() { return _authorizedManagers; }
-    public Set getAuthorizedManagerHashes() { return _authorizedManagerHashes; }
-    public void setAuthorizedManagers(Set who) { _authorizedManagers = who; _authorizedManagerHashes = hash(who); }
+    public Set<SigningPublicKey> getAuthorizedManagers() { return _authorizedManagers; }
+    public Set<Hash> getAuthorizedManagerHashes() { return _authorizedManagerHashes; }
+    public void setAuthorizedManagers(Set<SigningPublicKey> who) { _authorizedManagers = who; _authorizedManagerHashes = hash(who); }
+
     /** set of ArchiveInfo instances that anyone can see to get more posts */
-    public Set getPublicArchives() { return _publicArchives; }
-    public void setPublicArchives(Set where) { _publicArchives = where; }
+    public Set<ArchiveInfo> getPublicArchives() { return _publicArchives; }
+    public void setPublicArchives(Set<ArchiveInfo> where) { _publicArchives = where; }
+
     /** set of ArchiveInfo instances that only authorized people can see to get more posts */
-    public Set getPrivateArchives() { return _privateArchives; }
-    public void setPrivateArchives(Set where) { _privateArchives = where; }
+    public Set<ArchiveInfo> getPrivateArchives() { return _privateArchives; }
+    public void setPrivateArchives(Set<ArchiveInfo> where) { _privateArchives = where; }
+
     /** set of SessionKey instances that posts can be encrypted with */
-    public Set getReadKeys() { return _readKeys; }
-    public void setReadKeys(Set keys) { _readKeys = keys; }
+    public Set<SessionKey> getReadKeys() { return _readKeys; }
+    public void setReadKeys(Set<SessionKey> keys) { _readKeys = keys; }
+
     /** if true, the current read keys are/were publicly readable */
     public boolean getReadKeysArePublic() { return _readKeysArePublic; }
     public void setReadKeysArePublic(boolean pub) { _readKeysArePublic = pub; }
+
     /** publicly visible headers delivered with the metadata */
     public Properties getPublicHeaders() { return _publicHeaders; }
     public void setPublicHeaders(Properties headers) { _publicHeaders = headers; }
+
     /** privately visible headers delivered with the metadata */
     public Properties getPrivateHeaders() { return _privateHeaders; }
     public void setPrivateHeaders(Properties props) { _privateHeaders = props; }
+
     /** list of ReferenceNode instances that the channel refers to */
-    public List getReferences() { return _references; }
+    public List<ReferenceNode> getReferences() { return _references; }
     public void setReferences(List refs) { _references = refs; }
+
     public boolean getReadKeyUnknown() { return _readKeyUnknown; }
     public void setReadKeyUnknown(boolean unknown) { _readKeyUnknown = unknown; }
     public String getPassphrasePrompt() { return _passphrasePrompt; }
     public void setPassphrasePrompt(String prompt) { _passphrasePrompt = prompt; }
     
-    private Set hash(Set keys) {
+    private Set<Hash> hash(Set<SigningPublicKey> keys) {
         if (keys.size() == 0)
             return Collections.EMPTY_SET;
-        Set rv = new HashSet();
+        Set<Hash> rv = new HashSet();
         for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
             SigningPublicKey pub = (SigningPublicKey)iter.next();
             rv.add(pub.calculateHash());
@@ -155,7 +167,9 @@ public class ChannelInfo {
     }
     
     public boolean equals(Object obj) { return (obj instanceof ChannelInfo) ? ((ChannelInfo)obj)._channelId == _channelId : false; }
+
     public int hashCode() { return (int)_channelId; }
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         if (_channelHash == null)
