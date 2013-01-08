@@ -1,5 +1,24 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-08 1.102b-3 (kytv, zab, zzz)
+  GUI improvements:
+   - Add background image to browsser tab during startup
+   - Speed up browser tab display at startup by several seconds,
+     by putting new message search into a JobRunner thread
+   - Sort forums in new message button
+   - Display SyndicatorTab on startup if we closed with no tabs
+   - Limit number of old tabs displayed on startup
+  Fixes:
+   - Fixes to reduce the number of messages pushed to archives:
+     Use the apparent message date instead of the import date to determine what's too
+     old to push, so we don't push ancient stuff we just pulled to another server.
+     Fix bug where max age was multiplied by 7.
+  HTTP Server:
+   - Reject requests via inproxies
+  Build:
+   - OSX fixes
+   - Several new targets, cleanups
+
 * 2013-01-07 1.102b-2 (zzz)
   Default changes for better new experience:
    - Change default display filter from 6 months to 10 years
