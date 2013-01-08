@@ -15,6 +15,7 @@
     <property name="build.dir" value="build" />
     <property name="dist.dir" value="dist" />
     <property name="lib.dir" value="lib" />
+    <property name="pkg-temp" value="pkg-temp" />
     <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
 
     <!-- allow lib locations to be overridden -->
@@ -84,8 +85,10 @@
     </target>
 
     <target name="dist" depends="jar" description="Combine all jars">
-        <copy file="${swt.jar}" todir="lib" />
-        <copy file="${i2p.jar}" todir="lib" />
+        <mkdir dir="pkg-temp" />
+        <copy file="${swt.jar}" todir="${pkg-temp}" />
+        <copy file="${i2p.jar}" todir="${pkg-temp}" />
+        <copy file="${hsqldb.jar}" todir="${pkg-temp}" />
         <jar jarfile="syndie.jar" index="true">
             <manifest>
                 <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
@@ -94,11 +97,11 @@
                 <attribute name="Base-revision" value="${workspace.version}" />
             </manifest>
             <zipfileset src="${dist.lib.jar}" includes="**" />
-            <zipgroupfileset dir="lib" includes="*.jar"/>
+            <zipgroupfileset dir="${pkg-temp}" includes="*.jar"/>
         </jar>
     </target>
 
-    <target name="run" depends="jar" description="run syndie">
+    <target name="run" depends="jar" description="run Syndie with the 'Tabs' interface">
         <condition property="run.args" value="">
             <not>
                 <isset property="run.args" />
@@ -106,6 +109,21 @@
         </condition>
         <echo message="Running Syndie with args ${run.args}" />
         <java classname="syndie.gui.SWTUI" fork="true" failonerror="false">
+            <arg line="${run.args}" />
+            <classpath>
+                <path refid="classpath.run" />
+            </classpath>
+        </java>
+    </target>
+
+    <target name="run-desktop" depends="jar" description="run Syndie with the 'Desktop' interface">
+        <condition property="run.args" value="">
+            <not>
+                <isset property="run.args" />
+            </not>
+        </condition>
+        <echo message="Running Syndie with args ${run.args}" />
+        <java classname="syndie.gui.desktop.DesktopMain" fork="true" failonerror="false">
             <arg line="${run.args}" />
             <classpath>
                 <path refid="classpath.run" />
@@ -215,6 +233,7 @@
         <delete file="sloccount.sc" />
         <delete file="syndie.jar" />
         <delete dir="plugin" />
+        <delete dir="pkg-temp" />
         <delete file="${ant.project.name}.fba" />
         <delete file="syndie.xpi2p" />
         <delete file="syndie-update.xpi2p" />
