@@ -13,7 +13,7 @@
 	dh $@
 
 override_dh_auto_build:
-	ant jar -Dlib.dir=/usr/share/java -Di2p.jar=/usr/share/i2p/lib/i2p.jar
+	ant jar
 
 override_dh_auto_clean:
 	dh_clean
