@@ -225,25 +225,6 @@
 
     </target>
 
-
-    <target name="clean" description="clean up">
-        <delete dir="${build.dir}" />
-        <delete dir="builddep" />
-        <delete dir="${dist.dir}" />
-        <delete file="sloccount.sc" />
-        <delete file="syndie.jar" />
-        <delete dir="plugin" />
-        <delete dir="pkg-temp" />
-        <delete file="${ant.project.name}.fba" />
-        <delete file="syndie.xpi2p" />
-        <delete file="syndie-update.xpi2p" />
-        <delete file="syndie-win32.xpi2p" />
-        <delete file="syndie-win32-update.xpi2p" />
-        <delete file="syndie-linux-i386.xpi2p" />
-        <delete file="syndie-linux-i386-update.xpi2p" />
-        <delete file="syndie-linux-x86-64.xpi2p" />
-    </target>
-
     <target name="checkForMtn">
         <available property="mtn.available" file="_MTN" type="dir" />
     </target>
@@ -262,8 +243,38 @@
         <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
     </target>
 
+    <target name="getExtendedVersion" depends="buildProperties, trimMtnRev" description="Include trimmed MTN rev ID (if available) in the version number">
+        <property name="MtnShortHash" value="unknown" />
+        <condition property="Extended.Version" value="${full.version}-${MtnShortHash}">
+            <not>
+                <or>
+                    <equals arg1="${MtnShortHash}" arg2="" />
+                    <equals arg1="${MtnShortHash}" arg2="unknown" />
+                </or>
+            </not>
+        </condition>
+        <!-- if not set above we'll set it here -->
+        <property name="Extended.Version" value="${full.version}" />
+    </target>
 
-    <target name="getReleaseNumber">
+    <target name="trimMtnRev" depends="getMtnRev" unless="withoutRev" description="Output a shortend MTN rev ID">
+        <script language="javascript">
+            <![CDATA[
+            var MtnRev = project.getProperty("workspace.version");
+            if (MtnRev != 'unknown' && MtnRev != null) {
+                echo = project.createTask("echo");
+                var MtnShortHash = MtnRev.substring(0,8);
+                project.setProperty("MtnShortHash", MtnShortHash);
+                echo.setMessage("Trimmed hash: " + MtnShortHash);
+                echo.perform();
+            } else {
+                project.setProperty("MtnShortHash", 'unknown');
+            }
+            ]]>
+        </script>
+    </target>
+
+    <target name="getReleaseNumber" description="Extract the Release number from the source">
         <loadfile srcfile="src/syndie/Version.java" property="release.number">
             <filterchain>
                 <linecontains>
@@ -281,7 +292,7 @@
         <echo message="Release number is ${release.number}" />
     </target>
 
-    <target name="getBuildNumber">
+    <target name="getBuildNumber" description="Extract the build number from the source">
         <loadfile srcfile="src/syndie/Version.java" property="syndie.build.number">
             <filterchain>
                 <linecontains>
@@ -299,55 +310,7 @@
         <echo message="Build number is ${syndie.build.number}" />
     </target>
 
-    <target name="sloccount.report">
-        <echo message="Generating sloccount report (this will take awhile)" />
-        <exec executable="sloccount" failonerror="true">
-            <arg value="--details"/>
-            <arg value="--wide"/>
-            <arg value="${basedir}"/>
-            <redirector output="sloccount.sc">
-                <outputfilterchain>
-                    <linecontainsregexp negate="true">
-                        <regexp pattern="(WARNING|Warning:|sloccount\.sc)" />
-                    </linecontainsregexp>
-                </outputfilterchain>
-            </redirector>
-        </exec>
-        <echo message="sloccount report saved to the file sloccount.sc" />
-    </target>
-
-    <target name="getExtendedVersion" depends="buildProperties, trimMtnRev">
-        <property name="MtnShortHash" value="unknown" />
-        <condition property="Extended.Version" value="${full.version}-${MtnShortHash}">
-            <not>
-                <or>
-                    <equals arg1="${MtnShortHash}" arg2="" />
-                    <equals arg1="${MtnShortHash}" arg2="unknown" />
-                </or>
-            </not>
-        </condition>
-        <!-- if not set above we'll set it here -->
-        <property name="Extended.Version" value="${full.version}" />
-    </target>
-
-    <target name="trimMtnRev" depends="getMtnRev" unless="withoutRev">
-        <script language="javascript">
-            <![CDATA[
-            var MtnRev = project.getProperty("workspace.version");
-            if (MtnRev != 'unknown' && MtnRev != null) {
-                echo = project.createTask("echo");
-                var MtnShortHash = MtnRev.substring(0,8);
-                project.setProperty("MtnShortHash", MtnShortHash);
-                echo.setMessage("Trimmed hash: " + MtnShortHash);
-                echo.perform();
-            } else {
-                project.setProperty("MtnShortHash", 'unknown');
-            }
-            ]]>
-        </script>
-    </target>
-
-    <target name="source-tarball" depends="getExtendedVersion">
+    <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
         <fail message="This target cannot be used without Monotone!">
             <condition>
@@ -384,7 +347,24 @@
         </tar>
     </target>
 
-    <target name="findbugs" depends="jar">
+    <target name="sloccount.report" description="Generate 'sloccount' report">
+        <echo message="Generating sloccount report (this will take awhile)" />
+        <exec executable="sloccount" failonerror="true">
+            <arg value="--details"/>
+            <arg value="--wide"/>
+            <arg value="${basedir}"/>
+            <redirector output="sloccount.sc">
+                <outputfilterchain>
+                    <linecontainsregexp negate="true">
+                        <regexp pattern="(WARNING|Warning:|sloccount\.sc)" />
+                    </linecontainsregexp>
+                </outputfilterchain>
+            </redirector>
+        </exec>
+        <echo message="sloccount report saved to the file sloccount.sc" />
+    </target>
+
+    <target name="findbugs" depends="jar" description="Analyze source with Findbugs">
         <echo message="Starting findbugs, this will take a while..." />
         <exec executable="nice" failonerror="true">
             <arg value="findbugs"/>
@@ -433,6 +413,24 @@
             </classpath>
         </javadoc>
         <echo message="Warning, javadoc embeds timestamps in the output, run with 'TZ=UTC ant javadoc' if you plan to distribute" />
+    </target>
+
+    <target name="clean" description="clean up">
+        <delete dir="${build.dir}" />
+        <delete dir="builddep" />
+        <delete dir="${dist.dir}" />
+        <delete file="sloccount.sc" />
+        <delete file="syndie.jar" />
+        <delete dir="plugin" />
+        <delete dir="pkg-temp" />
+        <delete file="${ant.project.name}.fba" />
+        <delete file="syndie.xpi2p" />
+        <delete file="syndie-update.xpi2p" />
+        <delete file="syndie-win32.xpi2p" />
+        <delete file="syndie-win32-update.xpi2p" />
+        <delete file="syndie-linux-i386.xpi2p" />
+        <delete file="syndie-linux-i386-update.xpi2p" />
+        <delete file="syndie-linux-x86-64.xpi2p" />
     </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
