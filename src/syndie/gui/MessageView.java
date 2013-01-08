@@ -268,9 +268,9 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             if (authorChan != null) {
                 String name = authorChan.getName();
                 if (name == null)
-                    _headerAuthor.setText(authorChan.getChannelHash().toBase64().substring(0,6));
+                    _headerAuthor.setText('[' + authorChan.getChannelHash().toBase64().substring(0,6) + ']');
                 else
-                    _headerAuthor.setText("(" + authorChan.getChannelHash().toBase64().substring(0,6) + ") " + name);
+                    _headerAuthor.setText(name + " [" + authorChan.getChannelHash().toBase64().substring(0,6) + ']');
             } else {
                 _headerAuthor.setText(_translationRegistry.getText(T_NO_AUTHOR, "Unspecified"));
             }
@@ -281,9 +281,9 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             if (forumChan != null) {
                 String name = forumChan.getName();
                 if (name == null)
-                    _headerForum.setText(forumChan.getChannelHash().toBase64().substring(0,6));
+                    _headerForum.setText('[' + forumChan.getChannelHash().toBase64().substring(0,6) + ']');
                 else
-                    _headerForum.setText("(" + forumChan.getChannelHash().toBase64().substring(0,6) + ") " + name);
+                    _headerForum.setText(name + " [" + forumChan.getChannelHash().toBase64().substring(0,6) + ']');
             } else {
                 _headerForum.setText(_translationRegistry.getText(T_NO_FORUM, "Unspecified"));
             }
