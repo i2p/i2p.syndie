@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="syndie" default="run" basedir=".">
+<project name="syndie" default="usage" basedir=".">
     <description>Builds, tests and runs the project syndie.</description>
     <!--
         Include property files so that values can be easily overridden.
@@ -39,6 +39,17 @@
         <fileset dir="${data.dir}" />
     </path>
 
+    <target name="help" depends="usage" />
+    <target name="usage">
+        <property name="tab" value="    " />
+        <echo message="Useful targets:" />
+        <echo message="       clean: ${tab}Clean up the workspace" />
+        <echo message="        dist: ${tab}Create ${basedir}/syndie.jar containing dependencies for YOUR system"/>
+        <echo message="         jar: ${tab}Create a jar containing ${ant.project.name}"/>
+        <echo message="    javadocs: ${tab}Generate javadocs for ${ant.project.name}" />
+        <echo message="         run: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
+        <echo message=" run-desktop: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
+    </target>
     <target name="init" depends="buildProperties">
         <tstamp>
             <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
@@ -386,7 +397,8 @@
         <echo message="Now run: findbugs ${ant.project.name}.fba" />
     </target>
 
-    <target name="javadoc" depends="buildProperties" description="Generate Javadocs">
+    <target name="javadoc" depends="javadocs" />
+    <target name="javadocs" depends="buildProperties" description="Generate Javadocs">
         <!-- only set the locale if not set elsewhere -->
         <property name="javadoc.locale" value="en_US" />
         <mkdir dir="./build" />
