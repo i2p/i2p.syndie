@@ -28,9 +28,9 @@ import syndie.Constants;
  */
 public class HTTPServ implements CLI.Command {
     private static ServerSocket _ssocket;
-    private List _runners;
+    private List<Runner> _runners;
     /** accepted Socket instances that haven't run yet */
-    private static List _pendingSockets = new ArrayList();
+    private static final List<Socket> _pendingSockets = new ArrayList();
     private DBClient _client;
     private static UI _ui;
     private static boolean _alive = false;
@@ -43,8 +43,10 @@ public class HTTPServ implements CLI.Command {
     private int _curListeners;
     private static final int MAX_LISTENERS = 50;
     private static boolean _rebuilding;
-    private HashMap _sharedFiles;
+    private HashMap<String, File> _sharedFiles;
     
+    private static final boolean REJECT_INPROXY = true;
+
     public HTTPServ() {
         if (isAlive()) return;
         _runners = new ArrayList();
@@ -376,6 +378,7 @@ public class HTTPServ implements CLI.Command {
                 break;
             
             String [] header = line.split(":", 2);
+            // FIXME map keys to upper or lower case
             headers.put(header[0].trim(), header[1].trim());
         }
         
@@ -425,6 +428,7 @@ public class HTTPServ implements CLI.Command {
         else
             return path.substring(0, idx);
     }
+
     private static final String getChannelSub(String path) {
         int idx = path.lastIndexOf('/');
         if ( (idx < 0) || (idx + 1 >= path.length()) ) return null;
@@ -435,6 +439,11 @@ public class HTTPServ implements CLI.Command {
         if (path == null || path.equals("/"))
             path = "/index.html";
         _ui.debugMessage("GET " + path);
+        if (REJECT_INPROXY && path != "/index.html" &&
+            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            fail403(socket, in, out, timeout);
+            return;
+        }
         
         File file = (File) _sharedFiles.get(path);
         if (file != null)
@@ -455,6 +464,11 @@ public class HTTPServ implements CLI.Command {
         if (path == null || path.equals("/"))
             path = "/index.html";
         _ui.debugMessage("HEAD " + path);
+        if (REJECT_INPROXY && path != "/index.html" &&
+            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            fail403(socket, in, out, timeout);
+            return;
+        }
         
         File file = (File) _sharedFiles.get(path);
         if (file != null) {
@@ -621,6 +635,11 @@ public class HTTPServ implements CLI.Command {
             return;
         }
         _ui.debugMessage("handlePost");
+        if (REJECT_INPROXY &&
+            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            fail403(socket, in, out, timeout);
+            return;
+        }
         
         long remaining, contentLength;
         try {
