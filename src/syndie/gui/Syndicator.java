@@ -895,7 +895,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
-                buf.append(_translationRegistry.getText(T_SUMMARY_META, "Fetching message header"));
+                buf.append(_translationRegistry.getText(T_SUMMARY_META, "Fetching header"));
                 long p = action.getReceived();
                 long t = action.getSize();
                 if (p > 0)
@@ -909,7 +909,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
-                buf.append(_translationRegistry.getText(T_SUMMARY_BODY, "Fetching message body"));
+                buf.append(_translationRegistry.getText(T_SUMMARY_BODY, "Fetching message"));
                 long p = action.getReceived();
                 long t = action.getSize();
                 if (p > 0)
@@ -1044,7 +1044,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
-                buf.append(_translationRegistry.getText(T_SUMMARY_PMETA, "Pushing message header"));
+                buf.append(_translationRegistry.getText(T_SUMMARY_PMETA, "Pushing header"));
                 long t = action.getSize();
                 if (t > 0)
                     buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
@@ -1053,7 +1053,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_NOW, "Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
-                buf.append(_translationRegistry.getText(T_SUMMARY_PBODY, "Pushing message body"));
+                buf.append(_translationRegistry.getText(T_SUMMARY_PBODY, "Pushing message"));
                 long t = action.getSize();
                 if (t > 0)
                     buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
