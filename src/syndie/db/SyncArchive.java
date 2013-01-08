@@ -8,8 +8,10 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -17,10 +19,10 @@ import syndie.data.SyndieURI;
  *
  */
 public class SyncArchive {
-    private SyncManager _manager;
-    private DBClient _client;
+    private final SyncManager _manager;
+    private final DBClient _client;
     private String _name;
-    private String _oldName;
+    private final String _oldName;
     private String _archiveURL;
     private String _postKey;
     private String _readKey;
@@ -34,9 +36,9 @@ public class SyncArchive {
     private int _nextSyncDelayHours;
     private long _uriId;
     private boolean _nextSyncOneOff;
-    private List _incomingActions;
-    private List _outgoingActions;
-    private List _listeners;
+    private final List<IncomingAction> _incomingActions;
+    private final List<OutgoingAction> _outgoingActions;
+    private final List<SyncArchiveListener> _listeners;
     private long _whitelistGroupId;
     private SharedArchiveEngine.PullStrategy _pullStrategy;
     private SharedArchiveEngine.PushStrategy _pushStrategy;
@@ -59,6 +61,7 @@ public class SyncArchive {
     private static final int DEFAULT_DELAY_HOURS = 4;
 
     public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
+
     public SyncArchive(SyncManager mgr, DBClient client, String name) {
         _manager = mgr;
         _client = client;
@@ -486,6 +489,7 @@ public class SyncArchive {
     }
     
     private static final String SQL_GET_ATTRIBUTES = "SELECT uriId, postKey, postKeySalt, readKey, readKeySalt, consecutiveFailures, customProxyHost, customProxyPort, customFCPHost, customFCPPort, nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, nextSyncDelayHours, whitelistGroupId FROM nymArchive WHERE name = ? AND nymId = ?";
+
     /** (re)load all of the archive's attributes */
     private void load() {
         if (_name == null) return;
@@ -596,8 +600,10 @@ public class SyncArchive {
             "nextPullDate, nextPushDate, lastPullDate, lastPushDate, customPullPolicy, customPushPolicy, " +
             "name, nymId, nextSyncDelayHours, whitelistGroupId) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
     /** persist all of the archive's attributes */
     public void store() { store(false); }
+
     public void store(boolean notifyListeners) {
         synchronized (this) {
             delete(false);
@@ -697,6 +703,7 @@ public class SyncArchive {
     }
     
     public void delete() { delete(true); }
+
     public void delete(boolean notifyListeners) {
         PreparedStatement stmt = null;
         try {

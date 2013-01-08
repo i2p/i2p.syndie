@@ -17,11 +17,11 @@ import syndie.db.UI;
  *
  */
 public class ArchiveDefaultsPopup implements Themeable, Translatable {
-    private Shell _parent;
-    private DBClient _client;
-    private UI _ui;
-    private ThemeRegistry _themeRegistry;
-    private TranslationRegistry _translationRegistry;
+    private final Shell _parent;
+    private final DBClient _client;
+    private final UI _ui;
+    private final ThemeRegistry _themeRegistry;
+    private final TranslationRegistry _translationRegistry;
     
     private Shell _shell;
 

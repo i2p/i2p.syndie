@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -15,7 +16,9 @@ import syndie.data.SyndieURI;
 public class SyncManager {
     private static DBClient _client;
     private static UI _ui;
+
     private static SyncManager _instance = new SyncManager();
+
     public static SyncManager getInstance(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
@@ -25,9 +28,9 @@ public class SyncManager {
         _instance.loadArchives();
         return _instance; 
     }
-    private List _archives;
+    private final List<SyncArchive> _archives;
     private boolean _archivesLoaded;
-    private List _listeners;
+    private final List<SyncListener> _listeners;
     private boolean _online;
     private SharedArchiveEngine.PullStrategy _defaultPullStrategy;
     private SharedArchiveEngine.PushStrategy _defaultPushStrategy;
@@ -169,6 +172,7 @@ public class SyncManager {
         _ui.debugMessage("db push strategy: " + push);
         _defaultPushStrategy = push;
     }
+
     private void saveDefaultStrategies() {
         Properties prefs = _client.getNymPrefs();
         if (_defaultPushStrategy != null)

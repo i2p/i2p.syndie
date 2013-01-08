@@ -23,14 +23,14 @@ import syndie.data.Enclosure;
  * load the local archive (disk and database) into a SharedArchive
  */
 public class SharedArchiveBuilder {
-    private DBClient _client;
-    private UI _ui;
+    private final DBClient _client;
+    private final UI _ui;
     private int _shareDelayHours;
     /** if a message was created locally, don't advertise it as being here for at least this long */
     private int _hideLocalHours;
     private boolean _shareBanned;
     private boolean _shareReceivedOnly;
-    private SharedArchive.About _about;
+    private final SharedArchive.About _about;
     
     /** if it arrived in the last 3 days, its "new" */
     static final long PERIOD_NEW = 3*24*60*60*1000L;

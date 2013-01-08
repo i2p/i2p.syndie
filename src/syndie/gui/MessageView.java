@@ -69,12 +69,12 @@ import syndie.db.UI;
  *
  */
 public class MessageView extends BaseComponent implements Translatable, Themeable {
-    private NavigationControl _navControl;
-    private URIControl _uriControl;
-    private BookmarkControl _bookmarkControl;
-    private BanControl _banControl;
-    private DataCallback _dataCallback;
-    private Composite _parent;
+    private final NavigationControl _navControl;
+    private final URIControl _uriControl;
+    private final BookmarkControl _bookmarkControl;
+    private final BanControl _banControl;
+    private final DataCallback _dataCallback;
+    private final Composite _parent;
     private Composite _root;
     
     private ImageCanvas _avatar;
@@ -119,7 +119,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     //private MessagePreview _preview;
     
-    private SyndieURI _uri;
+    private final SyndieURI _uri;
     private int _page;
     private Hash _author;
     private Hash _target;

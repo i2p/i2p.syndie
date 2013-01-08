@@ -37,10 +37,10 @@ import syndie.db.UI;
  *
  */
 public class ArchiveDefaults extends Composite implements Themeable, Translatable {
-    private DBClient _client;
-    private UI _ui;
-    private ThemeRegistry _themeRegistry;
-    private TranslationRegistry _translationRegistry;
+    private final DBClient _client;
+    private final UI _ui;
+    private final ThemeRegistry _themeRegistry;
+    private final TranslationRegistry _translationRegistry;
     
     private Table _archives;
     private TableColumn _colImport;

@@ -1,9 +1,11 @@
 package syndie.gui;
 
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.SWT;
+
 import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 

@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
@@ -33,6 +35,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
@@ -46,8 +49,8 @@ import syndie.db.UI;
  *
  */
 class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Translatable, Disposable, SyncArchive.SyncArchiveListener {
-    private Composite _parent;
-    private SyncArchive _archive;
+    private final Composite _parent;
+    private final SyncArchive _archive;
     
     private Composite _root;
     private Label _nameLabel;
@@ -77,7 +80,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private Combo _pushAge;
     private Button _whitelistEnable;
     private Combo _whitelist;
-    private ArrayList _whitelistIds;
+    private final ArrayList<Long> _whitelistIds;
     private Button _whitelistPull;
     private Button _whitelistPreview;
     private Button _pullPrivate;
@@ -97,7 +100,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private Button _backOffOnFailures;
     private Button _save;
     private Button _cancel;
-    private Syndicator.SyndicationDetailListener _listener;
+    private final Syndicator.SyndicationDetailListener _listener;
     
     public SyndicatorDetailHTTPArchive(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, SyncArchive archive, Syndicator.SyndicationDetailListener lsnr) {
         super(client, ui, themes, trans);

@@ -2,7 +2,9 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -18,6 +20,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
+
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.SharedArchive;
@@ -30,7 +33,7 @@ import syndie.db.UI;
  *
  */
 public class ArchiveManager extends BaseComponent implements Translatable, Themeable {
-    private Composite _parent;
+    private final Composite _parent;
     private Composite _root;
 
     private Button _expiration;
@@ -51,10 +54,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private Button _save;
     private Button _cancel;
     
-    private List _uris;
-    private List _bannedScopes;
+    private final List<SyndieURI> _uris;
+    private final List<Hash> _bannedScopes;
     
-    private NavigationControl _navControl;
+    private final NavigationControl _navControl;
     
     public ArchiveManager(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl) {
         super(client, ui, themes, trans);
@@ -190,6 +193,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private static final String T_ADVERTISED_POPUP = "syndie.gui.archivemanager.adpopup.title";
     private static final String T_ADVERTISED_POPUP_DESC = "syndie.gui.archivemanager.adpopup.desc";
     private static final String T_ADVERTISED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
+
     private void manageAdvertised() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
         s.setText(_translationRegistry.getText(T_ADVERTISED_POPUP, "Advertised archives"));
@@ -247,6 +251,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private static final String T_BANNED_POPUP = "syndie.gui.archivemanager.bannedpopup.title";
     private static final String T_BANNED_POPUP_DESC = "syndie.gui.archivemanager.bannedpopup.desc";
     private static final String T_BANNED_POPUP_OK = "syndie.gui.archivemanager.bannedpopup.ok";
+
     private void manageBanned() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
         s.setText(_translationRegistry.getText(T_BANNED_POPUP, "Banned"));

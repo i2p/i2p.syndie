@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -30,6 +31,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.SyncArchive;
@@ -37,7 +39,7 @@ import syndie.db.SyncManager;
 import syndie.db.UI;
 
 public class ManageForumArchives extends BaseComponent implements Themeable, Translatable {
-    private ManageForum _manage;
+    private final ManageForum _manage;
     private Shell _shell;
     private Table _table;
     private TableColumn _colName;
@@ -57,7 +59,7 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
     private Button _ok;
     private Button _cancel;
     
-    private Map _itemToURI;
+    private final Map<TableItem, SyndieURI> _itemToURI;
     
     private TableItem _curItem;
     
