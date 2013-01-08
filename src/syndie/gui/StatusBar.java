@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -495,7 +496,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
      *  find a better way
      */
     private Map sortForums(Set forums) {
-        Map rv = new TreeMap();
+        Map rv = new TreeMap(Collator.getInstance());
         for (Iterator iter = forums.iterator(); iter.hasNext(); ) {
             Hash forum = (Hash)iter.next();
             String name = _client.getChannelName(forum);
@@ -754,7 +755,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
      */
     private Map<String, Long> generateMessageCounts() {
         _ui.debugMessage("statusbar refreshnewforums start");
-        Map<String, Long> rv = new TreeMap();
+        Map<String, Long> rv = new TreeMap(Collator.getInstance());
         List channelIds = _client.getNewChannelIds();
         // 30 ms per loop
         for (int i = 0; i < channelIds.size(); i++) {
