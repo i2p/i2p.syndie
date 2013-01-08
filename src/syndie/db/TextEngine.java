@@ -194,7 +194,7 @@ public class TextEngine {
         
         File archiveIntro = new File(_archiveDir, "index.html");
         if (!archiveIntro.exists())
-            installResource("/defaultarchiveindex", archiveIntro);
+            installResource("/defaultarchiveindex.html", archiveIntro);
         
         if (_client == null)
             _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
