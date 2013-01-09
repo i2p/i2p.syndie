@@ -1043,11 +1043,15 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 return;
             }
 
+            StringBuilder bf = new StringBuilder();
             String forum = _client.getChannelName(scope);
             if (forum != null)
-                actionItem.setText(0, forum + " [" + scope.toBase64().substring(0,6) + "]" + (uri.getMessageId() != null ? " - " + uri.getMessageId() : ""));
-            else
-                actionItem.setText(0, "[" + scope.toBase64().substring(0,6) + "]" + (uri.getMessageId() != null ? " - " + uri.getMessageId() : ""));
+                bf.append(forum).append(' ');
+            bf.append('[').append(scope.toBase64().substring(0,6)).append(']');
+            Long id = uri.getMessageId();
+            if (id != null)
+                bf.append(' ').append(Constants.getDateTime(id.longValue()));
+            actionItem.setText(0, bf.toString());
 
             if (action.isScheduled()) {
                 actionItem.setText(1, _translationRegistry.getText(T_WHEN_ASAP, "ASAP"));
