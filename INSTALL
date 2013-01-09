@@ -1,8 +1,7 @@
-Syndie can be built from source with a modern (1.5+) java development
-kit, or with a new GCJ (4.0+).  You must have ant (1.7+), and the
-source release includes HSQLDB (1.8.0.7), though newer revisions
-should work.  You will needs SWT as well - grab the latest version for
-your OS and architecture from http://www.eclipse.org/swt/ (or from
+Syndie can be built from source with a modern (1.6+) java development kitYou
+must have ant (1.7+), and the source release includes HSQLDB (1.8.0.7), though
+newer revisions should work.  You will need SWT as well - grab the latest
+version for your OS and architecture from http://www.eclipse.org/swt/ (or from
 your favorite package manager).
 
 I2P and SWT are required to compile Syndie. You could either
@@ -18,7 +17,8 @@ Alternatively, add a line to the file nbproject/private/private.properties
 To build a normal java instance, run "ant jar". To build a self-contained
 syndie.jar that includes the dependencies, run "ant dist".
 
-To run it from within the source directory, use "ant run".
+To run it from within the source directory, use "ant run". To run with the
+alternative 'Desktop GUI', use "ant run-desktop".
 
 To deploy your modifications into an existing Syndie install, copy
 the new ./lib/syndie.jar to the Syndie install's lib/ directory
