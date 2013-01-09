@@ -50,7 +50,16 @@
         <echo message="         run: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
         <echo message=" run-desktop: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
     </target>
+
     <target name="init" depends="buildProperties">
+        <available property="have.swt" file="${swt.jar}" type="file" />
+        <fail message="Cannot find ${swt.jar}. Please read INSTALL and build.properties for advice.">
+            <condition>
+                <not>
+                    <istrue value="${have.swt}" />
+                </not>
+            </condition>
+        </fail>
         <tstamp>
             <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
         </tstamp>
@@ -97,9 +106,9 @@
 
     <target name="dist" depends="jar" description="Combine all jars">
         <mkdir dir="pkg-temp" />
-        <copy file="${swt.jar}" todir="${pkg-temp}" />
-        <copy file="${i2p.jar}" todir="${pkg-temp}" />
-        <copy file="${hsqldb.jar}" todir="${pkg-temp}" />
+        <copy file="${swt.jar}" todir="${pkgtemp.dir}" />
+        <copy file="${i2p.jar}" todir="${pkgtemp.dir}" />
+        <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}" />
         <jar jarfile="syndie.jar" index="true">
             <manifest>
                 <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
@@ -108,7 +117,7 @@
                 <attribute name="Base-revision" value="${workspace.version}" />
             </manifest>
             <zipfileset src="${dist.lib.jar}" includes="**" />
-            <zipgroupfileset dir="${pkg-temp}" includes="*.jar"/>
+            <zipgroupfileset dir="${pkgtemp.dir}" includes="*.jar"/>
         </jar>
     </target>
 
@@ -321,7 +330,11 @@
         <echo message="Build number is ${syndie.build.number}" />
     </target>
 
-    <target name="preppkg" depends="prep-docs, prep-common" />
+    <target name="preppkg" depends="prep-docs">
+        <copy todir="${pkgtemp.dir}/bin">
+            <fileset dir="./bin" />
+        </copy>
+    </target>
 
     <target name="prep-docs">
         <copy todir="${pkgtemp.dir}/docs">
@@ -330,35 +343,36 @@
         <copy todir="${pkgtemp.dir}/docs/html">
             <fileset dir="doc/web" />
         </copy>
-    </target>
-
-    <target name="prep-common">
-        <copy todir="${pkgtemp.dir}/bin">
-            <fileset dir="./bin" />
-        </copy>
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
-            <fileset dir="doc/licenses/SWT/common" />
-        </copy>
         <copy file="LICENSE" todir="${pkgtemp.dir}/docs/licenses"/>
+        <copy file="lib/hsqldb_lic.txt" todir="${pkgtep.dir}/docs/licenses" />
         <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/docs/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
     </target>
 
-    <target name="prep-win-licenses" depends="prep-common">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
-            <fileset dir="doc/licenses/SWT/win" />
+    <target name="prep-common-swt">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+            <fileset dir="doc/licenses/SWT/common" />
         </copy>
     </target>
 
-    <target name="prep-lin-licenses" depends="prep-common">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
-            <fileset dir="doc/licenses/SWT/lin" />
+    <target name="prep-win-licenses" depends="prep-common-swt">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+            <fileset dir="doc/licenses/SWT/win/about_files" />
         </copy>
+        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/Windows.html" />
     </target>
 
-    <target name="prep-mac-licenses" depends="prep-common">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
-            <fileset dir="doc/licenses/SWT/mac" />
+    <target name="prep-lin-licenses" depends="prep-common-swt">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+            <fileset dir="doc/licenses/SWT/lin/about_files" />
         </copy>
+        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/Linux.html" />
+    </target>
+
+    <target name="prep-mac-licenses" depends="prep-common-swt">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+            <fileset dir="doc/licenses/SWT/mac/about_files" />
+        </copy>
+        <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/OSX.html" />
     </target>
 
     <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
@@ -486,6 +500,9 @@
         <delete file="syndie-linux-i386.xpi2p" />
         <delete file="syndie-linux-i386-update.xpi2p" />
         <delete file="syndie-linux-x86-64.xpi2p" />
+    </target>
+    <target name="debug">
+        <echoproperties/>
     </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
