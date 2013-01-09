@@ -105,7 +105,7 @@
     </target>
 
     <target name="dist" depends="jar" description="Combine all jars">
-        <mkdir dir="pkg-temp" />
+        <mkdir dir="${pkgtemp.dir}" />
         <copy file="${swt.jar}" todir="${pkgtemp.dir}" />
         <copy file="${i2p.jar}" todir="${pkgtemp.dir}" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}" />
@@ -344,7 +344,7 @@
             <fileset dir="doc/web" />
         </copy>
         <copy file="LICENSE" todir="${pkgtemp.dir}/docs/licenses"/>
-        <copy file="lib/hsqldb_lic.txt" todir="${pkgtep.dir}/docs/licenses" />
+        <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/docs/licenses" />
         <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/docs/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
     </target>
 
