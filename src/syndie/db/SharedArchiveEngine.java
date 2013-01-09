@@ -450,7 +450,8 @@ public class SharedArchiveEngine {
             }
         });
         
-        SharedArchiveBuilder.sortFiles(dirs);
+        // rather than sort to hide OS type, we shuffle later
+        //SharedArchiveBuilder.sortFiles(dirs);
         
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
@@ -492,13 +493,14 @@ public class SharedArchiveEngine {
                 }
             });
 
-            SharedArchiveBuilder.sortFiles(files);
+            // rather than sort to hide OS type, we shuffle later
+            //SharedArchiveBuilder.sortFiles(files);
             
             boolean added = false;
             for (int j = 0; j < files.length; j++) {
                 long messageId = SharedArchiveBuilder.getMessageId(files[j]);
                 if (messageId < 0) {                
-                    ui.debugMessage("File is not relevent for a message: " + files[j].getName());
+                    ui.debugMessage("File is not relevant for a message: " + files[j].getName());
                     continue;
                 }
                 boolean known = archive.isKnown(scope, messageId);
@@ -515,6 +517,7 @@ public class SharedArchiveEngine {
                     continue;
                 }
 
+                // the internal ID
                 long msgId = client.getMessageId(scope, messageId);
                 int privacy = client.getMessagePrivacy(msgId);
                 if (!archive.getAbout().wantPBE() && (privacy == DBClient.PRIVACY_PBE)) {
@@ -531,8 +534,10 @@ public class SharedArchiveEngine {
                 // If the other side wants it, they can pull it from some other archive.
                 // But use the min in case they spoofed it to the future.
                 // TODO maybe add an option?
-                //long importDate = client.getMessageImportDate(msgId);
-                long msgDate = Math.min(msgId, client.getMessageImportDate(msgId));
+                long importDate = client.getMessageImportDate(msgId);
+                long msgDate = messageId;
+                if (importDate > 0 && importDate < msgDate)
+                    msgDate = importDate;
                 if (archive.getAbout().wantRecentOnly()) {
                     if (msgDate + SharedArchiveBuilder.PERIOD_NEW < System.currentTimeMillis()) {
                         ui.debugMessage("Don't send them " + messageId + " because they only want recent messages");
@@ -542,7 +547,7 @@ public class SharedArchiveEngine {
                 
                 if (strategy.sendMaxAge > 0) {
                     if (msgDate + 24*60*60*1000L*strategy.sendMaxAge < System.currentTimeMillis()) {
-                        ui.debugMessage("Don't send them " + messageId + " because it is just too old, and if they wanted it, they'd have it already");
+                        ui.debugMessage("Don't send them " + messageId + " because it is too old; import date " + importDate);
                         continue;
                     }
                 }

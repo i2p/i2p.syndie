@@ -50,6 +50,10 @@ import syndie.data.WatchedChannel;
 
 /**
  *  The interface to the database itself
+ *
+ *  Note: "messageId" parameters are generally the external ID (timestamp),
+ *  and "msgId" paramters are the internal database ID.
+ *
  */
 public class DBClient {
 
@@ -1700,7 +1704,13 @@ public class DBClient {
         for (int i = 0; i < manageKeys.size(); i++) {
             NymKey key = (NymKey)manageKeys.get(i);
             if (key.getAuthenticated()) {
-                SigningPrivateKey priv = new SigningPrivateKey(key.getData());
+                SigningPrivateKey priv;
+                try {
+                    priv = new SigningPrivateKey(key.getData());
+                } catch (IllegalArgumentException iae) {
+                    _ui.errorMessage("Key is " + key + " Length is " + key.getData().length, iae);
+                    continue;
+                }
                 SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 pubKeys.add(pub);
                 if (includeIdent) {
@@ -2892,12 +2902,20 @@ public class DBClient {
     
     private static final String SQL_GET_INTERNAL_MESSAGE_ID = "SELECT msgId FROM channelMessage WHERE scopeChannelId = ? AND messageId = ?";
 
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return message info or null
+     */
     public MessageInfo getMessage(long scopeId, Long messageId) {
         ensureLoggedIn();
         if (messageId == null) return null;
         return getMessage(scopeId, messageId.longValue());
     }
 
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return message info or null
+     */
     public MessageInfo getMessage(long scopeId, long messageId) {
         long msgId = getMessageId(scopeId, messageId);
         if (msgId >= 0)
@@ -2905,6 +2923,11 @@ public class DBClient {
         else
             return null;
     }
+
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return internal message id or -1 if not found
+     */
     public long getMessageId(long scopeId, long messageId) {
         long msgId = -1;
         PreparedStatement stmt = null;
@@ -2929,12 +2952,22 @@ public class DBClient {
         }
         return msgId;
     }
+
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return internal message id or -1 if not found
+     */
     public long getMessageId(Hash scope, Long messageId) {
         if (messageId == null)
             return -1;
         else
             return getMessageId(scope, messageId.longValue());
     }
+
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return internal message id or -1 if not found
+     */
     public long getMessageId(Hash scope, long messageId) {
         long chanId = getChannelId(scope);
         if (chanId >= 0)
@@ -2943,6 +2976,10 @@ public class DBClient {
             return -1;
     }
     
+    /**
+     *  @param messageId external ID (timestamp)
+     *  @return date or -1
+     */
     public long getMessageImportDate(Hash scope, long messageId) {
         long msgId = getMessageId(scope, messageId);
         if (msgId >= 0)
@@ -2952,6 +2989,10 @@ public class DBClient {
     }
     private static final String SQL_GET_MESSAGE_IMPORT_DATE = "SELECT importDate FROM channelMessage WHERE msgId = ?";
 
+    /**
+     *  @param msgId internal ID
+     *  @return date or -1
+     */
     public long getMessageImportDate(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3008,6 +3049,10 @@ public class DBClient {
     
     private static final String SQL_GET_MESSAGE_ID = "SELECT messageId FROM channelMessage WHERE msgId = ?";
 
+    /**
+     *  @param msgId internal message id
+     *  @return external ID (timestamp) or -1
+     */
     public long getMessageId(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;

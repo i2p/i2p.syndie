@@ -1,5 +1,28 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-09 1.102b-4 (kytv, zzz)
+  GUI improvements:
+   - Display localized dates
+   - Display apparent date (message ID) rather than import date in most places
+   - Better sorting (localized, case-insensitive)
+   - Spacing on message flag bar icons
+  HTTP Server:
+   - Send and parse last-modified headers
+   - Add default favicon.ico and robots.txt to reduce server errors
+   - Move web files from archive/ to web/
+  - Return 404 instead of index on bad requests
+  Syndication:
+   - Store fetched index file for reuse if server cannot be
+     contacted or returns 304
+   - Continue syndication even if index has not been modified
+   - Fix pushes (broken in -3)
+  Build:
+   - Prep for installers and packages
+  Other:
+   - Fix disposed SWT exceptions on cancel
+   - Restrict permissions on all files and directories
+
+
 * 2013-01-08 1.102b-3 (kytv, zab, zzz)
   GUI improvements:
    - Add background image to browsser tab during startup
