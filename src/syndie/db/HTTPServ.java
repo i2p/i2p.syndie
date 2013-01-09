@@ -173,7 +173,7 @@ public class HTTPServ implements CLI.Command {
     private void buildSharedFiles() {
         _sharedFiles = new HashMap();
         
-        File webDir = _client.getArchiveDir();
+        File webDir = _client.getWebDir();
         File distDir = new File(_client.getRootDir(), "dist");
         String sharedIndex = LocalArchiveManager.SHARED_INDEX_FILE;
         
