@@ -25,19 +25,19 @@ public class ImageCanvas extends Canvas {
     
     private int _forcedWidth;
     private int _forcedHeight;
-    private boolean _scroll;
-    private boolean _scaleUp;
+    private final boolean _scroll;
+    private final boolean _scaleUp;
     
     public ImageCanvas(Composite parent) { this(parent, true); }
+
     public ImageCanvas(Composite parent, boolean scroll) { this(parent, scroll, true); }
+
     public ImageCanvas(Composite parent, boolean scroll, boolean border) { this(parent, scroll, border, true); }
+
     public ImageCanvas(Composite parent, boolean scroll, boolean border, boolean scaleUp) {
         super(parent, (border ? SWT.BORDER : 0) | (scroll ? SWT.H_SCROLL | SWT.V_SCROLL : 0));// | SWT.NO_BACKGROUND);
         _scroll = scroll;
-        _previewX = 0;
-        _previewY = 0;
         _scaleUp = scaleUp;
-        _imageCurrent = null;
         //setBackgroundMode(SWT.INHERIT_FORCE);
         addPaintListener(new PaintListener() {
             public void paintControl(PaintEvent evt) {
@@ -54,8 +54,6 @@ public class ImageCanvas extends Canvas {
         }
         //setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_BLACK));
         
-        _forcedWidth = 0;
-        _forcedHeight = 0;
     }
     
     public void forceSize(int width, int height) {
