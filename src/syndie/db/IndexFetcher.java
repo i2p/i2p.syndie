@@ -3,20 +3,33 @@ package syndie.db;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
+import net.i2p.util.FileUtil;
+import net.i2p.util.SecureFile;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import syndie.util.RFC822Date;
 
+/**
+ *  Fetch the shared-index.dat file and process it
+ */
 class IndexFetcher {
     private SyncManager _manager;
     private boolean _die;
     
+    private static final int FREENET_RETRIES = 0;
+    private static final int CLEARNET_RETRIES = 0;
+    private static final int I2P_RETRIES = 1;
+
+
     public IndexFetcher(SyncManager mgr) {
         _manager = mgr;
     }
@@ -129,9 +142,10 @@ class IndexFetcher {
             else
                 _manager.getUI().statusMessage("Fetching [" + url + "]");
             try {
-                File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-                final EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, indexFile.getAbsolutePath(), url);
-                GetListener lsnr = new GetListener(archive, indexFile);
+                File indexFile = SecureFile.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
+                final EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(),
+                                              FREENET_RETRIES, indexFile.getAbsolutePath(), url);
+                GetListener lsnr = new GetListener(get, url, archive, indexFile);
                 get.addStatusListener(lsnr);
                 Thread t = new Thread(new Runnable() { 
                     public void run() {
@@ -254,6 +268,7 @@ class IndexFetcher {
             }
         }
     }
+
     private void fetchHTTPIndex(SyncArchive archive) {
         String url = archive.getURL();
         if (url.indexOf("://") == -1)
@@ -277,14 +292,22 @@ class IndexFetcher {
             // already contains the shared-index.dat, so no need to rewrite it further
         }
         
-        if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
+        int retries;
+        boolean shouldProxy = archive.getHTTPProxyHost() != null && archive.getHTTPProxyHost().length() > 0;
+        if (shouldProxy) {
+            retries = I2P_RETRIES;
             _manager.getUI().statusMessage("Fetching [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
-        else
+        } else {
+            retries = CLEARNET_RETRIES;
             _manager.getUI().statusMessage("Fetching [" + url + "]");
+        }
         try {
-            File indexFile = File.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 3, indexFile.getAbsolutePath(), url);
-            GetListener lsnr = new GetListener(archive, indexFile);
+            long lastTime = archive.getLastSyncTime();
+            String lastMod = lastTime > 0 ? RFC822Date.to822Date(lastTime) : null;
+            File indexFile = SecureFile.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
+            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), shouldProxy, archive.getHTTPProxyHost(), archive.getHTTPProxyPort(),
+                                    retries, indexFile.getAbsolutePath(), url, true, null, lastMod);
+            GetListener lsnr = new GetListener(get, url, archive, indexFile);
             get.addStatusListener(lsnr);
             // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity
             get.fetch(60*1000, 5*60*1000, 60*1000);
@@ -294,30 +317,80 @@ class IndexFetcher {
     }
     
     private class GetListener implements EepGet.StatusListener {
-        private SyncArchive _archive;
-        private File _indexFile;
+        private final EepGet _get;
+        private final String _url;
+        private final SyncArchive _archive;
+        private final File _indexFile;
         private Exception _err;
-        public GetListener(SyncArchive archive, File indexFile) {
+
+        public GetListener(EepGet get, String url, SyncArchive archive, File indexFile) {
+            _get = get;
+            _url = url;
             _archive = archive;
             _indexFile = indexFile;
         }
 
+        /** @return null on error */
+        private File getSavedIndexFile() {
+            String host;
+            try {
+                URI uri = new URI(_url);
+                host = uri.getHost();
+                if (host == null || host.length() <= 0)
+                    return null;
+            } catch (URISyntaxException use) {
+                return null;
+            }
+            File dir = new File(_manager.getClient().getRootDir(), "indexes");
+            String name = host + '-' + LocalArchiveManager.SHARED_INDEX_FILE;
+            return new SecureFile(dir, name);
+        }
+
         public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {
             _manager.getUI().debugMessage("Fetch complete [" + url + "] after " + bytesTransferred);
-            if (_indexFile.exists()) {
-                SharedArchive index = new SharedArchive();
+            int status = _get.getStatusCode();
+            if (_indexFile.exists() && _indexFile.length() > 0) {
                 FileInputStream fin = null;
                 try {
                     fin = new FileInputStream(_indexFile);
+                    SharedArchive index = new SharedArchive();
                     index.read(fin);
                     _archive.indexFetched(_manager.getUI(), index);
+                    // we don't store the full index in the DB, only the about part,
+                    // so save it for later
+                    File to = getSavedIndexFile();
+                    if (to != null)
+                        FileUtil.rename(_indexFile, to);
                 } catch (IOException ioe) {
-                    _archive.indexFetchFail(ioe.getMessage(), ioe, true);
+                    _archive.indexFetchFail("Corrupt archive: " + ioe.getMessage(), ioe, true);
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                     _indexFile.delete();
                 }
+            } else if (status == 304) {
+                // we don't store the full index in the DB, only the about part,
+                // so read it back in here
+                File old = getSavedIndexFile();
+                if (old == null) {
+                    _archive.indexNotModified(_manager.getUI(), null);
+                    return;
+                }
+                FileInputStream fin = null;
+                try {
+                    SharedArchive index = new SharedArchive();
+                    fin = new FileInputStream(old);
+                    index.read(fin);
+                    _archive.indexNotModified(_manager.getUI(), index);
+                } catch (IOException ioe) {
+                    _archive.indexNotModified(_manager.getUI(), null);
+                    old.delete();
+                } finally {
+                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                }
+            } else if (status == 403) {
+                _archive.indexFetchFail("Permission denied", null, false);
             } else {
+                _archive.indexFetchFail("Response code " + status, null, true);
                 _manager.getUI().errorMessage("index file does not exist??" + _indexFile.getAbsolutePath());
             }
         }
@@ -326,6 +399,7 @@ class IndexFetcher {
             _manager.getUI().debugMessage("Fetch attempt failed [" + url + "] after " + bytesTransferred);
             _err = cause;
         }
+
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt) {
             _manager.getUI().debugMessage("Fetch totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
             _archive.indexFetchFail("Unable to fetch", _err, true);

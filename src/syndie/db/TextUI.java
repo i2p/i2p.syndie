@@ -2,7 +2,10 @@ package syndie.db;
 
 import java.io.*;
 import java.util.*;
+
 import net.i2p.data.DataHelper;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 
 /**
@@ -25,7 +28,7 @@ public class TextUI implements UI {
         try {
             _in = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
             try {
-                _debugOut = new PrintStream(new FileOutputStream("debug.log"), true);
+                _debugOut = new PrintStream(new SecureFileOutputStream("debug.log"), true);
             } catch (IOException ioe) {
                 _debugOut = new PrintStream(new NullOutputStream());
             }

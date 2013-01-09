@@ -5,8 +5,12 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.NymKey;
 
@@ -214,14 +218,14 @@ public class LoginManager extends CommandImpl {
                 chan = key.getChannel();
             }
             if (chan != null) {
-                File channelDir = new File(client.getOutboundDir(), chan.toBase64());
+                File channelDir = new SecureFile(client.getOutboundDir(), chan.toBase64());
                 File meta = new File(channelDir, "meta" + Constants.FILENAME_SUFFIX);
                 FileInputStream fis = null;
                 FileOutputStream fos = null;
                 try {
                     channelDir.mkdirs();
                     fis = new FileInputStream(metaOutFile);
-                    fos = new FileOutputStream(meta);
+                    fos = new SecureFileOutputStream(meta);
                     byte buf[] = new byte[4096];
                     int read = -1;
                     while ( (read = fis.read(buf)) != -1)

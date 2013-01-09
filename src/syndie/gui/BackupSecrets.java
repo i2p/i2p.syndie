@@ -21,10 +21,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
+import net.i2p.util.SecureFileOutputStream;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -40,6 +43,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
@@ -214,10 +218,11 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
     private String backup(List nymKeys, List chanHashes, String pass, String filename) {
         OutputStream out = null;
         File target = new File(filename);
+        // fixme parent isn't a SecureFile
         target.getParentFile().mkdirs();
         try {
             if (pass == null) {
-                out = new FileOutputStream(target);
+                out = new SecureFileOutputStream(target);
             } else {
                 out = new ByteArrayOutputStream(16*1024);
             }
@@ -228,7 +233,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 byte data[] = ((ByteArrayOutputStream)out).toByteArray();
                 byte salt[] = new byte[16];
                 byte encrypted[] = _client.pbeEncrypt(data, pass, salt);
-                FileOutputStream fos = new FileOutputStream(target);
+                FileOutputStream fos = new SecureFileOutputStream(target);
                 fos.write(salt);
                 fos.write(encrypted);
                 fos.close();

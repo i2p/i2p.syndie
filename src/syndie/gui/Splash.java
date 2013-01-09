@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
@@ -98,8 +102,8 @@ public class Splash {
                     tmpDir.mkdirs();
                 File tmp = null;
                 try {
-                    tmp = File.createTempFile("img", ".png", tmpDir);
-                    FileOutputStream fos = new FileOutputStream(tmp);
+                    tmp = SecureFile.createTempFile("img", ".png", tmpDir);
+                    FileOutputStream fos = new SecureFileOutputStream(tmp);
                     byte buf[] = new byte[4096];
                     int read = -1;
                     while ( (read = in.read(buf)) != -1)

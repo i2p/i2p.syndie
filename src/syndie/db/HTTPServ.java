@@ -14,14 +14,21 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
+import net.i2p.util.FileUtil;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
 import net.i2p.util.SocketTimeout;
+
 import syndie.Constants;
+import syndie.util.RFC822Date;
 
 /**
  * CLI parameters: ([--port $num] [--listeners $num] [--writable true] | [--kill true])
@@ -43,6 +50,7 @@ public class HTTPServ implements CLI.Command {
     private int _curListeners;
     private static final int MAX_LISTENERS = 50;
     private static boolean _rebuilding;
+    /** the whitelist of non-syndie files allowed */
     private HashMap<String, File> _sharedFiles;
     
     private static final boolean REJECT_INPROXY = true;
@@ -161,15 +169,18 @@ public class HTTPServ implements CLI.Command {
         _ui.statusMessage("Serving file \"" + file.toString() + "\" from uri \"" + uri + "\" via HTTP");
         _sharedFiles.put(uri, file);
     }
+
     private void buildSharedFiles() {
         _sharedFiles = new HashMap();
         
-        File archiveDir = _client.getArchiveDir();
+        File webDir = _client.getArchiveDir();
         File distDir = new File(_client.getRootDir(), "dist");
         String sharedIndex = LocalArchiveManager.SHARED_INDEX_FILE;
         
-        addSharedFile("/index.html", new File(archiveDir, "index.html"));
-        addSharedFile("/" + sharedIndex, new File(archiveDir, sharedIndex));
+        addSharedFile("/index.html", new File(webDir, "index.html"));
+        addSharedFile("/favicon.ico", new File(webDir, "favicon.ico"));
+        addSharedFile("/robots.txt", new File(webDir, "robots.txt"));
+        addSharedFile("/" + sharedIndex, new File(webDir, sharedIndex));
         
         if (distDir.isDirectory()) {
             String [] dist = distDir.list();
@@ -240,7 +251,7 @@ public class HTTPServ implements CLI.Command {
                     loggedIn = true;
                 }
 
-                final File sharedIndex = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+                final File sharedIndex = new File(_client.getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
 
                 //SyndicationManager manager = SyndicationManager.getInstance(_client, _ui);
                 //manager.loadArchives();
@@ -256,10 +267,11 @@ public class HTTPServ implements CLI.Command {
                             FileInputStream fis = null;
                             FileOutputStream fos = null;
                             try {
-                                tmp = File.createTempFile("index", "dat", _client.getTempDir());
-                                LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy(), tmp);
+                                tmp = SecureFile.createTempFile("index", "dat", _client.getTempDir());
+                                boolean ok = LocalArchiveManager.buildIndex(_client, _ui, mgr.getDefaultPullStrategy(), tmp);
+                                // TODO don't copy if it didn't rebuild
                                 fis = new FileInputStream(tmp);
-                                fos = new FileOutputStream(sharedIndex);
+                                fos = new SecureFileOutputStream(sharedIndex);
                                 byte buf[] = new byte[1024*16];
                                 int read = -1;
                                 while ( (read = fis.read(buf)) != -1)
@@ -284,7 +296,7 @@ public class HTTPServ implements CLI.Command {
                 
                 try {
                     // we want to break from the accept() periodically so we can do the above rebuilding checks
-                    _ssocket.setSoTimeout(2*60*1000);
+                    _ssocket.setSoTimeout(29*60*1000);
                     Socket socket = _ssocket.accept();
                     _ui.debugMessage("Connection accepted");
                     boolean added = false;
@@ -378,19 +390,26 @@ public class HTTPServ implements CLI.Command {
                 break;
             
             String [] header = line.split(":", 2);
-            // FIXME map keys to upper or lower case
-            headers.put(header[0].trim(), header[1].trim());
+            headers.put(header[0].trim().toUpperCase(Locale.US), header[1].trim());
         }
         
         try {
-            if (methodLine.startsWith("GET "))
-                handleGet(socket, in, out, timeout, getPath(methodLine), headers);
-            else if (methodLine.startsWith("HEAD "))
-                handleHead(socket, in, out, timeout, getPath(methodLine), headers);
-            else if (methodLine.startsWith("POST "))
-                handlePost(socket, in, out, timeout, getPath(methodLine), headers);
-            else
+            String path = getPath(methodLine);
+            if (methodLine.startsWith("GET ")) {
+                if (path != null)
+                    handleGet(socket, in, out, timeout, path, headers);
+                else
+                   fail404(socket, in, out, timeout);
+            } else if (methodLine.startsWith("HEAD ")) {
+                if (path != null)
+                    handleHead(socket, in, out, timeout, path, headers);
+                else
+                   fail404(socket, in, out, timeout);
+            } else if (methodLine.startsWith("POST ")) {
+                handlePost(socket, in, out, timeout, path, headers);
+            } else {
                 fail405(socket, in, out, timeout);
+            }
         } catch (RuntimeException re) {
             _ui.errorMessage("Error handling", re);
             fail(socket, in, out, timeout);
@@ -420,6 +439,7 @@ public class HTTPServ implements CLI.Command {
             return null;
         }
     }
+
     private static final String getChannel(String path) {
         int idx = path.lastIndexOf('/');
         if (idx < 0) return null;
@@ -435,20 +455,37 @@ public class HTTPServ implements CLI.Command {
         return path.substring(idx+1);
     }
 
-    private void handleGet(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
-        if (path == null || path.equals("/"))
+    /**
+     *  @param path non-null
+     *  @param headers keys in upper case
+     */
+    private void handleGet(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout,
+                           String path, HashMap<String, String> headers) throws IOException {
+        if (path.equals("/"))
             path = "/index.html";
         _ui.debugMessage("GET " + path);
         if (REJECT_INPROXY && path != "/index.html" &&
-            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            (headers.containsKey("X-FORWARDED-FOR") || headers.containsKey("X-FORWARDED-SERVER"))) {
             fail403(socket, in, out, timeout);
             return;
         }
         
         File file = (File) _sharedFiles.get(path);
-        if (file != null)
-            send(socket, in, out, file, timeout);
-        else {
+        if (file != null) {
+            if (file.exists()) {
+                String lm = headers.get("IF-MODIFIED-SINCE");
+                if (lm != null) {
+                    long lastMod = RFC822Date.parse822Date(lm);
+                    if (file.lastModified() <= lastMod) {
+                        send304(socket, in, out, timeout);
+                        return;
+                    }
+                }
+                send(socket, in, out, file, timeout);
+            } else {
+                fail404(socket, in, out, timeout);
+            }
+        } else {
             String chan = getChannel(path);
             String sub = getChannelSub(path);
             _ui.debugMessage("GET of [" + chan + "]  [" + sub + "]");
@@ -458,29 +495,36 @@ public class HTTPServ implements CLI.Command {
     
     /**
      *  Only handles the shared files, otherwise sends a 405
+     *  @param path non-null
+     *  @param headers keys in upper case
      *  @since 1.101b-8
      */
-    private void handleHead(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
-        if (path == null || path.equals("/"))
+    private void handleHead(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout,
+                            String path, HashMap<String, String> headers) throws IOException {
+        if (path.equals("/"))
             path = "/index.html";
         _ui.debugMessage("HEAD " + path);
         if (REJECT_INPROXY && path != "/index.html" &&
-            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            (headers.containsKey("X-FORWARDED-FOR") || headers.containsKey("X-FORWARDED-SERVER"))) {
             fail403(socket, in, out, timeout);
             return;
         }
         
         File file = (File) _sharedFiles.get(path);
         if (file != null) {
-            sendHeaders(socket, in, out, file, timeout);
-            close(socket, in, out, timeout);
+            if (file.exists()) {
+                sendHeaders(socket, in, out, file, timeout);
+                close(socket, in, out, timeout);
+            } else {
+                fail404(socket, in, out, timeout);
+            }
         } else {
             fail405(socket, in, out, timeout);
         }
     }
     
     private SharedArchive getSharedArchive() {
-        File indexFile = new File(_client.getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+        File indexFile = new File(_client.getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
         boolean needsLoad = false;
         if (_archive == null)
             needsLoad = true;
@@ -553,27 +597,44 @@ public class HTTPServ implements CLI.Command {
     }
     
     private void send(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
-        sendHeaders(socket, in, out, file, timeout);
-        sendBody(socket, in, out, file, timeout);
+        if (file.exists()) {
+            sendHeaders(socket, in, out, file, timeout);
+            sendBody(socket, in, out, file, timeout);
+        } else {
+            fail404(socket, in, out, timeout);
+        }
     }
 
     /**
      *  Send the HTTP headers
+     *  @param file must exist
      *  @since 1.101b-8
      */
     private void sendHeaders(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
-        String type = "application/octet-stream";
+        boolean hideLastMod = false;
+        String type;
         String name = file.getName();
-        if (name.endsWith(".html"))
+        if (name.endsWith(".html")) {
             type = "text/html";
-        else if (name.endsWith(".syndie"))
+        } else if (name.endsWith(".ico")) {
+            type = "image/x-icon";
+        } else if (name.endsWith(".txt")) {
+            type = "text/plain";
+        } else if (name.endsWith(".syndie")) {
             type = "application/x-syndie";
-        else if (name.endsWith(".dat"))
+            // don't send last-modified for syndie files, to protect when we pulled it
+            hideLastMod = true;
+        } else if (name.endsWith(".dat")) {
             type = "application/x-syndie-index";
+        } else {
+            type = "application/octet-stream";
+        }
         StringBuilder buf = new StringBuilder();
         buf.append("HTTP/1.0 200 OK\r\n");
         buf.append("Content-type: ").append(type).append("\r\n");
         buf.append("Content-length: ").append(file.length()).append("\r\n");
+        if (!hideLastMod)
+            buf.append("Last-modified: ").append(RFC822Date.to822Date(file.lastModified())).append("\r\n");
         buf.append("Connection: close\r\n");
         buf.append("\r\n");
         out.write(DataHelper.getUTF8(buf.toString()));
@@ -583,6 +644,7 @@ public class HTTPServ implements CLI.Command {
 
     /**
      *  Send the HTTP body
+     *  @param file must exist
      *  @since 1.101b-8
      */
     private void sendBody(Socket socket, InputStream in, OutputStream out, File file, SocketTimeout timeout) throws IOException {
@@ -629,27 +691,32 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
-    private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout, String path, HashMap headers) throws IOException {
+    /**
+     *  @param path ignored
+     *  @param headers keys in upper case
+     */
+    private void handlePost(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout,
+                            String path, HashMap<String, String> headers) throws IOException {
         if (!_allowPost) {
             fail403(socket, in, out, timeout);
             return;
         }
         _ui.debugMessage("handlePost");
         if (REJECT_INPROXY &&
-            (headers.containsKey("X-Forwarded-For") || headers.containsKey("X-Forwarded-Server"))) {
+            (headers.containsKey("X-FORWARDED-FOR") || headers.containsKey("X-FORWARDED-SERVER"))) {
             fail403(socket, in, out, timeout);
             return;
         }
         
         long remaining, contentLength;
         try {
-            remaining = contentLength = Long.parseLong((String) headers.get("Content-length"));
+            remaining = contentLength = Long.parseLong(headers.get("CONTENT-LENGTH"));
         } catch (NumberFormatException nfe) {
             fail(socket, in, out, timeout);
             return;
         }
         
-        File importDir = new File(_client.getTempDir(), System.currentTimeMillis() + "." + Thread.currentThread().hashCode() + ".imp");
+        File importDir = new SecureFile(_client.getTempDir(), System.currentTimeMillis() + "." + Thread.currentThread().hashCode() + ".imp");
         importDir.mkdirs();
 
         try {
@@ -702,7 +769,7 @@ public class HTTPServ implements CLI.Command {
                 } else {
                     if (remaining >= 0) {
                         // import it now?  queue it up for later?  see if its a dup?
-                        FileOutputStream fos = new FileOutputStream(new File(importDir, msgNum + ".syndie"));
+                        FileOutputStream fos = new SecureFileOutputStream(new File(importDir, msgNum + ".syndie"));
                         _ui.debugMessage(msgNum + ": handlePost: read message of size " + read + ", remaining: " + remaining);
 
                         fos.write(msg);
@@ -751,12 +818,15 @@ public class HTTPServ implements CLI.Command {
         out.write(ERR_404);
         fail(socket, in, out, timeout);
     }
+
     private void fail403(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
         out.write(ERR_403);
         fail(socket, in, out, timeout);
     }
+
     private void fail(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
-        _ui.debugMessage("failing socket", new Exception("source"));
+        //_ui.debugMessage("failing socket", new Exception("source"));
+        _ui.debugMessage("failing socket");
         close(socket, in, out, timeout);
     }
     
@@ -765,12 +835,20 @@ public class HTTPServ implements CLI.Command {
         out.write(ERR_405);
         fail(socket, in, out, timeout);
     }
+    
+    /** @since 1.102b-3 */
+    private void send304(Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
+        out.write(ERR_304);
+        close(socket, in, out, timeout);
+    }
 
     private static final byte[] TOO_BUSY = DataHelper.getUTF8("HTTP/1.0 401 TOO BUSY\r\nConnection: close\r\n\r\n<html><head><title>401 TOO BUSY</title></head><body><h1>401 TOO BUSY</h1></body></html>");
     private static final byte[] ERR_404 = DataHelper.getUTF8("HTTP/1.0 404 File not found\r\nConnection: close\r\n\r\n<html><head><title>404 File not found</title></head><body><h1>404 File not found</h1></body></html>");
     private static final byte[] ERR_403 = DataHelper.getUTF8("HTTP/1.0 403 Not authorized\r\nConnection: close\r\n\r\n<html><head><title>403 Not authorized</title></head><body><h1>403 Not authorized</h1></body></html>");
     /** @since 1.101b-8 */
     private static final byte[] ERR_405 = DataHelper.getUTF8("HTTP/1.0 405 Method not allowed\r\nConnection: close\r\n\r\n");
+    /** @since 1.102b-3 */
+    private static final byte[] ERR_304 = DataHelper.getUTF8("HTTP/1.0 304 Not modified\r\nConnection: close\r\n\r\n");
     
     private static final void tooBusy(Socket socket) throws IOException {
         SocketTimeout timeout = new SocketTimeout(socket, 20*1000);

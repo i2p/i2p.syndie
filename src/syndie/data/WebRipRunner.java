@@ -15,9 +15,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
 import net.i2p.util.EepGet;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.db.JobRunner;
 import syndie.db.NullUI;
@@ -175,7 +179,7 @@ public class WebRipRunner implements EepGet.StatusListener {
     public void blockingRip() {
         _ui.debugMessage("starting blocking rip");
         try {
-            _htmlFile = File.createTempFile("webrip", ".html", _tmpDir);
+            _htmlFile = SecureFile.createTempFile("webrip", ".html", _tmpDir);
         } catch (IOException ioe) {
             fatal("Unable to create a temporary file", ioe);
             return;
@@ -251,7 +255,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         }
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(_htmlFile);
+            fos = new SecureFileOutputStream(_htmlFile);
             fos.write(DataHelper.getUTF8(html));
             fos.close();
             fos = null;
@@ -309,7 +313,7 @@ public class WebRipRunner implements EepGet.StatusListener {
             FileOutputStream fos = null;
             try {
                 fis = new FileInputStream(f);
-                fos = new FileOutputStream(file);
+                fos = new SecureFileOutputStream(file);
                 byte buf[] = new byte[1024];
                 int read = -1;
                 while ( (read = fis.read(buf)) != -1)
@@ -485,7 +489,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         _ui.debugMessage("schedule fetch of " + absoluteURL);
         if ( (absoluteURL != null) && (!_attachmentURLRefs.contains(relative)) ) {
             try {
-                File f = File.createTempFile("webrip", ".attach", _tmpDir);
+                File f = SecureFile.createTempFile("webrip", ".attach", _tmpDir);
                 _attachmentFiles.add(f);
                 _attachmentURLs.add(absoluteURL);
                 _attachmentURLRefs.add(relative);
@@ -552,8 +556,8 @@ public class WebRipRunner implements EepGet.StatusListener {
         if ( (sourceEncoding == null) || (NO_REENCODE_ENCODINGS.contains(Constants.lowercase(sourceEncoding))) )
             return src;
         try {
-            File out = File.createTempFile("webripReencde", ".html", src.getParentFile());
-            FileOutputStream fos = new FileOutputStream(out);
+            File out = SecureFile.createTempFile("webripReencde", ".html", src.getParentFile());
+            FileOutputStream fos = new SecureFileOutputStream(out);
             OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
             
             FileInputStream fis = new FileInputStream(src);

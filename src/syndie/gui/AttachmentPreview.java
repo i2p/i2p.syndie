@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+
+import net.i2p.util.SecureFileOutputStream;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -258,7 +261,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         String fname = _saveAs.getText().trim();
         File out = new File(fname);
         try {
-            fos = new FileOutputStream(out);
+            fos = new SecureFileOutputStream(out);
             fos.write(_data);
             fos.close();
             fos = null;

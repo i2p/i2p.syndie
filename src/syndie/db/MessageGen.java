@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
@@ -18,6 +19,8 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
@@ -309,7 +312,7 @@ public class MessageGen extends CommandImpl {
                 encBody = encryptBody(client.ctx(), zipped, to, iv, replySessionKey);
                 _replyIV = iv;
             }
-            fos = new FileOutputStream(out);
+            fos = new SecureFileOutputStream(out);
             Sha256Standalone hash = new Sha256Standalone();
             DataHelper.write(fos, DataHelper.getUTF8(Constants.TYPE_CURRENT+"\n"), hash);
             TreeSet ordered = new TreeSet(pubHeaders.keySet());

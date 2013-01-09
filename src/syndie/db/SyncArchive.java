@@ -79,9 +79,29 @@ public class SyncArchive {
     }
     
     /**
+     *  The index fetch returned 304 not modified
+     *  @param old the archive from the last successfull fetch, or null if not available
+     */
+    public void indexNotModified(UI ui, SharedArchive old) {
+        if (old != null) {
+            indexFetched(ui, old);
+        } else {
+            setIndexFetchInProgress(false);
+            setConsecutiveFailures(0);
+            setLastIndexFetchErrorMsg(null);
+            setLastIndexFetchError(null);
+            updateSchedule(true);
+            fireUpdated();
+        }
+    }
+
+    /**
      * this creates the actions to be run as a result of fetching the specified archive index
+     * @param archive non-null
      */
     public void indexFetched(UI ui, SharedArchive archive) {
+        // TODO: set a "processing" indication
+
         if (_nextSyncTime <= 0) {
             ui.debugMessage("cancel during fetch, so even though we got the index, don't build actions");
             setIndexFetchInProgress(false);
@@ -89,6 +109,7 @@ public class SyncArchive {
             fireUpdated();
             return;
         }
+
         SharedArchiveEngine.PullStrategy pullStrategy = getPullStrategy();
         if (pullStrategy == null)
             pullStrategy = SyncManager.getInstance(_client, ui).getDefaultPullStrategy();

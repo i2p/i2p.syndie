@@ -16,6 +16,7 @@ import net.i2p.data.PublicKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFileOutputStream;
 
 /**
  * Handle the parsing of a raw message
@@ -390,7 +391,7 @@ public class Enclosure {
     public void store(String filename) throws IOException {
         File out = new File(filename);
         //if (out.exists()) throw new IOException("File already exists");
-        OutputStream raw = new BufferedOutputStream(new FileOutputStream(out));
+        OutputStream raw = new BufferedOutputStream(new SecureFileOutputStream(out));
         boolean good = false;
         try {
             raw.write(DataHelper.getUTF8(_enclosureType+"\n"));
@@ -415,7 +416,7 @@ public class Enclosure {
         File bufDir = new File("./syndb_temp");
         bufDir.mkdir();
         File tmp = File.createTempFile("enclosure", "dat", bufDir);
-        FileOutputStream fos = new FileOutputStream(tmp);
+        FileOutputStream fos = new SecureFileOutputStream(tmp);
         byte buf[] = new byte[4096];
         int remaining = numBytes;
         while (remaining > 0) {

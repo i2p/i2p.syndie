@@ -227,7 +227,7 @@ public class SyncOutboundPusher {
                            "Files." + uris.size() + ".DataLength=" + htmlIndex.length() + "\r\n").getBytes());
             }
             // don't forget the sharedIndex
-            File sharedIndex = new File(_manager.getClient().getArchiveDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+            File sharedIndex = new File(_manager.getClient().getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
             if (sharedIndex.exists()) {
                 _manager.getUI().debugMessage("including shared index");
                 out.write(("Files." + (uris.size()+1) + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +

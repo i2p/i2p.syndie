@@ -8,6 +8,7 @@ import java.util.*;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -19,6 +20,8 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.Enclosure;
@@ -1201,7 +1204,7 @@ public class ImportPost {
             return;
         }
         
-        File outDir = new File(client.getArchiveDir(), ident.toBase64());
+        File outDir = new SecureFile(client.getArchiveDir(), ident.toBase64());
         outDir.mkdirs();
         File outMeta = new File(outDir, uri.getMessageId().longValue()+Constants.FILENAME_SUFFIX);
         try {

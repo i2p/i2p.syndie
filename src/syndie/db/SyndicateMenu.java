@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -21,6 +22,8 @@ import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
 import net.i2p.util.EepGet;
+import net.i2p.util.SecureFile;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -214,7 +217,7 @@ class SyndicateMenu implements TextEngine.Menu {
             _archiveWasRemote = false;
         } else {
             try {
-                out = File.createTempFile("syndicate", ".index", client.getTempDir());
+                out = SecureFile.createTempFile("syndicate", ".index", client.getTempDir());
                 EepGet get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null);
                 get.addStatusListener(new UIStatusListener(ui));
                 boolean fetched = get.fetch();

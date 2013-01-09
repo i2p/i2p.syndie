@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -24,6 +25,9 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
@@ -470,7 +474,7 @@ public class MessageCreatorDirect extends MessageCreator {
         File out = pickTargetFile();
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(out);
+            fos = new SecureFileOutputStream(out);
             Sha256Standalone hash = new Sha256Standalone();
             DataHelper.write(fos, DataHelper.getUTF8(Constants.TYPE_CURRENT+"\n"), hash);
             TreeSet ordered = new TreeSet(_publicHeaders.keySet());
@@ -520,7 +524,7 @@ public class MessageCreatorDirect extends MessageCreator {
 
     private File pickTargetFile() {
         File outDir = _source.getClient().getOutboundDir();
-        File scopeDir = new File(outDir, _postScope.toBase64());
+        File scopeDir = new SecureFile(outDir, _postScope.toBase64());
         if (!scopeDir.exists())
             scopeDir.mkdirs();
         return new File(scopeDir, _createdURI.getMessageId().longValue() + Constants.FILENAME_SUFFIX);

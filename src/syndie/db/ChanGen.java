@@ -1,10 +1,12 @@
 package syndie.db;
 
 import gnu.crypto.hash.Sha256Standalone;
+
 import java.io.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
@@ -16,6 +18,9 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.EnclosureBody;
@@ -86,7 +91,7 @@ public class ChanGen extends CommandImpl {
         
         String out = args.getOptValue("metaOut");
         if (out == null) {
-            File chanDir = new File(client.getOutboundDir(), identPublic.calculateHash().toBase64());
+            File chanDir = new SecureFile(client.getOutboundDir(), identPublic.calculateHash().toBase64());
             chanDir.mkdirs();
             out = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX).getPath();
         }
@@ -399,7 +404,7 @@ public class ChanGen extends CommandImpl {
         FileOutputStream fos = null;
         try {
             byte encBody[] = encryptBody(_ctx, writeRawBody(refStr, privHeaders, avatar), bodyKey);
-            fos = new FileOutputStream(metaOut);
+            fos = new SecureFileOutputStream(metaOut);
             Sha256Standalone hash = new Sha256Standalone();
             DataHelper.write(fos, DataHelper.getUTF8(Constants.TYPE_CURRENT+"\n"), hash);
             TreeSet ordered = new TreeSet(pubHeaders.keySet());

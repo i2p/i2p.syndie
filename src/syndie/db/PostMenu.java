@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.*;
+
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -19,6 +20,9 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.*;
 
@@ -645,7 +649,7 @@ class PostMenu implements TextEngine.Menu {
             String content = ui.readStdIn();
             FileWriter out = null;
             try {
-                f = File.createTempFile("stdin", ".txt", client.getTempDir());
+                f = SecureFile.createTempFile("stdin", ".txt", client.getTempDir());
                 out = new FileWriter(f);
                 out.write(content);
                 out.close();
@@ -1459,7 +1463,7 @@ class PostMenu implements TextEngine.Menu {
         
         String out = opts.getOptValue("out");
         if (out == null) {
-            File chanDir = new File(client.getOutboundDir(), scopeChan.getChannelHash().toBase64());
+            File chanDir = new SecureFile(client.getOutboundDir(), scopeChan.getChannelHash().toBase64());
             chanDir.mkdirs();
             File msgFile = new File(chanDir, _currentMessage.getMessageId() + Constants.FILENAME_SUFFIX);
             out = msgFile.getPath();
@@ -1487,8 +1491,8 @@ class PostMenu implements TextEngine.Menu {
             Properties cfg = (Properties)_pageConfig.get(i);
             FileOutputStream fos = null;
             try {
-                File cfgFile = File.createTempFile("pageConfig", ""+ i, tmpDir);
-                fos = new FileOutputStream(cfgFile);
+                File cfgFile = SecureFile.createTempFile("pageConfig", ""+ i, tmpDir);
+                fos = new SecureFileOutputStream(cfgFile);
                 for (Iterator iter = cfg.keySet().iterator(); iter.hasNext(); ) {
                     String name = (String)iter.next();
                     String val = cfg.getProperty(name);
@@ -1511,8 +1515,8 @@ class PostMenu implements TextEngine.Menu {
             Properties cfg = (Properties)_attachmentConfig.get(i);
             FileOutputStream fos = null;
             try {
-                File cfgFile = File.createTempFile("attachConfig", ""+ i, tmpDir);
-                fos = new FileOutputStream(cfgFile);
+                File cfgFile = SecureFile.createTempFile("attachConfig", ""+ i, tmpDir);
+                fos = new SecureFileOutputStream(cfgFile);
                 for (Iterator iter = cfg.keySet().iterator(); iter.hasNext(); ) {
                     String name = (String)iter.next();
                     String val = cfg.getProperty(name);
@@ -1595,8 +1599,8 @@ class PostMenu implements TextEngine.Menu {
             String refs = ReferenceNode.walk(_referenceNodes);
             FileOutputStream fos = null;
             try {
-                refFile = File.createTempFile("refs", "txt", tmpDir);
-                fos = new FileOutputStream(refFile);
+                refFile = SecureFile.createTempFile("refs", "txt", tmpDir);
+                fos = new SecureFileOutputStream(refFile);
                 fos.write(DataHelper.getUTF8(refs));
                 fos.close();
                 genOpts.setOptValue("refs", refFile.getPath());

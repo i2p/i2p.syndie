@@ -11,8 +11,13 @@ import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
+import net.i2p.util.FileUtil;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.SyndieURI;
@@ -166,13 +171,15 @@ public class TextEngine {
     }
     
     private void buildInstallDir() {
-        _rootDir = new File(_rootFile);
-        _dbDir = new File(_rootDir, "db");
-        _tmpDir = new File(_rootDir, "tmp");
-        _archiveDir = new File(_rootDir, "archive");
-        _outboundDir = new File(_rootDir, "outbound");
-        _logDir = new File(_rootDir, "logs");
-        _scriptDir = new File(_rootDir, "scripts");
+        _rootDir = new SecureFile(_rootFile);
+        _dbDir = new SecureFile(_rootDir, "db");
+        _tmpDir = new SecureFile(_rootDir, "tmp");
+        _archiveDir = new SecureFile(_rootDir, "archive");
+        _outboundDir = new SecureFile(_rootDir, "outbound");
+        _logDir = new SecureFile(_rootDir, "logs");
+        _scriptDir = new SecureFile(_rootDir, "scripts");
+        File indexDir = new SecureFile(_rootDir, "indexes");
+        File webDir = new SecureFile(_rootDir, "web");
 
         boolean dbDirCreated = false;
         if (!_rootDir.exists()) _rootDir.mkdirs();
@@ -183,6 +190,17 @@ public class TextEngine {
         if (!_archiveDir.exists()) _archiveDir.mkdir();
         if (!_outboundDir.exists()) _outboundDir.mkdir();
         if (!_logDir.exists()) _logDir.mkdir();
+        if (!indexDir.exists()) indexDir.mkdir();
+        if (!webDir.exists()) webDir.mkdir();
+
+        // migrate shared index from old to new location
+        File oldSI = new File(_archiveDir, LocalArchiveManager.SHARED_INDEX_FILE);
+        File newSI = new File(webDir, LocalArchiveManager.SHARED_INDEX_FILE);
+        if (oldSI.exists() && !newSI.exists()) {
+            FileUtil.rename(oldSI, newSI);
+            (new File(_archiveDir, "index.html")).delete();
+        }
+
         if (!_scriptDir.exists()) {
             _scriptDir.mkdir();
             // bundle any scripts we ship with in the .jar
@@ -192,9 +210,15 @@ public class TextEngine {
             installResource("/onlogin", new File(_scriptDir, "login"));
         }
         
-        File archiveIntro = new File(_archiveDir, "index.html");
-        if (!archiveIntro.exists())
-            installResource("/defaultarchiveindex.html", archiveIntro);
+        File f = new File(webDir, "index.html");
+        if (!f.exists())
+            installResource("/archive/index.html", f);
+        f = new File(webDir, "favicon.ico");
+        if (!f.exists())
+            installResource("/archive/favicon.ico", f);
+        f = new File(webDir, "robots.txt");
+        if (!f.exists())
+            installResource("/archive/robots.txt", f);
         
         if (_client == null)
             _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
@@ -228,7 +252,7 @@ public class TextEngine {
         FileOutputStream fos = null;
         try {
             in = TextEngine.class.getResourceAsStream(name);
-            fos = new FileOutputStream(toFile);
+            fos = new SecureFileOutputStream(toFile);
             if (in != null) {
                 byte buf[] = new byte[1024];
                 int read = -1;

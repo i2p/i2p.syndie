@@ -13,6 +13,7 @@ import java.util.Set;
 
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
+import net.i2p.util.SecureFile;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
@@ -152,7 +153,7 @@ class SyncInboundFetcher {
             } else {
                 _manager.getUI().statusMessage("Fetching [" + url + "]");
                 try {
-                    File dataFile = File.createTempFile("freenetget", "dat", _manager.getClient().getTempDir());
+                    File dataFile = SecureFile.createTempFile("freenetget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, dataFile.getAbsolutePath(), url);
                     // the index fetch runs async, but these run synchronously, since we don't want to fire up e.g. 500 threads to pull
                     // new messages.  much to optimize on this front though
@@ -357,7 +358,7 @@ class SyncInboundFetcher {
                 else
                     _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
                 try {
-                    File dataFile = File.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
+                    File dataFile = SecureFile.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
                     GetListener lsnr = new GetListener(action, dataFile, _importer, _whitelistScopes);
                     get.addStatusListener(lsnr);

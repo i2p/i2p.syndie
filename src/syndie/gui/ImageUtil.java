@@ -11,7 +11,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Color;
@@ -28,6 +32,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 import syndie.db.NullUI;
@@ -639,8 +644,8 @@ public class ImageUtil {
         try {
             File tmp = null;
             try {
-                tmp = File.createTempFile("img", ".png", tmpDir);
-                FileOutputStream fos = new FileOutputStream(tmp);
+                tmp = SecureFile.createTempFile("img", ".png", tmpDir);
+                FileOutputStream fos = new SecureFileOutputStream(tmp);
                 fos.write(data);
                 fos.close();
             } catch (IOException ioe) { 
@@ -685,8 +690,8 @@ public class ImageUtil {
                     try {
                         File tmp = null;
                         try {
-                            tmp = File.createTempFile("img", ".png", _tmpDir);
-                            FileOutputStream fos = new FileOutputStream(tmp);
+                            tmp = SecureFile.createTempFile("img", ".png", _tmpDir);
+                            FileOutputStream fos = new SecureFileOutputStream(tmp);
                             byte buf[] = new byte[4096];
                             int read = -1;
                             while ( (read = in.read(buf)) != -1)

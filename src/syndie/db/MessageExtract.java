@@ -3,6 +3,7 @@ package syndie.db;
 import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
@@ -14,6 +15,9 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.Enclosure;
 import syndie.data.EnclosureBody;
@@ -204,7 +208,7 @@ public class MessageExtract extends CommandImpl {
     }
     
     private void extract(Enclosure enc, UI ui, EnclosureBody body, Opts args) throws IOException {
-        File dir = new File(args.getOptValue("out"));
+        File dir = new SecureFile(args.getOptValue("out"));
         if (dir.exists())
             throw new IOException("Output directory already exists: " + dir);
         dir.mkdirs();
@@ -212,7 +216,7 @@ public class MessageExtract extends CommandImpl {
             File page = new File(dir, "page" + i + ".dat");
             FileOutputStream fos = null;
             try {
-                fos = new FileOutputStream(page);
+                fos = new SecureFileOutputStream(page);
                 fos.write(body.getPage(i));
                 fos.close();
                 fos = null;
@@ -222,7 +226,7 @@ public class MessageExtract extends CommandImpl {
             
             File cfg = new File(dir, "page" + i + ".cfg");
             try {
-                fos = new FileOutputStream(cfg);
+                fos = new SecureFileOutputStream(cfg);
                 write(body.getPageConfig(i), fos);
                 fos.close();
                 fos = null;
@@ -234,7 +238,7 @@ public class MessageExtract extends CommandImpl {
             File attach = new File(dir, "attach" + i + ".dat");
             FileOutputStream fos = null;
             try {
-                fos = new FileOutputStream(attach);
+                fos = new SecureFileOutputStream(attach);
                 fos.write(body.getAttachment(i));
                 fos.close();
                 fos = null;
@@ -244,7 +248,7 @@ public class MessageExtract extends CommandImpl {
             
             File cfg = new File(dir, "attach" + i + ".cfg");
             try {
-                fos = new FileOutputStream(cfg);
+                fos = new SecureFileOutputStream(cfg);
                 write(body.getAttachmentConfig(i), fos);
                 fos.close();
                 fos = null;
@@ -257,7 +261,7 @@ public class MessageExtract extends CommandImpl {
         if (in != null) {
             FileOutputStream fos = null;
             try {
-                fos = new FileOutputStream(avatar);
+                fos = new SecureFileOutputStream(avatar);
                 byte buf[] = new byte[1024];
                 int read = -1;
                 while ( (read = in.read(buf)) != -1)
@@ -271,7 +275,7 @@ public class MessageExtract extends CommandImpl {
         
         FileOutputStream out = null;
         try {
-            out = new FileOutputStream(new File(dir, "privHeaders.txt"));
+            out = new SecureFileOutputStream(new File(dir, "privHeaders.txt"));
             write(body.getHeaders(), out);
             out.close();
             out = null;
@@ -279,7 +283,7 @@ public class MessageExtract extends CommandImpl {
             if (out != null) try { out.close(); } catch (IOException ioe) {}
         }
         try {
-            out = new FileOutputStream(new File(dir, "pubHeaders.txt"));
+            out = new SecureFileOutputStream(new File(dir, "pubHeaders.txt"));
             write(enc.getHeaders(), out);
             out.close();
             out = null;

@@ -27,6 +27,7 @@ import java.util.TreeMap;
 import java.util.zip.ZipInputStream;
 
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFileOutputStream;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -291,7 +292,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _shell.setLayout(new GridLayout(1, true));
             _shell.setImage(ImageUtil.ICON_SHELL);
             _root = _shell;
-            showWaitCursor(true);
+            // added, doesnt work FIXME
+            //showWaitCursor(true);
         }
         
         timer.addEvent("main shell constructed");
@@ -2370,7 +2372,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 byte buf[] = new byte[4096];
                 int read = 0;
                 fis = new FileInputStream(src);
-                fos = new FileOutputStream(target);
+                fos = new SecureFileOutputStream(target);
                 while ( (read = fis.read(buf)) != -1)
                     fos.write(buf, 0, read);
                 fos.close();

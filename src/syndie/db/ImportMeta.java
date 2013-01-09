@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
 import net.i2p.data.DataHelper;
@@ -21,6 +22,8 @@ import net.i2p.data.Hash;
 import net.i2p.data.PublicKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
+
 import syndie.Constants;
 import syndie.data.Enclosure;
 import syndie.data.EnclosureBody;
@@ -917,7 +920,7 @@ class ImportMeta {
     }
     
     private static void saveToArchive(DBClient client, UI ui, Hash ident, Enclosure enc) {
-        File outDir = new File(client.getArchiveDir(), ident.toBase64());
+        File outDir = new SecureFile(client.getArchiveDir(), ident.toBase64());
         outDir.mkdirs();
         File outMeta = new File(outDir, "meta" + Constants.FILENAME_SUFFIX);
         try {

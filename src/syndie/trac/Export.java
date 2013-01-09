@@ -18,7 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.HTMLStateBuilder;
 import syndie.data.MessageInfo;
@@ -63,7 +67,7 @@ public class Export {
     private File _attachmentDir;
     
     public Export(final String args[], final String dbFile, String attachmentDir) {
-        _attachmentDir = new File(attachmentDir);
+        _attachmentDir = new SecureFile(attachmentDir);
         if (!_attachmentDir.exists()) _attachmentDir.mkdirs();
         _ui = new TextUI(args, new TextEngine.ScriptListener() {
             public void alreadyRunning() {}
@@ -643,10 +647,10 @@ public class Export {
         File out = null;
         try {
             File ticketsDir = new File(_attachmentDir, "ticket");
-            File ticketDir = new File(ticketsDir, threadTicketId + "");
+            File ticketDir = new SecureFile(ticketsDir, threadTicketId + "");
             ticketDir.mkdirs();
-            out = File.createTempFile("attach", "_" + suffix, ticketDir);
-            FileOutputStream fos = new FileOutputStream(out);
+            out = SecureFile.createTempFile("attach", "_" + suffix, ticketDir);
+            FileOutputStream fos = new SecureFileOutputStream(out);
             fos.write(data);
             fos.close();
         } catch (IOException ioe) {

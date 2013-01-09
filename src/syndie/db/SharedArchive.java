@@ -20,6 +20,8 @@ import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
+ * Read and write the shared-index.dat file.
+ *
  * contains a description of data that can be pulled from an archive, as well as
  * what type of data the archive would be interested in receiving.  serialized as
  * serialize(About)+numChannels+serialize(Channel[])+numMessages+serialize(Message[])
@@ -150,6 +152,7 @@ public class SharedArchive {
                 throw new IOException("values out of range: " + dfe.getMessage());
             }
         }
+
         public void read(InputStream in) throws IOException {
             byte scope[] = new byte[Hash.HASH_LENGTH];
             int read = DataHelper.read(in, scope);
@@ -290,6 +293,9 @@ public class SharedArchive {
     
     static final int ABOUT_NO_ADMIN_CHANNEL = (1 << 31)-1;
     
+    /**
+     *  This is the shared-index.dat header
+     */
     public static class About {
         /** 2 bytes */
         int _flags;

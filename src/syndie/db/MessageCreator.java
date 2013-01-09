@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -18,6 +19,9 @@ import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
@@ -113,7 +117,7 @@ public class MessageCreator {
         
         String out = null;
         if (out == null) {
-            File chanDir = new File(client.getOutboundDir(), scope.toBase64());
+            File chanDir = new SecureFile(client.getOutboundDir(), scope.toBase64());
             chanDir.mkdirs();
             File msgFile = new File(chanDir, messageId + Constants.FILENAME_SUFFIX);
             out = msgFile.getPath();
@@ -153,8 +157,8 @@ public class MessageCreator {
             
             FileOutputStream fos = null;
             try {
-                File pageFile = File.createTempFile("pageData", ""+i, tmpDir);
-                fos = new FileOutputStream(pageFile);
+                File pageFile = SecureFile.createTempFile("pageData", ""+i, tmpDir);
+                fos = new SecureFileOutputStream(pageFile);
                 fos.write(DataHelper.getUTF8(content));
                 fos.close();
                 fos = null;
@@ -162,8 +166,8 @@ public class MessageCreator {
                 
                 String filename = pageFile.getAbsolutePath();
                 
-                File cfgFile = File.createTempFile("pageConfig", ""+ i, tmpDir);
-                fos = new FileOutputStream(cfgFile);
+                File cfgFile = SecureFile.createTempFile("pageConfig", ""+ i, tmpDir);
+                fos = new SecureFileOutputStream(cfgFile);
                 fos.write(DataHelper.getUTF8(Constants.MSG_PAGE_CONTENT_TYPE + '=' + contentType + '\n'));
                 if (title != null)
                     fos.write(DataHelper.getUTF8(Constants.MSG_PAGE_TITLE + '=' + title + '\n'));
@@ -190,8 +194,8 @@ public class MessageCreator {
             
             FileOutputStream fos = null;
             try {
-                File attachFile = File.createTempFile("attachData", ""+i, tmpDir);
-                fos = new FileOutputStream(attachFile);
+                File attachFile = SecureFile.createTempFile("attachData", ""+i, tmpDir);
+                fos = new SecureFileOutputStream(attachFile);
                 fos.write(data);
                 fos.close();
                 fos = null;
@@ -200,8 +204,8 @@ public class MessageCreator {
 
                 String filename = attachFile.getAbsolutePath();
             
-                File cfgFile = File.createTempFile("attachConfig", ""+ i, tmpDir);
-                fos = new FileOutputStream(cfgFile);
+                File cfgFile = SecureFile.createTempFile("attachConfig", ""+ i, tmpDir);
+                fos = new SecureFileOutputStream(cfgFile);
                 if (fname != null)
                     fos.write(DataHelper.getUTF8(Constants.MSG_ATTACH_NAME + '=' + CommandImpl.strip(fname.trim()) + '\n'));
                 if (desc != null)
@@ -319,8 +323,8 @@ public class MessageCreator {
             byte avatar[] = _source.getAvatarModifiedData();
             if (avatar != null) {
                 try {
-                    File avatarFile = File.createTempFile("avatar", ".png", tmpDir);
-                    FileOutputStream fos = new FileOutputStream(avatarFile);
+                    File avatarFile = SecureFile.createTempFile("avatar", ".png", tmpDir);
+                    FileOutputStream fos = new SecureFileOutputStream(avatarFile);
                     fos.write(avatar);
                     fos.close();
                     fos = null;
@@ -368,8 +372,8 @@ public class MessageCreator {
             String refs = ReferenceNode.walk(referenceNodes);
             FileOutputStream fos = null;
             try {
-                refFile = File.createTempFile("refs", "txt", tmpDir);
-                fos = new FileOutputStream(refFile);
+                refFile = SecureFile.createTempFile("refs", "txt", tmpDir);
+                fos = new SecureFileOutputStream(refFile);
                 fos.write(DataHelper.getUTF8(refs));
                 fos.close();
                 tempFiles.add(refFile);

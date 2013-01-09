@@ -12,11 +12,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
@@ -822,12 +826,12 @@ class ManageMenu implements TextEngine.Menu {
         File encPostOut = null;
         File encMetaOut = null;
         try {
-            manageOut = File.createTempFile("syndieManage", "dat", tmpDir);
-            replyOut = File.createTempFile("syndieReply", "dat", tmpDir);
-            encPostOut = File.createTempFile("syndieEncPost", "dat", tmpDir);
-            encMetaOut = File.createTempFile("syndieEncMeta", "dat", tmpDir);
+            manageOut = SecureFile.createTempFile("syndieManage", "dat", tmpDir);
+            replyOut = SecureFile.createTempFile("syndieReply", "dat", tmpDir);
+            encPostOut = SecureFile.createTempFile("syndieEncPost", "dat", tmpDir);
+            encMetaOut = SecureFile.createTempFile("syndieEncMeta", "dat", tmpDir);
             if (out == null) {
-                out = File.createTempFile("syndieMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
+                out = SecureFile.createTempFile("syndieMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
             }
         } catch (IOException ioe) {
             ui.errorMessage("Unable to create temporary files", ioe);
@@ -926,10 +930,10 @@ class ManageMenu implements TextEngine.Menu {
                 } else {
                     ui.debugMessage("Channel identity: " +pub.calculateHash().toBase64());
                 }
-                File chanDir = new File(client.getOutboundDir(), pub.calculateHash().toBase64());
+                File chanDir = new SecureFile(client.getOutboundDir(), pub.calculateHash().toBase64());
                 chanDir.mkdirs();
                 File mdFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
-                fos = new FileOutputStream(mdFile);
+                fos = new SecureFileOutputStream(mdFile);
                 fis = new FileInputStream(out);
                 byte buf[] = new byte[4096];
                 int read = -1;

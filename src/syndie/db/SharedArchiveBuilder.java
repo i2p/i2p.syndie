@@ -55,6 +55,10 @@ public class SharedArchiveBuilder {
     /** how old messages can be and still be marked as new (set to <= 0 and that means all messages are) */
     public void setPeriodNew(long ageMs) { _periodNew = ageMs; }
     
+    /**
+     *  TODO force-rebuild parameter
+     *  TODO only rebuild if something changed
+     */
     public SharedArchive buildSharedArchive() {
         _ui.statusMessage("Building shared archive rooted out of " + _client.getArchiveDir().getPath());
         SharedArchive archive = new SharedArchive();

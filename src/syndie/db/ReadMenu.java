@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -21,7 +23,8 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
-import net.i2p.crypto.KeyGenerator;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -1474,7 +1477,7 @@ class ReadMenu implements TextEngine.Menu {
         
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(filename);
+            fos = new SecureFileOutputStream(filename);
             if (page >= 0) {
                 String data = client.getMessagePageData(_currentMessage.getInternalId(), page);
                 fos.write(DataHelper.getUTF8(data));

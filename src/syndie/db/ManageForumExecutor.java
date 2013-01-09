@@ -11,12 +11,16 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.data.ArchiveInfo;
 import syndie.data.Enclosure;
 import syndie.data.SyndieURI;
@@ -117,12 +121,12 @@ public class ManageForumExecutor {
         File encPostOut = null;
         File encMetaOut = null;
         try {
-            manageOut = File.createTempFile("syndieNewManage", "dat", tmpDir);
-            replyOut = File.createTempFile("syndieNewReply", "dat", tmpDir);
-            encPostOut = File.createTempFile("syndieNewEncPost", "dat", tmpDir);
-            encMetaOut = File.createTempFile("syndieNewEncMeta", "dat", tmpDir);
+            manageOut = SecureFile.createTempFile("syndieNewManage", "dat", tmpDir);
+            replyOut = SecureFile.createTempFile("syndieNewReply", "dat", tmpDir);
+            encPostOut = SecureFile.createTempFile("syndieNewEncPost", "dat", tmpDir);
+            encMetaOut = SecureFile.createTempFile("syndieNewEncMeta", "dat", tmpDir);
             if (out == null) {
-                out = File.createTempFile("syndieNewMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
+                out = SecureFile.createTempFile("syndieNewMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
             }
         } catch (IOException ioe) {
             _errors.append("Unable to create temporary files: " + ioe.getMessage());
@@ -167,10 +171,10 @@ public class ManageForumExecutor {
                     identHash = pub.calculateHash();
                     _ui.debugMessage("Channel identity: " +identHash.toBase64());
                 }
-                File chanDir = new File(_client.getOutboundDir(), identHash.toBase64());
+                File chanDir = new SecureFile(_client.getOutboundDir(), identHash.toBase64());
                 chanDir.mkdirs();
                 File mdFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
-                fos = new BufferedOutputStream(new FileOutputStream(mdFile));
+                fos = new BufferedOutputStream(new SecureFileOutputStream(mdFile));
                 fis = new BufferedInputStream(new FileInputStream(out));
                 byte buf[] = new byte[4096];
                 int read = -1;
@@ -293,12 +297,12 @@ public class ManageForumExecutor {
         File encPostOut = null;
         File encMetaOut = null;
         try {
-            manageOut = File.createTempFile("syndieManage", "dat", tmpDir);
-            replyOut = File.createTempFile("syndieReply", "dat", tmpDir);
-            encPostOut = File.createTempFile("syndieEncPost", "dat", tmpDir);
-            encMetaOut = File.createTempFile("syndieEncMeta", "dat", tmpDir);
+            manageOut = SecureFile.createTempFile("syndieManage", "dat", tmpDir);
+            replyOut = SecureFile.createTempFile("syndieReply", "dat", tmpDir);
+            encPostOut = SecureFile.createTempFile("syndieEncPost", "dat", tmpDir);
+            encMetaOut = SecureFile.createTempFile("syndieEncMeta", "dat", tmpDir);
             if (out == null) {
-                out = File.createTempFile("syndieMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
+                out = SecureFile.createTempFile("syndieMetaOut", Constants.FILENAME_SUFFIX, tmpDir).getPath();
             }
         } catch (IOException ioe) {
             _errors.append("Unable to create temporary files: " + ioe.getMessage());
@@ -433,10 +437,10 @@ public class ManageForumExecutor {
                     identHash = pub.calculateHash();
                     _ui.debugMessage("Channel identity: " +identHash.toBase64());
                 }
-                File chanDir = new File(_client.getOutboundDir(), identHash.toBase64());
+                File chanDir = new SecureFile(_client.getOutboundDir(), identHash.toBase64());
                 chanDir.mkdirs();
                 File mdFile = new File(chanDir, "meta" + Constants.FILENAME_SUFFIX);
-                fos = new BufferedOutputStream(new FileOutputStream(mdFile));
+                fos = new BufferedOutputStream(new SecureFileOutputStream(mdFile));
                 fis = new BufferedInputStream(new FileInputStream(out));
                 byte buf[] = new byte[4096];
                 int read = -1;

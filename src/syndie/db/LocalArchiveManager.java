@@ -22,11 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.util.EepGet;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
@@ -35,6 +38,9 @@ import syndie.data.SyndieURI;
  *
  */
 public class LocalArchiveManager {
+
+    private static final int DEFAULT_REBUILD_DELAY_HOURS = 4;
+
     public static SharedArchive.About getLocalAbout(DBClient client, SharedArchiveEngine.PullStrategy pullStrategy) {
         SharedArchive.About about = new SharedArchive.About();
         about.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
@@ -106,26 +112,35 @@ public class LocalArchiveManager {
     
     public static final String SHARED_INDEX_FILE = "shared-index.dat";
     
-    public static void buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy) {
-        buildIndex(client, ui, pullStrategy, new File(client.getArchiveDir(), SHARED_INDEX_FILE));
+    /**
+     *  @return success
+     */
+    public static boolean buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy) {
+        return buildIndex(client, ui, pullStrategy, new File(client.getWebDir(), SHARED_INDEX_FILE));
     }
-    public static void buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy, File targetFile) {
-        if (!client.isLoggedIn()) return;
+
+    /**
+     *  TODO force-rebuild parameter
+     *  @return success
+     */
+    public static boolean buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy, File targetFile) {
+        if (!client.isLoggedIn()) return false;
         SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client, pullStrategy));
         SharedArchive archive = builder.buildSharedArchive();
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(targetFile);
+            fos = new SecureFileOutputStream(targetFile);
             archive.write(fos);
             fos.close();
             fos = null;
         } catch (IOException ioe) {
             ui.errorMessage("Error writing the shared index", ioe);
+            return false;
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
         }
-        return;
+        return true;
     }
     
-    public static int getLocalRebuildDelayHours(DBClient client) { return 1; }
+    public static int getLocalRebuildDelayHours(DBClient client) { return DEFAULT_REBUILD_DELAY_HOURS; }
 }

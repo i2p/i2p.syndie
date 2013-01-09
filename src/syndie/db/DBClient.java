@@ -31,6 +31,7 @@ import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
 import net.i2p.util.Log;
+import net.i2p.util.SecureFileOutputStream;
 import net.i2p.util.SimpleTimer2;
 
 import syndie.Constants;
@@ -313,6 +314,7 @@ public class DBClient {
     public File getTempDir() { return new File(_rootDir, "tmp"); }
     public File getOutboundDir() { return new File(_rootDir, "outbound"); }
     public File getArchiveDir() { return new File(_rootDir, "archive"); }
+    public File getWebDir() { return new File(_rootDir, "web"); }
     
     public String getDefaultHTTPProxyHost() { return _httpProxyHost; }
     public void setDefaultHTTPProxyHost(String host) { _httpProxyHost = host; }
@@ -3697,6 +3699,9 @@ public class DBClient {
     /** attachment number starts at 0 */    
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
+    /**
+     *  TODO can we get this as a stream or otherwise not load it all into memory?
+     */
     public byte[] getMessageAttachmentData(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -5098,7 +5103,7 @@ public class DBClient {
             return;
         }
         try {
-            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(out));
+            ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
             
             ZipEntry entry = new ZipEntry("db.properties");
             File f = new File(dbFileRoot + ".properties");
@@ -5274,7 +5279,7 @@ public class DBClient {
         byte buf[] = new byte[4096];
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(out);
+            fos = new SecureFileOutputStream(out);
             int read = -1;
             while ( (read = in.read(buf)) != -1)
                 fos.write(buf, 0, read);

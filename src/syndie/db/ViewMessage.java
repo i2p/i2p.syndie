@@ -5,9 +5,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
+import net.i2p.util.SecureFileOutputStream;
+
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
@@ -84,7 +88,7 @@ public class ViewMessage extends CommandImpl {
     
     private void extractMessage(DBClient client, UI ui, MessageInfo info, String outDir) {
         try {
-            File dir = new File(outDir);
+            File dir = new SecureFile(outDir);
             if (dir.exists()) {
                 ui.errorMessage("Output directory already exists.  Aborting");
                 ui.commandComplete(-1, null);
@@ -95,7 +99,7 @@ public class ViewMessage extends CommandImpl {
             File statusFile = new File(outDir, "status.txt");
             FileOutputStream fos = null;
             try {
-                fos = new FileOutputStream(statusFile);
+                fos = new SecureFileOutputStream(statusFile);
                 fos.write(DataHelper.getUTF8(info.toString()));
                 fos.close();
                 fos = null;
@@ -108,7 +112,7 @@ public class ViewMessage extends CommandImpl {
                 String data = client.getMessagePageData(info.getInternalId(), i);
                 if (data != null) {
                     try {
-                        fos = new FileOutputStream(new File(dir, "page" + i + ".dat"));
+                        fos = new SecureFileOutputStream(new File(dir, "page" + i + ".dat"));
                         fos.write(DataHelper.getUTF8(data));
                         fos.close();
                         fos = null;
@@ -120,7 +124,7 @@ public class ViewMessage extends CommandImpl {
                 String cfg = client.getMessagePageConfig(info.getInternalId(), i);
                 if (cfg != null) {
                     try {
-                        fos = new FileOutputStream(new File(dir, "page" + i + ".cfg"));
+                        fos = new SecureFileOutputStream(new File(dir, "page" + i + ".cfg"));
                         fos.write(DataHelper.getUTF8(cfg));
                         fos.close();
                         fos = null;
@@ -133,7 +137,7 @@ public class ViewMessage extends CommandImpl {
                 byte data[] = client.getMessageAttachmentData(info.getInternalId(), i);
                 if (data != null) {
                     try {
-                        fos = new FileOutputStream(new File(dir, "attachment" + i + ".dat"));
+                        fos = new SecureFileOutputStream(new File(dir, "attachment" + i + ".dat"));
                         fos.write(data);
                         fos.close();
                         fos = null;
@@ -145,7 +149,7 @@ public class ViewMessage extends CommandImpl {
                 String cfg = client.getMessageAttachmentConfigRaw(info.getInternalId(), i);
                 if (cfg != null) {
                     try {
-                        fos = new FileOutputStream(new File(dir, "attachment" + i + ".cfg"));
+                        fos = new SecureFileOutputStream(new File(dir, "attachment" + i + ".cfg"));
                         fos.write(DataHelper.getUTF8(cfg));
                         fos.close();
                         fos = null;
@@ -159,7 +163,7 @@ public class ViewMessage extends CommandImpl {
             if (refs.size() > 0) {
                 String refStr = ReferenceNode.walk(refs);
                 try {
-                    fos = new FileOutputStream(new File(dir, "references.cfg"));
+                    fos = new SecureFileOutputStream(new File(dir, "references.cfg"));
                     fos.write(DataHelper.getUTF8(refStr));
                     fos.close();
                     fos = null;

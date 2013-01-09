@@ -16,6 +16,7 @@ import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
 import net.i2p.util.Log;
+import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
 import syndie.data.ReferenceNode;
@@ -37,7 +38,7 @@ public abstract class CommandImpl implements CLI.Command {
         }
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(filename);
+            fos = new SecureFileOutputStream(filename);
             writeKey(fos, type, scope, data);
             fos.close();
             fos = null;
