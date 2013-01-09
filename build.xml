@@ -15,7 +15,7 @@
     <property name="build.dir" value="build" />
     <property name="dist.dir" value="dist" />
     <property name="lib.dir" value="lib" />
-    <property name="pkg-temp" value="pkg-temp" />
+    <property name="pkgtemp.dir" value="pkg-temp" />
     <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
 
     <!-- allow lib locations to be overridden -->
@@ -321,6 +321,46 @@
         <echo message="Build number is ${syndie.build.number}" />
     </target>
 
+    <target name="preppkg" depends="prep-docs, prep-common" />
+
+    <target name="prep-docs">
+        <copy todir="${pkgtemp.dir}/docs">
+            <fileset dir="." includes="CHANGES CREDITS INSTALL README TODO" />
+        </copy>
+        <copy todir="${pkgtemp.dir}/docs/html">
+            <fileset dir="doc/web" />
+        </copy>
+    </target>
+
+    <target name="prep-common">
+        <copy todir="${pkgtemp.dir}/bin">
+            <fileset dir="./bin" />
+        </copy>
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+            <fileset dir="doc/licenses/SWT/common" />
+        </copy>
+        <copy file="LICENSE" todir="${pkgtemp.dir}/docs/licenses"/>
+        <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/docs/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
+    </target>
+
+    <target name="prep-win-licenses" depends="prep-common">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
+            <fileset dir="doc/licenses/SWT/win" />
+        </copy>
+    </target>
+
+    <target name="prep-lin-licenses" depends="prep-common">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
+            <fileset dir="doc/licenses/SWT/lin" />
+        </copy>
+    </target>
+
+    <target name="prep-mac-licenses" depends="prep-common">
+        <copy todir="${pkgtemp.dir}/docs/licenses/SWT">
+            <fileset dir="doc/licenses/SWT/mac" />
+        </copy>
+    </target>
+
     <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
         <fail message="This target cannot be used without Monotone!">
@@ -346,12 +386,12 @@
             <fileset dir="../${ant.project.name}-${Extended.Version}/_MTN" />
         </delete>
         <tar longfile="gnu" destfile="../${tarball.name}" compression="bzip2">
-            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="/${ant.project.name}-${Extended.Version}">
+            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="${ant.project.name}-${Extended.Version}">
                 <include name="**/**" />
                 <exclude name="debian/**"/>
                 <exclude name="**/*.sh"/>
             </tarfileset>
-            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="/${ant.project.name}-${Extended.Version}" filemode="755">
+            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="${ant.project.name}-${Extended.Version}" filemode="755">
                 <exclude name="debian/**" />
                 <include name="**/*.sh" />
             </tarfileset>
@@ -430,13 +470,16 @@
     <target name="clean" description="clean up">
         <delete dir="${build.dir}" />
         <delete dir="builddep" />
-        <delete dir="${dist.dir}" />
         <delete file="sloccount.sc" />
-        <delete file="syndie.jar" />
         <delete dir="plugin" />
-        <delete dir="pkg-temp" />
+        <delete dir="${pkgtemp.dir}" />
         <delete file="${ant.project.name}.fba" />
+    </target>
+
+    <target name="distclean" depends="clean" description="more throrough clean-up">
         <delete file="syndie.xpi2p" />
+        <delete dir="${dist.dir}" />
+        <delete file="syndie.jar" />
         <delete file="syndie-update.xpi2p" />
         <delete file="syndie-win32.xpi2p" />
         <delete file="syndie-win32-update.xpi2p" />
