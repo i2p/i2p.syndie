@@ -3,15 +3,17 @@ package syndie.gui;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -22,12 +24,12 @@ import syndie.db.UI;
  * collection of icons relevent for a particular message
  */
 public class MessageFlagBar extends BaseComponent implements Translatable {
-    private BookmarkControl _bookmarkControl;
-    private Composite _parent;
+    private final BookmarkControl _bookmarkControl;
+    private final Composite _parent;
     private Composite _root;
     private MessageInfo _msg;
-    private boolean _includeTooltips;
-    private List _images;
+    private final boolean _includeTooltips;
+    private final List<Image> _images;
     private boolean _realized;
     private Color _bg;
     
@@ -214,7 +216,9 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         if (_realized) return;
         _root = new Composite(_parent, SWT.NONE);
         //_root.setBackgroundMode(SWT.INHERIT_FORCE);
-        _root.setLayout(new FillLayout(SWT.HORIZONTAL));
+        FillLayout layout = new FillLayout(SWT.HORIZONTAL);
+        layout.spacing = 15;
+        _root.setLayout(layout);
         _translationRegistry.register(this);
         _realized = true;
         setBackground(_bg);
