@@ -9,7 +9,7 @@
     <property file="build.properties"/>
 
 
-  <!-- Set some global properties up -->
+    <!-- Set some global properties up -->
     <property name="src.dir" value="src" />
     <property name="data.dir" value="data" />
     <property name="build.dir" value="build" />
@@ -17,24 +17,30 @@
     <property name="lib.dir" value="lib" />
     <property name="pkgtemp.dir" value="pkg-temp" />
     <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
+    <property name="pkgtemp.lib" value="${pkgtemp.dir}/lib" />
+    <property name="i2p.src.dir" value="../i2p.i2p" />
+    <property name="launch4j.dir" value="${i2p.src.dir}/installer/lib/launch4j" />
+    <property name="desktop.class" value="syndie.gui.desktop.DesktopMain" />
+    <property name="tabs.class" value="syndie.gui.SWTUI" />
+    <property name="cli.class" value="syndie.db.TextUI" />
 
     <!-- allow lib locations to be overridden -->
     <property name="hsqldb.jar" value="${lib.dir}/hsqldb.jar" />
     <property name="i2p.jar" value="${lib.dir}/i2p.jar" />
     <property name="swt.jar" value="${lib.dir}/swt.jar" />
 
-  <!-- Set some classpaths up -->
+    <!-- Set some classpaths up -->
     <path id="classpath.build">
         <pathelement location="${hsqldb.jar}" />
         <pathelement location="${i2p.jar}" />
         <pathelement location="${swt.jar}" />
     </path>
     <path id="classpath.run">
-        <pathelement location="${dist.lib.jar}" />
+        <pathelement location="${build.dir}/syndie.jar" />
         <path refid="classpath.build" />
     </path>
 
-  <!-- Set up a fileset for the resources -->
+    <!-- Set up a fileset for the resources -->
     <path id="resources.path">
         <fileset dir="${data.dir}" />
     </path>
@@ -45,11 +51,67 @@
         <echo message="Useful targets:" />
         <echo message="       clean: ${tab}Clean up the workspace" />
         <echo message="        dist: ${tab}Create ${basedir}/syndie.jar containing dependencies for YOUR system"/>
-        <echo message="         jar: ${tab}Create a jar containing ${ant.project.name}"/>
+        <echo message="   distclean: ${tab}Clean up all generated files" />
+        <echo message="         jar: ${tab}Create syndie.jar in build/ without the dependencies"/>
         <echo message="    javadocs: ${tab}Generate javadocs for ${ant.project.name}" />
-        <echo message="         run: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
-        <echo message=" run-desktop: ${tab}Run ${ant.project.name} with the 'tabs' interface" />
+        <echo message="         pkg: ${tab}Generate jar files and copy docs to ./dist" />
+        <echo message="     pkg-exe: ${tab}Same as pkg but also wraps jar files with launch4j into EXE files" />
+        <echo message="         run: ${tab}Run ${ant.project.name} with the 'Tabs' interface" />
+        <echo message=" run-desktop: ${tab}Run ${ant.project.name} with the alternative 'Desktop' interface" />
     </target>
+
+    <macrodef name="make-stub-jar">
+        <attribute name="type" />
+        <attribute name="type-class" />
+        <attribute name="additional" default=""/>
+
+        <sequential>
+            <jar destfile="${pkgtemp.dir}/Syndie-@{type}.jar">
+                <manifest>
+                    <attribute name="Main-Class" value="@{type-class}" />
+                    <attribute name="Class-Path" value="lib/i2p.jar lib/hsqldb.jar lib/syndie.jar @{additional}" />
+                    <attribute name="Build-Date" value="${build.timestamp}" />
+                    <attribute name="Base-Revision" value="${workspace.version}" />
+                </manifest>
+            </jar>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="wrap-to-exe">
+        <attribute name="type" />
+        <sequential>
+            <local name="launch4j.config" />
+            <tempfile property="launch4j.config" deleteonexit="true" />
+            <fail unless="launch4j.dir">Specify the location of the Launch4J installation directory with -Dlaunch4j.dir=/some/path/to/launch4j.jar</fail>
+            <taskdef name="launch4j" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar"
+                classname="net.sf.launch4j.ant.Launch4jTask" />
+
+            <echo file="${launch4j.config}"><![CDATA[
+                <launch4jConfig>
+                    <headerType>0</headerType>
+                    <jar>${pkgtemp.dir}/Syndie-@{type}.jar</jar>
+                    <outfile>${pkgtemp.dir}/Syndie-@{type}.exe</outfile>
+                    <errTitle>Syndie-@{type}</errTitle>
+                    <chdir>.</chdir>
+                    <icon>doc/web/favicon.ico</icon>
+                    <jre><minVersion>1.5.0</minVersion></jre>
+                    <versionInfo>
+                        <fileVersion>0.0.0.0</fileVersion>
+                        <productVersion>0.0.0.0</productVersion>
+                        <txtFileVersion>syndie-@{type}-${full.version}</txtFileVersion>
+                        <txtProductVersion>${full.version}</txtProductVersion>
+                        <fileDescription>Syndie @{type} Launcher</fileDescription>
+                        <copyright>copyright is theft</copyright>
+                        <productName>Syndie ${full.version}</productName>
+                        <internalName>syndie</internalName>
+                        <originalFilename>syndie-@{type}.exe</originalFilename>
+                    </versionInfo>
+                </launch4jConfig>
+                ]]></echo>
+
+            <launch4j configFile="${launch4j.config}" />
+        </sequential>
+    </macrodef>
 
     <target name="init" depends="buildProperties">
         <available property="have.swt" file="${swt.jar}" type="file" />
@@ -64,7 +126,7 @@
             <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
         </tstamp>
         <mkdir dir="${dist.dir}" />
-        <mkdir dir="${build.dir}" />
+        <mkdir dir="${build.dir}/obj" />
     </target>
 
     <condition property="depend.available">
@@ -75,7 +137,7 @@
         <depend
             cache="builddep"
             srcdir="src"
-            destdir="build">
+            destdir="${build.dir}/obj">
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
@@ -83,7 +145,7 @@
     </target>
 
     <target name="compile" depends="init, depend" description="compile the source">
-        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true" source="1.5" target="1.5"
+        <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.5" target="1.5"
                deprecation="on" includeAntRuntime="false">
             <classpath>
                 <path refid="classpath.build" />
@@ -91,10 +153,10 @@
         </javac>
     </target>
 
-    <target name="jar" depends="compile" description="generate the jar file">
+    <target name="jar" depends="compile" description="Build jar in ./build">
         <property name="build.built-by" value="unknown" />
-        <jar jarfile="${dist.lib.jar}">
-            <fileset dir="${build.dir}" excludes="javadoc/**" />
+        <jar jarfile="${build.dir}/syndie.jar">
+            <fileset dir="${build.dir}/obj" />
             <path refid="resources.path" />
             <manifest>
                 <attribute name="Built-By" value="${build.built-by}" />
@@ -105,10 +167,9 @@
     </target>
 
     <target name="dist" depends="jar" description="Combine all jars">
-        <mkdir dir="${pkgtemp.dir}" />
-        <copy file="${swt.jar}" todir="${pkgtemp.dir}" />
-        <copy file="${i2p.jar}" todir="${pkgtemp.dir}" />
-        <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}" />
+        <copy file="${swt.jar}" todir="${pkgtemp.lib}" />
+        <copy file="${i2p.jar}" todir="${pkgtemp.lib}" />
+        <copy file="${hsqldb.jar}" todir="${pkgtemp.lib}" />
         <jar jarfile="syndie.jar" index="true">
             <manifest>
                 <attribute name="Main-Class" value="syndie.gui.SWTUI"/>
@@ -116,8 +177,8 @@
                 <attribute name="Build-Date" value="${build.timestamp}" />
                 <attribute name="Base-revision" value="${workspace.version}" />
             </manifest>
-            <zipfileset src="${dist.lib.jar}" includes="**" />
-            <zipgroupfileset dir="${pkgtemp.dir}" includes="*.jar"/>
+            <zipfileset src="${build.dir}/syndie.jar" includes="**" />
+            <zipgroupfileset dir="${pkgtemp.lib}" includes="*.jar"/>
         </jar>
     </target>
 
@@ -151,6 +212,29 @@
         </java>
     </target>
 
+    <target name="-check-launch4j" if="launch4j.dir" description="Check if this system can run launch4j">
+        <condition property="can.create.exe">
+            <and>
+                <or>
+                    <os arch="amd64" />
+                    <os arch="x86" />
+                    <os arch="i386" />
+                    <os arch="x86_64" />
+                </or>
+                <or>
+                    <os name="Linux" />
+                    <os family="windows" />
+                </or>
+            </and>
+        </condition>
+    </target>
+
+    <target name="-jars2exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, -stub-jars" description="Wrap jar files into EXEs">
+        <wrap-to-exe type="Desktop" />
+        <wrap-to-exe type="Tabs" />
+        <wrap-to-exe type="CLI" />
+    </target>
+
     <target name="plugin" depends="buildProperties, jar">
         <mkdir dir="plugin/lib" />
         <buildnumber file="scripts/build.number" />
@@ -172,7 +256,7 @@
         <exec executable="pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/syndie.jar.pack" />
-            <arg value="${dist.dir}/syndie.jar" />
+            <arg value="${build.dir}/syndie.jar" />
         </exec>
         <exec executable="scripts/makeplugin.sh" failonerror="true">
             <arg value="plugin" />
@@ -245,11 +329,11 @@
 
     </target>
 
-    <target name="checkForMtn">
+    <target name="-checkForMtn">
         <available property="mtn.available" file="_MTN" type="dir" />
     </target>
 
-    <target name="getMtnRev" depends="checkForMtn" if="mtn.available">
+    <target name="getMtnRev" depends="-checkForMtn" if="mtn.available">
         <exec executable="mtn" outputproperty="workspace.version" errorproperty="mtn.error1" failifexecutionfails="false">
             <arg value="automate" />
             <arg value="get_base_revision_id" />
@@ -330,10 +414,20 @@
         <echo message="Build number is ${syndie.build.number}" />
     </target>
 
+    <target name="-stub-jars" depends="jar, preppkg" description="Create manifest-only jars for Syndie">
+        <make-stub-jar type="Desktop" additional="lib/swt.jar" type-class="${desktop.class}" />
+        <make-stub-jar type="Tabs" additional="lib/swt.jar" type-class="${tabs.class}" />
+        <make-stub-jar type="CLI" type-class="${cli.class}" />
+    </target>
+
     <target name="preppkg" depends="prep-docs">
         <copy todir="${pkgtemp.dir}/bin">
             <fileset dir="./bin" />
         </copy>
+        <copy file="${swt.jar}" todir="${pkgtemp.dir}/lib" />
+        <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
+        <copy file="${i2p.jar}" todir="${pkgtemp.dir}/lib" />
+        <copy file="${build.dir}/syndie.jar" todir="${pkgtemp.dir}/lib" />
     </target>
 
     <target name="prep-docs">
@@ -348,6 +442,8 @@
         <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/docs/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
     </target>
 
+
+    <target name="prep-swt-licenses" depends="prep-win-licenses, prep-lin-licenses, prep-mac-licenses, prep-common-swt" />
     <target name="prep-common-swt">
         <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
             <fileset dir="doc/licenses/SWT/common" />
@@ -355,9 +451,6 @@
     </target>
 
     <target name="prep-win-licenses" depends="prep-common-swt">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
-            <fileset dir="doc/licenses/SWT/win/about_files" />
-        </copy>
         <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/Windows.html" />
     </target>
 
@@ -374,6 +467,18 @@
         </copy>
         <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/OSX.html" />
     </target>
+
+    <target name="prep-launch4j-license" if="launch4j.dir">
+        <copy file="${launch4j.dir}/LICENSE.txt" tofile="docs/licenses/License-Launch4j.txt" />
+    </target>
+
+    <target name="pkg" depends="prep-launch4j-license, prep-swt-licenses, -stub-jars, jar, preppkg">
+        <move todir="${dist.dir}">
+            <fileset dir="${pkgtemp.dir}" />
+        </move>
+    </target>
+
+    <target name="pkg-exe" depends="-jars2exe, pkg"/>
 
     <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
@@ -445,7 +550,7 @@
             <arg value="-sourcepath"/>
             <arg value="src" />
             <!-- start of the files to be analyzed -->
-            <arg value="dist/syndie.jar"/>
+            <arg value="${build.dir}/syndie.jar"/>
         </exec>
         <echo message="Findbugs output stored in ${ant.project.name}.fba" />
         <echo message="Now run: findbugs ${ant.project.name}.fba" />
@@ -501,8 +606,15 @@
         <delete file="syndie-linux-i386-update.xpi2p" />
         <delete file="syndie-linux-x86-64.xpi2p" />
     </target>
-    <target name="debug">
+
+    <target name="totallyclean" depends="distclean" description="Clean-up even more">
+        <delete file="lib/i2p.jar" />
+        <delete file="lib/swt.jar" />
+    </target>
+
+    <target name="debug" description="Print properties">
         <echoproperties/>
     </target>
+
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
