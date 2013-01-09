@@ -14,7 +14,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
@@ -63,6 +65,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -452,7 +455,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                             break;
                     }
                     
-                    _ui.debugMessage("filter age selected: " + _age + " custom date: " + Constants.getDate(System.currentTimeMillis()-(_age-1)*24l*60l*60l*1000l));
+                    //_ui.debugMessage("filter age selected: " + _age + " custom date: " + Constants.getDate(System.currentTimeMillis()-(_age-1)*24l*60l*60l*1000l));
                     
                     _msgTree.applyFilter();
                 }
@@ -652,7 +655,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             String when = date.getText();
             try {
                 synchronized (_fmt) {
-                    Date val = _fmt.parse(when);
+                    Date val = Constants.parseDateTime(when);
                     long customDate = val.getTime();
                     
                     // calculate age in days from customDate
@@ -666,7 +669,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
                 box.setText(_translationRegistry.getText(T_CUSTOMDATE_ERR_TITLE, "Bad date"));
-                box.setMessage(_translationRegistry.getText(T_CUSTOMDATE_ERR_PREFIX, "There was an error with your date (please format as yyyy/mm/dd): ") + pe.getMessage());
+                box.setMessage(_translationRegistry.getText(T_CUSTOMDATE_ERR_PREFIX, "Error parsing date: ") + pe.getMessage());
                 box.open();
                 date.forceFocus();
             }
@@ -682,7 +685,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     days = uri.getLong("agelocal");
             }
             if (days != null)
-                _filterAge.setText(Constants.getDate(System.currentTimeMillis()-(days.longValue()-1)*24l*60l*60l*1000l));
+                _filterAge.setText(Constants.getDateTime(System.currentTimeMillis()-(days.longValue())*24*60*60*1000l));
             String tags[] = null;
             if (uri != null)
                 tags = uri.getStringArray("tagrequire");
@@ -744,12 +747,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         private void populateAgeCombo() {
             String [] items = {
-                _translationRegistry.getText(T_AGE_TODAY, "Today"),
-                _translationRegistry.getText(T_AGE_YESTERDAY, "Since yesterday"),
-                _translationRegistry.getText(T_AGE_THISWEEK, "This week"),
-                _translationRegistry.getText(T_AGE_LASTWEEK, "Since last week"),
-                _translationRegistry.getText(T_AGE_THISMONTH, "This month"),
-                _translationRegistry.getText(T_AGE_LASTMONTH, "Since last month"),
+                _translationRegistry.getText(T_AGE_TODAY, "Last day"),
+                _translationRegistry.getText(T_AGE_YESTERDAY, "Last 2 days"),
+                _translationRegistry.getText(T_AGE_THISWEEK, "Last week"),
+                _translationRegistry.getText(T_AGE_LASTWEEK, "Last 2 weeks"),
+                _translationRegistry.getText(T_AGE_THISMONTH, "Last month"),
+                _translationRegistry.getText(T_AGE_LASTMONTH, "Last 2 months"),
                 _translationRegistry.getText(T_AGE_6MONTH, "Last 6 months"),
                 _translationRegistry.getText(T_AGE_YEAR, "Last year"),
                 _translationRegistry.getText(T_AGE_3YEAR, "Last 3 years"),
@@ -949,7 +952,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
          */
         
         public void translate(TranslationRegistry registry) {
-            _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filters:"));
+            _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filter:  Since:"));
 
             _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
             _filterKeywordLabel.setText(registry.getText(T_FILTER_KEYWORD, "Text:"));
@@ -1656,6 +1659,19 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _navPrev.setEnabled(false);
             _navStart.setEnabled(false);
             _navPageSize.setEnabled(false);
+            _markMessageReadButton.setEnabled(false);
+            _markThreadReadButton.setEnabled(false);
+            _expandThreadButton.setEnabled(false);
+            _collapseThreadButton.setEnabled(false);
+          /****
+            // TODO no method. Have to disable or remove the listeners?
+            _colSubject.setEnabled(false);
+            _colAuthor.setEnabled(false);
+            _colChannel.setEnabled(false);
+            _colDate.setEnabled(false);
+            _colTags.setEnabled(false);
+           ****/
+
             return referenceNodes;
         }
         _navPageSize.setEnabled(true);
@@ -1674,6 +1690,19 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navEnd.setEnabled(!atEnd);
         _navPrev.setEnabled(!atBeginning);
         _navStart.setEnabled(!atBeginning);
+        // TODO enable/disable based on selection
+        _markMessageReadButton.setEnabled(true);
+        _markThreadReadButton.setEnabled(true);
+        _expandThreadButton.setEnabled(true);
+        _collapseThreadButton.setEnabled(true);
+      /****
+        // TODO enable/disable based if > 1 row
+        _colSubject.setEnabled(true);
+        _colAuthor.setEnabled(true);
+        _colChannel.setEnabled(true);
+        _colDate.setEnabled(true);
+        _colTags.setEnabled(true);
+      ****/
         
         StringBuilder buf = new StringBuilder();
         buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
@@ -1925,14 +1954,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 long postDate = messageId; //uri.getMessageId().longValue();
                 if (_appliedFilter == null) {
                     if (MessageTree.shouldUseImportDate(_client))
-                        date = Constants.getDate(importDate);
+                        date = Constants.getDateTime(importDate);
                     else
-                        date = Constants.getDate(postDate);
+                        date = Constants.getDateTime(postDate);
                 } else if (_appliedFilter.getString("agelocal") != null) {
-                    date = Constants.getDate(importDate);
+                    date = Constants.getDateTime(importDate);
                     //_browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
                 } else {
-                    date = Constants.getDate(postDate);
+                    date = Constants.getDateTime(postDate);
                     //_browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
                 }
                 status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
@@ -1945,7 +1974,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
                 chan = "";
                 if (messageId >= 0)
-                    date = Constants.getDate(uri.getMessageId().longValue());
+                    date = Constants.getDateTime(uri.getMessageId().longValue());
                 else
                     date = "";
                 tags = "";
@@ -1987,7 +2016,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         setMinWidth(_colSubject, subj, 0, 200);
         setMinWidth(_colAuthor, auth, 0, 150);
         setMinWidth(_colChannel, chan, 0, 150);
-        setMinWidth(_colDate, date, 20, 110);
+        setMinWidth(_colDate, date, 20, 150);
         setMinWidth(_colTags, tags, 0, 50);
         if (!_showChannel) _colChannel.setWidth(1);
         //_browser.getUI().debugMessage("message status: " + status);

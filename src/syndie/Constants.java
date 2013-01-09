@@ -2,9 +2,12 @@ package syndie;
 
 import java.io.File;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.*;
+
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+
 import syndie.data.SyndieURI;
 
 /**
@@ -132,6 +135,12 @@ public class Constants {
     /** this refers to the (context-sensitive) help uri - this url is just there for testing until the help is written */
     public static final SyndieURI HELP_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1187210851042l);
 
+    private static final long LATEST_DATE = 24*60*60*1000l;
+    /** 1/1/2000 */
+    private static final long EARLIEST_DATE = 946700000 * 1000l;
+    // todo translate
+    private static final String INVALID_DATE = "Invalid date";
+
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
     /** split on all of the characters in splitElements, with the resulting tokens not including that character */
@@ -194,28 +203,55 @@ public class Constants {
 
     /**
      *  Current locale.
+     *  Returns error string if too old or too far in future.
      */
-    public static final String getDate(long msgId) { 
+    public static final String getDate(long when) { 
+        if (when < EARLIEST_DATE || when > System.currentTimeMillis() + LATEST_DATE)
+            return INVALID_DATE;
         synchronized (_dayFmt) { 
-            return _dayFmt.format(new Date(msgId)); 
+            return _dayFmt.format(new Date(when)); 
         } 
     }
 
     private static final DateFormat _dayFmtMedium = DateFormat.getDateInstance(DateFormat.MEDIUM);
-    private static final DateFormat _dateTimeFmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
+    private static final DateFormat _dateTimeFmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
     /**
      *  Current locale.
      *  Displays date only if older than a week.
+     *  Returns error string if too old or too far in future.
      */
     public static final String getDateTime(long when) {
+        long now = System.currentTimeMillis();
+        if (when < EARLIEST_DATE || when > now + LATEST_DATE)
+            return INVALID_DATE;
         DateFormat fmt;
-        if (when > System.currentTimeMillis() - 7*24*60*60*1000l)
+        if (when > now - 7*24*60*60*1000l)
             fmt = _dateTimeFmt;
         else
             fmt = _dayFmtMedium;
         synchronized (fmt) { 
             return fmt.format(new Date(when)); 
+        }
+    }
+
+    /**
+     *  Current locale. Tries several variants.
+     *  @since 1.102b-5
+     */
+    public static final Date parseDateTime(String when) throws ParseException {
+        synchronized (_dateTimeFmt) { 
+            try {
+                return _dateTimeFmt.parse(when); 
+            } catch (ParseException pe) {}
+        }
+        synchronized (_dayFmtMedium) { 
+            try {
+                return _dayFmtMedium.parse(when); 
+            } catch (ParseException pe) {}
+        }
+        synchronized (_dayFmt) { 
+            return _dayFmt.parse(when); 
         }
     }
     
