@@ -12,7 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.data.Hash;
+
 import syndie.data.SyndieURI;
 import syndie.data.Timer;
 
@@ -20,10 +22,10 @@ import syndie.data.Timer;
  * direct implementation of the jwz threading algorithm without any filtering
  */
 public class ThreadBuilder {
-    private DBClient _client;
-    private UI _ui;
+    private final DBClient _client;
+    private final UI _ui;
     /** ThreadMsgId to Container */
-    private Map _idTable;
+    private final Map<ThreadMsgId, Container> _idTable;
     
     private static final boolean DEBUG = false;
     
@@ -34,7 +36,7 @@ public class ThreadBuilder {
     }
     
     public List buildThread(Set threadMsgIds) { 
-        Timer timer = new Timer("build thread", _ui);
+        Timer timer = new Timer("JWZ threader", _ui);
         List rv = buildThread(threadMsgIds, timer);
         timer.complete();
         return rv;
@@ -348,7 +350,7 @@ public class ThreadBuilder {
 
     /** build the thread that contains the given message */
     public ThreadReferenceNode buildThread(ThreadMsgId id) {
-        Timer timer = new Timer("build thread " + id.msgId, _ui);
+        Timer timer = new Timer("JWZ threader ID " + id.msgId, _ui);
         ThreadReferenceNode rv = buildThread(id, timer);
         timer.complete();
         return rv;

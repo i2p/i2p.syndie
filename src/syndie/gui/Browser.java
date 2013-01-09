@@ -1576,16 +1576,16 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             //if ( (tab == null) && (browseURI != null) )
             //    tab = (BrowserTab)_openTabs.get(browseURI);
             if (tab == null) {
-                debugMessage("building tab");
-                debugMessage("building normal URI: " + uri);
+                //debugMessage("building tab");
+                //debugMessage("building normal URI: " + uri);
                 tab = BrowserTab.build(this, uri, suggestedName, suggestedDescription);
                 if (tab != null) {
                     _openTabs.put(uri, tab);
                     _openTabURIs.put(tab.getTabItem(), uri);
                 }
-                debugMessage("tab built: " + tab);
+                //debugMessage("tab built: " + tab);
             } else {
-                debugMessage("canShow(" + uri + "): " + tab);
+                //debugMessage("canShow(" + uri + "): " + tab);
             }
         }
         if (tab != null) {
@@ -1595,11 +1595,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 _tabs.setRedraw(true);
             }
             tab.show(uri);
-            debugMessage("showing tab");
+            //debugMessage("showing tab");
             _tabs.showItem(tab.getTabItem());
-            debugMessage("tab shown");
+            //debugMessage("tab shown");
             _tabs.setSelection(tab.getTabItem());
-            debugMessage("tab selected");
+            //debugMessage("tab selected");
             tab.tabShown();
         } 
         if (tab == null) {
