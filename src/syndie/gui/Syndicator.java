@@ -857,6 +857,10 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 incomingURIToItem.put(uri, actionItem);
                 _items.put(actionItem, action);
                 //_ui.debugMessage("Added " + action);
+            } else if (actionItem.isDisposed()) {
+                _items.remove(actionItem);
+                incomingURIToItem.remove(uri);
+                return;
             }
 
             String forum = _client.getChannelName(scope);
