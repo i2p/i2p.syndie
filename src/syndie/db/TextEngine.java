@@ -42,7 +42,10 @@ public class TextEngine {
     private List _scriptListeners;
     private boolean _newNymCreated;
         
+    /** CLI only, will instantiate DBClient */
     public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
+
+    /** CLI only, will instantiate DBClient */
     public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
         if (lsnr != null)
@@ -55,11 +58,15 @@ public class TextEngine {
         _newNymCreated = false;
         _commandHistory = new ArrayList();
         rebuildMenus();
+        // this instantiates DBClient in CLI-only mode
         buildInstallDir();
         _client.runScript(_ui, "startup");
     }
 
+    /** CLI helper under GUI */
     public TextEngine(DBClient client, UI ui) { this(client, ui, null); }
+
+    /** CLI helper under GUI */
     public TextEngine(DBClient client, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
         if (lsnr != null)
@@ -170,6 +177,9 @@ public class TextEngine {
         rebuildMenus();
     }
     
+    /**
+     *  This also instantiates the DBClient in CLI-only mode
+     */
     private void buildInstallDir() {
         _rootDir = new SecureFile(_rootFile);
         _dbDir = new SecureFile(_rootDir, "db");
@@ -220,9 +230,12 @@ public class TextEngine {
         if (!f.exists())
             installResource("/archive/robots.txt", f);
         
-        if (_client == null)
+        if (_client == null) {
             _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
-        
+            // required to prevent NPE when running startup scripts
+            _client.setDefaultUI(_ui);
+        }        
+
         if (dbDirCreated) {
             // so it doesn't gather 'command completed'/etc messages on the screen
             _ui.insertCommand("gobble");

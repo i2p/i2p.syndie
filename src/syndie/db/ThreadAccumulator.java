@@ -323,8 +323,11 @@ AND
             for (int i = 0; i < rootMsgIds.size(); i++) {
                 Long msgId = (Long)rootMsgIds.get(i);
                 MessageThreadBuilder builder = new MessageThreadBuilder(_client, _ui);
+                MessageInfo info = _client.getMessage(msgId.longValue());
+                if (info == null) // startup maybe?
+                    continue;
                 //_ui.debugMessage("building thread for root msgId: " + msgId);
-                ReferenceNode root = builder.buildThread(_client.getMessage(msgId.longValue()));
+                ReferenceNode root = builder.buildThread(info);
                 _ui.debugMessage("thread built for root msgId: " + msgId + " - " + (root != null ? root.getURI() : null));
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
