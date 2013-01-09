@@ -1,7 +1,7 @@
 package syndie;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.*;
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
@@ -190,16 +190,32 @@ public class Constants {
         return new String(rv);
     }
 
-    private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
+    private static final DateFormat _dayFmt = DateFormat.getDateInstance(DateFormat.SHORT);
+
+    /**
+     *  Current locale.
+     */
     public static final String getDate(long msgId) { 
         synchronized (_dayFmt) { 
             return _dayFmt.format(new Date(msgId)); 
         } 
     }
-    private static final SimpleDateFormat _dateTimeFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.UK);
+
+    private static final DateFormat _dayFmtMedium = DateFormat.getDateInstance(DateFormat.MEDIUM);
+    private static final DateFormat _dateTimeFmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
+
+    /**
+     *  Current locale.
+     *  Displays date only if older than a week.
+     */
     public static final String getDateTime(long when) {
-        synchronized (_dateTimeFmt) { 
-            return _dateTimeFmt.format(new Date(when)); 
+        DateFormat fmt;
+        if (when > System.currentTimeMillis() - 7*24*60*60*1000l)
+            fmt = _dateTimeFmt;
+        else
+            fmt = _dayFmtMedium;
+        synchronized (fmt) { 
+            return fmt.format(new Date(when)); 
         }
     }
     

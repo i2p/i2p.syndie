@@ -9,10 +9,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
@@ -50,6 +52,7 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -299,7 +302,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             _headerAuthor.setVisible(showAuthor);
             _headerAuthorAction.setVisible(showAuthor);
             
-            String date = Constants.getDate(msg.getMessageId());
+            String date = Constants.getDateTime(msg.getMessageId());
             String impDate = Constants.getDate(_client.getMessageImportDate(msg.getInternalId()));
             _headerDate.setText(date + " [" + impDate + "]");
             
