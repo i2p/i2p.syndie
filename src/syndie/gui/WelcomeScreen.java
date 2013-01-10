@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import net.i2p.util.RandomSource;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.KeyEvent;
@@ -23,6 +26,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.Timer;
 import syndie.db.ManageForumExecutor;
@@ -347,7 +351,7 @@ public class WelcomeScreen extends Wizard {
                 "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
                 "your own blog/forum"})));
         _nameLabel.setText(registry.getText(T_NAME, "What name would you like to use for your new identity?"));
-        _name.setText(registry.getText(T_NAME_DEFAULT, "Syndie user"));
+        _name.setText(registry.getText(T_NAME_DEFAULT, "Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
         _avatarLabel.setText(registry.getText(T_AVATAR_LABEL, "What avatar would you like to use?"));
         _authenticationLabel.setText(registry.getText(T_AUTH_LABEL, "In your new identity's blog/forum, would  you like to allow other people to post?"));
         _authenticatePublic.setText(registry.getText(T_AUTH_PUBLIC, "Yes, let anyone reply to existing posts and post new topics"));
