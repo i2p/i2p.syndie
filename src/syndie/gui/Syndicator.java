@@ -1113,7 +1113,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     
     public void translate(TranslationRegistry registry) {
-        _colName.setText(registry.getText(""));
+        _colName.setText("");
         _colName.setImage(ImageUtil.ICON_REF_ARCHIVE);
         _colTime.setText(registry.getText("Time"));
         _colStatus.setText(registry.getText("Status"));

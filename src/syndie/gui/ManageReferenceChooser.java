@@ -605,7 +605,7 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
     public void translate(TranslationRegistry registry) {
         _colDescription.setText(registry.getText("Description"));
         _colType.setText(registry.getText("Type"));
-        _colTarget.setText(registry.getText(""));
+        _colTarget.setText("");
         _colName.setText(registry.getText("Name"));
         _add.setText(registry.getText("Add"));
         _addChild.setText(registry.getText("Add child"));

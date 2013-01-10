@@ -154,7 +154,36 @@
         </javac>
     </target>
 
-    <target name="jar" depends="compile" description="Build jar in ./build">
+    <target name="bundle" depends="compile" description="process the translations">
+        <!-- Update the messages_*.po files -->
+        <exec executable="sh" osfamily="unix" failifexecutionfails="true" failonerror="${require.gettext}" >
+            <arg value="./bundle-messages.sh" />
+        </exec>
+        <exec executable="sh" osfamily="mac" failifexecutionfails="true" failonerror="${require.gettext}" >
+            <arg value="./bundle-messages.sh" />
+        </exec>
+        <exec executable="sh" osfamily="windows" failifexecutionfails="false" >
+            <arg value="./bundle-messages.sh" />
+        </exec>
+    </target>
+
+    <target name="poupdate" depends="compile" description="generate the translation files">
+        <!-- Update the messages_*.po files.  -->
+        <exec executable="sh" osfamily="unix" failifexecutionfails="true" failonerror="true" >
+            <arg value="./bundle-messages.sh" />
+            <arg value="-p" />
+        </exec>
+        <exec executable="sh" osfamily="mac" failifexecutionfails="true" failonerror="true" >
+            <arg value="./bundle-messages.sh" />
+            <arg value="-p" />
+        </exec>
+        <exec executable="sh" osfamily="windows" failifexecutionfails="true" failonerror="true" >
+            <arg value="./bundle-messages.sh" />
+            <arg value="-p" />
+        </exec>
+    </target>
+
+    <target name="jar" depends="compile, bundle" description="Build jar in ./build">
         <property name="build.built-by" value="unknown" />
         <jar jarfile="${build.dir}/syndie.jar">
             <fileset dir="${build.dir}/obj" />
