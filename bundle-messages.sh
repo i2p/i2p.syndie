@@ -47,8 +47,8 @@ do
 		find $JPATHS -name *.java -newer $i > $TMPFILE
 	fi
 
-	if [ -s build/syndie/messages/messages_$LG.class -a \
-	     build/syndie/messages/messages_$LG.class -nt $i -a \
+	if [ -s build/obj/syndie/messages/messages_$LG.class -a \
+	     build/obj/syndie/messages/messages_$LG.class -nt $i -a \
 	     ! -s $TMPFILE ]
 	then
 		continue
@@ -93,7 +93,7 @@ do
         echo "Generating ${CLASS}_$LG ResourceBundle..."
 
         # convert to class files in build
-        msgfmt --java --statistics -r $CLASS -l $LG -d build $i
+        msgfmt --java --statistics -r $CLASS -l $LG -d build/obj $i
         if [ $? -ne 0 ]
         then
             echo "ERROR - msgfmt failed on ${i}, not updating translations"

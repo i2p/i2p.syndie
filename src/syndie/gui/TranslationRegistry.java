@@ -1,68 +1,64 @@
 package syndie.gui;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeSet;
+
+import net.i2p.I2PAppContext;
+import net.i2p.util.ConcurrentHashSet;
+import net.i2p.util.Translate;
 
 import org.eclipse.swt.graphics.Image;
 
 import syndie.db.UI;
 
 /**
- *
+ *  Formerly used property files inside the jar and in the directory.
+ *  Now using I2P's Messages API and .po files.
  */
 public class TranslationRegistry {
+    private final I2PAppContext _context;
     private final UI _ui;
     private final File _rootDir;
     private final Set<Translatable> _translatable;
-    private String _lang;
-    private Properties _text;
     private Map<String, Image> _images;
-    private Properties _baseText;
     private Map<String, Image> _baseImages;
-    private Map<String, Properties> _embeddedTranslations;
-    private Map<String, Properties> _fileTranslations;
     
+    private static final String BUNDLE = "syndie.locale.messages";
+
     public TranslationRegistry(UI ui, File rootDir) {
+        _context = I2PAppContext.getGlobalContext();
         _ui = ui;
         _rootDir = rootDir;
-        _translatable = Collections.synchronizedSet(new HashSet());
-        _lang = "English";
-        _text = new Properties();
+        _translatable = new ConcurrentHashSet();
+        // images are unused
         _images = new HashMap();
-        _baseText = new Properties();
         _baseImages = new HashMap();
     }
     
     public void register(Translatable entry) { _translatable.add(entry); entry.translate(this); }
+
     public void unregister(Translatable entry) { _translatable.remove(entry); }
     
-    public String getTranslation() { return _lang; }
+    public String getTranslation() { return Translate.getLanguage(_context); }
+
     /**
      * retrieve the translation's value for the given key, or the default value if no translated
      * value is known.  the returned string is postprocessed as well, turning any newlines into
      * the current platform's newline character
+     *
+     * @param key ignored, to be removed
      */
     public String getText(String key, String defaultVal) { 
-        String val = _text.getProperty(key, defaultVal);
-        return postprocess(val);
+        return getText(defaultVal);
     }
     
     private static final String NL = System.getProperty("line.separator");
+
     private static final String postprocess(String val) {
         if (val.indexOf('\n') == -1)
             return val;
@@ -83,11 +79,11 @@ public class TranslationRegistry {
      * back on the base language if it isn't known
      */
     public String getText(String key) {
-        String val = _text.getProperty(key);
-        if (val == null)
-            val = _baseText.getProperty(key);
-        return val;
+        String val = Translate.getString(key, _context, BUNDLE);
+        return postprocess(val);
     }
+
+    /** @deprecated unused */
     public Image getImage(String key) {
         Image img = (Image)_images.get(key);
         if (img == null)
@@ -95,171 +91,43 @@ public class TranslationRegistry {
         return img;
     }
     
+    /**
+     * @param newText ignored, to be removed
+     */
     private void switchTranslation(String newLang, Properties newText, Map newImages) {
-        _lang = newLang;
-        _text = newText;
+        if (_context.isRouterContext()) {
+            _ui.errorMessage("use the router console to change languages");
+            return;
+        }
+        // TODO store lang in database???
         _images = newImages;
         _ui.debugMessage("switching translation to " + newLang);
-        for (Iterator iter = _translatable.iterator(); iter.hasNext(); ) {
-            Translatable cur = (Translatable)iter.next();
+        // context falls back to system properties
+        System.setProperty(Translate.PROP_LANG, newLang);
+        for (Translatable cur : _translatable) {
             _ui.debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
             cur.translate(this);
         }
     }
     
     public void switchTranslation(String newLang) {
-        if ( (_lang != null) && (newLang.equals(_lang)) ) {
+        String lang = getTranslation();
+        if (newLang.equals(lang)) {
             _ui.debugMessage("language already in use (" + newLang + ")");
             return; // noop
         }
-        
-        if ("English".equals(newLang)) {
-            switchTranslation(newLang, new Properties(), new HashMap());
-        } else {
-            Properties txt = (Properties)_fileTranslations.get(newLang);
-            if (txt != null) {
-                switchTranslation(newLang, txt, new HashMap());
-            } else {
-                txt = (Properties)_embeddedTranslations.get(newLang);
-                if (txt != null) {
-                    switchTranslation(newLang, txt, new HashMap());
-                }
-            }
-        }
+        switchTranslation(newLang, null, new HashMap());
     }
     
-    private static final String KEY_LANG = "LANG";
-    private static final String KEY_ISBASE = "ISBASE";
-    
-    private void refreshEmbeddedTranslations() {
-        Properties baseText = null;
-        Map translations = new HashMap();
-        int translation = 0;
-        while (true) {
-            BufferedReader reader = null;
-            try {
-                InputStream in = getClass().getResourceAsStream("/translation_ " + translation + ".txt");
-                if (in != null) {
-                    reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                    Properties props = new Properties();
-                    String line = null;
-                    String lang = null;
-                    while ( (line = reader.readLine()) != null) {
-                        int split = line.indexOf(':');
-                        if (split <= 0)
-                            split = line.indexOf('=');
-                        if (split <= 0)
-                            continue;
-                        if (line.startsWith("/") || line.startsWith("#") || line.startsWith("--")) 
-                            continue;
-                        String key = line.substring(0, split).trim();
-                        String val = line.substring(split+1).trim();
-                        if (key.equals(KEY_LANG))
-                            lang = val;
-                        else if (key.equals(KEY_ISBASE))
-                            baseText = props;
-                        else
-                            props.setProperty(key, val);
-                    }
-                    reader.close();
-                    reader = null;
-                    if (lang != null)
-                        translations.put(lang, props);
-                    translation++;
-                } else {
-                    break;
-                }
-            } catch (IOException ioe) {
-                _ui.errorMessage("problem getting the embedded translations", ioe);
-            } finally {
-                if (reader != null) try { reader.close(); } catch (IOException ioe) {}
-            }
-        }
-        if (baseText != null)
-            _baseText = baseText;
-        _embeddedTranslations = translations;
-    }
-    private void refreshFileTranslations() {
-        Map translations = new HashMap();
-        refreshFileTranslations(translations, _rootDir);
-        _fileTranslations = translations;
-    }
-    private void refreshFileTranslations(Map translations, File dir) {
-        File files[] = dir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith("translation_");
-            }
-        });
-        Properties defaultText = null;
-        if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                BufferedReader reader = null;
-                try {
-                    InputStream in = new FileInputStream(files[i]);
-                    if (in != null) {
-                        reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                        Properties props = new Properties();
-                        String line = null;
-                        String lang = null;
-                        while ( (line = reader.readLine()) != null) {
-                            int split = line.indexOf(':');
-                            if (split <= 0)
-                                split = line.indexOf('=');
-                            if (split <= 0)
-                                continue;
-                            if (line.startsWith("/") || line.startsWith("#") || line.startsWith("--")) 
-                                continue;
-                            String key = line.substring(0, split).trim();
-                            String val = line.substring(split+1).trim();
-                            if (key.equals(KEY_LANG))
-                                lang = val;
-                            else if (key.equals(KEY_ISBASE))
-                                defaultText = props;
-                            else
-                                props.setProperty(key, val);
-                        }
-                        reader.close();
-                        reader = null;
-                        if (lang != null)
-                            translations.put(lang, props);
-                    }
-                } catch (IOException ioe) {
-                    _ui.errorMessage("problem getting the file translations", ioe);
-                } finally {
-                    if (reader != null) try { reader.close(); } catch (IOException ioe) {}
-                }
-            }
-        }
-        
-        if (defaultText != null)
-            _baseText = defaultText;
-    }
-    
-    public List getTranslations() {
-        refreshEmbeddedTranslations();
-        refreshFileTranslations();
-
-        ArrayList rv = new ArrayList();
-        rv.add("English");
-        TreeSet ordered = new TreeSet();
-        ordered.addAll(_embeddedTranslations.keySet());
-        ordered.addAll(_fileTranslations.keySet());
-        for (Iterator iter = ordered.iterator(); iter.hasNext(); )
-            rv.add(iter.next());
-        
+    public List<String> getTranslations() {
+        // remove this, or look for class files, or add to Translate API?
+        ArrayList<String> rv = new ArrayList();
+        rv.add("en");
+        rv.add("de");
+        rv.add("ru");
+        rv.add("xx");
         return rv;
     }
     
-    public void loadTranslations() {
-        refreshEmbeddedTranslations();
-        refreshFileTranslations();
-        
-        if (_baseImages == null)
-            _baseImages = new HashMap();
-        if (_baseText == null)
-            _baseText = new Properties();
-        
-        _text = _baseText;
-        _images = _baseImages;
-    }
+    public void loadTranslations() {}
 }
