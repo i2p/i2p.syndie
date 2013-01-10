@@ -936,8 +936,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterLabel.setText(registry.getText("Filter:  Since:"));
 
             _filterAdvanced.setText(registry.getText("Advanced..."));
-            _filterKeywordLabel.setText(registry.getText("Text:"));
-            _filterTagLabel.setText(registry.getText("Tag:"));
+            _filterKeywordLabel.setText(registry.getText("Text") + ':');
+            _filterTagLabel.setText(registry.getText("Tag") + ':');
             _filterUnreadOnly.setText(registry.getText("Unread only"));
             _filterKeyword.setToolTipText(registry.getText("Search pages and subjects for the phrase"));
             
@@ -2402,7 +2402,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _expandThreadButton.setText(registry.getText("Expand Thread"));
         _collapseThreadButton.setText(registry.getText("Collapse Thread"));
         
-        _navPageSizeLabel.setText(registry.getText("Page size:"));
+        _navPageSizeLabel.setText(registry.getText("Page size") + ':');
     }
     
     public void applyTheme(Theme theme) {

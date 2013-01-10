@@ -1071,7 +1071,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 public void widgetSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection(), runOnStartup.getSelection()); s.dispose(); }
             });
             
-            portLabel.setText(getTranslationRegistry().getText("HTTP listen port:"));
+            portLabel.setText(getTranslationRegistry().getText("HTTP listen port") + ':');
             writable.setText(getTranslationRegistry().getText("Others can post new messages to this server"));
             runOnStartup.setText(getTranslationRegistry().getText("Run on startup"));
             ok.setText(getTranslationRegistry().getText("OK"));

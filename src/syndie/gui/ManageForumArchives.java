@@ -490,10 +490,10 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
 
         _isPublic.setText(registry.getText("Anyone can see this, not just authorized readers"));
 
-        _addLabel.setText(registry.getText("Archive name:"));
-        _choiceHTTP.setText(registry.getText("HTTP URL:"));
-        _choiceFreenet.setText(registry.getText("Freenet key:"));
-        _choiceSyndie.setText(registry.getText("Syndie URI:"));
+        _addLabel.setText(registry.getText("Archive name") + ':');
+        _choiceHTTP.setText(registry.getText("HTTP URL") + ':');
+        _choiceFreenet.setText(registry.getText("Freenet key") + ':');
+        _choiceSyndie.setText(registry.getText("Syndie URI") + ':');
         _add.setText(registry.getText("Add"));
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));

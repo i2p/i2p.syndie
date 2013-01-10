@@ -266,7 +266,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             fos = null;
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_INFORMATION);
             box.setText(_translationRegistry.getText("Attachment saved"));
-            box.setMessage(_translationRegistry.getText("Attachment saved to:") + out.getAbsolutePath());
+            box.setMessage(_translationRegistry.getText("Attachment saved to") + ':' + out.getAbsolutePath());
             box.open();
         } catch (IOException ioe) {
             // hrm
@@ -288,11 +288,11 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
     
     
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText("Name:"));
-        _descLabel.setText(registry.getText("Description:"));
-        _sizeLabel.setText(registry.getText("Size:"));
-        _typeLabel.setText(registry.getText("Type:"));
-        _saveAsLabel.setText(registry.getText("Save as:"));
+        _nameLabel.setText(registry.getText("Name") + ':');
+        _descLabel.setText(registry.getText("Description") + ':');
+        _sizeLabel.setText(registry.getText("Size") + ':');
+        _typeLabel.setText(registry.getText("Type") + ':');
+        _saveAsLabel.setText(registry.getText("Save as") + ':');
         _saveAsBrowse.setText(registry.getText("Browse..."));
         _saveAsOk.setText(registry.getText("Save"));
     }

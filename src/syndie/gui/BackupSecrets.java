@@ -485,7 +485,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
     public void translate(TranslationRegistry registry) {
         _includeMeta.setText(registry.getText("Backup related forum profile?"));
         _includeExpiredKeys.setText(registry.getText("Backup expired keys?"));
-        _passphraseRequired.setText(registry.getText("Passphrase required to restore:"));
+        _passphraseRequired.setText(registry.getText("Passphrase required to restore") + ':');
         _ok.setText(registry.getText("Ok"));
         _cancel.setText(registry.getText("Cancel"));
     }

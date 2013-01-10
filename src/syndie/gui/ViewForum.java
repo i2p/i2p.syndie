@@ -838,16 +838,16 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
     
 
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText("Name:"));
-        _tagsLabel.setText(registry.getText("Tags:"));
-        _descriptionLabel.setText(registry.getText("Description:"));
-        _expirationLabel.setText(registry.getText("Expiration:"));
+        _nameLabel.setText(registry.getText("Name") + ':');
+        _tagsLabel.setText(registry.getText("Tags") + ':');
+        _descriptionLabel.setText(registry.getText("Description") + ':');
+        _expirationLabel.setText(registry.getText("Expiration") + ':');
         _expirationManager.setText(registry.getText("Manage"));
-        _archiveGroup.setText(registry.getText("Advertised archives:"));
-        _userGroup.setText(registry.getText("Authorized managers and posters:"));
+        _archiveGroup.setText(registry.getText("Advertised archives") + ':');
+        _userGroup.setText(registry.getText("Authorized managers and posters") + ':');
         _banGroup.setText(registry.getText("Banned forums/authors:"));
-        _refGroup.setText(registry.getText("Advertised references:"));
-        _authorizationLabel.setText(registry.getText("Authorization:"));
+        _refGroup.setText(registry.getText("Advertised references") + ':');
+        _authorizationLabel.setText(registry.getText("Authorization") + ':');
 
         _banView.setText(registry.getText("View the selected forum"));
         _banImport.setText(registry.getText("Ban the selected forum"));

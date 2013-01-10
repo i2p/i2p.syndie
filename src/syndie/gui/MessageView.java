@@ -884,9 +884,9 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     public void translate(TranslationRegistry registry) {
         _headerReply.setText(registry.getText("Reply..."));
-        _headerAuthorLabel.setText(registry.getText("Author:"));
-        _headerForumLabel.setText(registry.getText("Forum:"));
-        _headerDateLabel.setText(registry.getText("Date:"));
+        _headerAuthorLabel.setText(registry.getText("Author") + ':');
+        _headerForumLabel.setText(registry.getText("Forum") + ':');
+        _headerDateLabel.setText(registry.getText("Date") + ':');
         
         _headerReplyAuthorPrivate.setText(registry.getText("Send a private reply to the author"));
         _headerReplyForumPrivate.setText(registry.getText("Send a private reply to the forum administrators"));

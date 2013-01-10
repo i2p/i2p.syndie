@@ -1345,7 +1345,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             Label l = new Label(shell, SWT.NONE);
             l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-            l.setText(_translationRegistry.getText("Page title:"));
+            l.setText(_translationRegistry.getText("Page title") + ':');
             l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
             
             final Text titleField = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -2450,8 +2450,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     
     public void translate(TranslationRegistry registry) {
-        _authorLabel.setText(registry.getText("Author:"));
-        _toLabel.setText(registry.getText("Post to:"));
+        _authorLabel.setText(registry.getText("Author") + ':');
+        _toLabel.setText(registry.getText("Post to") + ':');
         _authorChangeButton.setText(registry.getText("Change author"));
         _toChangeButton.setText(registry.getText("Change forum"));
         _signAsChangeButton.setText(registry.getText("Change signed by"));

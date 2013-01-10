@@ -328,10 +328,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _expiration.setText(registry.getText("Manage expiration policies"));
         _cancelManager.setText(registry.getText("Manage cancel policies"));
     
-        _advertisedLabel.setText(registry.getText("Advertised archives:"));
+        _advertisedLabel.setText(registry.getText("Advertised archives") + ':');
         _advertisedManage.setText(registry.getText("Manage..."));
         
-        _deniableLabel.setText(registry.getText("Deniable forums:"));
+        _deniableLabel.setText(registry.getText("Deniable forums") + ':');
         _deniableManage.setText(registry.getText("Manage..."));
         
         _bannedLabel.setText(registry.getText("Banned forums/authors:"));

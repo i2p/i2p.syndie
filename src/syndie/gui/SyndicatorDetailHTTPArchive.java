@@ -518,7 +518,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label pubLabel = new Label(row, SWT.NONE);
         pubLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        pubLabel.setText(_translationRegistry.getText("Public key:"));
+        pubLabel.setText(_translationRegistry.getText("Public key") + ':');
         final Text pub = new Text(row, SWT.SINGLE | SWT.BORDER);
         pub.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         String loc = _location.getText().trim();
@@ -539,7 +539,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label fcpHostLabel = new Label(row, SWT.NONE);
         fcpHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpHostLabel.setText(_translationRegistry.getText("FCP host:"));
+        fcpHostLabel.setText(_translationRegistry.getText("FCP host") + ':');
         final Text fcpHost = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if ( (_archive.getFCPHost() != null) && (_archive.getFCPHost().trim().length() > 0) )
@@ -548,7 +548,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             fcpHost.setText("127.0.0.1");
         Label fcpPortLabel = new Label(row, SWT.NONE);
         fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpPortLabel.setText(_translationRegistry.getText("port:"));
+        fcpPortLabel.setText(_translationRegistry.getText("port") + ':');
         final Text fcpPort = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getFCPPort() > 0)
@@ -561,7 +561,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label privLabel = new Label(row, SWT.NONE);
         privLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        privLabel.setText(_translationRegistry.getText("Private key:"));
+        privLabel.setText(_translationRegistry.getText("Private key") + ':');
         final Text privKey = new Text(row, SWT.SINGLE | SWT.BORDER);
         privKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getPostKey() != null)
@@ -1049,35 +1049,35 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
     
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText("Name:"));
-        _locationLabel.setText(registry.getText("Archive URL:"));
+        _nameLabel.setText(registry.getText("Name") + ':');
+        _locationLabel.setText(registry.getText("Archive URL") + ':');
         _locationAdvanced.setText(registry.getText("Advanced..."));
         _locationAdvancedSendKey.setText(registry.getText("Specify posting key"));
         _locationAdvancedReadKey.setText(registry.getText("Specify reading key"));
         _locationAdvancedFreenet.setText(registry.getText("Configure freenet settings"));
-        _proxyHostLabel.setText(registry.getText("Proxy host:"));
-        _proxyPortLabel.setText(registry.getText("Port:"));
-        _pushPolicyLabel.setText(registry.getText("Push policy:"));
-        _pushMaxSizeLabel.setText(registry.getText("Max message size:"));
-        _pullPolicyLabel.setText(registry.getText("Pull policy:"));
-        _pullMaxSizeLabel.setText(registry.getText("Max message size:"));
+        _proxyHostLabel.setText(registry.getText("Proxy host") + ':');
+        _proxyPortLabel.setText(registry.getText("Port") + ':');
+        _pushPolicyLabel.setText(registry.getText("Push policy") + ':');
+        _pushMaxSizeLabel.setText(registry.getText("Max message size") + ':');
+        _pullPolicyLabel.setText(registry.getText("Pull policy") + ':');
+        _pullMaxSizeLabel.setText(registry.getText("Max message size") + ':');
         _pullPrivate.setText(registry.getText("Pull any private messages?"));
         _pullPrivateLocalOnly.setText(registry.getText("Pull private messages for us only?"));
         _pullPBE.setText(registry.getText("Pull passphrase protected messages?"));
-        _lastSyncLabel.setText(registry.getText("Last sync:"));
-        _nextSyncLabel.setText(registry.getText("Next sync:"));
+        _lastSyncLabel.setText(registry.getText("Last sync") + ':');
+        _nextSyncLabel.setText(registry.getText("Next sync") + ':');
         _nextSyncNow.setText(registry.getText("Sync ASAP"));
         _nextSyncNever.setText(registry.getText("Never sync"));
         _nextSyncOneOff.setText(registry.getText("Sync only once"));
-        _nextSyncDelayLabel.setText(registry.getText("Min sync delay:"));
-        _failuresLabel.setText(registry.getText("Sync failures:"));
+        _nextSyncDelayLabel.setText(registry.getText("Min sync delay") + ':');
+        _failuresLabel.setText(registry.getText("Sync failures") + ':');
         _backOffOnFailures.setText(registry.getText("Back off after failing?"));
         _save.setText(registry.getText("Save"));
         _cancel.setText(registry.getText("Cancel"));
 
         _pullNewAgeLabel.setText(registry.getText("Age to treat as 'recent'"));
         _pushAgeLabel.setText(registry.getText("Oldest message to send"));
-        _whitelistEnable.setText(registry.getText("Whitelisted category:"));
+        _whitelistEnable.setText(registry.getText("Whitelisted category") + ':');
         
         _whitelist.setToolTipText(registry.getText("Forums that are referenced in the specified category (and posts to those forums) are allowed to be imported"));
         _whitelistPull.setText(registry.getText("Only pull whitelisted content (reduces anonymity but saves bandwidth)"));

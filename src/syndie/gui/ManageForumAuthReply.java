@@ -226,13 +226,13 @@ class ManageForumAuthReply extends BaseComponent implements Themeable, Translata
         
         _rotate.setText(registry.getText("Rotate the reply key"));
         
-        _sendNewSelected.setText(registry.getText("Send the new key to the administrators of the selected forums:"));
+        _sendNewSelected.setText(registry.getText("Send the new key to the administrators of the selected forums") + ':');
         _sendNewSelectedAdd.setText(registry.getText("Add"));
         _sendNewSelectedDel.setText(registry.getText("Delete"));
         
         _sendNewPBE.setText(registry.getText("Post the new key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase") + ':');
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt") + ':');
         
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));

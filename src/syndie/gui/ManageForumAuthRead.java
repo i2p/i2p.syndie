@@ -332,12 +332,12 @@ class ManageForumAuthRead extends BaseComponent implements Themeable, Translatab
         _choiceAllowed.setText(registry.getText("Those already allowed to read posts"));
         _choiceAllowedRotate.setText(registry.getText("Rotate the keys used"));
         _choiceNew.setText(registry.getText("Anyone who has a newly created key"));
-        _sendSelected.setText(registry.getText("Send the key explicitly to the managers of the following forums:"));
+        _sendSelected.setText(registry.getText("Send the key explicitly to the managers of the following forums") + ':');
         _sendSelectedAdd.setText(registry.getText("Add"));
         _sendSelectedDel.setText(registry.getText("Delete"));
         _sendPBE.setText(registry.getText("Post the key in a passphrase protected message to the forum"));
-        _sendPBEPassLabel.setText(registry.getText("Passphrase:"));
-        _sendPBEPromptLabel.setText(registry.getText("Prompt:"));
+        _sendPBEPassLabel.setText(registry.getText("Passphrase") + ':');
+        _sendPBEPromptLabel.setText(registry.getText("Prompt") + ':');
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));
     }

@@ -206,9 +206,9 @@ public class WebRipPostControl extends WebRipPageControl {
         _privacyAuthorized.setText(registry.getText("Only authorized people can read the rip"));
         _tagWithURL.setText(registry.getText("Tag the post with the URL?"));
         
-        _tagLabel.setText(registry.getText("Tags:"));
-        _targetLabel.setText(registry.getText("Post to:"));
-        _authorLabel.setText(registry.getText("Post from:"));
+        _tagLabel.setText(registry.getText("Tags") + ':');
+        _targetLabel.setText(registry.getText("Post to") + ':');
+        _authorLabel.setText(registry.getText("Post from") + ':');
     }
     
     public void applyTheme(Theme theme) {

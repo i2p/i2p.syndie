@@ -132,8 +132,8 @@ public class PassphrasePrompt extends BaseComponent implements Translatable, The
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Passphrase"));
-        _passphraseLabel.setText(registry.getText("Passphrase:"));
-        _passphrasePromptLabel.setText(registry.getText("Publicly visible hint:"));
+        _passphraseLabel.setText(registry.getText("Passphrase") + ':');
+        _passphrasePromptLabel.setText(registry.getText("Publicly visible hint") + ':');
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));
     }

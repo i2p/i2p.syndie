@@ -302,12 +302,12 @@ class ManageForumAuthManage extends BaseComponent implements Themeable, Translat
         _selectedDel.setText(registry.getText("Delete"));
         
         _sendNew.setText(registry.getText("Create a new identity and allow it to manage the forum"));
-        _sendNewLabel.setText(registry.getText("Send the new identity key to the administrators of the selected forums:"));
+        _sendNewLabel.setText(registry.getText("Send the new identity key to the administrators of the selected forums") + ':');
         _sendNewAdd.setText(registry.getText("Add"));
         _sendNewDel.setText(registry.getText("Delete"));
         _sendNewPBE.setText(registry.getText("Post the new identity's key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase") + ':');
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt") + ':');
         
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));

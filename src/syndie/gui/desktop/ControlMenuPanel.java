@@ -618,10 +618,10 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _import.setText(registry.getText("Import"));
         //_tabbedUI.setText(registry.getText("Advanced: Display the tabbed UI"));
         _changePass.setText(registry.getText("Change Syndie instance passphrase"));
-        _openLabel.setText(registry.getText("Open Syndie URI:"));
+        _openLabel.setText(registry.getText("Open Syndie URI") + ':');
         _sql.setText(registry.getText("Advanced: SQL interface"));
         _open.setText(registry.getText("Open"));
-        _switchLabel.setText(registry.getText("Log in to a different Syndie instance:"));
+        _switchLabel.setText(registry.getText("Log in to a different Syndie instance") + ':');
         _switchBrowse.setText(registry.getText("Browse..."));
         _switchOpen.setText(registry.getText("Open selected"));
         _welcome.setText(registry.getText("Reshow welcome screen"));

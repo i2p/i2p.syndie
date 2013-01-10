@@ -44,7 +44,7 @@ public class ChangePassPopup {
 
         Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("Old passphrase:"));
+        l.setText(_translationRegistry.getText("Old passphrase") + ':');
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text oldPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         oldPass.setText("");
@@ -53,7 +53,7 @@ public class ChangePassPopup {
 
         l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("New passphrase:"));
+        l.setText(_translationRegistry.getText("New passphrase") + ':');
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text newPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         newPass.setText("");

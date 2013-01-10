@@ -675,14 +675,14 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
     }
     
     public void translate(TranslationRegistry registry) {
-        _locationLabel.setText(registry.getText("Location:"));
+        _locationLabel.setText(registry.getText("Location") + ':');
         _locationSelect.setText(registry.getText("Select..."));
         _watched.setText(registry.getText("Include in the watched list"));
-        _refs.setText(registry.getText("Add to my references in:"));
-        _refNewCatLabel.setText(registry.getText("New category name:"));
+        _refs.setText(registry.getText("Add to my references in") + ':');
+        _refNewCatLabel.setText(registry.getText("New category name") + ':');
         _refNewCatCreate.setText(registry.getText("Create"));
-        _customName.setText(registry.getText("Custom nickname:"));
-        _customDesc.setText(registry.getText("Custom description:"));
+        _customName.setText(registry.getText("Custom nickname") + ':');
+        _customDesc.setText(registry.getText("Custom description") + ':');
         _customIcon.setText(registry.getText("Custom icon"));
         _customIconBrowse.setText(registry.getText("Browse..."));
         _ok.setText(registry.getText("OK"));

@@ -356,7 +356,7 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
     
     
     public void translate(TranslationRegistry registry) {
-        _urlLabel.setText(registry.getText("Rip URL:"));
+        _urlLabel.setText(registry.getText("Rip URL") + ':');
         _urlOptions.setText(registry.getText("Options..."));
         _rip.setText(registry.getText("Rip!"));
         _cancel.setText(registry.getText("Cancel"));
@@ -365,8 +365,8 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         _optionProxy.setText(registry.getText("Configure proxy..."));
         _optionTorrents.setText(registry.getText("Attach torrents"));
         
-        _proxyHostLabel.setText(registry.getText("HTTP proxy host:"));
-        _proxyPortLabel.setText(registry.getText("HTTP proxy port:"));
+        _proxyHostLabel.setText(registry.getText("HTTP proxy host") + ':');
+        _proxyPortLabel.setText(registry.getText("HTTP proxy port") + ':');
         _proxyAsDefault.setText(registry.getText("Save as my default HTTP proxy"));
         _proxyOk.setText(registry.getText("OK"));
         _proxyShell.setText(registry.getText("Proxy"));

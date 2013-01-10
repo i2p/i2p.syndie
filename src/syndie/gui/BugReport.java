@@ -646,23 +646,23 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
     
 
     public void translate(TranslationRegistry registry) {
-        _componentLabel.setText(registry.getText("Component:"));
-        _typeLabel.setText(registry.getText("Bug type:"));
-        _severityLabel.setText(registry.getText("Severity:"));
-        _osLabel.setText(registry.getText("OS:"));
-        _jvmLabel.setText(registry.getText("JVM:"));
-        _swtLabel.setText(registry.getText("SWT:"));
-        _syndieLabel.setText(registry.getText("Syndie:"));
-        _summaryLabel.setText(registry.getText("Issue summary:"));
-        _logGroup.setText(registry.getText("Details:"));
-        _attachmentsLabel.setText(registry.getText("Attachments:"));
+        _componentLabel.setText(registry.getText("Component") + ':');
+        _typeLabel.setText(registry.getText("Bug type") + ':');
+        _severityLabel.setText(registry.getText("Severity") + ':');
+        _osLabel.setText(registry.getText("OS") + ':');
+        _jvmLabel.setText(registry.getText("JVM") + ':');
+        _swtLabel.setText(registry.getText("SWT") + ':');
+        _syndieLabel.setText(registry.getText("Syndie") + ':');
+        _summaryLabel.setText(registry.getText("Issue summary") + ':');
+        _logGroup.setText(registry.getText("Details") + ':');
+        _attachmentsLabel.setText(registry.getText("Attachments") + ':');
         _attachmentsAdd.setText(registry.getText("Add"));
         _attachmentsRemove.setText(registry.getText("Remove"));
         
         _post.setText(registry.getText("Post bug report"));
-        _targetLabel.setText(registry.getText("Post to:"));
+        _targetLabel.setText(registry.getText("Post to") + ':');
         _asPrivate.setText(registry.getText("Report includes sensitive data (so only let the admins read it)"));
-        _signAsLabel.setText(registry.getText("Sign report as:"));
+        _signAsLabel.setText(registry.getText("Sign report as") + ':');
         if (_signAs.getItemCount() > _signAsChans.size()) {
             _signAs.remove(_signAs.getItemCount()-1);
             _signAs.add(registry.getText("Anonymous"));

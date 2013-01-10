@@ -581,7 +581,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         if ( (errs != null) && (errs.trim().length() > 0) ) {
             MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setText(_translationRegistry.getText("Error"));
-            box.setMessage(_translationRegistry.getText("Internal error saving the forum:") + errs);
+            box.setMessage(_translationRegistry.getText("Internal error saving the forum") + ':' + errs);
             box.open();
         } else {
             // ok, now create any of the posts we need to send keys to the right people, 
@@ -1131,10 +1131,10 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     
 
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText("Name:"));
-        _tagsLabel.setText(registry.getText("Tags:"));
-        _descriptionLabel.setText(registry.getText("Description:"));
-        _expirationLabel.setText(registry.getText("Expiration:"));
+        _nameLabel.setText(registry.getText("Name") + ':');
+        _tagsLabel.setText(registry.getText("Tags") + ':');
+        _descriptionLabel.setText(registry.getText("Description") + ':');
+        _expirationLabel.setText(registry.getText("Expiration") + ':');
         _expirationManager.setText(registry.getText("Manage"));
         if (_showActions) {
             _save.setText(registry.getText("Save changes"));

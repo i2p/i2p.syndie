@@ -887,7 +887,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     
     public void translate(TranslationRegistry registry) {
-        _nextSyncLabel.setText(registry.getText("Next sync:"));
+        _nextSyncLabel.setText(registry.getText("Next sync") + ':');
         _bookmark.setText(registry.getText("Bookmark!"));
         _root.layout(true);
     }

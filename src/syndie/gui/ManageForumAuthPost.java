@@ -417,8 +417,8 @@ class ManageForumAuthPost extends BaseComponent implements Themeable, Translatab
         _sendNewAdd.setText(registry.getText("Add"));
         _sendNewDel.setText(registry.getText("Delete"));
         _sendNewPBE.setText(registry.getText("Post the new identity's key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase") + ':');
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt") + ':');
         
         _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));
