@@ -28,6 +28,7 @@
     <property name="hsqldb.jar" value="${lib.dir}/hsqldb.jar" />
     <property name="i2p.jar" value="${lib.dir}/i2p.jar" />
     <property name="swt.jar" value="${lib.dir}/swt.jar" />
+    <available property="launch4j.available" file="${launch4j.dir}/launch4j.jar" type="file" />
 
     <!-- Set some classpaths up -->
     <path id="classpath.build">
@@ -82,7 +83,7 @@
         <sequential>
             <local name="launch4j.config" />
             <tempfile property="launch4j.config" deleteonexit="true" />
-            <fail unless="launch4j.dir">Specify the location of the Launch4J installation directory with -Dlaunch4j.dir=/some/path/to/launch4j.jar</fail>
+            <fail unless="launch4j.available">Specify the location of the Launch4J installation directory with -Dlaunch4j.dir=/some/path/to/launch4j.jar</fail>
             <taskdef name="launch4j" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar"
                 classname="net.sf.launch4j.ant.Launch4jTask" />
 
@@ -212,7 +213,7 @@
         </java>
     </target>
 
-    <target name="-check-launch4j" if="launch4j.dir" description="Check if this system can run launch4j">
+    <target name="-check-launch4j" if="launch4j.available" description="Check if this system can run launch4j">
         <condition property="can.create.exe">
             <and>
                 <or>
@@ -468,7 +469,7 @@
         <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/OSX.html" />
     </target>
 
-    <target name="prep-launch4j-license" if="launch4j.dir">
+    <target name="prep-launch4j-license" if="launch4j.available">
         <copy file="${launch4j.dir}/LICENSE.txt" tofile="docs/licenses/License-Launch4j.txt" />
     </target>
 
