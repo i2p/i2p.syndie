@@ -264,14 +264,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         List<Hash> scopes = _bannedScopes;
         for (int i = 0; i < scopes.size(); i++) {
             Hash scope = scopes.get(i);
-            StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(scope);
-            if (name != null)
-                buf.append(name).append(' ');
-            String b64 = scope.toBase64();
-            buf.append('[').append(b64.substring(0, 6)).append("] ").append(b64);
+            String displayName = UIUtil.displayName(name, scope);
             TableItem item = new TableItem(banned, SWT.NONE);
-            item.setText(buf.toString());
+            item.setText(displayName);
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));

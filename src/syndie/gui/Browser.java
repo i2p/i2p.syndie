@@ -954,11 +954,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
 
         MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        startServer.setText(getTranslationRegistry().getText("Start HTTP archive server"));
+        startServer.setText(X + getTranslationRegistry().getText("Start HTTP archive server"));
         MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        stopServer.setText(getTranslationRegistry().getText("Stop HTTP archive server"));
+        stopServer.setText(X + getTranslationRegistry().getText("Stop HTTP archive server"));
         MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        configServer.setText(getTranslationRegistry().getText("Configure HTTP archive server"));
+        configServer.setText(X + getTranslationRegistry().getText("Configure HTTP archive server"));
         
         stopServer.setEnabled(false);
         new ServerConfig(startServer, stopServer, configServer);
@@ -1339,11 +1339,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            String name = info.getName();
-            if (name != null)
-                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
-            else
-                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            String displayName = UIUtil.displayName(info.getName(), info.getChannelHash());
+            item.setText(displayName);
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -1357,10 +1354,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            if (name != null)
-                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
-            else
-                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            item.setText(displayName);
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -1376,11 +1370,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            String name = info.getName();
-            if (name != null)
-                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
-            else
-                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            String displayName = UIUtil.displayName(info.getName(), info.getChannelHash());
+            item.setText(displayName);
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -1394,10 +1385,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            if (name != null)
-                item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
-            else
-                item.setText(info.getChannelHash().toBase64().substring(0,6));
+            item.setText(displayName);
             
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -2732,7 +2720,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     // the confirm popup is created on the fly, so translated only on creation, not on translate(...)
     // the bookmark popup is created on the fly, so translated only on creation, not on translate(...)
 
-    
+    /** Mnemonic - see MenuItem.setText() */
+    private static final char X = '&';
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Syndie"));
@@ -2741,81 +2730,81 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _copyTabLocation.setText(registry.getText("copy tab location"));
         _bookmarkTab.setText(registry.getText("bookmark tab"));
         
-        _fileMenuRoot.setText(registry.getText("&File"));
-        _fileMenuOpen.setText(registry.getText("&Open Syndie URI"));
-        _fileMenuMinimize.setText(registry.getText("&Minimize to the systray"));
-        _fileMenuImport.setText(registry.getText("&Import"));
-        _fileMenuImportBulk.setText(registry.getText("Import &bulk"));
-        _fileMenuExport.setText(registry.getText("&Export"));
-        _fileMenuExit.setText(registry.getText("E&xit"));
+        _fileMenuRoot.setText(X + registry.getText("File"));
+        _fileMenuOpen.setText(X + registry.getText("Open Syndie URI"));
+        _fileMenuMinimize.setText(X + registry.getText("Minimize to the systray"));
+        _fileMenuImport.setText(X + registry.getText("Import"));
+        _fileMenuImportBulk.setText(X + registry.getText("Import bulk"));
+        _fileMenuExport.setText(X + registry.getText("Export"));
+        _fileMenuExit.setText(X + registry.getText("Exit"));
         
         _fileMenuExit.setImage(ImageUtil.ICON_FM_EXIT);
         _fileMenuImport.setImage(ImageUtil.ICON_FM_IMPORT);
         _fileMenuExport.setImage(ImageUtil.ICON_FM_EXPORT);
 
 
-        _viewMenuRoot.setText(registry.getText("&View"));
-        _viewMenuShow.setText(registry.getText("Show &bookmarks"));
+        _viewMenuRoot.setText(X + registry.getText("View"));
+        _viewMenuShow.setText(X + registry.getText("Show bookmarks"));
         _viewMenuShow.setImage(ImageUtil.ICON_VM_BOOKMARK);
         
         
-        _forumMenuRoot.setText(registry.getText("F&orums"));
-        _forumMenuSearch.setText(registry.getText("&Find forums"));
-        _forumMenuBookmarked.setText(registry.getText("Read &forums"));
-        _forumMenuBrowse.setText(registry.getText("&Read all"));
-        _forumMenuBrowseForums.setText(registry.getText("Read &all by forum"));
-        _forumMenuReadPrivate.setText(registry.getText("Read &private messages"));
-        _forumMenuCreate.setText(registry.getText("&Create"));
+        _forumMenuRoot.setText(X + registry.getText("Forums"));
+        _forumMenuSearch.setText(X + registry.getText("Find forums"));
+        _forumMenuBookmarked.setText(X + registry.getText("Read forums"));
+        _forumMenuBrowse.setText(X + registry.getText("Read all"));
+        _forumMenuBrowseForums.setText(X + registry.getText("Read all by forum"));
+        _forumMenuReadPrivate.setText(X + registry.getText("Read private messages"));
+        _forumMenuCreate.setText(X + registry.getText("Create"));
         _forumMenuCreate.setImage(ImageUtil.ICON_CREATEFORUM);
-        _forumMenuManageRoot.setText(registry.getText("&Manage"));
+        _forumMenuManageRoot.setText(X + registry.getText("Manage"));
         
         _forumMenuSearch.setImage(ImageUtil.ICON_VIEWFORUM);
-        _postMenuRoot.setText(registry.getText("&Post"));
-        _postMenuNew.setText(registry.getText("Post &new"));
+        _postMenuRoot.setText(X + registry.getText("Post"));
+        _postMenuNew.setText(X + registry.getText("Post new"));
         _postMenuNew.setImage(ImageUtil.ICON_PM_NEWPOST);
-        _postMenuWebRip.setText(registry.getText("Post &web rip"));
-        _postMenuResumeRoot.setText(registry.getText("&Resume draft"));
+        _postMenuWebRip.setText(X + registry.getText("Post web rip"));
+        _postMenuResumeRoot.setText(X + registry.getText("Resume draft"));
 
-        _postMenuManageableRoot.setText(registry.getText("&Manageable forums"));
-        _postMenuPostableRoot.setText(registry.getText("&Postable forums"));
-        _postMenuPublicRoot.setText(registry.getText("&Publically postable forums"));
+        _postMenuManageableRoot.setText(X + registry.getText("Manageable forums"));
+        _postMenuPostableRoot.setText(X + registry.getText("Postable forums"));
+        _postMenuPublicRoot.setText(X + registry.getText("Publically postable forums"));
         
-        _syndicateMenuRoot.setText(registry.getText("&Syndicate"));
-        _syndicateMenuConfig.setText(registry.getText("&Control syndication"));
+        _syndicateMenuRoot.setText(X + registry.getText("Syndicate"));
+        _syndicateMenuConfig.setText(X + registry.getText("Control syndication"));
         _syndicateMenuConfig.setImage(ImageUtil.ICON_CONTROLSYNDICATION);
-        _syndicateMenuOnline.setText(registry.getText("Toggle &online state"));
-        _syndicateMenuArchive.setText(registry.getText("Manage &archive"));
+        _syndicateMenuOnline.setText(X + registry.getText("Toggle online state"));
+        _syndicateMenuArchive.setText(X + registry.getText("Manage archive"));
         _syndicateMenuArchive.setImage(ImageUtil.ICON_MANAGEARCHIVE);
 
-        _languageMenuRoot.setText(registry.getText("&Language"));
+        _languageMenuRoot.setText(X + registry.getText("Language"));
         _languageMenuRoot.setImage(ImageUtil.ICON_VM_LANGUAGE);
-        _languageMenuEdit.setText(registry.getText("&Translate"));
-        _languageMenuRefresh.setText(registry.getText("&Refresh translations"));
+        _languageMenuEdit.setText(X + registry.getText("Translate"));
+        _languageMenuRefresh.setText(X + registry.getText("Refresh translations"));
 
-        _styleMenuRoot.setText(registry.getText("&Style"));
+        _styleMenuRoot.setText(X + registry.getText("Style"));
         _styleMenuRoot.setImage(ImageUtil.ICON_VM_STYLE);
-        _styleMenuIncreaseFont.setText(registry.getText("&Increase font"));
-        _styleMenuDecreaseFont.setText(registry.getText("&Decrease font"));
-        _styleMenuReset.setText(registry.getText("&Reset style"));
-        _styleMenuEdit.setText(registry.getText("&Configure"));
+        _styleMenuIncreaseFont.setText(X + registry.getText("Increase font"));
+        _styleMenuDecreaseFont.setText(X + registry.getText("Decrease font"));
+        _styleMenuReset.setText(X + registry.getText("Reset style"));
+        _styleMenuEdit.setText(X + registry.getText("Configure"));
         
-        _advancedMenuRoot.setText(registry.getText("&Advanced"));
-        _advancedMenuLogs.setText(registry.getText("&Logs"));
-        _advancedMenuTextUI.setText(registry.getText("&Text interface"));
-        _advancedMenuBackupSecrets.setText(registry.getText("&Backup secrets"));
-        _advancedMenuRestoreSecrets.setText(registry.getText("&Restore secrets"));
-        _advancedMenuSQL.setText(registry.getText("&SQL interface"));
-        _advancedMenuDumpResources.setText(registry.getText("Dump resources"));
-        _advancedMenuDumpResourcesDiff.setText(registry.getText("Dump resource differences"));
+        _advancedMenuRoot.setText(X + registry.getText("Advanced"));
+        _advancedMenuLogs.setText(X + registry.getText("Logs"));
+        _advancedMenuTextUI.setText(X + registry.getText("Text interface"));
+        _advancedMenuBackupSecrets.setText(X + registry.getText("Backup secrets"));
+        _advancedMenuRestoreSecrets.setText(X + registry.getText("Restore secrets"));
+        _advancedMenuSQL.setText(X + registry.getText("SQL interface"));
+        _advancedMenuDumpResources.setText(X + registry.getText("Dump resources"));
+        _advancedMenuDumpResourcesDiff.setText(X + registry.getText("Dump resource differences"));
 
-        _helpMenuRoot.setText(registry.getText("&Help"));
-        _helpMenuAbout.setText(registry.getText("&About"));
+        _helpMenuRoot.setText(X + registry.getText("Help"));
+        _helpMenuAbout.setText(X + registry.getText("About"));
         _helpMenuAbout.setImage(ImageUtil.ICON_HM_ABOUT);
-        _helpMenuBugReport.setText(registry.getText("File a new &bug report"));
+        _helpMenuBugReport.setText(X + registry.getText("File a new bug report"));
         _helpMenuBugReport.setImage(ImageUtil.ICON_HM_BUG);
-        _helpMenuFAQ.setText(registry.getText("&FAQ"));
-        _helpMenuGUIManual.setText(registry.getText("&GUI manual"));
-        _helpMenuTextManual.setText(registry.getText("&Text interface manual"));
+        _helpMenuFAQ.setText(X + registry.getText("FAQ"));
+        _helpMenuGUIManual.setText(X + registry.getText("GUI manual"));
+        _helpMenuTextManual.setText(X + registry.getText("Text interface manual"));
         
         _systrayTip.setText(registry.getText("Syndie"));
         _systrayTip.setMessage(registry.getText("Syndie is running"));

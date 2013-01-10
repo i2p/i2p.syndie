@@ -473,10 +473,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 b.setImage(ImageUtil.createImage(avatar));
             else
                 b.setImage(ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR);
-            if (name != null)
-                b.setToolTipText(name + ": [" + scope.toBase64().substring(0, 6) + ']');
-            else
-                b.setToolTipText("[" + scope.toBase64().substring(0, 6) + ']');
+            String displayName = UIUtil.displayName(name, scope);
+            b.setToolTipText(displayName);
         }
         
         buttons.setSize(64*6+12, 400);

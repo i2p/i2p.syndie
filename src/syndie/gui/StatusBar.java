@@ -608,18 +608,14 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         List uris = _client.getPBERequired(true, true);
         for (int i = 0; i < uris.size(); i++) {
             final SyndieURI uri = (SyndieURI)uris.get(i);
-            StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(uri.getScope());
-            if (name != null) {
-                buf.append(name);
-            } else {
-                buf.append('[').append(uri.getScope().toBase64().substring(0, 6)).append(']');
-            }
+            String displayName = UIUtil.displayName(name, uri.getScope());
+
             if (uri.getMessageId() == null) {
                 if (uri.getScope() == null)
                     continue;
                 MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
-                item.setText(buf.toString());
+                item.setText(displayName);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
@@ -627,7 +623,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                 });
             } else {
                 MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
-                item.setText(buf.toString());
+                item.setText(displayName);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
@@ -769,11 +765,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             
             StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(channelId.longValue()); //info.getName();
-            if (name != null) {
-                buf.append(name);
-            } else {
-                buf.append('[').append(channelHash.toBase64().substring(0, 6)).append(']');
-            }
+            buf.append(UIUtil.displayName(name, channelHash));
             buf.append(" (").append(msgs).append(')');
             rv.put(buf.toString(), channelId);
         }
