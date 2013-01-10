@@ -20,9 +20,17 @@
     <property name="pkgtemp.lib" value="${pkgtemp.dir}/lib" />
     <property name="i2p.src.dir" value="../i2p.i2p" />
     <property name="launch4j.dir" value="${i2p.src.dir}/installer/lib/launch4j" />
+    <property name="izpack.dir" value="${i2p.src.dir}/installer/lib/izpack" />
     <property name="desktop.class" value="syndie.gui.desktop.DesktopMain" />
     <property name="tabs.class" value="syndie.gui.SWTUI" />
     <property name="cli.class" value="syndie.db.TextUI" />
+    <property name="swt.dir" value="${basedir}/swt/lib" />
+    <property name="swt.lin32" value="${swt.dir}/swt-lin32.jar" />
+    <property name="swt.lin64" value="${swt.dir}/swt-lin64.jar" />
+    <property name="swt.win32" value="${swt.dir}/swt-win32.jar" />
+    <property name="swt.win64" value="${swt.dir}/swt-win64.jar" />
+    <property name="swt.mac32" value="${swt.dir}/swt-mac32.jar" />
+    <property name="swt.mac64" value="${swt.dir}/swt-mac64.jar" />
 
     <!-- allow lib locations to be overridden -->
     <property name="hsqldb.jar" value="${lib.dir}/hsqldb.jar" />
@@ -62,15 +70,15 @@
     </target>
 
     <macrodef name="make-stub-jar">
-        <attribute name="type" />
+        <attribute name="name" default="" />
         <attribute name="type-class" />
         <attribute name="additional" default=""/>
 
         <sequential>
-            <jar destfile="${pkgtemp.dir}/Syndie-@{type}.jar">
+            <jar destfile="${pkgtemp.dir}/bin/syndie@{name}.jar">
                 <manifest>
                     <attribute name="Main-Class" value="@{type-class}" />
-                    <attribute name="Class-Path" value="lib/i2p.jar lib/hsqldb.jar lib/syndie.jar @{additional}" />
+                    <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar ../lib/syndie.jar @{additional}" />
                     <attribute name="Build-Date" value="${build.timestamp}" />
                     <attribute name="Base-Revision" value="${workspace.version}" />
                 </manifest>
@@ -79,7 +87,7 @@
     </macrodef>
 
     <macrodef name="wrap-to-exe">
-        <attribute name="type" />
+        <attribute name="type" default=""/>
         <sequential>
             <local name="launch4j.config" />
             <tempfile property="launch4j.config" deleteonexit="true" />
@@ -90,8 +98,8 @@
             <echo file="${launch4j.config}"><![CDATA[
                 <launch4jConfig>
                     <headerType>0</headerType>
-                    <jar>${pkgtemp.dir}/Syndie-@{type}.jar</jar>
-                    <outfile>${pkgtemp.dir}/Syndie-@{type}.exe</outfile>
+                    <jar>${pkgtemp.dir}/bin/syndie@{type}.jar</jar>
+                    <outfile>${pkgtemp.dir}/bin/syndie@{type}.exe</outfile>
                     <errTitle>Syndie-@{type}</errTitle>
                     <chdir>.</chdir>
                     <icon>doc/web/favicon.ico</icon>
@@ -105,7 +113,7 @@
                         <copyright>copyright is theft</copyright>
                         <productName>Syndie ${full.version}</productName>
                         <internalName>syndie</internalName>
-                        <originalFilename>syndie-@{type}.exe</originalFilename>
+                        <originalFilename>syndie@{type}.exe</originalFilename>
                     </versionInfo>
                 </launch4jConfig>
                 ]]></echo>
@@ -113,6 +121,158 @@
             <launch4j configFile="${launch4j.config}" />
         </sequential>
     </macrodef>
+
+    <macrodef name="wrap-installer">
+        <attribute name="bits" />
+        <sequential>
+            <local name="launch4j.config" />
+            <tempfile property="launch4j.config" deleteonexit="true" />
+            <fail unless="launch4j.available">Specify the location of the Launch4J installation directory with -Dlaunch4j.dir=/some/path/to/launch4j.jar</fail>
+            <taskdef name="launch4j" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar"
+                classname="net.sf.launch4j.ant.Launch4jTask" />
+
+            <echo file="${launch4j.config}"><![CDATA[
+                <launch4jConfig>
+                    <headerType>0</headerType>
+                    <jar>syndie-installer-${full.version}.bin.win@{bits}.jar</jar>
+                    <outfile>syndie-installer-${full.version}.bin.win@{bits}.exe</outfile>
+                    <errTitle>Syndie ${full.version} installer</errTitle>
+                    <chdir>.</chdir>
+                    <icon>doc/web/favicon.ico</icon>
+                    <jre><minVersion>1.5.0</minVersion></jre>
+                    <versionInfo>
+                        <fileVersion>0.0.0.0</fileVersion>
+                        <productVersion>0.0.0.0</productVersion>
+                        <txtFileVersion>syndie-${full.version} Windows @{bit}bit</txtFileVersion>
+                        <txtProductVersion>${full.version}</txtProductVersion>
+                        <fileDescription>Syndie ${full.version} Installation Launcher</fileDescription>
+                        <copyright>copyright is theft</copyright>
+                        <productName>Syndie ${full.version}</productName>
+                        <internalName>syndie</internalName>
+                        <originalFilename>syndie-installer-${full.version}.bin.win@{bits}.exe</originalFilename>
+                    </versionInfo>
+                </launch4jConfig>
+                ]]></echo>
+
+            <launch4j configFile="${launch4j.config}" />
+            <delete file="syndie-installer-${full.version}.bin.win@{bits}.jar" />
+        </sequential>
+    </macrodef>
+
+<macrodef name="build-installer">
+    <attribute name="os" />
+    <attribute name="swt" />
+    <attribute name="arch" />
+
+    <sequential>
+        <taskdef name="izpack" classpath="build/izpackpatch.jar:${izpack.dir}/standalone-compiler.jar"
+                 classname="com.izforge.izpack.ant.IzPackTask" />
+             <jar destfile="build/izpackpatch.jar"
+                 basedir="resources/izpack/patches" />
+        <delete file="${pkgtemp.dir}/lib/swt.jar" />
+        <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
+        <izpack output="syndie-installer-${full.version}.bin.@{os}@{arch}.jar"
+                installerType="standard"
+                basedir="."
+                izPackDir="${izpack.dir}/">
+            <config><![CDATA[
+<installation version="1.0">
+    <info>
+        <pack200/>
+        <appname>Syndie</appname>
+        <appversion>@{full.version}</appversion>
+        <appsubpath>syndie</appsubpath>
+        <authors>
+            <author name="Syndie development team" email="http://syndie.i2p2.de" />
+        </authors>
+        <url>http://syndie.i2p2.de</url>
+        <javaversion>1.5</javaversion>
+        <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
+        <run-privileged condition="izpack.windowsinstall.vista|izpack.windowsinstall.7"/>
+    </info>
+    <variables>
+        <variable name="desktopshortcutcheckboxenabled" value="true" />
+    </variables>
+    <guiprefs width="590" height="356" resizable="yes">
+        <laf name="liquid">
+            <os family="unix"/>
+        </laf>
+        <modifier key="langDisplayType" value="native" />
+    </guiprefs>
+    <locale>
+        <langpack iso3="eng"/>
+        <langpack iso3="cat"/>
+        <langpack iso3="chn"/>
+        <langpack iso3="cze"/>
+        <langpack iso3="dan"/>
+        <langpack iso3="deu"/>
+        <langpack iso3="ell"/>
+        <langpack iso3="fa"/>
+        <langpack iso3="fin"/>
+        <langpack iso3="fra"/>
+        <langpack iso3="glg"/>
+        <langpack iso3="hun"/>
+        <langpack iso3="ind"/>
+        <langpack iso3="ita"/>
+        <langpack iso3="jpn"/>
+        <langpack iso3="kor"/>
+        <langpack iso3="mys"/>
+        <langpack iso3="ned"/>
+        <langpack iso3="nor"/>
+        <langpack iso3="pol"/>
+        <langpack iso3="por"/>
+        <langpack iso3="rom"/>
+        <langpack iso3="rus"/>
+        <langpack iso3="scg"/>
+        <langpack iso3="spa"/>
+        <langpack iso3="svk"/>
+        <langpack iso3="swe"/>
+        <langpack iso3="tur"/>
+        <langpack iso3="twn"/>
+        <langpack iso3="ukr"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll" />
+    <native type="izpack" name="ShellLink_x64.dll" />
+    <resources>
+        <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
+        <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
+    </resources>
+
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="TargetPanel"/>
+        <panel classname="SummaryPanel"/>
+        <panel classname="InstallPanel"/>
+        <panel classname="ShortcutPanel"/>
+        <panel classname="SimpleFinishPanel"/>
+    </panels>
+    <packs>
+        <pack name="Base" required="yes">
+            <description>Base installation files</description>
+            <fileset dir="pkg-temp" includes="**/*" targetdir="$INSTALL_PATH"/>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn">
+                <os family="windows" />
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.exe" type="bin" stage="never" keep="true" failure="warn">
+                <os family="windows" />
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.jar" type="jar" stage="never" keep="true" failure="warn">
+                <os family="unix"/>
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.jar" type="jar" stage="never" keep="true" failure="warn">
+                <os family="unix"/>
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.jar" type="jar" stage="never" keep="true" failure="warn">
+                <os family="unix"/>
+            </executable>
+        </pack>
+    </packs>
+
+</installation>
+]]></config>
+        </izpack>
+    </sequential>
+</macrodef>
 
     <target name="init" depends="buildProperties">
         <available property="have.swt" file="${swt.jar}" type="file" />
@@ -196,8 +356,22 @@
         </jar>
     </target>
 
+    <target name="jar-cli" depends="compile,jar" description="Build jar with only the cli in ./build">
+        <property name="build.built-by" value="unknown" />
+        <jar jarfile="${build.dir}/syndie-cli.jar">
+            <zipfileset src="${build.dir}/syndie.jar" excludes="**/syndie/gui/** **/syndie/trac/** **/com/**" />
+            <manifest>
+                <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar" />
+                <attribute name="Built-By" value="${build.built-by}" />
+                <attribute name="Build-Date" value="${build.timestamp}" />
+                <attribute name="Base-revision" value="${workspace.version}" />
+                <attribute name="Main-Class" value="syndie.db.TextUI" />
+            </manifest>
+        </jar>
+    </target>
+
     <target name="dist" depends="jar" description="Combine all jars">
-        <copy file="${swt.jar}" todir="${pkgtemp.lib}" />
+        <copy file="${swt.jar}" tofile="${pkgtemp.lib}/swt.jar" />
         <copy file="${i2p.jar}" todir="${pkgtemp.lib}" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.lib}" />
         <jar jarfile="syndie.jar" index="true">
@@ -242,6 +416,11 @@
         </java>
     </target>
 
+    <target name="-check-for-izpack">
+        <available property="found.izpack" file="${izpack.dir}/standalone-compiler.jar" type="file" />
+        <fail unless="found.izpack">The installer targets require izpack! Specify -Dizpack.dir=/path/to/standalone-compiler.jar</fail>
+    </target>
+
     <target name="-check-launch4j" if="launch4j.available" description="Check if this system can run launch4j">
         <condition property="can.create.exe">
             <and>
@@ -260,9 +439,8 @@
     </target>
 
     <target name="-jars2exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, -stub-jars" description="Wrap jar files into EXEs">
-        <wrap-to-exe type="Desktop" />
-        <wrap-to-exe type="Tabs" />
-        <wrap-to-exe type="CLI" />
+        <wrap-to-exe type="-desktop" />
+        <wrap-to-exe />
     </target>
 
     <target name="plugin" depends="buildProperties, jar">
@@ -445,70 +623,71 @@
     </target>
 
     <target name="-stub-jars" depends="jar, preppkg" description="Create manifest-only jars for Syndie">
-        <make-stub-jar type="Desktop" additional="lib/swt.jar" type-class="${desktop.class}" />
-        <make-stub-jar type="Tabs" additional="lib/swt.jar" type-class="${tabs.class}" />
-        <make-stub-jar type="CLI" type-class="${cli.class}" />
+        <make-stub-jar name="-desktop" additional="../lib/swt.jar" type-class="${desktop.class}" />
+        <make-stub-jar additional="../lib/swt.jar" type-class="${tabs.class}" />
+        <make-stub-jar name="-cli" type-class="${cli.class}" />
     </target>
 
-    <target name="preppkg" depends="prep-docs">
-        <copy todir="${pkgtemp.dir}/bin">
-            <fileset dir="./bin" />
-        </copy>
-        <copy file="${swt.jar}" todir="${pkgtemp.dir}/lib" />
+    <target name="preppkg" depends="prep-docs, jar">
+        <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/Uninstaller" />
+        <copy file="${swt.jar}" tofile="${pkgtemp.dir}/lib/swt.jar" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
         <copy file="${i2p.jar}" todir="${pkgtemp.dir}/lib" />
         <copy file="${build.dir}/syndie.jar" todir="${pkgtemp.dir}/lib" />
     </target>
 
     <target name="prep-docs">
-        <copy todir="${pkgtemp.dir}/docs">
+        <copy todir="${pkgtemp.dir}/bin">
+            <fileset dir="./bin" />
+        </copy>
+        <copy todir="${pkgtemp.dir}/doc">
             <fileset dir="." includes="CHANGES CREDITS INSTALL README TODO" />
         </copy>
-        <copy todir="${pkgtemp.dir}/docs/html">
+        <copy todir="${pkgtemp.dir}/doc/web">
             <fileset dir="doc/web" />
         </copy>
-        <copy file="LICENSE" todir="${pkgtemp.dir}/docs/licenses"/>
-        <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/docs/licenses" />
-        <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/docs/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
+        <copy file="LICENSE" todir="${pkgtemp.dir}/doc/licenses"/>
+        <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/doc/licenses" />
     </target>
 
 
     <target name="prep-swt-licenses" depends="prep-win-licenses, prep-lin-licenses, prep-mac-licenses, prep-common-swt" />
     <target name="prep-common-swt">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+        <copy file="src/com/LICENSE.txt" tofile="${pkgtemp.dir}/doc/licenses/LICENSE-Jazzy-GPL-v2.1.txt" />
+        <copy todir="${pkgtemp.dir}/doc/licenses/SWT/about_files">
             <fileset dir="doc/licenses/SWT/common" />
         </copy>
     </target>
 
     <target name="prep-win-licenses" depends="prep-common-swt">
-        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/Windows.html" />
+        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/doc/licenses/SWT/Windows.html" />
     </target>
 
     <target name="prep-lin-licenses" depends="prep-common-swt">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+        <copy todir="${pkgtemp.dir}/doc/licenses/SWT/about_files">
             <fileset dir="doc/licenses/SWT/lin/about_files" />
         </copy>
-        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/Linux.html" />
+        <copy file="doc/licenses/SWT/lin/about.html" tofile="${pkgtemp.dir}/doc/licenses/SWT/Linux.html" />
     </target>
 
     <target name="prep-mac-licenses" depends="prep-common-swt">
-        <copy todir="${pkgtemp.dir}/docs/licenses/SWT/about_files">
+        <copy todir="${pkgtemp.dir}/doc/licenses/SWT/about_files">
             <fileset dir="doc/licenses/SWT/mac/about_files" />
         </copy>
-        <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/docs/licenses/SWT/OSX.html" />
+        <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/doc/licenses/SWT/OSX.html" />
     </target>
 
     <target name="prep-launch4j-license" if="launch4j.available">
-        <copy file="${launch4j.dir}/LICENSE.txt" tofile="docs/licenses/License-Launch4j.txt" />
+        <copy file="${launch4j.dir}/LICENSE.txt" tofile="${pkgtemp.dir}/doc/licenses/License-Launch4j.txt" />
     </target>
 
-    <target name="pkg" depends="prep-launch4j-license, prep-swt-licenses, -stub-jars, jar, preppkg">
+    <target name="pkg" depends="clean, prep-launch4j-license, prep-swt-licenses, -stub-jars, jar, preppkg">
         <move todir="${dist.dir}">
             <fileset dir="${pkgtemp.dir}" />
         </move>
     </target>
 
-    <target name="pkg-exe" depends="-jars2exe, pkg"/>
+    <target name="pkg-exe" depends="clean, -jars2exe, pkg"/>
 
     <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
@@ -622,13 +801,19 @@
         <delete file="sloccount.sc" />
         <delete dir="plugin" />
         <delete dir="${pkgtemp.dir}" />
+        <delete file="plugin.zip" />
         <delete file="${ant.project.name}.fba" />
+        <delete dir="pkg-osx" />
     </target>
 
-    <target name="distclean" depends="clean" description="more throrough clean-up">
+    <target name="distclean" depends="clean" description="More throrough clean-up">
         <delete file="syndie.xpi2p" />
         <delete dir="${dist.dir}" />
-        <delete file="syndie.jar" />
+        <delete quiet="true">
+            <fileset dir="." includes="syndie-installer* syndie*tar.bz2" />
+        </delete>
+        <delete file="syndie-installer*.jar" />
+        <delete file="syndie-installer*.exe" />
         <delete file="syndie-update.xpi2p" />
         <delete file="syndie-win32.xpi2p" />
         <delete file="syndie-win32-update.xpi2p" />
@@ -637,14 +822,156 @@
         <delete file="syndie-linux-x86-64.xpi2p" />
     </target>
 
-    <target name="totallyclean" depends="distclean" description="Clean-up even more">
+    <target name="totallyclean" depends="distclean" description="Most thorough clearning">
         <delete file="lib/i2p.jar" />
         <delete file="lib/swt.jar" />
+        <ant dir="swt" target="totallyclean" />
     </target>
 
     <target name="debug" description="Print properties">
         <echoproperties/>
     </target>
+
+    <target name="-delete-windows-files">
+        <delete failonerror="false" quiet="true">
+            <fileset dir="${pkgtemp.dir}" includes="*.exe" />
+        </delete>
+    </target>
+
+    <target name="installer-linux" depends="installer-linux32, installer-linux64, -delete-windows-files" description="Create Linux installers (i386 and x86_64)"/>
+
+    <target name="installer-linux32" depends="-check-for-izpack, -stub-jars, preppkg, -delete-windows-files" description="Create i386 installer for Linux">
+        <ant dir="swt" target="ensure-lin32-swt" />
+        <build-installer os="linux" arch="32" swt="${swt.lin32}" />
+    </target>
+
+    <target name="installer-linux64" depends="-check-for-izpack, -stub-jars, preppkg, -delete-windows-files" description="Create x86_64 installer for Linux">
+        <ant dir="swt" target="ensure-lin64-swt" />
+        <build-installer os="linux" arch="64" swt="${swt.lin64}" />
+    </target>
+
+    <target name="installer-windows" depends="installer-windows64-exe, installer-windows32-exe" description="Create i386 and x86_64 installers for Windows" />
+
+    <target name="installer-windows32-exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, installer-windows32" description="Create i386 installer for Windows and wrap it into an EXE">
+        <wrap-installer bits="32" />
+    </target>
+
+    <target name="installer-windows64-exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, installer-windows64" description="Create x86_64 installer for Windows and wrap it into an EXE">
+        <wrap-installer bits="64" />
+    </target>
+
+    <target name="installer-windows32" depends="-check-for-izpack, -jars2exe, -stub-jars, preppkg" description="Create i386 installer for Windows">
+        <ant dir="swt" target="ensure-win32-swt" />
+        <build-installer os="win" arch="32" swt="swt/lib/swt-win32.jar" />
+    </target>
+
+    <target name="installer-windows64" depends="-check-for-izpack, -jars2exe, -stub-jars, preppkg" description="Create x86_64 installer for Windows">
+        <ant dir="swt" target="ensure-win64-swt" />
+        <build-installer os="win" arch="64" swt="swt/lib/swt-win64.jar" />
+    </target>
+
+    <target name="installer-all" depends="installer-linux, installer-windows" description="Create Windows and Linux installers" />
+
+    <target name="prep-osx" depends="jar, prep-docs, prep-mac-licenses">
+        <mkdir dir="pkg-osx/Syndie.app/Contents/MacOS" />
+        <mkdir dir="pkg-osx/Syndie.app/Contents/Resources" />
+        <copy file="${hsqldb.jar}" todir="pkg-osx/Syndie.app/Contents/MacOS" />
+        <copy file="${build.dir}/syndie.jar" todir="pkg-osx/Syndie.app/Contents/MacOS" />
+        <copy file="resources/osx.icns" tofile="pkg-osx/Syndie.app/Contents/syndie.icns" />
+        <echo file="pkg-osx/Syndie.app/Contents/MacOS/startsyndie.sh"><![CDATA[#!/bin/sh
+            DIR=`dirname $0`
+            CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar
+            exec java -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+            ]]></echo>
+        <echo file="pkg-osx//Syndie.app/Contents/Info.plist"><![CDATA[
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+                <dict>
+                    <key>CFBundleExecutable</key>
+                    <string>startsyndie.sh</string>
+                    <key>CFBundleGetInfoString</key>
+                    <string>Syndie ${full.version} for Mac OS X</string>
+                    <key>CFBundleIconFile</key>
+                    <string>syndie.icns</string>
+                    <key>CFBundleIdentifier</key>
+                    <string>syndie.gui.SWTUI</string>
+                    <key>CFBundleInfoDictionaryVersion</key>
+                    <string>6.0</string>
+                    <key>CFBundleName</key>
+                    <string>Syndie</string>
+                    <key>CFBundlePackageType</key>
+                    <string>APPL</string>
+                    <key>CFBundleShortVersionString</key>
+                    <string>1.0</string>
+                    <key>CFBundleSignature</key>
+                    <string>?????</string>
+                    <key>CFBundleVersion</key>
+                    <string>1.0</string>
+                    <key>NSPrincipalClass</key>
+                    <string>NSApplication</string>
+                </dict>
+            </plist>
+            ]]></echo>
+        <copy todir="pkg-osx/doc">
+            <fileset dir="pkg-temp/doc" />
+        </copy>
+    </target>
+
+    <target name="pkg-cli" depends="jar-cli, prep-docs">
+        <copy file="${build.dir}/syndie-cli.jar" todir="${pkgtemp.dir}/bin" />
+        <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
+        <echo file="${pkgtemp.dir}/bin/readme.txt">In order to use this headless version of Syndie,
+copy i2p.jar to the lib directory, then simply
+run "syndie-cli.jar".
+
+Alternatively, you can run a command like the following:
+java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.TextUI
+</echo>
+        <tar destfile="syndie-cli-${full.version}.tar.bz2" compression="bzip2">
+            <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${full.version}" filemode="644">
+                <include name="bin/*" />
+                <include name="lib/hsqldb.jar" />
+                <include name="doc/*" />
+                <include name="doc/licenses/**" />
+                <exclude name="doc/web" />
+            </tarfileset>
+        </tar>
+    </target>
+
+    <target name="pkg-osx" depends="pkg-osx32, pkg-osx64" description="Create both i386 and x86_64 packages for OSX" />
+    <target name="pkg-osx32" depends="prep-osx" description="Create an i386 package for OSX">
+        <ant dir="swt" target="ensure-mac32-swt" />
+        <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <copy file="${swt.mac32}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <tar destfile="syndie-${full.version}.bin.osx32.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
+                <include name="**/**" />
+                <exclude name="**/*.sh" />
+            </tarfileset>
+            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="755">
+                <include name="**/*.sh" />
+            </tarfileset>
+        </tar>
+    </target>
+
+    <target name="pkg-osx64" depends="prep-osx" description="Create an x86_64 package for OSX">
+        <ant dir="swt" target="ensure-mac64-swt" />
+        <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <copy file="${swt.mac64}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <tar destfile="syndie-${full.version}.bin.osx64.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
+                <include name="**/**" />
+                <exclude name="**/*.sh" />
+            </tarfileset>
+            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="755">
+                <include name="**/*.sh" />
+            </tarfileset>
+        </tar>
+    </target>
+
+    <target name="pkg-all" depends="pkg-cli, installer-linux, installer-windows, pkg-osx" description="Create packags/installers for all supported systems." />
+
 
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->

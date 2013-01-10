@@ -4,17 +4,17 @@
  <shortcut name="Syndie"
            programGroup="yes"
            desktop="yes"
-	   applications="no"
-           target="$INSTALL_PATH\bin\syndie.exe" 
+           applications="no"
+           target="$INSTALL_PATH\bin\syndie.exe"
            iconFile="$INSTALL_PATH\doc\web\favicon.ico"
            description="Launch Syndie">
      <createForPack name="Base" />
  </shortcut>
- <shortcut name="Syndie tabs"
+ <shortcut name="Syndie (alternate UI)"
            programGroup="yes"
            desktop="yes"
-	   applications="no"
-           target="$INSTALL_PATH\bin\syndie-tabs.exe" 
+           applications="no"
+           target="$INSTALL_PATH\bin\syndie-desktop.exe"
            iconFile="$INSTALL_PATH\doc\web\favicon.ico"
            description="Launch Syndie">
      <createForPack name="Base" />
@@ -22,15 +22,15 @@
  <shortcut name="Syndie documentation"
            programGroup="yes"
            desktop="yes"
-	   applications="no"
+           applications="no"
            target="$INSTALL_PATH\doc\web\index.html"
            description="Local Syndie documentation">
      <createForPack name="Base" />
  </shortcut>
  <shortcut name="Uninstall Syndie"
            programGroup="yes"
-           desktop="yes"
-	   applications="no"
+           desktop="no"
+           applications="no"
            target="$INSTALL_PATH\uninstaller\uninstaller.jar"
            description="No more Syndie">
      <createForPack name="Base" />

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Fetch SWT" default="usage" basedir=".">
+    <description>Fetches and validates checksums of SWT</description>
+
+    <property file="override.properties"/>
+    <property file="swt.properties"/>
+
+    <!-- Set some global properties up -->
+    <property name="swt.dir" value="${basedir}/lib" />
+    <property name="swt.lin32" value="${swt.dir}/swt-lin32.jar" />
+    <property name="swt.lin64" value="${swt.dir}/swt-lin64.jar" />
+    <property name="swt.win32" value="${swt.dir}/swt-win32.jar" />
+    <property name="swt.win64" value="${swt.dir}/swt-win64.jar" />
+    <property name="swt.mac32" value="${swt.dir}/swt-mac32.jar" />
+    <property name="swt.mac64" value="${swt.dir}/swt-mac64.jar" />
+
+
+    <available property="swt.lin32.available" file="${swt.lin32}" type="file" />
+    <available property="swt.win32.available" file="${swt.win32}" type="file" />
+    <available property="swt.mac32.available" file="${swt.mac32}" type="file" />
+    <available property="swt.lin64.available" file="${swt.lin64}" type="file" />
+    <available property="swt.win64.available" file="${swt.win64}" type="file" />
+    <available property="swt.mac64.available" file="${swt.mac64}" type="file" />
+
+    <macrodef name="fetch" description="Fetch, extract, and verify swt.jar">
+        <attribute name="url"/>
+        <attribute name="dest"/>
+        <attribute name="hash" />
+
+        <sequential>
+            <get dest="swt.zip" src="@{url}"/>
+            <local name="checksum.matches"/>
+            <local name="checksum.matches.fail"/>
+            <local name="tempjar" />
+
+            <tempfile property="tempjar" deleteonexit="true"/>
+            <unzip src="swt.zip" dest="${basedir}">
+                <patternset>
+                    <include name="swt.jar" />
+                </patternset>
+            </unzip>
+            <move file="${basedir}/swt.jar" tofile="${tempjar}" />
+            <checksum file="${tempjar}" algorithm="sha" property="@{hash}"
+                verifyproperty="checksum.matches"/>
+            <condition property="checksum.matches.fail">
+                <equals arg1="${checksum.matches}" arg2="false"/>
+            </condition>
+            <fail if="checksum.matches.fail">Checksum error</fail>
+            <move file="${tempjar}" tofile="@{dest}" />
+            <touch file="@{dest}.verified" verbose="false" />
+            <delete file="swt.zip" quiet="true" />
+        </sequential>
+    </macrodef>
+
+    <macrodef name="checksha1" description="Takes in a file and a sha1 hash and verify file integrity">
+        <attribute name="file" />
+        <attribute name="hash" />
+        <sequential>
+            <local name="checksum.matches"/>
+            <local name="checksum.matches.fail"/>
+            <checksum file="@{file}" algorithm="sha" property="@{hash}"
+                verifyproperty="checksum.matches"/>
+            <condition property="checksum.matches.fail">
+                <equals arg1="${checksum.matches}" arg2="false"/>
+            </condition>
+            <fail if="checksum.matches.fail">Checksum error</fail>
+            <touch file="@{file}.verified" verbose="false" />
+        </sequential>
+    </macrodef>
+
+    <target name="ensure-lin32-swt">
+        <ant target="fetch-lin32-swt" />
+        <ant target="verify-lin32-swt" />
+    </target>
+
+    <target name="ensure-lin64-swt">
+        <ant target="fetch-lin64-swt" />
+        <ant target="verify-lin64-swt" />
+    </target>
+
+    <target name="ensure-mac32-swt">
+        <ant target="fetch-mac32-swt" />
+        <ant target="verify-mac32-swt" />
+    </target>
+
+    <target name="ensure-mac64-swt">
+        <ant target="fetch-mac64-swt" />
+        <ant target="verify-mac64-swt" />
+    </target>
+
+
+    <target name="ensure-win32-swt">
+        <ant target="fetch-win32-swt" />
+        <ant target="verify-win32-swt" />
+    </target>
+
+    <target name="ensure-win64-swt">
+        <ant target="fetch-win64-swt" />
+        <ant target="verify-win64-swt" />
+    </target>
+
+    <target name="ensure-SWT"
+        depends="ensure-lin32-swt, ensure-lin64-swt, ensure-mac32-swt,
+        ensure-mac64-swt, ensure-win32-swt, ensure-win64-swt"
+        description="Ensure all of the SWT libs are present and verify their checksums"/>
+
+    <target name="verify-lin32-swt" if="swt.lin32.available" unless="swt.lin32.verified">
+        <checksha1 file="${swt.lin32}" hash="${swt.lin32.sha1}" />
+    </target>
+
+    <target name="fetch-lin32-swt" unless="swt.lin32.available">
+        <fetch url="${swt.lin32.url}" dest="${swt.lin32}" hash="${swt.lin32.sha1}" />
+    </target>
+
+    <target name="verify-lin64-swt" if="swt.lin64.available" unless="swt.lin64.verified">
+        <checksha1 file="${swt.lin64}" hash="${swt.lin64.sha1}" />
+    </target>
+
+    <target name="fetch-lin64-swt" unless="swt.lin64.available">
+        <fetch url="${swt.lin64.url}" dest="${swt.lin64}" hash="${swt.lin64.sha1}" />
+    </target>
+
+    <target name="verify-mac32-swt" if="swt.mac32.available" unless="swt.mac32.verified">
+        <checksha1 file="${swt.mac32}" hash="${swt.mac32.sha1}" />
+    </target>
+
+    <target name="fetch-mac32-swt" unless="swt.mac32.available">
+        <fetch url="${swt.mac32.url}" dest="${swt.mac32}" hash="${swt.mac32.sha1}" />
+    </target>
+
+    <target name="verify-mac64-swt" if="swt.mac64.available" unless="swt.mac64.verified">
+        <checksha1 file="${swt.mac64}" hash="${swt.mac64.sha1}" />
+    </target>
+
+    <target name="fetch-mac64-swt" unless="swt.mac64.available">
+        <fetch url="${swt.mac64.url}" dest="${swt.mac64}" hash="${swt.mac64.sha1}" />
+    </target>
+
+    <target name="verify-win32-swt" if="swt.win32.available" unless="swt.win32.verified">
+        <checksha1 file="${swt.win32}" hash="${swt.win32.sha1}" />
+    </target>
+
+    <target name="fetch-win32-swt" unless="swt.win32.available">
+        <fetch url="${swt.win32.url}" dest="${swt.win32}" hash="${swt.win32.sha1}" />
+    </target>
+
+    <target name="verify-win64-swt" if="swt.win64.available" unless="swt.win64.verified">
+        <checksha1 file="${swt.win64}" hash="${swt.win64.sha1}" />
+    </target>
+
+    <target name="fetch-win64-swt" unless="swt.win64.available">
+        <fetch url="${swt.win64.url}" dest="${swt.win64}" hash="${swt.win64.sha1}" />
+    </target>
+
+    <target name="clean" />
+    <target name="reallyclean" depends="clean" />
+    <target name="distclean" depends="clean" />
+    <target name="totallyclean" depends="clean">
+        <delete dir="${swt.dir}" />
+    </target>
+
+    <target name="debug" >
+        <echoproperties />
+    </target>
+
+</project>
+<!-- vim: set ft=xml ts=4 sw=4 et: -->
