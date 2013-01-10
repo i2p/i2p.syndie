@@ -161,6 +161,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _bannedScopes.clear();
         _bannedScopes.addAll(chans);
         _banned.setText(chans.size()+"");
+        _bannedManage.setEnabled(chans.size() > 0);
         
         _deniable.setText(0+"");
         _root.layout(true, true);
@@ -260,15 +261,17 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         gd.widthHint = 400;
         gd.heightHint = 200;
         banned.setLayoutData(gd);
-        List scopes = _bannedScopes;
+        List<Hash> scopes = _bannedScopes;
         for (int i = 0; i < scopes.size(); i++) {
-            Hash scope = (Hash)scopes.get(i);
+            Hash scope = scopes.get(i);
+            StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(scope);
-            TableItem item = new TableItem(banned, SWT.NONE);
             if (name != null)
-                item.setText(scope.toBase64().substring(0,6) + " - " + name);
-            else
-                item.setText(scope.toBase64().substring(0,6));
+                buf.append(name).append(' ');
+            String b64 = scope.toBase64();
+            buf.append('[').append(b64.substring(0, 6)).append("] ").append(b64);
+            TableItem item = new TableItem(banned, SWT.NONE);
+            item.setText(buf.toString());
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
@@ -300,6 +303,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
             }
         }
         _banned.setText(_bannedScopes.size() + "");
+        _bannedManage.setEnabled(_bannedScopes.size() > 0);
     }
     
     public void applyTheme(Theme theme) {

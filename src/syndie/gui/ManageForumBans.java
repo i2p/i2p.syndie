@@ -6,8 +6,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.TreeEditor;
@@ -45,6 +47,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
@@ -55,15 +58,15 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 class ManageForumBans extends BaseComponent implements Themeable, Translatable {
-    private ManageForum _manage;
+    private final ManageForum _manage;
     private Shell _shell;
     private SashForm _sash;
     private RefTree _refTree;
     private Group _banGroup;
     private List _localBans;
-    private ArrayList _localBanHashes;
+    private final ArrayList<Hash> _localBanHashes;
     private List _targetBans;
-    private ArrayList _targetBanHashes;
+    private final ArrayList<Hash> _targetBanHashes;
     private Button _ok;
     private Button _cancel;
     
@@ -138,7 +141,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         
         _localBans.setRedraw(false);
         _localBanHashes.clear();
-        ArrayList banned = _client.getBannedChannels();
+        ArrayList<Hash> banned = _client.getBannedChannels();
         for (int i = 0; i < banned.size(); i++) {
             _localBanHashes.add(banned.get(i));
             _localBans.add(((Hash)banned.get(i)).toBase64());

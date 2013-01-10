@@ -436,13 +436,19 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             }
         }
         
+        StringBuilder buf = new StringBuilder();
+        if (info != null) {
+            String name = info.getName();
+            if (name != null)
+                buf.append(name).append(' ');
+         }
+        buf.append('[').append(scope.toBase64().substring(0,6)).append(']');
+        _metaName.setText(buf.toString());
+
         if (info != null) {
             GridData gd = (GridData)_meta.getLayoutData();
             gd.exclude = false;
             _ui.debugMessage("update metadata: forum: " + info.getChannelHash().toBase64());
-            String name = info.getName();
-            if (name == null) name = scope.toBase64().substring(0,6);
-            _metaName.setText(name);
             
             byte avatar[] = _client.getChannelAvatar(info.getChannelId());
             Image img = null;
@@ -524,8 +530,8 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             GridData gd = (GridData)_meta.getLayoutData();
             gd.exclude = false;
             _ui.debugMessage("update metadata: no forum");
-            _metaName.setText("");
-            _metaDesc.setText(_translationRegistry.getText("multiple forums selected"));
+            _metaDesc.setText(_translationRegistry.getText("Forum not found. It was banned or deleted."));
+            // setFont?
             _metaIconManageable.setVisible(false);
             _metaIconPostable.setVisible(false);
             _metaIconArchives.setVisible(false);
