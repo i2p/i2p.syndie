@@ -167,35 +167,21 @@ class MessageEditorFind implements Translatable, Themeable {
         _findShell.pack();
     }
     
-    private static final String T_FIND_ROOT = "syndie.gui.messageeditorfind.root";
-    private static final String T_FIND_TEXT = "syndie.gui.messageeditorfind.text";
-    private static final String T_FIND_REPLACE = "syndie.gui.messageeditorfind.replace";
-    private static final String T_FIND_MATCH = "syndie.gui.messageeditorfind.match";
-    private static final String T_FIND_WRAP = "syndie.gui.messageeditorfind.wrap";
-    private static final String T_FIND_BACKWARDS = "syndie.gui.messageeditorfind.backwards";
-    private static final String T_FIND_NEXT = "syndie.gui.messageeditorfind.next";
-    private static final String T_FIND_NEXT_TOOLTIP = "syndie.gui.messageeditorfind.nexttooltip";
-    private static final String T_FIND_CLOSE = "syndie.gui.messageeditorfind.close";
-    private static final String T_FIND_CLOSE_TOOLTIP = "syndie.gui.messageeditorfind.closetooltip";
-    private static final String T_FIND_REPLACE_ACTION = "syndie.gui.messageeditorfind.replace.action";
-    private static final String T_FIND_REPLACE_ACTION_TOOLTIP = "syndie.gui.messageeditorfind.replace.actiontooltip";
-    private static final String T_FIND_REPLACE_ALL_ACTION = "syndie.gui.messageeditorfind.replaceall.action";
-    private static final String T_FIND_REPLACE_ALL_ACTION_TOOLTIP = "syndie.gui.messageeditorfind.replaceall.actiontooltip";
     
     public void translate(TranslationRegistry registry) {
-        _findShell.setText(registry.getText(T_FIND_ROOT, "Find"));
-        _findTextLabel.setText(registry.getText(T_FIND_TEXT, "Find what: "));
-        _findReplaceLabel.setText(registry.getText(T_FIND_REPLACE, "Replace with: "));
-        _findMatchCase.setText(registry.getText(T_FIND_MATCH, "match case"));
-        _findWrapAround.setText(registry.getText(T_FIND_WRAP, "wrap around"));
-        _findBackwards.setText(registry.getText(T_FIND_BACKWARDS, "backwards"));
-        _findNext.setText(registry.getText(T_FIND_NEXT, "Find next"));
-        _findNext.setToolTipText(registry.getText(T_FIND_NEXT_TOOLTIP, "Find the next occurrence of the word"));
-        _close.setText(registry.getText(T_FIND_CLOSE, "Close"));
-        _close.setToolTipText(registry.getText(T_FIND_CLOSE_TOOLTIP, "Finish searching"));
-        _replace.setText(registry.getText(T_FIND_REPLACE_ACTION, "Replace"));
-        _replace.setToolTipText(registry.getText(T_FIND_REPLACE_ACTION_TOOLTIP, "Replace the current occurrence of the word"));
-        _replaceAll.setText(registry.getText(T_FIND_REPLACE_ALL_ACTION, "Replace all"));
-        _replaceAll.setToolTipText(registry.getText(T_FIND_REPLACE_ALL_ACTION_TOOLTIP, "Replace all remaining occurrences of the word"));
+        _findShell.setText(registry.getText("Find"));
+        _findTextLabel.setText(registry.getText("Find what: "));
+        _findReplaceLabel.setText(registry.getText("Replace with: "));
+        _findMatchCase.setText(registry.getText("match case"));
+        _findWrapAround.setText(registry.getText("wrap around"));
+        _findBackwards.setText(registry.getText("backwards"));
+        _findNext.setText(registry.getText("Find next"));
+        _findNext.setToolTipText(registry.getText("Find the next occurrence of the word"));
+        _close.setText(registry.getText("Close"));
+        _close.setToolTipText(registry.getText("Finish searching"));
+        _replace.setText(registry.getText("Replace"));
+        _replace.setToolTipText(registry.getText("Replace the current occurrence of the word"));
+        _replaceAll.setText(registry.getText("Replace all"));
+        _replaceAll.setToolTipText(registry.getText("Replace all remaining occurrences of the word"));
     }
 }

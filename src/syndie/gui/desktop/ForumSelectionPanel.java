@@ -141,10 +141,6 @@ public class ForumSelectionPanel extends DesktopPanel {
     //    if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
     //}
 
-    private static final String T_VIEWMATCHES = "syndie.gui.desktop.forumselectionpanel.viewmatches";
-    private static final String T_ADDNYM = "syndie.gui.desktop.forumselectionpanel.addnym";
-    private static final String T_ADDFORUM = "syndie.gui.desktop.forumselectionpanel.addforum";
-    private static final String T_ADDREF = "syndie.gui.desktop.forumselectionpanel.addref";
     class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _viewMatches;
         private Button _addNym;
@@ -177,10 +173,10 @@ public class ForumSelectionPanel extends DesktopPanel {
             _themeRegistry.register(SouthEdge.this);
         }
         public void translate(TranslationRegistry trans) {
-            _viewMatches.setText(trans.getText(T_VIEWMATCHES, "View combined"));
-            _addNym.setText(trans.getText(T_ADDNYM, "Create nym"));
-            _addForum.setText(trans.getText(T_ADDFORUM, "Create forum"));
-            _addReference.setText(trans.getText(T_ADDREF, "Create bookmark"));
+            _viewMatches.setText(trans.getText("View combined"));
+            _addNym.setText(trans.getText("Create nym"));
+            _addForum.setText(trans.getText("Create forum"));
+            _addReference.setText(trans.getText("Create bookmark"));
         }
         public void applyTheme(Theme theme) { 
             _viewMatches.setFont(theme.BUTTON_FONT);

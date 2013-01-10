@@ -74,14 +74,12 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
         }
     }
 
-    private static final String T_CONFIRM_CLOSE_TITLE = "syndie.gui.editmessagetab.confirm.title";
-    private static final String T_CONFIRM_CLOSE_MESSAGE = "syndie.gui.editmessagetab.confirm.message";
     
     protected boolean allowClose() {
         if (!_editor.isModifiedSinceOpen()) return true;
         MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
-        confirm.setText(getBrowser().getTranslationRegistry().getText(T_CONFIRM_CLOSE_TITLE, "Postpone message?"));
-        confirm.setMessage(getBrowser().getTranslationRegistry().getText(T_CONFIRM_CLOSE_MESSAGE, "Do you want to postpone this message to resume it later?"));
+        confirm.setText(getBrowser().getTranslationRegistry().getText("Postpone message?"));
+        confirm.setMessage(getBrowser().getTranslationRegistry().getText("Do you want to postpone this message to resume it later?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             _editor.postponeMessage();
@@ -108,12 +106,10 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
         getBrowser().getNavControl().unview(uri);
     }
     
-    private static final String T_TITLE = "syndie.gui.messageeditortab.title";
-    private static final String T_DESC = "syndie.gui.messageeditortab.desc";
     
     public Image getIcon() { return ImageUtil.ICON_TAB_PAGE; }
-    public String getName() { return getBrowser().getTranslationRegistry().getText(T_TITLE, "Post"); }
-    public String getDescription() { return getBrowser().getTranslationRegistry().getText(T_DESC, "Post a new message"); }
+    public String getName() { return getBrowser().getTranslationRegistry().getText("Post"); }
+    public String getDescription() { return getBrowser().getTranslationRegistry().getText("Post a new message"); }
     
     public boolean canShow(SyndieURI uri) {
         if (uri == null) return false;

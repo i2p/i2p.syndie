@@ -118,8 +118,7 @@ public class StandaloneMessageViewer implements Translatable, Themeable {
     }
 
     public void applyTheme(Theme theme) { _close.setFont(theme.BUTTON_FONT); _shell.layout(true, true); }
-    public void translate(TranslationRegistry registry) { _close.setText(registry.getText(T_CLOSE, "Close")); }
-    private static final String T_CLOSE = "syndie.gui.desktop.standalonemessageviewer.close";
+    public void translate(TranslationRegistry registry) { _close.setText(registry.getText("Close")); }
 
     private class StubNav implements NavigationControl {
         private NavigationControl _stubNav;

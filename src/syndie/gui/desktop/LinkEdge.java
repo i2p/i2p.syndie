@@ -62,7 +62,7 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
             public void paintControl(PaintEvent evt) {
                 if ( (_desktop.getThemeRegistry() == null) || (_desktop.getTranslationRegistry() == null) )
                     return;
-                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_SPECIALCHANNELS, "Special forums"));
+                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText("Special forums"));
             }
         });
             
@@ -79,7 +79,7 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
             public void paintControl(PaintEvent evt) {
                 if ( (_desktop.getThemeRegistry() == null) || (_desktop.getTranslationRegistry() == null) )
                     return;
-                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText(T_REFS, "Bookmarks"));
+                ImageUtil.drawAscending(evt.gc, _specialChannels, _desktop.getThemeRegistry().getTheme().SHELL_FONT, _desktop.getTranslationRegistry().getText("Bookmarks"));
             }
         });
             
@@ -112,6 +112,4 @@ public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
         _bookmarks.redraw();
     }
     
-    private static final String T_SPECIALCHANNELS = "syndie.gui.linkedge.specialchannels";
-    private static final String T_REFS = "syndie.gui.linkedge.refs";
 }

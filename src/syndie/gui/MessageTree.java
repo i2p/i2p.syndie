@@ -644,12 +644,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
 
         
-        private static final String T_CUSTOMDATE_SHELL = "syndie.gui.messagetree.customdate.shell";
-        private static final String T_CUSTOMDATE_LABEL = "syndie.gui.messagetree.customdate.label";
-        private static final String T_CUSTOMDATE_OK = "syndie.gui.messagetree.customdate.ok";
-        private static final String T_CUSTOMDATE_CANCEL = "syndie.gui.messagetree.customdate.cancel";
-        private static final String T_CUSTOMDATE_ERR_TITLE = "syndie.gui.messagetree.customdate.err.title";
-        private static final String T_CUSTOMDATE_ERR_PREFIX = "syndie.gui.messagetree.customdate.err.prefix";
         
         private void datePicked(final Combo date) {
             String when = date.getText();
@@ -668,8 +662,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setText(_translationRegistry.getText(T_CUSTOMDATE_ERR_TITLE, "Bad date"));
-                box.setMessage(_translationRegistry.getText(T_CUSTOMDATE_ERR_PREFIX, "Error parsing date: ") + pe.getMessage());
+                box.setText(_translationRegistry.getText("Bad date"));
+                box.setMessage(_translationRegistry.getText("Error parsing date: ") + pe.getMessage());
                 box.open();
                 date.forceFocus();
             }
@@ -732,38 +726,25 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private static final int AGE_10YEAR = 10;
         private static final int AGE_CUSTOM = 11;
 
-        private static final String T_AGE_TODAY = "syndie.gui.messagetree.age.today";
-        private static final String T_AGE_YESTERDAY = "syndie.gui.messagetree.age.yesterday";
-        private static final String T_AGE_THISWEEK = "syndie.gui.messagetree.age.thisweek";
-        private static final String T_AGE_LASTWEEK = "syndie.gui.messagetree.age.lastweek";
-        private static final String T_AGE_THISMONTH = "syndie.gui.messagetree.age.thismonth";
-        private static final String T_AGE_LASTMONTH = "syndie.gui.messagetree.age.lastmonth";
-        private static final String T_AGE_6MONTH = "syndie.gui.messagetree.age.6month";
-        private static final String T_AGE_YEAR = "syndie.gui.messagetree.age.year";
-        private static final String T_AGE_3YEAR = "syndie.gui.messagetree.age.3year";
-        private static final String T_AGE_5YEAR = "syndie.gui.messagetree.age.5year";
-        private static final String T_AGE_10YEAR = "syndie.gui.messagetree.age.10year";
-        private static final String T_AGE_CUSTOM = "syndie.gui.messagetree.age.custom";
         
         private void populateAgeCombo() {
             String [] items = {
-                _translationRegistry.getText(T_AGE_TODAY, "Last day"),
-                _translationRegistry.getText(T_AGE_YESTERDAY, "Last 2 days"),
-                _translationRegistry.getText(T_AGE_THISWEEK, "Last week"),
-                _translationRegistry.getText(T_AGE_LASTWEEK, "Last 2 weeks"),
-                _translationRegistry.getText(T_AGE_THISMONTH, "Last month"),
-                _translationRegistry.getText(T_AGE_LASTMONTH, "Last 2 months"),
-                _translationRegistry.getText(T_AGE_6MONTH, "Last 6 months"),
-                _translationRegistry.getText(T_AGE_YEAR, "Last year"),
-                _translationRegistry.getText(T_AGE_3YEAR, "Last 3 years"),
-                _translationRegistry.getText(T_AGE_5YEAR, "Last 5 years"),
-                _translationRegistry.getText(T_AGE_10YEAR, "Last 10 years")
+                _translationRegistry.getText("Last day"),
+                _translationRegistry.getText("Last 2 days"),
+                _translationRegistry.getText("Last week"),
+                _translationRegistry.getText("Last 2 weeks"),
+                _translationRegistry.getText("Last month"),
+                _translationRegistry.getText("Last 2 months"),
+                _translationRegistry.getText("Last 6 months"),
+                _translationRegistry.getText("Last year"),
+                _translationRegistry.getText("Last 3 years"),
+                _translationRegistry.getText("Last 5 years"),
+                _translationRegistry.getText("Last 10 years")
             };
             
             _filterAge.setItems(items);
         }
         
-        private static final String T_TAG_ALL = "syndie.gui.messagetree.tag.all";
 
         private void populateTagCombo() {
             String txt = _filterTag.getText().trim();
@@ -776,7 +757,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterTag.setRedraw(false);
             _filterTag.removeAll();
             TreeSet tags = new TreeSet(_msgTree.getTags());
-            _filterTag.add(_translationRegistry.getText(T_TAG_ALL, "Any tags"));
+            _filterTag.add(_translationRegistry.getText("Any tags"));
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 String tag = ((String)iter.next()).trim();
                 if (tag.length() > 0)
@@ -952,28 +933,28 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
          */
         
         public void translate(TranslationRegistry registry) {
-            _filterLabel.setText(registry.getText(T_FILTER_LABEL, "Filter:  Since:"));
+            _filterLabel.setText(registry.getText("Filter:  Since:"));
 
-            _filterAdvanced.setText(registry.getText(T_FILTER_ADVANCED, "Advanced..."));
-            _filterKeywordLabel.setText(registry.getText(T_FILTER_KEYWORD, "Text:"));
-            _filterTagLabel.setText(registry.getText(T_FILTER_TAG, "Tag:"));
-            _filterUnreadOnly.setText(registry.getText(T_FILTER_UNREAD, "Unread only"));
-            _filterKeyword.setToolTipText(registry.getText(T_FILTER_KEYWORD_TOOLTIP, "Search pages and subjects for the phrase"));
+            _filterAdvanced.setText(registry.getText("Advanced..."));
+            _filterKeywordLabel.setText(registry.getText("Text:"));
+            _filterTagLabel.setText(registry.getText("Tag:"));
+            _filterUnreadOnly.setText(registry.getText("Unread only"));
+            _filterKeyword.setToolTipText(registry.getText("Search pages and subjects for the phrase"));
             
-            _advancedScopeAll.setText(registry.getText(T_ADVANCED_SCOPE_ALL, "All forums"));
-            _advancedScopeBookmarked.setText(registry.getText(T_ADVANCED_SCOPE_BOOKMARKED, "Bookmarked forums"));
-            _advancedScopeOther.setText(registry.getText(T_ADVANCED_SCOPE_OTHER, "Specific forum..."));
+            _advancedScopeAll.setText(registry.getText("All forums"));
+            _advancedScopeBookmarked.setText(registry.getText("Bookmarked forums"));
+            _advancedScopeOther.setText(registry.getText("Specific forum..."));
             
-            _advancedPrivacyPublic.setText(registry.getText(T_ADVANCED_PRIVACY_PUBLIC, "Readable by: anyone"));
-            _advancedPrivacyAuthorized.setText(registry.getText(T_ADVANCED_PRIVACY_AUTHORIZED, "Readable by: authorized readers"));
-            _advancedPrivacyPBE.setText(registry.getText(T_ADVANCED_PRIVACY_PBE, "Readable by: those with a passphrase"));
-            _advancedPrivacyPrivate.setText(registry.getText(T_ADVANCED_PRIVACY_PRIVATE, "Readable by: forum administrators"));
-            _advancedDateImport.setText(registry.getText(T_ADVANCED_DATEIMPORT, "Use local import date instead of (unreliable) message creation date"));
-            _advancedThreadResults.setText(registry.getText(T_ADVANCED_THREAD, "Organize results in threads"));
-            _advancedPreview.setText(registry.getText(T_ADVANCED_PREVIEW, "Show a preview of the selected message"));
-            _advancedMarkReadOnView.setText(registry.getText(T_ADVANCED_MARKREADVIEW, "Mark messages read when opened"));
-            _advancedMarkReadOnPreview.setText(registry.getText(T_ADVANCED_MARKREADPREVIEW, "Mark messages read when previewed"));
-            _advancedPassphraseRequired.setText(registry.getText(T_ADVANCED_PASSPHRASE_REQUIRED, "Messages requiring a new passphrase"));
+            _advancedPrivacyPublic.setText(registry.getText("Readable by: anyone"));
+            _advancedPrivacyAuthorized.setText(registry.getText("Readable by: authorized readers"));
+            _advancedPrivacyPBE.setText(registry.getText("Readable by: those with a passphrase"));
+            _advancedPrivacyPrivate.setText(registry.getText("Readable by: forum administrators"));
+            _advancedDateImport.setText(registry.getText("Use local import date instead of (unreliable) message creation date"));
+            _advancedThreadResults.setText(registry.getText("Organize results in threads"));
+            _advancedPreview.setText(registry.getText("Show a preview of the selected message"));
+            _advancedMarkReadOnView.setText(registry.getText("Mark messages read when opened"));
+            _advancedMarkReadOnPreview.setText(registry.getText("Mark messages read when previewed"));
+            _advancedPassphraseRequired.setText(registry.getText("Messages requiring a new passphrase"));
             
             populateAgeCombo();
             populateTagCombo();
@@ -1545,14 +1526,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
     }
     
-    private static final String T_FILTERING_LABEL = "syndie.gui.messagetree.filtering";
     private Shell showFilteringWidget() {
         Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.APPLICATION_MODAL); // | SWT.ON_TOP);
         s.setLayout(new FillLayout());
         Composite c = new Composite(s, SWT.BORDER);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         Label label = new Label(c, SWT.NONE);
-        label.setText(_translationRegistry.getText(T_FILTERING_LABEL, "Message filtering in progress"));
+        label.setText(_translationRegistry.getText("Message filtering in progress"));
         final Label filler = new Label(c, SWT.NONE);
         label.setFont(_themeRegistry.getTheme().SHELL_FONT);
         filler.setFont(_themeRegistry.getTheme().SHELL_FONT);
@@ -1652,7 +1632,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
         if (sz <= 0 || referenceNodes.isEmpty()) {
-            String msg = _translationRegistry.getText(T_NAV_PAGE_EMPTY, "No items to display");
+            String msg = _translationRegistry.getText("No items to display");
             _navState.setText(msg);
             _navNext.setEnabled(false);
             _navEnd.setEnabled(false);
@@ -1705,7 +1685,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
       ****/
         
         StringBuilder buf = new StringBuilder();
-        buf.append(_translationRegistry.getText(T_NAV_PAGE_PREFIX, "Page: "));
+        buf.append(_translationRegistry.getText("Page: "));
         buf.append(_currentPage+1);
         buf.append(" / ");
         buf.append(pages);
@@ -1717,8 +1697,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         return referenceNodes.subList(start, end);
     }
 
-    private static final String T_NAV_PAGE_PREFIX = "syndie.gui.messagetree.nav.page.prefix";
-    private static final String T_NAV_PAGE_EMPTY = "syndie.gui.messagetree.nav.page.empty";
     
     public MessageIterator getIterator(SyndieURI uri) {
         ReferenceNode node = getNode(uri);
@@ -1967,7 +1945,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
-                subj = _translationRegistry.getText(T_SUBJECT_NOT_KNOWN_LOCALLY, "Message is not known locally");
+                subj = _translationRegistry.getText("Message is not known locally");
                 if (scopeName != null)
                     auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
                 else
@@ -2035,8 +2013,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         return MessageView.calculateSubject(_client, _ui, _translationRegistry, node.getUniqueId(), node.getScopeHash(), new Long(node.getMsgId().messageId), false);
     }
     
-    private static final String T_NO_SUBJECT = "syndie.gui.messagetree.nosubject";
-    private static final String T_SUBJECT_NOT_KNOWN_LOCALLY = "syndie.gui.messagetree.subjectnotknownlocally";
     
     protected void setMinWidth(TreeColumn col, String txt, int extra, int min) {
         int width = getWidth(txt) + _tree.getGridLineWidth()*2 + extra;
@@ -2384,64 +2360,18 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             applyFilter();
     }
 
-    private static final String T_SUBJECT = "syndie.gui.messagetree.subject";
-    private static final String T_AUTHOR = "syndie.gui.messagetree.author";
-    private static final String T_FORUM = "syndie.gui.messagetree.forum";
-    private static final String T_DATE = "syndie.gui.messagetree.date";
-    private static final String T_TAGS = "syndie.gui.messagetree.tags";
-    private static final String T_FILTER_LABEL = "syndie.gui.messagetree.filter.label";
-    private static final String T_FILTER_UNREAD = "syndie.gui.messagetree.filter.unread";
-    private static final String T_FILTER_ADVANCED = "syndie.gui.messagetree.filter.advanced";
-    private static final String T_FILTER_EDIT_SHELL = "syndie.gui.messagetree.filter.edit.shell";
-    private static final String T_FILTER_TAG = "syndie.gui.messagetree.filter.tag";
-    private static final String T_FILTER_KEYWORD = "syndie.gui.messagetree.filter.keyword";
-    private static final String T_FILTER_KEYWORD_TOOLTIP = "syndie.gui.messagetree.filter.keywordtooltip";
     
-    private static final String T_ADVANCED_SCOPE_ALL = "syndie.gui.messagetree.filteradvanced.scope.all";
-    private static final String T_ADVANCED_SCOPE_BOOKMARKED = "syndie.gui.messagetree.filteradvanced.scope.bookmarked";
-    private static final String T_ADVANCED_SCOPE_OTHER = "syndie.gui.messagetree.filteradvanced.scope.other";
-    private static final String T_ADVANCED_PRIVACY_PUBLIC = "syndie.gui.messagetree.filteradvanced.priv.public";
-    private static final String T_ADVANCED_PRIVACY_AUTHORIZED = "syndie.gui.messagetree.filteradvanced.priv.auth";
-    private static final String T_ADVANCED_PRIVACY_PBE = "syndie.gui.messagetree.filteradvanced.priv.pbe";
-    private static final String T_ADVANCED_PRIVACY_PRIVATE = "syndie.gui.messagetree.filteradvanced.priv.private";
-    private static final String T_ADVANCED_DATEIMPORT = "syndie.gui.messagetree.filteradvanced.dateimport";
-    private static final String T_ADVANCED_THREAD = "syndie.gui.messagetree.filteradvanced.thread";
-    private static final String T_ADVANCED_PREVIEW = "syndie.gui.messagetree.filteradvanced.preview";
-    private static final String T_ADVANCED_MARKREADVIEW = "syndie.gui.messagetree.filteradvanced.markreadview";
-    private static final String T_ADVANCED_MARKREADPREVIEW = "syndie.gui.messagetree.filteradvanced.markreadpreview";
 
-    private static final String T_ADVANCED_PASSPHRASE_REQUIRED = "syndie.gui.messagetree.filteradvanced.passrequired";
     
-    private static final String T_VIEW = "syndie.gui.messagetree.view";
-    private static final String T_VIEWFORUM = "syndie.gui.messagetree.viewforum";
-    private static final String T_VIEWFORUMMETA = "syndie.gui.messagetree.viewforummeta";
-    private static final String T_VIEWAUTHOR = "syndie.gui.messagetree.viewauthor";
-    private static final String T_VIEWAUTHORMETA = "syndie.gui.messagetree.viewauthormeta";
-    private static final String T_MARKREAD = "syndie.gui.messagetree.markread";
-    private static final String T_MARKTHREADREAD = "syndie.gui.messagetree.markthreadread";
-    private static final String T_MARKUNREAD = "syndie.gui.messagetree.markunread";
-    private static final String T_MARKALLREAD = "syndie.gui.messagetree.markallread";
-    private static final String T_BOOKMARKFORUM = "syndie.gui.messagetree.bookmarkforum";
-    private static final String T_BOOKMARKAUTHOR = "syndie.gui.messagetree.bookmarkauthor";
-    private static final String T_EXPANDTHREAD = "syndie.gui.messagetree.expandthread";
-    private static final String T_COLLAPSETHREAD = "syndie.gui.messagetree.collapsethread";
-    private static final String T_DELETE = "syndie.gui.messagetree.delete";
-    private static final String T_CANCEL = "syndie.gui.messagetree.cancel";
     
-    private static final String T_MARKREADBUTTON = "syndie.gui.messagetree.markreadbutton";
-    private static final String T_MARKTHREADREADBUTTON = "syndie.gui.messagetree.markthreadreadbutton";
-    private static final String T_REFRESHBUTTON = "syndie.gui.messagetree.refreshbutton";
-    private static final String T_EXPANDTHREADBUTTON = "syndie.gui.messagetree.expandthreadbutton";
-    private static final String T_COLLAPSETHREADBUTTON = "syndie.gui.messagetree.collapsethreadbutton";
     
-    private static final String T_PAGESIZE = "syndie.gui.messagetree.pagesize";
     
     public void translate(TranslationRegistry registry) {
-        _colSubject.setText(registry.getText(T_SUBJECT, "Subject"));
-        _colAuthor.setText(registry.getText(T_AUTHOR, "Author"));
-        _colChannel.setText(registry.getText(T_FORUM, "Forum"));
-        _colDate.setText(registry.getText(T_DATE, "Date"));
-        _colTags.setText(registry.getText(T_TAGS, "Tags"));
+        _colSubject.setText(registry.getText("Subject"));
+        _colAuthor.setText(registry.getText("Author"));
+        _colChannel.setText(registry.getText("Forum"));
+        _colDate.setText(registry.getText("Date"));
+        _colTags.setText(registry.getText("Tags"));
         
         _colSubject.pack();
         _colAuthor.pack();
@@ -2449,30 +2379,30 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _colDate.pack();
         _colTags.pack();
         
-        _view.setText(registry.getText(T_VIEW, "View the message"));
-        _reply.setText(registry.getText(T_VIEW, "Reply to the message"));
-        _viewForum.setText(registry.getText(T_VIEWFORUM, "View the forum's messages"));
-        _viewForumMeta.setText(registry.getText(T_VIEWFORUMMETA, "View the forum's profile"));
-        _viewAuthor.setText(registry.getText(T_VIEWAUTHOR, "View the author's blog"));
-        _viewAuthorMeta.setText(registry.getText(T_VIEWAUTHORMETA, "View the author's profile"));
-        _bookmarkForum.setText(registry.getText(T_BOOKMARKFORUM, "Bookmark the forum"));
-        _bookmarkAuthor.setText(registry.getText(T_BOOKMARKAUTHOR, "Bookmark the author"));
-        _expandThread.setText(registry.getText(T_EXPANDTHREAD, "Expand the thread fully"));
-        _collapseThread.setText(registry.getText(T_COLLAPSETHREAD, "Collapse the thread fully"));
-        _markRead.setText(registry.getText(T_MARKREAD, "Mark the message as read"));
-        _markThreadRead.setText(registry.getText(T_MARKTHREADREAD, "Mark the thread as read"));
-        _markUnread.setText(registry.getText(T_MARKUNREAD, "Mark the message as unread"));
-        _markAllRead.setText(registry.getText(T_MARKALLREAD, "Mark the forum as read"));
-        _delete.setText(registry.getText(T_DELETE, "Delete the message locally"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel the message (tell others to delete it)"));
+        _view.setText(registry.getText("View the message"));
+        _reply.setText(registry.getText("Reply to the message"));
+        _viewForum.setText(registry.getText("View the forum's messages"));
+        _viewForumMeta.setText(registry.getText("View the forum's profile"));
+        _viewAuthor.setText(registry.getText("View the author's blog"));
+        _viewAuthorMeta.setText(registry.getText("View the author's profile"));
+        _bookmarkForum.setText(registry.getText("Bookmark the forum"));
+        _bookmarkAuthor.setText(registry.getText("Bookmark the author"));
+        _expandThread.setText(registry.getText("Expand the thread fully"));
+        _collapseThread.setText(registry.getText("Collapse the thread fully"));
+        _markRead.setText(registry.getText("Mark the message as read"));
+        _markThreadRead.setText(registry.getText("Mark the thread as read"));
+        _markUnread.setText(registry.getText("Mark the message as unread"));
+        _markAllRead.setText(registry.getText("Mark the forum as read"));
+        _delete.setText(registry.getText("Delete the message locally"));
+        _cancel.setText(registry.getText("Cancel the message (tell others to delete it)"));
         
-        _markMessageReadButton.setText(registry.getText(T_MARKREADBUTTON, "Mark Message Read"));
-        _markThreadReadButton.setText(registry.getText(T_MARKTHREADREADBUTTON, "Mark Thread Read"));
-        _refreshButton.setText(registry.getText(T_REFRESHBUTTON, "Refresh"));
-        _expandThreadButton.setText(registry.getText(T_EXPANDTHREADBUTTON, "Expand Thread"));
-        _collapseThreadButton.setText(registry.getText(T_COLLAPSETHREADBUTTON, "Collapse Thread"));
+        _markMessageReadButton.setText(registry.getText("Mark Message Read"));
+        _markThreadReadButton.setText(registry.getText("Mark Thread Read"));
+        _refreshButton.setText(registry.getText("Refresh"));
+        _expandThreadButton.setText(registry.getText("Expand Thread"));
+        _collapseThreadButton.setText(registry.getText("Collapse Thread"));
         
-        _navPageSizeLabel.setText(registry.getText(T_PAGESIZE, "Page size:"));
+        _navPageSizeLabel.setText(registry.getText("Page size:"));
     }
     
     public void applyTheme(Theme theme) {

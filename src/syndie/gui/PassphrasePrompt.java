@@ -129,18 +129,13 @@ public class PassphrasePrompt extends BaseComponent implements Translatable, The
         }
     }
     
-    private static final String T_SHELL = "syndie.gui.passphraseprompt.shell";
-    private static final String T_PASSPHRASE = "syndie.gui.passphraseprompt.passphrase";
-    private static final String T_PROMPT = "syndie.gui.passphraseprompt.prompt";
-    private static final String T_OK = "syndie.gui.passphraseprompt.ok";
-    private static final String T_CANCEL = "syndie.gui.passphraseprompt.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL, "Passphrase"));
-        _passphraseLabel.setText(registry.getText(T_PASSPHRASE, "Passphrase:"));
-        _passphrasePromptLabel.setText(registry.getText(T_PROMPT, "Publicly visible hint:"));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _shell.setText(registry.getText("Passphrase"));
+        _passphraseLabel.setText(registry.getText("Passphrase:"));
+        _passphrasePromptLabel.setText(registry.getText("Publicly visible hint:"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
     
     public void applyTheme(Theme theme) {

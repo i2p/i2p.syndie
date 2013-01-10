@@ -116,7 +116,6 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _themeRegistry.register(this);
     }
     
-    private static final String T_MAXVIEW_UNMAX = "syndie.gui.attachmentpreview.unmax";
     private Shell _maxShell;
     private ImageCanvas _maxImage;
     
@@ -130,7 +129,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _maxShell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
         _maxShell.setLayout(new GridLayout(1, true));
         Button unmax = new Button(_maxShell, SWT.PUSH);
-        unmax.setText(_translationRegistry.getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+        unmax.setText(_translationRegistry.getText("Restore normal size"));
         unmax.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
@@ -266,14 +265,14 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             fos.close();
             fos = null;
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_INFORMATION);
-            box.setText(_translationRegistry.getText(T_SAVE_OK_TITLE, "Attachment saved"));
-            box.setMessage(_translationRegistry.getText(T_SAVE_OK_MSG, "Attachment saved to:") + out.getAbsolutePath());
+            box.setText(_translationRegistry.getText("Attachment saved"));
+            box.setMessage(_translationRegistry.getText("Attachment saved to:") + out.getAbsolutePath());
             box.open();
         } catch (IOException ioe) {
             // hrm
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_ERROR);
-            box.setText(_translationRegistry.getText(T_SAVE_ERROR_TITLE, "Error saving attachment"));
-            box.setMessage(_translationRegistry.getText(T_SAVE_ERROR_MSG, "Attachment could not be saved: ") + ioe.getMessage());
+            box.setText(_translationRegistry.getText("Error saving attachment"));
+            box.setMessage(_translationRegistry.getText("Attachment could not be saved: ") + ioe.getMessage());
             box.open();
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
@@ -287,26 +286,15 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _preview.disposeImage();
     }
     
-    private static final String T_SAVE_OK_TITLE = "syndie.gui.attachmentpreviewpopup.save.ok.title";
-    private static final String T_SAVE_OK_MSG = "syndie.gui.attachmentpreviewpopup.save.ok.msg";
-    private static final String T_SAVE_ERROR_TITLE = "syndie.gui.attachmentpreviewpopup.save.error.title";
-    private static final String T_SAVE_ERROR_MSG = "syndie.gui.attachmentpreviewpopup.save.error.msg";
-    private static final String T_NAME = "syndie.gui.attachmentpreviewpopup.name";
-    private static final String T_DESC = "syndie.gui.attachmentpreviewpopup.desc";
-    private static final String T_SIZE = "syndie.gui.attachmentpreviewpopup.size";
-    private static final String T_TYPE = "syndie.gui.attachmentpreviewpopup.type";
-    private static final String T_SAVEAS = "syndie.gui.attachmentpreviewpopup.saveas";
-    private static final String T_SAVEAS_BROWSE = "syndie.gui.attachmentpreviewpopup.saveas.browse";
-    private static final String T_SAVE = "syndie.gui.attachmentpreviewpopup.save";
     
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
-        _descLabel.setText(registry.getText(T_DESC, "Description:"));
-        _sizeLabel.setText(registry.getText(T_SIZE, "Size:"));
-        _typeLabel.setText(registry.getText(T_TYPE, "Type:"));
-        _saveAsLabel.setText(registry.getText(T_SAVEAS, "Save as:"));
-        _saveAsBrowse.setText(registry.getText(T_SAVEAS_BROWSE, "Browse..."));
-        _saveAsOk.setText(registry.getText(T_SAVE, "Save"));
+        _nameLabel.setText(registry.getText("Name:"));
+        _descLabel.setText(registry.getText("Description:"));
+        _sizeLabel.setText(registry.getText("Size:"));
+        _typeLabel.setText(registry.getText("Type:"));
+        _saveAsLabel.setText(registry.getText("Save as:"));
+        _saveAsBrowse.setText(registry.getText("Browse..."));
+        _saveAsOk.setText(registry.getText("Save"));
     }
     
     public void applyTheme(Theme theme) {

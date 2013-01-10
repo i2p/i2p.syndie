@@ -246,8 +246,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         }
     }
     
-    private static final String T_MULTI = "syndie.gui.messagetreepanel.multi";
-    private static final String T_REFS = "syndie.gui.messagetreepanel.refs";
     
     private class NorthEdge extends DesktopEdge implements Themeable, Translatable {
         private Label _avatar;
@@ -297,7 +295,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                     buf.append(" - ").append(_description);
                 _summary.setText(buf.toString());
             } else {
-                _summary.setText(_translationRegistry.getText(T_MULTI, "Browsing multiple forums"));
+                _summary.setText(_translationRegistry.getText("Browsing multiple forums"));
             }
             ((GridData)_refs.getLayoutData()).exclude = true;
             _refs.setVisible(false);
@@ -342,7 +340,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _refs.removeAll();
             _refNodes = new ArrayList();
             if (refs.size() > 0) {
-                _refs.add(_translationRegistry.getText(T_REFS, "* Forum notices and references:"));
+                _refs.add(_translationRegistry.getText("* Forum notices and references:"));
                 ReferenceNode.walk(refs, new ReferenceNode.Visitor() {
                     public void visit(ReferenceNode node, int depth, int siblingOrder) {
                         if (node.getURI() != null) {
@@ -433,13 +431,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         public void translate(TranslationRegistry registry) {}
     }
     
-    private static final String T_POST = "syndie.gui.messagetreepanel.post";
-    private static final String T_REPLY = "syndie.gui.messagetreepanel.reply";
-    private static final String T_PRIVMSG = "syndie.gui.messagetreepanel.privmsg";
-    private static final String T_WATCH = "syndie.gui.messagetreepanel.watch";
-    private static final String T_UNWATCH = "syndie.gui.messagetreepanel.unwatch";
-    private static final String T_BAN = "syndie.gui.messagetreepanel.ban";
-    private static final String T_UNBAN = "syndie.gui.messagetreepanel.unban";
     
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _post;
@@ -562,9 +553,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
-            _post.setText(registry.getText(T_POST, "Post a new message"));
-            _reply.setText(registry.getText(T_REPLY, "Reply"));
-            _privmsg.setText(registry.getText(T_PRIVMSG, "Send a private message"));
+            _post.setText(registry.getText("Post a new message"));
+            _reply.setText(registry.getText("Reply"));
+            _privmsg.setText(registry.getText("Send a private message"));
             translateWatch();
             translateBan();
         }
@@ -573,9 +564,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             if ( (_actionScope != null) && (_actionScopeId >= 0) ) {
                 _watch.setEnabled(true);
                 if (_client.isWatched(_actionScopeId))
-                    _watch.setText(_translationRegistry.getText(T_UNWATCH, "Unwatch the forum"));
+                    _watch.setText(_translationRegistry.getText("Unwatch the forum"));
                 else
-                    _watch.setText(_translationRegistry.getText(T_WATCH, "Watch the forum"));
+                    _watch.setText(_translationRegistry.getText("Watch the forum"));
             } else {
                 _watch.setEnabled(false);
             }
@@ -584,9 +575,9 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             if ( (_actionScope != null) && (_actionScopeId >= 0) ) {
                 _ban.setEnabled(true);
                 if (_client.getBannedChannels().contains(_actionScope))
-                    _ban.setText(_translationRegistry.getText(T_UNBAN, "Unban the forum"));
+                    _ban.setText(_translationRegistry.getText("Unban the forum"));
                 else
-                    _ban.setText(_translationRegistry.getText(T_BAN, "Ban the forum"));
+                    _ban.setText(_translationRegistry.getText("Ban the forum"));
             } else {
                 _ban.setEnabled(false);
             }
@@ -603,13 +594,6 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
         }
     }
 
-    private static final String T_PROFILE_TT = "syndie.gui.messagetreepanel.profile.tt";
-    private static final String T_PROFILE = "syndie.gui.messagetreepanel.profile";
-    private static final String T_EXPAND = "syndie.gui.messagetreepanel.expand";
-    private static final String T_COLLAPSE = "syndie.gui.messagetreepanel.collapse";
-    private static final String T_VIEW = "syndie.gui.messagetreepanel.view";
-    private static final String T_TOGGLEREAD = "syndie.gui.messagetreepanel.toggleread";
-    private static final String T_CREATEREF = "syndie.gui.messagetreepanel.createref";
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Hash _actionScope;
@@ -656,7 +640,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             });
             _expand.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_EXPAND, "Expand"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Expand"));
                 }
             });
             
@@ -686,7 +670,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             });
             _collapse.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_COLLAPSE, "Collapse"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Collapse"));
                 }
             });
             
@@ -700,7 +684,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _profile.setEnabled(false);
             _profile.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_PROFILE, "Profile"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Profile"));
                 }
             });
 
@@ -714,7 +698,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _view.setEnabled(false);
             _view.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_VIEW, "View"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("View"));
                 }
             });
 
@@ -728,7 +712,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _toggleRead.setEnabled(false);
             _toggleRead.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_TOGGLEREAD, "Mark read"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Mark read"));
                 }
             });
 
@@ -742,7 +726,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
             _createRef.setEnabled(false);
             _createRef.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_CREATEREF, "Create ref"));
+                    ImageUtil.drawDescending(evt.gc, _profile, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Create ref"));
                 }
             });
         }

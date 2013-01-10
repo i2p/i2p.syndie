@@ -28,7 +28,7 @@ class MaxView extends BaseComponent {
         _shell.setLayout(new GridLayout(1, true));
         _listener = lsnr;
         Button unmax = new Button(_shell, SWT.PUSH);
-        unmax.setText(trans.getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+        unmax.setText(trans.getText("Restore normal size"));
         unmax.setFont(themes.getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
@@ -75,5 +75,4 @@ class MaxView extends BaseComponent {
     
     public interface MaxListener { public void unmax(MaxView view); }
 
-    private static final String T_MAXVIEW_UNMAX = "syndie.gui.maxview.unmax";
 }

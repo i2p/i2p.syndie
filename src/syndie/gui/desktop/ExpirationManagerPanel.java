@@ -46,8 +46,6 @@ public class ExpirationManagerPanel extends DesktopPanel {
 
     protected void dispose() { _manager.dispose(); }
     
-    public String getPanelName() { return _translationRegistry.getText(T_NAME, "Expiration manager"); }
-    public String getPanelDescription() { return _translationRegistry.getText(T_DESC, "Control the deletion of old messages"); }
-    private static final String T_NAME = "syndie.gui.desktop.expirationmanagerpanel.name";
-    private static final String T_DESC = "syndie.gui.desktop.expirationmanagerpanel.desc";
+    public String getPanelName() { return _translationRegistry.getText("Expiration manager"); }
+    public String getPanelDescription() { return _translationRegistry.getText("Control the deletion of old messages"); }
 }

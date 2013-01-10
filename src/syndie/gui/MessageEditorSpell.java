@@ -74,13 +74,13 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(true);
             _spellAdd.setEnabled(false); // todo: user-specific dictionary
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText(T_SPELL_CANCEL, "cancel"));
+            _spellCancel.setText(_translationRegistry.getText("cancel"));
             _spellIgnore.setEnabled(true);
             _spellIgnoreAll.setEnabled(true);
             _spellReplace.setEnabled(true);
             _spellReplaceAll.setEnabled(true);
         } else {
-            _spellContext.setText(_translationRegistry.getText(T_SPELL_END, "End of content reached"));
+            _spellContext.setText(_translationRegistry.getText("End of content reached"));
             _spellContext.setLineBackground(0, 1, ColorUtil.getColor("red", null));
             _spellWord.setText("");
             _spellWord.setEnabled(false);
@@ -88,7 +88,7 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(false);
             _spellAdd.setEnabled(false);
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText(T_SPELL_END_OK, "ok"));
+            _spellCancel.setText(_translationRegistry.getText("ok"));
             _spellIgnore.setEnabled(false);
             _spellIgnoreAll.setEnabled(false);
             _spellReplace.setEnabled(false);
@@ -198,28 +198,17 @@ class MessageEditorSpell implements Themeable, Translatable {
         _spellShell.pack();
     }
     
-    private static final String T_SPELL_ROOT = "syndie.gui.messageeditorspell.root";
-    private static final String T_SPELL_WORD = "syndie.gui.messageeditorspell.word";
-    private static final String T_SPELL_SUGGESTION = "syndie.gui.messageeditorspell.suggestion";
-    private static final String T_SPELL_REPLACE = "syndie.gui.messageeditorspell.replace";
-    private static final String T_SPELL_REPLACE_ALL = "syndie.gui.messageeditorspell.replaceall";
-    private static final String T_SPELL_IGNORE = "syndie.gui.messageeditorspell.ignore";
-    private static final String T_SPELL_IGNORE_ALL = "syndie.gui.messageeditorspell.ignoreall";
-    private static final String T_SPELL_ADD = "syndie.gui.messageeditorspell.add";
-    private static final String T_SPELL_CANCEL = "syndie.gui.messageeditorspell.cancel";
  
-    private static final String T_SPELL_END = "syndie.gui.messageeditorspell.end";
-    private static final String T_SPELL_END_OK = "syndie.gui.messageeditorspell.end.ok";
     
     public void translate(TranslationRegistry registry) {
-        _spellShell.setText(registry.getText(T_SPELL_ROOT, "Spell checker"));
-        _spellWordLabel.setText(registry.getText(T_SPELL_WORD, "Word: "));
-        _spellSuggestionsLabel.setText(registry.getText(T_SPELL_SUGGESTION, "Suggestions: "));
-        _spellReplace.setText(registry.getText(T_SPELL_REPLACE, "replace"));
-        _spellReplaceAll.setText(registry.getText(T_SPELL_REPLACE_ALL, "replace all"));
-        _spellIgnore.setText(registry.getText(T_SPELL_IGNORE, "ignore"));
-        _spellIgnoreAll.setText(registry.getText(T_SPELL_IGNORE_ALL, "ignore all"));
-        _spellAdd.setText(registry.getText(T_SPELL_ADD, "add"));
-        _spellCancel.setText(registry.getText(T_SPELL_CANCEL, "cancel"));
+        _spellShell.setText(registry.getText("Spell checker"));
+        _spellWordLabel.setText(registry.getText("Word: "));
+        _spellSuggestionsLabel.setText(registry.getText("Suggestions: "));
+        _spellReplace.setText(registry.getText("replace"));
+        _spellReplaceAll.setText(registry.getText("replace all"));
+        _spellIgnore.setText(registry.getText("ignore"));
+        _spellIgnoreAll.setText(registry.getText("ignore all"));
+        _spellAdd.setText(registry.getText("add"));
+        _spellCancel.setText(registry.getText("cancel"));
     }
 }

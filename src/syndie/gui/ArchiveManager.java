@@ -190,17 +190,14 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _themeRegistry.unregister(this);
     }
 
-    private static final String T_ADVERTISED_POPUP = "syndie.gui.archivemanager.adpopup.title";
-    private static final String T_ADVERTISED_POPUP_DESC = "syndie.gui.archivemanager.adpopup.desc";
-    private static final String T_ADVERTISED_POPUP_OK = "syndie.gui.archivemanager.adpopup.ok";
 
     private void manageAdvertised() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_translationRegistry.getText(T_ADVERTISED_POPUP, "Advertised archives"));
+        s.setText(_translationRegistry.getText("Advertised archives"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         desc.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
-        desc.setText(_translationRegistry.getText(T_ADVERTISED_POPUP_DESC, "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
+        desc.setText(_translationRegistry.getText("If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
         final Table archives = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
@@ -217,7 +214,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_translationRegistry.getText(T_ADVERTISED_POPUP_OK, "OK"));
+        ok.setText(_translationRegistry.getText("OK"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
@@ -248,19 +245,16 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _advertised.setText(_uris.size() + "");
     }
 
-    private static final String T_BANNED_POPUP = "syndie.gui.archivemanager.bannedpopup.title";
-    private static final String T_BANNED_POPUP_DESC = "syndie.gui.archivemanager.bannedpopup.desc";
-    private static final String T_BANNED_POPUP_OK = "syndie.gui.archivemanager.bannedpopup.ok";
 
     private void manageBanned() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_translationRegistry.getText(T_BANNED_POPUP, "Banned"));
+        s.setText(_translationRegistry.getText("Banned"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         GridData gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
         gd.widthHint = 400;
         desc.setLayoutData(gd);
-        desc.setText(_translationRegistry.getText(T_BANNED_POPUP_DESC, "These authors and forums are completely ignored, with all of the associated messages refused"));
+        desc.setText(_translationRegistry.getText("These authors and forums are completely ignored, with all of the associated messages refused"));
         final Table banned = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         gd = new GridData(GridData.FILL, GridData.FILL, true, true);
         gd.widthHint = 400;
@@ -278,7 +272,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_translationRegistry.getText(T_BANNED_POPUP_OK, "Unban checked"));
+        ok.setText(_translationRegistry.getText("Unban checked"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }
@@ -329,31 +323,21 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _root.layout(true, true);
     }
     
-    private static final String T_EXPIRATION = "syndie.gui.archivemanager.expiration";
-    private static final String T_CANCELMANAGER = "syndie.gui.archivemanager.cancelmanager";
-    private static final String T_ADVERTISED = "syndie.gui.archivemanager.advertised";
-    private static final String T_ADVERTISEDMANAGE = "syndie.gui.archivemanager.advertisedmanage";
-    private static final String T_DENIABLE = "syndie.gui.archivemanager.deniable";
-    private static final String T_DENIABLEMANAGE = "syndie.gui.archivemanager.deniablemanage";
-    private static final String T_BANNED = "syndie.gui.archivemanager.banned";
-    private static final String T_BANNEDMANAGE = "syndie.gui.archivemanager.bannedmanage";
-    private static final String T_SAVE = "syndie.gui.archivemanager.save";
-    private static final String T_CANCEL = "syndie.gui.archivemanager.cancel";
         
     public void translate(TranslationRegistry registry) {
-        _expiration.setText(registry.getText(T_EXPIRATION, "Manage expiration policies"));
-        _cancelManager.setText(registry.getText(T_CANCELMANAGER, "Manage cancel policies"));
+        _expiration.setText(registry.getText("Manage expiration policies"));
+        _cancelManager.setText(registry.getText("Manage cancel policies"));
     
-        _advertisedLabel.setText(registry.getText(T_ADVERTISED, "Advertised archives:"));
-        _advertisedManage.setText(registry.getText(T_ADVERTISEDMANAGE, "Manage..."));
+        _advertisedLabel.setText(registry.getText("Advertised archives:"));
+        _advertisedManage.setText(registry.getText("Manage..."));
         
-        _deniableLabel.setText(registry.getText(T_DENIABLE, "Deniable forums:"));
-        _deniableManage.setText(registry.getText(T_DENIABLEMANAGE, "Manage..."));
+        _deniableLabel.setText(registry.getText("Deniable forums:"));
+        _deniableManage.setText(registry.getText("Manage..."));
         
-        _bannedLabel.setText(registry.getText(T_BANNED, "Banned forums/authors:"));
-        _bannedManage.setText(registry.getText(T_BANNEDMANAGE, "Manage..."));
+        _bannedLabel.setText(registry.getText("Banned forums/authors:"));
+        _bannedManage.setText(registry.getText("Manage..."));
         
-        _save.setText(registry.getText(T_SAVE, "Save"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _save.setText(registry.getText("Save"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

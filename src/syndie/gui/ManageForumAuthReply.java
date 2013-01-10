@@ -219,32 +219,22 @@ class ManageForumAuthReply extends BaseComponent implements Themeable, Translata
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_SHELL = "syndie.gui.viewforumauthreply.shell";
     
-    private static final String T_ROTATE = "syndie.gui.viewforumauthreply.rotate";
-    private static final String T_SEND_NEW_SELECTED = "syndie.gui.viewforumauthreply.send.new.selected";
-    private static final String T_SEND_NEW_SELECTED_ADD = "syndie.gui.viewforumauthreply.send.new.selected.add";
-    private static final String T_SEND_NEW_SELECTED_DEL = "syndie.gui.viewforumauthreply.send.new.selected.del";
-    private static final String T_SEND_NEW_PBE = "syndie.gui.viewforumauthreply.pbe";
-    private static final String T_SEND_NEW_PBE_PASS_LABEL = "syndie.gui.viewforumauthreply.pbe.pass.label";
-    private static final String T_SEND_NEW_PBE_PROMPT_LABEL = "syndie.gui.viewforumauthreply.pbe.prompt.label";
-    private static final String T_OK = "syndie.gui.viewforumauthreply.ok";
-    private static final String T_CANCEL = "syndie.gui.viewforumauthreply.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL, "Read forum feedback"));
+        _shell.setText(registry.getText("Read forum feedback"));
         
-        _rotate.setText(registry.getText(T_ROTATE, "Rotate the reply key"));
+        _rotate.setText(registry.getText("Rotate the reply key"));
         
-        _sendNewSelected.setText(registry.getText(T_SEND_NEW_SELECTED, "Send the new key to the administrators of the selected forums:"));
-        _sendNewSelectedAdd.setText(registry.getText(T_SEND_NEW_SELECTED_ADD, "Add"));
-        _sendNewSelectedDel.setText(registry.getText(T_SEND_NEW_SELECTED_DEL, "Delete"));
+        _sendNewSelected.setText(registry.getText("Send the new key to the administrators of the selected forums:"));
+        _sendNewSelectedAdd.setText(registry.getText("Add"));
+        _sendNewSelectedDel.setText(registry.getText("Delete"));
         
-        _sendNewPBE.setText(registry.getText(T_SEND_NEW_PBE, "Post the new key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText(T_SEND_NEW_PBE_PASS_LABEL, "Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText(T_SEND_NEW_PBE_PROMPT_LABEL, "Prompt:"));
+        _sendNewPBE.setText(registry.getText("Post the new key in a passphrase protected message to the forum"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
         
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

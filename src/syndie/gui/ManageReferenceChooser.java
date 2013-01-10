@@ -601,32 +601,20 @@ public class ManageReferenceChooser extends BaseComponent implements Translatabl
         add(child, parentItem, true, null);
     }
     
-    private static final String T_COL_DESC = "syndie.gui.manageforumreferencechooser.desc";
-    private static final String T_COL_TYPE = "syndie.gui.manageforumreferencechooser.type";
-    private static final String T_COL_TARGET = "syndie.gui.manageforumreferencechooser.target";
-    private static final String T_COL_NAME = "syndie.gui.manageforumreferencechooser.name";
-    private static final String T_ADD = "syndie.gui.manageforumreferencechooser.add";
-    private static final String T_ADDCHILD = "syndie.gui.manageforumreferencechooser.add.child";
-    private static final String T_EDIT = "syndie.gui.manageforumreferencechooser.edit";
-    private static final String T_VIEW = "syndie.gui.manageforumreferencechooser.view";
-    private static final String T_REMOVE = "syndie.gui.manageforumreferencechooser.remove";
-    private static final String T_IMPORT_FORUM = "syndie.gui.manageforumreferencechooser.importforum";
-    private static final String T_IMPORT_LOCAL = "syndie.gui.manageforumreferencechooser.importlocal";
-    private static final String T_IMPORTALL_LOCAL = "syndie.gui.manageforumreferencechooser.importalllocal";
     
     public void translate(TranslationRegistry registry) {
-        _colDescription.setText(registry.getText(T_COL_DESC, "Description"));
-        _colType.setText(registry.getText(T_COL_TYPE, "Type"));
-        _colTarget.setText(registry.getText(T_COL_TARGET, ""));
-        _colName.setText(registry.getText(T_COL_NAME, "Name"));
-        _add.setText(registry.getText(T_ADD, "Add"));
-        _addChild.setText(registry.getText(T_ADDCHILD, "Add child"));
-        _edit.setText(registry.getText(T_EDIT, "Edit"));
-        _view.setText(registry.getText(T_VIEW, "View"));
-        _remove.setText(registry.getText(T_REMOVE, "Remove"));
-        _importToForum.setText(registry.getText(T_IMPORT_FORUM, "Add local bookmarks"));
-        _importToLocal.setText(registry.getText(T_IMPORT_LOCAL, "Import to local bookmarks"));
-        _importAllToLocal.setText(registry.getText(T_IMPORTALL_LOCAL, "Import all to local bookmarks"));
+        _colDescription.setText(registry.getText("Description"));
+        _colType.setText(registry.getText("Type"));
+        _colTarget.setText(registry.getText(""));
+        _colName.setText(registry.getText("Name"));
+        _add.setText(registry.getText("Add"));
+        _addChild.setText(registry.getText("Add child"));
+        _edit.setText(registry.getText("Edit"));
+        _view.setText(registry.getText("View"));
+        _remove.setText(registry.getText("Remove"));
+        _importToForum.setText(registry.getText("Add local bookmarks"));
+        _importToLocal.setText(registry.getText("Import to local bookmarks"));
+        _importAllToLocal.setText(registry.getText("Import all to local bookmarks"));
         
         _colType.pack();
         _colDescription.pack();

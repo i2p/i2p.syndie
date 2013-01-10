@@ -116,14 +116,14 @@ public class SWTUI {
         if (lsnr.getAlreadyRunning()) {
             // show a special warning/error screen
             final Shell s = new Shell(d, SWT.DIALOG_TRIM);
-            s.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_TITLE, "Already running"));
+            s.setText(browser.getTranslationRegistry().getText("Already running"));
             s.setLayout(new GridLayout(1, true));
             Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
             l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
+            l.setText(browser.getTranslationRegistry().getText("Syndie is already running - please use the existing Syndie window"));
             Button b = new Button(s, SWT.PUSH);
             b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            b.setText(browser.getTranslationRegistry().getText(T_ALREADY_RUNNING_EXIT, "Exit"));
+            b.setText(browser.getTranslationRegistry().getText("Exit"));
             b.addSelectionListener(new FireSelectionListener() { 
                 public void fire() {
                     s.dispose();
@@ -151,14 +151,14 @@ public class SWTUI {
         } else if (lsnr.getLoginFailedCause() != null) {
             // show a special warning/error screen
             final Shell s = new Shell(d, SWT.DIALOG_TRIM);
-            s.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_TITLE, "Internal error"));
+            s.setText(browser.getTranslationRegistry().getText("Internal error"));
             s.setLayout(new GridLayout(1, true));
             Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
             l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED, "Syndie ran into an internal error trying to start up - please see the logs: ") + lsnr.getLoginFailedCause().getMessage());
+            l.setText(browser.getTranslationRegistry().getText("Syndie ran into an internal error trying to start up - please see the logs: ") + lsnr.getLoginFailedCause().getMessage());
             Button b = new Button(s, SWT.PUSH);
             b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            b.setText(browser.getTranslationRegistry().getText(T_LOGIN_FAILED_EXIT, "Exit"));
+            b.setText(browser.getTranslationRegistry().getText("Exit"));
             b.addSelectionListener(new FireSelectionListener() { 
                 public void fire() {
                     s.dispose();
@@ -219,12 +219,6 @@ public class SWTUI {
         }
     }
     
-    private static final String T_ALREADY_RUNNING_TITLE = "syndie.gui.swtui.alreadyrunning.title";
-    private static final String T_ALREADY_RUNNING_EXIT = "syndie.gui.swtui.alreadyrunning.exit";
-    private static final String T_ALREADY_RUNNING = "syndie.gui.swtui.alreadyrunning";
-    private static final String T_LOGIN_FAILED_TITLE = "syndie.gui.swtui.loginfailed.title";
-    private static final String T_LOGIN_FAILED_EXIT = "syndie.gui.swtui.loginfailed.exit";
-    private static final String T_LOGIN_FAILED = "syndie.gui.swtui.loginfailed";
 
     private static final Exception BAD_LOGIN = new Exception();
     private static final Exception BAD_PASS = new Exception();

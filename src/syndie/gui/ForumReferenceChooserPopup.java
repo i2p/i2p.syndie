@@ -153,11 +153,9 @@ public class ForumReferenceChooserPopup extends BaseComponent implements Referen
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_TITLE = "syndie.gui.forumselectionpanel.title";
-    private static final String T_CANCEL = "syndie.gui.forumselectionpanel.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Select forum"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _shell.setText(registry.getText("Select forum"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

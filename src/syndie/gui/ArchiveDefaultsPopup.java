@@ -89,18 +89,13 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
         _shell.dispose();
     }
     
-    private static final String T_TITLE = "syndie.gui.archivedefaultspopup.title";
-    private static final String T_EXPLANATIONWHY = "syndie.gui.archivedefaultspopup.explanationwhy";
-    private static final String T_INSTRUCTIONS = "syndie.gui.archivedefaultspopup.instructions";
-    private static final String T_SAVE = "syndie.gui.archivedefaultspopup.save";
-    private static final String T_CANCEL = "syndie.gui.archivedefaultspopup.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Archive defaults"));
-        _explanationWhy.setText(registry.getText(T_EXPLANATIONWHY, "You have no remote archives configured, preventing you from either reading other people's posts or from sharing your own posts with them."));
-        _instructions.setText(registry.getText(T_INSTRUCTIONS, "The default archives shipped with your Syndie instance are listed above.  Please make any necessary changes, unchecking any that you don't want"));
-        _save.setText(registry.getText(T_SAVE, "Save archives as your own"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _shell.setText(registry.getText("Archive defaults"));
+        _explanationWhy.setText(registry.getText("You have no remote archives configured, preventing you from either reading other people's posts or from sharing your own posts with them."));
+        _instructions.setText(registry.getText("The default archives shipped with your Syndie instance are listed above.  Please make any necessary changes, unchecking any that you don't want"));
+        _save.setText(registry.getText("Save archives as your own"));
+        _cancel.setText(registry.getText("Cancel"));
     }
     
     public void applyTheme(Theme theme) {

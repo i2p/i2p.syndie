@@ -230,10 +230,10 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
         for (int i = 0; i < items.length; i++) {
             switch (i) {
                 case 0:
-                    items[i].setText(registry.getText(T_TABTITLE_DEFAULT, "Default policy"));
+                    items[i].setText(registry.getText("Default policy"));
                     break;
                 case 1:
-                    items[i].setText(registry.getText(T_TABTITLE_MANAGED, "Managed forums"));
+                    items[i].setText(registry.getText("Managed forums"));
                     break;
                 default:
                     String name = (String)_channelNames.get(i-2);
@@ -277,8 +277,8 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _revert = new Button(buttons, SWT.PUSH);
             _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
             
-            _save.setText(_translationRegistry.getText(T_SAVE, "Save changes"));
-            _revert.setText(_translationRegistry.getText(T_REVERT, "Revert changes"));
+            _save.setText(_translationRegistry.getText("Save changes"));
+            _revert.setText(_translationRegistry.getText("Revert changes"));
             
             _save.setFont(_themeRegistry.getTheme().BUTTON_FONT);
             _revert.setFont(_themeRegistry.getTheme().BUTTON_FONT);
@@ -291,7 +291,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
                 // standard policies, not deletable
             } else {
                 _delete = new Button(buttons, SWT.PUSH);
-                _delete.setText(_translationRegistry.getText(T_DELETE, "Delete policy"));
+                _delete.setText(_translationRegistry.getText("Delete policy"));
                 _delete.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 _delete.addSelectionListener(new FireSelectionListener() { public void fire() { deletePolicy(); } });
             }
@@ -320,10 +320,6 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
         }
     }
   
-    private static final String T_HONOR_AUTHOR = "syndie.gui.cancelmanager.honorauthor";
-    private static final String T_HONOR_OWNER = "syndie.gui.cancelmanager.honorowner";
-    private static final String T_HONOR_MANAGER = "syndie.gui.cancelmanager.honormanager";
-    private static final String T_HONOR_POSTER = "syndie.gui.cancelmanager.honorposter";
     
     private class PolicyDetail {
         private PolicyGroup _group;
@@ -371,7 +367,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             _detailRoot.setLayout(gl);
 
             _honorFromAuthor = new Button(_detailRoot, SWT.CHECK);
-            _honorFromAuthor.setText(_translationRegistry.getText(T_HONOR_AUTHOR, "Honor cancel messages from the message author"));
+            _honorFromAuthor.setText(_translationRegistry.getText("Honor cancel messages from the message author"));
             _honorFromAuthor.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromAuthor.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
@@ -382,7 +378,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             });
             
             _honorFromForumOwner = new Button(_detailRoot, SWT.CHECK);
-            _honorFromForumOwner.setText(_translationRegistry.getText(T_HONOR_OWNER, "Honor cancel messages from the forum owner"));
+            _honorFromForumOwner.setText(_translationRegistry.getText("Honor cancel messages from the forum owner"));
             _honorFromForumOwner.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromForumOwner.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
@@ -393,7 +389,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             });
             
             _honorFromForumManager = new Button(_detailRoot, SWT.CHECK);
-            _honorFromForumManager.setText(_translationRegistry.getText(T_HONOR_MANAGER, "Honor cancel messages from any forum manager(s)"));
+            _honorFromForumManager.setText(_translationRegistry.getText("Honor cancel messages from any forum manager(s)"));
             _honorFromForumManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromForumManager.setEnabled(false);
             _honorFromForumManager.addSelectionListener(new FireSelectionListener() {
@@ -405,7 +401,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             });
             
             _honorFromForumAuthorizedPoster = new Button(_detailRoot, SWT.CHECK);
-            _honorFromForumAuthorizedPoster.setText(_translationRegistry.getText(T_HONOR_POSTER, "Honor cancel messages from any explicitly authorized forum posters"));
+            _honorFromForumAuthorizedPoster.setText(_translationRegistry.getText("Honor cancel messages from any explicitly authorized forum posters"));
             _honorFromForumAuthorizedPoster.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromForumAuthorizedPoster.setEnabled(false);
             _honorFromForumAuthorizedPoster.addSelectionListener(new FireSelectionListener() {
@@ -435,9 +431,4 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
         }
     }
     
-    private static final String T_SAVE = "syndie.gui.cancelmanager.save";
-    private static final String T_REVERT = "syndie.gui.cancelmanager.revert";
-    private static final String T_DELETE = "syndie.gui.cancelmanager.delete";
-    private static final String T_TABTITLE_DEFAULT = "syndie.gui.cancelmanager.tabtitle.default";
-    private static final String T_TABTITLE_MANAGED = "syndie.gui.cancelmanager.tabtitle.managed";
 }

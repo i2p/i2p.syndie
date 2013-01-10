@@ -257,20 +257,13 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         _ripRunner.nonblockingRip();
     }
 
-    private static final String T_STATUS_INIT = "syndie.gui.webripcontrol.status.init";
     private static final String DEFAULT_STATUS_INIT = "Step 1 of 6: Rip initialized";
-    private static final String T_STATUS_FETCHING_HTML = "syndie.gui.webripcontrol.status.fetchhtml";
     private static final String DEFAULT_STATUS_FETCHING_HTML = "Step 2 of 6: Fetching web page";
-    private static final String T_STATUS_HTML_FETCHED = "syndie.gui.webripcontrol.status.htmlfetched";
     private static final String DEFAULT_STATUS_HTML_FETCHED = "Step 3 of 6: Web page fetched";
-    private static final String T_STATUS_FETCHING_ATTACHMENTS = "syndie.gui.webripcontrol.status.fetchingattachments";
     private static final String DEFAULT_STATUS_FETCHING_ATTACHMENTS = "Step 4 of 6: Fetching attachments - ";
-    private static final String T_STATUS_ATTACHMENTS_FETCHED = "syndie.gui.webripcontrol.status.attachmentsfetched";
     private static final String DEFAULT_STATUS_ATTACHMENTS_FETCHED = "Step 5 of 6: Attachments fetched";
-    private static final String T_STATUS_REWRITTEN = "syndie.gui.webripcontrol.status.rewritten";
     private static final String DEFAULT_STATUS_REWRITTEN = "Step 6 of 6: Web page rewritten";
     
-    private static final String T_STATUS_ERROR = "syndie.gui.webripcontrol.status.error";
     private static final String DEFAULT_STATUS_ERROR = "Rip failed";
     
     public void statusUpdated(WebRipRunner runner) {
@@ -368,36 +361,23 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
     private int getMaxAttachKB() { return 64; }
     private int getMaxTotalKB() { return 4*1024; }
     
-    private static final String T_URL = "syndie.gui.webripcontrol.url";
-    private static final String T_OPTIONS = "syndie.gui.webripcontrol.options";
-    private static final String T_RIP = "syndie.gui.webripcontrol.rip";
-    private static final String T_CANCEL = "syndie.gui.webripcontrol.cancel";
-    private static final String T_OPT_ALLOWFILES = "syndie.gui.webripcontrol.opt.allowfiles";
-    private static final String T_OPT_IMAGES = "syndie.gui.webripcontrol.opt.images";
-    private static final String T_OPT_PROXY = "syndie.gui.webripcontrol.opt.proxy";
-    private static final String T_OPT_TORRENTS = "syndie.gui.webripcontrol.opt.torrents";
     
-    private static final String T_PROXY_HOST = "syndie.gui.webripcontrol.proxy.host";
-    private static final String T_PROXY_PORT = "syndie.gui.webripcontrol.proxy.port";
-    private static final String T_PROXY_OK = "syndie.gui.webripcontrol.proxy.ok";
-    private static final String T_PROXY_ASDEFAULT = "syndie.gui.webripcontrol.proxy.asdefault";
-    private static final String T_PROXY_SHELL = "syndie.gui.webripcontrol.proxy.shell";
     
     public void translate(TranslationRegistry registry) {
-        _urlLabel.setText(registry.getText(T_URL, "Rip URL:"));
-        _urlOptions.setText(registry.getText(T_OPTIONS, "Options..."));
-        _rip.setText(registry.getText(T_RIP, "Rip!"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
-        _optionAllowFiles.setText(registry.getText(T_OPT_ALLOWFILES, "Import file attachments (dangerous!)"));
-        _optionImages.setText(registry.getText(T_OPT_IMAGES, "Attach images"));
-        _optionProxy.setText(registry.getText(T_OPT_PROXY, "Configure proxy..."));
-        _optionTorrents.setText(registry.getText(T_OPT_TORRENTS, "Attach torrents"));
+        _urlLabel.setText(registry.getText("Rip URL:"));
+        _urlOptions.setText(registry.getText("Options..."));
+        _rip.setText(registry.getText("Rip!"));
+        _cancel.setText(registry.getText("Cancel"));
+        _optionAllowFiles.setText(registry.getText("Import file attachments (dangerous!)"));
+        _optionImages.setText(registry.getText("Attach images"));
+        _optionProxy.setText(registry.getText("Configure proxy..."));
+        _optionTorrents.setText(registry.getText("Attach torrents"));
         
-        _proxyHostLabel.setText(registry.getText(T_PROXY_HOST, "HTTP proxy host:"));
-        _proxyPortLabel.setText(registry.getText(T_PROXY_PORT, "HTTP proxy port:"));
-        _proxyAsDefault.setText(registry.getText(T_PROXY_ASDEFAULT, "Save as my default HTTP proxy"));
-        _proxyOk.setText(registry.getText(T_PROXY_OK, "OK"));
-        _proxyShell.setText(registry.getText(T_PROXY_SHELL, "Proxy"));
+        _proxyHostLabel.setText(registry.getText("HTTP proxy host:"));
+        _proxyPortLabel.setText(registry.getText("HTTP proxy port:"));
+        _proxyAsDefault.setText(registry.getText("Save as my default HTTP proxy"));
+        _proxyOk.setText(registry.getText("OK"));
+        _proxyShell.setText(registry.getText("Proxy"));
     }
 
     public void applyTheme(Theme theme) {

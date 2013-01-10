@@ -573,8 +573,6 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         }
     }
     
-    private static final String T_SCHEDULE_MESSAGE = "syndie.gui.referencechoosertree.schedule.message";
-    private static final String T_SCHEDULE_TITLE = "syndie.gui.referencechoosertree.schedule.title";
     
     private void askScheduleArchives() {
         // rewrite this to detect whether the number of scheduled fetches is 0, and if so,
@@ -582,8 +580,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _root.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 MessageBox box = new MessageBox(_tree.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-                box.setMessage(_translationRegistry.getText(T_SCHEDULE_MESSAGE, "To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
-                box.setText(_translationRegistry.getText(T_SCHEDULE_TITLE, "Schedule syndication?"));
+                box.setMessage(_translationRegistry.getText("To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
+                box.setText(_translationRegistry.getText("Schedule syndication?"));
                 int rc = box.open();
                 if (rc == SWT.YES)
                     _navControl.view(_uriControl.createSyndicationConfigURI());
@@ -702,7 +700,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             setChannelText(item, info);
             _manageChannels.put(item, info);
         }
@@ -710,7 +708,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_PREFIX, "manage: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("manage: ") + info.getName());
             setChannelText(item, info);
             _manageChannels.put(item, info);
         }
@@ -723,7 +721,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_POST_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             setChannelText(item, info);
             _postChannels.put(item, info);
         }
@@ -731,7 +729,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_POST_MANAGE_PREFIX, "manage: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("manage: ") + info.getName());
             setChannelText(item, info);
             _postChannels.put(item, info);
         }
@@ -739,7 +737,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_POST_PREFIX, "post: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("post: ") + info.getName());
             setChannelText(item, info);
             _postChannels.put(item, info);
         }
@@ -747,7 +745,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_POST_PUBLIC_PREFIX, "public: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("public: ") + info.getName());
             setChannelText(item, info);
             _postChannels.put(item, info);
         }
@@ -763,7 +761,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         if (info.getPassphrasePrompt() != null) {
             buf.append(info.getName())
                .append(" (")
-               .append(_translationRegistry.getText(T_PW, "Requires password"))
+               .append(_translationRegistry.getText("Requires password"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else if (info.getReadKeyUnknown()) {
@@ -771,7 +769,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             buf.append('[')
                .append(hash.toBase64().substring(0, 6))
                .append("] (")
-               .append(_translationRegistry.getText(T_RKEY, "Read key unknown"))
+               .append(_translationRegistry.getText("Read key unknown"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {
@@ -941,36 +939,22 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     public void watchesUpdated() { rebuildWatched(); }
 
-    private static final String T_BOOKMARK_ROOT = "syndie.gui.refchoosertree.bookmarkroot";
-    private static final String T_POST_ROOT = "syndie.gui.refchoosertree.postroot";
-    private static final String T_MANAGE_ROOT = "syndie.gui.refchoosertree.manageroot";
-    private static final String T_SEARCH_ROOT = "syndie.gui.refchoosertree.searchroot";
     
-    private static final String T_MANAGE_IDENT_PREFIX = "syndie.gui.refchoosertree.manage.identprefix";
-    private static final String T_MANAGE_PREFIX = "syndie.gui.refchoosertree.manage.prefix";
 
-    private static final String T_POST_IDENT_PREFIX = "syndie.gui.refchoosertree.post.identprefix";
-    private static final String T_POST_MANAGE_PREFIX = "syndie.gui.refchoosertree.post.manageprefix";
-    private static final String T_POST_PREFIX = "syndie.gui.refchoosertree.post.prefix";
-    private static final String T_POST_PUBLIC_PREFIX = "syndie.gui.refchoosertree.post.publicprefix";
     
-    private static final String T_WATCHED_ROOT = "syndie.gui.refchoosertree.watched.root";
-    private static final String T_IMPORTED_ROOT = "syndie.gui.refchoosertree.imported.root";
-    private static final String T_PW = "syndie.gui.refchoosertree.pw";
-    private static final String T_RKEY = "syndie.gui.refchoosertree.rkey";
     
     public void translate(TranslationRegistry registry) {
-        _bookmarkRoot.setText(registry.getText(T_BOOKMARK_ROOT, "Bookmarked references"));
+        _bookmarkRoot.setText(registry.getText("Bookmarked references"));
         _bookmarkRoot.setImage(ImageUtil.ICON_VM_BOOKMARK);
-        _postRoot.setText(registry.getText(T_POST_ROOT, "Writable forums"));
+        _postRoot.setText(registry.getText("Writable forums"));
         _postRoot.setImage(ImageUtil.ICON_WRITEABLEFORUM);
-        _manageRoot.setText(registry.getText(T_MANAGE_ROOT, "Manageable forums"));
+        _manageRoot.setText(registry.getText("Manageable forums"));
         _manageRoot.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
-        _watchedRoot.setText(registry.getText(T_WATCHED_ROOT, "Watched forums"));
+        _watchedRoot.setText(registry.getText("Watched forums"));
         _watchedRoot.setImage(ImageUtil.ICON_WATCHEDFORUM);
-        _importedRoot.setText(registry.getText(T_IMPORTED_ROOT, "Imported resources"));
+        _importedRoot.setText(registry.getText("Imported resources"));
         _importedRoot.setImage(ImageUtil.ICON_IMPORTEDRESOURCES);
-        //_searchRoot.setText(registry.getText(T_SEARCH_ROOT, "Search results..."));
+        //_searchRoot.setText(registry.getText("Search results..."));
         //refreshBookmarks();
         //redrawPostable();
         //redrawManageable();

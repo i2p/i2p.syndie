@@ -271,8 +271,6 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         mgr.setIsOnline(!mgr.isOnline());
     }
     
-    private static final String T_ONLINE = "syndie.gui.statusbar.online";
-    private static final String T_OFFLINE = "syndie.gui.statusbar.offline";
 
     public void refreshDisplay() { refreshDisplay(false); }
 
@@ -306,7 +304,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
         
         if (pbe > 0) {
-            _pbe.setText(_translationRegistry.getText(T_PBE, "Pass. req: ") + pbe);
+            _pbe.setText(_translationRegistry.getText("Pass. req: ") + pbe);
             ((GridData)_pbe.getLayoutData()).exclude = false;
             _pbe.setVisible(true);
         } else {
@@ -315,7 +313,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (priv != null) {
-            _priv.setText(_translationRegistry.getText(T_PRIV, "Private msgs: ") + priv);
+            _priv.setText(_translationRegistry.getText("Private msgs: ") + priv);
             ((GridData)_priv.getLayoutData()).exclude = false;
             _priv.setVisible(true);
         } else {
@@ -324,7 +322,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (postpone > 0) {
-            _postpone.setText(_translationRegistry.getText(T_POSTPONE, "Drafts: ") + postpone);
+            _postpone.setText(_translationRegistry.getText("Drafts: ") + postpone);
             ((GridData)_postpone.getLayoutData()).exclude = false;
             _postpone.setVisible(true);
         } else {
@@ -423,7 +421,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         if (threads > 0) {
             MenuItem item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText(T_UNREAD_BOOKMARKED, "View unread in bookmarked forums"));
+            item.setText(_translationRegistry.getText("View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
@@ -434,7 +432,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             });
             
             item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText(T_UNREAD_ALL, "View unread in all forums"));
+            item.setText(_translationRegistry.getText("View unread in all forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _navControl.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_client)));
@@ -473,7 +471,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         GridData gd = (GridData)_unread.getLayoutData();
         boolean wasExcluded = gd.exclude;
         if (threads > 0) {
-            _unread.setText(_translationRegistry.getText(T_UNREAD, "Unread: ") + sortedForums.size() + "/" + threads);
+            _unread.setText(_translationRegistry.getText("Unread: ") + sortedForums.size() + "/" + threads);
             gd.exclude = false;
             _unread.setVisible(true);
             if (wasExcluded)
@@ -488,8 +486,6 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         _root.layout(true);
     }
     
-    private static final String T_UNREAD_ALL = "syndie.gui.statusbar.unread.all";
-    private static final String T_UNREAD_BOOKMARKED = "syndie.gui.statusbar.unread.bookmarked";
 
     /**
      *  TODO the keys must include the hash prefix or they aren't unique;
@@ -553,7 +549,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         if (unreadMsgIds.size() > 0) {
             new MenuItem(_privMenu, SWT.SEPARATOR);
             MenuItem item = new MenuItem(_privMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText(T_PRIV_MARKALLREAD, "Mark all as read"));
+            item.setText(_translationRegistry.getText("Mark all as read"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
@@ -571,7 +567,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         final List readMsgIds = _browser.getPrivateMsgIds(true);
         if (readMsgIds.size() > 0) {
             MenuItem sub = new MenuItem(_privMenu, SWT.CASCADE);
-            sub.setText(_browser.getTranslationRegistry().getText(T_PRIV_READ, "Already read: ") + readMsgIds.size());
+            sub.setText(_browser.getTranslationRegistry().getText("Already read: ") + readMsgIds.size());
             Menu subm = new Menu(sub);
             sub.setMenu(subm);
             for (int i = 0; i < readMsgIds.size(); i++) {
@@ -603,8 +599,6 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             return unread + ""; //+ "/" + read;
     }
 
-    private static final String T_PRIV_MARKALLREAD = "syndie.gui.statusbar.priv.markallread";
-    private static final String T_PRIV_READ = "syndie.gui.statusbar.priv.read";
 
     private int refreshPBE() {
         MenuItem items[] = _pbeMenu.getItems();
@@ -655,7 +649,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             final Long postponeId = (Long)entry.getKey();
             final Integer rev = (Integer)entry.getValue();
             
-            String str = _translationRegistry.getText(T_POSTPONE_PREFIX, "Postponed on: ") + Constants.getDateTime(postponeId.longValue());
+            String str = _translationRegistry.getText("Postponed on: ") + Constants.getDateTime(postponeId.longValue());
             MenuItem item = new MenuItem(_postponeMenu, SWT.PUSH);
             item.setText(str);
             item.addSelectionListener(new SelectionListener() {
@@ -671,7 +665,6 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         return msgs.size();
     }
 
-    private static final String T_POSTPONE_PREFIX = "syndie.gui.statusbar.postponeprefix";
     
     /**
      *  Queues on the Job queue
@@ -737,7 +730,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (!forums.isEmpty()) {
-            _newForum.setText(_translationRegistry.getText(T_NEWFORUM, "New forums: ") + forums.size());
+            _newForum.setText(_translationRegistry.getText("New forums: ") + forums.size());
             ((GridData)_newForum.getLayoutData()).exclude = false;
             _newForum.setVisible(true);
         } else {
@@ -792,10 +785,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     private void displayOnlineState(boolean online) {
         if (online) {
             _onlineState.setImage(ImageUtil.ICON_ONLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText(T_ONLINE, "Online: syndication is enabled"));
+            _onlineState.setToolTipText(_translationRegistry.getText("Online: syndication is enabled"));
         } else {
             _onlineState.setImage(ImageUtil.ICON_OFFLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText(T_OFFLINE, "Offline: syndication is deferred"));
+            _onlineState.setToolTipText(_translationRegistry.getText("Offline: syndication is deferred"));
         }
         updateNextSync();
     }
@@ -809,18 +802,15 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         });
     }
     
-    private static final String T_NEXT_SYNC_OFFLINE = "syndie.gui.statusbar.nextsync.offline";
-    private static final String T_NEXT_SYNC_NOW = "syndie.gui.statusbar.nextsync.now";
-    private static final String T_NEXT_SYNC_NONE = "syndie.gui.statusbar.nextsync.none";
     public void setNextSync(long when, boolean online) {
         if (!online) {
-            _nextSyncDate.setText(_translationRegistry.getText(T_NEXT_SYNC_OFFLINE, "Deferred..."));
+            _nextSyncDate.setText(_translationRegistry.getText("Deferred..."));
             _syncNow = false;
         } else if (when <= 0) {
-            _nextSyncDate.setText(_translationRegistry.getText(T_NEXT_SYNC_NONE, "None scheduled"));
+            _nextSyncDate.setText(_translationRegistry.getText("None scheduled"));
             _syncNow = false;
         } else if (when-System.currentTimeMillis() <= 0) {
-            _nextSyncDate.setText(_translationRegistry.getText(T_NEXT_SYNC_NOW, "Now"));
+            _nextSyncDate.setText(_translationRegistry.getText("Now"));
             _syncNow = true;
         } else {
             long delay = when-System.currentTimeMillis();
@@ -888,7 +878,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     static NymReferenceNode getParent(UI ui, TranslationRegistry trans, BookmarkControl bookmarkControl, BookmarkDnD bookmark) {
         if (bookmark.uri.getMessageId() == null) return null;
         
-        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + trans.getText(T_BOOKMARK_SUFFIX_MSGS, "messages");
+        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + trans.getText("messages");
         
         List bookmarks = bookmarkControl.getBookmarks();
         for (int i = 0; i < bookmarks.size(); i++) {
@@ -903,18 +893,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         return node;
     }
     
-    private static final String T_BOOKMARK_SUFFIX_MSGS = "syndie.gui.statusbar.bookmarksuffixmsgs";
     
-    private static final String T_NEXT_SYNC = "syndie.gui.statusbar.nextsync";
-    private static final String T_NEWFORUM = "syndie.gui.statusbar.newforum";
-    private static final String T_UNREAD = "syndie.gui.statusbar.newmsg";
-    private static final String T_PBE = "syndie.gui.statusbar.pbe";
-    private static final String T_PRIV = "syndie.gui.statusbar.priv";
-    private static final String T_POSTPONE = "syndie.gui.statusbar.postpone";
-    private static final String T_BOOKMARK = "syndie.gui.statusbar.bookmark";
     public void translate(TranslationRegistry registry) {
-        _nextSyncLabel.setText(registry.getText(T_NEXT_SYNC, "Next sync:"));
-        _bookmark.setText(registry.getText(T_BOOKMARK, "Bookmark!"));
+        _nextSyncLabel.setText(registry.getText("Next sync:"));
+        _bookmark.setText(registry.getText("Bookmark!"));
         _root.layout(true);
     }
     

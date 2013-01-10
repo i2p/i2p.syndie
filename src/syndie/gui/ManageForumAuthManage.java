@@ -289,44 +289,27 @@ class ManageForumAuthManage extends BaseComponent implements Themeable, Translat
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_SHELL = "syndie.gui.viewforumauthmanage.shell";
     
-    private static final String T_CHOICE_ANYONE = "syndie.gui.viewforumauthmanage.choice.anyone";
-    private static final String T_CHOICE_ALLOWED = "syndie.gui.viewforumauthmanage.choice.allowed";
-    private static final String T_CHOICE_REPLIES = "syndie.gui.viewforumauthmanage.choice.replies";
         
-    private static final String T_SELECTED = "syndie.gui.viewforumauthmanage.selected";
-    private static final String T_SELECTED_ADD = "syndie.gui.viewforumauthmanage.selected.add";
-    private static final String T_SELECTED_DELETE = "syndie.gui.viewforumauthmanage.selected.del";
         
-    private static final String T_SEND_NEW = "syndie.gui.viewforumauthmanage.send.new";
-    private static final String T_SEND_NEW_LABEL = "syndie.gui.viewforumauthmanage.send.new.label";
-    private static final String T_SEND_NEW_ADD = "syndie.gui.viewforumauthmanage.send.new.add";
-    private static final String T_SEND_NEW_DELETE = "syndie.gui.viewforumauthmanage.send.new.del";
-    private static final String T_SEND_NEW_PBE = "syndie.gui.viewforumauthmanage.send.new.pbe";
         
     
-    private static final String T_PBE = "syndie.gui.viewforumauthmanage.pbe";
-    private static final String T_PBE_PASS_LABEL = "syndie.gui.viewforumauthmanage.pbe.pass.label";
-    private static final String T_PBE_PROMPT_LABEL = "syndie.gui.viewforumauthmanage.pbe.prompt.label";
-    private static final String T_OK = "syndie.gui.viewforumauthmanage.ok";
-    private static final String T_CANCEL = "syndie.gui.viewforumauthmanage.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL, "Who can manage the forum?"));
+        _shell.setText(registry.getText("Who can manage the forum?"));
         
-        _selectedAdd.setText(registry.getText(T_SELECTED_ADD, "Add"));
-        _selectedDel.setText(registry.getText(T_SELECTED_DELETE, "Delete"));
+        _selectedAdd.setText(registry.getText("Add"));
+        _selectedDel.setText(registry.getText("Delete"));
         
-        _sendNew.setText(registry.getText(T_SEND_NEW, "Create a new identity and allow it to manage the forum"));
-        _sendNewLabel.setText(registry.getText(T_SEND_NEW_LABEL, "Send the new identity key to the administrators of the selected forums:"));
-        _sendNewAdd.setText(registry.getText(T_SEND_NEW_ADD, "Add"));
-        _sendNewDel.setText(registry.getText(T_SEND_NEW_DELETE, "Delete"));
-        _sendNewPBE.setText(registry.getText(T_SEND_NEW_PBE, "Post the new identity's key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText(T_PBE_PASS_LABEL, "Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText(T_PBE_PROMPT_LABEL, "Prompt:"));
+        _sendNew.setText(registry.getText("Create a new identity and allow it to manage the forum"));
+        _sendNewLabel.setText(registry.getText("Send the new identity key to the administrators of the selected forums:"));
+        _sendNewAdd.setText(registry.getText("Add"));
+        _sendNewDel.setText(registry.getText("Delete"));
+        _sendNewPBE.setText(registry.getText("Post the new identity's key in a passphrase protected message to the forum"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
         
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

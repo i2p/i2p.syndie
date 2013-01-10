@@ -265,7 +265,7 @@ public class WelcomeScreen extends Wizard {
             });
         }
         _avatarItems[_avatarItems.length-1] = new MenuItem(_avatarMenu, SWT.PUSH);
-        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText(T_AVATAR_OTHER, "Other..."));
+        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText("Other..."));
         _avatarItems[_avatarItems.length-1].addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(); }
@@ -274,13 +274,12 @@ public class WelcomeScreen extends Wizard {
         _avatarImage = (Image)_avatarImages.get(0);
         _avatar.setImage(_avatarImage);
     }
-    private static final String T_AVATAR_OTHER = "syndie.gui.welcomescreen.avatar.other";
     
     private void pickAvatar() {
         FileDialog dialog = new FileDialog(getShell(), SWT.SINGLE | SWT.OPEN);
-        dialog.setText(_browser.getTranslationRegistry().getText(T_AVATAR_OPEN_NAME, "Select a 48x48 pixel PNG image"));
+        dialog.setText(_browser.getTranslationRegistry().getText("Select a 48x48 pixel PNG image"));
         dialog.setFilterExtensions(new String[] { "*.png" });
-        dialog.setFilterNames(new String[] { _browser.getTranslationRegistry().getText(T_AVATAR_OPEN_TYPE, "PNG image") });
+        dialog.setFilterNames(new String[] { _browser.getTranslationRegistry().getText("PNG image") });
         String filename = dialog.open();
         if (filename != null) {
             Image img = ImageUtil.createImageFromFile(filename);
@@ -305,8 +304,6 @@ public class WelcomeScreen extends Wizard {
         }
     }
     
-    private static final String T_AVATAR_OPEN_NAME = "syndie.gui.welcomescreen.avatar.name";
-    private static final String T_AVATAR_OPEN_TYPE = "syndie.gui.welcomescreen.avatar.type";
     
     public void applyTheme(Theme theme) {
         super.applyTheme(theme);
@@ -323,18 +320,6 @@ public class WelcomeScreen extends Wizard {
         _authenticateAuth.setFont(theme.DEFAULT_FONT);
     }
     
-    private static final String T_WELCOME = "syndie.gui.welcomescreen.welcome";
-    private static final String T_DESC = "syndie.gui.welcomescreen.desc";
-    private static final String T_NAME = "syndie.gui.welcomescreen.name";
-    private static final String T_NAME_DEFAULT = "syndie.gui.welcomescreen.name.default";
-    private static final String T_AVATAR_LABEL = "syndie.gui.welcomescreen.avatar.label";
-    private static final String T_AUTH_LABEL = "syndie.gui.welcomescreen.auth.label";
-    private static final String T_AUTH_PUBLIC = "syndie.gui.welcomescreen.auth.public";
-    private static final String T_AUTH_REPLY = "syndie.gui.welcomescreen.auth.reply";
-    private static final String T_AUTH_AUTH = "syndie.gui.welcomescreen.auth.auth";
-    private static final String T_ARCHIVEEXPLANATION = "syndie.gui.welcomescreen.archive.explanation";
-    private static final String T_ARCHIVEINSTRUCTIONS = "syndie.gui.welcomescreen.archive.instructions";
-    private static final String T_FINISH = "syndie.gui.welcomescreen.finish";
     
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
@@ -350,13 +335,13 @@ public class WelcomeScreen extends Wizard {
         _description.setText(registry.getText(T_DESC, reflow(new String [] {
                 "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
                 "your own blog/forum"})));
-        _nameLabel.setText(registry.getText(T_NAME, "What name would you like to use for your new identity?"));
-        _name.setText(registry.getText(T_NAME_DEFAULT, "Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
-        _avatarLabel.setText(registry.getText(T_AVATAR_LABEL, "What avatar would you like to use?"));
-        _authenticationLabel.setText(registry.getText(T_AUTH_LABEL, "In your new identity's blog/forum, would  you like to allow other people to post?"));
-        _authenticatePublic.setText(registry.getText(T_AUTH_PUBLIC, "Yes, let anyone reply to existing posts and post new topics"));
-        _authenticateReplies.setText(registry.getText(T_AUTH_REPLY, "Yes, let anyone reply to existing posts"));
-        _authenticateAuth.setText(registry.getText(T_AUTH_AUTH, "No"));
+        _nameLabel.setText(registry.getText("What name would you like to use for your new identity?"));
+        _name.setText(registry.getText("Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
+        _avatarLabel.setText(registry.getText("What avatar would you like to use?"));
+        _authenticationLabel.setText(registry.getText("In your new identity's blog/forum, would  you like to allow other people to post?"));
+        _authenticatePublic.setText(registry.getText("Yes, let anyone reply to existing posts and post new topics"));
+        _authenticateReplies.setText(registry.getText("Yes, let anyone reply to existing posts"));
+        _authenticateAuth.setText(registry.getText("No"));
         
         _archiveExplanationMessage.setText(registry.getText(T_ARCHIVEEXPLANATION, reflow(new String [] {
                 "Next it's time to select some archives to syndicate with.\n\n",

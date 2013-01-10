@@ -321,7 +321,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _users.setMenu(userMenu);
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
         viewForum.setImage(ImageUtil.ICON_VIEW);
-        viewForum.setText(_translationRegistry.getText(T_USER_VIEWFORUM, "View forum"));
+        viewForum.setText(_translationRegistry.getText("View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
@@ -335,7 +335,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         });
         MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
         viewMeta.setImage(ImageUtil.ICON_HM_ABOUT);
-        viewMeta.setText(_translationRegistry.getText(T_USER_VIEWFORUMMETA, "View forum profile"));
+        viewMeta.setText(_translationRegistry.getText("View forum profile"));
         viewMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
@@ -366,7 +366,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
 
         MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
         view.setImage(ImageUtil.ICON_VIEW);
-        view.setText(_translationRegistry.getText(T_ARCHIVE_VIEW, "View"));
+        view.setText(_translationRegistry.getText("View"));
         view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewArchive(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewArchive(); }
@@ -723,9 +723,9 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
             TableItem item = new TableItem(_archives, SWT.NONE);
             item.setText(0, url.trim());
             if (_pubArchiveURIs.contains(uri))
-                item.setText(1, _translationRegistry.getText(T_ARCHIVE_PUBLIC, "Public"));
+                item.setText(1, _translationRegistry.getText("Public"));
             else
-                item.setText(1, _translationRegistry.getText(T_ARCHIVE_PRIVATE, "Authorized readers only"));
+                item.setText(1, _translationRegistry.getText("Authorized readers only"));
             
             _archiveItemToURI.put(item, uri);
         }
@@ -741,9 +741,6 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _archives.setRedraw(true);
     }
 
-    private static final String T_ARCHIVE_VIEW = "syndie.gui.viewforum.archive.view";
-    private static final String T_ARCHIVE_PUBLIC = "syndie.gui.viewforum.archive.public";
-    private static final String T_ARCHIVE_PRIVATE = "syndie.gui.viewforum.archive.private";
     
     private void loadUsers(ChannelInfo info) {
         // add buttons w/ menus for the authorized managers and posters in _userGroup
@@ -775,9 +772,9 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
                 item.setText(0, scope.toBase64().substring(0,6));
             
             if (_managerHashes.contains(scope))
-                item.setText(1, _translationRegistry.getText(T_USER_PRIV_MANAGE, "Manager"));
+                item.setText(1, _translationRegistry.getText("Manager"));
             else
-                item.setText(1, _translationRegistry.getText(T_USER_PRIV_POST, "Authorized poster"));
+                item.setText(1, _translationRegistry.getText("Authorized poster"));
             
             _userItemToHash.put(item, scope);
         }
@@ -792,10 +789,6 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
     
         _users.setRedraw(true);
     }
-    private static final String T_USER_PRIV_MANAGE = "syndie.gui.viewforum.users.priv.manage";
-    private static final String T_USER_PRIV_POST = "syndie.gui.viewforum.users.priv.post";
-    private static final String T_USER_VIEWFORUMMETA = "syndie.gui.viewforum.user.viewforummeta";
-    private static final String T_USER_VIEWFORUM = "syndie.gui.viewforum.user.viewforum";
     private void toggleUserManagement(Hash scope) {
         if (_managerHashes.contains(scope)) {
             _managerHashes.remove(scope);
@@ -839,59 +832,33 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _root.pack(true);
     }
 
-    private static final String T_NAME = "syndie.gui.viewforum.name";
-    private static final String T_TAGS = "syndie.gui.viewforum.tags";
-    private static final String T_DESC = "syndie.gui.viewforum.desc";
-    private static final String T_AVATAR_SELECT = "syndie.gui.viewforum.avatar.select";
-    private static final String T_AUTH = "syndie.gui.viewforum.auth";
-    private static final String T_EXPIRATION = "syndie.gui.viewforum.expiration";
-    private static final String T_EXPIRATIONMANAGER = "syndie.gui.viewforum.expirationmanager";
-    private static final String T_USERS = "syndie.gui.viewforum.users";
-    private static final String T_BANNED = "syndie.gui.viewforum.banned";
-    private static final String T_REFS = "syndie.gui.viewforum.refs";
-    private static final String T_PUBARCHIVE = "syndie.gui.viewforum.pubarchive";
-    private static final String T_PRIVARCHIVE = "syndie.gui.viewforum.privarchive";
-    private static final String T_SAVE = "syndie.gui.viewforum.save";
-    private static final String T_CANCEL = "syndie.gui.viewforum.cancel";
     
-    private static final String T_AUTHGROUP = "syndie.gui.viewforum.authgroup";
-    private static final String T_AUTHGROUP_LABEL = "syndie.gui.viewforum.authgroup.label";
-    private static final String T_AUTHGROUP_READ = "syndie.gui.viewforum.authgroup.read";
-    private static final String T_AUTHGROUP_POST = "syndie.gui.viewforum.authgroup.post";
-    private static final String T_AUTHGROUP_MANAGE = "syndie.gui.viewforum.authgroup.manage";
-    private static final String T_AUTHGROUP_REPLY = "syndie.gui.viewforum.authgroup.reply";
 
-    private static final String T_AUTH_PUBLIC = "syndie.gui.viewforum.auth.public";
-    private static final String T_AUTH_PUBREPLY = "syndie.gui.viewforum.auth.pubreply";
-    private static final String T_AUTH_AUTH = "syndie.gui.viewforum.auth.auth";
     
-    private static final String T_AVATAR_OTHER = "syndie.gui.viewforum.avatar.other";
     
-    private static final String T_BAN_VIEW = "syndie.gui.viewforum.ban.view";
-    private static final String T_BAN_IMPORT = "syndie.gui.viewforum.ban.import";
 
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
-        _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
-        _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
-        _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
-        _expirationManager.setText(registry.getText(T_EXPIRATIONMANAGER, "Manage"));
-        _archiveGroup.setText(registry.getText(T_PUBARCHIVE, "Advertised archives:"));
-        _userGroup.setText(registry.getText(T_USERS, "Authorized managers and posters:"));
-        _banGroup.setText(registry.getText(T_BANNED, "Banned forums/authors:"));
-        _refGroup.setText(registry.getText(T_REFS, "Advertised references:"));
-        _authorizationLabel.setText(registry.getText(T_AUTH, "Authorization:"));
+        _nameLabel.setText(registry.getText("Name:"));
+        _tagsLabel.setText(registry.getText("Tags:"));
+        _descriptionLabel.setText(registry.getText("Description:"));
+        _expirationLabel.setText(registry.getText("Expiration:"));
+        _expirationManager.setText(registry.getText("Manage"));
+        _archiveGroup.setText(registry.getText("Advertised archives:"));
+        _userGroup.setText(registry.getText("Authorized managers and posters:"));
+        _banGroup.setText(registry.getText("Banned forums/authors:"));
+        _refGroup.setText(registry.getText("Advertised references:"));
+        _authorizationLabel.setText(registry.getText("Authorization:"));
 
-        _banView.setText(registry.getText(T_BAN_VIEW, "View the selected forum"));
-        _banImport.setText(registry.getText(T_BAN_IMPORT, "Ban the selected forum"));
+        _banView.setText(registry.getText("View the selected forum"));
+        _banImport.setText(registry.getText("Ban the selected forum"));
         
         // order correlates w/ AUTH_*
         if (_auth == 1)
-            _authorization.setText(registry.getText(T_AUTH_PUBLIC, "Allow anyone to post to the forum"));
+            _authorization.setText(registry.getText("Allow anyone to post to the forum"));
         else if (_auth == 2)
-            _authorization.setText(registry.getText(T_AUTH_PUBREPLY, "Allow anyone to reply to authorized posts"));
+            _authorization.setText(registry.getText("Allow anyone to reply to authorized posts"));
         else if (_auth == 3)
-            _authorization.setText(registry.getText(T_AUTH_AUTH, "Only allow authorized posters to post"));
+            _authorization.setText(registry.getText("Only allow authorized posters to post"));
     }
     
     private static final int AUTH_PUBLIC = 0;

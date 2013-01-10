@@ -164,18 +164,13 @@ abstract public class Wizard implements Themeable, Translatable {
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_TITLE = "syndie.gui.welcomescreen.title";
-    private static final String T_BACK = "syndie.gui.welcomescreen.back";
-    private static final String T_NEXT = "syndie.gui.welcomescreen.next";
-    private static final String T_FINISH = "syndie.gui.welcomescreen.finish";
-    private static final String T_CANCEL = "syndie.gui.welcomescreen.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Welcome to Syndie!"));
-        _back.setText(registry.getText(T_BACK, "< Back"));
-        _next.setText(registry.getText(T_NEXT, "Next >"));
-        _finish.setText(registry.getText(T_NEXT, "Finish"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _shell.setText(registry.getText("Welcome to Syndie!"));
+        _back.setText(registry.getText("< Back"));
+        _next.setText(registry.getText("Next >"));
+        _finish.setText(registry.getText("Finish"));
+        _cancel.setText(registry.getText("Cancel"));
     }
     
     class Page extends Composite {

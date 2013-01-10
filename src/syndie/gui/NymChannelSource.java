@@ -60,12 +60,12 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
         List watchedIds = getWatchedIds();
         _watchedIds = watchedIds;
 
-        ReferenceNode root = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_ROOT, "Forums"), null, "", "");
-        ReferenceNode watched = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_WATCHED, "Watched forums"), null, "", "");
-        ReferenceNode owned = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_OWNED, "Locally owned forums"), null, "", "");
-        ReferenceNode managed = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_MANAGED, "Locally managed forums"), null, "", "");
-        ReferenceNode authpost = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_AUTHPOST, "Explicitly postable forums"), null, "", "");
-        ReferenceNode pubpost = new ReferenceNode(_translationRegistry.getText(T_NYM_ITEM_PUBLICPOST, "Publicly postable forums"), null, "", "");
+        ReferenceNode root = new ReferenceNode(_translationRegistry.getText("Forums"), null, "", "");
+        ReferenceNode watched = new ReferenceNode(_translationRegistry.getText("Watched forums"), null, "", "");
+        ReferenceNode owned = new ReferenceNode(_translationRegistry.getText("Locally owned forums"), null, "", "");
+        ReferenceNode managed = new ReferenceNode(_translationRegistry.getText("Locally managed forums"), null, "", "");
+        ReferenceNode authpost = new ReferenceNode(_translationRegistry.getText("Explicitly postable forums"), null, "", "");
+        ReferenceNode pubpost = new ReferenceNode(_translationRegistry.getText("Publicly postable forums"), null, "", "");
 
         if (_includeWatched)
             root.addChild(watched);
@@ -123,10 +123,4 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
     public boolean isWatched(long chanId) { return _watchedIds.contains(new Long(chanId)); }
     public boolean isDeletable(long chanId) { return false; }
 
-    private static final String T_NYM_ITEM_ROOT = "syndie.gui.nymchanneltree.item.root";
-    private static final String T_NYM_ITEM_WATCHED = "syndie.gui.nymchanneltree.item.watched";
-    private static final String T_NYM_ITEM_OWNED = "syndie.gui.nymchanneltree.item.owned";
-    private static final String T_NYM_ITEM_MANAGED = "syndie.gui.nymchanneltree.item.managed";
-    private static final String T_NYM_ITEM_AUTHPOST = "syndie.gui.nymchanneltree.item.authpost";
-    private static final String T_NYM_ITEM_PUBLICPOST = "syndie.gui.nymchanneltree.item.publicpost";
 }

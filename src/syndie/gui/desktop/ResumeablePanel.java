@@ -113,11 +113,11 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
         if (toDrop.size() > 0) {
             MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             if (toDrop.size() == 1) {
-                confirm.setMessage(_translationRegistry.getText(T_CONFIRM_ABORT_MSG_SINGULAR, "Are you sure you want to completely drop the selected message?"));
-                confirm.setText(_translationRegistry.getText(T_CONFIRM_ABORT_TEXT_SINGULAR, "Confirm"));
+                confirm.setMessage(_translationRegistry.getText("Are you sure you want to completely drop the selected message?"));
+                confirm.setText(_translationRegistry.getText("Confirm"));
             } else {
-                confirm.setMessage(_translationRegistry.getText(T_CONFIRM_ABORT_MSG_PLURAL, "Are you sure you want to completely drop the selected messages?"));
-                confirm.setText(_translationRegistry.getText(T_CONFIRM_ABORT_TEXT_PLURAL, "Confirm"));                
+                confirm.setMessage(_translationRegistry.getText("Are you sure you want to completely drop the selected messages?"));
+                confirm.setText(_translationRegistry.getText("Confirm"));                
             }
 
             int rc = confirm.open();
@@ -130,10 +130,6 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
         }
     }
     
-    private static final String T_CONFIRM_ABORT_MSG_SINGULAR = "syndie.gui.desktop.resumeablepanel.confirmabortmsgsingular";
-    private static final String T_CONFIRM_ABORT_TEXT_SINGULAR = "syndie.gui.desktop.resumeablepanel.confirmaborttextsingular";
-    private static final String T_CONFIRM_ABORT_MSG_PLURAL = "syndie.gui.desktop.resumeablepanel.confirmabortmsgplural";
-    private static final String T_CONFIRM_ABORT_TEXT_PLURAL = "syndie.gui.desktop.resumeablepanel.confirmaborttextplural";
     
     private void populateTree() {
         TreeMap postponeIdToVersion = _client.getResumeable();
@@ -229,11 +225,9 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
         public boolean isValid() { return forum != null; }
     }
     
-    public String getPanelName() { return _translationRegistry.getText(T_TITLE, "Resume"); }
-    public String getPanelDescription() { return _translationRegistry.getText(T_DESC, "Resume postponed messages"); }
+    public String getPanelName() { return _translationRegistry.getText("Resume"); }
+    public String getPanelDescription() { return _translationRegistry.getText("Resume postponed messages"); }
     
-    private static final String T_TITLE = "syndie.gui.desktop.resumeablepanel.title";
-    private static final String T_DESC = "syndie.gui.desktop.resumeablepanel.desc";
     
     public void dispose() {
         _translationRegistry.unregister(this);
@@ -245,18 +239,11 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
         _existingTree.setFont(theme.TREE_FONT);
     }
 
-    private static final String T_CREATE_NEW = "syndie.gui.desktop.resumeablepanel.createnew";
-    private static final String T_RESUME = "syndie.gui.desktop.resumeablepanel.resume";
-    private static final String T_ABORT = "syndie.gui.desktop.resumeablepanel.abort";
-    private static final String T_CANCEL = "syndie.gui.desktop.resumeablepanel.cancel";
-    private static final String T_COL_FORUM = "syndie.gui.desktop.resumeablepanel.colforum";
-    private static final String T_COL_DATE = "syndie.gui.desktop.resumeablepanel.coldate";
-    private static final String T_COL_SUBJECT = "syndie.gui.desktop.resumeablepanel.colsubject";
     
     public void translate(TranslationRegistry registry) {
-        _colForum.setText(registry.getText(T_COL_FORUM, "Forum"));
-        _colDate.setText(registry.getText(T_COL_DATE, "Date"));
-        _colSubject.setText(registry.getText(T_COL_SUBJECT, "Subject"));
+        _colForum.setText(registry.getText("Forum"));
+        _colDate.setText(registry.getText("Date"));
+        _colSubject.setText(registry.getText("Subject"));
     }
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
@@ -277,7 +264,7 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
             });
             _resumeExisting.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _resumeExisting, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_RESUME, "Resume"));
+                    ImageUtil.drawDescending(evt.gc, _resumeExisting, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Resume"));
                 }
             });
 
@@ -287,7 +274,7 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
             });
             _abortExisting.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _abortExisting, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_ABORT, "Abort"));
+                    ImageUtil.drawDescending(evt.gc, _abortExisting, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Abort"));
                 }
             });
 
@@ -346,8 +333,8 @@ public class ResumeablePanel extends DesktopPanel implements Themeable, Translat
         }
         
         public void translate(TranslationRegistry registry) {
-            _createNew.setText(registry.getText(T_CREATE_NEW, "Create a new message"));
-            _cancel.setText(registry.getText(T_CANCEL, "Don't create a message at this time"));
+            _createNew.setText(registry.getText("Create a new message"));
+            _cancel.setText(registry.getText("Don't create a message at this time"));
         }
         public void applyTheme(Theme theme) {
             _createNew.setFont(theme.BUTTON_FONT);

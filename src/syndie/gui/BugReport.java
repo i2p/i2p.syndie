@@ -300,13 +300,13 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
                             } else {
                                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
                                 box.setMessage(errors);
-                                box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
+                                box.setText(_translationRegistry.getText("Error posting report"));
                                 box.open();
                             }
                         } else {
                             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
                             box.setMessage(errors);
-                            box.setText(_translationRegistry.getText(T_POST_ERR, "Error posting report"));
+                            box.setText(_translationRegistry.getText("Error posting report"));
                             box.open();
                         }
                         exec.cleanup();
@@ -420,9 +420,6 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         creator.execute();
     }
     
-    private static final String T_POST_OK = "syndie.gui.bugreport.postok";
-    private static final String T_POST_OK_MSG = "syndie.gui.bugreport.postokmsg";
-    private static final String T_POST_ERR = "syndie.gui.bugreport.posterr";
     
     private void targetSelected() {
         /*
@@ -438,12 +435,11 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
          */
     }
     
-    private static final String T_FILE_TEXT = "syndie.gui.bugreport.file";
     private FileDialog _fileDialog;
     private void addAttachment() {
         if (_fileDialog == null) {
             _fileDialog = new FileDialog(_root.getShell(), SWT.OPEN | SWT.MULTI);
-            _fileDialog.setText(_translationRegistry.getText(T_FILE_TEXT, "File to attach"));
+            _fileDialog.setText(_translationRegistry.getText("File to attach"));
         }
         if (_fileDialog.open() == null) return;
         String selected[] = _fileDialog.getFileNames();
@@ -542,7 +538,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         }
         
         // todo: enable this (need to modify MessageGen to create authorized unauthenticated posts)
-        // _signAs.add(_browser.getTranslationRegistry().getText(T_SIGN_AS_ANON, "Anonymous"));
+        // _signAs.add(_browser.getTranslationRegistry().getText("Anonymous"));
         
         int idx = _targetChans.indexOf(new Hash(Base64.decode(STANDARD_BUGREPORT_FORUM)));
         if (idx >= 0)
@@ -647,45 +643,29 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _scroll.setMinSize(_root.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     }
     
-    private static final String T_COMPONENT = "syndie.gui.bugreport.component";
-    private static final String T_TYPE = "syndie.gui.bugreport.type";
-    private static final String T_SEVERITY = "syndie.gui.bugreport.severity";
-    private static final String T_OS = "syndie.gui.bugreport.os";
-    private static final String T_JVM = "syndie.gui.bugreport.jvm";
-    private static final String T_SWT = "syndie.gui.bugreport.swt";
-    private static final String T_SUMMARY = "syndie.gui.bugreport.summary";
-    private static final String T_LOG = "syndie.gui.bugreport.log";
-    private static final String T_ATTACHMENTS = "syndie.gui.bugreport.attachments";
-    private static final String T_ATTACHMENTS_ADD = "syndie.gui.bugreport.attachments.add";
-    private static final String T_ATTACHMENTS_REMOVE = "syndie.gui.bugreport.attachments.remove";
-    private static final String T_POST = "syndie.gui.bugreport.post";
-    private static final String T_TARGET = "syndie.gui.bugreport.target";
-    private static final String T_ASPRIVATE = "syndie.gui.bugreport.asprivate";
     
-    private static final String T_SIGN_AS = "syndie.gui.bugreport.signas";
-    private static final String T_SIGN_AS_ANON = "syndie.gui.bugreport.signas.anon";
 
     public void translate(TranslationRegistry registry) {
-        _componentLabel.setText(registry.getText(T_COMPONENT, "Component:"));
-        _typeLabel.setText(registry.getText(T_TYPE, "Bug type:"));
-        _severityLabel.setText(registry.getText(T_SEVERITY, "Severity:"));
-        _osLabel.setText(registry.getText(T_OS, "OS:"));
-        _jvmLabel.setText(registry.getText(T_JVM, "JVM:"));
-        _swtLabel.setText(registry.getText(T_SWT, "SWT:"));
-        _syndieLabel.setText(registry.getText(T_SWT, "Syndie:"));
-        _summaryLabel.setText(registry.getText(T_SUMMARY, "Issue summary:"));
-        _logGroup.setText(registry.getText(T_LOG, "Details:"));
-        _attachmentsLabel.setText(registry.getText(T_ATTACHMENTS, "Attachments:"));
-        _attachmentsAdd.setText(registry.getText(T_ATTACHMENTS_ADD, "Add"));
-        _attachmentsRemove.setText(registry.getText(T_ATTACHMENTS_REMOVE, "Remove"));
+        _componentLabel.setText(registry.getText("Component:"));
+        _typeLabel.setText(registry.getText("Bug type:"));
+        _severityLabel.setText(registry.getText("Severity:"));
+        _osLabel.setText(registry.getText("OS:"));
+        _jvmLabel.setText(registry.getText("JVM:"));
+        _swtLabel.setText(registry.getText("SWT:"));
+        _syndieLabel.setText(registry.getText("Syndie:"));
+        _summaryLabel.setText(registry.getText("Issue summary:"));
+        _logGroup.setText(registry.getText("Details:"));
+        _attachmentsLabel.setText(registry.getText("Attachments:"));
+        _attachmentsAdd.setText(registry.getText("Add"));
+        _attachmentsRemove.setText(registry.getText("Remove"));
         
-        _post.setText(registry.getText(T_POST, "Post bug report"));
-        _targetLabel.setText(registry.getText(T_TARGET, "Post to:"));
-        _asPrivate.setText(registry.getText(T_ASPRIVATE, "Report includes sensitive data (so only let the admins read it)"));
-        _signAsLabel.setText(registry.getText(T_SIGN_AS, "Sign report as:"));
+        _post.setText(registry.getText("Post bug report"));
+        _targetLabel.setText(registry.getText("Post to:"));
+        _asPrivate.setText(registry.getText("Report includes sensitive data (so only let the admins read it)"));
+        _signAsLabel.setText(registry.getText("Sign report as:"));
         if (_signAs.getItemCount() > _signAsChans.size()) {
             _signAs.remove(_signAs.getItemCount()-1);
-            _signAs.add(registry.getText(T_SIGN_AS_ANON, "Anonymous"));
+            _signAs.add(registry.getText("Anonymous"));
         }
         
         rebuildComponentMenu(_client.getBugConfig());

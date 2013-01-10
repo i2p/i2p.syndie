@@ -525,7 +525,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             gd.exclude = false;
             _ui.debugMessage("update metadata: no forum");
             _metaName.setText("");
-            _metaDesc.setText(_translationRegistry.getText(T_META_NAME_MULTIPLE, "multiple forums selected"));
+            _metaDesc.setText(_translationRegistry.getText("multiple forums selected"));
             _metaIconManageable.setVisible(false);
             _metaIconPostable.setVisible(false);
             _metaIconArchives.setVisible(false);
@@ -584,7 +584,6 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         });
     }
     
-    private static final String T_META_NAME_MULTIPLE = "syndie.gui.browseforum.meta.name.multiple";
     
     public void setFilter(SyndieURI filter) { 
         if (!_viewOnly) {
@@ -670,47 +669,32 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     private void viewArchives() { _navControl.view(_uriControl.createMetaArchivesURI(_scope)); }
     private void viewAdmins() { _navControl.view(_uriControl.createMetaManagersURI(_scope)); }
 
-    private static final String T_MANAGEABLE_TOOLTIP = "syndie.gui.browseforum.manageable";
-    private static final String T_POSTABLE_TOOLTIP = "syndie.gui.browseforum.postable";
-    private static final String T_ARCHIVES_TOOLTIP = "syndie.gui.browseforum.archives";
-    private static final String T_REFS_TOOLTIP = "syndie.gui.browseforum.refs";
-    private static final String T_ADMINS_TOOLTIP = "syndie.gui.browseforum.admins";
 
-    private static final String T_BOOKMARK = "syndie.gui.browseforum.bookmark";
-    private static final String T_VIEW = "syndie.gui.browseforum.view";
-    private static final String T_MARKALLREAD = "syndie.gui.browseforum.markallread";
-    private static final String T_DELETEREAD = "syndie.gui.browseforum.deleteread";
-    private static final String T_COPYURI = "syndie.gui.browseforum.copyuri";
-    private static final String T_DELETEALL = "syndie.gui.browseforum.deleteall";
-    private static final String T_BAN = "syndie.gui.browseforum.ban";
     
-    private static final String T_MANAGE = "syndie.gui.browseforum.manage";
-    private static final String T_POST = "syndie.gui.browseforum.post";
     
-    private static final String T_REPLY = "syndie.gui.browseforum.reply";
     
     public void translate(TranslationRegistry registry) {
-        _metaIconManageable.setToolTipText(registry.getText(T_MANAGEABLE_TOOLTIP, "You can manage this forum"));
-        _metaIconPostable.setToolTipText(registry.getText(T_POSTABLE_TOOLTIP, "You can post in this forum"));
-        _metaIconArchives.setToolTipText(registry.getText(T_ARCHIVES_TOOLTIP, "This forum has published archives"));
-        _metaIconReferences.setToolTipText(registry.getText(T_REFS_TOOLTIP, "This forum has published references"));
-        _metaIconAdmins.setToolTipText(registry.getText(T_ADMINS_TOOLTIP, "This forum has specific admins"));
+        _metaIconManageable.setToolTipText(registry.getText("You can manage this forum"));
+        _metaIconPostable.setToolTipText(registry.getText("You can post in this forum"));
+        _metaIconArchives.setToolTipText(registry.getText("This forum has published archives"));
+        _metaIconReferences.setToolTipText(registry.getText("This forum has published references"));
+        _metaIconAdmins.setToolTipText(registry.getText("This forum has specific admins"));
 
-        _metaIconManageable.setText(registry.getText(T_MANAGE, "Manage"));
-        _metaIconPostable.setText(registry.getText(T_POST, "Post"));
+        _metaIconManageable.setText(registry.getText("Manage"));
+        _metaIconPostable.setText(registry.getText("Post"));
         
-        _metaNameMenuView.setText(registry.getText(T_VIEW, "View the forum profile"));
+        _metaNameMenuView.setText(registry.getText("View the forum profile"));
         _metaNameMenuView.setImage(ImageUtil.ICON_VIEW);
 
-        _metaNameMenuBookmark.setText(registry.getText(T_BOOKMARK, "Bookmark this forum"));
+        _metaNameMenuBookmark.setText(registry.getText("Bookmark this forum"));
         _metaNameMenuBookmark.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
-        _metaNameMenuMarkRead.setText(registry.getText(T_MARKALLREAD, "Mark all messages read"));
-        _metaNameMenuDeleteRead.setText(registry.getText(T_DELETEREAD, "Delete read messages"));
-        _metaNameMenuCopyURI.setText(registry.getText(T_COPYURI, "Copy forum URI"));
-        _metaNameMenuReply.setText(registry.getText(T_REPLY, "Send the forum administrators a private message"));
-        _metaNameMenuDeleteAll.setText(registry.getText(T_DELETEALL, "Delete all messages"));
-        _metaNameMenuBan.setText(registry.getText(T_BAN, "Ban this forum"));
+        _metaNameMenuMarkRead.setText(registry.getText("Mark all messages read"));
+        _metaNameMenuDeleteRead.setText(registry.getText("Delete read messages"));
+        _metaNameMenuCopyURI.setText(registry.getText("Copy forum URI"));
+        _metaNameMenuReply.setText(registry.getText("Send the forum administrators a private message"));
+        _metaNameMenuDeleteAll.setText(registry.getText("Delete all messages"));
+        _metaNameMenuBan.setText(registry.getText("Ban this forum"));
         _meta.layout(true, true);
     }
     

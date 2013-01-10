@@ -146,8 +146,8 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         if (_passphraseRequired.getSelection()) {
             if (pass.length() <= 0) {
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setMessage(_translationRegistry.getText(T_PASS_REQUIRED_MSG, "A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
-                box.setText(_translationRegistry.getText(T_PASS_REQUIRED_TITLE, "Passphrase required"));
+                box.setMessage(_translationRegistry.getText("A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
+                box.setText(_translationRegistry.getText("Passphrase required"));
                 box.open();
                 return;
             }
@@ -181,32 +181,25 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         if (nymKeys.size() > 0) {
             FileDialog dialog = new FileDialog(_root.getShell(), SWT.SAVE | SWT.SINGLE);
             dialog.setFileName("nymkeys.dat");
-            dialog.setText(_translationRegistry.getText(T_LOCATION, "File to write the backup to"));
+            dialog.setText(_translationRegistry.getText("File to write the backup to"));
             String filename = dialog.open();
             if (filename != null) {
                 String err = backup(nymKeys, chanMeta, pass, filename);
                 if (err != null) {
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_translationRegistry.getText(T_ERROR_MSG, "There was an error backing up the keys: ") + err);
-                    box.setText(_translationRegistry.getText(T_ERROR_TITLE, "Error"));
+                    box.setMessage(_translationRegistry.getText("There was an error backing up the keys: ") + err);
+                    box.setText(_translationRegistry.getText("Error"));
                     box.open();
                 } else {
                     _navControl.unview(_uri);
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_translationRegistry.getText(T_OK_MSG, "The keys were backed up to: ") + filename);
-                    box.setText(_translationRegistry.getText(T_OK_TITLE, "Backup successful"));
+                    box.setMessage(_translationRegistry.getText("The keys were backed up to: ") + filename);
+                    box.setText(_translationRegistry.getText("Backup successful"));
                     box.open();
                 }
             }
         }
     }
-    private static final String T_PASS_REQUIRED_MSG = "syndie.gui.backupsecrets.passrequired.msg";
-    private static final String T_PASS_REQUIRED_TITLE = "syndie.gui.backupsecrets.passrequired.title";
-    private static final String T_LOCATION = "syndie.gui.backupsecrets.location";
-    private static final String T_ERROR_MSG= "syndie.gui.backupsecrets.error.msg";
-    private static final String T_ERROR_TITLE = "syndie.gui.backupsecrets.error.title";
-    private static final String T_OK_MSG = "syndie.gui.backupsecrets.ok.msg";
-    private static final String T_OK_TITLE = "syndie.gui.backupsecrets.ok.title";
     
     /**
      * zip containing
@@ -302,8 +295,8 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         }
         if (origData.length <= ZIP_HEADER.length) {
             MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(trans.getText(T_READ_SHORT, "The secrets file was too short"));
-            box.setText(trans.getText(T_READ_SHORT_TITLE, "Error reading"));
+            box.setMessage(trans.getText("The secrets file was too short"));
+            box.setText(trans.getText("Error reading"));
             box.open();
             return;
         }
@@ -357,8 +350,8 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 zin = null;
                 
                 MessageBox box = new MessageBox(parent, SWT.ICON_INFORMATION | SWT.OK);
-                box.setMessage(trans.getText(T_RESTORED, "Restored keys/meta/corrupt meta: ") + keysRead + "/" + metaRead + "/" + failedMeta);
-                box.setText(trans.getText(T_RESTORED_TITLE, "Restored"));
+                box.setMessage(trans.getText("Restored keys/meta/corrupt meta: ") + keysRead + "/" + metaRead + "/" + failedMeta);
+                box.setText(trans.getText("Restored"));
                 box.open();
             } catch (IOException ioe) {
                 fail(client, ui, themes, trans, parent, ioe.getMessage());
@@ -368,19 +361,13 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
             }
         }
     }
-    private static final String T_READ_SHORT = "syndie.gui.backupsecrets.readshort";
-    private static final String T_READ_SHORT_TITLE = "syndie.gui.backupsecrets.readshort.title";
-    private static final String T_RESTORED = "syndie.gui.backupsecrets.restored";
-    private static final String T_RESTORED_TITLE = "syndie.gui.backupsecrets.restored.title";
     
     private static void fail(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, String err) {
         MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(trans.getText(T_READ_ERR, "The secrets file was corrupt: ") + err);
-        box.setText(trans.getText(T_READ_ERR_TITLE, "Error reading"));
+        box.setMessage(trans.getText("The secrets file was corrupt: ") + err);
+        box.setText(trans.getText("Error reading"));
         box.open();
     }
-    private static final String T_READ_ERR = "syndie.gui.backupsecrets.readerr";
-    private static final String T_READ_ERR_TITLE = "syndie.gui.backupsecrets.readerr.title";
     
     private void populateFields() {
         _includeExpiredKeys.setSelection(true);
@@ -432,16 +419,16 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 item.setChecked(true);
                 String str = null;
                 if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()))
-                    str = _translationRegistry.getText(T_TYPE_MANAGE, "Forum management key");
+                    str = _translationRegistry.getText("Forum management key");
                 else if (Constants.KEY_FUNCTION_REPLY.equals(key.getFunction()))
-                    str = _translationRegistry.getText(T_TYPE_REPLY, "Forum reply key");
+                    str = _translationRegistry.getText("Forum reply key");
                 else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction()))
-                    str = _translationRegistry.getText(T_TYPE_POST, "Forum post key");
+                    str = _translationRegistry.getText("Forum post key");
                 else if (Constants.KEY_FUNCTION_READ.equals(key.getFunction()))
-                    str = _translationRegistry.getText(T_TYPE_READ, "Forum read key");
+                    str = _translationRegistry.getText("Forum read key");
                 
                 if (key.getIsExpired())
-                    str = str + " [" + _translationRegistry.getText(T_KEY_EXPIRED, "expired") + "]";
+                    str = str + " [" + _translationRegistry.getText("expired") + "]";
                 
                 str = str + " (" + _client.sha256(key.getData()).toBase64().substring(0,12) + ")";
                 item.setText(str);
@@ -452,11 +439,6 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         }
     }
 
-    private static final String T_KEY_EXPIRED = "syndie.gui.backupsecrets.key.expired";
-    private static final String T_TYPE_MANAGE = "syndie.gui.backupsecrets.type.manage";
-    private static final String T_TYPE_REPLY = "syndie.gui.backupsecrets.type.reply";
-    private static final String T_TYPE_POST = "syndie.gui.backupsecrets.type.post";
-    private static final String T_TYPE_READ = "syndie.gui.backupsecrets.type.read";
     
     // do all manage keys first, then all reply, then all post, then all read keys
     private static final Comparator KEY_COMPARATOR = new Comparator() {
@@ -499,17 +481,12 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_META = "syndie.gui.backupsecrets.meta";
-    private static final String T_EXPIRED = "syndie.gui.backupsecrets.expired";
-    private static final String T_PASSPHRASE = "syndie.gui.backupsecrets.passphrase";
-    private static final String T_OK = "syndie.gui.backupsecrets.ok";
-    private static final String T_CANCEL = "syndie.gui.backupsecrets.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _includeMeta.setText(registry.getText(T_META, "Backup related forum profile?"));
-        _includeExpiredKeys.setText(registry.getText(T_EXPIRED, "Backup expired keys?"));
-        _passphraseRequired.setText(registry.getText(T_PASSPHRASE, "Passphrase required to restore:"));
-        _ok.setText(registry.getText(T_OK, "Ok"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _includeMeta.setText(registry.getText("Backup related forum profile?"));
+        _includeExpiredKeys.setText(registry.getText("Backup expired keys?"));
+        _passphraseRequired.setText(registry.getText("Passphrase required to restore:"));
+        _ok.setText(registry.getText("Ok"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

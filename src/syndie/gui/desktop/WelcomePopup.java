@@ -50,14 +50,6 @@ public class WelcomePopup implements Themeable, Translatable {
         initComponents();
     }
     
-    private static final String T_TITLE = "syndie.gui.desktop.welcomepopup.title";
-    private static final String T_GREETING = "syndie.gui.desktop.welcomepopup.greeting";
-    private static final String T_QUESTION = "syndie.gui.desktop.welcomepopup.question";
-    private static final String T_TOUR = "syndie.gui.desktop.welcomepopup.tour";
-    private static final String T_SHARING = "syndie.gui.desktop.welcomepopup.sharing";
-    private static final String T_IDENT = "syndie.gui.desktop.welcomepopup.ident";
-    private static final String T_PASS = "syndie.gui.desktop.welcomepopup.pass";
-    private static final String T_CONTINUE = "syndie.gui.desktop.welcomepopup.continue";
     
     private void initComponents() {
         _shell = new Shell(_parent, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
@@ -165,13 +157,13 @@ public class WelcomePopup implements Themeable, Translatable {
     }
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Welcome"));
-        _greeting.setText(registry.getText(T_GREETING, "Welcome to your new Syndie instance!"));
-        _question.setText(registry.getText(T_QUESTION, "Do you want to..."));
-        _tour.setText(registry.getText(T_TOUR, "take the tour?"));
-        _configSharing.setText(registry.getText(T_SHARING, "configure your sharing policy?"));
-        _configIdent.setText(registry.getText(T_IDENT, "configure your default identity?"));
-        _configPass.setText(registry.getText(T_PASS, "configure your instance passphrase?"));
-        _continueToSyndie.setText(registry.getText(T_CONTINUE, "continue on to Syndie?"));
+        _shell.setText(registry.getText("Welcome"));
+        _greeting.setText(registry.getText("Welcome to your new Syndie instance!"));
+        _question.setText(registry.getText("Do you want to..."));
+        _tour.setText(registry.getText("take the tour?"));
+        _configSharing.setText(registry.getText("configure your sharing policy?"));
+        _configIdent.setText(registry.getText("configure your default identity?"));
+        _configPass.setText(registry.getText("configure your instance passphrase?"));
+        _continueToSyndie.setText(registry.getText("continue on to Syndie?"));
     }
 }

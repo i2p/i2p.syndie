@@ -524,22 +524,15 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
         _targetTree.setFont(theme.TREE_FONT);
     }
     
-    private static final String T_COLDESC = "syndie.gui.messagereferenceseditor.coldesc";
-    private static final String T_COLNAME = "syndie.gui.messagereferenceseditor.colname";
-    private static final String T_COLTYPE = "syndie.gui.messagereferenceseditor.coltype";
-    private static final String T_COLTARGET = "syndie.gui.messagereferenceseditor.coltarget";
-    private static final String T_TARGET_REMOVE = "syndie.gui.messagereferenceseditor.target.remove";
-    private static final String T_TARGET_ADD = "syndie.gui.messagereferenceseditor.target.add";
-    private static final String T_TARGET_VIEW = "syndie.gui.messagereferenceseditor.target.view";
     
     public void translate(TranslationRegistry registry) {
-        _colDesc.setText(registry.getText(T_COLDESC, "Description"));
-        _colName.setText(registry.getText(T_COLNAME, "Name"));
-        _colType.setText(registry.getText(T_COLTYPE, "Type"));
-        _colTarget.setText(registry.getText(T_COLTARGET, "Target"));
-        _targetMenuRemove.setText(registry.getText(T_TARGET_REMOVE, "Remove reference"));
-        _targetMenuAdd.setText(registry.getText(T_TARGET_ADD, "Add reference"));
-        _targetMenuView.setText(registry.getText(T_TARGET_VIEW, "View reference"));
+        _colDesc.setText(registry.getText("Description"));
+        _colName.setText(registry.getText("Name"));
+        _colType.setText(registry.getText("Type"));
+        _colTarget.setText(registry.getText("Target"));
+        _targetMenuRemove.setText(registry.getText("Remove reference"));
+        _targetMenuAdd.setText(registry.getText("Add reference"));
+        _targetMenuView.setText(registry.getText("View reference"));
     }
     
     ReferenceNode _parentNode;

@@ -269,12 +269,10 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
         getBrowser().getThemeRegistry().register(this);
     }
 
-    private static final String T_NAME = "syndie.gui.sqltab.name";
-    private static final String T_DESC = "syndie.gui.sqltab.desc";
     
     public void translate(TranslationRegistry registry) {
-        _name = registry.getText(T_NAME, "SQL");
-        _description = registry.getText(T_DESC, "Advanced SQL interface");
+        _name = registry.getText("SQL");
+        _description = registry.getText("Advanced SQL interface");
         
         _icon = ImageUtil.ICON_TAB_SQL;
     }

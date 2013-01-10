@@ -322,37 +322,23 @@ class ManageForumAuthRead extends BaseComponent implements Themeable, Translatab
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_SHELL = "syndie.gui.viewforumauthread.shell";
     
-    private static final String T_CHOICE_ANYONE = "syndie.gui.viewforumauthread.choice.anyone";
-    private static final String T_CHOICE_ANYONE_RETROACTIVE = "syndie.gui.viewforumauthread.choice.anyoneretroactive";
-    private static final String T_CHOICE_ALLOWED = "syndie.gui.viewforumauthread.choice.allowed";
-    private static final String T_CHOICE_ALLOWED_ROTATE = "syndie.gui.viewforumauthread.choice.allowed.rotate";
-    private static final String T_CHOICE_NEW = "syndie.gui.viewforumauthread.choice.new";
-    private static final String T_SEND_SELECTED = "syndie.gui.viewforumauthread.send.selected";
-    private static final String T_SEND_SELECTED_ADD = "syndie.gui.viewforumauthread.send.selected.add";
-    private static final String T_SEND_SELECTED_DEL = "syndie.gui.viewforumauthread.send.selected.del";
-    private static final String T_PBE = "syndie.gui.viewforumauthread.pbe";
-    private static final String T_PBE_PASS_LABEL = "syndie.gui.viewforumauthread.pbe.pass.label";
-    private static final String T_PBE_PROMPT_LABEL = "syndie.gui.viewforumauthread.pbe.prompt.label";
-    private static final String T_OK = "syndie.gui.viewforumauthread.ok";
-    private static final String T_CANCEL = "syndie.gui.viewforumauthread.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL, "Who can read posts?"));
+        _shell.setText(registry.getText("Who can read posts?"));
         
-        _choiceAnyone.setText(registry.getText(T_CHOICE_ANYONE, "Anyone can read posts"));
-        _choiceAnyoneRetroactive.setText(registry.getText(T_CHOICE_ANYONE_RETROACTIVE, "Apply retroactively"));
-        _choiceAllowed.setText(registry.getText(T_CHOICE_ALLOWED, "Those already allowed to read posts"));
-        _choiceAllowedRotate.setText(registry.getText(T_CHOICE_ALLOWED_ROTATE, "Rotate the keys used"));
-        _choiceNew.setText(registry.getText(T_CHOICE_NEW, "Anyone who has a newly created key"));
-        _sendSelected.setText(registry.getText(T_SEND_SELECTED, "Send the key explicitly to the managers of the following forums:"));
-        _sendSelectedAdd.setText(registry.getText(T_SEND_SELECTED_ADD, "Add"));
-        _sendSelectedDel.setText(registry.getText(T_SEND_SELECTED_DEL, "Delete"));
-        _sendPBE.setText(registry.getText(T_PBE, "Post the key in a passphrase protected message to the forum"));
-        _sendPBEPassLabel.setText(registry.getText(T_PBE_PASS_LABEL, "Passphrase:"));
-        _sendPBEPromptLabel.setText(registry.getText(T_PBE_PROMPT_LABEL, "Prompt:"));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _choiceAnyone.setText(registry.getText("Anyone can read posts"));
+        _choiceAnyoneRetroactive.setText(registry.getText("Apply retroactively"));
+        _choiceAllowed.setText(registry.getText("Those already allowed to read posts"));
+        _choiceAllowedRotate.setText(registry.getText("Rotate the keys used"));
+        _choiceNew.setText(registry.getText("Anyone who has a newly created key"));
+        _sendSelected.setText(registry.getText("Send the key explicitly to the managers of the following forums:"));
+        _sendSelectedAdd.setText(registry.getText("Add"));
+        _sendSelectedDel.setText(registry.getText("Delete"));
+        _sendPBE.setText(registry.getText("Post the key in a passphrase protected message to the forum"));
+        _sendPBEPassLabel.setText(registry.getText("Passphrase:"));
+        _sendPBEPromptLabel.setText(registry.getText("Prompt:"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

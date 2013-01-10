@@ -120,12 +120,10 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener, The
     }
     
     public void translate(TranslationRegistry registry) {
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
     
-    private static final String T_OK = "syndie.gui.messagechooserpopup.ok";
-    private static final String T_CANCEL = "syndie.gui.messagechooserpopup.cancel";
     
     public void applyTheme(Theme theme) {
         _ok.setFont(theme.BUTTON_FONT);

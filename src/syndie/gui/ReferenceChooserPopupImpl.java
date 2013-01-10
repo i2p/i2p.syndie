@@ -116,7 +116,6 @@ class ReferenceChooserPopupImpl extends BaseComponent implements ReferenceChoose
         _lsnr.referenceChoiceAborted();
     }
     
-    private static final String T_TITLE = "syndie.gui.referencechooser.title";
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText(_titleKey, _titleVal));

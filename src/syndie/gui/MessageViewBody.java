@@ -195,7 +195,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if ( (title != null) && (title.trim().length() > 0) ) 
                 _tabs[i].setText(title);
             else
-                _tabs[i].setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                _tabs[i].setText(_translationRegistry.getText("Page ") + (i+1));
             
             _tabRoots[i].setLayout(new FillLayout());
             _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
@@ -212,7 +212,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
-            _tabs[off].setText(_translationRegistry.getText(T_TAB_THREAD, "Thread"));
+            _tabs[off].setText(_translationRegistry.getText("Thread"));
             _tabRoots[off].setLayout(new FillLayout());
 
             // no preview on the thread tree
@@ -263,7 +263,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
-            _tabs[off].setText(_translationRegistry.getText(T_TAB_REFS, "References"));
+            _tabs[off].setText(_translationRegistry.getText("References"));
             _tabRoots[off].setLayout(new FillLayout());
             _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
             _refTree.setReferences(refs);
@@ -281,7 +281,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off+i].setControl(_tabRoots[off+i]);
-                _tabs[off+i].setText(_translationRegistry.getText(T_ATTACH_PREFIX, "Attachment ") + (i+1));
+                _tabs[off+i].setText(_translationRegistry.getText("Attachment ") + (i+1));
                 _tabRoots[off+i].setLayout(new FillLayout());
     
                 final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);
@@ -386,10 +386,6 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         }
     }
     
-    private static final String T_PAGE_PREFIX = "syndie.gui.messageview.pageprefix";
-    private static final String T_ATTACH_PREFIX = "syndie.gui.messageview.attachprefix";
-    private static final String T_TAB_THREAD = "syndie.gui.messageview.tabthread";
-    private static final String T_TAB_REFS = "syndie.gui.messageview.tabrefs";
 
     private void asyncLoadThread(MessageInfo msg, final Composite parent) {
         if (_viewState.disposed) return;

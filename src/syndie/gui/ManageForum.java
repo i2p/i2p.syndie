@@ -399,8 +399,8 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     public boolean confirmClose() {
         if (!_modified) return true;
         MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText(_translationRegistry.getText(T_CONFIRM_CLOSE_TITLE, "Confirm"));
-        confirm.setMessage(_translationRegistry.getText(T_CONFIRM_CLOSE_MSG, "Do you want to discard these changes to the forum?"));
+        confirm.setText(_translationRegistry.getText("Confirm"));
+        confirm.setMessage(_translationRegistry.getText("Do you want to discard these changes to the forum?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             return true;
@@ -410,8 +410,6 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             return false;
         }
     }    
-    private static final String T_CONFIRM_CLOSE_TITLE = "syndie.gui.manageforum.close.title";
-    private static final String T_CONFIRM_CLOSE_MSG = "syndie.gui.manageforum.close.msg";
     
     private void promptForPBE() {
         PassphrasePrompt prompt = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), true);
@@ -582,8 +580,8 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         String errs = exec.getErrors();
         if ( (errs != null) && (errs.trim().length() > 0) ) {
             MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText(T_ERROR_TITLE, "Error"));
-            box.setMessage(_translationRegistry.getText(T_ERROR_MSG, "Internal error saving the forum:") + errs);
+            box.setText(_translationRegistry.getText("Error"));
+            box.setMessage(_translationRegistry.getText("Internal error saving the forum:") + errs);
             box.open();
         } else {
             // ok, now create any of the posts we need to send keys to the right people, 
@@ -693,8 +691,6 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             _dataCallback.forumCreated();
         }
     }
-    private static final String T_ERROR_TITLE = "syndie.gui.manageforum.error.title";
-    private static final String T_ERROR_MSG = "syndie.gui.manageforum.error.msg";
     
     private List createReferences(Hash scope, SessionKey readKey) { 
         //_browser.getUI().debugMessage("todo: create references for the read key in " + scope + ": " + readKey);
@@ -838,9 +834,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     }
     private void pickAvatar() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.SINGLE | SWT.OPEN);
-        dialog.setText(_translationRegistry.getText(T_AVATAR_OPEN_NAME, "Select a 48x48 pixel PNG image"));
+        dialog.setText(_translationRegistry.getText("Select a 48x48 pixel PNG image"));
         dialog.setFilterExtensions(new String[] { "*.png" });
-        dialog.setFilterNames(new String[] { _translationRegistry.getText(T_AVATAR_OPEN_TYPE, "PNG image") });
+        dialog.setFilterNames(new String[] { _translationRegistry.getText("PNG image") });
         String filename = dialog.open();
         if (filename != null) {
             Image img = ImageUtil.createImageFromFile(filename);
@@ -869,8 +865,6 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         }
     }
     
-    private static final String T_AVATAR_OPEN_NAME = "syndie.gui.manageforum.avatar.name";
-    private static final String T_AVATAR_OPEN_TYPE = "syndie.gui.manageforum.avatar.type";
     
     private void loadData() { loadData(_client.getChannel(_scopeId)); }
     private void loadData(ChannelInfo info) {
@@ -948,12 +942,11 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             numSelected++;
         }
         
-        _archiveGroup.setText(_translationRegistry.getText(T_ARCHIVE_PREFIX, "Archives: ") + numSelected + " ");
+        _archiveGroup.setText(_translationRegistry.getText("Archives: ") + numSelected + " ");
         _archiveRemoveAll.setEnabled(numSelected > 0);
         
         _archiveGroup.getParent().layout(new Control[] { _archiveGroup });
     }
-    private static final String T_ARCHIVE_PREFIX = "syndie.gui.manageforum.archive.prefix";
     
     private void loadRefs(ChannelInfo info) {
         _referenceNodeRoots.clear();
@@ -969,7 +962,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(false);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         numSelected = counter.getCount();
-        _refGroup.setText(_translationRegistry.getText(T_REF_PREFIX, "References: ") + numSelected + " ");
+        _refGroup.setText(_translationRegistry.getText("References: ") + numSelected + " ");
         _refRemoveAll.setEnabled(numSelected > 0);
         _refGroup.getParent().layout(new Control[] { _refGroup });
     }
@@ -986,7 +979,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         ReferenceNode.walk(_referenceNodeRoots, trim);
         for (int i = 0; i < scopes.size(); i++)
             _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
-        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + scopes.size() + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans: ") + scopes.size() + " ");
         _banRemoveAll.setEnabled(scopes.size() > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1023,7 +1016,6 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         }
     }
     
-    private static final String T_REF_PREFIX = "syndie.gui.manageforum.ref.prefix";
     
     private class Counter implements ReferenceNode.Visitor {
         private int _count;
@@ -1044,7 +1036,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeRefs() {
         TrimRefs trim = new TrimRefs(false);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _refGroup.setText(_translationRegistry.getText(T_REF_PREFIX, "References: ") + 0 + " ");
+        _refGroup.setText(_translationRegistry.getText("References: ") + 0 + " ");
         _refRemoveAll.setEnabled(false);
         _refGroup.getParent().layout(new Control[] { _refGroup });
         modified();
@@ -1053,7 +1045,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeBans() {
         TrimRefs trim = new TrimRefs(true);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + 0 + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans: ") + 0 + " ");
         _banRemoveAll.setEnabled(false);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1082,11 +1074,10 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(true);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         int numSelected = counter.getCount();
-        _banGroup.setText(_translationRegistry.getText(T_BAN_PREFIX, "Bans: ") + numSelected + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans: ") + numSelected + " ");
         _banRemoveAll.setEnabled(numSelected > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
     }
-    private static final String T_BAN_PREFIX = "syndie.gui.manageforum.ban.prefix";
 
     private void loadUsers(ChannelInfo info) {
         _managerHashes.clear();
@@ -1134,68 +1125,38 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _root.pack(true);
     }
 
-    private static final String T_NAME = "syndie.gui.manageforum.name";
-    private static final String T_TAGS = "syndie.gui.manageforum.tags";
-    private static final String T_DESC = "syndie.gui.manageforum.desc";
-    private static final String T_AUTH = "syndie.gui.manageforum.auth";
-    private static final String T_EXPIRATION = "syndie.gui.manageforum.expiration";
-    private static final String T_EXPIRATIONMANAGER = "syndie.gui.manageforum.expirationmanager";
-    private static final String T_USERS = "syndie.gui.manageforum.users";
-    private static final String T_PUBARCHIVE = "syndie.gui.manageforum.pubarchive";
-    private static final String T_PRIVARCHIVE = "syndie.gui.manageforum.privarchive";
-    private static final String T_SAVE = "syndie.gui.manageforum.save";
-    private static final String T_CANCEL = "syndie.gui.manageforum.cancel";
     
-    private static final String T_AUTHGROUP = "syndie.gui.manageforum.authgroup";
-    private static final String T_AUTHGROUP_LABEL = "syndie.gui.manageforum.authgroup.label";
-    private static final String T_AUTHGROUP_READ = "syndie.gui.manageforum.authgroup.read";
-    private static final String T_AUTHGROUP_POST = "syndie.gui.manageforum.authgroup.post";
-    private static final String T_AUTHGROUP_MANAGE = "syndie.gui.manageforum.authgroup.manage";
-    private static final String T_AUTHGROUP_REPLY = "syndie.gui.manageforum.authgroup.reply";
 
-    private static final String T_AUTH_PUBLIC = "syndie.gui.manageforum.auth.public";
-    private static final String T_AUTH_PUBREPLY = "syndie.gui.manageforum.auth.pubreply";
-    private static final String T_AUTH_AUTH = "syndie.gui.manageforum.auth.auth";
     
-    private static final String T_ARCHIVE_REMOVEALL = "syndie.gui.manageforum.archive.removeall";
-    private static final String T_ARCHIVE_SELECTALL = "syndie.gui.manageforum.archive.selectall";
-    private static final String T_ARCHIVE_SELECT = "syndie.gui.manageforum.archive.select";
-    private static final String T_FORUM_REMOVEALL = "syndie.gui.manageforum.forum.removeall";
-    private static final String T_FORUM_SELECTALL = "syndie.gui.manageforum.forum.selectall";
-    private static final String T_FORUM_SELECT = "syndie.gui.manageforum.forum.select";
-    private static final String T_BAN_REMOVEALL = "syndie.gui.manageforum.ban.removeall";
-    private static final String T_BAN_SELECTALL = "syndie.gui.manageforum.ban.selectall";
-    private static final String T_BAN_SELECT = "syndie.gui.manageforum.ban.select";
     
-    private static final String T_AVATAR_OTHER = "syndie.gui.manageforum.avatar.other";
 
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
-        _tagsLabel.setText(registry.getText(T_TAGS, "Tags:"));
-        _descriptionLabel.setText(registry.getText(T_DESC, "Description:"));
-        _expirationLabel.setText(registry.getText(T_EXPIRATION, "Expiration:"));
-        _expirationManager.setText(registry.getText(T_EXPIRATIONMANAGER, "Manage"));
+        _nameLabel.setText(registry.getText("Name:"));
+        _tagsLabel.setText(registry.getText("Tags:"));
+        _descriptionLabel.setText(registry.getText("Description:"));
+        _expirationLabel.setText(registry.getText("Expiration:"));
+        _expirationManager.setText(registry.getText("Manage"));
         if (_showActions) {
-            _save.setText(registry.getText(T_SAVE, "Save changes"));
-            _cancel.setText(registry.getText(T_CANCEL, "Cancel changes"));
+            _save.setText(registry.getText("Save changes"));
+            _cancel.setText(registry.getText("Cancel changes"));
         }
 
-        _authGroup.setText(registry.getText(T_AUTHGROUP, "Authorization and authentication"));
-        _authLabel.setText(registry.getText(T_AUTHGROUP_LABEL, "Forum authorization and authentication takes four forms - those allowed to read a forum's posts, those allowed to post to a forum, those allowed to manage a forum, and those allowed to read the private replies to forum administrators"));
-        _authRead.setText(registry.getText(T_AUTHGROUP_READ, "Read posts"));
-        _authPost.setText(registry.getText(T_AUTHGROUP_POST, "Create posts"));
-        _authManage.setText(registry.getText(T_AUTHGROUP_MANAGE, "Manage"));
-        _authReply.setText(registry.getText(T_AUTHGROUP_REPLY, "Read forum feedback"));
+        _authGroup.setText(registry.getText("Authorization and authentication"));
+        _authLabel.setText(registry.getText("Forum authorization and authentication takes four forms - those allowed to read a forum's posts, those allowed to post to a forum, those allowed to manage a forum, and those allowed to read the private replies to forum administrators"));
+        _authRead.setText(registry.getText("Read posts"));
+        _authPost.setText(registry.getText("Create posts"));
+        _authManage.setText(registry.getText("Manage"));
+        _authReply.setText(registry.getText("Read forum feedback"));
 
-        _archiveRemoveAll.setText(registry.getText(T_ARCHIVE_REMOVEALL, "Remove all"));
-        _archiveSelect.setText(registry.getText(T_ARCHIVE_SELECT, "Select..."));
+        _archiveRemoveAll.setText(registry.getText("Remove all"));
+        _archiveSelect.setText(registry.getText("Select..."));
         
-        _refRemoveAll.setText(registry.getText(T_FORUM_REMOVEALL, "Remove all"));
-        _refSelect.setText(registry.getText(T_FORUM_SELECT, "Select..."));
+        _refRemoveAll.setText(registry.getText("Remove all"));
+        _refSelect.setText(registry.getText("Select..."));
         
-        _banRemoveAll.setText(registry.getText(T_BAN_REMOVEALL, "Remove all"));
-        _banSelect.setText(registry.getText(T_BAN_SELECT, "Select..."));
+        _banRemoveAll.setText(registry.getText("Remove all"));
+        _banSelect.setText(registry.getText("Select..."));
     
-        _avatarOther.setText(registry.getText(T_AVATAR_OTHER, "Other..."));
+        _avatarOther.setText(registry.getText("Other..."));
     }
 }

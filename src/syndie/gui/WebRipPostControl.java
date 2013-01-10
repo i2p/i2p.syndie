@@ -197,25 +197,18 @@ public class WebRipPostControl extends WebRipPageControl {
         super.rip();
     }
     
-    private static final String T_PRIV_PUBLIC = "syndie.gui.webrippostcontrol.privpublic";
-    private static final String T_PRIV_PBE = "syndie.gui.webrippostcontrol.privpbe";
-    private static final String T_PRIV_AUTHORIZED = "syndie.gui.webrippostcontrol.privauthorized";
     
-    private static final String T_TAGWITHURL = "syndie.gui.webrippostcontrol.tagwithurl";
-    private static final String T_TAG = "syndie.gui.webrippostcontrol.tag";
-    private static final String T_TARGET = "syndie.gui.webrippostcontrol.target";
-    private static final String T_AUTHOR = "syndie.gui.webrippostcontrol.author";
     
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
-        _privacyPublic.setText(registry.getText(T_PRIV_PUBLIC, "Anyone can read the rip"));
-        _privacyPBE.setText(registry.getText(T_PRIV_PBE, "Passphrase required to read the rip..."));
-        _privacyAuthorized.setText(registry.getText(T_PRIV_AUTHORIZED, "Only authorized people can read the rip"));
-        _tagWithURL.setText(registry.getText(T_TAGWITHURL, "Tag the post with the URL?"));
+        _privacyPublic.setText(registry.getText("Anyone can read the rip"));
+        _privacyPBE.setText(registry.getText("Passphrase required to read the rip..."));
+        _privacyAuthorized.setText(registry.getText("Only authorized people can read the rip"));
+        _tagWithURL.setText(registry.getText("Tag the post with the URL?"));
         
-        _tagLabel.setText(registry.getText(T_TAG, "Tags:"));
-        _targetLabel.setText(registry.getText(T_TARGET, "Post to:"));
-        _authorLabel.setText(registry.getText(T_AUTHOR, "Post from:"));
+        _tagLabel.setText(registry.getText("Tags:"));
+        _targetLabel.setText(registry.getText("Post to:"));
+        _authorLabel.setText(registry.getText("Post from:"));
     }
     
     public void applyTheme(Theme theme) {

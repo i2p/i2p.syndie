@@ -272,22 +272,15 @@ class LogTab extends BrowserTab implements UI, Themeable, Translatable {
         _out.setFont(theme.LOG_FONT);
     }
     
-    private static final String T_MENU_CLEAR = "syndie.gui.logtab.menuclear";
-    private static final String T_NAME = "syndie.gui.logtab.name";
-    private static final String T_DESC = "syndie.gui.logtab.desc";
-    private static final String T_DEBUG = "syndie.gui.logtab.debug";
-    private static final String T_STATUS = "syndie.gui.logtab.status";
-    private static final String T_ERROR = "syndie.gui.logtab.error";
-    private static final String T_LEVELS = "syndie.gui.logtab.levels";
     
     public void translate(TranslationRegistry registry) {
-        _menuClear.setText(registry.getText(T_MENU_CLEAR, "Clear records"));
-        _name = registry.getText(T_NAME, "Logs");
-        _desc = registry.getText(T_DESC, "Log messages");
-        _levelDebug.setText(registry.getText(T_DEBUG, "Debug"));
-        _levelStatus.setText(registry.getText(T_STATUS, "Status"));
-        _levelError.setText(registry.getText(T_ERROR, "Error"));
-        _levels.setText(registry.getText(T_LEVELS, "Log levels"));
+        _menuClear.setText(registry.getText("Clear records"));
+        _name = registry.getText("Logs");
+        _desc = registry.getText("Log messages");
+        _levelDebug.setText(registry.getText("Debug"));
+        _levelStatus.setText(registry.getText("Status"));
+        _levelError.setText(registry.getText("Error"));
+        _levels.setText(registry.getText("Log levels"));
         
         reconfigItem();
     }

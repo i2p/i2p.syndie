@@ -37,8 +37,6 @@ public class ArchiveManagerPanel extends DesktopPanel {
     
     protected void dispose() { _manager.dispose(); }
     
-    public String getPanelName() { return _translationRegistry.getText(T_NAME, "Archive manager"); }
-    public String getPanelDescription() { return _translationRegistry.getText(T_DESC, "General management of the local archive"); }
-    private static final String T_NAME = "syndie.gui.desktop.archivemanagerpanel.name";
-    private static final String T_DESC = "syndie.gui.desktop.archivemanagerpanel.desc";
+    public String getPanelName() { return _translationRegistry.getText("Archive manager"); }
+    public String getPanelDescription() { return _translationRegistry.getText("General management of the local archive"); }
 }

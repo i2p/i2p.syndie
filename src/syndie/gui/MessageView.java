@@ -171,7 +171,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     public String getTitle() { 
         String rv = _headerSubject.getText();
-        //return _translationRegistry.getText(T_TITLE_PREFIX, "msg: ") + rv;
+        //return _translationRegistry.getText("msg: ") + rv;
         return rv;
     }
     
@@ -275,7 +275,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 else
                     _headerAuthor.setText(name + " [" + authorChan.getChannelHash().toBase64().substring(0,6) + ']');
             } else {
-                _headerAuthor.setText(_translationRegistry.getText(T_NO_AUTHOR, "Unspecified"));
+                _headerAuthor.setText(_translationRegistry.getText("Unspecified"));
             }
             timer.addEvent("author set");
             
@@ -288,7 +288,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 else
                     _headerForum.setText(name + " [" + forumChan.getChannelHash().toBase64().substring(0,6) + ']');
             } else {
-                _headerForum.setText(_translationRegistry.getText(T_NO_FORUM, "Unspecified"));
+                _headerForum.setText(_translationRegistry.getText("Unspecified"));
             }
             timer.addEvent("forum set");
             
@@ -359,7 +359,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             }
         }
         // no ancestors with a subject found
-        return trans.getText(T_NO_SUBJECT, "No subject");
+        return trans.getText("No subject");
     }
     static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, SyndieURI uri) {
         long msgId = -1;
@@ -396,9 +396,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             }
         }
         // no ancestors with a subject found
-        return trans.getText(T_NO_SUBJECT, "No subject");
+        return trans.getText("No subject");
     }
-    private static final String T_NO_SUBJECT = "syndie.gui.messageview.nosubject";
     
     /*
     public void toggleMaxView() {
@@ -427,7 +426,6 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     public void toggleMaxEditor() { }
 
     /*
-    private static final String T_MAXVIEW_UNMAX = "syndie.gui.messageview.maxview.unmax";
     private class MaxView {
         private Shell _shell;
         private PageRenderer _maxRenderer;
@@ -436,7 +434,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             _shell.setLayout(new GridLayout(1, true));
             Button unmax = new Button(_shell, SWT.PUSH);
-            unmax.setText(_browser.getTranslationRegistry().getText(T_MAXVIEW_UNMAX, "Restore normal size"));
+            unmax.setText(_browser.getTranslationRegistry().getText("Restore normal size"));
             unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             
             _maxRenderer = new PageRenderer(_shell, true, _browser);
@@ -486,8 +484,6 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     }
      */
     
-    private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.messageview.reimporterrtitle";
-    private static final String T_REIMPORT_ERR_MSG = "syndie.gui.messageview.reimporterrmsg";
     private void reimport(final String passphrase) {
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
@@ -497,8 +493,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                        MessageBox box = null;
                        if (!ok) {
                            box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-                           box.setText(_translationRegistry.getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
-                           box.setMessage(_translationRegistry.getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           box.setText(_translationRegistry.getText("Passphrase incorrect"));
+                           box.setMessage(_translationRegistry.getText("The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
                            if (rc == SWT.YES) {
                                _navControl.unview(_uri);
@@ -878,66 +874,42 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _headerTags.setFont(theme.DEFAULT_FONT);
     }
     
-    private static final String T_REPLY = "syndie.gui.messageview.reply";
-    private static final String T_AUTHOR = "syndie.gui.messageview.author";
-    private static final String T_FORUM = "syndie.gui.messageview.forum";
-    private static final String T_DATE = "syndie.gui.messageview.date";
 
-    private static final String T_NO_AUTHOR = "syndie.gui.messageview.noauthor";
-    private static final String T_NO_FORUM = "syndie.gui.messageview.noforum";
     
-    private static final String T_ATTACHMENT = "syndie.gui.messageview.attachment";
-    private static final String T_PAGE = "syndie.gui.messageview.page";
-    private static final String T_REFERENCES = "syndie.gui.messageview.references";
-    private static final String T_THREAD = "syndie.gui.messageview.thread";
 
-    private static final String T_TITLE_PREFIX = "syndie.gui.messageview.title";
     
-    private static final String T_AUTHORBAN = "syndie.gui.messageview.authorban";
-    private static final String T_AUTHORBOOKMARK = "syndie.gui.messageview.authorbookmark";
-    private static final String T_AUTHORVIEWMETA = "syndie.gui.messageview.authorviewmeta";
-    private static final String T_AUTHORVIEWMSGS = "syndie.gui.messageview.authorviewmsgs";
     
-    private static final String T_FORUMBAN = "syndie.gui.messageview.forumban";
-    private static final String T_FORUMBOOKMARK = "syndie.gui.messageview.forumbookmark";
-    private static final String T_FORUMVIEWMETA = "syndie.gui.messageview.forumviewmeta";
-    private static final String T_FORUMVIEWMSGS = "syndie.gui.messageview.forumviewmsgs";
     
-    private static final String T_AUTHORREPLYPRIV = "syndie.gui.messageview.authorreplypriv";
-    private static final String T_FORUMREPLYPUB = "syndie.gui.messageview.forumreplypub";
-    private static final String T_FORUMREPLYPRIV = "syndie.gui.messageview.forumreplypriv";
     
-    private static final String T_NEXTINTHREAD = "syndie.gui.messageview.nextinthread";
-    private static final String T_PREVINTHREAD = "syndie.gui.messageview.previnthread";
     
     public void translate(TranslationRegistry registry) {
-        _headerReply.setText(registry.getText(T_REPLY, "Reply..."));
-        _headerAuthorLabel.setText(registry.getText(T_AUTHOR, "Author:"));
-        _headerForumLabel.setText(registry.getText(T_FORUM, "Forum:"));
-        _headerDateLabel.setText(registry.getText(T_DATE, "Date:"));
+        _headerReply.setText(registry.getText("Reply..."));
+        _headerAuthorLabel.setText(registry.getText("Author:"));
+        _headerForumLabel.setText(registry.getText("Forum:"));
+        _headerDateLabel.setText(registry.getText("Date:"));
         
-        _headerReplyAuthorPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
-        _headerReplyForumPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
-        _headerReplyForumPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
+        _headerReplyAuthorPrivate.setText(registry.getText("Send a private reply to the author"));
+        _headerReplyForumPrivate.setText(registry.getText("Send a private reply to the forum administrators"));
+        _headerReplyForumPublic.setText(registry.getText("Send a public reply to the forum"));
         
         // duplicate the reply menu 
-        _authorMenuReplyPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
-        _forumMenuReplyPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
-        _forumMenuReplyPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
+        _authorMenuReplyPrivate.setText(registry.getText("Send a private reply to the author"));
+        _forumMenuReplyPrivate.setText(registry.getText("Send a private reply to the forum administrators"));
+        _forumMenuReplyPublic.setText(registry.getText("Send a public reply to the forum"));
         
-        _authorMenuBan.setText(registry.getText(T_AUTHORBAN, "Ban author"));
-        _authorMenuBookmark.setText(registry.getText(T_AUTHORBOOKMARK, "Bookmark author"));
-        _authorMenuViewMeta.setText(registry.getText(T_AUTHORVIEWMETA, "View author's information"));
-        _authorMenuViewMsgs.setText(registry.getText(T_AUTHORVIEWMSGS, "View author's forum"));
+        _authorMenuBan.setText(registry.getText("Ban author"));
+        _authorMenuBookmark.setText(registry.getText("Bookmark author"));
+        _authorMenuViewMeta.setText(registry.getText("View author's information"));
+        _authorMenuViewMsgs.setText(registry.getText("View author's forum"));
         
-        _forumMenuBan.setText(registry.getText(T_FORUMBAN, "Ban forum"));
-        _forumMenuBookmark.setText(registry.getText(T_FORUMBOOKMARK, "Bookmark forum"));
+        _forumMenuBan.setText(registry.getText("Ban forum"));
+        _forumMenuBookmark.setText(registry.getText("Bookmark forum"));
         _forumMenuBookmark.setImage(ImageUtil.ICON_ADDBOOKMARK);
-        _forumMenuViewMeta.setText(registry.getText(T_FORUMVIEWMETA, "View forum profile"));
+        _forumMenuViewMeta.setText(registry.getText("View forum profile"));
         _forumMenuViewMeta.setImage(ImageUtil.ICON_VIEW);
-        _forumMenuViewMsgs.setText(registry.getText(T_FORUMVIEWMSGS, "View forum messages"));
+        _forumMenuViewMsgs.setText(registry.getText("View forum messages"));
         
-        _headerGoToNextInThread.setText(registry.getText(T_NEXTINTHREAD, "Next"));
-        _headerGoToPrevInThread.setText(registry.getText(T_PREVINTHREAD, "Prev"));
+        _headerGoToNextInThread.setText(registry.getText("Next"));
+        _headerGoToPrevInThread.setText(registry.getText("Prev"));
     }
 }

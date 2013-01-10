@@ -412,7 +412,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 viewMatching(scopes); 
             }
         });
-        view.setText(_translationRegistry.getText(T_MENU_VIEWCOMBINED, "Combined view of the selected forums"));
+        view.setText(_translationRegistry.getText("Combined view of the selected forums"));
         
         _tree.setMenu(menu);
     }
@@ -452,7 +452,6 @@ public class NymChannelTree implements Themeable, Translatable {
             getMatchingScopes(scopes, base.getItem(i));
     }
     
-    private static final String T_MENU_VIEWCOMBINED = "syndie.gui.nymchanneltree.menu.viewcombined";
     
     private void buildMenu(final long chanId, boolean manageable, boolean postable, boolean deletable, boolean watched, final SyndieURI otherURI) {
         Menu menu = _tree.getMenu();
@@ -470,7 +469,7 @@ public class NymChannelTree implements Themeable, Translatable {
                     //_navControl.view(SyndieURI.createScope(chan));
                 }
             });
-            view.setText(_translationRegistry.getText(T_MENU_VIEW, "View the forum"));
+            view.setText(_translationRegistry.getText("View the forum"));
 
             MenuItem profile = new MenuItem(menu, SWT.PUSH);
             profile.addSelectionListener(new FireSelectionListener() {
@@ -480,7 +479,7 @@ public class NymChannelTree implements Themeable, Translatable {
                     //_navControl.view(SyndieURI.createScope(chan));
                 }
             });
-            profile.setText(_translationRegistry.getText(T_MENU_VIEWPROFILE, "View the forum's profile"));
+            profile.setText(_translationRegistry.getText("View the forum's profile"));
 
             if (manageable) {
                 MenuItem manage = new MenuItem(menu, SWT.PUSH);
@@ -491,7 +490,7 @@ public class NymChannelTree implements Themeable, Translatable {
                         //_navControl.view(URIHelper.instance().createMetaURI(chan));
                     }
                 });
-                manage.setText(_translationRegistry.getText(T_MENU_MANAGE, "Manage the forum"));
+                manage.setText(_translationRegistry.getText("Manage the forum"));
             }
 
             if (postable) {
@@ -503,7 +502,7 @@ public class NymChannelTree implements Themeable, Translatable {
                         //_navControl.view(URIHelper.instance().createPostURI(chan, null));
                     }
                 });
-                post.setText(_translationRegistry.getText(T_MENU_POST, "Post in the forum"));
+                post.setText(_translationRegistry.getText("Post in the forum"));
             }
 
             if (watched) {
@@ -517,7 +516,7 @@ public class NymChannelTree implements Themeable, Translatable {
                         //_navControl.view(URIHelper.instance().createPostURI(chan, null));
                     }
                 });
-                unwatch.setText(_translationRegistry.getText(T_MENU_UNWATCH, "Unwatch the forum"));
+                unwatch.setText(_translationRegistry.getText("Unwatch the forum"));
             }
         } else {
             MenuItem view = new MenuItem(menu, SWT.PUSH);
@@ -526,7 +525,7 @@ public class NymChannelTree implements Themeable, Translatable {
                     _listener.channelSelected(otherURI);
                 }
             });
-            view.setText(_translationRegistry.getText(T_MENU_VIEWRESOURCE, "View the resource"));
+            view.setText(_translationRegistry.getText("View the resource"));
         }
 
         if (deletable) {
@@ -539,18 +538,11 @@ public class NymChannelTree implements Themeable, Translatable {
                     //_navControl.view(URIHelper.instance().createPostURI(chan, null));
                 }
             });
-            delete.setText(_translationRegistry.getText(T_MENU_DELETE, "Drop the reference"));
+            delete.setText(_translationRegistry.getText("Drop the reference"));
         }
         _tree.setMenu(menu);
     }
     
-    private static final String T_MENU_VIEW = "syndie.gui.nymchanneltree.menu.view";
-    private static final String T_MENU_VIEWPROFILE = "syndie.gui.nymchanneltree.menu.viewprofile";
-    private static final String T_MENU_MANAGE = "syndie.gui.nymchanneltree.menu.manage";
-    private static final String T_MENU_POST = "syndie.gui.nymchanneltree.menu.post";
-    private static final String T_MENU_UNWATCH = "syndie.gui.nymchanneltree.menu.unwatch";
-    private static final String T_MENU_DELETE = "syndie.gui.nymchanneltree.menu.delete";
-    private static final String T_MENU_VIEWRESOURCE = "syndie.gui.nymchanneltree.menu.viewresource";
     
     public void setChannelSource(ChannelSource src) {
         if (src instanceof NymChannelSource)
@@ -1103,40 +1095,25 @@ public class NymChannelTree implements Themeable, Translatable {
     }
     
     public void translate(TranslationRegistry registry) {
-        _colAvatar.setText(registry.getText(T_AVATAR, "Avatar"));
-        _colName.setText(registry.getText(T_NAME, "Name"));
-        _colDesc.setText(registry.getText(T_DESC, "Description"));
-        _colMsgs.setText(registry.getText(T_MSGS, "Msgs"));
-        _colMsgs.setToolTipText(registry.getText(T_MSGS_TT, "Unread / Private / Total messages"));
-        _colLastPost.setText(registry.getText(T_LASTPOST, "Last post"));
-        _colAttributes.setToolTipText(registry.getText(T_ATTRIBUTES_TT, "Profile published references?"));
+        _colAvatar.setText(registry.getText("Avatar"));
+        _colName.setText(registry.getText("Name"));
+        _colDesc.setText(registry.getText("Description"));
+        _colMsgs.setText(registry.getText("Msgs"));
+        _colMsgs.setToolTipText(registry.getText("Unread / Private / Total messages"));
+        _colLastPost.setText(registry.getText("Last post"));
+        _colAttributes.setToolTipText(registry.getText("Profile published references?"));
         
-        _filterLabel.setText(registry.getText(T_FILTER, "Only include forums with: "));
-        _unreadOnlySel.setText(registry.getText(T_UNREADONLY, "unread messages"));
-        _privateOnlySel.setText(registry.getText(T_PRIVATEONLY, "private messages"));
-        _search.setText(registry.getText(T_SEARCH, "search term"));
-        _searchButton.setText(registry.getText(T_SEARCH_BUTTON, "search"));
-        _searchAll.setText(registry.getText(T_SEARCH_ALL, "view all"));
+        _filterLabel.setText(registry.getText("Only include forums with: "));
+        _unreadOnlySel.setText(registry.getText("unread messages"));
+        _privateOnlySel.setText(registry.getText("private messages"));
+        _search.setText(registry.getText("search term"));
+        _searchButton.setText(registry.getText("search"));
+        _searchAll.setText(registry.getText("view all"));
         
-        _nymChannelsButton.setText(registry.getText(T_NYMCHANNELS, "Special forums"));
-        _bookmarksButton.setText(registry.getText(T_BOOKMARKS, "Bookmarks"));
+        _nymChannelsButton.setText(registry.getText("Special forums"));
+        _bookmarksButton.setText(registry.getText("Bookmarks"));
     }
     
-    private static final String T_AVATAR = "syndie.gui.nymchanneltree.avatar";
-    private static final String T_NAME = "syndie.gui.nymchanneltree.name";
-    private static final String T_DESC = "syndie.gui.nymchanneltree.desc";
-    private static final String T_MSGS = "syndie.gui.nymchanneltree.msgs";
-    private static final String T_MSGS_TT = "syndie.gui.nymchanneltree.msgs.tt";
-    private static final String T_LASTPOST = "syndie.gui.nymchanneltree.lastpost";
-    private static final String T_ATTRIBUTES_TT = "syndie.gui.nymchanneltree.attributes.tt";
     
-    private static final String T_FILTER = "syndie.gui.nymchanneltree.filterunreadonly";
-    private static final String T_UNREADONLY = "syndie.gui.nymchanneltree.unreadonly";
-    private static final String T_PRIVATEONLY = "syndie.gui.nymchanneltree.privateonly";
-    private static final String T_SEARCH = "syndie.gui.nymchanneltree.search";
-    private static final String T_SEARCH_BUTTON = "syndie.gui.nymchanneltree.search.button";
-    private static final String T_SEARCH_ALL = "syndie.gui.nymchanneltree.search.all";
     
-    private static final String T_NYMCHANNELS = "syndie.gui.nymchanneltree.nymchannels";
-    private static final String T_BOOKMARKS = "syndie.gui.nymchanneltree.bookmarks";
 }

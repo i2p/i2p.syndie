@@ -490,20 +490,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
     }
     
-    private static final String T_POSTED_MESSAGE = "syndie.gui.messageeditor.post.message";
-    private static final String T_POSTED_TITLE = "syndie.gui.messageeditor.post.title";
-    private static final String T_POSTED_CHECKBOX = "syndie.gui.messageeditor.post.checkbox";
-    private static final String T_POSTED_OK = "syndie.gui.messageeditor.post.ok";
-    private static final String T_POST_ERROR_MESSAGE_PREFIX = "syndie.gui.messageeditor.post.errormsg";
-    private static final String T_POST_ERROR_TITLE = "syndie.gui.messageeditor.post.errortitle";
-    private static final String T_CONFIRM_EMPTY_TITLE = "syndie.gui.messageeditor.post.confirmempty.title";
-    private static final String T_CONFIRM_EMPTY_MESSAGE = "syndie.gui.messageeditor.post.confirmempty.message";
     
     public void postMessage() {
         if (!isModifiedSinceOpen()) {
             MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            confirm.setText(_translationRegistry.getText(T_CONFIRM_EMPTY_TITLE, "Post empty message?"));
-            confirm.setMessage(_translationRegistry.getText(T_CONFIRM_EMPTY_MESSAGE, "Do you really want to post this empty message?"));
+            confirm.setText(_translationRegistry.getText("Post empty message?"));
+            confirm.setMessage(_translationRegistry.getText("Do you really want to post this empty message?"));
             
             if (confirm.open() == SWT.NO)
                 return;
@@ -529,14 +521,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                                 ((LocalMessageCallback)iter.next()).messageCreated(uri);
                         } else {
                             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                            box.setMessage(_translationRegistry.getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + errors);
-                            box.setText(_translationRegistry.getText(T_POST_ERROR_TITLE, "Error creating the message"));
+                            box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information: ") + errors);
+                            box.setText(_translationRegistry.getText("Error creating the message"));
                             box.open();
                         }
                     } else {
                         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_translationRegistry.getText(T_POST_ERROR_MESSAGE_PREFIX, "There was an error creating the message.  Please view the log for more information: ") + errors);
-                        box.setText(_translationRegistry.getText(T_POST_ERROR_TITLE, "Error creating the message"));
+                        box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information: ") + errors);
+                        box.setText(_translationRegistry.getText("Error creating the message"));
                         box.open();
                     }
                     exec.cleanup();
@@ -547,7 +539,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     if (Boolean.valueOf(prefs.getProperty("editor.showMessageCreatedBox")).booleanValue()) {
                         final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
-                        shell.setText(_translationRegistry.getText(T_POSTED_TITLE, "Message created!"));
+                        shell.setText(_translationRegistry.getText("Message created!"));
                         
                         GridLayout gl = new GridLayout(2, false);
                         shell.setLayout(gl);
@@ -558,17 +550,17 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                         messageLayoutData.heightHint = 75;
                         message.setLayoutData(messageLayoutData);
                         message.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-                        message.setText(_translationRegistry.getText(T_POSTED_MESSAGE, "Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+                        message.setText(_translationRegistry.getText("Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
                         
                         final Button checkbox = new Button(shell, SWT.CHECK);
                         checkbox.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                        checkbox.setText(_translationRegistry.getText(T_POSTED_CHECKBOX, "Display this message next time"));
+                        checkbox.setText(_translationRegistry.getText("Display this message next time"));
                         checkbox.setSelection(true);
                         
                         Button ok = new Button(shell, SWT.PUSH);
                         ok.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
                         ok.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-                        ok.setText(_translationRegistry.getText(T_POSTED_OK, "OK"));
+                        ok.setText(_translationRegistry.getText("OK"));
                         ok.addSelectionListener(new FireSelectionListener() {
                             public void fire() {
                                 if (!checkbox.getSelection()) {
@@ -668,16 +660,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 ((LocalMessageCallback)iter.next()).messagePostponed(_postponeId);
     }
     
-    private static final String T_CANCEL_MESSAGE = "syndie.gui.messageeditor.cancel.message";
-    private static final String T_CANCEL_TITLE = "syndie.gui.messageeditor.cancel.title";
     
     public void cancelMessage() { cancelMessage(true); }
     public void cancelMessage(boolean requireConfirm) {
         if (requireConfirm) {
             // confirm
             MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            dialog.setMessage(_translationRegistry.getText(T_CANCEL_MESSAGE, "Are you sure you want to cancel this message?"));
-            dialog.setText(_translationRegistry.getText(T_CANCEL_TITLE, "Confirm message cancellation"));
+            dialog.setMessage(_translationRegistry.getText("Are you sure you want to cancel this message?"));
+            dialog.setText(_translationRegistry.getText("Confirm message cancellation"));
             int rv = dialog.open();
             if (rv == SWT.YES) {
                 cancelMessage(false);
@@ -905,7 +895,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if ( (title != null) && (title.trim().length() > 0) )
                 editor.getItem().setText(title);
             else
-                editor.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                editor.getItem().setText(_translationRegistry.getText("Page ") + (i+1));
             //if (isHTML)
             //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
             //else
@@ -954,7 +944,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         updateToolbar();
     }
     
-    private static final String T_PAGE_PREFIX = "syndie.gui.messageeditor.pageprefix";
     
     private static final String SER_AUTHOR = "author";
     private static final String SER_TARGET = "target";
@@ -1103,7 +1092,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (cfg.containsKey(SER_EXPIRATION))
             _controlExpirationText.setText(cfg.getProperty(SER_EXPIRATION));
         else
-            _controlExpirationText.setText(_browser.getTranslationRegistry().getText(T_EXPIRATION_NONE, "none"));
+            _controlExpirationText.setText(_browser.getTranslationRegistry().getText("none"));
          */
     }
     
@@ -1328,9 +1317,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         });
     }
     
-    private static final String T_TITLE = "syndie.gui.messageeditor.title";
-    private static final String T_TITLE_LABEL = "syndie.gui.messageeditor.title.label";
-    private static final String T_TITLE_DONE = "syndie.gui.messageeditor.title.done";
     
     private void setTitle() {
         final int page = _pageTabs.getSelectionIndex();
@@ -1351,11 +1337,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 public void shellDeiconified(ShellEvent shellEvent) {}
                 public void shellIconified(ShellEvent shellEvent) {}
             });
-            shell.setText(_translationRegistry.getText(T_TITLE, "Page title"));
+            shell.setText(_translationRegistry.getText("Page title"));
             
             Label l = new Label(shell, SWT.NONE);
             l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-            l.setText(_translationRegistry.getText(T_TITLE_LABEL, "Page title:"));
+            l.setText(_translationRegistry.getText("Page title:"));
             l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
             
             final Text titleField = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -1376,7 +1362,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             });
             
             Button done = new Button(shell, SWT.PUSH);
-            done.setText(_translationRegistry.getText(T_TITLE_DONE, "OK"));
+            done.setText(_translationRegistry.getText("OK"));
             done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
             done.addSelectionListener(new FireSelectionListener() { 
@@ -1409,17 +1395,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         else
             idx = 1;
         _privacy.removeAll();
-        _privacy.add(_translationRegistry.getText(T_PRIV_PUBLIC, "Anyone can read the post"));
-        _privacy.add(_translationRegistry.getText(T_PRIV_AUTHORIZED, "Authorized readers of the forum can read the post"));
-        _privacy.add(_translationRegistry.getText(T_PRIV_PBE, "Passphrase required to read the post..."));
-        _privacy.add(_translationRegistry.getText(T_PRIV_REPLY, "Only forum administrators can read the post"));
+        _privacy.add(_translationRegistry.getText("Anyone can read the post"));
+        _privacy.add(_translationRegistry.getText("Authorized readers of the forum can read the post"));
+        _privacy.add(_translationRegistry.getText("Passphrase required to read the post..."));
+        _privacy.add(_translationRegistry.getText("Only forum administrators can read the post"));
         _privacy.setRedraw(true);
     }
     
-    private static final String T_PRIV_PUBLIC = "syndie.gui.messageeditor.priv.public";
-    private static final String T_PRIV_AUTHORIZED = "syndie.gui.messageeditor.priv.auth";
-    private static final String T_PRIV_PBE = "syndie.gui.messageeditor.priv.pbe";
-    private static final String T_PRIV_REPLY = "syndie.gui.messageeditor.priv.reply";
     
     private static final int PRIVACY_PUBLIC = 0;
     private static final int PRIVACY_AUTHORIZED = 1;
@@ -1468,11 +1450,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
     }
     
-    private static final String T_PREVIEW = "syndie.gui.messageeditor.preview";
-    private static final String T_EDIT = "syndie.gui.messageeditor.edit";
-    private static final String T_POST = "syndie.gui.messageeditor.post";
-    private static final String T_POSTPONE = "syndie.gui.messageeditor.postpone";
-    private static final String T_CANCEL = "syndie.gui.messageeditor.cancel";
     
     private void initFooter() {
         if (!_showActions) return;
@@ -1501,9 +1478,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             public void fire(SelectionEvent selectionEvent) { cancelMessage(); }
         });
         
-        _post.setText(_translationRegistry.getText(T_POST, "Post the message"));
-        _postpone.setText(_translationRegistry.getText(T_POSTPONE, "Save the message for later"));
-        _cancel.setText(_translationRegistry.getText(T_CANCEL, "Cancel the message"));
+        _post.setText(_translationRegistry.getText("Post the message"));
+        _postpone.setText(_translationRegistry.getText("Save the message for later"));
+        _cancel.setText(_translationRegistry.getText("Cancel the message"));
     }
     
     public static final String TYPE_HTML = "text/html";
@@ -1535,7 +1512,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _pageTypes.add(type);
         _pageTitles.add("");
         int pageNum = _pageEditors.size();
-        ed.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + pageNum);
+        ed.getItem().setText(_translationRegistry.getText("Page ") + pageNum);
         
         viewPage(_pageEditors.size()-1);
         for (int i = 0; i < _editorStatusListeners.size(); i++)
@@ -1562,7 +1539,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             for (int i = 0; i < _pageEditors.size(); i++) {
                 PageEditor cur = (PageEditor)_pageEditors.get(i);
-                cur.getItem().setText(_translationRegistry.getText(T_PAGE_PREFIX, "Page ") + (i+1));
+                cur.getItem().setText(_translationRegistry.getText("Page ") + (i+1));
             }
             viewPage(_pageEditors.size()-1);
             saveState();
@@ -1590,8 +1567,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
     }
     
-    private static final String T_WEBRIP_TITLE = "syndie.gui.messageeditor.webrip";
-    private static final String T_WEBRIP_FAIL = "syndie.gui.messageeditor.webrip.fail";
     
     public void addWebRip() {
         Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
@@ -1600,7 +1575,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ctl.setListener(new WebRipListener(shell, ctl));
         ctl.setExistingAttachments(_attachmentData.size());
         shell.pack();
-        shell.setText(_translationRegistry.getText(T_WEBRIP_TITLE, "Add web rip"));
+        shell.setText(_translationRegistry.getText("Add web rip"));
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent evt) { ctl.dispose(); }
@@ -1647,7 +1622,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ctl.dispose();        
         if (msgs.size() > 0) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText(T_WEBRIP_FAIL, "Rip failed"));
+            box.setText(_translationRegistry.getText("Rip failed"));
             StringBuilder err = new StringBuilder();
             for (int i = 0; i < msgs.size(); i++)
                 err.append((String)msgs.get(i)).append('\n');
@@ -1724,9 +1699,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         _preview.setEnabled(isHTML);
         if (isHTML && getPageEditor(page).isPreviewShowing())
-            _preview.setText(_translationRegistry.getText(T_EDIT, "Edit the message"));
+            _preview.setText(_translationRegistry.getText("Edit the message"));
         else
-            _preview.setText(_translationRegistry.getText(T_PREVIEW, "Preview the message"));
+            _preview.setText(_translationRegistry.getText("Preview the message"));
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -1908,8 +1883,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _threadTree.setFilterable(false);
     }
     
-    private static final String T_REFTAB = "syndie.gui.messageeditor.reftab";
-    private static final String T_THREADTAB = "syndie.gui.messageeditor.threadtab";
     
     private void initHeader() {
         Composite header = new Composite(_root, SWT.NONE);
@@ -2428,13 +2401,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     private void showUnauthorizedWarning() {
         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(_translationRegistry.getText(T_NOT_AUTHORIZED_MSG, "The selected author does not have permission to write in the selected forum - please adjust your selection"));
-        box.setText(_translationRegistry.getText(T_NOT_AUTHORIZED_TITLE, "Not authorized"));
+        box.setMessage(_translationRegistry.getText("The selected author does not have permission to write in the selected forum - please adjust your selection"));
+        box.setText(_translationRegistry.getText("Not authorized"));
         box.open();
     }
     
-    private static final String T_NOT_AUTHORIZED_MSG = "syndie.gui.messageeditor.notauthorized.msg";
-    private static final String T_NOT_AUTHORIZED_TITLE = "syndie.gui.messageeditor.notauthorized.title";
     
     public void applyTheme(Theme theme) {
         _authorLabel.setFont(theme.DEFAULT_FONT);
@@ -2469,23 +2440,17 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _root.layout(true);
     }
     
-    private static final String T_ATTACHMENTS_NONE = "syndie.gui.messageeditor.attachments.none";
     
-    private static final String T_FROM_LINE = "syndie.gui.messageeditor.fromline";
-    private static final String T_TO_LINE = "syndie.gui.messageeditor.toline";
-    private static final String T_FROM_CHANGE = "syndie.gui.messageeditor.fromchange";
-    private static final String T_TO_CHANGE = "syndie.gui.messageeditor.tochange";
-    private static final String T_SIGNAS_CHANGE = "syndie.gui.messageeditor.signaschange";
     
     public void translate(TranslationRegistry registry) {
-        _authorLabel.setText(registry.getText(T_FROM_LINE, "Author:"));
-        _toLabel.setText(registry.getText(T_TO_LINE, "Post to:"));
-        _authorChangeButton.setText(registry.getText(T_FROM_CHANGE, "Change author"));
-        _toChangeButton.setText(registry.getText(T_TO_CHANGE, "Change forum"));
-        _signAsChangeButton.setText(registry.getText(T_SIGNAS_CHANGE, "Change signed by"));
+        _authorLabel.setText(registry.getText("Author:"));
+        _toLabel.setText(registry.getText("Post to:"));
+        _authorChangeButton.setText(registry.getText("Change author"));
+        _toChangeButton.setText(registry.getText("Change forum"));
+        _signAsChangeButton.setText(registry.getText("Change signed by"));
         
-        _refEditorTab.setText(_translationRegistry.getText(T_REFTAB, "References"));
-        _threadTab.setText(_translationRegistry.getText(T_THREADTAB, "Thread"));
+        _refEditorTab.setText(_translationRegistry.getText("References"));
+        _threadTab.setText(_translationRegistry.getText("Thread"));
     }
 
     // image popup stuff
@@ -2493,7 +2458,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
         Properties prefs = _client.getNymPrefs();
         dialog.setFilterPath(prefs.getProperty("editor.defaultAttachmentPath"));
-        dialog.setText(_translationRegistry.getText(T_ADDATTACH, "Attach file"));
+        dialog.setText(_translationRegistry.getText("Attach file"));
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
         String base = dialog.getFilterPath();
@@ -2510,24 +2475,19 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         prefs.setProperty("editor.defaultAttachmentPath", base);
         _client.setNymPrefs(prefs);
     }
-    private static final String T_ADDATTACH = "syndie.gui.messageeditor.addattach";
 
-    private static final String T_TOOLARGE_MSG = "syndie.gui.messageeditor.toolarge.msg";
-    private static final String T_TOOLARGE_TITLE = "syndie.gui.messageeditor.toolarge.title";
-    private static final String T_LARGE_MSG = "syndie.gui.messageeditor.large.msg";
-    private static final String T_LARGE_TITLE = "syndie.gui.messageeditor.large.title";
     
     private boolean isValidSize(long length) {
         if (length > Constants.MAX_ATTACHMENT_SIZE) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_translationRegistry.getText(T_TOOLARGE_MSG, "The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
-            box.setText(_translationRegistry.getText(T_TOOLARGE_TITLE, "Too large"));
+            box.setMessage(_translationRegistry.getText("The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
+            box.setText(_translationRegistry.getText("Too large"));
             box.open();
             return false;
         //} else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
         //    MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-        //    box.setMessage(_browser.getTranslationRegistry().getText(T_LARGE_MSG, "The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
-        //    box.setText(_browser.getTranslationRegistry().getText(T_LARGE_TITLE, "Large attachment"));
+        //    box.setMessage(_browser.getTranslationRegistry().getText("The attachment exceeds your maximum syndication size, so you will not be able to push this post to others.  Are you sure you want to include this attachment?"));
+        //    box.setText(_browser.getTranslationRegistry().getText("Large attachment"));
         //    int rc = box.open();
         //    if (rc != SWT.YES)
         //        return false;
@@ -2729,20 +2689,17 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _attachmentSummary.add(summary);
                 
                 CTabItem item = _pageTabs.getItem(_pageEditors.size()+i);
-                item.setText(_translationRegistry.getText(T_ATTACHMENT_PREFIX, "Attachment ") + (i+1));
+                item.setText(_translationRegistry.getText("Attachment ") + (i+1));
             }
         } else {
-            _attachmentSummary.add(_translationRegistry.getText(T_ATTACHMENTS_NONE, "none"));
+            _attachmentSummary.add(_translationRegistry.getText("none"));
         }
         
 /*        for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).attachmentsRebuilt(_attachmentData, _attachmentSummary);*/
     }
     
-    private static final String T_ATTACHMENT_PREFIX = "syndie.gui.messageeditor.attachment.prefix";
     
-    private static final String T_PAGE_VIEW = "syndie.gui.messageeditor.pageview";
-    private static final String T_PAGE_DELETE = "syndie.gui.messageeditor.pagedelete";
     
     public void insertAtCaret(String html) {
         PageEditor editor = getPageEditor();

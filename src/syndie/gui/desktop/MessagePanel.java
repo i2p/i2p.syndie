@@ -143,8 +143,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                     Display.getDefault().asyncExec(new Runnable() {
                         public void run() {
                             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                            box.setText(_translationRegistry.getText(T_NOMSG_TITLE, "Message unknown"));
-                            box.setMessage(_translationRegistry.getText(T_NOMSG, "The selected message is not known locally"));
+                            box.setText(_translationRegistry.getText("Message unknown"));
+                            box.setMessage(_translationRegistry.getText("The selected message is not known locally"));
                             _navControl.unview(_baseURI);
                             box.open();
                             return;
@@ -164,11 +164,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         });
     }
 
-    private static final String T_NOMSG_TITLE = "syndie.gui.desktop.messagepanel.nomsg.title";
-    private static final String T_NOMSG = "syndie.gui.desktop.messagepanel.nomsg";
 
-    private static final String T_UNAUTH_TITLE = "syndie.gui.desktop.messagepanel.unauth.title";
-    private static final String T_UNAUTH = "syndie.gui.desktop.messagepanel.unauth";
 
     private void shown(final SyndieURI uri, long msgId, MessageInfo msg, Timer timer) {
         if (msg == null) throw new RuntimeException("msg is null? " + msgId + " - " + uri);
@@ -187,8 +183,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             return;
         } else if (msg.getReadKeyUnknown() || msg.getReplyKeyUnknown()) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setText(_translationRegistry.getText(T_UNAUTH_TITLE, "Not authorized"));
-            box.setMessage(_translationRegistry.getText(T_UNAUTH, "You are not authorized to read that message"));
+            box.setText(_translationRegistry.getText("Not authorized"));
+            box.setMessage(_translationRegistry.getText("You are not authorized to read that message"));
             _navControl.unview(uri);
             box.open();
             return;
@@ -221,8 +217,6 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
     }
     public void hidden(Desktop desktop) {}
     
-    private static final String T_REIMPORT_ERR_TITLE = "syndie.gui.desktop.messagepanel.reimporterrtitle";
-    private static final String T_REIMPORT_ERR_MSG = "syndie.gui.desktop.messagepanel.reimporterrmsg";
     private void reimport(final String passphrase, final SyndieURI uri) {
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
@@ -232,8 +226,8 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                        MessageBox box = null;
                        if (!ok) {
                            box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-                           box.setText(_translationRegistry.getText(T_REIMPORT_ERR_TITLE, "Passphrase incorrect"));
-                           box.setMessage(_translationRegistry.getText(T_REIMPORT_ERR_MSG, "The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           box.setText(_translationRegistry.getText("Passphrase incorrect"));
+                           box.setMessage(_translationRegistry.getText("The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
                            if (rc == SWT.YES) {
                                _navControl.unview(uri);
@@ -274,11 +268,6 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
         if (_edgeEast == null) _edgeEast = new EastEdge(edge, _ui); 
     }
 
-    private static final String T_REPLYTOFORUM = "syndie.gui.desktop.messagepanel.replytoforum";
-    private static final String T_REPLYTOAUTHOR = "syndie.gui.desktop.messagepanel.replytoauthor";
-    private static final String T_REPLYTOADMINS = "syndie.gui.desktop.messagepanel.replytoadmins";
-    private static final String T_MARK_READ = "syndie.gui.desktop.messagepanel.toggleread.markread";
-    private static final String T_MARK_UNREAD = "syndie.gui.desktop.messagepanel.toggleread.markunread";
 
     private void replyToForum() {
         boolean isPM = _msg.getWasPrivate();
@@ -334,11 +323,11 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                     if (_alreadyRead) {
                         _client.markMessageUnread(_msgId);
                         _alreadyRead = false;
-                        _toggleRead.setText(_translationRegistry.getText(T_MARK_READ, "Mark as read"));
+                        _toggleRead.setText(_translationRegistry.getText("Mark as read"));
                     } else {
                         _client.markMessageRead(_msgId);
                         _alreadyRead = true;
-                        _toggleRead.setText(_translationRegistry.getText(T_MARK_UNREAD, "Mark as unread"));
+                        _toggleRead.setText(_translationRegistry.getText("Mark as unread"));
                     }
                     getEdgeRoot().layout(true, true);
                 }
@@ -366,11 +355,11 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
                             switch (status) {
                                 case DBClient.MSG_STATUS_READ:
                                     _alreadyRead = true;
-                                    _toggleRead.setText(_translationRegistry.getText(T_MARK_UNREAD, "Mark as unread"));
+                                    _toggleRead.setText(_translationRegistry.getText("Mark as unread"));
                                     break;
                                 case DBClient.MSG_STATUS_UNREAD:
                                     _alreadyRead = false;
-                                    _toggleRead.setText(_translationRegistry.getText(T_MARK_READ, "Mark as read"));
+                                    _toggleRead.setText(_translationRegistry.getText("Mark as read"));
                                     break;
                             }
                             _replyToForum.setEnabled(postable || pubReply);
@@ -386,9 +375,9 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             });
         }
         public void translate(TranslationRegistry trans) {
-            _replyToForum.setText(trans.getText(T_REPLYTOFORUM, "Reply to forum"));
-            _replyToAuthor.setText(trans.getText(T_REPLYTOAUTHOR, "Reply to author"));
-            _replyToAdmins.setText(trans.getText(T_REPLYTOADMINS, "Reply to admins"));
+            _replyToForum.setText(trans.getText("Reply to forum"));
+            _replyToAuthor.setText(trans.getText("Reply to author"));
+            _replyToAdmins.setText(trans.getText("Reply to admins"));
         }
         public void applyTheme(Theme theme) { 
             _replyToForum.setFont(theme.BUTTON_FONT);
@@ -796,28 +785,19 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _navForum.setEnabled(iter.getMessageTreeURI() != null);
         }
         public void translate(TranslationRegistry registry) {
-            _navNextNew.setToolTipText(registry.getText(T_NAV_NEXT_NEW, "Next unread message"));
-            _navPrevNew.setToolTipText(registry.getText(T_NAV_PREV_NEW, "Previous unread message"));
-            _navNextViaThread.setToolTipText(registry.getText(T_NAV_NEXT_VIA_THREAD, "Next message (by threads)"));
-            _navPrevViaThread.setToolTipText(registry.getText(T_NAV_PREV_VIA_THREAD, "Previous message (by threads)"));
-            _navNextInThread.setToolTipText(registry.getText(T_NAV_NEXT_IN_THREAD, "Next message in the current thread only"));
-            _navPrevInThread.setToolTipText(registry.getText(T_NAV_PREV_IN_THREAD, "Previous message in the current thread only"));
-            _navNextThread.setToolTipText(registry.getText(T_NAV_NEXT_THREAD, "Beginning of the next thread"));
-            _navPrevThread.setToolTipText(registry.getText(T_NAV_PREV_THREAD, "Beginning of the previous thread"));
-            _navForum.setToolTipText(registry.getText(T_NAV_FORUM, "Jump back to the thread tree"));
+            _navNextNew.setToolTipText(registry.getText("Next unread message"));
+            _navPrevNew.setToolTipText(registry.getText("Previous unread message"));
+            _navNextViaThread.setToolTipText(registry.getText("Next message (by threads)"));
+            _navPrevViaThread.setToolTipText(registry.getText("Previous message (by threads)"));
+            _navNextInThread.setToolTipText(registry.getText("Next message in the current thread only"));
+            _navPrevInThread.setToolTipText(registry.getText("Previous message in the current thread only"));
+            _navNextThread.setToolTipText(registry.getText("Beginning of the next thread"));
+            _navPrevThread.setToolTipText(registry.getText("Beginning of the previous thread"));
+            _navForum.setToolTipText(registry.getText("Jump back to the thread tree"));
         }
         public void applyTheme(Theme theme) {}
     }
 
-    private static final String T_NAV_NEXT_NEW = "syndie.gui.desktop.messagepanel.nav.next.new";
-    private static final String T_NAV_PREV_NEW = "syndie.gui.desktop.messagepanel.nav.prev.new";
-    private static final String T_NAV_NEXT_VIA_THREAD = "syndie.gui.desktop.messagepanel.nav.next.via.thread";
-    private static final String T_NAV_PREV_VIA_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.via.thread";
-    private static final String T_NAV_NEXT_IN_THREAD = "syndie.gui.desktop.messagepanel.nav.next.in.thread";
-    private static final String T_NAV_PREV_IN_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.in.thread";
-    private static final String T_NAV_NEXT_THREAD = "syndie.gui.desktop.messagepanel.nav.next.thread";
-    private static final String T_NAV_PREV_THREAD = "syndie.gui.desktop.messagepanel.nav.prev.thread";
-    private static final String T_NAV_FORUM = "syndie.gui.desktop.messagepanel.nav.forum";
 
     /**
      * run this outside the gui thread to fetch the iterator to retrieve an iterator for

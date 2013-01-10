@@ -135,10 +135,9 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
-            _title.setText(registry.getText(T_TITLE, "Peer syndication"));
+            _title.setText(registry.getText("Peer syndication"));
         }
     }
-    private static final String T_TITLE = "syndie.gui.desktop.syndicatorpanel.title";
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _details;
@@ -157,7 +156,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             });
             _details.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _details, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_DETAILS, "Archive details"));
+                    ImageUtil.drawDescending(evt.gc, _details, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Archive details"));
                 }
             });
             _viewFetched = new Button(getEdgeRoot(), SWT.PUSH);
@@ -170,7 +169,7 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             });
             _viewFetched.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _viewFetched, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_DETAILS, "View fetched messages"));
+                    ImageUtil.drawDescending(evt.gc, _viewFetched, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("View fetched messages"));
                 }
             });
 
@@ -183,7 +182,6 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             _details.redraw();
         }
     }
-    private static final String T_DETAILS = "syndie.gui.desktop.syndicatorpanel.details";
     
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _addArchive;
@@ -224,14 +222,10 @@ public class SyndicatorPanel extends DesktopPanel implements Themeable, Translat
             _deleteArchive.setFont(theme.BUTTON_FONT);
         }
         public void translate(TranslationRegistry registry) {
-            _addArchive.setText(registry.getText(T_ADDARCHIVE, "Add archive"));
-            _syncOneOff.setText(registry.getText(T_SYNCONEOFF, "Sync (just once)"));
-            _syncRecurring.setText(registry.getText(T_SYNCRECURRING, "Sync (recurring)"));
-            _deleteArchive.setText(registry.getText(T_DELETEARCHIVE, "Delete archive"));
+            _addArchive.setText(registry.getText("Add archive"));
+            _syncOneOff.setText(registry.getText("Sync (just once)"));
+            _syncRecurring.setText(registry.getText("Sync (recurring)"));
+            _deleteArchive.setText(registry.getText("Delete archive"));
         }
     }
-    private static final String T_ADDARCHIVE = "syndie.gui.desktop.syndicatorpanel.addarchive";
-    private static final String T_SYNCONEOFF = "syndie.gui.desktop.syndicatorpanel.synconeoff";
-    private static final String T_SYNCRECURRING= "syndie.gui.desktop.syndicatorpanel.syncrecurring";
-    private static final String T_DELETEARCHIVE = "syndie.gui.desktop.syndicatorpanel.deletearchive";
 }

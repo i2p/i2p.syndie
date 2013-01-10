@@ -123,14 +123,12 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         root.layout(true, true);
     }
     
-    private static final String T_CONFIRM_CLOSE_TITLE = "syndie.gui.desktop.messageeditorpanel.confirm.title";
-    private static final String T_CONFIRM_CLOSE_MESSAGE = "syndie.gui.desktop.messageeditorpanel.confirm.message";
     
     protected boolean allowClose() {
         if (!_editor.isModifiedSinceOpen()) return true;
         MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
-        confirm.setText(_translationRegistry.getText(T_CONFIRM_CLOSE_TITLE, "Postpone message?"));
-        confirm.setMessage(_translationRegistry.getText(T_CONFIRM_CLOSE_MESSAGE, "Do you want to postpone this message to resume it later?"));
+        confirm.setText(_translationRegistry.getText("Postpone message?"));
+        confirm.setMessage(_translationRegistry.getText("Do you want to postpone this message to resume it later?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             _editor.postponeMessage();
@@ -155,8 +153,6 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         ((EastEdge)_edgeEast).setPreviewText(_translationRegistry);
     }
     
-    private static final String T_POSTPREVIEW_TITLE = "syndie.gui.desktop.messageeditorpanel.postpreview.title";
-    private static final String T_POSTPREVIEW = "syndie.gui.desktop.messageeditorpanel.postpreview";
     
     private void post() {
         final PageEditor page = _editor.getPageEditor();
@@ -170,8 +166,8 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                             getRoot().getDisplay().asyncExec(new Runnable() {
                                 public void run() {
                                     MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
-                                    box.setText(_translationRegistry.getText(T_POSTPREVIEW_TITLE, "Preview post"));
-                                    box.setMessage(_translationRegistry.getText(T_POSTPREVIEW, "Is this preview what you want to post?"));
+                                    box.setText(_translationRegistry.getText("Preview post"));
+                                    box.setMessage(_translationRegistry.getText("Is this preview what you want to post?"));
                                     _ui.debugMessage("before previewPost confirm prompt");
                                     int rc = box.open();
                                     _ui.debugMessage("after previewPost confirm prompt");
@@ -233,14 +229,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
     }
     public void attachmentsRebuilt(List attachmentData, List attachmentSummary) {}
     
-    private static final String T_PRIV_PUBLIC = "syndie.gui.desktop.messageeditorpanel.privpublic";
-    private static final String T_PRIV_AUTHORIZED = "syndie.gui.desktop.messageeditorpanel.privauthorized";
-    private static final String T_PRIV_PBE = "syndie.gui.desktop.messageeditorpanel.privpbe";
-    private static final String T_PRIV_PRIVATE = "syndie.gui.desktop.messageeditorpanel.privprivate";
     
-    private static final String T_FORUMNAME = "syndie.gui.desktop.messageeditorpanel.forumname";
-    private static final String T_AUTHORNAME= "syndie.gui.desktop.messageeditorpanel.authorname";
-    private static final String T_PRIVACY = "syndie.gui.desktop.messageeditorpanel.privacy";
     
     private class NorthEdge extends DesktopEdge implements Themeable, Translatable {
         private Label _authorAvatar;
@@ -433,28 +422,28 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         
         public void pickPrivacyPublic() {
             _privacyIcon.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PUBLIC);
-            String txt = _translationRegistry.getText(T_PRIV_PUBLIC, "Anyone can read it");
+            String txt = _translationRegistry.getText("Anyone can read it");
             _privacyIcon.setToolTipText(txt);
             _privacy.setText(txt);
             getEdgeRoot().layout(true, true);
         }
         public void pickPrivacyPBE() {
             _privacyIcon.setImage(ImageUtil.ICON_EDITOR_PRIVACY_PBE);
-            String txt = _translationRegistry.getText(T_PRIV_PBE, "Passphrase required");
+            String txt = _translationRegistry.getText("Passphrase required");
             _privacyIcon.setToolTipText(txt);
             _privacy.setText(txt);
             getEdgeRoot().layout(true, true);
         }
         public void pickPrivacyPrivate() {
             _privacyIcon.setImage(ImageUtil.ICON_EDITOR_PRIVACY_REPLY);
-            String txt = _translationRegistry.getText(T_PRIV_PRIVATE, "Forum admins only");
+            String txt = _translationRegistry.getText("Forum admins only");
             _privacyIcon.setToolTipText(txt);
             _privacy.setText(txt);
             getEdgeRoot().layout(true, true);
         }
         public void pickPrivacyAuthorized() {
             _privacyIcon.setImage(ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED);
-            String txt = _translationRegistry.getText(T_PRIV_AUTHORIZED, "Authorized readers only");
+            String txt = _translationRegistry.getText("Authorized readers only");
             _privacyIcon.setToolTipText(txt);
             _privacy.setText(txt);
             getEdgeRoot().layout(true, true);
@@ -470,16 +459,12 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             getEdgeRoot().layout(true, true);
         }
         public void translate(TranslationRegistry registry) {
-            _privacyLabel.setText(registry.getText(T_PRIVACY, "Who can read the post?"));
-            _forumNameLabel.setText(registry.getText(T_FORUMNAME, "Forum (to):"));
-            _authorNameLabel.setText(registry.getText(T_AUTHORNAME, "Author (from):"));
+            _privacyLabel.setText(registry.getText("Who can read the post?"));
+            _forumNameLabel.setText(registry.getText("Forum (to):"));
+            _authorNameLabel.setText(registry.getText("Author (from):"));
         }
     }
     
-    private static final String T_SAVEFORLATER_TT = "syndie.gui.desktop.messageeditorpanel.saveforlater.tt";
-    private static final String T_PREVIEW_TT = "syndie.gui.desktop.messageeditorpanel.preview.tt";
-    private static final String T_POST_TT = "syndie.gui.desktop.messageeditorpanel.post.tt";
-    private static final String T_CANCEL_TT = "syndie.gui.desktop.messageeditorpanel.cancel.tt";
     
     private class EastEdge extends DesktopEdge implements Translatable, Themeable {
         private Button _saveForLater;
@@ -514,7 +499,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                         
             _saveForLater.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _saveForLater, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_SAVEFORLATER, "Save"));
+                    ImageUtil.drawDescending(evt.gc, _saveForLater, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Save"));
                 }
             });
             _preview.addPaintListener(new PaintListener() {
@@ -524,20 +509,20 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
                         previewing = true;
 
                     if (previewing)
-                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_EDIT, "Edit"));
+                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Edit"));
                     else
-                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_PREVIEW, "Preview"));
+                        ImageUtil.drawDescending(evt.gc, _preview, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Preview"));
                     
                 }
             });
             _post.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _post, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_POST, "Post"));
+                    ImageUtil.drawDescending(evt.gc, _post, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Post"));
                 }
             });
             _cancel.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _cancel, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText(T_CANCEL, "Cancel"));
+                    ImageUtil.drawDescending(evt.gc, _cancel, _themeRegistry.getTheme().BUTTON_FONT, _translationRegistry.getText("Cancel"));
                 }
             });
         }
@@ -546,10 +531,10 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             setPreviewText(_translationRegistry);
         }
         public void translate(TranslationRegistry registry) {
-            _saveForLater.setToolTipText(registry.getText(T_SAVEFORLATER_TT, "Save the message for later"));
-            _preview.setToolTipText(registry.getText(T_PREVIEW_TT, "Preview the page"));
-            _post.setToolTipText(registry.getText(T_POST_TT, "Post the message"));
-            _cancel.setToolTipText(registry.getText(T_CANCEL_TT, "Cancel the message entirely"));
+            _saveForLater.setToolTipText(registry.getText("Save the message for later"));
+            _preview.setToolTipText(registry.getText("Preview the page"));
+            _post.setToolTipText(registry.getText("Post the message"));
+            _cancel.setToolTipText(registry.getText("Cancel the message entirely"));
             
             _saveForLater.redraw();
             _preview.redraw();
@@ -571,11 +556,6 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
     }
     
-    private static final String T_SAVEFORLATER = "syndie.gui.desktop.messageeditorpanel.saveforlater";
-    private static final String T_PREVIEW = "syndie.gui.desktop.messageeditorpanel.preview";
-    private static final String T_EDIT = "syndie.gui.desktop.messageeditorpanel.edit";
-    private static final String T_POST = "syndie.gui.desktop.messageeditorpanel.post";
-    private static final String T_CANCEL = "syndie.gui.desktop.messageeditorpanel.cancel";
     
     private class SouthEdge extends DesktopEdge implements Translatable {
         private Button _addPage;
@@ -693,30 +673,18 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
         
         public void translate(TranslationRegistry registry) {
-            _addPage.setToolTipText(registry.getText(T_ADDPAGE_TT, "Add page"));
-            _removePage.setToolTipText(registry.getText(T_REMOVEPAGE_TT, "Remove page"));
-            _addWebRip.setToolTipText(registry.getText(T_WEBRIP_TT, "Rip a web page"));
-            _toggleFormat.setToolTipText(registry.getText(T_TOGGLEFORMAT_TT, "Toggle HTML/plain text"));
-            _addImg.setToolTipText(registry.getText(T_ADDIMAGE_TT, "Add image"));
-            _addFile.setToolTipText(registry.getText(T_ADDFILE_TT, "Add file"));
-            _removeFile.setToolTipText(registry.getText(T_REMOVEFILE_TT, "Remove file"));
-            _addLink.setToolTipText(registry.getText(T_ADDLINK_TT, "Add link"));
-            _htmlStyle.setToolTipText(registry.getText(T_HTMLSTYLE_TT, "HTML style helper"));
-            _spell.setToolTipText(registry.getText(T_SPELL_TT, "Check spelling"));
-            _find.setToolTipText(registry.getText(T_FIND_TT, "Find/replace text"));
-            _quote.setToolTipText(registry.getText(T_QUOTE_TT, "Quote the parent message"));
+            _addPage.setToolTipText(registry.getText("Add page"));
+            _removePage.setToolTipText(registry.getText("Remove page"));
+            _addWebRip.setToolTipText(registry.getText("Rip a web page"));
+            _toggleFormat.setToolTipText(registry.getText("Toggle HTML/plain text"));
+            _addImg.setToolTipText(registry.getText("Add image"));
+            _addFile.setToolTipText(registry.getText("Add file"));
+            _removeFile.setToolTipText(registry.getText("Remove file"));
+            _addLink.setToolTipText(registry.getText("Add link"));
+            _htmlStyle.setToolTipText(registry.getText("HTML style helper"));
+            _spell.setToolTipText(registry.getText("Check spelling"));
+            _find.setToolTipText(registry.getText("Find/replace text"));
+            _quote.setToolTipText(registry.getText("Quote the parent message"));
         }
     }
-    private static final String T_ADDPAGE_TT = "syndie.gui.desktop.messageeditorpanel.addpage.tt";
-    private static final String T_REMOVEPAGE_TT = "syndie.gui.desktop.messageeditorpanel.removepage.tt";
-    private static final String T_WEBRIP_TT = "syndie.gui.desktop.messageeditorpanel.webrip.tt";
-    private static final String T_TOGGLEFORMAT_TT = "syndie.gui.desktop.messageeditorpanel.toggleformat.tt";
-    private static final String T_ADDIMAGE_TT = "syndie.gui.desktop.messageeditorpanel.addimage.tt";
-    private static final String T_ADDFILE_TT = "syndie.gui.desktop.messageeditorpanel.addfile.tt";
-    private static final String T_REMOVEFILE_TT = "syndie.gui.desktop.messageeditorpanel.removefile.tt";
-    private static final String T_ADDLINK_TT = "syndie.gui.desktop.messageeditorpanel.addlink.tt";
-    private static final String T_HTMLSTYLE_TT = "syndie.gui.desktop.messageeditorpanel.htmlstyle.tt";
-    private static final String T_SPELL_TT = "syndie.gui.desktop.messageeditorpanel.spell.tt";
-    private static final String T_FIND_TT = "syndie.gui.desktop.messageeditorpanel.find.tt";
-    private static final String T_QUOTE_TT = "syndie.gui.desktop.messageeditorpanel.quote.tt";
 }

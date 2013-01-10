@@ -277,13 +277,7 @@ class Desktop {
      */
     private static final boolean ALLOW_SLOW_STARTUP = true;
     
-    private static final String T_ALREADY_RUNNING_TITLE = "syndie.gui.desktop.alreadyrunning.title";
-    private static final String T_ALREADY_RUNNING = "syndie.gui.desktop.alreadyrunning";
-    private static final String T_ALREADY_RUNNING_EXIT = "syndie.gui.desktop.alreadyrunning.exit";
     
-    private static final String T_LOGIN_FAILED_TITLE = "syndie.gui.desktop.loginfailed.title";
-    private static final String T_LOGIN_FAILED = "syndie.gui.desktop.loginfailed";
-    private static final String T_LOGIN_FAILED_EXIT = "syndie.gui.desktop.loginfailed.exit";
     
     boolean startEngine() {
         final Timer startupTimer = new Timer("restart engine", _ui);
@@ -342,10 +336,6 @@ class Desktop {
     }
     
     
-    private static final String T_PASSPHRASE_REQ = "syndie.gui.desktop.passphrase.req";
-    private static final String T_LOGIN_PROCEED = "syndie.gui.desktop.login.proceed";
-    private static final String T_LOGIN_EXIT = "syndie.gui.desktop.login.exit";
-    private static final String T_LOGIN = "syndie.gui.desktop.login";
     
     private int proceedAfterLogin(final TextEngine engine, final Timer timer, final StartupListener lsnr) {
         // to allow the startup scripts to run, which may include 'login',
@@ -358,18 +348,18 @@ class Desktop {
             _display.asyncExec(new Runnable() { 
                 public void run() {
                     final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-                    s.setText(strans(T_ALREADY_RUNNING_TITLE, "Already running"));
+                    s.setText(strans("Already running"));
                     if (_themeRegistry != null)
                         s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                     s.setLayout(new GridLayout(1, true));
                     Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                     l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-                    l.setText(strans(T_ALREADY_RUNNING, "Syndie is already running - please use the existing Syndie window"));
+                    l.setText(strans("Syndie is already running - please use the existing Syndie window"));
                     if (_themeRegistry != null)
                         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                     Button b = new Button(s, SWT.PUSH);
                     b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-                    b.setText(strans(T_ALREADY_RUNNING_EXIT, "Exit"));
+                    b.setText(strans("Exit"));
                     if (_themeRegistry != null)
                         b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                     b.addSelectionListener(new FireSelectionListener() { 
@@ -431,14 +421,14 @@ class Desktop {
             public void run() {
                 // show a special warning/error screen
                 final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-                s.setText(strans(T_PASSPHRASE_REQ, "Passphrase..."));
+                s.setText(strans("Passphrase..."));
                 if (_themeRegistry != null)
                     s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                 s.setLayout(new GridLayout(2, false));
 
                 Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                 l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                l.setText(strans(T_LOGIN, "Passphrase:"));
+                l.setText(strans("Passphrase:"));
                 if (_themeRegistry != null)
                     l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                 final Text pass = new Text(s, SWT.SINGLE | SWT.WRAP);
@@ -455,7 +445,7 @@ class Desktop {
 
                 Button b = new Button(s, SWT.PUSH);
                 b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-                b.setText(strans(T_LOGIN_PROCEED, "Login"));
+                b.setText(strans("Login"));
                 if (_themeRegistry != null)
                     b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 b.addSelectionListener(new FireSelectionListener() { 
@@ -466,7 +456,7 @@ class Desktop {
 
                 b = new Button(s, SWT.PUSH);
                 b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-                b.setText(strans(T_LOGIN_EXIT, "Exit"));
+                b.setText(strans("Exit"));
                 if (_themeRegistry != null)
                     b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 b.addSelectionListener(new FireSelectionListener() { 
@@ -734,10 +724,10 @@ class Desktop {
             final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
             GridLayout gl = new GridLayout(1, true);
             shell.setLayout(gl);
-            shell.setText(_translationRegistry.getText(T_EXTERNAL_TITLE, "External URL selected"));
+            shell.setText(_translationRegistry.getText("External URL selected"));
             
             Text msg = new Text(shell, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
-            msg.setText(_translationRegistry.getText(T_EXTERNAL_MSG, "The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
+            msg.setText(_translationRegistry.getText("The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
             GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             msg.setLayoutData(gd);
@@ -752,7 +742,7 @@ class Desktop {
             url.setLayoutData(gd);
             
             Button b = new Button(shell, SWT.PUSH);
-            b.setText(_translationRegistry.getText(T_EXTERNAL_OK, "Close"));
+            b.setText(_translationRegistry.getText("Close"));
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             b.setLayoutData(gd);
@@ -765,17 +755,12 @@ class Desktop {
             url.forceFocus();
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText(T_BADURI_TITLE, "Invalid URI"));
-            box.setMessage(_translationRegistry.getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri);
+            box.setText(_translationRegistry.getText("Invalid URI"));
+            box.setMessage(_translationRegistry.getText("The URI visited is not understood by Syndie: ") + uri);
             box.open();
         }
     }
     
-    private static final String T_EXTERNAL_TITLE = "syndie.gui.desktop.desktop.external.title";
-    private static final String T_EXTERNAL_MSG = "syndie.gui.desktop.desktop.external.msg";
-    private static final String T_EXTERNAL_OK = "syndie.gui.desktop.desktop.external.ok";
-    private static final String T_BADURI_TITLE = "syndie.gui.desktop.desktop.baduri.title";
-    private static final String T_BADURI_MSG = "syndie.gui.desktop.desktop.baduri.msg";
     
     
     DesktopPanel getCurrentPanel() { 
@@ -1085,17 +1070,8 @@ class Desktop {
     
     public void refreshPrimaryAvatar() { ((ControlDesktopCorner)_cornerNorthWest).refreshPrimaryAvatar(); }
     
-    private static final String T_CONFIRMBAN = "syndie.gui.desktop.desktop.confirmban";
-    private static final String T_CONFIRMBAN_NAME = "syndie.gui.desktop.desktop.confirmbanname";
     
-    private static final String T_CONFIRMCANCEL = "syndie.gui.desktop.confirmcancel";
-    private static final String T_CANCEL_TITLE = "syndie.gui.desktop.cancel.title";
-    private static final String T_CANCEL_MSG = "syndie.gui.desktop.cancel.msg";
 
-    private static final String T_CONFIRMDELETE = "syndie.gui.desktop.confirmdelete";
-    private static final String T_CONFIRMDELETE_NAME = "syndie.gui.desktop.confirmdelete.name";
-    private static final String T_DELETE_TITLE = "syndie.gui.desktop.delete.title";
-    private static final String T_DELETE_MSG = "syndie.gui.desktop.delete.msg";
     
     private class DesktopBan implements BanControl {
         public boolean ban(final Hash scope) { 
@@ -1109,7 +1085,7 @@ class Desktop {
                     "All of the messages in it will be removed and you will never receive " +
                     "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
                     + scopeName);
-            box.setText(_translationRegistry.getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+            box.setText(_translationRegistry.getText("Confirm ban"));
             int rc = box.open();
             if (rc == SWT.YES) {
                 JobRunner.instance().enqueue(new Runnable() {
@@ -1139,7 +1115,7 @@ class Desktop {
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
                     "Do you really want to tell everyone to ignore this message: " + scopeName));
-            box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm cancel"));
+            box.setText(getTranslationRegistry().getText("Confirm cancel"));
             int rc = box.open();
             if (rc == SWT.YES) {
                 doCancel(uri);
@@ -1152,8 +1128,8 @@ class Desktop {
             _client.cancelMessage(uri, getUI());
             //_client.ban(scope, getUI(), true, false); 
             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-            box.setText(getTranslationRegistry().getText(T_CANCEL_TITLE, "Cancelled"));
-            box.setMessage(getTranslationRegistry().getText(T_CANCEL_MSG, "Selected message cancelled"));
+            box.setText(getTranslationRegistry().getText("Cancelled"));
+            box.setMessage(getTranslationRegistry().getText("Selected message cancelled"));
             box.open();
         }
 
@@ -1175,7 +1151,7 @@ class Desktop {
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
                     "Do you really want to locally delete this message: " + scopeName));
-            box.setText(getTranslationRegistry().getText(T_CONFIRMDELETE_NAME, "Confirm delete"));
+            box.setText(getTranslationRegistry().getText("Confirm delete"));
             int rc = box.open();
             if (rc == SWT.YES) {
                 doDelete(uri);
@@ -1188,8 +1164,8 @@ class Desktop {
             _client.deleteMessage(uri, getUI(), true);
             //_client.ban(scope, getUI(), true, false); 
             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-            box.setText(getTranslationRegistry().getText(T_DELETE_TITLE, "Deleted"));
-            box.setMessage(getTranslationRegistry().getText(T_DELETE_MSG, "Selected message deleted"));
+            box.setText(getTranslationRegistry().getText("Deleted"));
+            box.setMessage(getTranslationRegistry().getText("Selected message deleted"));
             box.open();
         }
     }
@@ -1450,14 +1426,10 @@ class CommandBar implements Themeable, Translatable {
     }
 
     public void translate(TranslationRegistry registry) {
-        _syndicate.setText(registry.getText(T_SYNDICATE, "Share"));
-        //_read.setText(registry.getText(T_READ, "Read"));
-        _post.setText(registry.getText(T_POST, "Write"));
-        _switchPanel.setText(registry.getText(T_SWITCH, "Switch task"));
+        _syndicate.setText(registry.getText("Share"));
+        //_read.setText(registry.getText("Read"));
+        _post.setText(registry.getText("Write"));
+        _switchPanel.setText(registry.getText("Switch task"));
     }
     
-    private static final String T_SYNDICATE = "syndie.gui.desktop.CommandBar.syndicate";
-    //private static final String T_READ = "syndie.gui.desktop.CommandBar.read";
-    private static final String T_POST = "syndie.gui.desktop.CommandBar.post";
-    private static final String T_SWITCH = "syndie.gui.desktop.CommandBar.switch";
 }

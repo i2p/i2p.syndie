@@ -514,68 +514,43 @@ public class ReferenceChooserInfo extends BaseComponent implements ReferenceChoo
         _ui.debugMessage("other item selected [" + item.getText() + "]");
     }
     
-    private static final String T_CHANNEL_ROOT = "syndie.gui.refchooserinfo.channel";
-    private static final String T_CHANNEL_NAME = "syndie.gui.refchooserinfo.channel.name";
-    private static final String T_CHANNEL_DESC = "syndie.gui.refchooserinfo.channel.desc";
-    private static final String T_CHANNEL_HASH = "syndie.gui.refchooserinfo.channel.hash";
-    private static final String T_CHANNEL_PUBPOST = "syndie.gui.refchooserinfo.channel.pubpost";
-    private static final String T_CHANNEL_PUBREPLY = "syndie.gui.refchooserinfo.channel.pubreply";
-    private static final String T_CHANNEL_ACCEPT = "syndie.gui.refchooserinfo.channel.accept";
-    private static final String T_CHANNEL_CANCEL = "syndie.gui.refchooserinfo.channel.cancel";
-    private static final String T_MESSAGE_ROOT = "syndie.gui.refchooserinfo.message";
-    private static final String T_MESSAGE_NAME = "syndie.gui.refchooserinfo.message.name";
-    private static final String T_MESSAGE_DESC = "syndie.gui.refchooserinfo.message.desc";
-    private static final String T_MESSAGE_HASH = "syndie.gui.refchooserinfo.message.hash";
-    private static final String T_MESSAGE_SUBJECT = "syndie.gui.refchooserinfo.message.subject";
-    private static final String T_MESSAGE_AUTHOR = "syndie.gui.refchooserinfo.message.author";
-    private static final String T_MESSAGE_DATE = "syndie.gui.refchooserinfo.message.date";
-    private static final String T_MESSAGE_ACCEPT = "syndie.gui.refchooserinfo.message.accept";
-    private static final String T_MESSAGE_CANCEL = "syndie.gui.refchooserinfo.message.cancel";
-    private static final String T_ARCHIVE_ROOT = "syndie.gui.refchooserinfo.archive";
-    private static final String T_ARCHIVE_LABEL = "syndie.gui.refchooserinfo.archive.label";
-    private static final String T_ARCHIVE_ACCEPT = "syndie.gui.refchooserinfo.archive.accept";
-    private static final String T_ARCHIVE_CANCEL = "syndie.gui.refchooserinfo.archive.cancel";
-    private static final String T_URI_ROOT = "syndie.gui.refchooserinfo.uri";
-    private static final String T_URI_LABEL = "syndie.gui.refchooserinfo.uri.label";
-    private static final String T_URI_ACCEPT = "syndie.gui.refchooserinfo.uri.accept";
-    private static final String T_URI_CANCEL = "syndie.gui.refchooserinfo.uri.cancel";
 
     public void translate(TranslationRegistry registry) {
-        _rootChannel.setText(registry.getText(T_CHANNEL_ROOT, "Forum summary"));
-        _channelNameLabel.setText(registry.getText(T_CHANNEL_NAME, "Name: "));
-        _channelDescLabel.setText(registry.getText(T_CHANNEL_DESC, "Description: "));
-        _channelHashLabel.setText(registry.getText(T_CHANNEL_HASH, "Hash: "));
-        _channelPubPost.setText(registry.getText(T_CHANNEL_PUBPOST, "anyone can post"));
-        _channelPubReply.setText(registry.getText(T_CHANNEL_PUBREPLY, "anyone can reply to posts"));
+        _rootChannel.setText(registry.getText("Forum summary"));
+        _channelNameLabel.setText(registry.getText("Name: "));
+        _channelDescLabel.setText(registry.getText("Description: "));
+        _channelHashLabel.setText(registry.getText("Hash: "));
+        _channelPubPost.setText(registry.getText("anyone can post"));
+        _channelPubReply.setText(registry.getText("anyone can reply to posts"));
         if (_channelAccept != null)
-            _channelAccept .setText(registry.getText(T_CHANNEL_ACCEPT, "Accept"));
+            _channelAccept .setText(registry.getText("Accept"));
         if (_channelCancel != null)
-            _channelCancel.setText(registry.getText(T_CHANNEL_CANCEL, "Cancel"));
+            _channelCancel.setText(registry.getText("Cancel"));
         
-        _rootMessage.setText(registry.getText(T_MESSAGE_ROOT, "Message summary"));
-        _messageChannelNameLabel.setText(registry.getText(T_MESSAGE_NAME, "Name: "));
-        _messageChannelDescLabel.setText(registry.getText(T_MESSAGE_DESC, "Description: "));
-        _messageChannelHashLabel.setText(registry.getText(T_MESSAGE_HASH, "Hash: "));
-        _messageSubjectLabel.setText(registry.getText(T_MESSAGE_SUBJECT, "Subject: "));
-        _messageAuthorLabel.setText(registry.getText(T_MESSAGE_AUTHOR, "Author: "));
-        _messageDateLabel.setText(registry.getText(T_MESSAGE_DATE, "Date: "));
+        _rootMessage.setText(registry.getText("Message summary"));
+        _messageChannelNameLabel.setText(registry.getText("Name: "));
+        _messageChannelDescLabel.setText(registry.getText("Description: "));
+        _messageChannelHashLabel.setText(registry.getText("Hash: "));
+        _messageSubjectLabel.setText(registry.getText("Subject: "));
+        _messageAuthorLabel.setText(registry.getText("Author: "));
+        _messageDateLabel.setText(registry.getText("Date: "));
         if (_messageAccept != null)
-            _messageAccept .setText(registry.getText(T_MESSAGE_ACCEPT, "Accept"));
+            _messageAccept .setText(registry.getText("Accept"));
         if (_messageCancel != null)
-            _messageCancel.setText(registry.getText(T_MESSAGE_CANCEL, "Cancel"));
+            _messageCancel.setText(registry.getText("Cancel"));
         
-        _rootArchive.setText(registry.getText(T_ARCHIVE_ROOT, "Archive summary"));
-        _archiveLabel.setText(registry.getText(T_ARCHIVE_LABEL, "Archive: "));
+        _rootArchive.setText(registry.getText("Archive summary"));
+        _archiveLabel.setText(registry.getText("Archive: "));
         if (_archiveAccept != null)
-            _archiveAccept.setText(registry.getText(T_ARCHIVE_ACCEPT, "Accept"));
+            _archiveAccept.setText(registry.getText("Accept"));
         if (_archiveCancel != null)
-            _archiveCancel.setText(registry.getText(T_ARCHIVE_CANCEL, "Cancel"));
+            _archiveCancel.setText(registry.getText("Cancel"));
         
-        _rootURI.setText(registry.getText(T_URI_ROOT, "URI summary"));
-        _uriLabel.setText(registry.getText(T_URI_LABEL, "URI: "));
+        _rootURI.setText(registry.getText("URI summary"));
+        _uriLabel.setText(registry.getText("URI: "));
         if (_uriAccept != null)
-            _uriAccept.setText(registry.getText(T_URI_ACCEPT, "Accept"));
+            _uriAccept.setText(registry.getText("Accept"));
         if (_uriCancel != null)
-            _uriCancel.setText(registry.getText(T_URI_CANCEL, "Cancel"));
+            _uriCancel.setText(registry.getText("Cancel"));
     }
 }

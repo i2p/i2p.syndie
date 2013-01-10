@@ -284,12 +284,10 @@ class SQLPanel extends DesktopPanel implements Translatable, Themeable {
         super.dispose();
     }
 
-    private static final String T_NAME = "syndie.gui.sqltab.name";
-    private static final String T_DESC = "syndie.gui.sqltab.desc";
     
     public void translate(TranslationRegistry registry) {
-        _name = registry.getText(T_NAME, "SQL");
-        _description = registry.getText(T_DESC, "Advanced SQL interface");
+        _name = registry.getText("SQL");
+        _description = registry.getText("Advanced SQL interface");
     }
     
     public void applyTheme(Theme theme) {

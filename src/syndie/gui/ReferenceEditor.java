@@ -452,7 +452,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         
         TreeItem root = null;
         root = new TreeItem(_refCategory, SWT.NONE);
-        root.setText(_translationRegistry.getText(T_REFCAT_ROOT, "Top level"));
+        root.setText(_translationRegistry.getText("Top level"));
         
         for (int i = 0; i < roots.size(); i++) {
             NymReferenceNode node = (NymReferenceNode)roots.get(i);
@@ -462,7 +462,6 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         _refCategory.setSelection(new TreeItem[] { root });
         _refCategory.setRedraw(true);
     }
-    private static final String T_REFCAT_ROOT = "syndie.gui.referenceeditor.refcat.root";
     
     private void addCategory(NymReferenceNode node, TreeItem parent) {
         if ( (node.getURI() != null) && (node.getChildCount() <= 0) )
@@ -507,15 +506,13 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
             } catch (SWTException se) {
                 _ui.errorMessage("Error creating the image from " + selected, se);
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setText(_translationRegistry.getText(T_BADFILE_TITLE, "Invalid image"));
-                box.setMessage(_translationRegistry.getText(T_BADFILE_PREFIX, "Unable to load the image: ") + se.getMessage());
+                box.setText(_translationRegistry.getText("Invalid image"));
+                box.setMessage(_translationRegistry.getText("Unable to load the image: ") + se.getMessage());
                 box.open();
             }
         }
     }
     
-    private static final String T_BADFILE_TITLE = "syndie.gui.referenceeditor.badfile.title";
-    private static final String T_BADFILE_PREFIX = "syndie.gui.referenceeditor.badfile.prefix";
     
     private void createCategory() {
         TreeItem items[] = _refCategory.getSelection();
@@ -648,9 +645,8 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         } catch (URISyntaxException use) {
             uri = null;
         }
-        popup.showPopup(_translationRegistry.getText(T_SELECT_TITLE, "Select location"), uri, null);
+        popup.showPopup(_translationRegistry.getText("Select location"), uri, null);
     }
-    private static final String T_SELECT_TITLE = "syndie.gui.referenceeditor.select.title";
     
     public void dispose() {
         _translationRegistry.unregister(this);
@@ -679,30 +675,18 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
     }
     
     public void translate(TranslationRegistry registry) {
-        _locationLabel.setText(registry.getText(T_LOCATION, "Location:"));
-        _locationSelect.setText(registry.getText(T_LOCATION_SELECT, "Select..."));
-        _watched.setText(registry.getText(T_ADDWATCHED, "Include in the watched list"));
-        _refs.setText(registry.getText(T_ADDREFS, "Add to my references in:"));
-        _refNewCatLabel.setText(registry.getText(T_REFCATNAME, "New category name:"));
-        _refNewCatCreate.setText(registry.getText(T_REFCATADD, "Create"));
-        _customName.setText(registry.getText(T_CUSTOMNAME, "Custom nickname:"));
-        _customDesc.setText(registry.getText(T_CUSTOMDESC, "Custom description:"));
-        _customIcon.setText(registry.getText(T_OVERRIDEICON, "Custom icon"));
-        _customIconBrowse.setText(registry.getText(T_OVERRIDEICON_BROWSE, "Browse..."));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _locationLabel.setText(registry.getText("Location:"));
+        _locationSelect.setText(registry.getText("Select..."));
+        _watched.setText(registry.getText("Include in the watched list"));
+        _refs.setText(registry.getText("Add to my references in:"));
+        _refNewCatLabel.setText(registry.getText("New category name:"));
+        _refNewCatCreate.setText(registry.getText("Create"));
+        _customName.setText(registry.getText("Custom nickname:"));
+        _customDesc.setText(registry.getText("Custom description:"));
+        _customIcon.setText(registry.getText("Custom icon"));
+        _customIconBrowse.setText(registry.getText("Browse..."));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 
-    private static final String T_LOCATION = "syndie.gui.desktop.referenceeditor.location";
-    private static final String T_LOCATION_SELECT = "syndie.gui.desktop.referenceeditor.location.select";
-    private static final String T_ADDWATCHED = "syndie.gui.desktop.referenceeditor.addwatched";
-    private static final String T_ADDREFS = "syndie.gui.desktop.referenceeditor.addrefs";
-    private static final String T_REFCATNAME = "syndie.gui.desktop.referenceeditor.refcatname";
-    private static final String T_REFCATADD = "syndie.gui.desktop.referenceeditor.refcatadd";
-    private static final String T_CUSTOMNAME = "syndie.gui.desktop.referenceeditor.customname";
-    private static final String T_CUSTOMDESC = "syndie.gui.desktop.referenceeditor.customdesc";
-    private static final String T_OVERRIDEICON = "syndie.gui.desktop.referenceeditor.overrideicon";
-    private static final String T_OVERRIDEICON_BROWSE = "syndie.gui.desktop.referenceeditor.overrideicon.browse";
-    private static final String T_OK = "syndie.gui.desktop.referenceeditor.ok";
-    private static final String T_CANCEL = "syndie.gui.desktop.referenceeditor.cancel";
 }

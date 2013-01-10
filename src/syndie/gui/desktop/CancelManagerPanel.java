@@ -46,8 +46,6 @@ public class CancelManagerPanel extends DesktopPanel {
 
     protected void dispose() { _manager.dispose(); }
     
-    public String getPanelName() { return _translationRegistry.getText(T_NAME, "Cancel manager"); }
-    public String getPanelDescription() { return _translationRegistry.getText(T_DESC, "Control whose cancel messages to honor"); }
-    private static final String T_NAME = "syndie.gui.desktop.cancelmanagerpanel.name";
-    private static final String T_DESC = "syndie.gui.desktop.cancelmanagerpanel.desc";
+    public String getPanelName() { return _translationRegistry.getText("Cancel manager"); }
+    public String getPanelDescription() { return _translationRegistry.getText("Control whose cancel messages to honor"); }
 }

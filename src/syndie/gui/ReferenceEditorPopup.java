@@ -69,10 +69,9 @@ class ReferenceEditorPopup extends BaseComponent implements Translatable, Themea
     
     private void cancel() { dispose(); }
     
-    private static final String T_TITLE = "syndie.gui.referenceeditorpopup.title";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Reference editor"));
+        _shell.setText(registry.getText("Reference editor"));
     }
     public void applyTheme(Theme theme) {
         _shell.setFont(theme.SHELL_FONT);

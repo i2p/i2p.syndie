@@ -213,7 +213,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _ui.debugMessage("North edge updated w/ new summary=" + buf.toString() + " and refs=" + refs);
             _refNodes = new ArrayList();
             if (refs.size() > 0) {
-                _refs.add(_translationRegistry.getText(T_REFS, "* Forum notices and references:"));
+                _refs.add(_translationRegistry.getText("* Forum notices and references:"));
                 ReferenceNode.walk(refs, new ReferenceNode.Visitor() {
                     public void visit(ReferenceNode node, int depth, int siblingOrder) {
                         if (node.getURI() != null) {
@@ -303,10 +303,9 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
         }
         public void translate(TranslationRegistry registry) {
             //if (_isNew)
-            //    _title.setText(registry.getText(T_TITLE, "New profile"));
+            //    _title.setText(registry.getText("New profile"));
         }
     }
-    private static final String T_REFS = "syndie.gui.desktop.profilepanel.refs";
 
     
     private class EastEdge extends DesktopEdge implements Themeable, Translatable {
@@ -325,7 +324,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             });
             _messages.addPaintListener(new PaintListener() {
                 public void paintControl(PaintEvent evt) {
-                    ImageUtil.drawDescending(evt.gc, _messages, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText(T_MESSAGES, "Messages"));
+                    ImageUtil.drawDescending(evt.gc, _messages, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Messages"));
                 }
             });
 
@@ -338,7 +337,6 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _messages.redraw();
         }
     }
-    private static final String T_MESSAGES = "syndie.gui.desktop.profilepanel.messages";
     
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable, ManageForum.StateListener {
         private Button _watch;
@@ -421,28 +419,22 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
         public void translate(TranslationRegistry registry) {
             translateWatch();
             translateBan();
-            _saveChanges.setText(registry.getText(T_SAVE, "Save changes"));
-            _cancelChanges.setText(registry.getText(T_CANCEL, "Cancel changes"));
+            _saveChanges.setText(registry.getText("Save changes"));
+            _cancelChanges.setText(registry.getText("Cancel changes"));
         }
         private void translateWatch() {
             if ( (_scopeId >= 0) && (_client.isWatched(_scopeId)) )
-                _watch.setText(_translationRegistry.getText(T_UNWATCH, "Unwatch the forum"));
+                _watch.setText(_translationRegistry.getText("Unwatch the forum"));
             else
-                _watch.setText(_translationRegistry.getText(T_WATCH, "Watch the forum"));
+                _watch.setText(_translationRegistry.getText("Watch the forum"));
         }
         private void translateBan() {
             if ((_scope != null) && (_client.getBannedChannels().contains(_scope)))
-                _ban.setText(_translationRegistry.getText(T_UNBAN, "Unban the forum"));
+                _ban.setText(_translationRegistry.getText("Unban the forum"));
             else
-                _ban.setText(_translationRegistry.getText(T_BAN, "Ban the forum"));
+                _ban.setText(_translationRegistry.getText("Ban the forum"));
         }
 
     }
     
-    private static final String T_WATCH = "syndie.gui.desktop.profilepanel.watch";
-    private static final String T_UNWATCH = "syndie.gui.desktop.profilepanel.unwatch";
-    private static final String T_BAN = "syndie.gui.desktop.profilepanel.ban";
-    private static final String T_UNBAN = "syndie.gui.desktop.profilepanel.unban";
-    private static final String T_SAVE = "syndie.gui.desktop.profilepanel.save";
-    private static final String T_CANCEL = "syndie.gui.desktop.profilepanel.cancel";
 }

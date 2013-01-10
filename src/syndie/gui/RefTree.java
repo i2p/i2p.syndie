@@ -81,7 +81,7 @@ class RefTree extends ReferenceChooserTree {
         }
 
         if (item == getWatchedRoot()) {
-            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText("Group ") + (System.currentTimeMillis()%1000), null, "", null);
             Collection chans = _client.getWatchedChannels();
             for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
                 WatchedChannel cur = (WatchedChannel)iter.next();
@@ -98,7 +98,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getBookmarkRoot()) {
-            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText("Group ") + (System.currentTimeMillis()%1000), null, "", null);
             Collection chans = getBookmarks();
             for (Iterator iter = chans.iterator(); iter.hasNext(); ) {
                 NymReferenceNode cur = (NymReferenceNode)iter.next();
@@ -112,7 +112,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getManageRoot()) {
-            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText("Group ") + (System.currentTimeMillis()%1000), null, "", null);
             ArrayList chans = getManageableChannels();
             for (int i = 0; i < chans.size(); i++) {
                 chan = (ChannelInfo)chans.get(i);
@@ -129,7 +129,7 @@ class RefTree extends ReferenceChooserTree {
             else
                 return null;
         } else if (item == getPostRoot()) {
-            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText(T_SRCGROUP, "Group ") + (System.currentTimeMillis()%1000), null, "", null);
+            ReferenceNode rv = new ReferenceNode(_translationRegistry.getText("Group ") + (System.currentTimeMillis()%1000), null, "", null);
             ArrayList chans = getPostableChannels();
             for (int i = 0; i < chans.size(); i++) {
                 chan = (ChannelInfo)chans.get(i);
@@ -149,5 +149,4 @@ class RefTree extends ReferenceChooserTree {
 
         return null;
     }    
-    private static final String T_SRCGROUP = "syndie.gui.reftree.srcgroup";
 }

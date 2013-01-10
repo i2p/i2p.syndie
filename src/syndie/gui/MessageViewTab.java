@@ -40,8 +40,8 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     public void tabShown() {
         if (!_view.isKnownLocally()) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setText(getBrowser().getTranslationRegistry().getText(T_NOMSG_TITLE, "Message unknown"));
-            box.setMessage(getBrowser().getTranslationRegistry().getText(T_NOMSG, "The selected message is not known locally"));
+            box.setText(getBrowser().getTranslationRegistry().getText("Message unknown"));
+            box.setMessage(getBrowser().getTranslationRegistry().getText("The selected message is not known locally"));
             getBrowser().getNavControl().unview(getURI());
             box.open();
             return;
@@ -50,8 +50,6 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
         super.tabShown();
     }
     
-    private static final String T_NOMSG_TITLE = "syndie.gui.messageview.nomsg.title";
-    private static final String T_NOMSG = "syndie.gui.messageview.nomsg";
     
     protected void disposeDetails() { 
         _view.dispose();

@@ -163,28 +163,18 @@ public class ReferenceChooserSearch extends BaseComponent implements Translatabl
         _chooser.setSearchResults(matches);
     }
     
-    private static final String T_ROOT = "syndie.gui.rechoosersearch.root";
-    private static final String T_NAME = "syndie.gui.rechoosersearch.name";
-    private static final String T_NAME_TOOLTIP = "syndie.gui.rechoosersearch.name.tooltip";
-    private static final String T_TAGS = "syndie.gui.rechoosersearch.tags";
-    private static final String T_TAGS_TOOLTIP = "syndie.gui.rechoosersearch.tags.tooltip";
-    private static final String T_HASH = "syndie.gui.rechoosersearch.hash";
-    private static final String T_HASH_TOOLTIP = "syndie.gui.rechoosersearch.hash.tooltip";
-    private static final String T_PUBLICPOST = "syndie.gui.rechoosersearch.publicpost";
-    private static final String T_PUBLICPOST_TOOLTIP = "syndie.gui.rechoosersearch.publicpost.tooltip";
-    private static final String T_SEARCH = "syndie.gui.rechoosersearch.search";
     
     public void translate(TranslationRegistry registry) {
-        _searchTags.setText(registry.getText(T_TAGS, "Tags: "));
-        _name.setToolTipText(registry.getText(T_NAME_TOOLTIP, "the channel name must start with this string"));
-        _root.setText(registry.getText(T_ROOT, "Forum search criteria:"));
-        _searchCriteria.setText(registry.getText(T_NAME, "Name: "));
-        _tags.setToolTipText(registry.getText(T_TAGS_TOOLTIP, "-tag excludes, +tag requires all, without a prefix requires one or more"));
-        _searchHash.setText(registry.getText(T_HASH, "Hash: "));
-        _hash.setToolTipText(registry.getText(T_HASH_TOOLTIP, "the channel's hash must start with this string"));
-        _publicPost.setText(registry.getText(T_PUBLICPOST, "anyone can post?"));
-        _publicPost.setToolTipText(registry.getText(T_PUBLICPOST_TOOLTIP, "if true, include channels that anyone is allowed to post to"));
-        _search.setText(registry.getText(T_SEARCH, "Search"));
+        _searchTags.setText(registry.getText("Tags: "));
+        _name.setToolTipText(registry.getText("the channel name must start with this string"));
+        _root.setText(registry.getText("Forum search criteria:"));
+        _searchCriteria.setText(registry.getText("Name: "));
+        _tags.setToolTipText(registry.getText("-tag excludes, +tag requires all, without a prefix requires one or more"));
+        _searchHash.setText(registry.getText("Hash: "));
+        _hash.setToolTipText(registry.getText("the channel's hash must start with this string"));
+        _publicPost.setText(registry.getText("anyone can post?"));
+        _publicPost.setToolTipText(registry.getText("if true, include channels that anyone is allowed to post to"));
+        _search.setText(registry.getText("Search"));
                 
     }
 }

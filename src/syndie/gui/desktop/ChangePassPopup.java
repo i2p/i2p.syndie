@@ -34,23 +34,17 @@ public class ChangePassPopup {
         initComponents();
     }
         
-    private static final String T_CHANGEPASS_TITLE = "syndie.gui.desktop.changepasspopup.title";
-    private static final String T_CHANGEPASS_OLDPASS = "syndie.gui.desktop.changepasspopup.oldpass";
-    private static final String T_CHANGEPASS_NEWPASS = "syndie.gui.desktop.changepasspopup.newpass";
-    private static final String T_CHANGEPASS_NEWPASS2 = "syndie.gui.desktop.changepasspopup.newpass2";
-    private static final String T_CHANGEPASS_OK = "syndie.gui.desktop.changepasspopup.ok";
-    private static final String T_CHANGEPASS_CANCEL = "syndie.gui.desktop.changepasspopup.cancel";
 
     private void initComponents() {        
         // show a special warning/error screen
         final Shell s = new Shell(_parent, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        s.setText(_translationRegistry.getText(T_CHANGEPASS_TITLE, "Change passphrase"));
+        s.setText(_translationRegistry.getText("Change passphrase"));
         s.setLayout(new GridLayout(2, false));
         s.setFont(_themeRegistry.getTheme().SHELL_FONT);
 
         Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_CHANGEPASS_OLDPASS, "Old passphrase:"));
+        l.setText(_translationRegistry.getText("Old passphrase:"));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text oldPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         oldPass.setText("");
@@ -59,7 +53,7 @@ public class ChangePassPopup {
 
         l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_CHANGEPASS_NEWPASS, "New passphrase:"));
+        l.setText(_translationRegistry.getText("New passphrase:"));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text newPass = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         newPass.setText("");
@@ -68,7 +62,7 @@ public class ChangePassPopup {
         
         l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_CHANGEPASS_NEWPASS2, "New passphrase (again):"));
+        l.setText(_translationRegistry.getText("New passphrase (again):"));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text newPass2 = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         newPass2.setText("");
@@ -77,7 +71,7 @@ public class ChangePassPopup {
 
         Button b = new Button(s, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        b.setText(_translationRegistry.getText(T_CHANGEPASS_OK, "Reset passphrase"));
+        b.setText(_translationRegistry.getText("Reset passphrase"));
         b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         b.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
@@ -92,7 +86,7 @@ public class ChangePassPopup {
 
         b = new Button(s, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        b.setText(_translationRegistry.getText(T_CHANGEPASS_CANCEL, "Cancel"));
+        b.setText(_translationRegistry.getText("Cancel"));
         b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         b.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
@@ -126,8 +120,8 @@ public class ChangePassPopup {
         if ( (_desktop.getPassphrase() != null) && (!_desktop.getPassphrase().equals(old)) ) {
             _ui.debugMessage("old passphrase is not correct");
             MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK | SWT.PRIMARY_MODAL);
-            box.setMessage(_translationRegistry.getText(T_CHANGEPASS_OLD_DOESNTMATCH, "Old passphrase is incorrect"));
-            box.setText(_translationRegistry.getText(T_CHANGEPASS_OLD_DOESNTMATCH_TEXT, "Invalid passphrase"));
+            box.setMessage(_translationRegistry.getText("Old passphrase is incorrect"));
+            box.setText(_translationRegistry.getText("Invalid passphrase"));
             box.open();
             return;
         }
@@ -140,15 +134,11 @@ public class ChangePassPopup {
         } else {
             _ui.debugMessage("new passphrases do not match");
             MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK | SWT.PRIMARY_MODAL);
-            box.setMessage(_translationRegistry.getText(T_CHANGEPASS_NEW_DOESNTMATCH, "New passphrases don't match"));
-            box.setText(_translationRegistry.getText(T_CHANGEPASS_NEW_DOESNTMATCH_TEXT, "Invalid passphrase"));
+            box.setMessage(_translationRegistry.getText("New passphrases don't match"));
+            box.setText(_translationRegistry.getText("Invalid passphrase"));
             box.open();
             return;
         }
     }
     
-    private static final String T_CHANGEPASS_OLD_DOESNTMATCH = "syndie.gui.desktop.changepasspopup.old.doesntmatch";
-    private static final String T_CHANGEPASS_OLD_DOESNTMATCH_TEXT = "syndie.gui.desktop.changepasspopup.old.doesntmatch.text";
-    private static final String T_CHANGEPASS_NEW_DOESNTMATCH = "syndie.gui.desktop.changepasspopup.new.doesntmatch";
-    private static final String T_CHANGEPASS_NEW_DOESNTMATCH_TEXT = "syndie.gui.desktop.changepasspopup.new.doesntmatch.text";    
 }

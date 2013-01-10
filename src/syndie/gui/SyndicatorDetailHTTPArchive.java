@@ -435,8 +435,6 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         });
     }
     
-    private static final String T_PREVIEW_PREFIX = "syndie.gui.syndicatordetailhttparchive.preview.prefix";
-    private static final String T_PREVIEW_DONE = "syndie.gui.syndicatordetailhttparchive.preview.done";
     
     private void previewWhitelist() {
         Set scopes = _client.getReferencedScopes(((Long)_whitelistIds.get(_whitelist.getSelectionIndex())).longValue());
@@ -448,7 +446,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         shell.setLayout(gl);
-        shell.setText(_translationRegistry.getText(T_PREVIEW_PREFIX, "Whitelist: ") + scopes.size());
+        shell.setText(_translationRegistry.getText("Whitelist: ") + scopes.size());
         
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.V_SCROLL);
         scroll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -485,7 +483,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         
         Button done = new Button(shell, SWT.PUSH);
         done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        done.setText(_translationRegistry.getText(T_PREVIEW_DONE, "Ok"));
+        done.setText(_translationRegistry.getText("Ok"));
         done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         done.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -514,7 +512,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
     private void configFreenet() {
         final Shell dialog = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        dialog.setText(_translationRegistry.getText(T_FREENET_TITLE, "Freenet configuration"));
+        dialog.setText(_translationRegistry.getText("Freenet configuration"));
         dialog.setLayout(new GridLayout(1, true));
         
         Composite row = new Composite(dialog, SWT.NONE);
@@ -522,7 +520,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label pubLabel = new Label(row, SWT.NONE);
         pubLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        pubLabel.setText(_translationRegistry.getText(T_FREENET_PUB, "Public key:"));
+        pubLabel.setText(_translationRegistry.getText("Public key:"));
         final Text pub = new Text(row, SWT.SINGLE | SWT.BORDER);
         pub.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         String loc = _location.getText().trim();
@@ -534,16 +532,16 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         final Button readOnly = new Button(row, SWT.RADIO);
-        readOnly.setText(_translationRegistry.getText(T_FREENET_READONLY, "Read only"));
+        readOnly.setText(_translationRegistry.getText("Read only"));
         final Button writeOnly = new Button(row, SWT.RADIO);
-        writeOnly.setText(_translationRegistry.getText(T_FREENET_WRITEONLY, "Write only"));
+        writeOnly.setText(_translationRegistry.getText("Write only"));
         
         row = new Composite(dialog, SWT.NONE);
         row.setLayout(new GridLayout(4, false));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label fcpHostLabel = new Label(row, SWT.NONE);
         fcpHostLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpHostLabel.setText(_translationRegistry.getText(T_FREENET_FCPHOST, "FCP host:"));
+        fcpHostLabel.setText(_translationRegistry.getText("FCP host:"));
         final Text fcpHost = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpHost.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if ( (_archive.getFCPHost() != null) && (_archive.getFCPHost().trim().length() > 0) )
@@ -552,7 +550,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             fcpHost.setText("127.0.0.1");
         Label fcpPortLabel = new Label(row, SWT.NONE);
         fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpPortLabel.setText(_translationRegistry.getText(T_FREENET_FCPPORT, "port:"));
+        fcpPortLabel.setText(_translationRegistry.getText("port:"));
         final Text fcpPort = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getFCPPort() > 0)
@@ -565,7 +563,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Label privLabel = new Label(row, SWT.NONE);
         privLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        privLabel.setText(_translationRegistry.getText(T_FREENET_PRIV, "Private key:"));
+        privLabel.setText(_translationRegistry.getText("Private key:"));
         final Text privKey = new Text(row, SWT.SINGLE | SWT.BORDER);
         privKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getPostKey() != null)
@@ -574,7 +572,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             privKey.setText("");
         Button gen = new Button(row, SWT.PUSH);
         gen.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        gen.setText(_translationRegistry.getText(T_FREENET_NEWKEY, "Generate new"));
+        gen.setText(_translationRegistry.getText("Generate new"));
         gen.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { gen(); }
             public void widgetSelected(SelectionEvent selectionEvent) { gen(); }
@@ -604,7 +602,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row.setLayout(new FillLayout(SWT.HORIZONTAL));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         Button save = new Button(row, SWT.PUSH);
-        save.setText(_translationRegistry.getText(T_FREENET_SAVE, "Save"));
+        save.setText(_translationRegistry.getText("Save"));
         save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveFreenet(); }
             public void widgetSelected(SelectionEvent selectionEvent) { saveFreenet(); }
@@ -621,7 +619,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             }
         });
         Button cancel = new Button(row, SWT.PUSH);
-        cancel.setText(_translationRegistry.getText(T_FREENET_CANCEL, "Cancel"));
+        cancel.setText(_translationRegistry.getText("Cancel"));
         cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
@@ -631,16 +629,6 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         dialog.setSize(dialog.computeSize(400, SWT.DEFAULT));
         dialog.open();
     }
-    private static final String T_FREENET_TITLE = "syndie.gui.syndicatordetailhttparchive.freenet.title";
-    private static final String T_FREENET_PUB = "syndie.gui.syndicatordetailhttparchive.freenet.pub";
-    private static final String T_FREENET_READONLY = "syndie.gui.syndicatordetailhttparchive.freenet.readonly";
-    private static final String T_FREENET_WRITEONLY = "syndie.gui.syndicatordetailhttparchive.freenet.writeonly";
-    private static final String T_FREENET_FCPHOST = "syndie.gui.syndicatordetailhttparchive.freenet.fcphost";
-    private static final String T_FREENET_FCPPORT = "syndie.gui.syndicatordetailhttparchive.freenet.fcpport";
-    private static final String T_FREENET_PRIV = "syndie.gui.syndicatordetailhttparchive.freenet.priv";
-    private static final String T_FREENET_NEWKEY = "syndie.gui.syndicatordetailhttparchive.freenet.newkey";
-    private static final String T_FREENET_SAVE = "syndie.gui.syndicatordetailhttparchive.freenet.save";
-    private static final String T_FREENET_CANCEL = "syndie.gui.syndicatordetailhttparchive.freenet.cancel";
     
     private int getInt(String str) {
         if (str == null) return -1;
@@ -663,8 +651,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             Map rv = SyncOutboundPusher.readResults(s.getInputStream(), _ui);
             if (rv == null) {
                 MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-                box.setMessage(_translationRegistry.getText(T_FREENET_ERROR, "Error communicating with the Freenet server"));
-                box.setText(_translationRegistry.getText(T_FREENET_ERROR_TITLE, "Error"));
+                box.setMessage(_translationRegistry.getText("Error communicating with the Freenet server"));
+                box.setText(_translationRegistry.getText("Error"));
                 box.open();
                 //_ui.commandComplete(-1, null);
             } else {
@@ -682,14 +670,12 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             //_error = "Error generating a new Freenet keypair";
             _ui.debugMessage("Error generating a new Freenet keypair", e);
             MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_translationRegistry.getText(T_FREENET_ERROR, "Error communicating with the Freenet server") + ": " + e.getMessage());
-            box.setText(_translationRegistry.getText(T_FREENET_ERROR_TITLE, "Error"));
+            box.setMessage(_translationRegistry.getText("Error communicating with the Freenet server") + ": " + e.getMessage());
+            box.setText(_translationRegistry.getText("Error"));
             box.open();
             //_ui.commandComplete(-1, null);
         }
     }
-    private static final String T_FREENET_ERROR = "syndie.gui.syndicatordetailhttparchive.freenet.error";
-    private static final String T_FREENET_ERROR_TITLE = "syndie.gui.syndicatordetailhttparchive.freenet.error.title";
     
     /** 
      * turn the SSK public key retrieved from fred and make it a USK w/ version -1 
@@ -929,16 +915,16 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         if (last > 0)
             _lastSync.setText(Constants.getDateTime(last));
         else
-            _lastSync.setText(_translationRegistry.getText(T_NEVER, "Never"));
+            _lastSync.setText(_translationRegistry.getText("Never"));
         
         long nxt = _archive.getNextSyncTime();
         if (nxt > 0) {
             if (nxt <= System.currentTimeMillis())
-                _nextSync.setText(_translationRegistry.getText(T_ASAP, "ASAP"));
+                _nextSync.setText(_translationRegistry.getText("ASAP"));
             else
                 _nextSync.setText(Constants.getDateTime(nxt));
         } else {
-            _nextSync.setText(_translationRegistry.getText(T_NEVER, "Never"));
+            _nextSync.setText(_translationRegistry.getText("Never"));
         }
         
         _whitelistPull.setSelection(pull.pullWhitelistOnly);
@@ -1000,8 +986,6 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         }
     }
     
-    private static final String T_NEVER = "syndie.gui.syndicatordetailhttparchive.never";
-    private static final String T_ASAP = "syndie.gui.syndicatordetailhttparchive.asap";
 
     // callbacks from the archive engine, may occur on arbitrary threads
     public void incomingUpdated(SyncArchive.IncomingAction action) {}
@@ -1065,83 +1049,41 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _whitelistPull.setFont(theme.DEFAULT_FONT);
     }
     
-    private static final String T_NAME = "syndie.gui.syndicatordetailhttparchive.name";
-    private static final String T_LOCATION = "syndie.gui.syndicatordetailhttparchive.location";
-    private static final String T_LOCATIONADVANCED = "syndie.gui.syndicatordetailhttparchive.locationadvanced";
-    private static final String T_LOCATIONADVANCED_SEND = "syndie.gui.syndicatordetailhttparchive.locationadvanced.send";
-    private static final String T_LOCATIONADVANCED_READ = "syndie.gui.syndicatordetailhttparchive.locationadvanced.read";
-    private static final String T_LOCATIONADVANCED_FREENET = "syndie.gui.syndicatordetailhttparchive.locationadvanced.freenet";
-    private static final String T_PROXYHOST = "syndie.gui.syndicatordetailhttparchive.proxyhost";
-    private static final String T_PROXYPORT = "syndie.gui.syndicatordetailhttparchive.proxyport";
-    private static final String T_PUSHPOLICY = "syndie.gui.syndicatordetailhttparchive.pushpolicy";
-    private static final String T_PUSHMAXSIZE = "syndie.gui.syndicatordetailhttparchive.pushmaxsize";
-    private static final String T_PULLPOLICY = "syndie.gui.syndicatordetailhttparchive.pullpolicy";
-    private static final String T_PULLMAXSIZE = "syndie.gui.syndicatordetailhttparchive.pullmaxsize";
-    private static final String T_PULLPRIVATE = "syndie.gui.syndicatordetailhttparchive.pullprivate";
-    private static final String T_PULLPRIVATELOCALONLY = "syndie.gui.syndicatordetailhttparchive.pullprivateonly";
-    private static final String T_PBE = "syndie.gui.syndicatordetailhttparchive.pbe";
-    private static final String T_LASTSYNC = "syndie.gui.syndicatordetailhttparchive.lastsync";
-    private static final String T_NEXTSYNC = "syndie.gui.syndicatordetailhttparchive.nextsync";
-    private static final String T_SYNCNOW = "syndie.gui.syndicatordetailhttparchive.syncnow";
-    private static final String T_SYNCNEVER = "syndie.gui.syndicatordetailhttparchive.syncnever";
-    private static final String T_SYNCONEOFF = "syndie.gui.syndicatordetailhttparchive.synconeoff";
-    private static final String T_SYNCDELAY = "syndie.gui.syndicatordetailhttparchive.syncdelay";
-    private static final String T_FAILURES = "syndie.gui.syndicatordetailhttparchive.failures";
-    private static final String T_BACKOFF = "syndie.gui.syndicatordetailhttparchive.backoff";
-    private static final String T_PUSHPOLICY_ALLDELTA = "syndie.gui.syndicatordetailhttparchive.pushpolicy.alldelta";
-    private static final String T_PUSHPOLICY_LOCALDELTA = "syndie.gui.syndicatordetailhttparchive.pushpolicy.localdelta";
-    private static final String T_PUSHPOLICY_NOTHING = "syndie.gui.syndicatordetailhttparchive.pushpolicy.nothing";
-    private static final String T_SIZE_SUFFIX = "syndie.gui.syndicatordetailhttparchive.sizesuffix";
-    private static final String T_PULLPOLICY_RECENTDELTA = "syndie.gui.syndicatordetailhttparchive.pullpolicy.recentdelta";
-    private static final String T_PULLPOLICY_ALLDELTA = "syndie.gui.syndicatordetailhttparchive.pullpolicy.alldelta";
-    private static final String T_PULLPOLICY_RECENTKNOWN = "syndie.gui.syndicatordetailhttparchive.pullpolicy.recentknown";
-    private static final String T_PULLPOLICY_ALLKNOWN = "syndie.gui.syndicatordetailhttparchive.pullpolicy.allknown";
-    private static final String T_PULLPOLICY_PIR = "syndie.gui.syndicatordetailhttparchive.pullpolicy.pir";
-    private static final String T_PULLPOLICY_NOTHING = "syndie.gui.syndicatordetailhttparchive.pullpolicy.nothing";
-    private static final String T_SYNC_DELAY_SUFFIX = "syndie.gui.syndicatordetailhttparchive.syncdelaysuffix";
-    private static final String T_SAVE = "syndie.gui.syndicatordetailhttparchive.save";
-    private static final String T_CANCEL = "syndie.gui.syndicatordetailhttparchive.cancel";
-    private static final String T_PULLNEWAGE = "syndie.gui.syndicatordetailhttparchive.pullnewage";
-    private static final String T_PUSHAGE = "syndie.gui.syndicatordetailhttparchive.pushage";
-    private static final String T_WHITELIST = "syndie.gui.syndicatordetailhttparchive.whitelist";
-    private static final String T_WHITELIST_TT = "syndie.gui.syndicatordetailhttparchive.whitelist.tt";
-    private static final String T_WHITELIST_PULL = "syndie.gui.syndicatordetailhttparchive.whitelist.pull";
-    private static final String T_WHITELIST_PREVIEW = "syndie.gui.syndicatordetailhttparchive.whitelist.preview";
     
     public void translate(TranslationRegistry registry) {
-        _nameLabel.setText(registry.getText(T_NAME, "Name:"));
-        _locationLabel.setText(registry.getText(T_LOCATION, "Archive URL:"));
-        _locationAdvanced.setText(registry.getText(T_LOCATIONADVANCED, "Advanced..."));
-        _locationAdvancedSendKey.setText(registry.getText(T_LOCATIONADVANCED_SEND, "Specify posting key"));
-        _locationAdvancedReadKey.setText(registry.getText(T_LOCATIONADVANCED_READ, "Specify reading key"));
-        _locationAdvancedFreenet.setText(registry.getText(T_LOCATIONADVANCED_FREENET, "Configure freenet settings"));
-        _proxyHostLabel.setText(registry.getText(T_PROXYHOST, "Proxy host:"));
-        _proxyPortLabel.setText(registry.getText(T_PROXYPORT, "Port:"));
-        _pushPolicyLabel.setText(registry.getText(T_PUSHPOLICY, "Push policy:"));
-        _pushMaxSizeLabel.setText(registry.getText(T_PUSHMAXSIZE, "Max message size:"));
-        _pullPolicyLabel.setText(registry.getText(T_PULLPOLICY, "Pull policy:"));
-        _pullMaxSizeLabel.setText(registry.getText(T_PULLMAXSIZE, "Max message size:"));
-        _pullPrivate.setText(registry.getText(T_PULLPRIVATE, "Pull any private messages?"));
-        _pullPrivateLocalOnly.setText(registry.getText(T_PULLPRIVATELOCALONLY, "Pull private messages for us only?"));
-        _pullPBE.setText(registry.getText(T_PBE, "Pull passphrase protected messages?"));
-        _lastSyncLabel.setText(registry.getText(T_LASTSYNC, "Last sync:"));
-        _nextSyncLabel.setText(registry.getText(T_NEXTSYNC, "Next sync:"));
-        _nextSyncNow.setText(registry.getText(T_SYNCNOW, "Sync ASAP"));
-        _nextSyncNever.setText(registry.getText(T_SYNCNEVER, "Never sync"));
-        _nextSyncOneOff.setText(registry.getText(T_SYNCONEOFF, "Sync only once"));
-        _nextSyncDelayLabel.setText(registry.getText(T_SYNCDELAY, "Min sync delay:"));
-        _failuresLabel.setText(registry.getText(T_FAILURES, "Sync failures:"));
-        _backOffOnFailures.setText(registry.getText(T_BACKOFF, "Back off after failing?"));
-        _save.setText(registry.getText(T_SAVE, "Save"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _nameLabel.setText(registry.getText("Name:"));
+        _locationLabel.setText(registry.getText("Archive URL:"));
+        _locationAdvanced.setText(registry.getText("Advanced..."));
+        _locationAdvancedSendKey.setText(registry.getText("Specify posting key"));
+        _locationAdvancedReadKey.setText(registry.getText("Specify reading key"));
+        _locationAdvancedFreenet.setText(registry.getText("Configure freenet settings"));
+        _proxyHostLabel.setText(registry.getText("Proxy host:"));
+        _proxyPortLabel.setText(registry.getText("Port:"));
+        _pushPolicyLabel.setText(registry.getText("Push policy:"));
+        _pushMaxSizeLabel.setText(registry.getText("Max message size:"));
+        _pullPolicyLabel.setText(registry.getText("Pull policy:"));
+        _pullMaxSizeLabel.setText(registry.getText("Max message size:"));
+        _pullPrivate.setText(registry.getText("Pull any private messages?"));
+        _pullPrivateLocalOnly.setText(registry.getText("Pull private messages for us only?"));
+        _pullPBE.setText(registry.getText("Pull passphrase protected messages?"));
+        _lastSyncLabel.setText(registry.getText("Last sync:"));
+        _nextSyncLabel.setText(registry.getText("Next sync:"));
+        _nextSyncNow.setText(registry.getText("Sync ASAP"));
+        _nextSyncNever.setText(registry.getText("Never sync"));
+        _nextSyncOneOff.setText(registry.getText("Sync only once"));
+        _nextSyncDelayLabel.setText(registry.getText("Min sync delay:"));
+        _failuresLabel.setText(registry.getText("Sync failures:"));
+        _backOffOnFailures.setText(registry.getText("Back off after failing?"));
+        _save.setText(registry.getText("Save"));
+        _cancel.setText(registry.getText("Cancel"));
 
-        _pullNewAgeLabel.setText(registry.getText(T_PULLNEWAGE, "Age to treat as 'recent'"));
-        _pushAgeLabel.setText(registry.getText(T_PUSHAGE, "Oldest message to send"));
-        _whitelistEnable.setText(registry.getText(T_WHITELIST, "Whitelisted category:"));
+        _pullNewAgeLabel.setText(registry.getText("Age to treat as 'recent'"));
+        _pushAgeLabel.setText(registry.getText("Oldest message to send"));
+        _whitelistEnable.setText(registry.getText("Whitelisted category:"));
         
-        _whitelist.setToolTipText(registry.getText(T_WHITELIST_TT, "Forums that are referenced in the specified category (and posts to those forums) are allowed to be imported"));
-        _whitelistPull.setText(registry.getText(T_WHITELIST_PULL, "Only pull whitelisted content (reduces anonymity but saves bandwidth)"));
-        _whitelistPreview.setText(registry.getText(T_WHITELIST_PREVIEW, "Preview"));
+        _whitelist.setToolTipText(registry.getText("Forums that are referenced in the specified category (and posts to those forums) are allowed to be imported"));
+        _whitelistPull.setText(registry.getText("Only pull whitelisted content (reduces anonymity but saves bandwidth)"));
+        _whitelistPreview.setText(registry.getText("Preview"));
         
         translateCombos(registry);
     }
@@ -1165,25 +1107,9 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
     private static final int SYNC_DELAY_DEFAULT_INDEX = 2;
     
-    private static final String T_NEWAGE_DEFAULT = "syndie.gui.syndicatordetailhttparchive.newage.default";
-    private static final String T_NEWAGE_1W = "syndie.gui.syndicatordetailhttparchive.newage.1w";
-    private static final String T_NEWAGE_1M = "syndie.gui.syndicatordetailhttparchive.newage.1m";
-    private static final String T_NEWAGE_3M = "syndie.gui.syndicatordetailhttparchive.newage.3m";
-    private static final String T_NEWAGE_6M = "syndie.gui.syndicatordetailhttparchive.newage.6m";
-    private static final String T_NEWAGE_1Y = "syndie.gui.syndicatordetailhttparchive.newage.1y";
-    private static final String T_NEWAGE_3Y = "syndie.gui.syndicatordetailhttparchive.newage.3y";
-    private static final String T_NEWAGE_5Y = "syndie.gui.syndicatordetailhttparchive.newage.5y";
-    private static final String T_NEWAGE_10Y = "syndie.gui.syndicatordetailhttparchive.newage.10y";
     private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 91, 183, 365, 1095, 1826, 3653 };
     private static final int NEWAGE_DEFAULT_INDEX = NEWAGEDAYS.length - 1;
     
-    private static final String T_SENDAGE_1W = "syndie.gui.syndicatordetailhttparchive.sendage.1w";
-    private static final String T_SENDAGE_2W = "syndie.gui.syndicatordetailhttparchive.sendage.2w";
-    private static final String T_SENDAGE_1M = "syndie.gui.syndicatordetailhttparchive.sendage.1m";
-    private static final String T_SENDAGE_2M = "syndie.gui.syndicatordetailhttparchive.sendage.2m";
-    private static final String T_SENDAGE_6M = "syndie.gui.syndicatordetailhttparchive.sendage.6m";
-    private static final String T_SENDAGE_1Y = "syndie.gui.syndicatordetailhttparchive.sendage.1y";
-    private static final String T_SENDAGE_INF = "syndie.gui.syndicatordetailhttparchive.sendage.inf";
     private static final int SENDAGE_DEFAULT_INDEX = 0;
     private static final int[] SENDAGEDAYS = new int[] { 7, 14, 31, 62, 183, 365, -1 };
         
@@ -1191,60 +1117,60 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         int cnt = _pushPolicy.getItemCount();
         int sel = (cnt > 0 ? _pushPolicy.getSelectionIndex() : PUSH_POLICY_DEFAULT);
         _pushPolicy.removeAll();
-        _pushPolicy.add(registry.getText(T_PUSHPOLICY_ALLDELTA, "Send all messages they don't have"));
-        _pushPolicy.add(registry.getText(T_PUSHPOLICY_LOCALDELTA, "Send locally created messages they don't have"));
-        _pushPolicy.add(registry.getText(T_PUSHPOLICY_NOTHING, "Send nothing"));
+        _pushPolicy.add(registry.getText("Send all messages they don't have"));
+        _pushPolicy.add(registry.getText("Send locally created messages they don't have"));
+        _pushPolicy.add(registry.getText("Send nothing"));
         _pushPolicy.select(sel);
         
         cnt = _pushMaxSize.getItemCount();
         sel = (cnt > 0 ? _pushMaxSize.getSelectionIndex() : SIZE_DEFAULT_INDEX);
         _pushMaxSize.removeAll();
         for (int i = 0; i < SIZES.length; i++)
-            _pushMaxSize.add(SIZES[i] + registry.getText(T_SIZE_SUFFIX, " KBytes"));
+            _pushMaxSize.add(SIZES[i] + registry.getText(" KBytes"));
         _pushMaxSize.select(sel);
         
         cnt = _pullPolicy.getItemCount();
         sel = (cnt > 0 ? _pullPolicy.getSelectionIndex() : PULL_POLICY_DEFAULT);
         _pullPolicy.removeAll();
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_RECENTDELTA, "Recent messages we don't have"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_ALLDELTA, "All messages we don't have"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_RECENTKNOWN, "Recent messages in forums we know"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_ALLKNOWN, "All messages in forums we know"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_PIR, "Everything the archive considers recent (PIR)"));
-        _pullPolicy.add(registry.getText(T_PULLPOLICY_NOTHING, "Nothing"));
+        _pullPolicy.add(registry.getText("Recent messages we don't have"));
+        _pullPolicy.add(registry.getText("All messages we don't have"));
+        _pullPolicy.add(registry.getText("Recent messages in forums we know"));
+        _pullPolicy.add(registry.getText("All messages in forums we know"));
+        _pullPolicy.add(registry.getText("Everything the archive considers recent (PIR)"));
+        _pullPolicy.add(registry.getText("Nothing"));
         _pullPolicy.select(sel);
         
         cnt = _pullMaxSize.getItemCount();
         sel = (cnt > 0 ? _pullMaxSize.getSelectionIndex() : SIZE_DEFAULT_INDEX);
         _pullMaxSize.removeAll();
         for (int i = 0; i < SIZES.length; i++)
-            _pullMaxSize.add(SIZES[i] + registry.getText(T_SIZE_SUFFIX, " KBytes"));
+            _pullMaxSize.add(SIZES[i] + registry.getText(" KBytes"));
         _pullMaxSize.select(sel);
 
         cnt = _pullNewAge.getItemCount();
         sel = (cnt > 0 ? _pullNewAge.getSelectionIndex() : NEWAGE_DEFAULT_INDEX);
         _pullNewAge.removeAll();
-        _pullNewAge.add(registry.getText(T_NEWAGE_DEFAULT, "Whatever the archive advertises as new"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_1W, "1 week"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_1M, "1 month"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_3M, "3 months"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_6M, "6 months"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_1Y, "1 year"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_3Y, "3 year"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_5Y, "5 year"));
-        _pullNewAge.add(registry.getText(T_NEWAGE_10Y, "10 years"));
+        _pullNewAge.add(registry.getText("Whatever the archive advertises as new"));
+        _pullNewAge.add(registry.getText("1 week"));
+        _pullNewAge.add(registry.getText("1 month"));
+        _pullNewAge.add(registry.getText("3 months"));
+        _pullNewAge.add(registry.getText("6 months"));
+        _pullNewAge.add(registry.getText("1 year"));
+        _pullNewAge.add(registry.getText("3 year"));
+        _pullNewAge.add(registry.getText("5 year"));
+        _pullNewAge.add(registry.getText("10 years"));
         _pullNewAge.select(sel);
 
         cnt = _pushAge.getItemCount();
         sel = (cnt > 0 ? _pushAge.getSelectionIndex() : SENDAGE_DEFAULT_INDEX);
         _pushAge.removeAll();
-        _pushAge.add(registry.getText(T_SENDAGE_1W, "1 week"));
-        _pushAge.add(registry.getText(T_SENDAGE_2W, "2 weeks"));
-        _pushAge.add(registry.getText(T_SENDAGE_1M, "1 month"));
-        _pushAge.add(registry.getText(T_SENDAGE_2M, "2 months"));
-        _pushAge.add(registry.getText(T_SENDAGE_6M, "6 months"));
-        _pushAge.add(registry.getText(T_SENDAGE_1Y, "1 year"));
-        _pushAge.add(registry.getText(T_SENDAGE_INF, "Unlimited (only use if your clock is off)"));
+        _pushAge.add(registry.getText("1 week"));
+        _pushAge.add(registry.getText("2 weeks"));
+        _pushAge.add(registry.getText("1 month"));
+        _pushAge.add(registry.getText("2 months"));
+        _pushAge.add(registry.getText("6 months"));
+        _pushAge.add(registry.getText("1 year"));
+        _pushAge.add(registry.getText("Unlimited (only use if your clock is off)"));
         _pushAge.select(sel);
         
         cnt = _nextSyncDelay.getItemCount();
@@ -1252,9 +1178,9 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _nextSyncDelay.removeAll();
         for (int i = 0; i < SYNC_DELAY.length; i++) {
             if (SYNC_DELAY[i] == 1)
-                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(T_SYNC_DELAY_SUFFIX, " hour"));
+                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(" hour"));
             else
-                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(T_SYNC_DELAY_SUFFIX, " hours"));
+                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(" hours"));
         }
         _nextSyncDelay.select(sel);
     }

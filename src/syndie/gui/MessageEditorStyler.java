@@ -344,7 +344,7 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         rv.setText(name);
         final Menu colorMenu = new Menu(rv);
         MenuItem none = new MenuItem(colorMenu, SWT.PUSH);
-        none.setText(_translationRegistry.getText(T_COLOR_DEFAULT, "default"));
+        none.setText(_translationRegistry.getText("default"));
         if ( (defaultColor == null) || (!names.contains(defaultColor)) )
             none.setSelection(true);
         none.addSelectionListener(new ColorMenuItemListener(rv, null, onSelect));
@@ -396,46 +396,27 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         }
     }
     
-    private static final String T_COLOR_DEFAULT = "syndie.gui.messageeditorstyler.color.default";
-    private static final String T_STYLE = "syndie.gui.messageeditorstyler.style";
-    private static final String T_TEXT = "syndie.gui.messageeditorstyler.text";
-    private static final String T_TEXT_B = "syndie.gui.messageeditorstyler.text.bold";
-    private static final String T_TEXT_I = "syndie.gui.messageeditorstyler.text.italic";
-    private static final String T_TEXT_U = "syndie.gui.messageeditorstyler.text.underline";
-    private static final String T_TEXT_SO = "syndie.gui.messageeditorstyler.text.strikeout";
-    private static final String T_TEXT_FONT = "syndie.gui.messageeditorstyler.text.font";
-    private static final String T_TEXT_FONTSIZE = "syndie.gui.messageeditorstyler.text.fontsize";
-    private static final String T_TEXT_ALIGN = "syndie.gui.messageeditorstyler.text.align";
-    private static final String T_TEXT_ALIGN_LEFT = "syndie.gui.messageeditorstyler.text.align.left";
-    private static final String T_TEXT_ALIGN_LEFT_TOOLTIP = "syndie.gui.messageeditorstyler.text.align.lefttooltip";
-    private static final String T_TEXT_ALIGN_CENTER = "syndie.gui.messageeditorstyler.text.align.center";
-    private static final String T_TEXT_ALIGN_CENTER_TOOLTIP = "syndie.gui.messageeditorstyler.text.align.centertooltip";
-    private static final String T_TEXT_ALIGN_RIGHT = "syndie.gui.messageeditorstyler.text.align.right";
-    private static final String T_TEXT_ALIGN_RIGHT_TOOLTIP = "syndie.gui.messageeditorstyler.text.align.righttooltip";
-    private static final String T_TEXT_SAMPLE = "syndie.gui.messageeditorstyler.text.sample";
-    private static final String T_TEXT_OK = "syndie.gui.messageeditorstyler.text.ok";
-    private static final String T_TEXT_CANCEL = "syndie.gui.messageeditorstyler.text.cancel";
     
     public void translate(TranslationRegistry registry) {
         // todo: translate
-        _txtShell.setText(registry.getText(T_STYLE, "Text style chooser"));        
-        _grpText.setText(registry.getText(T_TEXT, "Styling"));
-        _txtBold.setText(registry.getText(T_TEXT_B, "B"));
-        _txtItalic.setText(registry.getText(T_TEXT_I, "I"));
-        _txtUnderline.setText(registry.getText(T_TEXT_U, "U"));
-        _txtStrikeout.setText(registry.getText(T_TEXT_SO, "SO"));
-        _txtFont.setToolTipText(registry.getText(T_TEXT_FONT, "Adjust the font"));
-        _txtFontSize.setToolTipText(registry.getText(T_TEXT_FONTSIZE, "Adjust the font size"));
-        _grpAlign.setText(registry.getText(T_TEXT_ALIGN, "Alignment"));
-        _txtAlignLeft.setText(registry.getText(T_TEXT_ALIGN_LEFT, "left"));
-        _txtAlignLeft.setToolTipText(registry.getText(T_TEXT_ALIGN_LEFT_TOOLTIP, "Align the text to the left"));
-        _txtAlignCenter.setText(registry.getText(T_TEXT_ALIGN_CENTER, "center"));
-        _txtAlignCenter.setToolTipText(registry.getText(T_TEXT_ALIGN_CENTER_TOOLTIP, "Align the text to the center"));
-        _txtAlignRight.setText(registry.getText(T_TEXT_ALIGN_RIGHT, "right"));
-        _txtAlignRight.setToolTipText(registry.getText(T_TEXT_ALIGN_RIGHT_TOOLTIP, "Align the text to the right"));
-        _sampleText.setText(registry.getText(T_TEXT_SAMPLE, "This is the sample text"));
-        _styleOk.setText(registry.getText(T_TEXT_OK, "ok"));
-        _styleCancel.setText(registry.getText(T_TEXT_CANCEL, "cancel"));
+        _txtShell.setText(registry.getText("Text style chooser"));        
+        _grpText.setText(registry.getText("Styling"));
+        _txtBold.setText(registry.getText("B"));
+        _txtItalic.setText(registry.getText("I"));
+        _txtUnderline.setText(registry.getText("U"));
+        _txtStrikeout.setText(registry.getText("SO"));
+        _txtFont.setToolTipText(registry.getText("Adjust the font"));
+        _txtFontSize.setToolTipText(registry.getText("Adjust the font size"));
+        _grpAlign.setText(registry.getText("Alignment"));
+        _txtAlignLeft.setText(registry.getText("left"));
+        _txtAlignLeft.setToolTipText(registry.getText("Align the text to the left"));
+        _txtAlignCenter.setText(registry.getText("center"));
+        _txtAlignCenter.setToolTipText(registry.getText("Align the text to the center"));
+        _txtAlignRight.setText(registry.getText("right"));
+        _txtAlignRight.setToolTipText(registry.getText("Align the text to the right"));
+        _sampleText.setText(registry.getText("This is the sample text"));
+        _styleOk.setText(registry.getText("ok"));
+        _styleCancel.setText(registry.getText("cancel"));
     }
     
     public void applyTheme(Theme theme) {

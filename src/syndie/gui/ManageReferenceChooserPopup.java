@@ -101,11 +101,9 @@ public class ManageReferenceChooserPopup extends BaseComponent implements Themea
         _shell.setFont(theme.SHELL_FONT);
     }
     
-    private static final String T_CLOSE = "syndie.gui.managereferencechooserpopup.close";
-    private static final String T_SHELL = "syndie.gui.managereferencechooserpopup.shell";
     
     public void translate(TranslationRegistry registry) {
-        _close.setText(registry.getText(T_CLOSE, "Close"));
-        _shell.setText(registry.getText(T_SHELL, "References"));
+        _close.setText(registry.getText("Close"));
+        _shell.setText(registry.getText("References"));
     }
 }

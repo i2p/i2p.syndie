@@ -271,29 +271,24 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         getRoot().layout(true, true);
     }
     
-    private static final String T_HTTPSERV_RUNNING = "syndie.gui.desktop.controlmenupanel.httpserv.running";
-    private static final String T_HTTPSERV_NOTRUNNING = "syndie.gui.desktop.controlmenupanel.httpserv.notrunning";
-    private static final String T_HTTPSERV_STARTING = "syndie.gui.desktop.controlmenupanel.httpserv.starting";
-    private static final String T_HTTPSERV_STARTFAILED_TITLE = "syndie.gui.desktop.controlmenupanel.httpserv.startfailed.title";
-    private static final String T_HTTPSERV_STARTFAILED_PREFIX = "syndie.gui.desktop.controlmenupanel.httpserv.startfailed.prefix";
     
     private void updateHttpservStatus() {
         if (HTTPServ.startFailed() && (HTTPServ.getStartFailedMessage() != null)) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText(T_HTTPSERV_STARTFAILED_TITLE, "Server failed"));
-            box.setMessage(_translationRegistry.getText(T_HTTPSERV_STARTFAILED_PREFIX, "There was an error starting up the HTTP server: ") + HTTPServ.getStartFailedMessage());
+            box.setText(_translationRegistry.getText("Server failed"));
+            box.setMessage(_translationRegistry.getText("There was an error starting up the HTTP server: ") + HTTPServ.getStartFailedMessage());
             box.open();
             HTTPServ.clearFailedMessage();
         }
         
         if (HTTPServ.isAlive() && !HTTPServ.startInProgress()) {
-            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_RUNNING, "Running - press to stop"));
+            _httpservStatus.setText(_translationRegistry.getText("Running - press to stop"));
             _httpservStatus.setEnabled(true);
         } else if (HTTPServ.startInProgress()) {
-            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_STARTING, "Startup in progress..."));
+            _httpservStatus.setText(_translationRegistry.getText("Startup in progress..."));
             _httpservStatus.setEnabled(false);
         } else {
-            _httpservStatus.setText(_translationRegistry.getText(T_HTTPSERV_NOTRUNNING, "Not running - press to start"));
+            _httpservStatus.setText(_translationRegistry.getText("Not running - press to start"));
             _httpservStatus.setEnabled(true);
         }
         getRoot().layout(true, true); // resized due to text changes
@@ -347,16 +342,11 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _client.setNymPrefs(prefs);
     }
     
-    private static final String T_HTTPSERV_OPTIONS_SHELL = "syndie.gui.desktop.controlmenupanel.httpserv.options.shell";
-    private static final String T_HTTPSERV_OPTIONS_LISTENPORT = "syndie.gui.desktop.controlmenupanel.httpserv.options.listenport";
-    private static final String T_HTTPSERV_OPTIONS_MINLISTENERS = "syndie.gui.desktop.controlmenupanel.httpserv.options.minlisteners";
-    private static final String T_HTTPSERV_OPTIONS_WRITABLE = "syndie.gui.desktop.controlmenupanel.httpserv.options.writable";
-    private static final String T_HTTPSERV_OPTIONS_DONE = "syndie.gui.desktop.controlmenupanel.httpserv.options.done";
     
     private void showHttpservOptions() {
         final Shell shell = new Shell(getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
-        shell.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_SHELL, "Archive server options"));
+        shell.setText(_translationRegistry.getText("Archive server options"));
         
         GridLayout gl = new GridLayout(2, false);
         gl.horizontalSpacing = 0;
@@ -367,7 +357,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         Label l = new Label(shell, SWT.SINGLE);
         l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_LISTENPORT, "TCP port to listen on: "));
+        l.setText(_translationRegistry.getText("TCP port to listen on: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text port = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -391,7 +381,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
 
         l = new Label(shell, SWT.SINGLE);
         l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_MINLISTENERS, "Minimum number of handlers: "));
+        l.setText(_translationRegistry.getText("Minimum number of handlers: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Spinner minListeners = new Spinner(shell, SWT.READ_ONLY | SWT.BORDER);
@@ -411,7 +401,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         l = new Label(shell, SWT.SINGLE);
         l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_WRITABLE, "Can people post messages to the server? "));
+        l.setText(_translationRegistry.getText("Can people post messages to the server? "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Button writable = new Button(shell, SWT.CHECK);
@@ -427,7 +417,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         Button done = new Button(shell, SWT.PUSH);
         done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        done.setText(_translationRegistry.getText(T_HTTPSERV_OPTIONS_DONE, "Done"));
+        done.setText(_translationRegistry.getText("Done"));
         done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         done.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -439,14 +429,12 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         shell.open();
     }
     
-    private static final String T_ROOTDIR_MSG = "syndie.gui.desktop.controlmenupanel.rootdirmsg";
-    private static final String T_ROOTDIR_TEXT = "syndie.gui.desktop.controlmenupanel.rootdirtext";
 
     private void browseForRootDir() {
         DirectoryDialog dialog = new DirectoryDialog(getRoot().getShell(), SWT.OPEN);
         dialog.setFilterPath(_switchDir.getText());
-        dialog.setMessage(_translationRegistry.getText(T_ROOTDIR_MSG, "Root of the Syndie directory tree (containing db/, archive/, etc)"));
-        dialog.setText(_translationRegistry.getText(T_ROOTDIR_TEXT, "Root directory"));
+        dialog.setMessage(_translationRegistry.getText("Root of the Syndie directory tree (containing db/, archive/, etc)"));
+        dialog.setText(_translationRegistry.getText("Root directory"));
         String dir = dialog.open();
         if (dir != null)
             _switchDir.setText(dir);
@@ -473,8 +461,8 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
             FileDialog dialog = new FileDialog(getRoot().getShell(), SWT.OPEN | SWT.SINGLE);
             dialog.setFilterExtensions(new String[] { "*.syndie", "*" });
             // retranslate each time
-            dialog.setText(_translationRegistry.getText(T_IMPORT_SYNDIE_TITLE, "Import syndie file"));
-            dialog.setFilterNames(new String[] { _translationRegistry.getText(T_IMPORT_SYNDIE_EXTENSION, "Syndie files"), _translationRegistry.getText(T_IMPORT_ALL_EXTENSION, "All files") });
+            dialog.setText(_translationRegistry.getText("Import syndie file"));
+            dialog.setFilterNames(new String[] { _translationRegistry.getText("Syndie files"), _translationRegistry.getText("All files") });
             String file = dialog.open();
             if (file != null) {
                 _importLocation.setText(file);
@@ -482,9 +470,6 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
             }
         }
     }
-    private static final String T_IMPORT_SYNDIE_TITLE = "syndie.gui.desktop.controlmenupanel.importsyndietitle";
-    private static final String T_IMPORT_SYNDIE_EXTENSION = "syndie.gui.desktop.controlmenupanel.importsyndieextension";
-    private static final String T_IMPORT_ALL_EXTENSION = "syndie.gui.desktop.controlmenupanel.importallextension";
     
     private void fireOpen() {
         try { 
@@ -542,8 +527,8 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {
                         MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                        box.setText(_translationRegistry.getText(T_IMPORT_COMPLETE, "Import complete"));
-                        box.setMessage(_translationRegistry.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
+                        box.setText(_translationRegistry.getText("Import complete"));
+                        box.setMessage(_translationRegistry.getText("Messages imported successfully/total: ") + successful + "/" + total);
                         box.open();
                         _import.setEnabled(true);
                         _importBrowse.setEnabled(true);
@@ -596,8 +581,6 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         }
     }
     
-    private static final String T_IMPORT_COMPLETE = "syndie.gui.desktop.controlmenupanel.importcomplete";
-    private static final String T_IMPORT_COMPLETE_PREFIX = "syndie.gui.desktop.controlmenupanel.importcomplete.prefix";
     
     public void applyTheme(Theme theme) {
         _importLabel.setFont(theme.DEFAULT_FONT);
@@ -625,48 +608,29 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _httpservStatus.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_IMPORTLABEL = "syndie.gui.desktop.controlmenupanel.importlabel";
-    private static final String T_IMPORTFILE = "syndie.gui.desktop.controlmenupanel.importfile";
-    private static final String T_IMPORTBULK = "syndie.gui.desktop.controlmenupanel.importbulk";
-    private static final String T_IMPORTBROWSE = "syndie.gui.desktop.controlmenupanel.importbrowse";
-    private static final String T_IMPORT = "syndie.gui.desktop.controlmenupanel.import";
-    private static final String T_OPENLABEL = "syndie.gui.desktop.controlmenupanel.openlabel";
-    private static final String T_OPEN = "syndie.gui.desktop.controlmenupanel.open";
-    private static final String T_EXIT = "syndie.gui.desktop.controlmenupanel.exit";
-    private static final String T_SQL = "syndie.gui.desktop.controlmenupanel.sql";
-    private static final String T_SWITCH = "syndie.gui.desktop.controlmenupanel.switch";
-    private static final String T_SWITCH_BROWSE = "syndie.gui.desktop.controlmenupanel.switchbrowse";
-    private static final String T_SWITCH_OPEN = "syndie.gui.desktop.controlmenupanel.switchopen";
-    private static final String T_CHANGEPASS = "syndie.gui.desktop.controlmenupanel.changepass";
-    private static final String T_WELCOME = "syndie.gui.desktop.controlmenupanel.welcome";
-    private static final String T_ARCHIVEMANAGER = "syndie.gui.desktop.controlmenupanel.archivemgr";
-    private static final String T_TABBEDUI = "syndie.gui.desktop.controlmenupanel.tabbedui";
     
-    private static final String T_HTTPSERV_LABEL = "syndie.gui.desktop.controlmenupanel.httpserv.label";
-    private static final String T_HTTPSERV_ONSTARTUP = "syndie.gui.desktop.controlmenupanel.httpserv.onstartup";
-    private static final String T_HTTPSERV_OPTIONS = "syndie.gui.desktop.controlmenupanel.httpserv.options";
     
     public void translate(TranslationRegistry registry) {
-        _importLabel.setText(registry.getText(T_IMPORTLABEL, "Import: "));
-        _importFile.setText(registry.getText(T_IMPORTFILE, "individual message"));
-        _importBulk.setText(registry.getText(T_IMPORTBULK, "directory (recursively)"));
-        _importBrowse.setText(registry.getText(T_IMPORTBROWSE, "Browse..."));
-        _import.setText(registry.getText(T_IMPORT, "Import"));
-        //_tabbedUI.setText(registry.getText(T_TABBEDUI, "Advanced: Display the tabbed UI"));
-        _changePass.setText(registry.getText(T_CHANGEPASS, "Change Syndie instance passphrase"));
-        _openLabel.setText(registry.getText(T_OPENLABEL, "Open Syndie URI:"));
-        _sql.setText(registry.getText(T_SQL, "Advanced: SQL interface"));
-        _open.setText(registry.getText(T_OPEN, "Open"));
-        _switchLabel.setText(registry.getText(T_SWITCH, "Log in to a different Syndie instance:"));
-        _switchBrowse.setText(registry.getText(T_SWITCH_BROWSE, "Browse..."));
-        _switchOpen.setText(registry.getText(T_SWITCH_OPEN, "Open selected"));
-        _welcome.setText(registry.getText(T_WELCOME, "Reshow welcome screen"));
-        _archiveMgr.setText(registry.getText(T_ARCHIVEMANAGER, "Archive manager"));
-        _exit.setText(registry.getText(T_EXIT, "Exit"));
+        _importLabel.setText(registry.getText("Import: "));
+        _importFile.setText(registry.getText("individual message"));
+        _importBulk.setText(registry.getText("directory (recursively)"));
+        _importBrowse.setText(registry.getText("Browse..."));
+        _import.setText(registry.getText("Import"));
+        //_tabbedUI.setText(registry.getText("Advanced: Display the tabbed UI"));
+        _changePass.setText(registry.getText("Change Syndie instance passphrase"));
+        _openLabel.setText(registry.getText("Open Syndie URI:"));
+        _sql.setText(registry.getText("Advanced: SQL interface"));
+        _open.setText(registry.getText("Open"));
+        _switchLabel.setText(registry.getText("Log in to a different Syndie instance:"));
+        _switchBrowse.setText(registry.getText("Browse..."));
+        _switchOpen.setText(registry.getText("Open selected"));
+        _welcome.setText(registry.getText("Reshow welcome screen"));
+        _archiveMgr.setText(registry.getText("Archive manager"));
+        _exit.setText(registry.getText("Exit"));
 
-        _httpservLabel.setText(registry.getText(T_HTTPSERV_LABEL, "Integrated HTTP-accessible archive server:"));
-        _httpservOnStart.setText(registry.getText(T_HTTPSERV_ONSTARTUP, "Run on startup"));
-        _httpservOptions.setText(registry.getText(T_HTTPSERV_OPTIONS, "Configure..."));
+        _httpservLabel.setText(registry.getText("Integrated HTTP-accessible archive server:"));
+        _httpservOnStart.setText(registry.getText("Run on startup"));
+        _httpservOptions.setText(registry.getText("Configure..."));
         
         updateHttpservStatus();
     }

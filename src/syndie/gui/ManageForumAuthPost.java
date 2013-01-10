@@ -395,49 +395,32 @@ class ManageForumAuthPost extends BaseComponent implements Themeable, Translatab
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_SHELL = "syndie.gui.viewforumauthpost.shell";
     
-    private static final String T_CHOICE_ANYONE = "syndie.gui.viewforumauthpost.choice.anyone";
-    private static final String T_CHOICE_ALLOWED = "syndie.gui.viewforumauthpost.choice.allowed";
-    private static final String T_CHOICE_REPLIES = "syndie.gui.viewforumauthpost.choice.replies";
         
-    private static final String T_SELECTED = "syndie.gui.viewforumauthpost.selected";
-    private static final String T_SELECTED_ADD = "syndie.gui.viewforumauthpost.selected.add";
-    private static final String T_SELECTED_DELETE = "syndie.gui.viewforumauthpost.selected.del";
         
-    private static final String T_SEND_NEW = "syndie.gui.viewforumauthpost.send.new";
-    private static final String T_SEND_NEW_LABEL = "syndie.gui.viewforumauthpost.send.new.label";
-    private static final String T_SEND_NEW_ADD = "syndie.gui.viewforumauthpost.send.new.add";
-    private static final String T_SEND_NEW_DELETE = "syndie.gui.viewforumauthpost.send.new.del";
-    private static final String T_SEND_NEW_PBE = "syndie.gui.viewforumauthpost.send.new.pbe";
         
     
-    private static final String T_PBE = "syndie.gui.viewforumauthpost.pbe";
-    private static final String T_PBE_PASS_LABEL = "syndie.gui.viewforumauthpost.pbe.pass.label";
-    private static final String T_PBE_PROMPT_LABEL = "syndie.gui.viewforumauthpost.pbe.prompt.label";
-    private static final String T_OK = "syndie.gui.viewforumauthpost.ok";
-    private static final String T_CANCEL = "syndie.gui.viewforumauthpost.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL, "Who can post in the forum?"));
+        _shell.setText(registry.getText("Who can post in the forum?"));
         
-        _choiceAnyone.setText(registry.getText(T_CHOICE_ANYONE, "Anyone can post"));
-        _choiceAllowed.setText(registry.getText(T_CHOICE_ALLOWED, "Only authorized users can post or reply"));
-        _choiceReplies.setText(registry.getText(T_CHOICE_REPLIES, "Anyone can reply to an authorised post"));
+        _choiceAnyone.setText(registry.getText("Anyone can post"));
+        _choiceAllowed.setText(registry.getText("Only authorized users can post or reply"));
+        _choiceReplies.setText(registry.getText("Anyone can reply to an authorised post"));
         
-        _selected.setText(registry.getText(T_SELECTED, "What identities are authorized?"));
-        _selectedAdd.setText(registry.getText(T_SELECTED_ADD, "Add"));
-        _selectedDel.setText(registry.getText(T_SELECTED_DELETE, "Delete"));
+        _selected.setText(registry.getText("What identities are authorized?"));
+        _selectedAdd.setText(registry.getText("Add"));
+        _selectedDel.setText(registry.getText("Delete"));
         
-        _sendNew.setText(registry.getText(T_SEND_NEW, "Create a new identity and allow it to post"));
-        _sendNewLabel.setText(registry.getText(T_SEND_NEW_LABEL, "Send the new identity's key to the administrators of the selected forums:"));
-        _sendNewAdd.setText(registry.getText(T_SEND_NEW_ADD, "Add"));
-        _sendNewDel.setText(registry.getText(T_SEND_NEW_DELETE, "Delete"));
-        _sendNewPBE.setText(registry.getText(T_SEND_NEW_PBE, "Post the new identity's key in a passphrase protected message to the forum"));
-        _sendNewPBEPassLabel.setText(registry.getText(T_PBE_PASS_LABEL, "Passphrase:"));
-        _sendNewPBEPromptLabel.setText(registry.getText(T_PBE_PROMPT_LABEL, "Prompt:"));
+        _sendNew.setText(registry.getText("Create a new identity and allow it to post"));
+        _sendNewLabel.setText(registry.getText("Send the new identity's key to the administrators of the selected forums:"));
+        _sendNewAdd.setText(registry.getText("Add"));
+        _sendNewDel.setText(registry.getText("Delete"));
+        _sendNewPBE.setText(registry.getText("Post the new identity's key in a passphrase protected message to the forum"));
+        _sendNewPBEPassLabel.setText(registry.getText("Passphrase:"));
+        _sendNewPBEPromptLabel.setText(registry.getText("Prompt:"));
         
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

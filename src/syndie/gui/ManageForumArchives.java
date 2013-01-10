@@ -477,38 +477,25 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
         _colPublic.pack();
     }
     
-    private static final String T_COLNAME = "syndie.gui.manageforumarchives.colname";
-    private static final String T_COLTYPE = "syndie.gui.manageforumarchives.coltype";
-    private static final String T_COLLOCATION = "syndie.gui.manageforumarchives.collocation";
-    private static final String T_COLPUBLIC = "syndie.gui.manageforumarchives.colpublic";
 
-    private static final String T_ADDLABEL = "syndie.gui.manageforumarchives.addlabel";
-    private static final String T_HTTPURL = "syndie.gui.manageforumarchives.httpurl";
-    private static final String T_FREENETKEY = "syndie.gui.manageforumarchives.freenetkey";
-    private static final String T_SYNDIEURI = "syndie.gui.manageforumarchives.syndieuri";
-    private static final String T_ISPUB = "syndie.gui.manageforumarchives.ispub";
-    private static final String T_ADD = "syndie.gui.manageforumarchives.add";
-    private static final String T_OK = "syndie.gui.manageforumarchives.ok";
-    private static final String T_CANCEL = "syndie.gui.manageforumarchives.cancel";
     
-    private static final String T_TITLE = "syndie.gui.manageforumarchives.title";
 
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_TITLE, "Archives advertised"));
+        _shell.setText(registry.getText("Archives advertised"));
         
-        _colName.setText(registry.getText(T_COLNAME, "Name"));
-        _colType.setText(registry.getText(T_COLTYPE, "Type"));
-        _colLocation.setText(registry.getText(T_COLLOCATION, "Location"));
-        _colPublic.setText(registry.getText(T_COLPUBLIC, "Public?"));
+        _colName.setText(registry.getText("Name"));
+        _colType.setText(registry.getText("Type"));
+        _colLocation.setText(registry.getText("Location"));
+        _colPublic.setText(registry.getText("Public?"));
 
-        _isPublic.setText(registry.getText(T_ISPUB, "Anyone can see this, not just authorized readers"));
+        _isPublic.setText(registry.getText("Anyone can see this, not just authorized readers"));
 
-        _addLabel.setText(registry.getText(T_ADDLABEL, "Archive name:"));
-        _choiceHTTP.setText(registry.getText(T_HTTPURL, "HTTP URL:"));
-        _choiceFreenet.setText(registry.getText(T_FREENETKEY, "Freenet key:"));
-        _choiceSyndie.setText(registry.getText(T_SYNDIEURI, "Syndie URI:"));
-        _add.setText(registry.getText(T_ADD, "Add"));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _addLabel.setText(registry.getText("Archive name:"));
+        _choiceHTTP.setText(registry.getText("HTTP URL:"));
+        _choiceFreenet.setText(registry.getText("Freenet key:"));
+        _choiceSyndie.setText(registry.getText("Syndie URI:"));
+        _add.setText(registry.getText("Add"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

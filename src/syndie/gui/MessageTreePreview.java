@@ -228,9 +228,8 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
         _themeRegistry.register(this);
     }
     
-    private static final String T_VIEW = "syndie.gui.messagetreepreview.view";
     public void translate(TranslationRegistry registry) {
-        _view.setText(registry.getText(T_VIEW, "View"));
+        _view.setText(registry.getText("View"));
     }
     public void applyTheme(Theme theme) {
         _headerSubject.setFont(theme.DEFAULT_FONT);

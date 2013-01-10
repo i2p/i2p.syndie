@@ -285,7 +285,6 @@ class StartupPanel extends DesktopPanel implements Themeable {
     
     public void buildSouth(Composite edge) { if (_edgeSouth == null) _edgeSouth = new SouthEdge(edge, _ui); }
     
-    private static final String T_CLEAR = "syndie.gui.desktop.startuppanel.clear";
     private class SouthEdge extends DesktopEdge implements Themeable, Translatable {
         private Button _clear;
         public SouthEdge(Composite edge, UI ui) {
@@ -309,7 +308,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
             _themeRegistry.unregister(SouthEdge.this);
         }
         public void translate(TranslationRegistry registry) {
-            _clear.setText(registry.getText(T_CLEAR, "Clear messages"));
+            _clear.setText(registry.getText("Clear messages"));
         }
         public void applyTheme(Theme theme) { _clear.setFont(theme.BUTTON_FONT); }
     }

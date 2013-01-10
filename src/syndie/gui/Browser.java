@@ -821,13 +821,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
 
         MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        startServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_START, "Start HTTP archive server"));
+        startServer.setText(getTranslationRegistry().getText("Start HTTP archive server"));
         startServer.setImage(ImageUtil.ICON_STARTARCHIVESERVER);
         MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        stopServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_STOP, "Stop HTTP archive server"));
+        stopServer.setText(getTranslationRegistry().getText("Stop HTTP archive server"));
         stopServer.setImage(ImageUtil.ICON_STOPARCHIVESERVER);
         MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        configServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_CONFIG, "Configure HTTP archive server"));
+        configServer.setText(getTranslationRegistry().getText("Configure HTTP archive server"));
         configServer.setImage(ImageUtil.ICON_CONFIGUREARCHIVESERVER);
         
         stopServer.setEnabled(false);
@@ -929,22 +929,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         });
          */
     }
-    private static final String T_SYNDICATE_FETCHDIFF = "syndie.gui.browser.syndicate.fetchdiff";
-    private static final String T_SYNDICATE_SELECTEXPLICIT = "syndie.gui.browser.syndicate.selectedexplicit";
-    private static final String T_SYNDICATE_PULLDIFF = "syndie.gui.browser.syndicate.pulldiff";
-    private static final String T_SYNDICATE_PULLKNOWN = "syndie.gui.browser.syndicate.pullknown";
-    private static final String T_SYNDICATE_PULLBOOKMARKED = "syndie.gui.browser.syndicate.pullbookmarked";
-    private static final String T_SYNDICATE_PULLINDEXES = "syndie.gui.browser.syndicate.pullindexes";
-    private static final String T_SYNDICATE_PUSHDIFF = "syndie.gui.browser.syndicate.pushdiff";
     
-    private static final String T_SYNDICATE_HTTPSERV_START = "syndie.gui.browser.syndicate.httpserv.start";
-    private static final String T_SYNDICATE_HTTPSERV_STOP = "syndie.gui.browser.syndicate.httpserv.stop";
-    private static final String T_SYNDICATE_HTTPSERV_CONFIG = "syndie.gui.browser.syndicate.httpserv.config";
     
-    private static final String T_HTTPSERV_WRITABLE = "syndie.gui.browser.httpserv.writable";
-    private static final String T_HTTPSERV_RUNONSTARTUP = "syndie.gui.browser.httpserv.runonstartup";
-    private static final String T_HTTPSERV_PORT = "syndie.gui.browser.httpserv.port";
-    private static final String T_HTTPSERV_OK = "syndie.gui.browser.httpserv.ok";
 
     private void toggleOnline() {
         SyncManager mgr = SyncManager.getInstance(getClient(), getUI());
@@ -968,11 +954,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
 
         MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        startServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_START, "Start HTTP archive server"));
+        startServer.setText(getTranslationRegistry().getText("Start HTTP archive server"));
         MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        stopServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_STOP, "Stop HTTP archive server"));
+        stopServer.setText(getTranslationRegistry().getText("Stop HTTP archive server"));
         MenuItem configServer = new MenuItem(_syndicateMenu, SWT.PUSH);
-        configServer.setText(getTranslationRegistry().getText(T_SYNDICATE_HTTPSERV_CONFIG, "Configure HTTP archive server"));
+        configServer.setText(getTranslationRegistry().getText("Configure HTTP archive server"));
         
         stopServer.setEnabled(false);
         new ServerConfig(startServer, stopServer, configServer);
@@ -1085,10 +1071,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 public void widgetSelected(SelectionEvent selectionEvent) { saveConfig(port.getText(), writable.getSelection(), runOnStartup.getSelection()); s.dispose(); }
             });
             
-            portLabel.setText(getTranslationRegistry().getText(T_HTTPSERV_PORT, "HTTP listen port:"));
-            writable.setText(getTranslationRegistry().getText(T_HTTPSERV_WRITABLE, "Others can post new messages to this server"));
-            runOnStartup.setText(getTranslationRegistry().getText(T_HTTPSERV_RUNONSTARTUP, "Run on startup"));
-            ok.setText(getTranslationRegistry().getText(T_HTTPSERV_OK, "OK"));
+            portLabel.setText(getTranslationRegistry().getText("HTTP listen port:"));
+            writable.setText(getTranslationRegistry().getText("Others can post new messages to this server"));
+            runOnStartup.setText(getTranslationRegistry().getText("Run on startup"));
+            ok.setText(getTranslationRegistry().getText("OK"));
             
             portLabel.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
             port.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
@@ -1114,7 +1100,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void showAbout() {
         final Shell s = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         s.setLayout(new GridLayout(2, false));
-        s.setText(getTranslationRegistry().getText(T_ABOUT_TITLE, "About"));
+        s.setText(getTranslationRegistry().getText("About"));
         
         Label l = new Label(s, SWT.NONE);
         l.setText("Syndie " + Version.VERSION);
@@ -1158,7 +1144,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
 
         Button b = new Button(s, SWT.PUSH);
-        b.setText(getTranslationRegistry().getText(T_ABOUT_CLOSE, "Close"));
+        b.setText(getTranslationRegistry().getText("Close"));
         b.setFont(getThemeRegistry().getTheme().BUTTON_FONT);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         b.addSelectionListener(new SelectionListener() {
@@ -1169,8 +1155,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         s.pack();
         s.open();
     }
-    private static final String T_ABOUT_CLOSE = "syndie.gui.browser.about.close";
-    private static final String T_ABOUT_TITLE = "syndie.gui.browser.about.title";
     
     private void initSystray() {
         _systray = _shell.getDisplay().getSystemTray();
@@ -1191,8 +1175,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private void exit() {
         MessageBox confirm = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText(_translation.getText(T_CONFIRM_EXIT_TITLE, "Confirm exit"));
-        confirm.setMessage(_translation.getText(T_CONFIRM_EXIT_MESSAGE, "Are you sure you want to exit Syndie?"));
+        confirm.setText(_translation.getText("Confirm exit"));
+        confirm.setMessage(_translation.getText("Are you sure you want to exit Syndie?"));
         int rv = confirm.open();
         if (rv == SWT.YES) {
             // save before hiding/disposing anything
@@ -1354,7 +1338,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             final ChannelInfo info = chans.getIdentityChannel(i);
             MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
@@ -1372,7 +1356,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             
             item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
@@ -1391,7 +1375,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             final ChannelInfo info = chans.getManagedChannel(i);
             MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
@@ -1409,7 +1393,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             
             item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
             else
@@ -1437,7 +1421,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             final ChannelInfo info = chans.getPostChannel(i);
             MenuItem item = new MenuItem(_postMenuPostableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
@@ -1465,7 +1449,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             final ChannelInfo info = chans.getPublicPostChannel(i);
             MenuItem item = new MenuItem(_postMenuPublicMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText(T_MANAGE_IDENT_PREFIX, "ident: ") + info.getName());
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
             String name = info.getName();
             if (name != null)
                 item.setText(name + " (" + info.getChannelHash().toBase64().substring(0,6) + ")");
@@ -1541,8 +1525,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         } catch (Exception e) {
             errorMessage("Internal error viewing " + uri, e);
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR);
-            box.setText(getTranslationRegistry().getText(T_ERRORVIEW_TITLE, "Internal error"));
-            box.setMessage(getTranslationRegistry().getText(T_ERRORVIEW_MSG, "There was an internal error viewing the given location: ") + uri.toString());
+            box.setText(getTranslationRegistry().getText("Internal error"));
+            box.setMessage(getTranslationRegistry().getText("There was an internal error viewing the given location: ") + uri.toString());
             box.open();
         }
         showWaitCursor(false);
@@ -1612,10 +1596,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
             GridLayout gl = new GridLayout(1, true);
             shell.setLayout(gl);
-            shell.setText(getTranslationRegistry().getText(T_EXTERNAL_TITLE, "External URL selected"));
+            shell.setText(getTranslationRegistry().getText("External URL selected"));
             
             Text msg = new Text(shell, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
-            msg.setText(getTranslationRegistry().getText(T_EXTERNAL_MSG, "The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
+            msg.setText(getTranslationRegistry().getText("The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
             GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             msg.setLayoutData(gd);
@@ -1630,7 +1614,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             url.setLayoutData(gd);
             
             Button b = new Button(shell, SWT.PUSH);
-            b.setText(getTranslationRegistry().getText(T_EXTERNAL_OK, "Close"));
+            b.setText(getTranslationRegistry().getText("Close"));
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             b.setLayoutData(gd);
@@ -1646,14 +1630,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             url.forceFocus();
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
-            box.setText(getTranslationRegistry().getText(T_BADURI_TITLE, "Invalid URI"));
-            box.setMessage(getTranslationRegistry().getText(T_BADURI_MSG, "The URI visited is not understood by Syndie: ") + uri.toString());
+            box.setText(getTranslationRegistry().getText("Invalid URI"));
+            box.setMessage(getTranslationRegistry().getText("The URI visited is not understood by Syndie: ") + uri.toString());
             box.open();
         }
     }
-    private static final String T_EXTERNAL_TITLE = "syndie.gui.browser.external.title";
-    private static final String T_EXTERNAL_MSG = "syndie.gui.browser.external.msg";
-    private static final String T_EXTERNAL_OK = "syndie.gui.browser.external.ok";
     
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;
@@ -1742,14 +1723,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     }
                 }
             } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
-                name = _translation.getText(T_BOOKMARK_LOGS_NAME, "logs");
-                desc = _translation.getText(T_BOOKMARK_LOGS_DESC, "watch log messages");
+                name = _translation.getText("logs");
+                desc = _translation.getText("watch log messages");
             } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
-                name = _translation.getText(T_BOOKMARK_POST_NAME, "post");
-                desc = _translation.getText(T_BOOKMARK_POST_DESC, "post a new message");
+                name = _translation.getText("post");
+                desc = _translation.getText("post a new message");
             } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
-                name = _translation.getText(T_BOOKMARK_TEXTUI_NAME, "text UI");
-                desc = _translation.getText(T_BOOKMARK_TEXTUI_DESC, "text based interface");
+                name = _translation.getText("text UI");
+                desc = _translation.getText("text based interface");
             }
         }
         
@@ -1801,12 +1782,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     public UI getUI() { return this; }
     public TranslationRegistry getTranslationRegistry() { return _translation; }
     
-    private static final String T_BAN_TITLE = "syndie.gui.browser.ban.title";
-    private static final String T_BAN_MSG = "syndie.gui.browser.ban.msg";
     
     
-    private static final String T_CONFIRMBAN = "syndie.gui.browser.confirmban";
-    private static final String T_CONFIRMBAN_NAME = "syndie.gui.browser.confirmbanname";
     
     public boolean ban(Hash scope) {
         String scopeName = _client.getChannelName(scope);
@@ -1819,7 +1796,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 "All of the messages in it will be removed and you will never receive " +
                 "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
                 + scopeName);
-        box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm ban"));
+        box.setText(getTranslationRegistry().getText("Confirm ban"));
         int rc = box.open();
         if (rc == SWT.YES) {
             doBan(scope);
@@ -1832,8 +1809,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _client.ban(scope, getUI(), true);
         //_client.ban(scope, getUI(), true, false); 
         MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-        box.setText(getTranslationRegistry().getText(T_BAN_TITLE, "Banned"));
-        box.setMessage(getTranslationRegistry().getText(T_BAN_MSG, "Selected forum/author banned"));
+        box.setText(getTranslationRegistry().getText("Banned"));
+        box.setMessage(getTranslationRegistry().getText("Selected forum/author banned"));
         box.open();
     }
     
@@ -1855,7 +1832,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
                 "Do you really want to tell everyone to ignore this message: " + scopeName));
-        box.setText(getTranslationRegistry().getText(T_CONFIRMBAN_NAME, "Confirm cancel"));
+        box.setText(getTranslationRegistry().getText("Confirm cancel"));
         int rc = box.open();
         if (rc == SWT.YES) {
             doCancel(uri);
@@ -1868,13 +1845,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _client.cancelMessage(uri, getUI());
         //_client.ban(scope, getUI(), true, false); 
         MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-        box.setText(getTranslationRegistry().getText(T_CANCEL_TITLE, "Cancelled"));
-        box.setMessage(getTranslationRegistry().getText(T_CANCEL_MSG, "Selected message cancelled"));
+        box.setText(getTranslationRegistry().getText("Cancelled"));
+        box.setMessage(getTranslationRegistry().getText("Selected message cancelled"));
         box.open();
     }
-    private static final String T_CONFIRMCANCEL = "syndie.gui.browser.confirmcancel";
-    private static final String T_CANCEL_TITLE = "syndie.gui.browser.cancel.title";
-    private static final String T_CANCEL_MSG = "syndie.gui.browser.cancel.msg";
 
     public boolean deleteMessage(SyndieURI uri) {
         if ( (uri == null) || (uri.getScope() == null) )
@@ -1894,7 +1868,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
                 "Do you really want to locally delete this message: " + scopeName));
-        box.setText(getTranslationRegistry().getText(T_CONFIRMDELETE_NAME, "Confirm delete"));
+        box.setText(getTranslationRegistry().getText("Confirm delete"));
         int rc = box.open();
         if (rc == SWT.YES) {
             doDelete(uri);
@@ -1907,14 +1881,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _client.deleteMessage(uri, getUI(), true);
         //_client.ban(scope, getUI(), true, false); 
         MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-        box.setText(getTranslationRegistry().getText(T_DELETE_TITLE, "Deleted"));
-        box.setMessage(getTranslationRegistry().getText(T_DELETE_MSG, "Selected message deleted"));
+        box.setText(getTranslationRegistry().getText("Deleted"));
+        box.setMessage(getTranslationRegistry().getText("Selected message deleted"));
         box.open();
     }
-    private static final String T_CONFIRMDELETE = "syndie.gui.browser.confirmdelete";
-    private static final String T_CONFIRMDELETE_NAME = "syndie.gui.browser.confirmdelete.name";
-    private static final String T_DELETE_TITLE = "syndie.gui.browser.delete.title";
-    private static final String T_DELETE_MSG = "syndie.gui.browser.delete.msg";
 
     private void postNew() { view(URIHelper.instance().createPostURI(null, null)); }
     private void showTextUI() { view(URIHelper.instance().createTextUIURI()); }
@@ -2088,24 +2058,21 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         debugMessage(sw.toString());
     }
     
-    private static final String T_OPEN_LABEL = "syndie.gui.browser.openlabel";
-    private static final String T_OPEN_BUTTON = "syndie.gui.browser.openbutton";
-    private static final String T_OPEN_TITLE = "syndie.gui.browser.opentitle";
     
     private void openPrompt() {
         final Shell shell = new Shell(_shell, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         shell.setLayout(new GridLayout(3, false));
-        shell.setText(getTranslationRegistry().getText(T_OPEN_TITLE, "Open Syndie URI"));
+        shell.setText(getTranslationRegistry().getText("Open Syndie URI"));
         Label label = new Label(shell, SWT.NONE);
         label.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        label.setText(getTranslationRegistry().getText(T_OPEN_LABEL, "Location: "));
+        label.setText(getTranslationRegistry().getText("Location: "));
         final Text field = new Text(shell, SWT.BORDER | SWT.SINGLE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
         gd.widthHint = ImageUtil.getWidth("abcdefghijklmnopqrstuvwxyz", field);
         field.setLayoutData(gd);
         final Button ok = new Button(shell, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(getTranslationRegistry().getText(T_OPEN_BUTTON, "Open"));
+        ok.setText(getTranslationRegistry().getText("Open"));
         
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -2196,11 +2163,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             tab.toggleMaxEditor();
     }
 
-    private static final String T_IMPORT_SYNDIE_TITLE = "syndie.gui.browser.importsyndietitle";
-    private static final String T_IMPORT_SYNDIE_EXTENSION = "syndie.gui.browser.importsyndieextension";
-    private static final String T_IMPORT_ALL_EXTENSION = "syndie.gui.browser.importallextension";
-    private static final String T_IMPORT_COMPLETE = "syndie.gui.browser.importcomplete";
-    private static final String T_IMPORT_COMPLETE_PREFIX = "syndie.gui.browser.importcompleteprefix";
     
     private void importMessage() {
         if (_importFileDialog == null) {
@@ -2208,8 +2170,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _importFileDialog.setFilterExtensions(new String[] { "*.syndie", "*" });
         }
         // retranslate each time
-        _importFileDialog.setText(_translation.getText(T_IMPORT_SYNDIE_TITLE, "Import syndie file"));
-        _importFileDialog.setFilterNames(new String[] { _translation.getText(T_IMPORT_SYNDIE_EXTENSION, "Syndie files"), _translation.getText(T_IMPORT_ALL_EXTENSION, "All files") });
+        _importFileDialog.setText(_translation.getText("Import syndie file"));
+        _importFileDialog.setFilterNames(new String[] { _translation.getText("Syndie files"), _translation.getText("All files") });
         if (null != _importFileDialog.open()) {
             final String path = _importFileDialog.getFilterPath();
             final String names[] = _importFileDialog.getFileNames();
@@ -2229,8 +2191,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     Display.getDefault().asyncExec(new Runnable() {
                         public void run() {
                             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-                            box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
-                            box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
+                            box.setText(_translation.getText("Import complete"));
+                            box.setMessage(_translation.getText("Messages imported successfully/total: ") + successful + "/" + total);
                             box.open();
                             _statusBar.setEnableRefresh(true);
                         }
@@ -2239,13 +2201,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             });
         }
     }
-    private static final String T_IMPORT_BULK_SYNDIE_TITLE = "syndie.gui.browser.importbulksyndietitle";
     /** recursive import directories */
     private void importBulkMessage() {
         if (_importDirDialog == null)
             _importDirDialog = new DirectoryDialog(_shell, SWT.NONE);
         // retranslate each time
-        _importDirDialog.setText(_translation.getText(T_IMPORT_BULK_SYNDIE_TITLE, "Import directories recursively"));
+        _importDirDialog.setText(_translation.getText("Import directories recursively"));
         final String dir = _importDirDialog.open();
         if (dir != null) {
             JobRunner.instance().enqueue(new Runnable() {
@@ -2265,8 +2226,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     Display.getDefault().asyncExec(new Runnable() {
                         public void run() {
                             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
-                            box.setText(_translation.getText(T_IMPORT_COMPLETE, "Import complete"));
-                            box.setMessage(_translation.getText(T_IMPORT_COMPLETE_PREFIX, "Messages imported successfully/total: ") + successful + "/" + total);
+                            box.setText(_translation.getText("Import complete"));
+                            box.setMessage(_translation.getText("Messages imported successfully/total: ") + successful + "/" + total);
                             box.open();
                             _statusBar.setEnableRefresh(true);
                         }
@@ -2337,9 +2298,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         });
         popup.setShowText(false);
         popup.limitOptions(false, false, false, true, true, false, false, false, false, false, false);
-        popup.showPopup(_translation.getText(T_EXPORT_TITLE, "Export..."));
+        popup.showPopup(_translation.getText("Export..."));
     }
-    private static final String T_EXPORT_TITLE = "syndie.gui.browser.export.title";
     private void exportMessage(SyndieURI uri) {
         Hash scope = uri.getScope();
         Long messageId = uri.getMessageId();
@@ -2355,7 +2315,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         FileDialog dialog = new FileDialog(_shell, SWT.SAVE | SWT.SINGLE);
         dialog.setFileName(src.getName());
-        dialog.setText(_translation.getText(T_EXPORT_SAVE_DIALOG, "Export to"));
+        dialog.setText(_translation.getText("Export to"));
         String filename = dialog.open();
         
         if (filename != null) {
@@ -2387,7 +2347,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
     }
-    private static final String T_EXPORT_SAVE_DIALOG = "syndie.gui.browser.export.save.dialog";
     
     private void backupSecrets() { view(URIHelper.instance().createBackupSecretsURI()); }
     private void restoreSecrets() {
@@ -2395,10 +2354,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         dialog.setFileName("nymkeys.dat");
         dialog.setFilterExtensions(new String[] { "*.dat", "*.*" });
         dialog.setFilterNames(new String[] { 
-            getTranslationRegistry().getText(T_RESTORE_BACKUP, "Syndie secrets files"), 
-            getTranslationRegistry().getText(T_RESTORE_ALL, "All files")
+            getTranslationRegistry().getText("Syndie secrets files"), 
+            getTranslationRegistry().getText("All files")
         });
-        dialog.setText(getTranslationRegistry().getText(T_RESTORE_TEXT, "Select Syndie secrets file to restore"));
+        dialog.setText(getTranslationRegistry().getText("Select Syndie secrets file to restore"));
         String file = dialog.open();
         if (file != null) {
             File f = new File(file);
@@ -2406,11 +2365,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             BackupSecrets.restore(_client, this, _themes, _translation, _shell, f);
         }
     }
-    private static final String T_RESTORE_BACKUP = "syndie.gui.browser.restore.backup";
-    private static final String T_RESTORE_ALL = "syndie.gui.browser.restore.all";
-    private static final String T_RESTORE_TEXT = "syndie.gui.browser.restore.text";
     
-    private static final String T_SEARCH_FORUM_TITLE = "syndie.gui.browser.searchforumtitle";
     
     private void searchForums() {
         final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(_shell, T_SEARCH_FORUM_TITLE, "Find forums");
@@ -2774,168 +2729,96 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     public void addUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.add(lsnr); } }
     public void removeUI(UI lsnr) { synchronized (_uiListeners) { _uiListeners.remove(lsnr); } }
     
-    private static final String T_SHELL_TITLE = "syndie.gui.browser.title";
-    private static final String T_CLOSE_ALL = "syndie.gui.browser.tabmenu.closeall";
-    private static final String T_CLOSE_OTHER = "syndie.gui.browser.tabmenu.closeother";
-    private static final String T_COPY_TAB_LOC = "syndie.gui.browser.tabmenu.copylocation";
-    private static final String T_BOOKMARK_TAB = "syndie.gui.browser.tabmenu.bookmark";
-    private static final String T_FILE_MENU_TITLE = "syndie.gui.browser.filemenu.title";
-    private static final String T_FILE_MENU_TITLE_ACCELERATOR = "syndie.gui.browser.filemenu.title.accelerator";
-    private static final String T_FILE_MENU_OPEN = "syndie.gui.browser.filemenu.open";
-    private static final String T_FILE_MENU_MINIMIZE = "syndie.gui.browser.filemenu.minimize";
-    private static final String T_FILE_MENU_IMPORT = "syndie.gui.browser.filemenu.import";
-    private static final String T_FILE_MENU_IMPORT_BULK = "syndie.gui.browser.filemenu.importbulk";
-    private static final String T_FILE_MENU_EXPORT = "syndie.gui.browser.filemenu.export";
-    private static final String T_FILE_MENU_BACKUP_SECRETS = "syndie.gui.browser.filemenu.backupsecrets";
-    private static final String T_FILE_MENU_RESTORE_SECRETS = "syndie.gui.browser.filemenu.restoresecrets";
-    private static final String T_FILE_MENU_EXIT = "syndie.gui.browser.filemenu.exit";
-    private static final String T_FILE_MENU_EXIT_ACCELERATOR = "syndie.gui.browser.filemenu.exit.accelerator";
-    private static final String T_VIEW_MENU_TITLE = "syndie.gui.browser.viewmenu";
-    private static final String T_VIEW_MENU_SHOW = "syndie.gui.browser.viewmenu.show";
-    private static final String T_FORUM_MENU_TITLE = "syndie.gui.browser.forummenu.title";
-    private static final String T_FORUM_MENU_SEARCH = "syndie.gui.browser.forummenu.search";
-    private static final String T_FORUM_MENU_BOOKMARKED = "syndie.gui.browser.forummenu.bookmarked";
-    private static final String T_FORUM_MENU_BROWSE = "syndie.gui.browser.forummenu.browse";
-    private static final String T_FORUM_MENU_BROWSEFORUMS = "syndie.gui.browser.forummenu.browseforums";
-    private static final String T_FORUM_MENU_READPRIVATE = "syndie.gui.browser.forummenu.readprivate";
-    private static final String T_FORUM_MENU_CREATE = "syndie.gui.browser.forummenu.create";
-    private static final String T_FORUM_MENU_MANAGE = "syndie.gui.browser.forummenu.manage";
-    private static final String T_POST_MENU_TITLE = "syndie.gui.browser.postmenu.title";
-    private static final String T_POST_MENU_NEW = "syndie.gui.browser.postmenu.new";
-    private static final String T_POST_MENU_WEBRIP = "syndie.gui.browser.postmenu.webrip";
-    private static final String T_POST_MENU_RESUME = "syndie.gui.browser.postmenu.resume";
-    private static final String T_POST_MENU_MANAGEABLE = "syndie.gui.browser.postmenu.manageable";
-    private static final String T_POST_MENU_POSTABLE = "syndie.gui.browser.postmenu.postable";
-    private static final String T_POST_MENU_PUBLIC = "syndie.gui.browser.postmenu.public";
-    private static final String T_SYNDICATE_MENU_TITLE = "syndie.gui.browser.syndicatemenu.title";
-    private static final String T_SYNDICATE_MENU_CONFIG = "syndie.gui.browser.syndicatemenu.config";
-    private static final String T_SYNDICATE_MENU_ONLINE = "syndie.gui.browser.syndicatemenu.online";
-    private static final String T_SYNDICATE_MENU_STATUS = "syndie.gui.browser.syndicatemenu.status";
-    private static final String T_SYNDICATE_MENU_ARCHIVE = "syndie.gui.browser.syndicatemenu.archive";
-    private static final String T_LANGUAGE_MENU_TITLE = "syndie.gui.browser.language.title";
-    private static final String T_LANGUAGE_MENU_EDIT = "syndie.gui.browser.language.edit";
-    private static final String T_LANGUAGE_MENU_REFRESH = "syndie.gui.browser.language.refresh";
-    private static final String T_STYLE_MENU_TITLE = "syndie.gui.browser.style.title";
-    private static final String T_STYLE_MENU_INCREASE = "syndie.gui.browser.style.increase";
-    private static final String T_STYLE_MENU_DECREASE = "syndie.gui.browser.style.decrease";
-    private static final String T_STYLE_MENU_RESET = "syndie.gui.browser.style.reset";
-    private static final String T_STYLE_MENU_EDIT = "syndie.gui.browser.style.edit";
-    private static final String T_ADVANCED_MENU_TITLE = "syndie.gui.browser.advancedmenu.title";
-    private static final String T_ADVANCED_MENU_TEXTUI = "syndie.gui.browser.advancedmenu.textui";
-    private static final String T_ADVANCED_MENU_LOGS = "syndie.gui.browser.advancedmenu.logs";
-    private static final String T_ADVANCED_MENU_SQL = "syndie.gui.browser.advancedmenu.sql";
-    private static final String T_ADVANCED_MENU_DUMPRESOURCES = "syndie.gui.browser.advancedmenu.dumpresources";
-    private static final String T_ADVANCED_MENU_DUMPRESOURCESDIFF = "syndie.gui.browser.advancedmenu.dumpresourcesdiff";
-    private static final String T_HELP_MENU_TITLE = "syndie.gui.browser.helpmenu.title";
-    private static final String T_HELP_MENU_ABOUT = "syndie.gui.browser.helpmenu.about";
-    private static final String T_HELP_MENU_BUG = "syndie.gui.browser.helpmenu.bug";
-    private static final String T_HELP_MENU_FAQ = "syndie.gui.browser.helpmenu.faq";
-    private static final String T_HELP_MENU_GUIMAN = "syndie.gui.browser.helpmenu.guiman";
-    private static final String T_HELP_MENU_TEXTMAN = "syndie.gui.browser.helpmenu.textman";
-    private static final String T_SYSTRAY_TOOLTIP_TITLE = "syndie.gui.browser.systray.title";
-    private static final String T_SYSTRAY_TOOLTIP_TEXT = "syndie.gui.browser.systray.text";
     // the confirm popup is created on the fly, so translated only on creation, not on translate(...)
-    private static final String T_CONFIRM_EXIT_TITLE = "syndie.gui.browser.confirmexit.title";
-    private static final String T_CONFIRM_EXIT_MESSAGE = "syndie.gui.browser.confirmexit.message";
     // the bookmark popup is created on the fly, so translated only on creation, not on translate(...)
-    private static final String T_BOOKMARK_LOGS_NAME = "syndie.gui.browser.bookmarklogs.name";
-    private static final String T_BOOKMARK_LOGS_DESC = "syndie.gui.browser.bookmarklogs.desc";
-    private static final String T_BOOKMARK_POST_NAME = "syndie.gui.browser.bookmarkpost.name";
-    private static final String T_BOOKMARK_POST_DESC = "syndie.gui.browser.bookmarkpost.desc";
-    private static final String T_BOOKMARK_TEXTUI_NAME = "syndie.gui.browser.bookmarktextui.name";
-    private static final String T_BOOKMARK_TEXTUI_DESC = "syndie.gui.browser.bookmarktextui.desc";
 
-    private static final String T_BADURI_TITLE = "syndie.gui.browser.baduri.title";
-    private static final String T_BADURI_MSG = "syndie.gui.browser.baduri.msg";
     
-    private static final String T_ERRORVIEW_TITLE = "syndie.gui.browser.errorview.title";
-    private static final String T_ERRORVIEW_MSG = "syndie.gui.browser.errorview.msg";
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(T_SHELL_TITLE, "Syndie"));
-        _closeAllTabs.setText(registry.getText(T_CLOSE_ALL, "close all tabs"));
-        _closeOtherTabs.setText(registry.getText(T_CLOSE_OTHER, "close other tabs"));
-        _copyTabLocation.setText(registry.getText(T_COPY_TAB_LOC, "copy tab location"));
-        _bookmarkTab.setText(registry.getText(T_BOOKMARK_TAB, "bookmark tab"));
+        _shell.setText(registry.getText("Syndie"));
+        _closeAllTabs.setText(registry.getText("close all tabs"));
+        _closeOtherTabs.setText(registry.getText("close other tabs"));
+        _copyTabLocation.setText(registry.getText("copy tab location"));
+        _bookmarkTab.setText(registry.getText("bookmark tab"));
         
-        _fileMenuRoot.setText(registry.getText(T_FILE_MENU_TITLE, "&File"));
-        _fileMenuOpen.setText(registry.getText(T_FILE_MENU_OPEN, "&Open Syndie URI"));
-        _fileMenuMinimize.setText(registry.getText(T_FILE_MENU_MINIMIZE, "&Minimize to the systray"));
-        _fileMenuImport.setText(registry.getText(T_FILE_MENU_IMPORT, "&Import"));
-        _fileMenuImportBulk.setText(registry.getText(T_FILE_MENU_IMPORT_BULK, "Import &bulk"));
-        _fileMenuExport.setText(registry.getText(T_FILE_MENU_EXPORT, "&Export"));
-        _fileMenuExit.setText(registry.getText(T_FILE_MENU_EXIT, "E&xit"));
+        _fileMenuRoot.setText(registry.getText("&File"));
+        _fileMenuOpen.setText(registry.getText("&Open Syndie URI"));
+        _fileMenuMinimize.setText(registry.getText("&Minimize to the systray"));
+        _fileMenuImport.setText(registry.getText("&Import"));
+        _fileMenuImportBulk.setText(registry.getText("Import &bulk"));
+        _fileMenuExport.setText(registry.getText("&Export"));
+        _fileMenuExit.setText(registry.getText("E&xit"));
         
         _fileMenuExit.setImage(ImageUtil.ICON_FM_EXIT);
         _fileMenuImport.setImage(ImageUtil.ICON_FM_IMPORT);
         _fileMenuExport.setImage(ImageUtil.ICON_FM_EXPORT);
 
 
-        _viewMenuRoot.setText(registry.getText(T_VIEW_MENU_TITLE, "&View"));
-        _viewMenuShow.setText(registry.getText(T_VIEW_MENU_SHOW, "Show &bookmarks"));
+        _viewMenuRoot.setText(registry.getText("&View"));
+        _viewMenuShow.setText(registry.getText("Show &bookmarks"));
         _viewMenuShow.setImage(ImageUtil.ICON_VM_BOOKMARK);
         
         
-        _forumMenuRoot.setText(registry.getText(T_FORUM_MENU_TITLE, "F&orums"));
-        _forumMenuSearch.setText(registry.getText(T_FORUM_MENU_SEARCH, "&Find forums"));
-        _forumMenuBookmarked.setText(registry.getText(T_FORUM_MENU_BOOKMARKED, "Read &forums"));
-        _forumMenuBrowse.setText(registry.getText(T_FORUM_MENU_BROWSE, "&Read all"));
-        _forumMenuBrowseForums.setText(registry.getText(T_FORUM_MENU_BROWSEFORUMS, "Read &all by forum"));
-        _forumMenuReadPrivate.setText(registry.getText(T_FORUM_MENU_READPRIVATE, "Read &private messages"));
-        _forumMenuCreate.setText(registry.getText(T_FORUM_MENU_CREATE, "&Create"));
+        _forumMenuRoot.setText(registry.getText("F&orums"));
+        _forumMenuSearch.setText(registry.getText("&Find forums"));
+        _forumMenuBookmarked.setText(registry.getText("Read &forums"));
+        _forumMenuBrowse.setText(registry.getText("&Read all"));
+        _forumMenuBrowseForums.setText(registry.getText("Read &all by forum"));
+        _forumMenuReadPrivate.setText(registry.getText("Read &private messages"));
+        _forumMenuCreate.setText(registry.getText("&Create"));
         _forumMenuCreate.setImage(ImageUtil.ICON_CREATEFORUM);
-        _forumMenuManageRoot.setText(registry.getText(T_FORUM_MENU_MANAGE, "&Manage"));
+        _forumMenuManageRoot.setText(registry.getText("&Manage"));
         
         _forumMenuSearch.setImage(ImageUtil.ICON_VIEWFORUM);
-        _postMenuRoot.setText(registry.getText(T_POST_MENU_TITLE, "&Post"));
-        _postMenuNew.setText(registry.getText(T_POST_MENU_NEW, "Post &new"));
+        _postMenuRoot.setText(registry.getText("&Post"));
+        _postMenuNew.setText(registry.getText("Post &new"));
         _postMenuNew.setImage(ImageUtil.ICON_PM_NEWPOST);
-        _postMenuWebRip.setText(registry.getText(T_POST_MENU_WEBRIP, "Post &web rip"));
-        _postMenuResumeRoot.setText(registry.getText(T_POST_MENU_RESUME, "&Resume draft"));
+        _postMenuWebRip.setText(registry.getText("Post &web rip"));
+        _postMenuResumeRoot.setText(registry.getText("&Resume draft"));
 
-        _postMenuManageableRoot.setText(registry.getText(T_POST_MENU_MANAGEABLE, "&Manageable forums"));
-        _postMenuPostableRoot.setText(registry.getText(T_POST_MENU_POSTABLE, "&Postable forums"));
-        _postMenuPublicRoot.setText(registry.getText(T_POST_MENU_PUBLIC, "&Publically postable forums"));
+        _postMenuManageableRoot.setText(registry.getText("&Manageable forums"));
+        _postMenuPostableRoot.setText(registry.getText("&Postable forums"));
+        _postMenuPublicRoot.setText(registry.getText("&Publically postable forums"));
         
-        _syndicateMenuRoot.setText(registry.getText(T_SYNDICATE_MENU_TITLE, "&Syndicate"));
-        _syndicateMenuConfig.setText(registry.getText(T_SYNDICATE_MENU_CONFIG, "&Control syndication"));
+        _syndicateMenuRoot.setText(registry.getText("&Syndicate"));
+        _syndicateMenuConfig.setText(registry.getText("&Control syndication"));
         _syndicateMenuConfig.setImage(ImageUtil.ICON_CONTROLSYNDICATION);
-        _syndicateMenuOnline.setText(registry.getText(T_SYNDICATE_MENU_ONLINE, "Toggle &online state"));
-        _syndicateMenuArchive.setText(registry.getText(T_SYNDICATE_MENU_ARCHIVE, "Manage &archive"));
+        _syndicateMenuOnline.setText(registry.getText("Toggle &online state"));
+        _syndicateMenuArchive.setText(registry.getText("Manage &archive"));
         _syndicateMenuArchive.setImage(ImageUtil.ICON_MANAGEARCHIVE);
 
-        _languageMenuRoot.setText(registry.getText(T_LANGUAGE_MENU_TITLE, "&Language"));
+        _languageMenuRoot.setText(registry.getText("&Language"));
         _languageMenuRoot.setImage(ImageUtil.ICON_VM_LANGUAGE);
-        _languageMenuEdit.setText(registry.getText(T_LANGUAGE_MENU_EDIT, "&Translate"));
-        _languageMenuRefresh.setText(registry.getText(T_LANGUAGE_MENU_REFRESH, "&Refresh translations"));
+        _languageMenuEdit.setText(registry.getText("&Translate"));
+        _languageMenuRefresh.setText(registry.getText("&Refresh translations"));
 
-        _styleMenuRoot.setText(registry.getText(T_STYLE_MENU_TITLE, "&Style"));
+        _styleMenuRoot.setText(registry.getText("&Style"));
         _styleMenuRoot.setImage(ImageUtil.ICON_VM_STYLE);
-        _styleMenuIncreaseFont.setText(registry.getText(T_STYLE_MENU_INCREASE, "&Increase font"));
-        _styleMenuDecreaseFont.setText(registry.getText(T_STYLE_MENU_DECREASE, "&Decrease font"));
-        _styleMenuReset.setText(registry.getText(T_STYLE_MENU_RESET, "&Reset style"));
-        _styleMenuEdit.setText(registry.getText(T_STYLE_MENU_EDIT, "&Configure"));
+        _styleMenuIncreaseFont.setText(registry.getText("&Increase font"));
+        _styleMenuDecreaseFont.setText(registry.getText("&Decrease font"));
+        _styleMenuReset.setText(registry.getText("&Reset style"));
+        _styleMenuEdit.setText(registry.getText("&Configure"));
         
-        _advancedMenuRoot.setText(registry.getText(T_ADVANCED_MENU_TITLE, "&Advanced"));
-        _advancedMenuLogs.setText(registry.getText(T_ADVANCED_MENU_LOGS, "&Logs"));
-        _advancedMenuTextUI.setText(registry.getText(T_ADVANCED_MENU_TEXTUI, "&Text interface"));
-        _advancedMenuBackupSecrets.setText(registry.getText(T_FILE_MENU_BACKUP_SECRETS, "&Backup secrets"));
-        _advancedMenuRestoreSecrets.setText(registry.getText(T_FILE_MENU_RESTORE_SECRETS, "&Restore secrets"));
-        _advancedMenuSQL.setText(registry.getText(T_ADVANCED_MENU_SQL, "&SQL interface"));
-        _advancedMenuDumpResources.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCES, "Dump resources"));
-        _advancedMenuDumpResourcesDiff.setText(registry.getText(T_ADVANCED_MENU_DUMPRESOURCESDIFF, "Dump resource differences"));
+        _advancedMenuRoot.setText(registry.getText("&Advanced"));
+        _advancedMenuLogs.setText(registry.getText("&Logs"));
+        _advancedMenuTextUI.setText(registry.getText("&Text interface"));
+        _advancedMenuBackupSecrets.setText(registry.getText("&Backup secrets"));
+        _advancedMenuRestoreSecrets.setText(registry.getText("&Restore secrets"));
+        _advancedMenuSQL.setText(registry.getText("&SQL interface"));
+        _advancedMenuDumpResources.setText(registry.getText("Dump resources"));
+        _advancedMenuDumpResourcesDiff.setText(registry.getText("Dump resource differences"));
 
-        _helpMenuRoot.setText(registry.getText(T_HELP_MENU_TITLE, "&Help"));
-        _helpMenuAbout.setText(registry.getText(T_HELP_MENU_ABOUT, "&About"));
+        _helpMenuRoot.setText(registry.getText("&Help"));
+        _helpMenuAbout.setText(registry.getText("&About"));
         _helpMenuAbout.setImage(ImageUtil.ICON_HM_ABOUT);
-        _helpMenuBugReport.setText(registry.getText(T_HELP_MENU_BUG, "File a new &bug report"));
+        _helpMenuBugReport.setText(registry.getText("File a new &bug report"));
         _helpMenuBugReport.setImage(ImageUtil.ICON_HM_BUG);
-        _helpMenuFAQ.setText(registry.getText(T_HELP_MENU_FAQ, "&FAQ"));
-        _helpMenuGUIManual.setText(registry.getText(T_HELP_MENU_GUIMAN, "&GUI manual"));
-        _helpMenuTextManual.setText(registry.getText(T_HELP_MENU_TEXTMAN, "&Text interface manual"));
+        _helpMenuFAQ.setText(registry.getText("&FAQ"));
+        _helpMenuGUIManual.setText(registry.getText("&GUI manual"));
+        _helpMenuTextManual.setText(registry.getText("&Text interface manual"));
         
-        _systrayTip.setText(registry.getText(T_SYSTRAY_TOOLTIP_TITLE, "Syndie"));
-        _systrayTip.setMessage(registry.getText(T_SYSTRAY_TOOLTIP_TEXT, "Syndie is running"));
+        _systrayTip.setText(registry.getText("Syndie"));
+        _systrayTip.setMessage(registry.getText("Syndie is running"));
     }
     
     public void applyTheme(Theme theme) {

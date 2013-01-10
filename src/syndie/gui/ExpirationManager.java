@@ -286,16 +286,16 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         _execute.setFont(theme.BUTTON_FONT);
     }
     public void translate(TranslationRegistry registry) {
-        _execute.setText(registry.getText(T_EXECUTE, "Execute expiration policies"));
+        _execute.setText(registry.getText("Execute expiration policies"));
         
         CTabItem items[] = _tabs.getItems();
         for (int i = 0; i < items.length; i++) {
             switch (i) {
                 case 0:
-                    items[i].setText(registry.getText(T_TABTITLE_DEFAULT, "Default policy"));
+                    items[i].setText(registry.getText("Default policy"));
                     break;
                 case 1:
-                    items[i].setText(registry.getText(T_TABTITLE_WATCHED, "Watched forums"));
+                    items[i].setText(registry.getText("Watched forums"));
                     break;
                 default:
                     String name = (String)_channelNames.get(i-2);
@@ -343,8 +343,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             _revert = new Button(buttons, SWT.PUSH);
             _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
             
-            _save.setText(_translationRegistry.getText(T_SAVE, "Save changes"));
-            _revert.setText(_translationRegistry.getText(T_REVERT, "Revert changes"));
+            _save.setText(_translationRegistry.getText("Save changes"));
+            _revert.setText(_translationRegistry.getText("Revert changes"));
             
             _save.setFont(_themeRegistry.getTheme().BUTTON_FONT);
             _revert.setFont(_themeRegistry.getTheme().BUTTON_FONT);
@@ -357,7 +357,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 // standard policies, not deletable
             } else {
                 _delete = new Button(buttons, SWT.PUSH);
-                _delete.setText(_translationRegistry.getText(T_DELETE, "Delete policy"));
+                _delete.setText(_translationRegistry.getText("Delete policy"));
                 _delete.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 _delete.addSelectionListener(new FireSelectionListener() { public void fire() { deletePolicy(); } });
             }
@@ -459,7 +459,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 _mimicDefault = new Button(_detailRoot, SWT.CHECK);
                 _mimicDefault.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
                 _mimicDefault.setSelection(_policy.getMimicDefault());
-                _mimicDefault.setText(_translationRegistry.getText(T_MIMICDEFAULT, "Same as the default policy"));
+                _mimicDefault.setText(_translationRegistry.getText("Same as the default policy"));
                 _mimicDefault.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                 attributeRoot = new Composite(_detailRoot, SWT.NONE);
                 attributeRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -491,9 +491,9 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         
         private void render() {
             if (_policy.isDBPolicy())
-                _type.setText(_translationRegistry.getText(T_TYPEDB, "Internal message data"));
+                _type.setText(_translationRegistry.getText("Internal message data"));
             else
-                _type.setText(_translationRegistry.getText(T_TYPEDATAFILE, "Sharable external message data"));
+                _type.setText(_translationRegistry.getText("Sharable external message data"));
             
             if (_policy.getMaxNumMessages() > 0) {
                 _maxNumMsgsVal.setText(_policy.getMaxNumMessages() + "");
@@ -563,7 +563,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             
             _maxNumMsgsEnable = new Button(row, SWT.CHECK);
             _maxNumMsgsLabel = new Label(row, SWT.NONE);
-            _maxNumMsgsLabel.setText(_translationRegistry.getText(T_MAXNUMMSGS_LABEL, "Max number of messages: "));
+            _maxNumMsgsLabel.setText(_translationRegistry.getText("Max number of messages: "));
             _maxNumMsgsVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxNumMsgsVal.setTextLimit(7);
             
@@ -614,7 +614,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxSizeKBEnable = new Button(row, SWT.CHECK);
             _maxSizeKBLabel = new Label(row, SWT.NONE);
-            _maxSizeKBLabel.setText(_translationRegistry.getText(T_MAXSIZEKB_LABEL, "Max total size (KBytes): "));
+            _maxSizeKBLabel.setText(_translationRegistry.getText("Max total size (KBytes): "));
             _maxSizeKBVal  = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxSizeKBVal.setTextLimit(7);
 
@@ -665,7 +665,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxAgeDaysEnable = new Button(row, SWT.CHECK);
             _maxAgeDaysLabel = new Label(row, SWT.NONE);
-            _maxAgeDaysLabel.setText(_translationRegistry.getText(T_MAXAGEDAYS_LABEL, "Max age (days): "));
+            _maxAgeDaysLabel.setText(_translationRegistry.getText("Max age (days): "));
             _maxAgeDaysVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxAgeDaysVal.setTextLimit(4);
             
@@ -722,16 +722,4 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         }
     }
     
-    private static final String T_SAVE = "syndie.gui.expirationmanager.save";
-    private static final String T_REVERT = "syndie.gui.expirationmanager.revert";
-    private static final String T_DELETE = "syndie.gui.expirationmanager.delete";
-    private static final String T_EXECUTE = "syndie.gui.expirationmanager.execute";
-    private static final String T_MIMICDEFAULT = "syndie.gui.expirationmanager.mimicdefault";
-    private static final String T_TYPEDB = "syndie.gui.expirationmanager.typedb";
-    private static final String T_TYPEDATAFILE = "syndie.gui.expirationmanager.typedatafile";
-    private static final String T_MAXNUMMSGS_LABEL = "syndie.gui.expirationmanager.maxnummsgs.label";
-    private static final String T_MAXSIZEKB_LABEL = "syndie.gui.expirationmanager.maxsizekb.label";
-    private static final String T_MAXAGEDAYS_LABEL = "syndie.gui.expirationmanager.maxagedays.label";
-    private static final String T_TABTITLE_DEFAULT = "syndie.gui.expirationmanager.tabtitle.default";
-    private static final String T_TABTITLE_WATCHED = "syndie.gui.expirationmanager.tabtitle.watched";
 }

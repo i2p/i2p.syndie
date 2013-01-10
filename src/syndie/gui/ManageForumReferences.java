@@ -180,9 +180,8 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
             public int getPageCount() { return 0; }
             public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
         });
-        popup.showPopup(_translationRegistry.getText(T_ADDREF, "Add reference"));
+        popup.showPopup(_translationRegistry.getText("Add reference"));
     }
-    private static final String T_ADDREF = "syndie.gui.manageforumreferences.addref";
     
     public void dispose() {
         _translationRegistry.unregister(this);
@@ -530,23 +529,15 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_COLDESC = "syndie.gui.manageforumreferences.coldesc";
-    private static final String T_COLNAME = "syndie.gui.manageforumreferences.colname";
-    private static final String T_COLTARGET = "syndie.gui.manageforumreferences.coltarget";
-    private static final String T_SHELL = "syndie.gui.manageforumreferences.shell";
-    private static final String T_OK = "syndie.gui.manageforumreferences.ok";
-    private static final String T_CANCEL = "syndie.gui.manageforumreferences.cancel";
-    private static final String T_TARGET_REMOVE = "syndie.gui.manageforumreferences.target.remove";
-    private static final String T_TARGET_ADD = "syndie.gui.manageforumreferences.target.add";
     
     public void translate(TranslationRegistry registry) {
-        _colDesc.setText(registry.getText(T_COLDESC, "Description"));
-        _colName.setText(registry.getText(T_COLNAME, "Name"));
-        _colTarget.setText(registry.getText(T_COLTARGET, "Target"));
-        _shell.setText(registry.getText(T_SHELL, "References"));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
-        _targetMenuRemove.setText(registry.getText(T_TARGET_REMOVE, "Remove reference"));
-        _targetMenuAdd.setText(registry.getText(T_TARGET_ADD, "Add reference"));
+        _colDesc.setText(registry.getText("Description"));
+        _colName.setText(registry.getText("Name"));
+        _colTarget.setText(registry.getText("Target"));
+        _shell.setText(registry.getText("References"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
+        _targetMenuRemove.setText(registry.getText("Remove reference"));
+        _targetMenuAdd.setText(registry.getText("Add reference"));
     }
 }

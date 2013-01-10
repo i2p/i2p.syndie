@@ -272,23 +272,6 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
             _translationRegistry.unregister(this);
     }
     
-    private static final String T_PBE = "syndie.gui.messageflagbar.pbe";
-    private static final String T_READKEYUNKNOWN = "syndie.gui.messageflagbar.readkeyunknown";
-    private static final String T_REPLYKEYUNKNOWN = "syndie.gui.messageflagbar.replykeyunknown";
-    private static final String T_UNREADABLE = "syndie.gui.messageflagbar.unreadable";
-    private static final String T_PUBLIC = "syndie.gui.messageflagbar.pbe";
-    private static final String T_AUTHENTICATED = "syndie.gui.messageflagbar.authenticated";
-    private static final String T_AUTHORIZED = "syndie.gui.messageflagbar.authorized";
-    private static final String T_BANNED = "syndie.gui.messageflagbar.banned";
-    private static final String T_BOOKMARKED_FORUM = "syndie.gui.messageflagbar.bookmarked.forum";
-    private static final String T_BOOKMARKED_AUTHOR = "syndie.gui.messageflagbar.bookmarked.author";
-    private static final String T_SCHEDULED = "syndie.gui.messageflagbar.scheduled";
-    private static final String T_HASKEYS = "syndie.gui.messageflagbar.haskeys";
-    private static final String T_HASARCHIVES = "syndie.gui.messageflagbar.hasarchives";
-    private static final String T_HASREFS = "syndie.gui.messageflagbar.hasrefs";
-    private static final String T_HASATTACHMENTS = "syndie.gui.messageflagbar.hasattachments";
-    private static final String T_ISNEW = "syndie.gui.messageflagbar.isnew";
-    private static final String T_ISPRIVATE = "syndie.gui.messageflagbar.isprivate";
     
     public void translate(TranslationRegistry registry) {
         if (!_includeTooltips) return;
@@ -299,39 +282,39 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
                 _ui.debugMessage("translating icon " + i);
                 Image img = (Image)_images.get(i); //l.getImage();
                 if (img == ImageUtil.ICON_MSG_FLAG_PBE)
-                    ctl[i].setToolTipText(registry.getText(T_PBE, "Post is passphrase protected"));
+                    ctl[i].setToolTipText(registry.getText("Post is passphrase protected"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN)
-                    ctl[i].setToolTipText(registry.getText(T_READKEYUNKNOWN, "Read key unknown"));
+                    ctl[i].setToolTipText(registry.getText("Read key unknown"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_REPLYKEYUNKNOWN)
-                    ctl[i].setToolTipText(registry.getText(T_REPLYKEYUNKNOWN, "Private key unknown"));
+                    ctl[i].setToolTipText(registry.getText("Private key unknown"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_UNREADABLE)
-                    ctl[i].setToolTipText(registry.getText(T_UNREADABLE, "Message is not readable"));
+                    ctl[i].setToolTipText(registry.getText("Message is not readable"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_PUBLIC)
-                    ctl[i].setToolTipText(registry.getText(T_PUBLIC, "Message was publically readable"));
+                    ctl[i].setToolTipText(registry.getText("Message was publically readable"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_AUTHENTICATED)
-                    ctl[i].setToolTipText(registry.getText(T_AUTHENTICATED, "Author is authentic"));
+                    ctl[i].setToolTipText(registry.getText("Author is authentic"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_AUTHORIZED)
-                    ctl[i].setToolTipText(registry.getText(T_AUTHORIZED, "Author is allowed to post in the forum"));
+                    ctl[i].setToolTipText(registry.getText("Author is allowed to post in the forum"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BANNED)
-                    ctl[i].setToolTipText(registry.getText(T_BANNED, "Post is banned"));
+                    ctl[i].setToolTipText(registry.getText("Post is banned"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_AUTHOR)
-                    ctl[i].setToolTipText(registry.getText(T_BOOKMARKED_AUTHOR, "Author is bookmarked"));
+                    ctl[i].setToolTipText(registry.getText("Author is bookmarked"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_BOOKMARKED_FORUM)
-                    ctl[i].setToolTipText(registry.getText(T_BOOKMARKED_FORUM, "Forum is bookmarked"));
+                    ctl[i].setToolTipText(registry.getText("Forum is bookmarked"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_SCHEDULEDFOREXPIRE)
-                    ctl[i].setToolTipText(registry.getText(T_SCHEDULED, "Message is scheduled to expire"));
+                    ctl[i].setToolTipText(registry.getText("Message is scheduled to expire"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASKEYS)
-                    ctl[i].setToolTipText(registry.getText(T_HASKEYS, "Message includes keys you can import"));
+                    ctl[i].setToolTipText(registry.getText("Message includes keys you can import"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASARCHIVES)
-                    ctl[i].setToolTipText(registry.getText(T_HASARCHIVES, "Message refers to archives"));
+                    ctl[i].setToolTipText(registry.getText("Message refers to archives"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASREFS)
-                    ctl[i].setToolTipText(registry.getText(T_HASREFS, "Message includes references"));
+                    ctl[i].setToolTipText(registry.getText("Message includes references"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS)
-                    ctl[i].setToolTipText(registry.getText(T_HASATTACHMENTS, "Message includes attachments"));
+                    ctl[i].setToolTipText(registry.getText("Message includes attachments"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_ISNEW)
-                    ctl[i].setToolTipText(registry.getText(T_ISNEW, "Message is unread"));
+                    ctl[i].setToolTipText(registry.getText("Message is unread"));
                 else if (img == ImageUtil.ICON_MSG_TYPE_PRIVATE)
-                    ctl[i].setToolTipText(registry.getText(T_ISPRIVATE, "Message was privately encrypted"));
+                    ctl[i].setToolTipText(registry.getText("Message was privately encrypted"));
                 else {
                     _ui.debugMessage("translating icon " + i + ": UNKNOWN icon");
                 }

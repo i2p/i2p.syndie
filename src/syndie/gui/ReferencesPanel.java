@@ -147,7 +147,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         final SyndieURI uri = node.getURI();
         
         MenuItem view = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText(T_MENU_VIEW, "View"));
+        view.setText(_translationRegistry.getText("View"));
         if (uri != null)
             view.addSelectionListener(new FireSelectionListener() { public void fire() { viewSelected(sel); } });
         else
@@ -156,7 +156,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         // view all makes sense in the tabbed view, but not in the desktop
         /*
         MenuItem viewAll = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText(T_MENU_VIEWCHILDREN, "View children"));
+        view.setText(_translationRegistry.getText("View children"));
         if (node.getChildCount() > 0) {
             view.addSelectionListener(new FireSelectionListener() { 
                 public void fire() {
@@ -169,7 +169,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
          */
         
         MenuItem copy = new MenuItem(menu, SWT.PUSH);
-        copy.setText(_translationRegistry.getText(T_MENU_COPYURI, "Copy target URI"));
+        copy.setText(_translationRegistry.getText("Copy target URI"));
         copy.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
                 TextTransfer tt = TextTransfer.getInstance();
@@ -182,31 +182,27 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         });
         
         MenuItem edit = new MenuItem(menu, SWT.PUSH);
-        edit.setText(_translationRegistry.getText(T_MENU_EDIT, "Edit"));
+        edit.setText(_translationRegistry.getText("Edit"));
         edit.addSelectionListener(new FireSelectionListener() { public void fire() { edit(sel); } });
         
         MenuItem delete = new MenuItem(menu, SWT.PUSH);
-        delete.setText(_translationRegistry.getText(T_MENU_DELETE, "Delete"));
+        delete.setText(_translationRegistry.getText("Delete"));
         delete.addSelectionListener(new FireSelectionListener() { public void fire() { delete(sel); } });
     }
-    private static final String T_MENU_VIEW = "syndie.gui.referencepanel.menu.view";
-    private static final String T_MENU_COPYURI = "syndie.gui.referencepanel.menu.copyuri";
-    private static final String T_MENU_EDIT = "syndie.gui.referencepanel.menu.edit";
-    private static final String T_MENU_DELETE = "syndie.gui.referencepanel.menu.delete";
     
     private void buildMenu(Menu menu, final TreeItem sel[]) {
         MenuItem view = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText(T_MENU_VIEW, "View"));
+        view.setText(_translationRegistry.getText("View"));
         view.setImage(ImageUtil.ICON_VIEW);
         view.setEnabled(false);
         
         MenuItem edit = new MenuItem(menu, SWT.PUSH);
-        edit.setText(_translationRegistry.getText(T_MENU_EDIT, "Edit"));
+        edit.setText(_translationRegistry.getText("Edit"));
         edit.setImage(ImageUtil.ICON_EDIT);
         edit.addSelectionListener(new FireSelectionListener() { public void fire() { edit(sel); } });
         
         MenuItem delete = new MenuItem(menu, SWT.PUSH);
-        delete.setText(_translationRegistry.getText(T_MENU_DELETE, "Delete"));
+        delete.setText(_translationRegistry.getText("Delete"));
         delete.setImage(ImageUtil.ICON_DELETE);
         delete.addSelectionListener(new FireSelectionListener() { public void fire() { delete(sel); } });
     }
@@ -322,21 +318,14 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         _delete.setFont(theme.BUTTON_FONT);
         _close.setFont(theme.BUTTON_FONT);
     }
-    private static final String T_ADDFOLDER = "syndie.gui.referencespanel.addfolder";
-    private static final String T_ADDREFERENCE = "syndie.gui.referencespanel.addreference";
-    private static final String T_DELETE = "syndie.gui.referencespanel.delete";
-    private static final String T_CLOSE = "syndie.gui.referencespanel.close";
-    private static final String T_COLNAME = "syndie.gui.referencespanel.colname";
-    private static final String T_COLTYPE = "syndie.gui.referencespanel.coltype";
-    private static final String T_COLDESC = "syndie.gui.referencespanel.coldesc";
     
     public void translate(TranslationRegistry trans) {
-        _addFolder.setText(trans.getText(T_ADDFOLDER, "Add folder"));
-        _addReference.setText(trans.getText(T_ADDREFERENCE, "Add reference"));
-        _delete.setText(trans.getText(T_DELETE, "Delete"));
-        _close.setText(trans.getText(T_CLOSE, "Close"));
-        _colName.setText(trans.getText(T_COLNAME, "Name"));
-        _colType.setText(trans.getText(T_COLTYPE, "Type"));
-        _colDesc.setText(trans.getText(T_COLDESC, "Description"));
+        _addFolder.setText(trans.getText("Add folder"));
+        _addReference.setText(trans.getText("Add reference"));
+        _delete.setText(trans.getText("Delete"));
+        _close.setText(trans.getText("Close"));
+        _colName.setText(trans.getText("Name"));
+        _colType.setText(trans.getText("Type"));
+        _colDesc.setText(trans.getText("Description"));
     }
 }

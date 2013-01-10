@@ -302,15 +302,11 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         _cancel.setFont(theme.BUTTON_FONT);
     }
     
-    private static final String T_BANGROUP = "syndie.gui.manageforumbans.bangroup";
-    private static final String T_SHELL = "syndie.gui.manageforumbans.shell";
-    private static final String T_OK = "syndie.gui.manageforumbans.ok";
-    private static final String T_CANCEL = "syndie.gui.manageforumbans.cancel";
     
     public void translate(TranslationRegistry registry) {
-        _banGroup.setText(registry.getText(T_BANGROUP, "Locally banned scopes"));
-        _shell.setText(registry.getText(T_SHELL, "Banned scopes"));
-        _ok.setText(registry.getText(T_OK, "OK"));
-        _cancel.setText(registry.getText(T_CANCEL, "Cancel"));
+        _banGroup.setText(registry.getText("Locally banned scopes"));
+        _shell.setText(registry.getText("Banned scopes"));
+        _ok.setText(registry.getText("OK"));
+        _cancel.setText(registry.getText("Cancel"));
     }
 }

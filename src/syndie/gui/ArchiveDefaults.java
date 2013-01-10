@@ -189,7 +189,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         }
     }
     
-    private static final String T_PROXY_NONE = "syndie.gui.archivedefaultspopup.proxy_none";
     
     private void addToDefaults(String name, String url, String proxyHost, int proxyPort, String pullPolicy, String pushPolicy, boolean syncByDefault) {
         TableItem item = new TableItem(_archives, SWT.LEFT);
@@ -200,7 +199,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         if ( (proxyHost != null) && (proxyPort > 0) )
             item.setText(2, proxyHost + ":" + proxyPort);
         else
-            item.setText(2, _translationRegistry.getText(T_PROXY_NONE, "no proxy"));
+            item.setText(2, _translationRegistry.getText("no proxy"));
         if ((pushPolicy != null) && (pushPolicy.indexOf("SendNothing") != -1))
             item.setText(3, "X");
         else
@@ -239,10 +238,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         }
     }
     
-    private static final String T_EDIT_NAME = "syndie.gui.archivedefaultspopup.editname";
-    private static final String T_EDIT_NAME_TITLE = "syndie.gui.archivedefaultspopup.editname.title";
-    private static final String T_EDIT_NAME_OK = "syndie.gui.archivedefaultspopup.editname.ok";
-    private static final String T_EDIT_NAME_CANCEL = "syndie.gui.archivedefaultspopup.editname.cancel";
     
     private void editName(final TableItem item) {
         final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL | SWT.BORDER);
@@ -252,7 +247,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         shell.setLayout(gl);
-        shell.setText(_translationRegistry.getText(T_EDIT_NAME_TITLE, "Edit name"));
+        shell.setText(_translationRegistry.getText("Edit name"));
         
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
@@ -264,7 +259,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_EDIT_NAME, "Archive name: "));
+        l.setText(_translationRegistry.getText("Archive name: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text name = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -282,7 +277,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_NAME_OK, "OK"));
+        b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -293,7 +288,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_NAME_CANCEL, "Cancel"));
+        b.setText(_translationRegistry.getText("Cancel"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() { shell.dispose(); }
@@ -303,10 +298,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         shell.open();
     }
     
-    private static final String T_EDIT_URL = "syndie.gui.archivedefaultspopup.editurl";
-    private static final String T_EDIT_URL_TITLE = "syndie.gui.archivedefaultspopup.editurl.title";
-    private static final String T_EDIT_URL_OK = "syndie.gui.archivedefaultspopup.editurl.ok";
-    private static final String T_EDIT_URL_CANCEL = "syndie.gui.archivedefaultspopup.editurl.cancel";
     
     private void editURL(final TableItem item) {
         final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.BORDER | SWT.PRIMARY_MODAL);
@@ -316,7 +307,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         shell.setLayout(gl);
-        shell.setText(_translationRegistry.getText(T_EDIT_URL_TITLE, "Edit URL"));
+        shell.setText(_translationRegistry.getText("Edit URL"));
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent shellEvent) { shell.dispose(); }
@@ -327,7 +318,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_EDIT_URL, "Archive location: "));
+        l.setText(_translationRegistry.getText("Archive location: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text url = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -345,7 +336,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_URL_OK, "OK"));
+        b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -356,7 +347,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_URL_CANCEL, "Cancel"));
+        b.setText(_translationRegistry.getText("Cancel"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() { shell.dispose(); }
@@ -366,10 +357,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         shell.open();
     }
     
-    private static final String T_EDIT_PROXY = "syndie.gui.archivedefaultspopup.editproxy";
-    private static final String T_EDIT_PROXY_TITLE = "syndie.gui.archivedefaultspopup.editproxy.title";
-    private static final String T_EDIT_PROXY_OK = "syndie.gui.archivedefaultspopup.editproxy.ok";
-    private static final String T_EDIT_PROXY_CANCEL = "syndie.gui.archivedefaultspopup.editproxy.cancel";
     
     private void editProxy(final TableItem item) {
         String proxy = item.getText(2);
@@ -395,7 +382,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         shell.setLayout(gl);
-        shell.setText(_translationRegistry.getText(T_EDIT_PROXY_TITLE, "Edit proxy"));
+        shell.setText(_translationRegistry.getText("Edit proxy"));
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent shellEvent) { shell.dispose(); }
@@ -406,7 +393,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_EDIT_URL, "Proxy host: "));
+        l.setText(_translationRegistry.getText("Proxy host: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text host = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -416,7 +403,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText(T_EDIT_URL, "port: "));
+        l.setText(_translationRegistry.getText("port: "));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text port = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -435,7 +422,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                         item.setText(2, h + ":" + portNum);
                         shell.dispose();
                     } else {
-                        item.setText(2, _translationRegistry.getText(T_PROXY_NONE, "no proxy"));
+                        item.setText(2, _translationRegistry.getText("no proxy"));
                         shell.dispose();
                     }
                 }
@@ -444,7 +431,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_URL_OK, "OK"));
+        b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -456,7 +443,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                     item.setText(2, h + ":" + portNum);
                     shell.dispose();
                 } else {
-                    item.setText(2, _translationRegistry.getText(T_PROXY_NONE, "no proxy"));
+                    item.setText(2, _translationRegistry.getText("no proxy"));
                     shell.dispose();
                 }
             }
@@ -464,7 +451,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText(T_EDIT_URL_CANCEL, "Cancel"));
+        b.setText(_translationRegistry.getText("Cancel"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
             public void fire() { shell.dispose(); }
@@ -546,29 +533,19 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         _translationRegistry.unregister(this);
     }
     
-    private static final String T_COLIMPORT = "syndie.gui.archivedefaultspopup.import";
-    private static final String T_COLLOCATION = "syndie.gui.archivedefaultspopup.collocation";
-    private static final String T_COLPROXY = "syndie.gui.archivedefaultspopup.colproxy";
-    private static final String T_COLPULLONLY = "syndie.gui.archivedefaultspopup.colpullonly";
-    private static final String T_COLAUTOMATIC = "syndie.gui.archivedefaultspopup.colautomatic";
-    private static final String T_COLIMPORT_TT = "syndie.gui.archivedefaultspopup.import.tt";
-    private static final String T_COLLOCATION_TT = "syndie.gui.archivedefaultspopup.collocation.tt";
-    private static final String T_COLPROXY_TT = "syndie.gui.archivedefaultspopup.colproxy.tt";
-    private static final String T_COLPULLONLY_TT = "syndie.gui.archivedefaultspopup.colpullonly.tt";
-    private static final String T_COLAUTOMATIC_TT = "syndie.gui.archivedefaultspopup.colautomatic.tt";
     
     public void translate(TranslationRegistry registry) {
-        _colImport.setText(registry.getText(T_COLIMPORT, "Archive"));
-        _colLocation.setText(registry.getText(T_COLLOCATION, "URL"));
-        _colProxy.setText(registry.getText(T_COLPROXY, "Proxy"));
-        _colPullOnly.setText(registry.getText(T_COLPULLONLY, "Read Only"));
-        _colAutomatic.setText(registry.getText(T_COLAUTOMATIC, "Auto Sync"));
+        _colImport.setText(registry.getText("Archive"));
+        _colLocation.setText(registry.getText("URL"));
+        _colProxy.setText(registry.getText("Proxy"));
+        _colPullOnly.setText(registry.getText("Read Only"));
+        _colAutomatic.setText(registry.getText("Auto Sync"));
         
-        _colImport.setToolTipText(registry.getText(T_COLIMPORT_TT, "Archive"));
-        _colLocation.setToolTipText(registry.getText(T_COLLOCATION_TT, "Archive location"));
-        _colProxy.setToolTipText(registry.getText(T_COLPROXY_TT, "HTTP Proxy to access it"));
-        _colPullOnly.setToolTipText(registry.getText(T_COLPULLONLY_TT, "Read only archive (pull only, do not push)?"));
-        _colAutomatic.setToolTipText(registry.getText(T_COLAUTOMATIC_TT, "Schedule sharing immediately"));
+        _colImport.setToolTipText(registry.getText("Archive"));
+        _colLocation.setToolTipText(registry.getText("Archive location"));
+        _colProxy.setToolTipText(registry.getText("HTTP Proxy to access it"));
+        _colPullOnly.setToolTipText(registry.getText("Read only archive (pull only, do not push)?"));
+        _colAutomatic.setToolTipText(registry.getText("Schedule sharing immediately"));
         
 
         _colAutomatic.setWidth(100);

@@ -309,20 +309,15 @@ public class MessagePreview extends BaseComponent implements Themeable, Translat
         return false;
     }
     
-    private static final String T_VIEW = "syndie.gui.messagepreview.view";
-    private static final String T_REPLY = "syndie.gui.messagepreview.reply";
     
-    private static final String T_AUTHORREPLYPRIV = "syndie.gui.messagepreview.authorreplypriv";
-    private static final String T_FORUMREPLYPUB = "syndie.gui.messagepreview.forumreplypub";
-    private static final String T_FORUMREPLYPRIV = "syndie.gui.messagepreview.forumreplypriv";
     
     public void translate(TranslationRegistry registry) {
-        _headerView.setText(registry.getText(T_VIEW, "View"));
-        _headerReply.setText(registry.getText(T_REPLY, "Reply..."));
+        _headerView.setText(registry.getText("View"));
+        _headerReply.setText(registry.getText("Reply..."));
         
-        _headerReplyAuthorPrivate.setText(registry.getText(T_AUTHORREPLYPRIV, "Send a private reply to the author"));
-        _headerReplyForumPrivate.setText(registry.getText(T_FORUMREPLYPRIV, "Send a private reply to the forum administrators"));
-        _headerReplyForumPublic.setText(registry.getText(T_FORUMREPLYPUB, "Send a public reply to the forum"));
+        _headerReplyAuthorPrivate.setText(registry.getText("Send a private reply to the author"));
+        _headerReplyForumPrivate.setText(registry.getText("Send a private reply to the forum administrators"));
+        _headerReplyForumPublic.setText(registry.getText("Send a public reply to the forum"));
     }
     
     public void applyTheme(Theme theme) {

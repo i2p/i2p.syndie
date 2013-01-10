@@ -41,11 +41,6 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
     
     private Composite getRoot() { return _root; }
 
-    private static final String T_REFLOC_SHELL = "syndie.gui.desktop.forumselectionpanel.refloc.shell";
-    private static final String T_REFLOC_DESC = "syndie.gui.desktop.forumselectionpanel.refloc.desc";
-    private static final String T_REFLOC_OK = "syndie.gui.desktop.forumselectionpanel.refloc.ok";
-    private static final String T_REFLOC_NEWFOLDER = "syndie.gui.desktop.forumselectionpanel.refloc.newfolder";
-    private static final String T_REFLOC_ROOT = "syndie.gui.desktop.forumselectionpanel.refloc.root";
 
     public void setPopup(LinkBuilderPopup popup) { _popup = popup; }
 
@@ -53,7 +48,7 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
     public void uriBuilt(final SyndieURI uri, final String text) {
         // now see /where/ they want to store the ref
         final Shell shell = new Shell(getRoot().getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-        shell.setText(_translationRegistry.getText(T_REFLOC_SHELL, "Reference location"));
+        shell.setText(_translationRegistry.getText("Reference location"));
         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
         GridLayout gl = new GridLayout(3, false);
         gl.verticalSpacing = 0;
@@ -72,7 +67,7 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
         });
 
         Label l = new Label(shell, SWT.NONE);
-        l.setText(_translationRegistry.getText(T_REFLOC_DESC, "Please specify where you want to store this reference"));
+        l.setText(_translationRegistry.getText("Please specify where you want to store this reference"));
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 3, 1));
 
@@ -84,7 +79,7 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
 
         Button ok = new Button(shell, SWT.PUSH);
         ok.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-        ok.setText(_translationRegistry.getText(T_REFLOC_OK, "Store"));
+        ok.setText(_translationRegistry.getText("Store"));
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         ok.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -96,12 +91,12 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
 
         Button newFolder = new Button(shell, SWT.PUSH);
         newFolder.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-        newFolder.setText(_translationRegistry.getText(T_REFLOC_NEWFOLDER, "Create folder"));
+        newFolder.setText(_translationRegistry.getText("Create folder"));
         newFolder.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
 
         final Text folderName = new Text(shell, SWT.SINGLE | SWT.BORDER);
         folderName.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-        folderName.setText(_translationRegistry.getText(T_REFLOC_NEWFOLDER, "New folder"));
+        folderName.setText(_translationRegistry.getText("New folder"));
         folderName.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
         newFolder.addSelectionListener(new FireSelectionListener() {
@@ -121,7 +116,7 @@ class AddReferenceSource implements LinkBuilderPopup.LinkBuilderSource {
     
     private void populateRefFolderTree(Tree tree) {
         TreeItem root = new TreeItem(tree, SWT.NONE);
-        root.setText(_translationRegistry.getText(T_REFLOC_ROOT, "Top level"));
+        root.setText(_translationRegistry.getText("Top level"));
 
         List refs = _client.getNymReferences();
         root.setData("nodes", refs);

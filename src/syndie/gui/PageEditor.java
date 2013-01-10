@@ -823,8 +823,6 @@ public class PageEditor extends BaseComponent implements Themeable {
         }
     }
     
-    private static final String T_MAXEDITOR_UNMAX = "syndie.gui.pageeditor.maxeditor.unmax";
-    private static final String T_MAXEDITOR_PREVIEW = "syndie.gui.pageeditor.maxeditor.preview";
     private Text _maxText;
     private TextChangeManager _maxTextManager;
     private class MaxEditor {
@@ -834,10 +832,10 @@ public class PageEditor extends BaseComponent implements Themeable {
             _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             _shell.setLayout(new GridLayout(2, true));
             Button unmax = new Button(_shell, SWT.PUSH);
-            unmax.setText(_translationRegistry.getText(T_MAXEDITOR_UNMAX, "Restore normal editor size"));
+            unmax.setText(_translationRegistry.getText("Restore normal editor size"));
             unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             Button preview = new Button(_shell, SWT.PUSH);
-            preview.setText(_translationRegistry.getText(T_MAXEDITOR_PREVIEW, "Show maximized preview"));
+            preview.setText(_translationRegistry.getText("Show maximized preview"));
             preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxText = new Text(_shell, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
             _maxText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
@@ -909,8 +907,6 @@ public class PageEditor extends BaseComponent implements Themeable {
         public void dispose() { _shell.dispose(); }
     }
     
-    private static final String T_MAXPREVIEW_UNMAX = "syndie.gui.pageeditor.maxpreview.unmax";
-    private static final String T_MAXPREVIEW_EDITOR = "syndie.gui.pageeditor.maxpreview.edit";
     private class MaxPreview {
         private Shell _shell;
         private PageRenderer _maxRenderer;
@@ -919,10 +915,10 @@ public class PageEditor extends BaseComponent implements Themeable {
             _shell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
             _shell.setLayout(new GridLayout(2, true));
             Button unmax = new Button(_shell, SWT.PUSH);
-            unmax.setText(_translationRegistry.getText(T_MAXPREVIEW_UNMAX, "Restore normal preview size"));
+            unmax.setText(_translationRegistry.getText("Restore normal preview size"));
             unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             Button edit = new Button(_shell, SWT.PUSH);
-            edit.setText(_translationRegistry.getText(T_MAXPREVIEW_EDITOR, "Show maximized editor"));
+            edit.setText(_translationRegistry.getText("Show maximized editor"));
             edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             
             _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
